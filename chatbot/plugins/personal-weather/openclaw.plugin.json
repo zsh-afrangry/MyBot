@@ -1,0 +1,84 @@
+{
+  "id": "personal-weather",
+  "name": "Personal Weather",
+  "description": "Read-only QWeather brief for kurumi's owner.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "required": [
+      "apiHost",
+      "apiKey"
+    ],
+    "properties": {
+      "apiHost": {
+        "type": "string",
+        "description": "QWeather dedicated API hostname without scheme or path."
+      },
+      "apiKey": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "required": [
+              "source",
+              "provider",
+              "id"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "env"
+              },
+              "provider": {
+                "type": "string",
+                "const": "default"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": false
+  },
+  "configContracts": {
+    "secretInputs": {
+      "paths": [
+        {
+          "path": "apiKey",
+          "expected": "string"
+        }
+      ]
+    }
+  },
+  "uiHints": {
+    "apiHost": {
+      "label": "QWeather API host"
+    },
+    "apiKey": {
+      "label": "QWeather credential",
+      "sensitive": true
+    }
+  },
+  "contracts": {
+    "tools": [
+      "personal_weather_get_brief"
+    ]
+  },
+  "toolMetadata": {
+    "personal_weather_get_brief": {
+      "optional": true,
+      "replaySafe": true
+    }
+  }
+}

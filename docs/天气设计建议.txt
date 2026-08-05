@@ -1,0 +1,689 @@
+你的这个功能不应该主要靠“系统提示词”实现，而应该拆成一套确定性的后台能力：
+
+```text
+QQ 对话
+  ↓
+OpenClaw Agent
+  ├─ 查询天气工具
+  ├─ 修改位置计划工具
+  └─ 创建/修改提醒任务
+          ↓
+结构化位置数据 + OpenClaw Automations
+          ↓
+QWeather API
+          ↓
+天气规则判断、去重
+          ↓
+QQBot 主动推送
+```
+
+## 一、先明确：Skill、Tool、定时任务不是一回事
+
+OpenClaw 中：
+
+* **Tool**：真正执行操作，例如请求 QWeather、读取当前位置、修改位置计划。
+* **Skill**：告诉模型什么时候、怎样调用这些 Tool。
+* **Automation/Cron**：在指定时间触发程序或 Agent。
+* **Memory**：保存稳定资料和长期上下文。
+
+所以，仅增加一个 `SKILL.md` 并不会凭空产生天气查询能力。OpenClaw 官方也明确区分了：Tools 是可调用动作，Skills 只是教 Agent 如何使用这些能力。([OpenClaw][1])
+
+你最好不要直接给它开放通用 `exec`、Shell 或文件写入权限，而是开发一个**权限极窄的天气插件或本地工具服务**。
+
+---
+
+# 二、建议的最终架构
+
+建议实现五个独立模块。
+
+## 1. QWeatherClient：只负责访问和风天气
+
+它从环境变量读取：
+
+```env
+QWEATHER_API_HOST=你的专属API_HOST
+QWEATHER_API_KEY=你的API_KEY
+```
+
+请求时使用：
+
+```http
+X-QW-Api-Key: your-api-key
+```
+
+API Key 不应该放入系统提示词、Skill 文本、记忆文件或者模型上下文，只允许代码通过环境变量读取。QWeather 当前要求使用账户专属 API Host，并支持通过 `X-QW-Api-Key` 请求头认证。([和风天气开发者服务][2])
+
+建议封装以下接口：
+
+```text
+lookup_location(name, adm)
+get_weather_now(location_id)
+get_daily_forecast(location_id)
+get_hourly_forecast(location_id)
+get_minutely_rain(lon, lat)
+get_official_alerts(lat, lon)
+```
+
+对应 QWeather 接口：
+
+```text
+GET /geo/v2/city/lookup
+GET /v7/weather/now
+GET /v7/weather/3d
+GET /v7/weather/24h
+GET /v7/minutely/5m
+GET /weatheralert/v1/current/{latitude}/{longitude}
+```
+
+城市查询能够返回 LocationID、经纬度、行政区和时区；分钟级降水接口能够提供中国地区未来两小时的降水信息；官方预警接口能够返回正在生效的预警及其更新、替代关系。([和风天气开发者服务][3])
+
+---
+
+## 2. Weather Tool：暴露给 Agent 的窄工具
+
+不建议暴露以下能力：
+
+```text
+exec
+shell
+curl
+任意HTTP请求
+任意文件读写
+sudo
+```
+
+而是只暴露以下工具。
+
+### 查询类工具
+
+```json
+{
+  "name": "weather_get_brief",
+  "description": "获取指定地点的当前天气、今日预报、未来24小时降水和官方预警",
+  "parameters": {
+    "location_id": "string"
+  }
+}
+```
+
+```json
+{
+  "name": "weather_lookup_location",
+  "description": "将用户提供的省市区名称解析为QWeather地点",
+  "parameters": {
+    "query": "string",
+    "administrative_area": "string"
+  }
+}
+```
+
+### 位置管理工具
+
+```json
+{
+  "name": "user_location_set_period",
+  "description": "设置用户在某个时间段内所在的位置",
+  "parameters": {
+    "location_id": "string",
+    "province": "string",
+    "city": "string",
+    "district": "string",
+    "latitude": "number",
+    "longitude": "number",
+    "effective_from": "ISO-8601 datetime",
+    "effective_until": "ISO-8601 datetime or null",
+    "source_text": "string"
+  }
+}
+```
+
+```json
+{
+  "name": "user_location_get_effective",
+  "description": "获取当前时刻用户实际所在的位置",
+  "parameters": {
+    "at": "ISO-8601 datetime"
+  }
+}
+```
+
+这里最关键的是：**模型不能直接自己写 JSON、修改系统提示词或修改数据库。模型只能调用经过校验的位置管理工具。**
+
+工具负责：
+
+1. 校验日期格式；
+2. 调用 GeoAPI 确认城市；
+3. 检查时间段重叠；
+4. 写入结构化数据；
+5. 返回最终修改结果。
+
+---
+
+# 三、当前位置不要写进系统提示词
+
+你示例中的这种做法：
+
+```text
+2026年8月6日，我的主人在广东省广州市天河区
+2026年8月16日，我的主人将飞往无锡，请注意当前系统时间是否已经到达8月16日
+```
+
+短期看能工作，长期会出现很多问题：
+
+* 提示词不断膨胀；
+* 多次旅行记录互相冲突；
+* 模型可能忽略时间；
+* 很难处理出发时间、到达时间和返程；
+* 无法可靠删除已经失效的位置；
+* 定时任务每次都要依赖模型理解日期。
+
+更好的数据结构是：
+
+```json
+{
+  "timezone": "Asia/Shanghai",
+  "location_periods": [
+    {
+      "location_id": "广州天河对应的LocationID",
+      "province": "广东省",
+      "city": "广州市",
+      "district": "天河区",
+      "latitude": 23.13,
+      "longitude": 113.36,
+      "effective_from": "2026-08-06T00:00:00+08:00",
+      "effective_until": "2026-08-16T14:30:00+08:00",
+      "status": "confirmed"
+    },
+    {
+      "location_id": "无锡对应的LocationID",
+      "province": "江苏省",
+      "city": "无锡市",
+      "district": null,
+      "latitude": 31.49,
+      "longitude": 120.31,
+      "effective_from": "2026-08-16T14:30:00+08:00",
+      "effective_until": null,
+      "status": "confirmed"
+    }
+  ]
+}
+```
+
+这里应该使用飞机预计抵达无锡的时间，例如：
+
+```text
+2026-08-16T14:30:00+08:00
+```
+
+而不是笼统使用 `2026-08-16 00:00`。否则你还在广州机场时，机器人可能已经开始推送无锡天气。
+
+每次天气任务执行时，只需要查询：
+
+```sql
+effective_from <= 当前时间
+AND (
+    effective_until IS NULL
+    OR 当前时间 < effective_until
+)
+ORDER BY effective_from DESC
+LIMIT 1
+```
+
+所以到了 **2026 年 8 月 16 日 14:30**，天气任务自然会查询无锡，不需要修改系统提示词，也不需要临时唤醒模型去“更新记忆”。
+
+OpenClaw 的 `USER.md` 更适合保存稳定偏好和用户资料，`MEMORY.md` 更适合长期决定和简要事实，不适合充当频繁变动的定时任务数据库。([OpenClaw][4])
+
+---
+
+# 四、每天上午 10:30 的天气提醒
+
+## 推荐执行流程
+
+每天 10:30：
+
+```text
+1. 获取当前系统时间
+2. 根据位置时间段查询当前有效位置
+3. 查询实时天气
+4. 查询今日最高/最低温
+5. 查询未来24小时降水
+6. 查询官方预警
+7. 生成天气简报
+8. 通过QQBot推送
+```
+
+### OpenClaw Automation 示例
+
+当前 OpenClaw 文档推荐使用 `openclaw automations`，`openclaw cron` 是兼容别名。Cron 表达式可以指定时区，QQBot 的私聊目标格式是 `qqbot:c2c:OPENID`。([OpenClaw][5])
+
+```bash
+openclaw automations create "30 10 * * *" \
+  "执行每日天气简报任务。读取当前有效位置，调用天气工具，获取实时天气、今日最高最低温、未来24小时降水和官方预警。使用简体中文输出。不要虚构数据。如果查询失败，明确说明失败原因。" \
+  --name "每日天气简报" \
+  --tz "Asia/Shanghai" \
+  --session isolated \
+  --announce \
+  --channel qqbot \
+  --to "qqbot:c2c:你的OPENID"
+```
+
+测试任务：
+
+```bash
+openclaw automations list
+```
+
+```bash
+openclaw automations run <jobId> --wait
+```
+
+查看执行记录：
+
+```bash
+openclaw automations runs --id <jobId> --limit 20
+```
+
+也可以先测试 QQ 主动推送本身：
+
+```bash
+openclaw message send \
+  --channel "qqbot" \
+  --target "qqbot:c2c:你的OPENID" \
+  --message "天气提醒推送测试"
+```
+
+QQBot 插件当前支持基于 OpenClaw 定时任务的主动推送；不过腾讯 QQ 一侧可能拦截部分主动消息，因此应先用最简单的文本消息测试主动推送链路。([GitHub][6])
+
+---
+
+# 五、下雨、高温、预警不能只检查一次
+
+你判断得对，突发天气不能一天只检查一次。
+
+但是也不建议让 LLM 每 10 分钟完整运行一次，因为会：
+
+* 消耗大量模型 Token；
+* 重复加载上下文；
+* 容易重复提醒；
+* 发生模型幻觉；
+* API 请求量难以控制。
+
+正确做法是：
+
+```text
+定时检查器：高频、无LLM、纯代码
+           ↓
+发现“新事件”
+           ↓
+才调用LLM润色，或者直接模板推送
+```
+
+## 推荐频率
+
+### 官方天气预警
+
+```text
+每15分钟检查一次
+```
+
+查询：
+
+```text
+/weatheralert/v1/current/{lat}/{lon}
+```
+
+以以下字段去重：
+
+```text
+alert.id
+messageType.code
+issuedTime
+latestChange
+supersedes
+```
+
+官方预警接口能够区分新发布、更新和取代的预警，但 QWeather 也提示预警数据可能有延迟，应在消息中保留“以当地气象部门最新发布为准”。([和风天气开发者服务][7])
+
+### 临近降雨
+
+```text
+06:00—23:00，每15分钟检查一次
+```
+
+使用：
+
+```text
+/v7/minutely/5m
+```
+
+这个接口提供中国地区未来两小时、每 5 分钟的降水预测。([和风天气开发者服务][8])
+
+### 高温和未来降水
+
+```text
+每小时检查一次
+```
+
+使用：
+
+```text
+/v7/weather/24h
+/v7/weather/3d
+```
+
+---
+
+# 六、必须做提醒去重
+
+否则它可能每 15 分钟都告诉你：
+
+```text
+广州正在下雨。
+广州正在下雨。
+广州正在下雨。
+```
+
+建议保存这样的状态：
+
+```json
+{
+  "official_alerts": {
+    "last_alert_ids": [
+      "20260806120000123456"
+    ]
+  },
+  "rain": {
+    "current_episode_id": "2026-08-06T14:00+08:00",
+    "notified_at": "2026-08-06T13:15:00+08:00",
+    "expected_end_at": "2026-08-06T15:20:00+08:00"
+  },
+  "heat": {
+    "date": "2026-08-06",
+    "max_temperature": 37,
+    "notified_level": "high"
+  }
+}
+```
+
+建议使用以下规则。
+
+## 官方预警规则
+
+```text
+新 alert.id：发送
+同一个预警发生 update：发送一次更新
+预警取消：可发送一次解除提醒
+完全未变化：不发送
+```
+
+## 降雨规则
+
+```text
+从“未来两小时无雨”变成“未来两小时有雨”：发送
+已经提醒过同一轮降雨：不重复发送
+降雨强度明显升级：再次发送
+距离上次提醒不足2小时且没有升级：不发送
+```
+
+## 高温规则
+
+阈值可以做成配置，不要写死在模型提示词里，例如：
+
+```json
+{
+  "heat_rules": [
+    {
+      "temperature": 35,
+      "level": "注意",
+      "cooldown_hours": 12
+    },
+    {
+      "temperature": 37,
+      "level": "重要",
+      "cooldown_hours": 6
+    },
+    {
+      "temperature": 40,
+      "level": "紧急",
+      "cooldown_hours": 3
+    }
+  ]
+}
+```
+
+这些只是你自己的通知阈值，不应伪装成当地政府的法定预警标准。真正的官方高温预警应以 QWeather 官方预警接口返回的原始信息为准。
+
+---
+
+# 七、使用 Automation Condition Trigger，而不是普通 Heartbeat
+
+OpenClaw 的 Heartbeat 会定期唤醒 Agent，更适合让 Agent检查“有没有值得关注的事情”。它本质上仍然是一次 Agent Turn。官方文档也说明 Heartbeat 是周期性的主会话运行。([OpenClaw][9])
+
+对于天气预警，更适合：
+
+```text
+每15分钟执行一个无模型检查脚本
+只有出现新预警时才 fire=true
+然后再执行消息推送
+```
+
+OpenClaw Automations 支持 condition trigger：检查脚本返回 `fire: true` 时才执行正常 payload；返回 `fire: false` 时仅保存状态，不创建一次完整 Agent 运行。([OpenClaw][10])
+
+伪代码如下：
+
+```javascript
+async function checkWeatherCondition(triggerState) {
+  const now = new Date();
+
+  const location = await getEffectiveLocation(now);
+  const alerts = await qweather.getAlerts(
+    location.latitude,
+    location.longitude
+  );
+
+  const previousAlertIds = new Set(
+    triggerState?.alertIds ?? []
+  );
+
+  const newAlerts = alerts.filter(
+    alert => !previousAlertIds.has(alert.id)
+  );
+
+  return {
+    fire: newAlerts.length > 0,
+    message: newAlerts.length > 0
+      ? JSON.stringify(newAlerts)
+      : undefined,
+    state: {
+      locationId: location.locationId,
+      alertIds: alerts.map(alert => alert.id),
+      checkedAt: now.toISOString()
+    }
+  };
+}
+```
+
+实际生产中最好将 QWeather 检查逻辑写成独立代码，而不是把整段判断逻辑全部塞进 Automation 的字符串脚本中。
+
+---
+
+# 八、用户告知旅行后如何处理
+
+例如你在 **2026 年 8 月 6 日**发送：
+
+```text
+我8月16日下午坐飞机去无锡，大概14:30到，之后住在无锡。
+```
+
+Agent 的处理流程应该是：
+
+```text
+1. 从消息中提取：
+   目的地：无锡
+   生效时间：2026-08-16 14:30 +08:00
+
+2. 调用 weather_lookup_location：
+   query=无锡
+   administrative_area=江苏
+
+3. 获得：
+   LocationID
+   经纬度
+   省市区
+   时区
+
+4. 调用 user_location_set_period：
+   将广州记录结束时间设为2026-08-16 14:30
+   新增无锡记录，开始时间为2026-08-16 14:30
+
+5. 回复用户：
+   已记录。2026年8月16日14:30起，
+   天气提醒将自动切换到江苏省无锡市。
+```
+
+它**不需要在 10 天后修改系统提示词**。
+
+可以额外建立一个一次性任务：
+
+```text
+2026-08-16 14:30：
+“已将天气关注位置切换为无锡。”
+```
+
+但这个一次性任务只是用于通知你“切换已经发生”，不是位置切换本身的必要条件。位置选择应该永远由结构化时间段计算，这样即使一次性任务执行失败，天气地点依然能正确切换。
+
+---
+
+# 九、系统提示词应该怎样修改
+
+你原来写的是：
+
+```text
+你无法联网搜索。
+你没有调用工具的能力。
+```
+
+修改为：
+
+```text
+你不具备开放式互联网搜索能力。
+
+你只能调用系统明确提供并列入允许名单的工具。
+目前允许使用的外部数据能力包括天气查询和用户位置计划管理。
+
+天气数据必须来自天气工具的返回结果，不得凭常识、记忆或猜测生成实时天气。
+
+你不得尝试调用Shell、sudo、任意HTTP请求、任意文件读写或未明确提供的工具。
+
+你不得在回复中展示、复述或索取QWEATHER_API_KEY及其他系统密钥。
+
+当用户询问实时天气、天气预报或天气预警时：
+1. 首先获取当前有效位置；
+2. 再调用天气查询工具；
+3. 明确区分实时观测、天气预报和官方预警；
+4. 工具失败时明确说明失败，不得伪造结果。
+
+当用户明确告知当前位置变化、旅行目的地或未来迁移计划时：
+1. 解析地点和生效时间；
+2. 调用地点解析工具确认行政区和LocationID；
+3. 调用位置计划工具写入结构化记录；
+4. 告知用户实际保存的地点和生效时间；
+5. 不得通过修改系统提示词来保存动态位置。
+
+用户只是讨论、假设或询问某个地点时，不得修改当前位置。
+只有用户明确表示“我现在在”“我要去”“之后住在”等个人行程信息时，才允许调用位置修改工具。
+```
+
+Skill 中再写天气工具的具体使用说明，例如：
+
+```markdown
+---
+name: personal-weather
+description: 查询用户当前位置的天气、预报和天气预警，并管理未来地点切换。
+---
+
+# Personal Weather
+
+## 查询天气
+
+当用户询问当前天气时：
+
+1. 调用 user_location_get_effective 获取当前有效位置。
+2. 调用 weather_get_brief。
+3. 使用简体中文回答。
+4. 不得猜测实时天气。
+
+## 修改地点
+
+只有用户明确告知本人当前位置或未来旅行计划时：
+
+1. 使用 weather_lookup_location 解析地点。
+2. 检查是否存在同名城市。
+3. 使用 user_location_set_period 保存位置时间段。
+4. 回复最终保存的地点和生效时间。
+
+不得直接修改系统提示词、SOUL.md、USER.md 或 MEMORY.md 来保存临时地点。
+```
+
+---
+
+# 十、建议你的第一版按这个顺序实现
+
+第一阶段先完成确定性链路：
+
+```text
+QWeatherClient
+→ 手动输入地点查询天气
+→ 手动QQ主动推送
+→ 每天10:30自动推送
+```
+
+第二阶段再增加位置管理：
+
+```text
+地点解析
+→ 当前地点结构化存储
+→ 未来地点时间段
+→ 自动切换
+```
+
+第三阶段增加主动预警：
+
+```text
+官方预警每15分钟检查
+→ 去重
+→ 降雨临近预报
+→ 高温阈值
+→ 冷却时间
+```
+
+第四阶段才让 Agent 根据自然语言修改位置和创建未来行程。
+
+另外，你目前使用 API KEY 可以继续完成第一版，但 QWeather 已经提示将在 2027 年开始限制 API KEY 的每日请求量；官方不同页面显示的具体生效日期存在 2027 年 1 月 1 日和 2 月 1 日两种说法。因此不要等到临近限制时再处理，后续最好迁移到 JWT。([和风天气开发者服务][11])
+
+**最终原则是：**
+
+```text
+系统提示词定义边界
+Skill定义调用方法
+Tool执行能力
+数据库保存事实
+Automation负责时间
+规则引擎负责预警和去重
+LLM只负责理解自然语言和组织表达
+```
+
+这套结构后续也可以直接复用于航班提醒、日程提醒、快递状态、纪念日和定期健康提醒，而不需要不断往系统提示词中追加日期和事件。
+
+[1]: https://docs.openclaw.ai/tools/skills?utm_source=chatgpt.com "Skills - OpenClaw Docs"
+[2]: https://dev.qweather.com/en/docs/configuration/api-config/?utm_source=chatgpt.com "Create API Request | QWeather Developers"
+[3]: https://dev.qweather.com/en/docs/api/geoapi/city-lookup/ "City Lookup | GeoAPI | QWeather Developers"
+[4]: https://docs.openclaw.ai/concepts/memory "Memory overview - OpenClaw"
+[5]: https://docs.openclaw.ai/cli/cron?utm_source=chatgpt.com "Automations (cron) - OpenClaw Docs"
+[6]: https://github.com/tencent-connect/openclaw-qqbot "GitHub - tencent-connect/openclaw-qqbot: qqbot · GitHub"
+[7]: https://dev.qweather.com/en/docs/api/warning/weather-alert/ "Weather Alert | Warning | QWeather Developers"
+[8]: https://dev.qweather.com/en/docs/api/minutely/minutely-precipitation/?utm_source=chatgpt.com "Minutely Precipitation | QWeather Developers"
+[9]: https://docs.openclaw.ai/gateway/heartbeat "Heartbeat - OpenClaw"
+[10]: https://docs.openclaw.ai/automation/cron-jobs "Automations - OpenClaw"
+[11]: https://dev.qweather.com/en/docs/configuration/authentication/?utm_source=chatgpt.com "Authentication | QWeather Developers"
+ 

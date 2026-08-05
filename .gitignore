@@ -1,0 +1,28 @@
+# OpenClaw runtime state and host-specific configuration
+.env
+openclaw.json
+openclaw.json.*
+gateway.systemd.env
+identity/
+agents/
+logs/
+state/
+workspace-attestations/
+npm/
+skill-workshop/
+
+# Local chatbot state and personal context
+chatbot/openclaw-workspace-state.json
+chatbot/memory/
+chatbot/MEMORY.md
+chatbot/USER.md
+chatbot/IDENTITY.md
+chatbot/HEARTBEAT.md
+chatbot/TOOLS.md
+chatbot/SOUL.md
+
+# Dependencies, build artefacts, and local editor files
+**/node_modules/
+**/dist/
+*.log
+.DS_Store
