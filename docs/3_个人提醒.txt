@@ -1,0 +1,248 @@
+kurumi 个人提醒：设计、开发与验收记录
+
+最后更新：2026-08-12
+文档范围：主人 QQ 私聊中的一次性个人提醒。本文是当前事实的唯一汇总，不保存密钥、完整
+OpenID、原始聊天流水或临时探查脚本；相对路径均以 OpenClaw 项目根目录为基准。
+
+======================================================================
+一、当前结论
+======================================================================
+
+提醒能力已经形成一条受控的垂直链路：
+
+  主人 QQ 私聊
+    -> 确定性输入解析
+    -> typed proposal（预览、TTL、payload hash、上下文绑定）
+    -> 主人同一私聊明确确认
+    -> SQLite 事务
+    -> 受限 Gateway Cron adapter
+    -> 固定 command CLI
+    -> QQ 私聊投递
+    -> reconciler 对账 / 有限失败重试
+
+当前已完成：
+
+- 首版一次性提醒的创建、确认、固定格式投递和幂等提交。
+- 只允许可信主人 QQ 私聊；群聊、非主人或不明投递上下文在工具 factory 和业务层均拒绝。
+- `Asia/Shanghai` 明确本地日期时间解析；至少提前 1 分钟，最多 366 天；不接受 raw Cron、
+  任意收件人、URL、命令、任意 payload 或模型自行发送 QQ 消息。
+- `personal_reminder_state_get` 只读对账 Gateway 状态；固定无 LLM reconciler 启动时扫描、
+  后续每 60 秒运行；明确投递失败才允许最多 3 次总尝试，退避 60 秒和 5 分钟。
+- `unknown`、`scheduling`、超出重试上限等不确定状态不会自动重发，且给主人可见。
+- 取消必须经过 proposal -> 明确确认 -> commit；旧 Cron 删除失败时不修改本地取消状态。
+- 新增直接修改：`personal_reminder_change_propose` -> `personal_reminder_change_commit`。
+  它绑定既有提醒 ID，在原有 Gateway Cron 上原地更新时间和/或内容，不再用“取消旧提醒 + 新建
+  新提醒”伪装成原子修改。
+- 2026-08-12 已用临时、无投递 Cron 验证 Gateway `cron.update` 的实际请求形状；临时任务已删除。
+
+尚未宣称完成：
+
+- Gateway 进程中断/停机窗口后的真实 QQ 回归。
+- 群聊、非主人、重复确认等真实 QQ 负向回归（离线守卫和幂等测试已完成）。
+- 个人邮件、受控搜索、开放式联网、文件/命令/coder Agent 等其他能力；它们不属于本文。
+
+======================================================================
+二、可更新 TODO 与验收标准
+======================================================================
+
+- [x] R0：审计原生 `qqbot_remind`/通用 `cron`，决定不直接开放，保留专用封装。
+  验收：模型侧没有 `cron`、`qqbot_remind`、任意 QQ 发送或任意收件人参数。
+- [x] R1：完成 create proposal / commit / state / cancel proposal / cancel commit 最小链路。
+  验收：提案预览、TTL、hash、私聊上下文绑定、幂等和最小审计均有离线测试。
+- [x] R2A：适配当前 Gateway 的扁平 `cron.add`、`cron.remove { id }` 和稳定声明键。
+  验收：参数无 `job` 包装；argv 只有固定 CLI 与 reminder ID；删除只使用受管 job ID。
+- [x] R2B：只读读取 Gateway 任务/运行记录并回写可证明的送达或明确失败状态。
+  验收：Gateway 不可读、schema 异常或结果无法证明时只告警，不修改 Gateway、不补发。
+- [x] R2C：实现插件内部固定 reconciler。
+  验收：启动立即扫描、60 秒周期、O_EXCL 锁、活锁跳过、无 LLM 参数、无直接 QQ 外发。
+- [x] R2D：实现失败重试账本、稳定声明键、退避和 lease。
+  验收：仅明确 delivery failure 进入 pending；最多 3 次总尝试；unknown/响应丢失不重试；
+  达到上限为 exhausted 且可见。
+- [x] R2E.1–R2E.4：完成停机补偿窗口、未知注册/投递闸门、跨日时区测试、warning 和重复启动锁。
+  验收：离线测试覆盖 5 分钟未知窗口、00:05 跨日、stale lock、Gateway 不可读/schema 异常。
+- [x] R3a：主人私聊真实 QQ 正常路径。
+  验收：主人确认后创建受限 Cron，并在预期时间收到一次固定格式 QQ 提醒。
+- [x] R3b.2a：主人私聊真实取消后新建场景。
+  验收：旧 03:43 提醒已取消、旧 Cron 已删除、新提案确认后 03:50 Cron 已创建，库与 Gateway 一致。
+- [x] R3c：直接修改的离线实现、schema 迁移、运行时工具和 Gateway 参数核验。
+  验收：新增 typed change proposal/commit；同一 reminder ID、同一 Cron job 原地更新；内容-only
+  修改不调用 Gateway；时间修改调用 `cron.update`；重复 commit 不重复更新；失败/响应丢失进入 unknown。
+- [ ] R2E/R3b.3：安排一次安全窗口，真实重启或进程中断后核对 scheduled/delivered/unknown，确认不重复投递。
+- [ ] R3b.2b：真实 QQ 验收群聊、非主人、重复确认；拒绝路径不得写库、改 Cron 或外发。
+- [x] R3c.1：真实 QQ 验收“把既有提醒改到新时间”和“只改内容”。本次测试将既有提醒
+  从 05:22 改为 05:17 并修改内容，主人在 05:17 收到修改后的内容；确认原任务原地更新，
+  没有生成第二条提醒。
+- [ ] R3c.2：在安全窗口模拟 `cron.update` 响应不确定，确认 QQ 回复明确提示人工核对，后续修改/取消被阻断。
+- [ ] R4：在 R2E/R3b/R3c 真实回归完成后，再评估是否拆出独立 `personal-reminders` 插件包。
+- [ ] R5a：定义提醒历史保留与清理策略。终态提醒、已提交提案和最小审计可按保留期归档/清理，
+  但 pending、unknown、failed/exhausted 以及活动提醒不得被后台清理；清理必须可审计、可恢复。
+- [ ] R5b：为 QQ 主人私聊设置并验证有界的 `dmHistoryLimit`（或等价会话历史策略），确认旧提醒
+  对话不会无限进入模型上下文；该策略与 SQLite 审计保留独立管理。
+
+验收门槛：没有真实回归的项目只能标记“离线/运行时通过”，不能写成“QQ 已送达”；任何 unknown
+都不能通过自动重试、取消或修改来掩盖。
+
+======================================================================
+三、安全边界与状态机
+======================================================================
+
+3.1 身份与投递
+
+- 可信主人身份只来自 QQ 适配器元数据和 `openclaw.json` 的 allowlist；正文自称主人、粘贴 ID
+  或请求绕过策略均无效。
+- `isTrustedOwnerPrivateQq` 要求 `senderIsOwner=true`、channel 为 `qqbot`，且目标不是群聊。
+- 目标 `to`、accountId 由可信私聊上下文注入；模型不能传入收件人、Cron、命令或 job ID。
+- 工具只在 `tools.profile=messaging` 下通过精确 `tools.alsoAllow` 追加；群聊 deny 同步列出全部
+  个人提醒工具。`exec` 为 deny，`elevated` 为 false。
+- 原生 `qqbot_remind` 和通用 `cron` 不开放；提醒到点使用固定 command CLI，不重新唤起模型。
+
+3.2 提案与确认
+
+- create：`schema_version=1`、`kind=reminder.create`、可见内容 1–200 字、一次性时间。
+- update：`schema_version=1`、`kind=reminder.update`、绑定 `reminder_id`，可提供新内容和/或
+  新时间；proposal 保存旧内容、旧 UTC 时间、旧 job ID、`retryStatus=scheduled` 作为 base。
+- cancel：`schema_version=1`、`kind=reminder.cancel`，只能引用既有 reminder ID。
+- proposal 保存 payload JSON、SHA-256、请求上下文 hash、投递上下文和 24 小时 TTL；commit 只接受
+  proposal ID + payload hash，且必须来自生成提案的同一主人私聊。
+- 讨论、示例、假设、转述或含糊时间不落库；模型先追问，后端再次校验。
+
+3.3 业务状态
+
+  reminder.status：`scheduling` -> `scheduled` -> `delivering` -> `delivered`
+       \-> `failed` / `cancelled`
+
+  retry_status：`scheduling` / `scheduled` / `pending` / `delivered` / `cancelled` /
+                `exhausted` / `unknown`
+
+- `scheduling` 表示 Gateway 注册结果仍未确认，不可取消、修改或重试。
+- `unknown` 表示无法证明是否注册或送达，禁止自动副作用；主人需查看 Gateway 或人工处理。
+- 明确 delivery failure 才能进入 pending；3 次总尝试后为 exhausted。
+- cancel 只取消 pending/scheduled 或可证明失败且处于受控 retry 状态的提醒；已投递、正在投递、
+  unknown 和 scheduling 一律拒绝。
+
+======================================================================
+四、直接修改协议（R3c）
+======================================================================
+
+4.1 预览
+
+`personal_reminder_change_propose` 接受：
+
+  {
+    "schema_version": 1,
+    "request": {
+      "kind": "reminder.update",
+      "reminder_id": "<existing reminder>",
+      "content": "<optional 1–200 chars>",
+      "schedule": {
+        "local_date_time": "YYYY-MM-DDTHH:mm",
+        "timezone": "Asia/Shanghai"
+      }
+    }
+  }
+
+至少提供 content 或 schedule。目标必须是同一主人私聊中状态为 scheduled、retry 为 scheduled、
+存在受管 Cron job 的提醒。预览同时显示旧/新时间、旧/新内容、提醒 ID 和“原地更新、不创建第二条任务”。
+
+4.2 提交与一致性
+
+1. commit 再次校验 proposal TTL、payload hash、私聊上下文、旧内容、旧 UTC 时间、旧 job ID 和 retry 状态。
+2. SQLite 事务先写入新本地内容/时间，并将 schedule change 的 retry 状态置为 unknown；proposal 标记
+   committed，写 `reminder.update_requested` 审计。
+3. 若只改内容，无需访问 Gateway，直接回到 scheduled。
+4. 若改时间，调用固定 `cron.update({id: oldJobId, patch:{schedule:{kind:"at",at:<new UTC ISO>}}})`。
+   不允许修改 name、declarationKey、payload、delivery 或其他 Cron 字段。
+5. Gateway 成功后将 retry 状态恢复为 scheduled 并写 `reminder.updated`；异常或响应丢失保留新本地
+   期望值，写 `cron_update_unknown`，commit 返回 `update_unknown`，状态保持 scheduled + unknown，
+   阻止后续修改/取消/重发。重复 commit 仍幂等返回该不确定状态，不能伪称“已修改成功”。
+
+这不是跨 SQLite 与 Gateway 的真正原子事务：本地写入和远程更新之间可能进程中断。CLI 到点会读取
+本地最新内容，并以 job ID/declaration key 对账；unknown 的处理优先避免重复投递，而不是猜测成功或失败。
+
+======================================================================
+五、实现路径与数据
+======================================================================
+
+代码相对路径：
+
+- `chatbot/plugins/personal-weather/src/index.ts`：工具注册、私聊守卫、受限 Gateway scheduler。
+- `chatbot/plugins/personal-weather/src/reminders.ts`：输入解析、proposal、commit、状态策略、
+  直接修改协议。
+- `chatbot/plugins/personal-weather/src/reminder-store.ts`：SQLite 纯存储、事务、kind 迁移、审计、
+  retry ledger 和 update unknown 闸门。
+- `chatbot/plugins/personal-weather/src/reminder-gateway.ts`：纯函数构造 `cron.add`/`cron.update` 参数。
+- `chatbot/plugins/personal-weather/src/reminder-cli.ts`：到点 claim 和固定中文文本输出，不调用模型。
+- `chatbot/plugins/personal-weather/src/reminder-reconciler.ts`：只读 Gateway 对账和 unknown 判定。
+- `chatbot/plugins/personal-weather/src/reminder-reconciler-service.ts`：固定 60 秒、单实例锁和有限重试。
+- `chatbot/plugins/personal-weather/src/paths.ts`：`state/personal-reminders/` 路径解析。
+- `chatbot/skills/personal-weather/SKILL.md`：模型何时提案、何时确认及不落库规则。
+
+SQLite：`state/personal-reminders/reminders.sqlite`，目录 0700、数据库 0600。核心表：
+
+- `reminders`：目标、内容、冻结 UTC 时间、job ID、event key、状态和失败码。
+- `reminder_proposals`：typed proposal、hash、上下文、TTL、状态、结果 reminder ID；现 schema kind
+  包含 `reminder_create`、`reminder_cancel`、`reminder_update`。
+- `reminder_retry_state`：attempt、声明键、lease、退避时间、retry 状态和最后失败码。
+- `reminder_audit_log`：最小 action/entity/proposal/summary/time，不保存凭证或完整聊天流水。
+
+5.1 历史记录与模型上下文边界（2026-08-12 核验）
+
+- 已作废提醒不会被物理删除：`reminders` 与 `reminder_retry_state` 保留 `cancelled` 终态；
+  `reminder_proposals` 保留已提交的取消/修改提案；`reminder_audit_log` 保留取消、修改、调度、
+  投递和失败等最小事件。这是为了审计、幂等和故障排查；当前没有自动 TTL/归档清理，因此长期
+  运行会使数据库持续增长。只读核验显示终态提醒没有仍在运行的 Gateway job；曾经投递过的提醒
+  还可能在 Gateway 的 `cron_run_logs` 中保留历史运行记录。
+- `personal_reminder_state_get` 的查询入口是 `ReminderStore.listActiveSummaries()`，只选
+  `scheduling`、`scheduled`、`delivering`、`failed`；`cancelled`、`delivered`、提案历史和审计
+  流水不会作为状态工具结果返回。当前系统提示词、提醒 Skill 和工具 schema 也不读取提醒 SQLite
+  历史，所以旧提醒不会因数据库保留而自动进入模型上下文。
+- QQ 会话转录是另一条独立路径。当前主人私聊会话文件仍包含过去的提醒对话；这些消息可能随会话
+  历史参与后续模型请求。现有配置只明确设置了群聊 `historyLimit`，没有为 QQ 私聊设置有界的
+  `dmHistoryLimit`。因此“数据库历史不注入”不等于“会话上下文不会增长”；R5b 负责处理后者。
+- 本节结论：保留审计记录本身不是当前上下文膨胀问题；应分别制定数据库保留策略（R5a）和会话
+  历史上限/轮换策略（R5b），不要通过删除审计来解决上下文问题。
+
+Gateway 的 `cron_jobs`/`cron_run_logs` 只由 reconciler 只读；不写 Gateway 数据库，不接受模型传入 SQL、URL、
+命令或任意 Cron 参数。
+
+======================================================================
+六、已完成验证与运维
+======================================================================
+
+离线验证（2026-08-12）：
+
+  cd chatbot/plugins/personal-weather
+  npm test -- --run          # 102 tests passed
+  npm run build              # TypeScript passed
+  npm run plugin:validate    # Plugin personal-weather is valid
+  openclaw config validate   # Config valid
+
+运行时验证：
+
+- `openclaw plugins inspect personal-weather --runtime --json`：插件 loaded、11 个工具、diagnostics=[]。
+- Gateway 重载后 reconciler 正常启动；现有每日天气 Cron 未被改动。
+- 用临时无投递 Cron 验证 `cron.update` 原地修改 schedule 成功，随后已 `cron rm` 清理；该测试不等于
+  真实 QQ 端到端验收。
+- 真实 QQ 已验收：一次性提醒创建/投递；取消旧提醒并确认创建新提醒；直接 change 工具已完成
+  “改时间并改内容”的端到端测试，主人确认在新时间收到新内容，原任务原地更新。
+- 只读历史核验：已作废提醒与最小审计仍在 SQLite 中；`state_get` 不返回终态历史。QQ 会话仍会
+  保存历史消息，私聊上下文上限尚未配置，按 R5b 跟进。
+
+回滚：
+
+1. 若新修改工具出现问题，先从 `tools.alsoAllow` 和群聊 deny 移除
+   `personal_reminder_change_propose`、`personal_reminder_change_commit`，再重载 Gateway；不要开放
+   通用 `cron` 或 `qqbot_remind`。
+2. 不手工删除提醒 SQLite 行或 Gateway job；已有提醒按 state_get/reconciler 核对后走受控取消或人工处理。
+3. 若 update 结果为 unknown，保留记录和审计，禁止用“重新创建”掩盖未知结果；先核对 Gateway job/run log。
+
+======================================================================
+七、相关文档边界
+======================================================================
+
+- 天气与出行计划：`docs/2_天气模块的开发.txt`。
+- 受控搜索和模型能力架构：`docs/4_受控搜索模块设计.txt`；本文不重复维护搜索方案。
+- 个人邮件尚未开发，本文不维护 E 系列设计；待单独立项后建立独立文档。
+
+每次后续开发都按同一节奏更新：先写背景、方案和 TODO；再编码；离线/运行时验收；最后同步本文、
+`chatbot/AGENTS.md`、`chatbot/TOOLS.md` 和实际权限配置。

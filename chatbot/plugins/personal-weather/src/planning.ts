@@ -1,8 +1,13 @@
+import { createHash } from "node:crypto";
+
+import { OWNER_SUBJECT_ID } from "./store.js";
 import type {
   EffectivePlace,
   NotificationPreferences,
   PendingProposalSummary,
   Place,
+  TripCreateCommitInput,
+  TripCreateProposalForCommit,
   TripSummary,
   UnixSeconds,
   WeatherStore,
@@ -61,7 +66,7 @@ export interface PlanningState {
   capabilities: {
     stateRead: true;
     proposalPreview: true;
-    proposalCommit: false;
+    proposalCommit: true;
     locationChange: false;
     scheduleChange: false;
   };
@@ -116,10 +121,34 @@ export interface PlanningChangeProposalResult {
   persistedAs: "change_proposals";
 }
 
+export interface PlanningCommitInput {
+  proposal_id: string;
+  payload_hash: string;
+}
+
+export interface PlanningCommitResult {
+  ok: true;
+  schemaVersion: 1;
+  proposalId: string;
+  status: "committed";
+  idempotent: boolean;
+  trip: TripSummary;
+  locationPeriodCreated: false;
+  weatherLocationChanged: false;
+  warnings: string[];
+}
+
 export type PlanningFailure = {
   ok: false;
   error: {
-    code: "invalid_input" | "unsupported_request";
+    code:
+      | "invalid_input"
+      | "unsupported_request"
+      | "proposal_not_found"
+      | "proposal_hash_mismatch"
+      | "proposal_expired"
+      | "proposal_unavailable"
+      | "proposal_payload_invalid";
     message: string;
   };
 };
@@ -150,11 +179,105 @@ export function getPlanningState(store: WeatherStore): PlanningState {
     capabilities: {
       stateRead: true,
       proposalPreview: true,
-      proposalCommit: false,
+      proposalCommit: true,
       locationChange: false,
       scheduleChange: false,
     },
   };
+}
+
+/**
+ * Commit exactly one previously previewed `trip.create` proposal. All model
+ * supplied fields are just identifiers for a frozen server-side payload; the
+ * actual trip data is parsed again from that payload before the store executes
+ * its transaction.
+ */
+export function commitPlanningProposal(
+  store: WeatherStore,
+  rawInput: unknown,
+): PlanningCommitResult | PlanningFailure {
+  const parsed = parseCommitInput(rawInput);
+  if (!parsed.ok) return parsed;
+  const nowUtc = store.getNowUtc();
+
+  return store.withPlanningTransaction((repository) => {
+    const proposal = repository.getTripCreateProposal(parsed.input.proposalId);
+    if (!proposal) {
+      return proposalFailure("proposal_not_found", "未找到可提交的行程提案。");
+    }
+    if (proposal.payloadHash !== parsed.input.payloadHash) {
+      return proposalFailure("proposal_hash_mismatch", "提案内容已变化，请重新查询状态并确认最新预览。");
+    }
+
+    const expectedContextHash = createHash("sha256")
+      .update(`${OWNER_SUBJECT_ID}|${proposal.kind}|${proposal.payloadHash}`)
+      .digest("hex");
+    if (proposal.requestContextHash !== expectedContextHash) {
+      return proposalFailure("proposal_unavailable", "该提案的确认上下文无效，请重新创建提案。");
+    }
+
+    if (proposal.status === "committed") {
+      const trip = proposal.resultTripId === null
+        ? undefined
+        : repository.getTripSummary(proposal.resultTripId);
+      if (!trip) {
+        return proposalFailure("proposal_unavailable", "该提案的已提交记录不完整，不能重复提交。");
+      }
+      return committedResult(proposal.proposalId, trip, true);
+    }
+    if (proposal.status !== "pending") {
+      return proposalFailure("proposal_unavailable", "该提案已不可提交，请重新创建一条新的提案。");
+    }
+    if (proposal.expiresAtUtc <= nowUtc) {
+      if (!repository.expirePendingProposal(proposal.proposalId, nowUtc)) {
+        throw new Error("Proposal changed while being expired");
+      }
+      repository.insertOwnerAudit({
+        action: "proposal.expired",
+        entityType: "change_proposal",
+        entityId: proposal.proposalId,
+        proposalId: proposal.proposalId,
+        summaryJson: JSON.stringify({ kind: "trip_create", reason: "ttl_expired" }),
+        atUtc: nowUtc,
+      });
+      return proposalFailure("proposal_expired", "该提案已过期，未提交任何行程。请重新创建提案。");
+    }
+
+    let commitInput: TripCreateCommitInput;
+    try {
+      commitInput = buildCommitInput(proposal, store, nowUtc);
+    } catch (error) {
+      return proposalFailure(
+        "proposal_payload_invalid",
+        error instanceof Error ? error.message : "提案内容无法安全提交。",
+      );
+    }
+
+    const tripId = repository.insertPlannedTrip(commitInput, nowUtc);
+    if (!repository.markProposalCommitted({
+      proposalId: proposal.proposalId,
+      payloadHash: proposal.payloadHash,
+      tripId,
+      atUtc: nowUtc,
+    })) {
+      throw new Error("Proposal changed while being committed");
+    }
+    repository.insertOwnerAudit({
+      action: "trip.committed",
+      entityType: "trip",
+      entityId: String(tripId),
+      proposalId: proposal.proposalId,
+      summaryJson: JSON.stringify({
+        kind: "trip_create",
+        weatherLocationChanged: false,
+        locationPeriodCreated: false,
+      }),
+      atUtc: nowUtc,
+    });
+    const trip = repository.getTripSummary(tripId);
+    if (!trip) throw new Error("Committed trip could not be read back");
+    return committedResult(proposal.proposalId, trip, false);
+  });
 }
 
 export function proposePlanningChange(
@@ -229,6 +352,217 @@ export function proposePlanningChange(
     expiresAtUtc: created.expiresAtUtc,
     persistedAs: "change_proposals",
   };
+}
+
+function parseCommitInput(
+  rawInput: unknown,
+): { ok: true; input: { proposalId: string; payloadHash: string } } | PlanningFailure {
+  if (!isRecord(rawInput) || !hasOnlyKeys(rawInput, ["proposal_id", "payload_hash"])) {
+    return invalidInput("提交请求只能包含 proposal_id 和 payload_hash。");
+  }
+  const proposalId = rawInput.proposal_id;
+  if (
+    typeof proposalId !== "string"
+    || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu.test(proposalId)
+  ) {
+    return invalidInput("proposal_id 必须是提案预览返回的 UUID。");
+  }
+  const payloadHash = rawInput.payload_hash;
+  if (typeof payloadHash !== "string" || !/^[a-f0-9]{64}$/u.test(payloadHash)) {
+    return invalidInput("payload_hash 必须匹配提案预览返回的内容哈希。");
+  }
+  return { ok: true, input: { proposalId, payloadHash } };
+}
+
+function buildCommitInput(
+  proposal: TripCreateProposalForCommit,
+  store: WeatherStore,
+  asOfUtc: UnixSeconds,
+): TripCreateCommitInput {
+  const facts = parseFrozenTripCreateFacts(proposal.payloadJson, asOfUtc);
+  const originPlaceId = store.getEffectivePlace(asOfUtc).place.id;
+  return {
+    proposalId: proposal.proposalId,
+    payloadHash: proposal.payloadHash,
+    title: facts.title,
+    originPlaceId,
+    destinationText: facts.destination.text,
+    destinationAdministrativeArea: facts.destination.administrativeArea,
+    transportMode: facts.transportMode,
+    departure: toStoredTimeWindow(facts.departure),
+    arrival: toStoredTimeWindow(facts.arrival),
+    weatherMode: facts.weatherMode,
+    sourceSummary: buildCommittedTripSourceSummary(facts),
+  };
+}
+
+function parseFrozenTripCreateFacts(
+  payloadJson: string,
+  asOfUtc: UnixSeconds,
+): PlanningChangeProposalResult["canonicalFacts"] {
+  let raw: unknown;
+  try {
+    raw = JSON.parse(payloadJson) as unknown;
+  } catch {
+    throw new Error("提案内容已损坏，不能提交。");
+  }
+  if (!isRecord(raw) || !hasOnlyKeys(raw, [
+    "domain",
+    "schemaVersion",
+    "kind",
+    "title",
+    "origin",
+    "destination",
+    "transportMode",
+    "departure",
+    "arrival",
+    "weatherMode",
+    "sourceKind",
+  ])) {
+    throw new Error("提案内容不符合已冻结的行程格式，不能提交。");
+  }
+  if (
+    raw.domain !== "weather_travel"
+    || raw.schemaVersion !== 1
+    || raw.kind !== "trip_create"
+    || raw.sourceKind !== "owner_text"
+  ) {
+    throw new Error("提案类型或来源不受支持，不能提交。");
+  }
+
+  const title = readRequiredText(raw.title, "frozen title");
+  if (!title.ok) throw new Error(title.error.message);
+  const origin = parseFrozenPlaceSummary(raw.origin, "origin");
+  const destination = parseFrozenDestination(raw.destination);
+  const transportMode = parseEnum(raw.transportMode, TRANSPORT_MODES, "transportMode");
+  if (!transportMode.ok || transportMode.value === undefined) {
+    throw new Error("冻结的交通方式无效。");
+  }
+  const weatherMode = parseEnum(
+    raw.weatherMode,
+    ["none", "dual_city", "switch_at_arrival"] as const,
+    "weatherMode",
+  );
+  if (!weatherMode.ok || weatherMode.value === undefined) {
+    throw new Error("冻结的天气模式无效。");
+  }
+  const departure = parseFrozenTimeWindow(raw.departure, "departure", asOfUtc);
+  const arrival = parseFrozenTimeWindow(raw.arrival, "arrival", asOfUtc);
+
+  return {
+    domain: "weather_travel",
+    schemaVersion: 1,
+    kind: "trip_create",
+    title: title.value,
+    origin,
+    destination,
+    transportMode: transportMode.value,
+    departure,
+    arrival,
+    weatherMode: weatherMode.value,
+    sourceKind: "owner_text",
+  };
+}
+
+function parseFrozenPlaceSummary(raw: unknown, name: string): PlanningPlaceSummary {
+  if (!isRecord(raw) || !hasOnlyKeys(raw, ["displayName", "countryCode", "timezone", "precision"])) {
+    throw new Error(`冻结的 ${name} 地点格式无效。`);
+  }
+  const displayName = readRequiredText(raw.displayName, `${name}.displayName`);
+  const countryCode = readRequiredText(raw.countryCode, `${name}.countryCode`);
+  const timezone = readRequiredText(raw.timezone, `${name}.timezone`);
+  if (!displayName.ok || !countryCode.ok || !timezone.ok || !isValidTimezone(timezone.value)) {
+    throw new Error(`冻结的 ${name} 地点信息无效。`);
+  }
+  if (countryCode.value.length !== 2 || !["city", "district", "point"].includes(raw.precision as string)) {
+    throw new Error(`冻结的 ${name} 地点精度无效。`);
+  }
+  return {
+    displayName: displayName.value,
+    countryCode: countryCode.value,
+    timezone: timezone.value,
+    precision: raw.precision as Place["precision"],
+  };
+}
+
+function parseFrozenDestination(
+  raw: unknown,
+): PlanningChangeProposalResult["canonicalFacts"]["destination"] {
+  if (!isRecord(raw) || !hasOnlyKeys(raw, ["text", "administrativeArea", "resolution"])) {
+    throw new Error("冻结的目的地格式无效。");
+  }
+  const text = readRequiredText(raw.text, "destination.text");
+  if (!text.ok) throw new Error(text.error.message);
+  if (raw.administrativeArea !== null && raw.administrativeArea !== undefined) {
+    const area = readRequiredText(raw.administrativeArea, "destination.administrativeArea");
+    if (!area.ok) throw new Error(area.error.message);
+    if (raw.resolution !== "pending") throw new Error("目的地解析状态无效。");
+    return { text: text.value, administrativeArea: area.value, resolution: "pending" };
+  }
+  if (raw.resolution !== "pending") throw new Error("目的地解析状态无效。");
+  return { text: text.value, administrativeArea: null, resolution: "pending" };
+}
+
+function parseFrozenTimeWindow(
+  raw: unknown,
+  name: string,
+  asOfUtc: UnixSeconds,
+): PlanningTimeWindow | null {
+  if (raw === null) return null;
+  const parsed = parseTimeWindow(raw, name, asOfUtc);
+  if (!parsed.ok || parsed.value === undefined) {
+    throw new Error(parsed.ok ? `冻结的 ${name} 时间不能为空。` : parsed.error.message);
+  }
+  return parsed.value;
+}
+
+function toStoredTimeWindow(
+  window: PlanningTimeWindow | null,
+): TripCreateCommitInput["departure"] {
+  if (window === null) return null;
+  const earliestUtc = timestampToUnixSeconds(window.earliest);
+  const latestUtc = timestampToUnixSeconds(window.latest);
+  if (earliestUtc === undefined || latestUtc === undefined) {
+    throw new Error("冻结的时间无法转换为 UTC。");
+  }
+  return { earliestUtc, latestUtc, precision: window.precision };
+}
+
+function committedResult(
+  proposalId: string,
+  trip: TripSummary,
+  idempotent: boolean,
+): PlanningCommitResult {
+  return {
+    ok: true,
+    schemaVersion: 1,
+    proposalId,
+    status: "committed",
+    idempotent,
+    trip,
+    locationPeriodCreated: false,
+    weatherLocationChanged: false,
+    warnings: [
+      "行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。",
+      "当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。",
+    ],
+  };
+}
+
+function buildCommittedTripSourceSummary(
+  facts: PlanningChangeProposalResult["canonicalFacts"],
+): string {
+  const area = facts.destination.administrativeArea
+    ? `；行政区=${facts.destination.administrativeArea}`
+    : "";
+  return `主人确认的行程提案；目的地=${facts.destination.text}${area}；地点尚未消歧，不切换天气地点。`;
+}
+
+function proposalFailure(
+  code: Exclude<PlanningFailure["error"]["code"], "invalid_input" | "unsupported_request">,
+  message: string,
+): PlanningFailure {
+  return { ok: false, error: { code, message } };
 }
 
 function parsePlanningChangeInput(
@@ -422,6 +756,13 @@ function parseTimestamp(value: string): number | undefined {
   if (!/(?:Z|[+-]\d{2}:\d{2})$/u.test(value)) return undefined;
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function timestampToUnixSeconds(value: string): UnixSeconds | undefined {
+  const milliseconds = parseTimestamp(value);
+  if (milliseconds === undefined) return undefined;
+  const seconds = Math.floor(milliseconds / 1000);
+  return Number.isSafeInteger(seconds) && seconds >= 0 ? seconds : undefined;
 }
 
 function isValidTimezone(value: string): boolean {

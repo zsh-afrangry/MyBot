@@ -1,0 +1,949 @@
+这个思路整体上是**有效的，而且比前面“把所有东西都当 Tool”更成熟了一层**。我认为可以作为你后续架构的主线，但有几处值得收紧，否则容易在实现阶段过度抽象。
+
+我先给结论：
+
+> **认知、外部能力、控制平面、执行策略、横切治理分开，是正确方向。**
+>
+> 其中最值得保留的三个核心设计是：
+>
+> 1. Search / Calculator 是显式能力节点，而不是偷偷发生的“增强”；
+> 2. Scheduler / Workflow 属于控制平面，而不是普通业务 Tool；
+> 3. Installed / Authorized / Exposed / Executed 四个状态必须区分。
+
+但我建议对 `model.extract / model.plan / model.synthesize` 和 `CapabilityPlan=DAG` 两点做一些修正。
+
+---
+
+# 一、你对“模型能力 ≠ 执行策略”的判断是对的
+
+这个区分非常重要。
+
+例如：
+
+```text
+理解：
+“我明天下午三点去无锡”
+```
+
+这是模型的**认知能力**。
+
+而：
+
+```text
+用 GPT-X
+thinking=high
+最多运行30秒
+最多花0.03美元
+失败切换模型B
+```
+
+这才属于**ExecutionPolicy**。
+
+两者混在一起会出现很奇怪的设计，例如：
+
+```json
+{
+  "execution_policy": {
+    "intent_understanding": true,
+    "summarization": true
+  }
+}
+```
+
+显然不合理。
+
+所以你的三分法基本成立：
+
+```text
+认知能力
+外部增强能力
+模型执行策略
+```
+
+---
+
+# 二、不过我不建议把所有认知动作真的注册成 Capability
+
+这里是我认为需要修正的第一处。
+
+你写：
+
+```text
+model.extract
+model.plan
+model.synthesize
+```
+
+在**概念模型**中这样画完全没问题。
+
+但实际 Capability Registry 里，不一定真的应该注册：
+
+```yaml
+id: model.extract
+id: model.plan
+id: model.synthesize
+```
+
+否则很快会出现：
+
+```text
+model.classify
+model.reason
+model.compare
+model.rewrite
+model.translate
+model.rank
+model.reflect
+...
+```
+
+最后你又造出了几十个“模型工具”。
+
+更适合的理解是：
+
+```text
+LLM Runtime
+├── understanding
+├── extraction
+├── planning
+├── synthesis
+└── generation
+```
+
+这些通常是 **Agent Runtime 自带的认知过程**。
+
+只有当你真的需要：
+
+* 不同模型分别执行；
+* 独立计费；
+* 独立超时；
+* 独立缓存；
+* 独立验证；
+* 独立重试；
+
+才值得把某一步显式提升成 Plan Step。
+
+例如普通天气请求：
+
+```text
+用户
+→ Agent理解
+→ weather.get_brief
+→ Agent回答
+```
+
+完全没必要显式形成：
+
+```text
+model.extract
+→ weather.get_brief
+→ model.synthesize
+```
+
+但是复杂金融分析：
+
+```text
+stock.get_kline
+→ web.search
+→ model.financial_analysis
+→ model.review
+```
+
+如果你确实给“分析”和“复核”用了不同模型，那么显式节点才有价值。
+
+所以：
+
+> **认知能力是架构中的一等概念，但不一定都是 Capability Registry 中的一等 Tool。**
+
+---
+
+# 三、TaskSpec 的修改是进步
+
+你原来：
+
+```text
+任务 =
+能力 × 操作 × 目标 × 触发方式 × ...
+```
+
+问题在于一个任务只能隐含一个能力。
+
+现在：
+
+```text
+TaskSpec =
+Goal
+× CapabilityPlan
+× Trigger
+× ExecutionPolicy
+× PermissionPolicy
+× DeliveryPolicy
+```
+
+明显更合理。
+
+尤其是：
+
+```text
+Goal
+```
+
+和：
+
+```text
+CapabilityPlan
+```
+
+分开非常重要。
+
+比如：
+
+> 分析英伟达最近为什么上涨。
+
+Goal 是：
+
+```text
+解释 NVIDIA 最近上涨原因
+```
+
+但 CapabilityPlan 只是完成这个 Goal 的一种方式：
+
+```text
+stock.get_kline
+→ calculator.change_rate
+→ web.search
+→ synthesis
+```
+
+以后可能变成：
+
+```text
+stock.get_kline
+→ financial_news.search
+→ SEC filings
+→ synthesis
+```
+
+**Goal 没变，Plan 可以变。**
+
+这就是 Agent 系统应该具有的弹性。
+
+---
+
+# 四、但不要一上来就把所有 CapabilityPlan 做成 DAG
+
+这是第二个我建议收紧的地方。
+
+理论上：
+
+```text
+CapabilityPlan = DAG<Step>
+```
+
+完全正确。
+
+但对你现在的阶段来说，直接实现通用 DAG Workflow Engine 很容易把系统复杂度拉爆。
+
+绝大多数早期任务其实只是：
+
+### 单步
+
+```text
+weather.get_brief
+```
+
+### 顺序
+
+```text
+stock.get_kline
+→ web.search
+→ summarize
+```
+
+### 延迟执行
+
+```text
+paper.search
+→ 保存结果
+→ 16:00发送
+```
+
+所以第一版 Plan IR 可以先支持：
+
+```text
+single
+sequence
+scheduled
+```
+
+以后真的出现：
+
+```text
+       ┌→ search A ─┐
+input ─┤            ├→ synthesis
+       └→ search B ─┘
+```
+
+再升级成完整 DAG。
+
+也就是说：
+
+> 数据模型可以预留 DAG，但执行引擎不必现在就实现完整 DAG。
+
+---
+
+# 五、你对 AOP 的理解非常准确
+
+这一部分我基本同意，不建议大改。
+
+真正适合作为横切面的就是：
+
+```text
+认证
+授权
+审计
+Tracing
+限流
+预算
+超时
+敏感信息检查
+SSRF防护
+缓存
+幂等
+重试
+内容信任标记
+```
+
+这些东西有一个共同特征：
+
+> **它们决定“这次调用怎样被安全地执行”，但不改变用户要求完成什么业务任务。**
+
+所以：
+
+```text
+web.search
+```
+
+不是切面。
+
+因为：
+
+```text
+不搜索
+```
+
+和：
+
+```text
+搜索
+```
+
+最终答案可能完全不同。
+
+而：
+
+```text
+audit logging
+```
+
+开不开不应该改变答案的业务含义。
+
+这是很好的判定标准。
+
+---
+
+# 六、Search 作为显式节点尤其重要
+
+Calculator 其实还有一点讨论空间，因为很多简单计算甚至可以完全由模型完成。
+
+但 Search 基本必须显式。
+
+因为 Search 同时产生：
+
+```text
+外部网络访问
+数据外发
+不可信输入进入Agent
+事实来源变化
+成本
+延迟
+```
+
+例如：
+
+```text
+web.search(
+    query="用户姓名 + 公司 + 某个人问题"
+)
+```
+
+其实已经发生了数据外发。
+
+所以必须记录：
+
+```text
+谁触发
+搜索词是什么
+访问哪个 provider
+什么时候调用
+返回哪些来源
+后续哪个答案用了它
+```
+
+因此你说：
+
+> 不能像自动日志一样偷偷搜索。
+
+这个判断非常重要。
+
+---
+
+# 七、领域能力声明基础能力依赖，也是正确方向
+
+比如：
+
+```yaml
+stock.explain_movement:
+  required:
+    - stock.market_data
+  optional:
+    - calculator
+    - web.search
+```
+
+非常合理。
+
+这里我只建议增加一个区分：
+
+```text
+dependency
+```
+
+和：
+
+```text
+fallback
+```
+
+不要混成一个概念。
+
+例如：
+
+```text
+stock.explain_movement
+```
+
+需要：
+
+```text
+stock.market_data
+```
+
+这是 dependency。
+
+但是：
+
+```text
+paper.search
+失败
+→ web.search(site:arxiv.org ...)
+```
+
+才是 fallback。
+
+可以写：
+
+```yaml
+dependencies:
+  required:
+    - stock.market_data
+
+augmentation:
+  optional:
+    - web.search
+
+fallback:
+  provider_failure:
+    - secondary_stock_provider
+```
+
+会比全部塞在 `dependencies` 里面更清晰。
+
+---
+
+# 八、EffectiveCapabilities 公式非常值得保留
+
+你写：
+
+```text
+EffectiveCapabilities =
+Installed
+∩ Authorized
+∩ TaskNeeded
+∩ RiskAllowed
+```
+
+这个思想非常好。
+
+不过执行流程上可以再细一点：
+
+```text
+Installed
+        ↓
+Authorized
+        ↓
+Candidate
+        ↓
+Exposed
+        ↓
+Selected
+        ↓
+Executed
+```
+
+其中：
+
+### Installed
+
+代码存在：
+
+```text
+git.push
+web.search
+weather.get
+```
+
+### Authorized
+
+这个主人身份有权：
+
+```text
+git.push ✓
+```
+
+群聊身份：
+
+```text
+git.push ✗
+```
+
+### Candidate
+
+Router 根据当前任务判断可能相关：
+
+```text
+股票分析 →
+stock
+calculator
+web.search
+```
+
+### Exposed
+
+Policy 最终允许模型看到：
+
+```text
+stock
+web.search
+```
+
+### Selected
+
+Planner 实际选择：
+
+```text
+stock.get_kline
+web.search
+```
+
+### Executed
+
+最后真正成功运行：
+
+```text
+stock.get_kline ✓
+web.search ✓
+```
+
+这个链条以后做审计会非常有价值。
+
+你原来的四状态：
+
+```text
+Installed
+Authorized
+Exposed
+Executed
+```
+
+已经足够第一版用了；`Candidate/Selected` 可以以后做 Tool Router 时增加。
+
+---
+
+# 九、Scheduler 作为控制平面，这个判断我也支持
+
+尤其不要让模型直接拥有：
+
+```text
+cron add
+cron rm
+cron edit
+```
+
+这是比较危险而且粒度错误的能力。
+
+模型真正需要表达的是：
+
+```json
+{
+  "trigger": {
+    "type": "once",
+    "at": "2026-08-12T16:00:00+08:00"
+  }
+}
+```
+
+或者：
+
+```json
+{
+  "trigger": {
+    "type": "cron",
+    "expression": "30 10 * * *",
+    "timezone": "Asia/Shanghai"
+  }
+}
+```
+
+然后：
+
+```text
+Planner
+→ TaskSpec
+→ Policy
+→ Scheduler Runtime
+```
+
+模型表达“我要什么时候执行”，不直接操作底层 cron。
+
+这就是非常典型的：
+
+> **声明式控制，而不是命令式控制。**
+
+---
+
+# 十、不过 Scheduler 仍需要一个“模型可表达接口”
+
+这里有一个细微区别。
+
+你说：
+
+> Scheduler 不建议作为普通共享工具直接交给模型。
+
+正确。
+
+但不能发展成：
+
+> Scheduler 完全不可由模型触达。
+
+否则用户说：
+
+> 下午4点提醒我。
+
+模型没办法表达这个需求。
+
+比较合理的是：
+
+```text
+模型能够产生：
+TriggerSpec
+```
+
+但不能产生：
+
+```text
+shell: openclaw cron add ...
+```
+
+例如：
+
+```json
+{
+  "goal": "发送论文搜索结果",
+  "trigger": {
+    "type": "at",
+    "time": "2026-08-12T16:00:00+08:00"
+  }
+}
+```
+
+Scheduler Runtime 自己处理。
+
+因此：
+
+```text
+模型可操作的是“调度语义”
+不是“调度器本身”
+```
+
+这个区别建议写进你的设计文档。
+
+---
+
+# 十一、还有一个非常有价值的补充：Data Trust
+
+这个不是为了补充而补充，我认为你以后一定会需要。
+
+因为你的能力来源不同：
+
+```text
+calculator
+weather API
+stock API
+web search
+用户消息
+本地代码仓库
+```
+
+可信等级不一样。
+
+建议每个 Step 输出带：
+
+```text
+trust_level
+source
+freshness
+```
+
+例如：
+
+```json
+{
+  "source": "QWeather",
+  "trust": "trusted_structured_provider",
+  "freshness": "2026-08-12T02:30:00+08:00"
+}
+```
+
+而 Search：
+
+```json
+{
+  "source": "web.search",
+  "trust": "untrusted_external",
+  "sources": [...]
+}
+```
+
+这样后面的：
+
+```text
+model.synthesize
+```
+
+可以知道：
+
+> 网页内容只能作为证据，不能作为指令。
+
+这与你前面担心的 prompt injection 是直接对应的。
+
+---
+
+# 十二、Capability Registry 不要第一版就写得太复杂
+
+你给的：
+
+```yaml
+id: web.search
+class: primitive
+trust: untrusted_external
+data_egress: fixed_provider
+side_effect: external_query
+contexts:
+  - owner_private
+confirmation: none
+dependencies: []
+fallbacks: []
+runtime_status: planned
+```
+
+总体方向很好。
+
+第一版我建议只保留真正影响运行时的字段：
+
+```yaml
+id: web.search
+class: primitive
+
+risk:
+  trust: untrusted_external
+  data_egress: true
+  side_effect: external_query
+
+permissions:
+  owner_private: allow
+  group: deny
+
+runtime:
+  status: installed
+```
+
+别太早加入二三十个元数据字段。
+
+等真实需求出现再增加：
+
+```text
+cost_class
+latency_class
+fallback
+cache
+retry
+rate_limit
+```
+
+因为 Registry 很容易演变成另一个“大而全配置中心”。
+
+---
+
+# 十三、我现在会把你的架构归纳成五层，而不是全部平铺
+
+你的体系已经可以比较清晰地变成：
+
+```text
+┌──────────────────────────────┐
+│       Cognitive Plane        │
+│  理解 / Planning / Synthesis │
+└──────────────┬───────────────┘
+               ↓
+┌──────────────────────────────┐
+│         Plan IR              │
+│ Goal / Steps / Trigger / ... │
+└──────────────┬───────────────┘
+               ↓
+┌──────────────────────────────┐
+│       Policy Plane           │
+│ 权限 / 风险 / Budget /审批   │
+└──────────────┬───────────────┘
+               ↓
+┌──────────────────────────────┐
+│      Execution Runtime       │
+│ Scheduler / Workflow / Bus   │
+└──────────────┬───────────────┘
+               ↓
+┌──────────────────────────────┐
+│       Capability Plane       │
+│ Primitive + Domain Adapters  │
+└──────────────────────────────┘
+```
+
+外面再包：
+
+```text
+Audit
+Tracing
+Rate Limit
+Privacy
+Timeout
+Idempotency
+```
+
+这些才是 AOP 横切治理。
+
+---
+
+# 十四、放到你的实际例子里就非常清晰
+
+用户：
+
+> 查一下最近 Agent Security 的论文，下午4点发给我。
+
+Cognitive Plane 理解：
+
+```text
+Goal：
+获得近期Agent Security论文并稍后发送
+```
+
+Plan：
+
+```text
+Step 1:
+paper.search
+
+Step 2:
+model.synthesize
+
+Step 3:
+delivery.send
+```
+
+其中：
+
+```text
+Step 1/2 = now
+Step 3 = 16:00
+```
+
+Policy：
+
+```text
+paper.search：允许
+QQ给主人：允许
+无需确认
+```
+
+Runtime：
+
+```text
+立即执行1、2
+保存ResultRef
+16:00调度Step3
+```
+
+Capabilities：
+
+```text
+paper.search
+QQ delivery
+```
+
+如果论文 API 不够：
+
+```text
+Planner根据策略加入：
+web.search
+```
+
+于是整个执行历史清晰可追踪。
+
+---
+
+# 十五、最终评价
+
+如果给这个设计打一个架构方向上的评价，我会认为已经从：
+
+```text
+“给智能体堆工具”
+```
+
+走到了：
+
+```text
+“能力运行时 + 控制平面 + 认知规划”
+```
+
+这是明显正确的升级。
+
+当前最值得修正的只有三个地方：
+
+1. **不要把所有认知行为真的做成 Tool。**
+   `model.extract/plan/synthesize` 首先是 Agent Runtime 的认知阶段，必要时才提升为显式 Step。
+
+2. **Plan IR 可以按照 DAG 设计，但第一阶段不要实现完整 DAG 引擎。**
+   先支持单步、顺序、延时，足够你当前使用。
+
+3. **Scheduler 不直接暴露底层控制权，但模型必须能够声明 Trigger。**
+   即“可表达调度意图，但不可直接控制 cron”。
+
+其余几个核心观点——Search/Calculator 显式化、AOP 横切治理、Capability Registry、领域依赖声明、四层 Capability 状态——我认为都值得保留。
+ 

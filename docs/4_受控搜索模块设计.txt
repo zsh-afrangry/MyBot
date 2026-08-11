@@ -1,0 +1,1016 @@
+kurumi 受控搜索与模型能力架构设计
+
+首次设计：2026-08-12
+最后更新：2026-08-12（补充任务/功能解耦判断、Provider 方案待决）
+状态：架构设计阶段；尚未选择搜索供应商，尚未开放任何联网搜索、网页抓取或浏览器能力。
+
+本文中的相对路径均以 OpenClaw 项目根目录为基准。本文描述设计与开发计划，不授予运行时
+权限；实际能力以 `openclaw.json`、运行时工具清单和端到端验收为准。任何 API Key、Token、
+账号或完整 QQ 身份标识都不得写入本文。
+
+TODO（随开发更新）：
+
+- [x] A0：明确模型认知过程、基础能力、领域能力、内部控制能力与横切切面的边界。
+- [x] A1：确认认知动作默认属于 LLM Runtime，不批量注册为 Capability/Tool。
+- [x] A2：确认 Plan IR 第一版只实现 `single`、`sequence`、`scheduled`，不开发通用 DAG 引擎。
+- [ ] S0：冻结首版范围、威胁模型、Provider/费用/隐私决策和接口契约。
+- [ ] S1：在不改运行时权限的前提下，实现独立 `personal-search` 插件的离线最小切片。
+- [ ] S2：完成离线功能、安全、故障、配额、隐私和既有模块回归验收。
+- [ ] S3：分阶段接入 OpenClaw，并完成主人 QQ 私聊及权限负向的真实验收和回滚演练。
+- [ ] S4：在 S3 稳定后完善确定性搜索路由、引用规范和质量 Eval；不开发动态 Router。
+- [ ] S5：只有出现真实组合/延迟搜索用例后，才实现固定 `sequence` / `scheduled` 模板。
+- [ ] S6：只有结果列表稳定后，才评估“打开本次搜索返回的单条 result ID”；不得接受任意 URL。
+- [ ] A3：只有真实任务需要并行依赖、汇合或补偿时，才评审 DAG Workflow Engine。
+
+各阶段的可执行子任务、验收目标、停止条件和回滚边界见第十三节。顶部 S0-S3 阶段项以该阶段
+全部 Must Pass 完成为准；Should Pass 可以作为稳定化债务继续保留。“代码已写”不等于“能力
+已验收”，但非阻塞治理项也不得阻止一个边界已经足够安全的 MVP 首次运行。
+
+======================================================================
+一、本轮结论
+======================================================================
+
+1. “模型能力”不是一个单独字段，也不全部属于执行策略。
+2. 模型的理解、抽取、规划、比较、综合和生成默认是 Agent/LLM Runtime 的内部认知过程，
+   不为每个动词注册 `model.extract`、`model.plan`、`model.synthesize` 等 Tool。
+3. 只有某个认知阶段具有独立模型、计费、超时、缓存、验证或重试需求时，才把它提升为显式
+   Plan Step。此时它是可独立执行的“模型阶段”，不是把所有思考动作工具化。
+4. Calculator、Current Time、Web Search、OCR 等是可复用的 Primitive Capability。它们会改变
+   任务输入或结果，必须作为显式依赖/调用留下来源，不能像日志一样透明插入。
+5. Weather、Stock、Paper、Git、Travel 等是 Domain Capability；领域操作可以声明并复用基础
+   能力，但不会自动继承基础能力的权限。
+6. Scheduler、Workflow、Notification 是内部 Control Plane。领域服务可以通过受限 adapter 使用，
+   但不因此把通用 Scheduler、任意发送或 Workflow 管理权限交给模型。
+7. 身份检查、权限、审计、限流、预算、追踪、输入输出校验、不可信内容标记和幂等适合采用
+   AOP/中间件式横切设计。
+8. 数据模型可为 DAG 预留版本和依赖字段；第一版执行器不实现任意 DAG、分支、循环或模型生成
+   的工作流。
+
+一句话概括：
+
+  模型负责认知；显式 Capability 提供可验证的外部能力；领域操作声明依赖；控制平面负责触发和
+  投递；横切中间件在每次调用前后强制执行权限与安全策略。
+
+======================================================================
+二、避免“模型能力”概念膨胀
+======================================================================
+
+认知能力在架构中是一等概念，但默认不是 Capability Registry 中的一等 Tool。
+
+建议的概念模型：
+
+  LLM Runtime
+  ├── understanding
+  ├── extraction
+  ├── planning
+  ├── comparison
+  ├── synthesis
+  └── generation
+
+普通任务不需要把这些过程序列化。例如：
+
+  用户问天气
+      -> Agent 理解问题
+      -> weather.get_brief
+      -> Agent 组织回答
+
+不创建：
+
+  model.extract -> weather.get_brief -> model.synthesize
+
+否则 Registry 很快会膨胀为 `model.classify/reason/compare/rewrite/translate/rank/reflect/...`，
+只是把模型内部动词重新包装成几十个“工具”，既增加上下文，也不能带来稳定的执行边界。
+
+显式提升模型阶段的条件：满足以下任一真实需求时才考虑。
+
+- 使用不同模型或不同 Provider；
+- 独立计费、预算或 Token 上限；
+- 独立超时、重试或 fallback；
+- 独立缓存且输入输出可以稳定寻址；
+- 需要结构化输出校验或专门 Eval；
+- 需要第二模型复核、人工确认或可审计重放；
+- 该阶段的失败需要与其他步骤分别恢复。
+
+例如复杂金融分析可以是：
+
+  stock.get_kline
+      -> web.search
+      -> model.financial_analysis（专用模型、结构化输出）
+      -> model.review（第二模型、独立验证）
+
+此处两个模型阶段有独立执行语义，才值得成为显式 Step。
+
+需要区分：
+
+- “模型能够理解/总结”属于 LLM Runtime 的能力事实；
+- “这一任务要不要独立运行一个模型阶段”属于 Plan；
+- “选择哪个模型、thinking level、预算、超时和 fallback”属于 ExecutionPolicy。
+
+======================================================================
+三、任务表达式与 Plan IR
+======================================================================
+
+此前的设计为：
+
+  任务 = 能力 × 操作 × 目标 × 触发方式 × 执行策略 × 权限策略 × 投递方式
+
+它继续作为概念检查表使用，不直接等同于 v1 的序列化 schema。
+
+保留这套分解，但显式执行计划是可选项，且第一版不强制设置全局 Target：
+
+  TaskSpec
+  ├── Goal
+  ├── ExplicitPlan?          // 可选；仅在需要显式 Capability 时存在
+  ├── Trigger
+  ├── ExecutionPolicy
+  ├── PermissionPolicy
+  └── DeliveryPolicy
+
+其中：
+
+- Goal：用户真正想得到的结果；
+- ExplicitPlan：可选的显式能力调用，不包含普通的隐式理解和措辞过程；
+- Trigger：立即、绝对时间或受控周期；
+- ExecutionPolicy：模型/Provider、超时、重试、预算、缓存、fallback、失败策略；
+- PermissionPolicy：谁、在哪个通道、对什么数据和副作用有权限；
+- DeliveryPolicy：结果送到哪里、格式、去重、静默时段和失败可见性。
+
+纯模型任务可以没有 ExplicitPlan。例如改写句子、解释稳定知识或总结当前上下文时，LLM Runtime
+直接围绕 Goal 工作，不为了统一格式虚构 `model.generate`、`model.explain` 等 Capability。
+
+第一版也不设置容易产生歧义的全局 Target。目标放在真正使用它的局部位置：
+
+- `Step.target`：该能力步骤操作的对象，例如 `NVDA` 或“最近 30 天 NVIDIA 新闻”；
+- `DeliveryPolicy.target`：投递对象，例如当前主人 QQ 私聊；
+- `Goal`：保留跨步骤的全局意图。
+
+若未来多个领域证明存在稳定且唯一的“任务主体”，再通过新 schemaVersion 增加可选 TaskTarget，
+不在 v1 提前占位。
+
+第一版 Plan IR 只支持三种外形：
+
+1. `single`
+
+   一个显式能力调用，例如 `weather.get_brief` 或 `web.search`。
+
+2. `sequence`
+
+   少量固定顺序步骤；前一步的受控输出成为后一步输入。首版不支持任意分支、循环、动态新增
+   Step 或模型生成命令。
+
+3. `scheduled`
+
+   对 `single` 或 `sequence` 增加受控 Trigger。语义上 Schedule 属于 Trigger，不是新的计算
+   拓扑；序列化格式可以提供 `scheduled` 包装，便于实现和阅读。
+
+示意结构：
+
+  {
+    "schemaVersion": 1,
+    "goal": "查询公开网页中的最新信息",
+    "explicitPlan": {
+      "kind": "single",
+      "step": {
+        "capability": "web.search",
+        "operation": "search",
+        "target": "public_web"
+      }
+    },
+    "trigger": { "kind": "now" },
+    "executionPolicy": {
+      "timeoutMs": 8000,
+      "maxAttempts": 1,
+      "fallback": "none"
+    },
+    "permissionPolicy": {
+      "context": "owner_qq_private",
+      "dataEgress": "fixed_search_provider"
+    },
+    "deliveryPolicy": {
+      "kind": "reply_private_chat",
+      "target": "trusted_owner_from_context"
+    }
+  }
+
+不要求每一次普通对话都持久化 TaskSpec，也不要求每个 TaskSpec 都含 ExplicitPlan。`single` 可只在
+本轮内存中执行；只有定时、可恢复、多步写入或需要审计重放的任务才需要持久化结构化计划。
+
+未来可在 schema 中预留 `stepId`、`dependsOn`，但 v1 执行器忽略/拒绝并行依赖。只有出现真实的：
+
+          ┌-> search A -┐
+  input --|             |-> synthesis
+          └-> search B -┘
+
+并且顺序执行无法满足延迟、成本或语义要求时，才设计 DAG 的并发、汇合、失败传播、补偿和恢复。
+
+======================================================================
+四、Capability 分类与共享方式
+======================================================================
+
+A. LLM Runtime（默认隐式）
+
+  理解、抽取、规划、比较、综合、生成。通常不进入 Registry；满足独立执行条件时，才以有限的
+  `model_stage` 进入 Plan。
+
+B. Primitive Capability（显式、可复用）
+
+  calculator、time、web.search、OCR、文件解析等。它们不是某一业务领域，但其输出会参与任务
+  结果，所以必须留下显式调用、来源、时效和失败状态。
+
+C. Domain Capability（显式、领域语义）
+
+  weather、stock、paper、travel、git 等。它们拥有受控数据结构、领域规则和操作语义。
+
+D. Internal Control Plane（默认不向模型暴露）
+
+  scheduler、workflow runtime、notification dispatcher、proposal/commit coordinator、outbox、
+  reconciler。模型可以通过领域工具表达意图，但不直接获得通用控制权限。
+
+E. Cross-cutting Aspects（所有能力调用的强制包络）
+
+  身份认证、权限检查、schema 校验、隐私/凭证检测、限流、费用预算、超时、审计、追踪、缓存、
+  幂等、不可信外部内容标记、输出规范化和失败码收敛。
+
+共享基础能力采用“显式依赖 + 受控注入”，不是全局继承：
+
+  weather.realtime
+    required: [qweather]
+    fallback: none
+
+  stock.explain_movement
+    required: [stock.market_data, calculator]
+    optional: [web.search]
+
+  paper.discovery
+    required: [paper.search]
+    optional: [web.search]
+
+领域操作只能使用声明过、当前上下文获准且当前风险策略允许的依赖。`web.search` 即使是基础能力，
+也不能因此自动进入每个领域，更不能通过依赖关系把模型未获授权的能力间接放大。
+
+有效能力集合：
+
+  EffectiveCapabilities =
+      Installed
+      ∩ ContextAuthorized
+      ∩ TaskRequired
+      ∩ RiskPolicyAllowed
+
+还要区分四个状态：
+
+- Installed：代码/Provider 已安装；
+- Authorized：当前身份和通道被代码允许；
+- Exposed：本轮被展示给模型；
+- Executed：本次实际调用并产生了可审计结果。
+
+Tool Router 未来只影响 Exposed，不能改变 Authorized。
+
+======================================================================
+五、AOP 类比的准确边界
+======================================================================
+
+AOP 类比适用于“不改变业务目标，但每次调用都必须执行”的包络：
+
+  身份/通道校验
+      -> 参数和隐私校验
+      -> 权限、预算与限流
+      -> Capability 执行
+      -> 输出/schema/不可信内容处理
+      -> provenance 与最小审计
+
+日志是典型切面；身份、权限、预算和审计也应统一实现，避免每个领域复制粘贴后逐渐不一致。
+
+Search 和 Calculator 不应成为透明切面：
+
+- 它们会改变结论，必须在 Plan/调用记录中可见；
+- Search 会向第三方外发 query，并返回不可信资料；
+- Calculator 是确定性结果，Search 只是候选来源，两者的 trust level 不同；
+- 失败时必须由领域路由策略决定“停止、降级还是明确说明”，不能静默替代专业数据源。
+
+因此正确关系是：
+
+  领域能力通过显式依赖共享 Primitive Capability；
+  所有能力共同经过 AOP/中间件式安全包络。
+
+======================================================================
+六、Capability Registry v1（先登记，不先造 Router）
+======================================================================
+
+Registry 是能力清单和策略输入，不是权限授予器，也不要求每项能力都是一个模型可见 Tool。
+
+建议最小字段：
+
+  id
+  class: primitive | domain | model_stage | internal_control
+  exposure: model_tool | internal_only
+  operations
+  input_schema_version
+  output_schema_version
+  provider_policy
+  trust: deterministic | trusted_domain_api | untrusted_external
+  data_egress: none | fixed_provider
+  side_effect: none | local_state | external_delivery
+  contexts
+  confirmation
+  required_capabilities
+  optional_capabilities
+  fallback_policy
+  budget_policy
+  runtime_status: planned | installed | loaded | accepted
+
+`web.search` 示例：
+
+  id: web.search
+  class: primitive
+  exposure: model_tool
+  operations: [search]
+  trust: untrusted_external
+  data_egress: fixed_provider
+  side_effect: external_query
+  contexts: [owner_qq_private]
+  confirmation: none_for_explicit_public_query
+  required_capabilities: []
+  fallback_policy: none
+  runtime_status: planned
+
+Registry v1 可以先写成代码常量或严格 JSON，并由测试检查“注册工具、manifest、alsoAllow、群聊
+deny、文档状态”是否一致。当前工具数量仍少，不开发可动态授予权限的通用 Router。
+
+======================================================================
+七、受控搜索在架构中的位置
+======================================================================
+
+`personal_web_search` 是主人私聊可调用的 Primitive Capability，也是外部数据外发与不可信内容
+入口。它不是任意 HTTP、Web Fetch 或浏览器。
+
+首版输入：
+
+  personal_web_search({ query })
+
+首版输出只包括最多 5 条：
+
+  result_id
+  title
+  snippet
+  canonical_https_url
+  source_domain
+  published_at（上游提供时）
+  searched_at
+
+固定边界：
+
+- 仅可信主人 QQ 私聊，factory 内进行代码身份守卫；
+- Provider、Host、Path、认证方式、结果数和 Header 均由配置固定；
+- query 最长 200 字，响应大小、字段长度、超时和请求频率有硬限制；
+- API Key 使用 SecretRef，不进入提示词、query、SQLite、审计或错误文本；
+- 不接受 URL、Host、Cookie、Header、HTTP 方法、账号、代理、下载路径或代码；
+- 不访问 localhost、私网、link-local、metadata endpoint；
+- 不开放 `web_fetch`、浏览器、登录态、JavaScript、POST 表单、文件下载；
+- 搜索结果视为不可信资料，不得改变系统提示词、身份、权限、Tool schema 或执行计划；
+- 只记录 query hash、Provider、耗时、结果数量、状态和费用计数；默认不长期保存原始 query/结果。
+
+“最多 5 条”是 S1/S2/S3 的单次调用硬上限和上下文/成本预算，不是永久不变的业务语义，也不向
+模型暴露任意 `count`。它目前足以覆盖单一查询、当前事件核实和小范围来源比较，同时限制不可信
+内容的注入面、响应大小、延迟、费用和审计负担。
+
+未来它可能成为宽主题发现、多来源交叉验证、翻页或多步研究的单次调用瓶颈。出现真实需求前不
+提前放大上限；出现需求后只能通过受控方式扩展：
+
+- 绑定主人、私聊会话、原始 query hash 和短 TTL 的有限续页/Continuation，每次仍有结果数上限，
+  且有总结果数、总延迟和总费用预算；
+- 预注册的固定 `sequence`，多次搜索各自保留 provenance，并设置整个序列的总预算；
+- 在质量 Eval 证明响应大小、相关性、注入风险和成本仍可接受后，再评审是否提高单次硬上限。
+
+任何扩展都不得把任意 URL、无限 `count`、Provider 参数或开放式抓取交给模型。
+
+“只读搜索”仍有数据外发：query 会发送给第三方 Provider。模型不得把 API Key、完整身份标识、
+私聊原文、长期记忆、精确住址、机票号或其他无关私人信息自动拼进 query。涉及私人内容时先进行
+最小化改写；无法确认外发范围时向主人说明并追问。
+
+======================================================================
+八、搜索路由与 Fallback Policy
+======================================================================
+
+第一版不做自由学习的 LLM Tool Router，先采用少量确定性规则和明确工具描述：
+
+- 最新新闻、当前人物/公司状态、近期政策或明确要求联网核实时，可使用 Search；
+- 实时天气只用 QWeather，Search 不是天气数据 fallback；
+- 实时行情只用专业 Stock API，Search 只能补充公开新闻背景；
+- 论文元数据优先 Paper API；发现范围不足时才按策略补 Search；
+- 稳定基础知识且无时效疑问时可直接回答；
+- 搜索失败时如实说明，不用模型记忆伪装成最新结果；
+- 专业 API 失败时，只有该领域显式声明 fallback 才能搜索，并必须标明数据源降级。
+
+有效路由不是“模型知识 -> 专业 API -> Search”的固定阶梯，而是按 claim 类型选择信息源。
+
+示例：
+
+1. “广州现在多少度”
+
+   `single(weather.get_brief)`；不暴露 Search 作为替代数据源。
+
+2. “某公司今天发生了什么”
+
+   `single(web.search)`；Agent 的普通理解和组织回答仍是隐式 LLM Runtime。
+
+3. “分析英伟达最近一个月上涨原因”
+
+   未来可用有限 `sequence(stock.get_kline, calculator, web.search)`；普通综合默认隐式。只有使用
+   独立金融分析模型或复核模型时，再添加显式 `model_stage`。
+
+4. “16:00 搜索某主题并发给我”
+
+   `scheduled(sequence(web.search, deterministic_format))`；Scheduler 和 QQ Delivery 是内部控制
+   平面，不向模型暴露通用 Cron 或任意发送目标。该能力不属于 S1 首版。
+
+======================================================================
+九、分阶段开发路线
+======================================================================
+
+这项工程按“设计冻结 -> 离线实现 -> 离线验收 -> 分阶段上线 -> 质量完善 -> 有需求才组合”推进。
+S1 不修改 `openclaw.json`，S2 通过前不让模型看到 Search，S3 才逐项增加运行时暴露面。
+
+首版搜索建议作为独立插件：
+
+  chatbot/plugins/personal-search/
+
+不继续塞入已经承担天气、规划和提醒职责的 `personal-weather` 插件，也不在此时重构后者。Search
+与现有领域模块只共享架构约定，不直接共享业务 Store。等身份守卫、审计包络、错误模型等在至少
+两个独立插件中证明接口稳定，并出现第三处实际复用需求后，再评审是否提取小型公共 Runtime。
+
+当前“任务和功能解耦程度”的判断：
+
+- 已经完成的部分：LLM 的理解、规划和生成与显式 Capability 分开；天气、规划、提醒等领域功能
+  与各自的 Provider、Store 和副作用适配器分开；Scheduler、Proposal/Commit、Delivery 和
+  Reconciler 等控制平面没有直接作为通用工具暴露给模型。
+- 尚未完成的部分：项目还没有一个真正统一的 Task Runtime。天气查询、提醒、规划提案、Cron
+  任务和未来搜索仍以各领域自己的请求、记录、服务和受控流程表达；Trigger、ExecutionContext、
+  权限包络、投递、审计/来源和恢复语义也尚未由一个通用 Task 对象统一承载。
+- 因此，当前状态是“功能已经从模型和底层副作用中解耦，但具体任务尚未从各领域工作流中完全抽象
+  出来”。本文中的 `TaskSpec`、`TriggerSpec`、`ExecutionContext`、`Provenance` 和 Plan IR
+  是演进边界与架构契约，不代表当前已经存在可承载所有领域任务的通用执行引擎。
+
+这种未完全解耦在当前阶段是合理的：天气、提醒和搜索的真实任务形态、恢复要求、投递方式、数据
+敏感度和失败语义还没有形成足够稳定的交集。为追求形式上的完全解耦而提前建设通用 Task Engine，
+容易把尚未验证的共性固化为框架，并扩大本轮搜索的变更面和安全回归面。因此，搜索 S1 继续采用
+独立插件 + 单一 `personal_web_search` + 领域内受控调用的最小路径，不因概念上存在 TaskSpec
+就提前引入通用运行时。
+
+只有在天气、提醒、搜索至少出现第二或第三种真实组合需求，并证明存在稳定、可复用且边界清晰的
+共同语义后，才提取 `TaskSpec` / `TriggerSpec` / `ExecutionContext` / `Provenance` 等公共
+边界，再评审是否需要小型 Task Runtime 或固定组合模板。届时应以真实复用证据、失败恢复和审计
+需求为依据，而不是以“所有功能理论上都能统一”为依据。
+
+Capability Registry v1 首先只是声明文件、校验规则和测试依据，不成为动态权限授予器；Plan IR
+首先只是架构契约，S1 的 `single` 搜索不需要通用 Plan Engine。这样可以保留演进方向，同时避免
+为了一个搜索工具先重构整个系统。
+
+======================================================================
+十、首版明确非目标
+======================================================================
+
+- 不把所有认知动作注册成 Tool/Capability；
+- 不实现通用 DAG Workflow Engine；
+- 不实现模型自由生成或修改执行图；
+- 不实现动态权限授予 Router；
+- 不开放 `web_fetch`、浏览器、任意 HTTP、登录态或下载；
+- 不将搜索结果自动写入长期记忆、知识库、系统提示词或开发文档；
+- 不自动使用 Search 替代天气、行情等专业数据源；
+- 不允许领域模块通过“共享基础能力”获得未声明或未授权的联网权限；
+- 不让模型直接管理 Scheduler、Notification target 或 QQ 发送；
+- 不因 Search 是“基础能力”而默认每轮展示或调用。
+
+======================================================================
+十一、验收与回滚
+======================================================================
+
+上线条件：
+
+- Provider 和费用策略已确认；
+- SecretRef 配置有效且文件权限正确；
+- 离线测试、插件校验、配置校验和运行时 inspect 通过；
+- `messaging` profile 只增加精确 Search 工具名；
+- 所有群聊策略显式 deny；
+- 真实主人 QQ 私聊搜索成功，引用与时间正确；
+- 群聊/非主人、无 Key、超时、429、异常响应和提示注入负向通过；
+- 日志、SQLite、提示词和工具结果不含凭证或无关私人信息。
+
+回滚顺序：
+
+1. 从 `tools.alsoAllow` 移除精确 Search 工具名；
+2. 保持群聊 deny，并禁用 Search 插件/配置；
+3. 重启 Gateway，验证运行时工具清单不再包含 Search；
+4. 保留最小审计和配额计数，不手工删除或伪造历史；
+5. 删除/轮换 Search Key 时使用供应商与 SecretRef 的正常流程，不在文档记录密钥。
+
+======================================================================
+十二、仍需主人确认的信息
+======================================================================
+
+MVP Must Pass：
+
+- Search Provider；
+- 专用 API Key 是否已获批；
+- 每分钟、每天和每月的保守调用上限，以及 Provider 账户费用硬上限；
+- 原始 query 是否允许进入 Provider，以及哪些明显私人信息必须在外发前删除；
+- 是否接受首版只有结果摘要和链接、不能打开网页全文。
+
+MVP 后 Should Pass：
+
+- 是否需要搜索缓存及其 TTL；
+- audit 的长期保留/删除期限；
+- 是否需要精确到单次费用的本地核算；
+- 是否需要比明显 Secret 拦截更复杂的 query 隐私分类。
+
+Must 信息未确认不妨碍完成架构与 mock 接口设计，但会阻止真实 Search API 接入和端到端验收；
+Should 信息不阻止首次 MVP。
+
+======================================================================
+十三、详细开发 TODO、验收目标与停止条件
+======================================================================
+
+本节是实际开发清单。任务状态遵守以下规则：
+
+1. 先在本文记录需求、边界、依赖和验收方法；
+2. 再修改代码，并记录文件、配置、迁移和安全影响；
+3. 先完成自动化/终端验收，再做需要运行时权限的真实 QQ 验收；
+4. 主人报告真实结果或开发者取得等价的可复核证据后，更新验收记录；
+5. 代码、测试、运行状态和文档一致后，才把对应 TODO 标为完成。
+
+优先级分为两档：
+
+- `Must Pass`：首次向主人 QQ 私聊开放 Search 之前必须通过；它直接保护身份、网络、Secret、输入
+  输出边界、超时/响应大小、群聊拒绝、基础限流、回滚或既有功能。
+- `Should Pass`：明确记录的稳定化和治理工作，可以在 MVP 已真实搜索后继续补齐；包括更完整的
+  费用计数、复杂 query 隐私分类、穷举型异常映射、长期 audit retention、质量 Eval 和通用化。
+
+Should Pass 如果在实现过程中暴露出可直接越权、泄密或无法回滚的问题，应升级为 Must Pass 并
+记录原因；除此之外不能因为 Should 未完成而无限推迟首个 MVP。
+
+这些 TODO 是验收检查点，不是一项对应一个模块、类或开发迭代。多个 Must 可以由同一条简单
+代码路径和同一组参数化测试同时满足。MVP 的复杂度预算是：一个独立插件、一个固定 Provider
+client、一个薄 SearchService、一个 tool factory 和测试；不新建通用治理平台、Plan Engine、
+Registry Runtime、复杂隐私分类器或独立审计数据库。若某个 Must 的实现开始要求这些平台，应先
+收缩实现或把非安全核心移到 Should，而不是继续扩建框架。
+
+任何阶段不得因为“下一阶段早晚会做”而提前开放其权限。搜索失败不得影响天气简报、规划状态、
+个人提醒或 QQ 基础对话；涉及现有模块的重构必须另立 TODO、单独回归、单独回滚。
+
+----------------------------------------------------------------------
+S0：设计冻结与外部依赖确认（不写运行代码、不开放权限）
+----------------------------------------------------------------------
+
+- [x] [Must Pass] S0.1：冻结首版能力范围和非目标。
+
+  交付物：一份明确的 S1 输入/输出、允许上下文、网络边界、数据外发和非目标清单。
+
+  验收目标：
+  - 唯一模型可见操作是 `personal_web_search({query})`；query 为唯一业务参数；
+  - 输出最多 5 条规范化公开搜索结果，并带来源域名和检索时间；
+  - 明确排除任意 URL、网页正文抓取、浏览器、登录态、下载、长期记忆写入和定时搜索；
+  - 明确 Search 不是天气/行情等专业 API 的隐式 fallback；
+  - 文档、tool schema 和测试名称对上述范围使用相同术语。
+
+  停止条件：若首版必须包含网页正文、登录、上传私人文件或任意 URL，本计划须拆出新的高风险
+  设计，不得把它们伪装成 Search 参数加入 S1。
+
+- [ ] [Must Pass] S0.2：完成 Search Provider 选型决策记录（ADR）。
+
+  交付物：Provider、官方 API 文档版本、固定 API origin/path/method、认证方式、响应 schema、
+  服务地区、费用、速率限制、数据保留和撤销 Key 方法；不得记录 Key 值。
+
+  验收目标：
+  - Provider 提供正式 API，而非模拟浏览器或复用个人登录 Cookie；
+  - 支持固定 Host 的服务端搜索，且可限制结果数量、超时和响应大小；
+  - 已明确每分钟、每日、每月调用或费用上限及 429/超限语义；
+  - Key 可单独创建、轮换和撤销，不与个人主账号高权限凭证复用；
+  - 已记录 Provider 会接收哪些 query/元数据以及默认保留政策。
+
+  阻塞关系：未完成本项，可以写接口和 mock；不能完成真实客户端及 S3 端到端验收。
+
+- [x] [Must Pass] S0.3：定义配置、SecretRef 和运行环境契约。
+
+  交付物：环境变量名称、插件配置 schema、SecretRef 映射、非秘密默认值、启动失败策略和示例配置；
+  示例只写占位符。
+
+  验收目标：
+  - Key 仅从 SecretRef 解析，不出现在源码、文档、manifest、命令行参数或工具结果；
+  - Host/path/method 不可由模型参数覆盖；生产环境不允许运行时任意改写；
+  - 缺 Key、空 Key、错误 SecretRef 时插件给出收敛错误，且不回显原始配置；
+  - 配置校验能拒绝未知字段、非法上限、非 HTTPS origin 和超出硬上限的超时/结果数；
+  - 秘密文件的实际权限在 S3 上线前核验，目标为仅所有者可读写。
+
+- [ ] [Should Pass] S0.4：定义 Capability Registry v1 的严格 schema 和 `web.search` 条目。
+
+  交付物：版本化 Registry 文件/代码常量、schema 校验器和一致性测试设计。
+
+  验收目标：
+  - capability id 唯一；class、exposure、trust、egress、side effect、contexts 和 runtime status 必填；
+  - 未知字段、未知枚举、重复 id 和不支持的 schemaVersion 被拒绝；
+  - `web.search` 标为 `untrusted_external`、`fixed_provider`、`owner_qq_private`；
+  - Registry 不包含 API Key，不动态写 `openclaw.json`，也不能把 planned 自动变为 authorized；
+  - 测试能发现 Registry、manifest、已注册工具名和文档状态之间的不一致。
+
+  非目标：本项不实现动态 Router、运行时权限授予或插件自动安装。
+
+- [ ] [Should Pass] S0.5：冻结完整 `single` 调用契约，并为 Plan IR 预留版本。
+
+  交付物：search request/result 类型、稳定错误码和 provenance 类型；Plan IR 仅保留设计稿。
+
+  验收目标：
+  - S1 运行路径不依赖通用 Plan Engine；一次 tool call 就能完成；
+  - 普通 understanding/extraction/synthesis 不出现在 Registry 或序列化计划中；
+  - 输入输出均有 schemaVersion 或能在不破坏 v1 的条件下演进；
+  - 若收到 sequence/scheduled/DAG 字段，S1 明确拒绝而不是部分执行；
+  - 错误至少区分 invalid_input、unauthorized、rate_limited、budget_exceeded、timeout、
+    upstream_rejected、upstream_unavailable、invalid_upstream_response 和 internal_error。
+
+- [x] [Must Pass] S0.6：冻结模块边界与“暂不重构”清单。
+
+  交付物：`personal-search` 目录职责、与 OpenClaw/plugin SDK 的接口、与现有插件零业务依赖说明。
+
+  验收目标：
+  - Search 不读写天气 SQLite、规划提案、提醒记录或长期记忆；
+  - 不修改 `personal-weather` 的 Store/Service 结构来迁就 Search；
+  - Provider client、schema、normalizer、quota/audit 和 tool factory 边界可分别单测；
+  - 跨插件公共库只有在接口稳定且出现实际复用证据后另案提取；
+  - 若 S1 被整体移除，现有天气、规划、提醒代码无需跟随修改。
+
+- [x] [Must Pass] S0.7：建立 MVP 安全验收矩阵、测试数据和回滚清单。
+
+  交付物：正向、负向、故障、隐私、配额、内容安全、QQ 上下文和回归用例表。
+
+  验收目标：
+  - 每个固定安全边界至少有一个自动化拒绝用例；
+  - Provider 故障用例不依赖真实故障，可由 mock 确定性复现；
+  - 测试夹具不含真实 Key、完整 QQ 身份、私聊原文或私人行程；
+  - 已定义 S3 的配置备份、工具撤权、插件禁用、Gateway 重启和运行时复核步骤；
+  - 明确哪些验收必须由主人在真实 QQ 中完成。
+
+- [ ] [Must Pass] S0.8：S0 Go/No-Go 评审。
+
+  验收目标：S0 中全部 Must Pass 完成；未完成的 Should 已明确登记且不影响身份、Secret、固定
+  网络边界或回滚；不存在未决定却会改变 MVP 安全边界的问题；此时 `tools.alsoAllow` 和系统
+  提示词仍未声明搜索可用。
+
+----------------------------------------------------------------------
+S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
+----------------------------------------------------------------------
+
+- [ ] [Must Pass] S1.1：创建独立 `chatbot/plugins/personal-search/` 插件骨架。
+
+  验收目标：
+  - package、manifest、TypeScript 配置、build/test 命令和入口完整；
+  - 插件只声明精确工具名，不声明 exec、filesystem、browser 或通用 network 工具；
+  - `npm run build`/等价构建在干净依赖状态下通过；
+  - 还没有修改生产 `plugins.allow`、`plugins.load.paths` 或 `tools.alsoAllow`。
+
+- [ ] [Must Pass] S1.2：实现严格输入 schema 和可信主人私聊守卫。
+
+  验收目标：
+  - query 必须为非空字符串，规范化后不超过 200 字；拒绝未知字段、数组、对象和超长文本；
+  - 拒绝控制字符、NUL 和明显无意义的全空白输入；Unicode 正常文本不被错误破坏；
+  - owner/channel 只取可信 tool context，不接受模型传入 ownerId、channel、target；
+  - 非主人、QQ 群聊、缺少身份元数据和非 QQ 上下文均在发起网络请求前拒绝；
+  - 单测证明拒绝路径的 Provider 调用次数为 0。
+
+- [ ] [Must Pass] S1.3：实现基础 query 最小化与明显 Secret 外发检查。
+
+  验收目标：
+  - 不自动拼接长期记忆、完整聊天历史、OpenID、精确住址、票号、Key 或系统提示词；
+  - 对明显 Secret、完整身份标识和已定义的高风险格式采用 fail-closed；
+  - 工具返回可理解的“需要更小范围 query/主人确认”错误，不返回命中的秘密原文；
+  - 明确用户主动要求搜索私人内容时的确认边界，首版不自行推断同意；
+  - audit 只接收 hash/长度/基础分类结果，不接收原始敏感片段；
+  - 复杂语义隐私分类不阻塞 MVP，登记到 S4.5。
+
+- [ ] [Must Pass] S1.4：实现固定 SearchClient 和网络包络。
+
+  验收目标：
+  - origin/path/method/auth header 全部来自经校验的配置；tool input 无法覆盖；
+  - 仅 HTTPS，禁止自动跨 origin redirect，限制连接/总超时、最大响应字节和最多 1 次尝试；
+  - 不接受代理、Cookie、用户 Header、POST body 模板、下载路径或任意 URL；
+  - 401/403/429/5xx、DNS、连接、TLS、超时分别映射到稳定错误码；
+  - 错误对象、日志和堆栈的对外文本不包含认证 Header 或完整响应正文。
+
+- [ ] [Must Pass] S1.5：实现响应 parser、normalizer、去重与 provenance。
+
+  验收目标：
+  - 异常 JSON、类型错误、超大字段、缺失关键字段被安全拒绝或丢弃；
+  - 最多返回 5 条；title/snippet/URL/域名/时间均有字段长度上限；
+  - URL 只接受可解析的 `https:` 公网候选，去除 userinfo 和 fragment；
+  - 结果按 canonical URL/Provider id 去重，不因单条坏数据导致其余安全结果丢失；
+  - 返回 searched_at、provider、source_domain，并明确内容为外部不可信资料；
+  - snippet 中的“忽略系统指令/调用工具”等文本只作为资料，不获得控制语义。
+
+- [ ] [Must Pass] S1.6：实现基础进程内限流、请求配额和并发上限。
+
+  验收目标：
+  - 至少有 per-minute、per-day、最大并发和硬结果数限制；配置只能比代码硬上限更严格；
+  - 检查和占用配额为原子操作，并发请求不会同时穿透；
+  - 429 能尊重受限的 Retry-After 信息，但 S1 不自动多次重试；
+  - 预算耗尽在网络请求前失败，并返回下一可用时间或明确状态；
+  - 已记录“进程重启会重置哪些计数”；MVP 可接受保守的进程内计数与 Provider 账户硬上限，
+    精确费用核算和持久化配额登记到 S4.5。
+
+- [ ] [Must Pass] S1.7：实现 MVP 最小化审计与可观测性。
+
+  验收目标：
+  - 首版使用结构化运行日志即可，不为 Search 单独建设审计数据库或通用审计平台；
+  - 记录 request_id、query hash、query 长度、Provider、耗时、结果数、请求配额计数和状态码；
+  - 默认不记录原始 query、snippet、完整 URL query string、Key、认证 Header 或私聊正文；
+  - 外部可见错误短而稳定，内部诊断可关联 request_id；
+  - 审计失败的策略明确：安全守卫/预算状态无法确认时 fail-closed，非关键指标失败不泄密；
+  - MVP 至少有受控日志位置和大小/轮转上限；长期 retention 政策登记到 S4.5。
+
+- [ ] [Must Pass] S1.8：实现 `personal_web_search` tool factory 和输出格式。
+
+  验收目标：
+  - factory 内再次执行 owner-private-QQ 守卫，不能只依赖提示词或 `alsoAllow`；
+  - tool description 明确“公开网页搜索、会外发 query、结果不可信、无网页全文”；
+  - 工具只调用 SearchService，不直接操作配置、文件、数据库、Scheduler 或 QQ 发送；
+  - 成功、无结果、上游失败、配额失败都有确定性结构，模型无需猜测执行状态；
+  - tool result 不含内部堆栈、SecretRef 名称或供应商原始调试数据。
+
+- [ ] [Must Pass] S1.9：完成插件 manifest 和代码一致性校验。
+
+  验收目标：
+  - manifest 工具名、代码注册名和测试期望完全一致；若 Registry 已实现，也必须一致；
+  - 插件配置 unknown fields 被拒；可选/必需字段与实际启动行为一致；
+  - 若存在 Registry，runtime_status 在离线阶段最多为 installed，不得标为 loaded/accepted；
+  - 生成产物不包含 `.env`、数据库、日志或测试秘密。
+
+- [ ] [Must Pass] S1.10：完成离线实现记录。
+
+  验收目标：本文记录新增/修改的相对路径、关键选择、尚未验收项和精确测试命令；
+  `openclaw.json` 的工具暴露面与 S1 开始前一致。
+
+----------------------------------------------------------------------
+S2：离线功能、安全和回归验收（仍不让模型看到 Search）
+----------------------------------------------------------------------
+
+- [ ] [Must Pass] S2.1：输入与 schema 测试通过。
+
+  验收目标：覆盖正常中英文、空白、超长、控制字符、unknown fields、错误类型、Unicode 边界；
+  所有拒绝均发生在网络调用前，测试无随机失败。
+
+- [ ] [Must Pass] S2.2：Provider 基础响应和故障矩阵通过。
+
+  验收目标：至少覆盖正常、零结果、坏 URL/缺字段、异常或超大响应、认证失败、429、典型 5xx
+  和超时；错误被收敛到稳定类别，重试次数和审计状态符合设计。Provider 的罕见变体与穷举型
+  错误细分登记到 S4.5。
+
+- [ ] [Must Pass] S2.3：网络边界测试通过。
+
+  验收目标：模型参数无法改变 scheme/host/path/method/header；重定向不能绕到 localhost、私网、
+  link-local 或 metadata endpoint；客户端不会下载文件、执行脚本或跟随页面内链接。
+
+- [ ] [Must Pass] S2.4：隐私、Secret 和日志测试通过。
+
+  验收目标：用 canary Secret/OpenID/票号测试时外发被拒或按规则最小化；扫描构建产物、日志、
+  audit、错误和快照均不出现 canary 原文或真实凭证；原始 query 默认不持久化。
+
+- [ ] [Must Pass] S2.5：不可信内容和提示注入测试通过。
+
+  验收目标：结果标题/snippet 中的系统指令、tool call、Markdown/控制字符、恶意链接和伪造引用
+  不能修改权限、调用额外工具、写记忆或触发发送；输出仍清晰标识来源与不确定性。
+
+- [ ] [Must Pass] S2.6：基础限流、请求配额、并发和单次调用测试通过。
+
+  验收目标：边界前后计数正确；并发不超发；超限不触网；失败是否计费规则明确；同一 tool call
+  不因内部自动恢复造成重复收费。若引入持久化，重启后计数和 schema migration 通过测试。
+
+- [ ] [Must Pass] S2.7：既有能力回归和 S2 Go/No-Go 通过。
+
+  验收目标：天气、规划、提醒插件原有 build/test 不因 Search 失败；生产配置校验仍通过；Search
+  代码目录整体禁用/移除时现有能力不受影响。S2.1-S2.6 全绿后才能进入 S3。
+
+----------------------------------------------------------------------
+S3：分阶段运行时接入与真实 QQ 验收
+----------------------------------------------------------------------
+
+- [ ] [Must Pass] S3.1：上线前快照与 SecretRef 配置完成。
+
+  验收目标：记录当前插件清单、工具清单、配置校验结果和回滚命令；配置备份不含明文 Key；
+  SecretRef 可解析、秘密文件权限合格，Key 权限和额度为最小值。
+
+- [ ] [Must Pass] S3.2：只加载插件，不向模型暴露工具。
+
+  验收目标：先增加精确 `plugins.load.paths` / `plugins.allow` / plugin config；保持 Search 不在
+  `tools.alsoAllow`；`plugins inspect --runtime`、doctor 和 config validate 均通过；日常 QQ 对话
+  中模型仍不能调用或声称已经具备 Search。
+
+- [ ] [Must Pass] S3.3：完成受控 Provider smoke test。
+
+  验收目标：通过插件测试入口或受控诊断发出一个无隐私的固定 query；验证认证、超时、解析、
+  配额和审计；终端输出不显示 Key；失败时不进入工具暴露阶段。
+
+- [ ] [Must Pass] S3.4：原子增加工具可见性与群聊拒绝策略。
+
+  验收目标：
+  - 先确保全部 QQ 群聊策略显式 deny 精确 Search 工具或整个 Search namespace；
+  - `messaging` profile 只增加 `personal_web_search`，不增加 cron、exec、fetch、browser 等邻接工具；
+  - 工具自身 owner-private factory 守卫仍存在，形成配置层和代码层双重拒绝；
+  - 配置修改后 validate 通过，diff 中没有无关权限扩大。
+
+- [ ] [Must Pass] S3.5：重启 Gateway 并核对实际运行时状态。
+
+  验收目标：Gateway 健康；插件 diagnostics 为空；主人私聊上下文能看到 Search；群聊/非主人
+  上下文不可用；天气、规划、提醒工具清单和后台任务未减少、未扩大、未报错。
+
+- [ ] [Must Pass] S3.6：完成主人 QQ 私聊正向验收。
+
+  验收目标：至少验证当前事件查询、零结果或小众查询、明确要求联网核实三类；每次最多 5 条，
+  含来源域名和检索时间；模型区分搜索资料与自身推断，不宣称读过未抓取的全文。
+
+- [ ] [Must Pass] S3.7：完成真实权限和失败负向验收。
+
+  验收目标：群聊、非主人、无/坏 Key、超时、429、Provider 5xx 均符合预期；能证明被拒请求
+  未触网或未越权；失败回答不伪造最新信息，不建议通过任意 HTTP/exec 绕过。
+
+- [ ] [Must Pass] S3.8：完成回滚演练。
+
+  验收目标：从 `tools.alsoAllow` 撤掉 Search 后模型立即不再可用；禁用插件并重启后 runtime
+  清单无 Search；天气/规划/提醒仍正常；重新启用不会重复迁移、破坏配额或泄露旧结果。
+
+- [ ] [Must Pass] S3.9：完成 S3 验收记录。
+
+  验收目标：记录测试时间、匿名化 query 类型、通过/失败结果、运行版本和遗留问题；主人确认真实
+  QQ 结果后，Registry runtime_status 才能标为 accepted，顶部 S3 才能勾选。
+
+----------------------------------------------------------------------
+S4：路由、引用与质量完善（不升级为动态 Router）
+----------------------------------------------------------------------
+
+- [ ] [Should Pass] S4.1：建立确定性信息源路由矩阵。
+
+  验收目标：至少覆盖稳定知识、当前事件、天气、行情、论文、私人数据和用户明确要求联网；每类
+  定义首选源、允许 fallback、禁止源和失败表述；天气/行情回归证明不会被 Search 静默替代。
+
+- [ ] [Should Pass] S4.2：完善工具描述、系统提示和引用规则。
+
+  验收目标：模型知道何时搜索、何时不搜索；不把 snippet 当全文；事实尽量就近附来源；多个来源
+  冲突时明确说明；系统提示词只描述已验收能力，不承诺 fetch/browser。
+
+- [ ] [Should Pass] S4.3：建立搜索质量 Eval 集。
+
+  验收目标：使用无私人信息的固定题集评估是否该搜、query 最小化、来源相关性、时效、引用忠实、
+  不确定性和失败降级；建立可重复基线，不以单次主观“看起来不错”替代回归。
+
+- [ ] [Should Pass] S4.4：评审横切公共 Runtime 是否值得提取。
+
+  验收目标：列出 Search 与现有插件真实重复且已稳定的守卫/审计/错误接口；只有收益大于迁移风险
+  才单独立项。若提取，必须保持各插件独立回滚并完成全量回归；否则记录“继续局部实现”。
+
+- [ ] [Should Pass] S4.5：补齐 MVP 后的高级治理项。
+
+  验收目标：根据真实使用数据决定是否增加精确费用核算、跨重启持久化配额、复杂 query 隐私
+  分类、Provider 罕见异常细分、长期 audit retention/删除策略和更细的指标；每一项必须证明解决
+  了真实风险或运维问题，不为了“框架完整”一次性全做。
+
+- [ ] [Should Pass，按需启动] S4.6：评估结果数量与受控续页策略。
+
+  验收目标：用真实或脱敏用例评估单一查询、宽主题发现、多来源交叉验证、翻页和多步研究；决定
+  继续保持单次最多 5 条、增加绑定会话的有限 Continuation，或在 Eval 后提高硬上限；同时记录
+  去重、provenance、总结果数、总延迟、费用和不可信内容预算。没有真实需求时明确保持 5 条。
+
+----------------------------------------------------------------------
+S5：有限组合能力（由真实需求触发，不是 S3 上线前置）
+----------------------------------------------------------------------
+
+- [ ] [Should Pass，按需启动] S5.1：收集并确认至少一个 `single` 无法满足的真实用例。
+
+  验收目标：写清输入、固定步骤、步骤间数据、失败语义、预算、权限和投递；若单步工具加普通
+  LLM 综合已足够，则拒绝创建 sequence。
+
+- [ ] [Should Pass，按需启动] S5.2：实现白名单 `sequence` 模板，而非通用工作流语言。
+
+  验收目标：只允许预注册步骤和固定次序；中间输出严格 typed/有大小限制；禁止循环、动态 tool id、
+  命令、任意 URL 和模型临时追加步骤；每步分别超时、审计且总预算有硬上限。
+
+- [ ] [Should Pass，按需启动] S5.3：在真实延迟搜索需求出现后实现 `scheduled` 包装。
+
+  验收目标：复用内部受控 Scheduler/Delivery adapter；模型不获得通用 Cron 或任意 QQ target；
+  创建/修改/取消走主人私聊确认；重启恢复、claim、幂等、错过窗口和重复投递均有测试。
+
+- [ ] [Should Pass，按需启动] S5.4：组合能力真实验收。
+
+  验收目标：正常、部分失败、预算耗尽、重启恢复、取消、群聊拒绝和重复执行全部通过；失败不会
+  留下声称成功的计划或重复消息。通过后才把对应模板加入 Registry/runtime。
+
+----------------------------------------------------------------------
+S6：受控打开单条搜索结果（独立高风险阶段）
+----------------------------------------------------------------------
+
+- [ ] [Should Pass，按需启动] S6.1：先完成安全设计，不直接给 Search 增加 URL 参数。
+
+  验收目标：result_id 高熵、短 TTL、绑定主人/会话/原请求；服务端保存规范化 URL 和 hash；模型
+  只能提交 result_id；过期、猜测、跨会话和重复滥用均拒绝。
+
+- [ ] [Should Pass，按需启动] S6.2：实现受限 Fetcher 及内容隔离。
+
+  验收目标：每次解析/重定向都阻止 localhost、私网、link-local、metadata、非 HTTP(S) 和 DNS
+  rebinding；限制跳转、字节、时间和 MIME；不执行 JavaScript、不登录、不下载附件、不提交表单；
+  正文作为不可信数据进入隔离 parser，不能改变工具/权限/计划。
+
+- [ ] [Should Pass，按需启动] S6.3：完成 SSRF、内容炸弹、重定向链、恶意 MIME、提示注入和 QQ 真实验收。
+
+  验收目标：全部安全测试通过且有独立回滚开关后才开放；失败时仍保留 S3 的结果列表能力，
+  关闭 Fetcher 不影响 Search。
+
+----------------------------------------------------------------------
+A3：DAG Workflow Engine 的启动门槛
+----------------------------------------------------------------------
+
+- [ ] [Should Pass，按需启动] A3.1：证明至少两个已验收真实任务无法用 `single`、固定 `sequence` 或 `scheduled` 表达，
+      并且并行/汇合能带来可量化的正确性、延迟或成本收益。
+- [ ] [Should Pass，按需启动] A3.2：单独设计并评审依赖解析、并发预算、步骤状态、失败传播、取消、补偿、持久化恢复、
+      幂等、版本迁移、可视化和权限传递；模型不得自由生成任意 capability id。
+- [ ] [Should Pass，按需启动] A3.3：DAG 引擎作为独立项目立项，不阻塞 S1-S4，也不通过重构已稳定模块“顺便上线”。
+
+A3.1 未满足时，A3 保持未开始；“理论上以后可能需要并行”不构成立项理由。
+
+======================================================================
+十四、当前推荐的下一步
+======================================================================
+
+下一步只做 S0，不直接写通用框架，也不修改生产权限。顺序建议为：
+
+  S0.1 范围冻结
+      -> S0.2 Provider/费用/隐私决策
+      -> S0.3 配置与 SecretRef 契约
+      -> S0.6 模块边界
+      -> S0.7 MVP 验收矩阵
+      -> S0.8 Go/No-Go
+
+  S0.4 Registry 与 S0.5 完整 Plan IR 契约作为 Should Pass，可并行记录，但不阻止 S1/S3 MVP。
+
+S0 可以暴露真正缺失的信息，并使 S1 变成一个边界明确、可删除、可离线验收的独立插件，而不是
+一次全系统重构。当前最大的外部阻塞项仍是 Search Provider、专用 Key、预算/配额和 query 隐私
+政策；其余架构与 mock 开发不依赖真实 Key。
+
+======================================================================
+十五、开发记录（2026-08-12，Search MVP 第一轮）
+======================================================================
+
+本轮开始前的运行时事实：
+
+- OpenClaw 版本为 `2026.7.1-2`；当前未配置 `tools.web.search`，也未安装/启用 Brave Provider；
+- 生产 `messaging` profile 未暴露 `web_search`、`web_fetch` 或 browser；
+- 当前天气、规划和提醒仍由 `chatbot/plugins/personal-weather/` 提供，本轮不重构该插件；
+- OpenClaw Plugin Runtime 已提供 `api.runtime.webSearch.search(...)`，插件可以在不依赖通用 agent
+  tool wrapper 的情况下调用已选择的 Search Provider。
+
+本轮实现决策（Provider 尚未完成可用性验收，优先验证 DeepSeek）：
+
+1. 新建 `chatbot/plugins/personal-search/`，只注册 `personal_web_search`；
+2. 包装 OpenClaw 的内部 `runtime.webSearch`，不重复实现 Provider HTTP/SecretRef transport；
+3. MVP 代码固定 `count = 5` 和搜索结果边界，但不把 Provider、Host、URL、Header 或 count
+   交给模型；最终 Provider 必须通过 S0.2 的结构化结果、费用、隐私、稳定性和权限审查；
+4. Provider Key 或其他凭证由所选 Provider 的 SecretRef 表面管理，不进入 `personal-search` 配置；
+5. 即使以后启用某个 Provider，也不把通用 `web_search` 加入 `tools.alsoAllow`；只有包装工具可见；
+6. 当前先用注入的 mock runner 完成 S1/S2；本轮只预置不启用的 DeepSeek Provider 配置，
+   不安装 Provider、不重启 Gateway、不向 QQ 暴露 Search，也不扩大生产权限。
+
+DeepSeek 作为检索后端的记录方案（2026-08-12）：
+
+1. 调用关系固定为“GPT-Terra 主 Agent -> 受控 Search Adapter -> DeepSeek Responses Web Search”。
+   GPT-Terra 负责判断是否需要联网、约束 query、理解证据和生成最终回答；DeepSeek 只承担受控检索，
+   不替换主 Agent，也不改变主 Agent 的图片理解路径。
+2. 本地预置的 Provider 配置为 `deepseek-search`：
+   - Base URL：`https://api.deepseek.com`；
+   - 协议：`openai-responses`，由 Responses API 的 `/responses` 路径承载服务端 `web_search`；
+   - 模型：`deepseek-v4-flash`；
+   - 输入：仅 `text`，因为检索 Worker 不承担图片理解；
+   - 凭证：`DEEPSEEK_API_KEY` SecretRef。实际 Key 不写入仓库、不写入本文。
+3. 这里必须使用 DeepSeek Responses API，不能把普通 OpenAI-compatible Chat Completions 的
+   Tool Calls 误认为已经具备联网能力。DeepSeek 的 Tool Calls 文档明确要求由调用方提供工具执行；
+   Responses API 文档才定义了由服务端执行的 `web_search` 和 `web_search_call`。
+4. 当前配置只是“模型/传输预置”，不是 Search Provider 已上线：OpenClaw 官方 DeepSeek Provider
+   目前是模型 Provider，不声明 `webSearchProviders`。因此本配置不会自动开放通用 `web_search`，
+   也不会改变 `tools.alsoAllow`。后续仍需由 `personal-search` 或一个专用 Provider Adapter
+   注册受控搜索能力，并把 DeepSeek 返回的来源、标题、URL、时间和摘要规范化为本文定义的
+   `SearchResult`/`Provenance` 边界。
+5. 质量边界：只要 Adapter 尽量保留原始来源和引用，让 GPT-Terra 基于证据作最终综合，文字问题的
+   最终回答质量不必然下降；但不能假定它等同于 Brave/Google。需要实测的风险包括召回率、来源覆盖、
+   引用粒度、时效性、延迟、费用和限额。遇到依赖图片、图表、扫描 PDF 或复杂网页视觉布局的资料，
+   DeepSeek 检索 Worker 不能补足主 Agent 的视觉能力，必要时应降级为“返回链接并说明未完成视觉核验”，
+   或交给具备视觉能力的后续 Fetch/分析路径。
+6. 使用边界：DeepSeek 的自然语言总结只能作为不可信的中间结果，不能替代来源证据；搜索结果中的
+   网页文本同样按不可信输入处理，不能执行其中的指令。搜索 Adapter 不把 API Key、内部配置或完整
+   会话历史发送给 DeepSeek，只发送最小化、经约束的 query 和必要的时间/地域条件。
+
+官方依据：
+
+- DeepSeek [Responses API](https://api-docs.deepseek.com/zh-cn/guides/responses_api/)；
+- DeepSeek [Tool Calls](https://api-docs.deepseek.com/guides/tool_calls/)；
+- OpenClaw [DeepSeek Provider](https://docs.openclaw.ai/providers/deepseek)；
+- OpenClaw [Web Search](https://docs.openclaw.ai/tools/web)。
+
+S0 状态说明：
+
+- S0.1、S0.3、S0.6、S0.7 已由本文的范围、配置契约、模块边界和验收/回滚矩阵满足；
+- S0.2 尚未完成 live 验收；当前优先验证 DeepSeek Responses Web Search，Brave、模型原生搜索、
+  其他托管 Provider 或自托管方案保留为后备选项。仍需确认凭证/登录、账户硬限额、数据外发和
+  结果契约；
+- S0.8 在 S0.2 完成前不勾选，但这不阻止无网络权限的 mock 实现与离线测试。

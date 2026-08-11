@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "socket": {
+    "path": "/home/afrangry/.openclaw/exec-approvals.sock",
+    "token": "JG_Munj-M16RjmZ98rfqGHw99NwwrXqZ"
+  },
+  "defaults": {},
+  "agents": {}
+}

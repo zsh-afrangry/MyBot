@@ -30,16 +30,21 @@ Bot 名称：kurumi
 - 模型 naiccc/gpt-5.6-terra 已完成真实对话测试。
 - kurumi 第一版身份、人格、用户资料、安全规则和长期记忆骨架已建立。
 
-当前能力边界（截至 2026-08-11）：
+当前能力边界（截至 2026-08-12）：
 
-- 自然语言对话已验收；主人私聊当前精确准入 3 个 optional 天气/规划工具：
+- 自然语言对话已验收；主人私聊源码当前注册 9 个 optional 天气/规划/提醒工具：
   `personal_weather_get_brief`、`personal_planning_state_get`、
-  `personal_planning_change_propose`。其中后两者属于 P2A：状态工具只读，提案工具
-  只生成 pending 草稿，不提交行程或切换天气地点。
+  `personal_planning_change_propose`、`personal_planning_change_commit`、
+  `personal_reminder_state_get`、`personal_reminder_propose`、`personal_reminder_commit`、
+  `personal_reminder_cancel_propose`、`personal_reminder_cancel_commit`。状态工具只读；
+  提案工具只生成 pending 草稿；提交工具只在主人明确确认且 ID/Hash 精确匹配时写入一条
+  `planned` 行程，仍不切换天气地点。提醒 R1 的单次创建与到点投递已通过真实 QQ 验收；
+  R2B 已加入 `state_get` 按需只读对账 Gateway 回执，R2C 已加入插件内部固定对账 service，R2D 已加入明确投递失败的有限重试；停机恢复、取消和失败路径真实验收仍待完成。
+  它不开放通用 Cron 或 QQ 发送。
 - 天气插件只访问配置好的 QWeather 专属 Host，不等于开放通用联网搜索。
 - 一次性 QQ 主动消息已获得腾讯发送 API 成功回执，主人已确认客户端收到并在 QQ 回复。
 - 暂无文件写入、任意 HTTP、通用工具调用、主机命令、sudo、coder Agent 或 Git
-  维护能力；P2A 不提供 commit/discard，位置切换、提醒修改和主动预警仍未实现。
+  维护能力；P2B-commit 不提供地点消歧/discard，位置切换、提醒修改和主动预警仍未实现。
 - MEMORY.md 与 memory/ 已被运行时扫描，且 MEMORY.md 已进入主 Agent 的新会话提示词。
 - memory-core 的语义检索索引、Embedding 和自动写入仍待单独验收。
 - OpenClaw Cron 调度器已启用；天气简报任务在 disabled 状态下手动验收 1 次，
@@ -212,6 +217,11 @@ Bot 名称：kurumi
 8. 未来代码能力采用独立 coder Agent，不直接给群聊或日常助手整台主机权限。
 9. 动态位置、旅行和提醒状态不写入系统提示词；未来使用独立结构化存储和窄工具维护。
 10. 天气能力只获得 QWeather 专属 Host 的定向 HTTPS 访问，不因天气功能同步开放通用网页搜索。
+11. 个人提醒与网页搜索是独立的窄能力：提醒不向模型开放通用 `cron` 或任意收件人；搜索
+    不等同于任意网页抓取。两者均只限主人 QQ 私聊，并由代码检查可信通道身份。
+12. 首版不用“安全检测 Agent”作为授权边界。身份、输入、Host、投递目标、频率和副作用
+    必须由确定性代码强制；未来如加入只读审查 Agent，它只能提供风险标记，不能提升权限或
+    代替程序校验。
 
 ======================================================================
 七、开发 TODO
@@ -255,11 +265,38 @@ P2 单项工具能力
     2026-08-06 10:30（Asia/Shanghai）。
 [x] P2A（2026-08-11）：主人私聊状态读取与严格 trip.create proposal 预览；只写
     change_proposals.pending 草稿，不写 trips/location_periods/preferences。
-[ ] P2B：地点消歧、proposal 冻结/hash/revision/TTL、主人确认后的原子 commit、审计和幂等。
+[x] P2B-commit（2026-08-11，本地实现）：proposal ID/Hash/TTL/上下文校验、主人确认后的
+    原子 trip commit、审计、幂等和数据库迁移；仍不做地点消歧或位置切换。
+[x] P2B QQ 私聊端到端回归（2026-08-11）：图片更正后的第二条无锡航班提案已提交为
+    `planned` trip；无 location_period、无天气地点切换，审计记录正确。
+[ ] P2B 维护：将提案预览标题“P2A 预览”改为中性描述。
+[x] P2C-0（2026-08-11）：已完成代码、离线回归、运行时加载及既有 committed proposal 的
+    无写入幂等验收。已拆出 PlanningService 模块与 PlanningRepository，避免 WeatherStore
+    在跨表 effects 出现后膨胀为存储层与策略层混合的大类。
+[ ] P2B-location/P2C：地点消歧、proposal discard 与确认式位置时间线派生。
 [ ] P2C：确认式行程与天气地点时间线联动、跨时区/日期级时间/返程规则。
 [ ] 第三阶段：官方预警、临近降雨、高温规则、去重与冷却。
 [ ] 第四阶段：机票截图解析、行程确认和可选航班状态更新。
-[ ] 网页检索：来源引用、域名与网络权限、提示注入防护。
+[x] P2R0（个人提醒方案）：审计 `qqbot_remind` 的目标/调度边界；不直接将它或通用 `cron`
+    加入模型 allowlist。确认专用封装的存储、投递与回滚方案。
+[x] P2R1（个人提醒，正常路径已真实 QQ 验收）：主人 QQ 私聊专用的 reminder proposal -> commit -> 定时投递；无
+    caller-supplied recipient、无 raw Cron、无任意 agent prompt；支持查看和确认式取消。
+[ ] P2R2（提醒可靠性与验收）：已完成 R2A `cron.remove {id}`/稳定 declaration key、R2B
+    Gateway 回执只读对账、R2C 插件内部固定对账 service（启动扫描、每 60 秒运行）和 R2D 有限重试/退避；仍待
+    R2E 重启/停机/时区边界，再做 R3b 取消、去重、权限负向及真实 QQ 回归。未完成项不得声称
+    “已自动恢复”或“已取消”。详细顺序以 `docs/3_个人提醒.txt` 为准。
+[ ] P2S0（受控搜索方案）：确定搜索供应商、费用上限和 SecretRef；不启用 `web_fetch`、
+    浏览器或任意 HTTP。
+[ ] P2S1（受控搜索）：主人 QQ 私聊专用的 `personal_web_search`；固定 Search API Host、
+    查询长度/频率/结果数限制、来源链接与提示注入处理。
+[ ] P2S2（搜索验收）：私聊正向、群聊/非主人负向、超时/配额/SSRF/提示注入回归；通过前
+    不得声称已联网搜索。
+[ ] E0（个人邮件方案）：选定专用 From 邮箱与邮件供应商；配置 SecretRef；确定收件人
+    allow-list、投递限额、失败处理与 E 系列边界。
+[ ] E1（个人邮件）：主人 QQ 私聊专用的 email proposal -> commit；固定 From、allow-list
+    收件人别名、无 CC/BCC/附件/任意 From 或 To。
+[ ] E2（邮件验收）：正常发送、名单外收件人拒绝、群聊/非主人拒绝、重复 commit 幂等、
+    最小审计与真实收件验收；通过前不得声称可发送邮件。
 [ ] 文件只读：类型、MIME、大小、超时和路径限制。
 [ ] 文件写入：只允许 output/，不覆盖原文件，写入前确认策略。
 [ ] 每项工具独立完成配置、威胁检查和端到端测试后再标记为可用。
@@ -644,3 +681,94 @@ P2A 回滚：从 `tools.alsoAllow` 和群聊 deny 中移除两个 `personal_plan
 重新构建/校验并重启 Gateway；保留 `change_proposals` 表中的 pending 草稿，不手工删除
 数据库文件。下一步进入 P2B：地点消歧、proposal commit 的 TTL/hash/revision/幂等/审计
 和事务提交器，仍不开放搜索或通用写入。
+
+======================================================================
+十五、2026-08-11 天气/个人计划 P2B-commit 开发记录
+======================================================================
+
+本轮目标：在维持主人 QQ 私聊、最小工具白名单和无通用写入权限的前提下，允许主人把已经
+预览的单条出行 proposal 明确确认并提交为正式 `planned` 行程。该能力不包含地点消歧、
+天气地点切换、提醒修改、Cron、文件、命令、搜索或 coder 权限。
+
+本轮实现：
+
+1. `chatbot/plugins/personal-weather/src/index.ts` 新增
+   `personal_planning_change_commit`。输入只有 `proposal_id` 和 `payload_hash`，并复用
+   可信主人 QQ 私聊守卫；群聊和非主人上下文一律拒绝。
+2. `chatbot/plugins/personal-weather/src/planning.ts` 从数据库中的冻结 canonical payload
+   再次解析行程事实，而非相信模型提供的行程 JSON；模型只能引用预览得到的 ID/Hash。
+3. `chatbot/plugins/personal-weather/src/store.ts` 增加 schema v2：`trips` 保存尚未消歧的
+   目的地短文本/行政区。提交使用 `BEGIN IMMEDIATE` 单事务复核 proposal 的 kind、状态、
+   TTL、payload Hash 和请求上下文 Hash，再写入 `planned` trip、proposal committed 状态和
+   最小 audit_log；重复提交同一 ID/Hash 返回同一 trip，不重复写入。
+4. 提交不会创建 `location_periods` 或虚构坐标/QWeather LocationID；即使草稿有
+   `switch_at_arrival` 意图，当前天气地点仍保持既有有效地点，后续 P2B-location 另行
+   消歧并确认。
+5. 插件 manifest 已重建；`tools.alsoAllow` 已精确加入 commit 工具，QQ 群聊 deny 同步
+   加入；插件注册表已刷新并重启 Gateway。运行时 inspect 显示 4 个工具、无诊断；QQ 私聊
+   的 propose -> 明确确认 -> commit 回归仍待主人操作。
+
+离线验证：
+
+- 8 个测试文件、76 项测试通过；覆盖正常 commit、重复提交幂等、Hash 不匹配、提案过期、
+  未创建 location_period、审计记录和 schema v2；
+- `npm run plugin:build` 与 `npm run plugin:validate` 通过；
+- 已在迁移前以 SQLite `VACUUM INTO` 创建私有备份：
+  `state/personal-weather/weather.sqlite.pre-p2b-20260811-2238.bak`（权限 600）；生产库
+  已迁移到 schema v2，核验仍为 0 条行程、0 条 pending 提案、0 条审计记录，权限 600；
+  未新增网络访问或 Cron 变更。
+
+P2B-commit 回滚：先从 `tools.alsoAllow` 及 QQ 群聊 deny 中移除
+`personal_planning_change_commit`，重新构建、刷新插件注册表并重启 Gateway。保留 schema v2
+和已经提交的行程审计记录；不得手工删除生产 SQLite 文件。下一步是 QQ 私聊端到端回归，
+之后再开发受控地点消歧与 discard。
+
+======================================================================
+十六、2026-08-11 P2B QQ 私聊真实验收
+======================================================================
+
+主人先发送“8 月 15 日去无锡，早上 8 点到 10 点飞机”，生成第一条 pending 草稿；该表达被
+安全地解释为 08:00–10:00 的起飞时间窗、无抵达时间。随后主人发送航班图片，模型读取到
+08:25 广州白云 T2 起飞、10:50 无锡硕放抵达、航班 CZ3913，并重新生成第二条 pending 草稿。
+
+主人随后明确命令保存。只读审计确认：第二条 proposal 状态为 `committed`，关联 `trip #1`；
+结构化 trip 为 `planned`、目的地文本“无锡”、行政区“江苏省”、飞机、起飞/抵达均为精确
+时间，行程标题包含 `CZ3913`。`location_periods=0`，天气地点未切换；`audit_log` 有一条
+`trip.committed`。第一条草稿仍为 pending，按 24 小时 TTL 自动过期；没有手工删除数据。
+
+此验收只证明“文字/图片理解 -> pending proposal -> 主人确认 -> hash 匹配的 trip commit”链路。
+它不验收专用机票 OCR、独立航班号字段、地点消歧、自动天气地点切换、提醒修改或航班状态。
+
+======================================================================
+十七、固定开发与验收流程（今后所有模块遵循）
+======================================================================
+
+1. 分析需求：明确目标、边界、风险、权限、数据影响和需要主人确认的选择；不把讨论当需求。
+2. 写方案和 TODO：先在对应模块开发文档顶部登记背景、范围、非目标、实现步骤、验收标准和
+   回滚点；跨模块的长期规则同步写入本备忘录。
+3. 写代码：按 TODO 小步实现；业务策略放在 Service 层，持久化层只处理受限读写和事务原语；
+   不因方便而开放通用工具、直写数据库或扩大权限。
+4. 记录代码：在开发文档写明关键相对路径、数据迁移、权限变化和行为限制；不记录凭证。
+5. 验收：先执行离线测试、构建、插件/配置校验和最小权限检查；再由主人 QQ 实测或由受控
+   运行时完成端到端回归。仅“加载成功”不等于功能验收。
+6. 归档：记录实际测试输入、可验证结果、遗留风险和回滚方式；只有离线与要求的端到端验收
+   都通过后，才把 TODO 标为完成。未验收项必须保留为未完成，不以推测代替结果。
+
+======================================================================
+十八、2026-08-11 当前一致性复核与 P2C-0 记录
+======================================================================
+
+用户提出的两项一致性问题已记录：
+
+1. `src/planning.ts` 的预览标题仍写有“P2A 预览”。这只是文案误导，不影响权限、数据或
+   提交逻辑；当前暂不修改，保留在天气模块 TODO，后续 QQ 回归前改为中性标题。
+2. `isTrustedOwnerPrivateQq` 已实际位于 `src/index.ts` 模块顶层，三处工具 factory 都复用
+   同一函数，并非三份复制粘贴。当前 QQ SDK 字段仍一致，暂不为抽象而抽象；以后 SDK
+   上下文字段升级时应将三处真实上下文一起做负向权限回归。
+
+P2C-0 已实施并验收：`src/planning.ts` 作为规划 Service 模块解释冻结 payload、执行确认/TTL/
+幂等策略；新增 `src/planning-repository.ts` 仅负责 proposal/trip/audit 的受限 CRUD；
+`src/store.ts` 只保留 SQLite 生命周期、读模型和单事务入口。该步没有新增模型工具、联网、
+群聊权限、地点解析、Cron 或数据迁移。离线测试、插件校验及生产库的无写入幂等验收均通过：
+重放既有 committed proposal 返回原行程，trip 与 audit 计数不变。详细记录见
+`docs/2_天气模块的开发.txt` 第八节。

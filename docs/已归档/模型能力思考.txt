@@ -1,0 +1,796 @@
+你的判断基本正确，我会再做一个关键区分：
+
+> **“联网搜索”在实现层仍然是一个 Tool，但在系统架构层更适合被定义为一种横向基础能力，而不是和天气、股票、论文完全同级的业务功能。**
+
+这两个视角并不矛盾。
+
+---
+
+## 1. 你现在这四个“工具”技术上都可以存在
+
+例如：
+
+```text
+personal_weather
+paper_search
+stock_query
+personal_web_search
+```
+
+其中：
+
+```text
+天气 → QWeather
+股票 → 股票数据 API
+论文 → arXiv / Semantic Scholar / Crossref 等
+搜索 → 搜索 API
+```
+
+这是非常合理的。
+
+特别是你现在安全策略比较保守，`personal_web_search` 可以设计成：
+
+```text
+输入：
+query
+
+输出：
+[
+  {
+    title,
+    snippet,
+    url,
+    source,
+    published_at
+  }
+]
+```
+
+并且只有：
+
+```text
+搜索公开网页
+```
+
+而没有：
+
+```text
+任意HTTP
+任意POST
+登录网页
+浏览器控制
+下载文件
+执行JavaScript
+```
+
+那么它是一个相对安全的只读互联网入口。
+
+---
+
+# 2. 但是从架构来看，我不会把 Search 和 Weather 完全看成一类
+
+我会把你的能力分成三层。
+
+### A. 横向基础能力
+
+这些能力可以被大量其他任务使用：
+
+```text
+Web Search
+Calculator
+Current Time
+Date Parser
+可能以后还有：
+Web Fetch
+OCR
+文件解析
+代码执行
+```
+
+它们类似于：
+
+> Agent 的“感官和基础工具”。
+
+例如：
+
+```text
+“今天距离国庆还有多少天？”
+        ↓
+Date/Calculator
+
+“GPT-6最近有什么消息？”
+        ↓
+Web Search
+
+“这个数字除以23是多少？”
+        ↓
+Calculator
+```
+
+它们本身不代表某个业务领域。
+
+---
+
+### B. 领域能力
+
+例如：
+
+```text
+Weather
+Stock
+Paper
+Git Repository
+Calendar
+Flight
+```
+
+它们拥有自己的领域语义。
+
+比如：
+
+```text
+stock.get_kline
+stock.get_quote
+
+weather.get_brief
+weather.get_alert
+
+paper.search
+paper.get_metadata
+
+git.commit
+git.push
+git.status
+```
+
+---
+
+### C. 控制与编排能力
+
+就是我们前面说的：
+
+```text
+Scheduler
+Policy
+Pause/Resume
+Workflow
+Notification
+```
+
+例如：
+
+```text
+“下午4点执行”
+“以后每天执行”
+“暂时不要执行”
+“等A完成之后再执行B”
+```
+
+这些也不属于天气或者股票。
+
+所以你的架构其实可以变成：
+
+```text
+                  Agent
+                    │
+        ┌───────────┼───────────┐
+        ↓           ↓           ↓
+    基础能力      领域能力      控制能力
+        │           │           │
+    Search       Weather      Scheduler
+    Calculator   Stock        Policy
+    Time         Paper        Workflow
+                 Git          Notification
+```
+
+这个分类我认为比单纯把所有东西放在一个 `tools[]` 里面理解要清晰很多。
+
+---
+
+# 3. Search 最特殊的地方就在于它可以“增强其他领域”
+
+你第三点其实非常重要。
+
+比如用户问：
+
+> 苹果最近为什么跌？
+
+这里至少有两个能力：
+
+```text
+stock.get_price("AAPL")
+```
+
+获取准确行情。
+
+同时：
+
+```text
+web_search("AAPL stock drop latest reasons")
+```
+
+获取新闻背景。
+
+然后 Agent 综合：
+
+```text
+行情 API
++
+互联网新闻
++
+模型分析
+```
+
+所以 Search 并不是取代 Stock。
+
+而是：
+
+```text
+Stock = 专业数据源
+Search = 外部信息补充
+```
+
+天气同样如此。
+
+问：
+
+> 广州现在多少度？
+
+应该：
+
+```text
+QWeather
+```
+
+而不是：
+
+```text
+Google/Bing 搜索
+```
+
+但如果问：
+
+> 为什么广州今年夏天特别热？
+
+这已经变成：
+
+```text
+天气数据
++
+Web Search
+```
+
+可能需要搜索气象局、新闻、研究资料。
+
+---
+
+# 4. 论文也是一样
+
+比如：
+
+> 查一下最近 AI Agent Security 的论文。
+
+第一选择应该是：
+
+```text
+paper.search(
+    query="AI Agent Security",
+    date_range=...
+)
+```
+
+因为论文工具返回：
+
+```text
+title
+authors
+abstract
+doi/arxiv_id
+published_at
+venue
+```
+
+结构非常稳定。
+
+但如果用户问：
+
+> 最近大家都在讨论哪些 Agent Security 方向？
+
+可能就是：
+
+```text
+paper.search
++
+web_search
+```
+
+因为除了论文，还有：
+
+```text
+OpenAI / Anthropic 博客
+GitHub项目
+会议动态
+研究者讨论
+安全事件
+```
+
+这时候 Search 又变成一个增强能力。
+
+---
+
+# 5. 所以我很赞同你说的“必备技能、按需加载”
+
+只是我会稍微改一下术语：
+
+> **基础能力（Primitive Capability），按需授权/按需暴露。**
+
+例如 Agent 的 Capability Registry 可能存在：
+
+```json
+{
+  "primitives": [
+    "web.search",
+    "calculator",
+    "time.now"
+  ],
+
+  "domains": [
+    "weather",
+    "stock",
+    "paper",
+    "git"
+  ],
+
+  "control": [
+    "scheduler",
+    "policy",
+    "notification"
+  ]
+}
+```
+
+模型并不需要每次对话都看到所有工具。
+
+例如用户说：
+
+> 128734 × 398 是多少？
+
+Router 可以只暴露：
+
+```text
+calculator
+```
+
+而不是同时把：
+
+```text
+weather
+stock
+paper
+git
+web_search
+scheduler
+...
+```
+
+几十个工具全部塞给模型。
+
+这就是你说的**按需加载**。
+
+---
+
+# 6. 为什么按需加载很重要
+
+不仅仅是安全。
+
+还有三个工程原因。
+
+### 第一，降低 Tool Selection 难度
+
+如果模型同时看到：
+
+```text
+50个工具
+```
+
+工具选择准确率通常会下降。
+
+例如：
+
+```text
+paper_search
+web_search
+web_fetch
+knowledge_search
+database_search
+```
+
+模型可能不知道该选谁。
+
+如果 Router 已经知道：
+
+```text
+这是论文任务
+```
+
+就只暴露：
+
+```text
+paper_search
+web_search
+```
+
+简单很多。
+
+---
+
+### 第二，减少 Prompt / Tool Schema 上下文
+
+每一个 Tool 都有：
+
+```text
+name
+description
+parameters
+schema
+usage constraints
+```
+
+几十个工具本身就可能吃掉大量上下文。
+
+所以成熟系统通常不会：
+
+```text
+所有能力永远全部暴露
+```
+
+而是：
+
+```text
+能力注册表
+      ↓
+任务分类
+      ↓
+选出候选能力
+      ↓
+本轮只加载这些工具
+```
+
+---
+
+### 第三，缩小安全攻击面
+
+例如进行：
+
+```text
+“查一下广州天气”
+```
+
+这一轮根本没必要让 Agent 看见：
+
+```text
+git.push
+database.execute
+file.write
+scheduler.modify
+```
+
+即使发生提示词注入，也没有这些能力可用。
+
+所以：
+
+> Tool Gating 同时是准确率优化、上下文优化和安全机制。
+
+---
+
+# 7. 你可以引入一个非常重要的概念：Fallback
+
+我认为这是你现在设计中值得增加，而且不是“为了补充而补充”的东西。
+
+例如 Weather：
+
+```text
+优先：
+weather.get_brief
+
+失败：
+明确告诉用户天气服务不可用
+```
+
+未必应该自动：
+
+```text
+web_search("广州天气")
+```
+
+因为搜索天气质量无法保证。
+
+但 Paper：
+
+```text
+优先：
+paper.search
+
+如果找不到：
+web.search
+```
+
+Stock：
+
+```text
+实时价格：
+只能 stock API
+
+公司相关新闻：
+web.search
+```
+
+General QA：
+
+```text
+模型知识足够且稳定
+→ 直接回答
+
+信息可能过时 / 不确定
+→ web.search
+```
+
+这实际上就是：
+
+```text
+Capability Routing Policy
+```
+
+例如：
+
+```yaml
+weather:
+  realtime:
+    primary: weather
+    fallback: none
+
+paper:
+  discovery:
+    primary: paper
+    fallback: web_search
+
+stock:
+  market_data:
+    primary: stock
+    fallback: none
+
+  news:
+    primary: web_search
+
+general_qa:
+  fresh_information:
+    primary: web_search
+```
+
+这是非常有价值的一层。
+
+---
+
+# 8. Calculator 和 Search 确实非常相似
+
+你的类比很好。
+
+用户问：
+
+```text
+39182 × 718
+```
+
+模型理论上“会算”。
+
+但为了准确：
+
+```text
+Calculator
+```
+
+用户问：
+
+```text
+某公司最近发生了什么
+```
+
+模型理论上“可能知道”。
+
+但为了时效性：
+
+```text
+Search
+```
+
+它们本质上都是：
+
+> **模型自身能力不足或可靠性不够时使用的外部增强能力。**
+
+所以我会把：
+
+```text
+Calculator
+Web Search
+Current Time
+```
+
+称为 **Agent 基础工具 / Primitive Tools**。
+
+模型默认应该知道：
+
+```text
+涉及精确计算
+→ calculator
+
+涉及当前时间
+→ time
+
+涉及最新信息、不确定事实
+→ search
+```
+
+而不是用户必须明确说：
+
+> “请调用搜索工具。”
+
+---
+
+# 9. 但 Search 和 Calculator 有一个巨大差别
+
+Calculator 输入：
+
+```text
+2 + 2
+```
+
+结果高度可信。
+
+Search 输入：
+
+```text
+GPT最新研究
+```
+
+返回的是：
+
+```text
+不可信外部内容
+```
+
+因此 Search 必须额外经过一层：
+
+```text
+Untrusted Content Boundary
+```
+
+简单表示：
+
+```text
+Calculator
+    ↓
+可信计算结果
+
+Search
+    ↓
+不可信外部资料
+    ↓
+来源过滤 / 注入隔离
+    ↓
+Agent
+```
+
+这意味着 Search 虽然是“基础能力”，但安全级别不能和 Calculator 完全一样。
+
+---
+
+# 10. 对你当前项目，我会这样组织
+
+现在不用把系统搞得特别复杂。
+
+可以先形成：
+
+```text
+kurumi
+│
+├── Primitive Tools
+│   ├── personal_web_search
+│   ├── calculator
+│   └── current_time
+│
+├── Domain Tools
+│   ├── personal_weather
+│   ├── personal_paper
+│   ├── personal_stock
+│   └── personal_git
+│
+└── Control Tools
+    ├── scheduler
+    ├── policy
+    └── notification
+```
+
+以后 Router 决定：
+
+```text
+这轮到底开放哪些。
+```
+
+比如：
+
+> 帮我分析一下英伟达最近一个月为什么涨这么多。
+
+Router：
+
+```text
+Stock
+Web Search
+Calculator
+```
+
+Agent：
+
+```text
+stock.get_kline
+      ↓
+计算涨幅
+      ↓
+web.search相关新闻
+      ↓
+综合解释
+```
+
+而用户说：
+
+> 明天天气怎么样？
+
+Router：
+
+```text
+Weather
+```
+
+甚至根本不需要开放 Web Search。
+
+---
+
+## 最后，我会把你的观点稍微修正成一句话
+
+你现在认为：
+
+> “联网搜索是 Agent 的必备技能。”
+
+我会改成：
+
+> **联网搜索是通用 Agent 的基础感知能力之一，但并不是每个任务都应该实际启用它。**
+
+和 Calculator 一样：
+
+```text
+系统拥有
+≠
+每轮开放
+
+工具可用
+≠
+必须调用
+```
+
+比较理想的系统其实是：
+
+```text
+模型自身知识
+    ↓ 不足
+专业领域API
+    ↓ 不足
+Web Search
+```
+
+而不是所有问题首先搜索。
+
+因为未来你的 kurumi 真正变复杂之后，**重点不会是“有没有 Web Search”**，而是：
+
+> **Agent 能不能根据任务类型、时效性、可靠性和风险，选择最合适的信息源。**
+
+这实际上就是你后面很值得专门设计的一层：**Capability Router / Tool Router**。
+ 

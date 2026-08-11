@@ -9,8 +9,15 @@ Cron 状态和下一次运行时间会变化，应以运行时命令输出为准
 TODO（可随开发更新）：
 
 - [x] P2A 本地垂直切片：状态读取 + typed trip proposal 预览 + 离线权限回归。
-- [ ] P2A QQ 私聊端到端回归（等待 Gateway 在正常 systemd/前台环境恢复）。
-- [ ] P2B：地点消歧、proposal commit/discard 的安全协议、事务、审计和幂等。
+- [x] P2A QQ 私聊端到端回归：状态查询已收到最小化结果（2026-08-11）。
+- [x] P2B-commit 本地切片：Hash/TTL 检查、原子行程提交、审计、幂等与离线回归。
+- [x] P2B QQ 私聊端到端回归：图片更正后的第二条无锡航班提案已由主人确认提交为
+  `planned` trip；没有创建 location_period 或切换天气地点（2026-08-11）。
+- [ ] P2B 维护：将 `buildProposalPreview` 的“P2A 预览”改为中性标题；不影响数据或权限。
+- [x] P2C-0 架构准备：已完成代码、离线回归、运行时加载及对既有已提交提案的无写入
+  幂等验收（2026-08-11）。在新增 trip -> location_period 业务派生前，规划策略已从
+  WeatherStore 拆到 PlanningService 模块，并保留单事务边界。
+- [ ] P2B/P2C 后续：受控地点消歧与 proposal discard；两者均须独立安全协议。
 - [ ] P2C：确认式行程到天气地点时间线的确定性联动。
 - [ ] P2D/P3：偏好驱动调度、官方预警、临近降雨和高温去重。
 - [ ] P4：图片/OCR 与航班能力（独立评审）。
@@ -28,11 +35,13 @@ TODO（可随开发更新）：
 - 以固定 QWeather 专属 Host 查询当前天气、3 日预报、24 小时预报和官方预警；
 - 为当前有效地点生成确定性的中文简报；
 - 在主人私聊中通过 `personal_weather_get_brief` 提供只读查询；
-- P2A 已实现并纳入插件的两个主人私聊专用、可选的规划工具：
+- P2A 已实现两个主人私聊专用、可选的规划工具：
   `personal_planning_state_get` 读取最小化状态摘要，
   `personal_planning_change_propose` 生成严格类型的行程待确认预览；
-- P2A 的提案只写入 `change_proposals` 的 pending 草稿，不提交 `trips`、
-  `location_periods` 或 `notification_preferences`，也不改变天气地点和 Cron；
+- P2B-commit 增加 `personal_planning_change_commit`：只可提交 ID 与内容 Hash 精确匹配、
+  未过期的 `trip_create` 草稿；一次事务写入一条 `planned` trip、提交状态和审计记录；
+- 未消歧的目的地只保存短文本，P2B-commit 不写 `location_periods` 或
+  `notification_preferences`，也不改变天气地点和 Cron；
 - 通过固定 CLI 供运维侧创建每日简报任务；
 - 使用独立 SQLite 保存默认地点、缓存和后续位置/行程功能所需的基础结构。
 
@@ -40,9 +49,9 @@ TODO（可随开发更新）：
 
 - 通用网页、任意 HTTP、Shell、文件写入、数据库直连、sudo 或 Cron 管理；
 - 群聊天气工具；
-- 自动位置切换、行程写入、机票 OCR、航班状态、临近降雨和主动预警；
-- 由模型修改提示词、记忆或数据库来直接保存地点、行程或提醒；P2A 只允许后端
-  生成受限的 pending proposal 草稿。
+- 自动位置切换、机票 OCR、航班状态、临近降雨和主动预警；
+- 由模型修改提示词、记忆或数据库来直接保存地点、行程或提醒；模型只能调用受限后端
+  生成草稿，且提交时只能传回冻结草稿的 ID/Hash，不能提供任意 JSON 或 SQL。
 
 确认的默认地点是广东省广州市天河区。未来地点或行程只能由受限工具在主人明确
 确认后保存；讨论、示例和假设不是事实。
@@ -57,12 +66,15 @@ TODO（可随开发更新）：
   personal_weather_get_brief（可选、只读工具）
   personal_planning_state_get（可选、只读状态摘要）
   personal_planning_change_propose（可选、仅生成 pending 提案）
+  personal_planning_change_commit（可选、仅提交 Hash 匹配的 pending 提案）
        |
        v
   personal-weather 插件
        |-- QWeatherClient：固定 Host、固定路径、只读请求
        |-- WeatherService：缓存与实况/预报/预警组合
-       |-- WeatherStore：独立 SQLite
+       |-- PlanningService（`planning.ts`）：提案策略与事务编排
+       |-- PlanningRepository：规划表的受限 SQL CRUD
+       |-- WeatherStore：独立 SQLite 生命周期、读模型与事务入口
        `-- Formatter：确定性中文文案
 
   运维 Cron -> 固定 CLI（daily-brief）-> QQ 主动投递
@@ -70,15 +82,18 @@ TODO（可随开发更新）：
 相对 OpenClaw 根目录的关键文件：
 
 - `chatbot/plugins/personal-weather/`：插件源码和测试；不要修改 `npm/` 下的安装副本。
-- `chatbot/plugins/personal-weather/src/index.ts`：3 个模型工具的声明、QQ 主人私聊
+- `chatbot/plugins/personal-weather/src/index.ts`：4 个模型工具的声明、QQ 主人私聊
   守卫和运行时适配。
 - `chatbot/plugins/personal-weather/src/planning.ts`：P2A 状态摘要、严格输入校验、
-  canonical facts、预览文本和 pending proposal 编排。
+  canonical facts、预览文本，以及规划 Service 模块中的 frozen-payload commit 策略编排。
+- `chatbot/plugins/personal-weather/src/planning-repository.ts`：P2C-0 新增的规划持久化
+  adapter；只包含 proposals、trips、audit 的受限 SQL CRUD，不解释模型输入或决定 effects。
 - `chatbot/plugins/personal-weather/src/cli.ts`：运维 CLI。
 - `chatbot/plugins/personal-weather/src/qweather-client.ts`：上游请求限制与重试。
 - `chatbot/plugins/personal-weather/src/weather-service.ts`：组件组合与缓存。
-- `chatbot/plugins/personal-weather/src/store.ts`：SQLite schema、读模型和 pending
-  proposal 原子写入。
+- `chatbot/plugins/personal-weather/src/store.ts`：SQLite schema、读模型、pending proposal
+  原子写入，以及受控 `withPlanningTransaction()` 事务入口；不承载 P2B/P2C 的确认策略或
+  跨表业务派生。
 - `chatbot/plugins/personal-weather/src/formatter.ts`：天气简报格式。
 - `chatbot/skills/personal-weather/SKILL.md`：模型的使用规则；Skill 不授予权限。
 - `state/personal-weather/weather.sqlite`：运行数据；不提交、不手改。
@@ -87,7 +102,7 @@ TODO（可随开发更新）：
 三、对外接口与配置
 ======================================================================
 
-当前模型工具分为三类：
+当前源码中的模型工具分为四类：
 
   personal_weather_get_brief
 
@@ -95,13 +110,17 @@ TODO（可随开发更新）：
 
   personal_planning_change_propose
 
+  personal_planning_change_commit
+
 `personal_weather_get_brief` 读取有效地点，返回经验证的实况、今日预报、未来 24
 小时降雨趋势、官方预警、数据时间和来源。`personal_planning_state_get` 只返回
 默认/有效地点、每日简报时刻、已存在的行程摘要和未过期 pending proposal 的最小化
 摘要。`personal_planning_change_propose` 只接受版本化的 `trip.create` 请求，生成
 canonical facts、缺失字段、警告和预览，并写入一条短期 `change_proposals` 草稿。
-三个工具都不能直接修改地点、已确认行程、提醒、提示词、记忆、Cron 或发送消息；
-P2A 尚未提供 commit/discard 工具。
+`personal_planning_change_commit` 只接受同一草稿返回的 `proposal_id` 与 `payload_hash`，
+并复核 pending 状态、TTL 与请求上下文哈希；成功时原子提交一条 `planned` 行程，重试返回
+同一记录而不重复创建。四个工具都不能修改地点、提醒、提示词、记忆、Cron 或发送消息；
+commit 也不执行地点消歧或天气地点切换，discard 尚未提供。
 
 CLI 位于插件构建产物中，支持：
 
@@ -160,10 +179,11 @@ SQLite 使用独立数据库，不修改 `state/openclaw.sqlite`。当前 schema
 - `notification_state`：后续通知去重状态；
 - `api_cache`、`audit_log` 与 `schema_migrations`：缓存、审计和迁移。
 
-位置时间段使用半开区间，并以约束防止已确认记录重叠。只有
-`personal_planning_change_propose` 在主人私聊中通过严格校验后，才可以写入一条
-`change_proposals.status=pending` 草稿；它不会写入业务事实表。其余聊天内容不能写入
-这些表。
+位置时间段使用半开区间，并以约束防止已确认记录重叠。`personal_planning_change_propose`
+在主人私聊中通过严格校验后，只可以写入一条 `change_proposals.status=pending` 草稿。
+随后只有 `personal_planning_change_commit` 在主人明确确认、ID/Hash 匹配、未过期时，才可
+以单个 SQLite 事务写入 `trips`、更新 proposal 为 `committed` 并写入最小审计；其余聊天
+内容不能写入这些表。未消歧目的地只保存短文本，绝不伪造坐标或 QWeather LocationID。
 
 ======================================================================
 五、构建、验证与运维
@@ -224,12 +244,61 @@ Gateway 或上游 API 变更后，应重新进行最小权限审计、离线测�
 P2：地点与最近出行
 
 - P2A（已完成，2026-08-11）：实现最小化状态读取和严格 `trip.create` proposal
-  预览；只写 pending 草稿，不提供 commit/discard；
-- P2B（下一步）：实现地点消歧、proposal 冻结/hash/revision/TTL、主人确认后的原子
-  commit、审计和幂等；
+  预览；只写 pending 草稿；
+- P2B-commit（已完成并 QQ 回归，2026-08-11）：实现 proposal ID/Hash/TTL/上下文哈希
+  复核、主人确认后的原子 trip commit、最小审计和幂等；图片更正后的第二条无锡航班已提交
+  为 `planned` trip，未消歧的目的地仍不切换天气地点；第一条较早的模糊草稿保持 pending，
+  将按 TTL 过期；
+- P2C-0（下一步）：先提取 PlanningService/规划事务边界，再加入跨表 effects；不要把
+  trip -> location_period 推导继续塞进 WeatherStore；
+- P2B-location/P2C（随后）：通过受控地点目录消歧目的地，并将“可切换天气地点”的影响在
+  同一确认协议下派生；proposal discard 也在此阶段完成；
 - 仅在主人明确要求保存时生成 proposal；示例、讨论和“可能出行”不得落库；
 - 到达地点以已确认的到达时刻切换，未知或仅日期级的时间不自动切换；
 - 支持查看、修改、取消和完成行程，并覆盖跨时区、延误和区间边界测试。
+
+======================================================================
+八、P2C-0 开发与验收记录：规划 Service 与事务边界
+======================================================================
+
+背景：`WeatherStore` 已管理 places、trips、location_periods、preferences、proposals、
+notification、audit 与缓存等多张表。P2C 将首次引入“提交 trip 后派生 location_period”的
+跨表业务 effect；若继续把判定与派生写入 Store，会把 SQLite 持久化和领域策略混为一层。
+
+本小步目标：不改变已上线 P2A/P2B 的外部工具、提案格式、行程数据或权限，仅为 P2C 预留
+清晰边界。实现完成后，`planning.ts` 作为 PlanningService 模块承担策略，未为了形式再包一层
+无状态 class：
+
+- `PlanningService` 负责冻结 payload 的解释、确认/过期/幂等策略，以及未来 effects 的
+  决策；
+- `PlanningRepository` 只负责 proposals、trips、audit 的受限 SQL CRUD；
+- `WeatherStore` 保留数据库生命周期、迁移、现有只读查询与受控 `BEGIN IMMEDIATE` 事务入口；
+- Service 必须在同一事务 callback 内组合 repository 写入，未来才能原子完成
+  `trip + location_period + audit`；不得由模型提供 effects、SQL、坐标或 URL。
+
+已实现（2026-08-11）：
+
+- 新增 `src/planning-repository.ts`，将 trip_create proposal 的读取/过期、planned trip 插入、
+  proposal 提交、trip 摘要读取和最小 audit 写入收敛为 persistence-only adapter；
+- `src/planning.ts` 的 `commitPlanningProposal()` 在单事务内负责 UUID/Hash、确认上下文哈希、
+  TTL、幂等、冻结 payload 再解析及最终结果；Repository 不接受模型任意 effects、SQL、坐标或
+  URL；
+- `WeatherStore.withPlanningTransaction()` 只负责 `BEGIN IMMEDIATE`、commit/rollback 与受限
+  Repository 的构造。任一 Service 写入抛错会回滚整个事务；
+- 新增回归：Repository 已插入 trip 后主动抛错，断言没有残留 trip。现有 P2A/P2B 的正常提交、
+  重试幂等、Hash 不匹配与 TTL 过期回归仍通过。
+
+非目标：本步不调用新的 GeoAPI，不新增工具，不改 QQ system prompt，不消歧无锡，不创建
+location_period，不修改已经提交的 `trip #1`，也不开放 discard。
+
+离线与运行时验收：`npm test` 通过 8 个文件、77 项测试；`npm run plugin:validate` 通过；
+`openclaw config validate`、`plugins doctor` 通过；Gateway 重启后 runtime inspect 仍只加载原有
+4 个工具、无 diagnostics，Gateway health 为 OK。上线前创建
+`state/personal-weather/weather.sqlite.pre-p2c0-20260811-2352.bak`（权限 600）；备份只含既有
+1 条 committed 行程和 1 条 pending 草稿。
+
+生产无写入幂等验收：重放既有 committed 提案的 ID/Hash，新的 Service/Repository 路径返回
+`idempotent=true`；前后 trip 数和 `trip.committed` audit 数均未变化。P2C-0 TODO 已完成。
 
 P3：主动天气通知
 
