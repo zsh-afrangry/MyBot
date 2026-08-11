@@ -7,7 +7,7 @@ import {
   mkdirSync,
   openSync,
 } from "node:fs";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -353,6 +353,43 @@ export type EffectivePlace =
       effectiveUntilUtc: null;
     };
 
+export interface TripSummary {
+  id: number;
+  title: string;
+  state: "tentative" | "planned" | "in_progress" | "completed" | "cancelled";
+  originDisplayName: string | null;
+  destinationDisplayName: string | null;
+  transportMode: "unknown" | "air" | "rail" | "car" | "bus" | "ship" | "other";
+  departureEarliestUtc: UnixSeconds | null;
+  departureLatestUtc: UnixSeconds | null;
+  departurePrecision: "unknown" | "date" | "window" | "exact";
+  arrivalEarliestUtc: UnixSeconds | null;
+  arrivalLatestUtc: UnixSeconds | null;
+  arrivalPrecision: "unknown" | "date" | "window" | "exact";
+  weatherMode: "none" | "dual_city" | "switch_at_arrival";
+  revision: number;
+}
+
+export interface PendingProposalSummary {
+  proposalId: string;
+  kind:
+    | "trip_create"
+    | "trip_update"
+    | "trip_cancel"
+    | "location_set"
+    | "location_cancel"
+    | "preferences_update";
+  status: "pending" | "committed" | "cancelled" | "expired" | "rejected";
+  previewText: string;
+  payloadHash: string;
+  expiresAtUtc: UnixSeconds;
+  createdAtUtc: UnixSeconds;
+}
+
+export interface CreatedPendingProposal extends PendingProposalSummary {
+  requestContextHash: string;
+}
+
 export interface CachedApiResponse {
   cacheKey: string;
   endpointKind: string;
@@ -396,6 +433,33 @@ type PreferencesRow = {
   cooldown_minutes: number;
   travel_dual_city_enabled: number;
   revision: number;
+};
+
+type TripSummaryRow = {
+  id: number;
+  title: string;
+  state: TripSummary["state"];
+  origin_display_name: string | null;
+  destination_display_name: string | null;
+  transport_mode: TripSummary["transportMode"];
+  departure_earliest_utc: number | null;
+  departure_latest_utc: number | null;
+  departure_precision: TripSummary["departurePrecision"];
+  arrival_earliest_utc: number | null;
+  arrival_latest_utc: number | null;
+  arrival_precision: TripSummary["arrivalPrecision"];
+  weather_mode: TripSummary["weatherMode"];
+  revision: number;
+};
+
+type PendingProposalRow = {
+  proposal_id: string;
+  kind: PendingProposalSummary["kind"];
+  status: PendingProposalSummary["status"];
+  preview_text: string;
+  payload_hash: string;
+  expires_at_utc: number;
+  created_at_utc: number;
 };
 
 type Migration = {
@@ -616,6 +680,175 @@ export class WeatherStore {
       locationPeriodId: null,
       effectiveFromUtc: null,
       effectiveUntilUtc: null,
+    };
+  }
+
+  getNowUtc(): UnixSeconds {
+    this.#assertOpen();
+    return normalizeUnixSeconds(this.#now());
+  }
+
+  listTripSummaries(
+    subjectId = OWNER_SUBJECT_ID,
+    limit = 10,
+  ): TripSummary[] {
+    assertSubjectId(subjectId);
+    assertListLimit(limit);
+    this.#assertOpen();
+
+    const rows = this.#database.prepare(`
+      SELECT
+        trip.id,
+        trip.title,
+        trip.state,
+        origin.display_name AS origin_display_name,
+        destination.display_name AS destination_display_name,
+        trip.transport_mode,
+        trip.departure_earliest_utc,
+        trip.departure_latest_utc,
+        trip.departure_precision,
+        trip.arrival_earliest_utc,
+        trip.arrival_latest_utc,
+        trip.arrival_precision,
+        trip.weather_mode,
+        trip.revision
+      FROM trips AS trip
+      LEFT JOIN places AS origin ON origin.id = trip.origin_place_id
+      LEFT JOIN places AS destination ON destination.id = trip.destination_place_id
+      WHERE trip.subject_id = ?
+      ORDER BY
+        CASE trip.state
+          WHEN 'in_progress' THEN 0
+          WHEN 'planned' THEN 1
+          WHEN 'tentative' THEN 2
+          ELSE 3
+        END,
+        COALESCE(trip.arrival_earliest_utc, trip.departure_earliest_utc,
+                 ${SQLITE_MAX_INTEGER_LITERAL}) ASC,
+        trip.updated_at_utc DESC
+      LIMIT ?
+    `).all(subjectId, limit) as Array<TripSummaryRow>;
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      state: row.state,
+      originDisplayName: row.origin_display_name,
+      destinationDisplayName: row.destination_display_name,
+      transportMode: row.transport_mode,
+      departureEarliestUtc: row.departure_earliest_utc,
+      departureLatestUtc: row.departure_latest_utc,
+      departurePrecision: row.departure_precision,
+      arrivalEarliestUtc: row.arrival_earliest_utc,
+      arrivalLatestUtc: row.arrival_latest_utc,
+      arrivalPrecision: row.arrival_precision,
+      weatherMode: row.weather_mode,
+      revision: row.revision,
+    }));
+  }
+
+  listPendingProposals(
+    subjectId = OWNER_SUBJECT_ID,
+    atUtc = this.getNowUtc(),
+    limit = 10,
+  ): PendingProposalSummary[] {
+    assertSubjectId(subjectId);
+    assertListLimit(limit);
+    const normalizedAtUtc = normalizeUnixSeconds(atUtc);
+    this.#assertOpen();
+
+    const rows = this.#database.prepare(`
+      SELECT proposal_id, kind, status, preview_text, payload_hash,
+             expires_at_utc, created_at_utc
+      FROM change_proposals
+      WHERE subject_id = ?
+        AND status = 'pending'
+        AND expires_at_utc > ?
+      ORDER BY created_at_utc DESC
+      LIMIT ?
+    `).all(subjectId, normalizedAtUtc, limit) as Array<PendingProposalRow>;
+
+    return rows.map((row) => ({
+      proposalId: row.proposal_id,
+      kind: row.kind,
+      status: row.status,
+      previewText: row.preview_text,
+      payloadHash: row.payload_hash,
+      expiresAtUtc: row.expires_at_utc,
+      createdAtUtc: row.created_at_utc,
+    }));
+  }
+
+  createPendingProposal(input: {
+    kind: "trip_create";
+    payloadJson: string;
+    previewText: string;
+    expiresAtUtc: UnixSeconds;
+  }): CreatedPendingProposal {
+    if (input.kind !== "trip_create") {
+      throw new TypeError("P2A only accepts trip_create proposals");
+    }
+    assertJsonText(input.payloadJson, "payloadJson", 64 * 1024);
+    assertMultilineText(input.previewText, "previewText", 4000);
+
+    let parsedPayload: unknown;
+    try {
+      parsedPayload = JSON.parse(input.payloadJson) as unknown;
+    } catch {
+      throw new TypeError("payloadJson must contain valid JSON");
+    }
+    if (parsedPayload === null || typeof parsedPayload !== "object") {
+      throw new TypeError("payloadJson must contain a JSON object");
+    }
+
+    const createdAtUtc = this.getNowUtc();
+    const expiresAtUtc = normalizeUnixSeconds(input.expiresAtUtc);
+    const maximumLifetime = 7 * 24 * 60 * 60;
+    if (expiresAtUtc <= createdAtUtc || expiresAtUtc > createdAtUtc + maximumLifetime) {
+      throw new TypeError("Proposal expiry must be within seven days");
+    }
+
+    const proposalId = randomUUID();
+    const payloadHash = createHash("sha256").update(input.payloadJson).digest("hex");
+    const requestContextHash = createHash("sha256")
+      .update(`${OWNER_SUBJECT_ID}|${input.kind}|${payloadHash}`)
+      .digest("hex");
+
+    this.#assertOpen();
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      this.#database.prepare(`
+        INSERT INTO change_proposals (
+          proposal_id, kind, subject_id, payload_json, payload_hash, preview_text,
+          request_context_hash, status, expires_at_utc, created_at_utc, updated_at_utc
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)
+      `).run(
+        proposalId,
+        input.kind,
+        OWNER_SUBJECT_ID,
+        input.payloadJson,
+        payloadHash,
+        input.previewText,
+        requestContextHash,
+        expiresAtUtc,
+        createdAtUtc,
+        createdAtUtc,
+      );
+      this.#database.exec("COMMIT");
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+
+    return {
+      proposalId,
+      kind: input.kind,
+      status: "pending",
+      previewText: input.previewText,
+      payloadHash,
+      expiresAtUtc,
+      createdAtUtc,
+      requestContextHash,
     };
   }
 
@@ -870,6 +1103,7 @@ function mapPlace(row: PlaceRow): Place {
     qweatherLocationId: row.qweather_location_id,
     source: row.source,
   };
+
 }
 
 function currentUnixSeconds(): UnixSeconds {
@@ -895,6 +1129,35 @@ function assertSubjectId(subjectId: string): void {
 
 function assertCacheKey(cacheKey: string): void {
   assertShortText(cacheKey, "cacheKey", 500);
+}
+
+function assertListLimit(limit: number): void {
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 50) {
+    throw new TypeError("limit must be an integer between 1 and 50");
+  }
+}
+
+function assertJsonText(value: string, name: string, maximumBytes: number): void {
+  if (typeof value !== "string" || value.length === 0) {
+    throw new TypeError(`${name} must be a non-empty string`);
+  }
+  if (Buffer.byteLength(value, "utf8") > maximumBytes) {
+    throw new TypeError(`${name} exceeds the allowed size`);
+  }
+  if (/\u0000/u.test(value)) {
+    throw new TypeError(`${name} contains an unsafe character`);
+  }
+}
+
+function assertMultilineText(value: string, name: string, maximum: number): void {
+  if (
+    typeof value !== "string" ||
+    value.length < 1 ||
+    value.length > maximum ||
+    /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/u.test(value)
+  ) {
+    throw new TypeError(`${name} must contain safe text between 1 and ${maximum} characters`);
+  }
 }
 
 function assertShortText(value: string, name: string, maximum: number): void {

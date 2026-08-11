@@ -21,7 +21,7 @@ OpenClaw 会刻意忽略工作区 `.env` 内的模型 API Key，避免附件或�
 - `QQBOT_APP_ID`
 - `QQBOT_APP_SECRET`
 - 所选模型提供商对应的 API Key（模板默认 `OPENAI_API_KEY`）
-- 天气服务的 API Key 和专属 Host（插件代码已完成本机验收，但尚未链接安装或授权）
+- 天气服务的 API Key 和专属 Host（插件已链接安装；Key 通过 SecretRef 从环境读取）
 
 QQ 的 `clientSecret` 已配置为从 `QQBOT_APP_SECRET` 环境变量读取，不会写入 `openclaw.json`。QQ AppID 不是密钥，但需要同步写入配置。
 
@@ -39,6 +39,11 @@ openclaw gateway restart
 openclaw channels status --deep
 ```
 
-当前模型与 QQ 文本对话已验收。天气插件只完成了代码与本机真实 API 验收，尚未
-安装、准入模型或创建 Cron，因此仍不属于线上能力。Markdown、图片、语音和文件
-也需按开发备忘录逐项验收；不要把未授权能力描述成已上线。
+当前模型与 QQ 文本对话已验收。天气插件已链接安装，`personal_weather_get_brief`、
+`personal_planning_state_get` 和 `personal_planning_change_propose` 已精确准入主人
+私聊；群聊显式拒绝这三个工具。天气
+模型调用回归和 QQ 主动发送 API 回执已通过；每日 10:30 Cron 已正式启用。
+主人已确认收到第一次主动测试和第二条 Cron 真实简报。手动 Cron 回归为
+`ok/delivered`，每日任务现已启用，将按 Asia/Shanghai 每天 10:30 运行。
+Markdown、图片、语音和文件也需逐项验收；P2A 提案工具只生成 pending 预览，不提交
+行程、不切换地点、不修改提醒或 Cron；不要把未授权能力描述成已上线。

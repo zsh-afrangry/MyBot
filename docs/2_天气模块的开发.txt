@@ -1,761 +1,264 @@
-kurumi 天气模块开发设计
+kurumi 天气模块：开发与维护说明
+
 首次设计：2026-08-06
-最后更新：2026-08-06
-当前状态：Phase 1A/1B 代码与本机冒烟完成；插件未安装/未授权；Cron 任务数为 0
+最近整理：2026-08-11
+
+本文只记录已落地的实现、稳定边界、运维入口和后续工作。实时插件加载状态、
+Cron 状态和下一次运行时间会变化，应以运行时命令输出为准，不能以本文代替审计。
+
+TODO（可随开发更新）：
+
+- [x] P2A 本地垂直切片：状态读取 + typed trip proposal 预览 + 离线权限回归。
+- [ ] P2A QQ 私聊端到端回归（等待 Gateway 在正常 systemd/前台环境恢复）。
+- [ ] P2B：地点消歧、proposal commit/discard 的安全协议、事务、审计和幂等。
+- [ ] P2C：确认式行程到天气地点时间线的确定性联动。
+- [ ] P2D/P3：偏好驱动调度、官方预警、临近降雨和高温去重。
+- [ ] P4：图片/OCR 与航班能力（独立评审）。
 
 ======================================================================
-动态 TODO（每次开发优先更新本节）
+一、状态与范围
 ======================================================================
 
-状态：`[x]` 已完成；`[~]` 进行中；`[ ]` 待处理；`[!]` 阻塞/需主人决定。
+第一阶段（P1）已于 2026-08-06 验收完成：personal-weather 插件、只读天气工具、
+固定 CLI、离线测试、真实 QWeather 查询、QQ 主动投递和每日简报 Cron 均曾完成验收。
+该结论是当日验收记录，不等同于当前 Gateway、插件或 Cron 仍在运行。
 
-P0 背景与安全基线
+当前已实现的能力：
 
-[x] 记录本次开发背景、目标、默认地点、非目标和分阶段计划。
-[x] 确认默认天气地点：广东省广州市天河区。
-[x] 确认广州/无锡行程仅为架构示例，不写入位置或旅行事实。
-[x] 确认主人有“最近出行”需求，但时间、目的地和交通工具尚未确定。
-[x] 确认未来由 kurumi 在主人明确告知后记录行程，不由开发者代写事实。
-[x] 本轮暂不处理群聊天气能力，保持现有群聊策略不变。
-[x] 确认通用 Web、文件工具、exec、sudo、coder 和 condition trigger 不开放。
+- 以固定 QWeather 专属 Host 查询当前天气、3 日预报、24 小时预报和官方预警；
+- 为当前有效地点生成确定性的中文简报；
+- 在主人私聊中通过 `personal_weather_get_brief` 提供只读查询；
+- P2A 已实现并纳入插件的两个主人私聊专用、可选的规划工具：
+  `personal_planning_state_get` 读取最小化状态摘要，
+  `personal_planning_change_propose` 生成严格类型的行程待确认预览；
+- P2A 的提案只写入 `change_proposals` 的 pending 草稿，不提交 `trips`、
+  `location_periods` 或 `notification_preferences`，也不改变天气地点和 Cron；
+- 通过固定 CLI 供运维侧创建每日简报任务；
+- 使用独立 SQLite 保存默认地点、缓存和后续位置/行程功能所需的基础结构。
 
-P1A 只读天气基础
+不属于第一阶段：
 
-[x] 创建 `chatbot/plugins/personal-weather/` 插件工程和构建配置。
-[x] 实现 QWeather Host/认证/路径/超时/响应大小/重试、并发和脱敏边界。
-[x] 2026-08-06 真实冒烟确认现有 API Key 可调用 Weather API v1；未回退 v7。
-[x] 实现 GeoAPI 地点解析与广州天河默认地点初始化。
-[x] 实现 current/daily/hourly/alerts 的统一数据模型和组合查询。
-[x] 实现确定性中文天气简报 formatter。
-[x] 实现 optional 工具 `personal_weather_get_brief`。
-[x] 实现固定 CLI：health、db:init、lookup、brief、daily-brief。
-[x] 建立独立 SQLite Schema、组件缓存及位置/出行后续数据基础。
-
-P1B Skill、测试与本机验证
-
-[x] 创建 `chatbot/skills/personal-weather/SKILL.md` 并通过格式校验。
-[x] 完成成功、空数据、未知枚举、超时、401/403、429、5xx、重定向和大小限制测试。
-[x] 完成 formatter、缓存、SQLite、时间区间、SSRF 与隐私测试。
-[x] npm build/test 通过：7 个测试文件、71 项测试。
-[x] OpenClaw plugin build/validate 通过；inspect 留到链接安装后执行。
-[x] 使用真实 QWeather 完成四组件冒烟及缓存命中验证，全程未输出凭证。
-[x] npm 生产依赖审计为 0 个已知漏洞。
-
-P1C 权限与每日 10:30（必须在 P1A/P1B 验收后）
-
-[ ] 轮换曾出现在聊天中的 QWeather Key，再用于正式运行。
-[ ] 精确准入 `personal_weather_get_brief`，不切换到 coding/full。
-[ ] 更新 AGENTS.md、TOOLS.md、QQ systemPrompt 和开发备忘录的能力声明。
-[ ] QQ 主动文本链路测试，确认腾讯侧允许投递。
-[ ] 以 disabled 状态创建 10:30、Asia/Shanghai 的每日简报 Cron。
-[ ] 手动运行、核对 QQ 文本和 Cron history 后再启用。
-[ ] 记录 Cron job ID、禁用/删除命令、失败告警和回滚步骤。
-
-P2 最近出行（本轮只做数据基础，不自动启用写工具）
-
-[x] Schema 支持独立 change_proposals、未知字段的 tentative trip 和位置半开区间；
-    当前实际 trips/location_periods/change_proposals 均为 0。
-[ ] 实现地点/出行 `proposal -> 主人确认 -> commit` 窄工具。
-[ ] kurumi 仅在主人明确陈述本人行程时生成 proposal；讨论或示例不落库。
-[ ] 支持目的地、交通工具、出发/到达时刻仍未知的 draft 行程。
-[ ] 信息补全后，将位置切换绑定预计/实际到达时刻，不绑定当天 00:00。
-[ ] 支持主人查看、修改、取消、完成和删除最近出行记录。
-[ ] 机票截图、OCR 和航班状态作为独立后续能力。
-
-当前无代码阻塞。正式启用仍需：轮换已出现在聊天中的 QWeather Key、链接安装并
-检查插件、精确授权天气工具、验证 QQ 主动投递，以及以 disabled 状态创建并验收
-10:30 Cron。以上步骤均未在本轮擅自执行。
-
-======================================================================
-本次开发背景与目标
-======================================================================
-
-开发开始前背景：kurumi 已通过 OpenClaw 接入 QQ Bot，当时只验收了文本对话。
-QWeather 的专属 Host 和 API Key 已放入运行环境，但当时尚无天气代码、模型可调用
-天气 Tool 或定时任务。主人希望按照“一个能力、一次授权、一次验收”逐步开发。
-截至本次更新，代码、离线测试和本机真实冒烟已经完成，但模型工具授权和 Cron 仍
-未启用，因此线上 kurumi 的能力声明仍保持“仅对话”。
-
-主人当前确认的稳定天气默认地点为广东省广州市天河区。主人近期可能出行，但
-日期、目的地和交通工具尚未确定；此前广州飞无锡只是设计示例，不能写入记忆、
-JSON 或数据库。未来应由 kurumi 在 QQ 私聊中理解主人明确告知的行程，生成结构化
-proposal，向主人回显并确认后，再由受限工具持久化。
-
-本阶段目标：
-
-1. 建立一个可测试、可审计的原生 personal-weather Tool Plugin；
-2. 只让插件内部访问固定 QWeather Host，不开放通用互联网能力；
-3. 支持广州天河的按需天气简报，并为每天 10:30 主动推送准备固定 CLI；
-4. 建立独立 SQLite 基础，使未来位置时间线和最近出行不依赖系统提示词；
-5. 完成测试和真实 API 冒烟后，才修改提示词、授权 Tool 和创建 Cron；
-6. 保持 QQ 群聊、主机命令、文件工具、sudo、通用 Web 和 coder 能力不变。
-
-本轮明确非目标：群聊天气、通用搜索、临近降雨轮询、自动灾害推送、机票图片
-OCR、航班状态、自动修改长期记忆，以及让模型直接写文件或数据库。
-
-======================================================================
-一、结论
-======================================================================
-
-天气模块已开始开发并完成第一阶段代码，但仍必须分阶段上线。
-
-第一版只实现：
-
-1. 固定 QWeather 专属 Host 的只读天气客户端；
-2. 私聊中按需查询当前有效地点的天气；
-3. QQ 主动文本消息链路测试；
-4. 每天 10:30（Asia/Shanghai）的天气简报。
-
-第一版不同时开放：
-
-- 通用网页搜索、web_fetch、浏览器或任意 HTTP 请求；
-- Shell、exec、sudo、通用文件读写；
-- 让模型直接修改 JSON、系统提示词、MEMORY.md 或数据库；
+- 通用网页、任意 HTTP、Shell、文件写入、数据库直连、sudo 或 Cron 管理；
 - 群聊天气工具；
-- 高频灾害预警、临近降雨、机票截图解析和航班状态。
+- 自动位置切换、行程写入、机票 OCR、航班状态、临近降雨和主动预警；
+- 由模型修改提示词、记忆或数据库来直接保存地点、行程或提醒；P2A 只允许后端
+  生成受限的 pending proposal 草稿。
 
-天气所需联网是“插件内部对一个固定 QWeather Host 发起只读 HTTPS GET”，
-不是给模型开放互联网。两者权限和风险完全不同。
-
-======================================================================
-二、现状审计
-======================================================================
-
-当前真实配置：
-
-- `tools.profile = messaging`，模型可见基线为消息、会话列表/历史/发送和状态。
-  当前群聊 deny 只覆盖了其中部分会话工具，因此这不是绝对最小权限；群聊在
-  正式增加业务工具前应改为仅允许 `session_status`，或全局回归测试后改用 minimal。
-- 文件、主机命令、通用 Web、浏览器、Cron 管理和 coder 工具未对模型开放。
-- `tools.exec.security = deny`。
-- `tools.elevated.enabled = false`，不能使用 sudo/elevated exec。
-- `agents.defaults.sandbox` 未配置，实际 sandbox mode 为 off；当前安全主要依靠
-  工具策略。以后若开放 exec，它会直接运行在宿主机，因此天气模块绝不开放 exec。
-- `heartbeat.every = 0m`，Heartbeat 已关闭。
-- OpenClaw Cron 调度器本身已启用，当前任务数为 0。
-- QQ 插件已经声明 `qqbot_remind` 和 `qqbot_channel_api`，但当前 messaging
-  profile 未显式准入插件工具。上线天气前仍应在群聊 deny 中显式拒绝它们。
-- `memory-core` 当前只涉及记忆扫描/检索，不提供可靠的动态位置写入方案。
-
-结论：现状没有暴露主机、文件、sudo 或开放式网络能力，整体很保守；但不能
-表述为“所有权限完全关闭”，因为基础消息和会话工具仍在。提示词不是权限边界，
-`openclaw.json`、插件实现和 Cron 管理权限才是真正的执行边界。
+确认的默认地点是广东省广州市天河区。未来地点或行程只能由受限工具在主人明确
+确认后保存；讨论、示例和假设不是事实。
 
 ======================================================================
-三、参考文档的三项修正
+二、架构与代码位置
 ======================================================================
 
-参考：`docs/天气设计建议.txt`
+  主人 QQ 私聊
+       |
+       v
+  personal_weather_get_brief（可选、只读工具）
+  personal_planning_state_get（可选、只读状态摘要）
+  personal_planning_change_propose（可选、仅生成 pending 提案）
+       |
+       v
+  personal-weather 插件
+       |-- QWeatherClient：固定 Host、固定路径、只读请求
+       |-- WeatherService：缓存与实况/预报/预警组合
+       |-- WeatherStore：独立 SQLite
+       `-- Formatter：确定性中文文案
 
-1. 本机 OpenClaw 2026.7.1-2 没有 `openclaw automations` 命令；应使用：
+  运维 Cron -> 固定 CLI（daily-brief）-> QQ 主动投递
 
-   openclaw cron add|edit|list|show|run|runs|status
+相对 OpenClaw 根目录的关键文件：
 
-2. 第一版不优先使用 condition trigger。
-
-   本机虽然支持 `--trigger-script`，但官方文档明确警告：启用
-   `cron.triggers.enabled` 后，触发脚本属于无人值守代码执行面，并可能使用
-   所属 Agent 的完整工具策略。当前最小权限阶段应保持该功能关闭。
-
-   高频天气检查以后使用受信任的固定程序配合 command Cron：无新事件时输出
-   `NO_REPLY`，有新事件才输出消息。Cron 会抑制 `NO_REPLY`，不需要反复调用模型。
-
-3. 新天气代码不应以旧的 city-based `/v7/weather/*` 为主，但新版鉴权需实测。
-
-   QWeather 已将相关 v7 城市天气接口标记为将弃用。新模块以经纬度和
-   `/weather/v1/*` 为主；分钟级降水目前仍可作为第二阶段的可选 v7 接口。
-   官方认证兼容表明确列出 API Key 支持 GeoAPI v2 和 API v7，但没有明确列出
-   Weather API v1，而 v1 示例使用 JWT。因此客户端先隔离认证策略并用现有
-   `X-QW-Api-Key` 做冒烟；若 v1 返回 401/403，必须让主人创建 JWT 或确认套餐，
-   不能悄悄回退 v7，也不能把该兼容性写成已验收。
-
-======================================================================
-四、建议架构
-======================================================================
-
-  QQ 私聊
-     |
-     v
-  kurumi Agent
-     |  只能看到显式准入的窄工具
-     v
-  personal-weather 原生 Tool Plugin
-     |-- QWeatherClient：固定 Host、固定路径、只读 GET
-     |-- WeatherService：组合实况、日预报、小时预报、官方预警
-     |-- LocationService：读取有效位置；后续受控修改位置时间线
-     |-- RuleEngine：后续处理预警、降雨、高温、去重、冷却
-     |-- Formatter：确定性生成中文天气消息和数据来源
-     v
-  独立 SQLite + 小型缓存
-
-  OpenClaw Cron
-     |-- 每天 10:30：生成并向 QQ 私聊投递每日简报
-     |-- 后续每 10 分钟：无 LLM 检查官方预警
-     |-- 后续每小时：无 LLM 检查高温与小时趋势
-     v
-  QQBot announce -> qqbot:c2c:<OWNER_OPENID>
-
-系统提示词只定义边界；Skill 告诉模型何时、怎样使用工具；插件 Tool 执行查询；
-SQLite 保存结构化事实；Cron 负责时间；规则引擎负责去重。模型不承担可靠计时、
-数据库事务或预警判定。
+- `chatbot/plugins/personal-weather/`：插件源码和测试；不要修改 `npm/` 下的安装副本。
+- `chatbot/plugins/personal-weather/src/index.ts`：3 个模型工具的声明、QQ 主人私聊
+  守卫和运行时适配。
+- `chatbot/plugins/personal-weather/src/planning.ts`：P2A 状态摘要、严格输入校验、
+  canonical facts、预览文本和 pending proposal 编排。
+- `chatbot/plugins/personal-weather/src/cli.ts`：运维 CLI。
+- `chatbot/plugins/personal-weather/src/qweather-client.ts`：上游请求限制与重试。
+- `chatbot/plugins/personal-weather/src/weather-service.ts`：组件组合与缓存。
+- `chatbot/plugins/personal-weather/src/store.ts`：SQLite schema、读模型和 pending
+  proposal 原子写入。
+- `chatbot/plugins/personal-weather/src/formatter.ts`：天气简报格式。
+- `chatbot/skills/personal-weather/SKILL.md`：模型的使用规则；Skill 不授予权限。
+- `state/personal-weather/weather.sqlite`：运行数据；不提交、不手改。
 
 ======================================================================
-五、建议项目相对路径
+三、对外接口与配置
 ======================================================================
 
-相对 OpenClaw 根目录：
+当前模型工具分为三类：
 
-  chatbot/plugins/personal-weather/
-      天气原生插件的开发源码。不要直接修改 npm/ 下已安装插件代码。
+  personal_weather_get_brief
 
-  chatbot/plugins/personal-weather/openclaw.plugin.json
-      声明插件 ID、配置 Schema、可提供的工具和 optional 元数据。
+  personal_planning_state_get
 
-  chatbot/plugins/personal-weather/package.json
-      TypeScript ESM 插件包、构建和测试命令。
+  personal_planning_change_propose
 
-  chatbot/plugins/personal-weather/src/qweather-client.ts
-      QWeather HTTPS 客户端、Host/路径限制、认证、SSRF、超时、并发、重试和响应上限。
+`personal_weather_get_brief` 读取有效地点，返回经验证的实况、今日预报、未来 24
+小时降雨趋势、官方预警、数据时间和来源。`personal_planning_state_get` 只返回
+默认/有效地点、每日简报时刻、已存在的行程摘要和未过期 pending proposal 的最小化
+摘要。`personal_planning_change_propose` 只接受版本化的 `trip.create` 请求，生成
+canonical facts、缺失字段、警告和预览，并写入一条短期 `change_proposals` 草稿。
+三个工具都不能直接修改地点、已确认行程、提醒、提示词、记忆、Cron 或发送消息；
+P2A 尚未提供 commit/discard 工具。
 
-  chatbot/plugins/personal-weather/src/parsers.ts
-      将 unknown 网络 JSON 校验并归一化为 QWeather v1/GeoAPI 类型。
+CLI 位于插件构建产物中，支持：
 
-  chatbot/plugins/personal-weather/src/weather-service.ts
-      解析有效地点，使用独立缓存聚合实况、每日/小时预报和预警。
+  health
+  db:init
+  lookup --location <区县> --adm <城市>
+  brief [--json]
+  daily-brief
 
-  chatbot/plugins/personal-weather/src/store.ts
-      独立 SQLite、默认地点、位置时间线、出行基础、proposal、缓存和迁移。
+`health` 只校验配置和本地数据库，不发起网络请求；`lookup` 和 `brief` 会调用
+QWeather；`daily-brief` 输出用于主动消息的简报文本。
 
-  chatbot/plugins/personal-weather/src/weather-model.ts
-      模型可见的统一 WeatherBrief 业务数据结构。
-
-  chatbot/plugins/personal-weather/src/formatter.ts
-      无 LLM 的每日简报和突发提醒模板。
-
-  chatbot/plugins/personal-weather/src/cli.ts
-      供 operator 创建的 command Cron 使用的固定 CLI，不向模型暴露 Shell。
-
-  chatbot/plugins/personal-weather/src/*.test.ts
-      单元、响应夹具、时间切换、缓存、SSRF 和失败处理测试。
-
-  chatbot/plugins/personal-weather/src/rule-engine.ts
-      尚未创建；后续预警、降雨、高温规则、事件去重和冷却放在这里。
-
-  chatbot/skills/personal-weather/SKILL.md
-      模型使用天气/位置工具的说明；Skill 本身不授予任何权限。
-
-  state/personal-weather/weather.sqlite
-      天气模块自己的结构化状态，权限 600。不得直接修改
-      `state/openclaw.sqlite` 或 Agent 的 SQLite。
-
-  docs/2_天气模块的开发.txt
-      本设计、开发进度、测试结果、Cron ID、回滚和未解决问题。
-
-======================================================================
-六、QWeather 客户端
-======================================================================
-
-凭证只从环境变量读取：
+运行配置需要：
 
   QWEATHER_API_HOST
   QWEATHER_API_KEY
 
-鉴权验收状态（2026-08-06）：官方兼容表没有明确列出 Weather API v1 的 API Key
-兼容性，但本机专属 Host 已用 `X-QW-Api-Key` 成功读取 current、daily、hourly 和
-alerts，因此当前账号/Host 可用。第一版只实现 API Key。若未来必须改用 JWT，
-应使用私钥按官方规则生成短期 Token，不能把会过期的静态 Bearer 字符串当长期
-配置，也不能静默回退 v7。
+API Key 必须通过环境变量或插件 SecretRef 提供，不能进入源码、`openclaw.json`、
+提示词、聊天记录、文档、命令行参数或日志。配置与凭证的具体位置见
+`chatbot/BOT_SETUP.md`。
 
-安全要求：
+当前客户端使用以下固定接口：
 
-1. URL 只能由客户端从 `https://${QWEATHER_API_HOST}` 和固定路径内部派生；配置
-   类型不接受第二个 baseUrl。
-2. Host 必须是配置中的完整专属 Host；拒绝用户传入 URL、协议、端口和路径。
-3. API Key 只通过 `X-QW-Api-Key` 请求头发送，不进入 URL、日志、提示词或工具结果。
-4. 只允许 GET；`maxRedirects=0`，禁止自动跟随重定向。
-5. 使用 OpenClaw 默认严格 SSRF Guard 和 DNS pinning；不添加会放宽私网检查的
-   Host/Origin 信任 policy，不使用环境代理，不允许私网或 metadata 地址。
-6. 使用绝对超时、总预算、响应体 1 MiB 上限、全局并发上限 4 和本地缓存。
-7. 对 JSON 做运行时校验，未知枚举保留，不能导致程序崩溃。
-8. 关闭请求 capture；日志和稳定错误不含 Host、地点请求、原始 body 或凭证。
-9. 401/403 不重试；429、网络错误和指定 5xx 有上限重试；SSRF 拦截不重试。
-10. 每条输出记录 `fetchedAt` 和 fresh/cached-fresh，过期数据不伪装成实时数据。
-11. 按响应中的 `attributions`/来源要求展示和风天气归因。
-12. 上线前轮换曾在聊天中出现过的 QWeather Key。
+- `GET /geo/v2/city/lookup`
+- `GET /weather/v1/current/{lat}/{lon}`
+- `GET /weather/v1/daily/{lat}/{lon}`
+- `GET /weather/v1/hourly/{lat}/{lon}`
+- `GET /weatheralert/v1/current/{lat}/{lon}`
 
-建议接口：
-
-  地点解析
-    GET /geo/v2/city/lookup
-    参数：location、adm、range=cn、number、lang=zh
-    保存：经纬度、行政区、IANA 时区和可选 LocationID。
-
-  当前天气
-    GET /weather/v1/current/{lat}/{lon}?localTime=true&lang=zh
-
-  每日预报
-    GET /weather/v1/daily/{lat}/{lon}?days=3&localTime=true&lang=zh
-
-  小时预报
-    GET /weather/v1/hourly/{lat}/{lon}?hours=24&localTime=true&lang=zh
-
-  官方预警
-    GET /weatheralert/v1/current/{lat}/{lon}?localTime=true&lang=zh
-
-  可选临近降雨（第二/三阶段）
-    GET /v7/minutely/5m?location={lon},{lat}&lang=zh
-
-新模块以经纬度作为天气查询主键。LocationID 只用于地点解析、显示或兼容，
-不能把整个 GeoAPI 城市库永久镜像到本地；只保存主人实际选择的少量地点。
+天气查询以经纬度为主键。地点解析得到的 LocationID 仅用于显示或兼容，不能用来
+镜像整个城市库。当前实现使用 API Key；2026-08-06 的真实查询证明当时的账号、
+Host 与 Key 能访问上述 Weather API v1 接口。若将来鉴权或套餐变化，应显式验证或
+迁移到官方 JWT 方案，不得静默回退到旧接口。
 
 ======================================================================
-七、模型可见工具
+四、安全与数据规则
 ======================================================================
 
-工具名称应唯一、窄且标记为 optional。
+插件是定向数据访问，不是向模型开放互联网。实现和配置必须同时保持以下边界：
 
-第一阶段只开放：
+- URL 只由配置的专属 HTTPS Host 和代码内固定路径派生；不接收用户 URL、协议、
+  端口或路径。
+- 仅允许 GET；不跟随重定向；不使用代理或会放宽私网检查的 Host/Origin 信任策略。
+- API Key 仅置于 `X-QW-Api-Key` 请求头；不得输出原始上游响应、Host 或凭证。
+- 请求有超时、总预算、响应体上限、全局并发上限、有限重试与本地缓存；401/403 和
+  SSRF 拦截不重试。
+- 网络 JSON 必须在运行时校验。未知枚举和部分组件不可用时应以稳定结果返回，
+  不得伪造实时数据或“无预警”。
+- 所有展示应保留 QWeather 归因和数据时间；缓存数据必须标示缓存状态。
+- 只允许可信主人私聊使用天气工具；身份与私聊状态只能来自可信频道元数据。
 
-  personal_weather_get_brief
-      读取当前有效地点，返回实况、今日高低温、未来 24 小时降水趋势、官方预警、
-      数据更新时间和来源。它不接收任意 URL，也不能修改位置或文件。
+SQLite 使用独立数据库，不修改 `state/openclaw.sqlite`。当前 schema 包含：
 
-第二阶段再增加：
+- `places` 与 `notification_preferences`：默认地点和通知偏好；
+- `location_periods`、`trips`、`change_proposals`：为后续确认式地点/行程写入预留；
+- `notification_state`：后续通知去重状态；
+- `api_cache`、`audit_log` 与 `schema_migrations`：缓存、审计和迁移。
 
-  personal_weather_lookup_place
-      只读地点解析，返回少量候选供主人消歧。
-
-  personal_weather_location_get_effective
-      读取某个时间点的有效地点。
-
-  personal_weather_location_propose
-      根据明确的当前位置/旅行陈述生成结构化修改预览，不落库。
-
-  personal_weather_location_commit
-      仅在可信主人私聊中，用 proposal ID 提交已确认的位置时间线变更。
-
-  personal_weather_location_cancel
-      取消指定的未来位置或行程，返回实际变更结果。
-
-模型可以生成工具参数，但不能直接获得数据库连接、通用 write/edit、Shell 或
-任意 HTTP 工具。位置写工具必须校验发送者元数据、私聊场景、时间格式、地点
-候选、时间段重叠和 proposal ID，并通过事务和审计落库。
-
-启用工具时保持最小授权：
-
-- 保留 `minimal` 或 `messaging` profile；
-- 只用 `tools.alsoAllow` 加入精确工具名，不切换为 coding/full；
-- 群聊优先使用只含 `session_status` 的 allowlist；若暂不改为 allowlist，则显式
-  deny `message`、`sessions_list`、`sessions_history`、`sessions_send`、
-  `personal_weather_*`、`qqbot_remind` 和 `qqbot_channel_api`；
-- 位置写工具第一版不开放；
-- 每个 Cron 再使用 `--tools` 收窄当次 Agent 工具，但它不能替代全局策略。
+位置时间段使用半开区间，并以约束防止已确认记录重叠。只有
+`personal_planning_change_propose` 在主人私聊中通过严格校验后，才可以写入一条
+`change_proposals.status=pending` 草稿；它不会写入业务事实表。其余聊天内容不能写入
+这些表。
 
 ======================================================================
-八、SQLite 数据结构
+五、构建、验证与运维
 ======================================================================
 
-单机、单主人场景使用一个独立 SQLite 足够，不需要 MySQL、MongoDB 或向量库。
-向量数据库适合语义检索，不适合有效时间范围、唯一约束、事务和通知去重。
+在 `chatbot/plugins/personal-weather/` 中执行：
 
-当前已经创建 v1 Schema：
+  npm run build
+  npm test
+  npm run plugin:build
+  npm run plugin:validate
 
-1. `places`
+源码、依赖或插件 manifest 变更后，应先完成以上验证，再由运维人员重新安装/链接
+插件，并检查 OpenClaw 的插件加载和工具准入。不要因插件存在就假定工具对模型可见；
+最终权限由 OpenClaw 配置和当前会话策略决定。
 
-   保存少量实际使用的行政区/城市：展示名、国家、省、市、区、行政区中心经纬度、
-   IANA 时区、精度、QWeather LocationID、来源和时间戳。第一条 seed 仅为主人已
-   确认的默认地点广东省广州市天河区：LocationID `101280109`、纬度 `23.1356`、
-   经度 `113.3354`、`Asia/Shanghai`。不保存家庭住址或精确 GPS。
+每日简报必须由固定的 `daily-brief` CLI 运行，不能让模型执行 Shell。创建或修改
+任务时使用 `openclaw cron`，并固定：
 
-2. `notification_preferences`
+- `30 10 * * *` 与 `Asia/Shanghai`；
+- 隔离会话、精确 argv、固定 cwd、超时和输出上限；
+- QQ 私聊目标由受控配置提供，文档中不记录真实 OpenID；
+- 仅向任务本身所需的工具授权，且任务失败必须保留为可见的 run error。
 
-   以 `subject_id=owner` 保存 `default_place_id`、每日是否启用、分钟数 `630`
-   （10:30）、固定/有效地点时区模式、安静时段、官方预警/雨/高温开关、阈值、
-   冷却和旅行日双城偏好。当前只初始化默认值，没有启用 Cron。
+日常审计和回滚应先列出当前任务确认实际 ID，再操作：
 
-3. `location_periods`
+  openclaw cron list
+  openclaw cron runs <job-id>
+  openclaw cron disable <job-id>
+  openclaw cron rm <job-id>
 
-   这是“已确认的天气地点覆盖时间线”，不是模型草稿。字段包含 place、
-   `[effective_from_utc, effective_until_utc)` 半开区间、basis、关联 trip、
-   record_state、脱敏来源摘要和 revision。应用查询和数据库 trigger 双重禁止
-   confirmed 区间重叠，允许首尾相接；没有覆盖时自动回退 default_place。
-
-4. `trips`
-
-   保存主人已经确认要记录的真实出行。`state=tentative` 表示计划真实存在但细节
-   待定，不表示模型推断。目的地、交通工具、日期/时间窗均可未知；未知字段为
-   NULL/unknown，`weather_mode=none`，不会切换地点或自动创建提醒。以后支持
-   planned/in_progress/completed/cancelled、出发/到达时间窗、精度、车次/航班号的
-   非敏感部分、next_review_at 和 revision。禁止保存 PNR、票号和证件号。
-
-5. `change_proposals`
-
-   在模型理解与业务事实之间建立硬边界。proposal 冻结 payload_json/hash、预览、
-   base revision、过期时间和状态；commit 将来只能接收 proposal_id，不能顺便改
-   payload。讨论/示例不生成 proposal；明确保存意图可生成 proposal；主人确认后
-   才在固定事务中写 trip/location/preferences。重复 commit 必须幂等。
-
-6. `notification_state`
-
-   为后续官方预警、降雨、高温和每日消息保存 event key、payload hash、首次/末次
-   观察、投递、冷却和状态，用于去重；当前没有主动预警任务。
-
-7. `api_cache`
-
-   保存不含凭证的 QWeather 原始 JSON、endpoint、place、metadata tag、SHA-256、
-   fetched/expires 和字节数，上限 1 MiB。当前 TTL：current 10 分钟、alerts 5
-   分钟、hourly 30 分钟、daily 1 小时；daily cache key 还含地点当地日期，防止
-   跨日误用。真实冒烟已验证第二次查询显示 `cached-fresh` 且无需联网。
-
-8. `audit_log` 与 `schema_migrations`
-
-   audit 只保存动作、实体、proposal 和脱敏变更摘要，不复制完整私聊；迁移表与
-   `PRAGMA user_version` 管理版本。目前 Schema version=1。
-
-所有数据库时间存 UTC Unix 秒，输入/展示使用地点 IANA 时区。启用 foreign_keys、
-WAL、busy_timeout、secure_delete；状态目录权限 700，数据库权限 600，并拒绝目录
-或数据库符号链接。当前生产状态库中 places=1、preferences=1，trips=0、
-location_periods=0、change_proposals=0。SQLite 足够，不需要 MySQL、MongoDB 或
-向量数据库。
+插件回滚顺序：先从精确工具 allowlist 移除天气工具，再禁用或卸载插件并重启
+Gateway。卸载 link 插件不会删除源码，也不会自动清理工具 allowlist。
 
 ======================================================================
-九、每天 10:30 简报
+六、已完成验收（历史记录）
 ======================================================================
 
-执行流程：
+2026-08-06 已完成并记录的验证：
 
-1. 获取可信系统时间；
-2. 从 location_periods 查询当前有效地点；
-3. 查询 current、daily、hourly 和 alerts；
-4. 检查数据更新时间和缓存；
-5. 确定性生成中文简报；
-6. 附天气来源和查询时间；
-7. 通过 QQBot announce 发送给主人私聊；
-8. 记录投递结果，失败时按策略告警。
+- TypeScript 构建、插件构建/校验和 8 个测试文件、74 项测试通过；
+- 成功覆盖正常响应、空数据、未知枚举、超时、401/403、429、5xx、重定向、响应大小、
+  缓存、SQLite、时间区间和 SSRF/隐私边界；
+- 使用当时有效的专属 Host 与 API Key 查询 GeoAPI、实况、每日、小时和官方预警，
+  随后的查询命中 fresh cache；
+- 插件链接安装、runtime inspect、plugins doctor、精确工具准入和一次真实模型调用
+  已通过；
+- QQ 主动文本投递与 disabled Cron 手动运行均获主人确认，之后每日简报任务曾启用。
 
-推荐第一版使用 operator 创建的 command Cron，并使用精确 argv 调用固定程序。
-这样不调用 LLM，也不向模型开放 exec。command Cron 本身仍是在宿主机运行的可信
-代码，因此必须先审计程序，使用固定绝对路径、固定 cwd、输出上限和超时。
-
-计划命令形态（仅设计示例，当前未执行）：
-
-  openclaw cron add \
-    --name "kurumi 每日天气简报" \
-    --cron "30 10 * * *" \
-    --tz "Asia/Shanghai" \
-    --exact \
-    --command-argv '["node","dist/cli.js","daily-brief"]' \
-    --command-cwd "/home/afrangry/.openclaw/chatbot/plugins/personal-weather" \
-    --timeout-seconds 60 \
-    --output-max-bytes 65536 \
-    --announce \
-    --channel qqbot \
-    --to "qqbot:c2c:<OWNER_OPENID>" \
-    --account default
-
-不得把真实 OpenID 写入本设计或系统提示词。真实 Cron 配置会由 OpenClaw 自己保存
-在共享 SQLite 中，使用 CLI 管理，不手改 `state/openclaw.sqlite`。
-
-每日简报示例格式：
-
-  早上好，主人～
-  广州天河：当前 29°C，体感 32°C；今天 27～35°C。
-  下午有较高降雨概率，出门建议带伞；当前无官方气象预警。
-  数据：和风天气，查询于 10:30。
-
-真实字段必须完全来自工具结果，不得让模型凭常识补写实时天气。
+这些结果不能证明当前凭证、服务、QQ 连通性或 Cron 仍然正常。任何配置、依赖、
+Gateway 或上游 API 变更后，应重新进行最小权限审计、离线测试、真实查询和私聊投递
+回归。
 
 ======================================================================
-十、主动预警与去重（后续阶段）
+七、后续工作
 ======================================================================
 
-建议频率应服从 QWeather 官方缓存建议和实际套餐：
+P2：地点与最近出行
 
-- 官方预警：每 10 分钟检查一次；
-- 临近降雨：中国支持区域内，06:00～23:00 每 10 分钟检查一次；
-- 高温和小时趋势：每 60 分钟最多刷新一次；
-- 每日简报：固定 10:30 单独运行。
+- P2A（已完成，2026-08-11）：实现最小化状态读取和严格 `trip.create` proposal
+  预览；只写 pending 草稿，不提供 commit/discard；
+- P2B（下一步）：实现地点消歧、proposal 冻结/hash/revision/TTL、主人确认后的原子
+  commit、审计和幂等；
+- 仅在主人明确要求保存时生成 proposal；示例、讨论和“可能出行”不得落库；
+- 到达地点以已确认的到达时刻切换，未知或仅日期级的时间不自动切换；
+- 支持查看、修改、取消和完成行程，并覆盖跨时区、延误和区间边界测试。
 
-高频检查必须是无 LLM 的确定性程序。有新事件才输出消息；没有事件输出
-`NO_REPLY`，避免 QQ 刷屏和 Token 浪费。
+P3：主动天气通知
 
-官方预警去重键至少包含：
+- 实现官方预警、临近降雨和高温规则；高频检查保持无 LLM 的确定性程序；
+- 使用事件键、冷却时间和投递状态去重；无新消息时不向 QQ 发送内容；
+- 在启用前确认安静时段、可突破安静时段的预警类型、个人高温阈值和实际套餐限制。
 
-  alert.id
-  messageType.code
-  issuedTime
-  supersedes
-  metadata.tag
+P4：图片与航班
 
-规则：新预警发送；同一预警 update 只发送一次更新；cancel 可发送一次解除；
-无变化不发送。未知预警类型保留原文，不因枚举表未更新而丢弃。
-
-临近降雨：从“无雨”变为“未来两小时有雨”时发送；同一轮降雨不重复；强度
-明显升级可再次发送；无升级时遵守冷却时间。
-
-高温阈值属于个人通知偏好，不能冒充政府法定预警。官方高温预警仍以 alert
-接口为准。
+- 先单独验收 QQ 图片输入、图像理解/OCR 与隐私保留策略；
+- 机票解析只能生成 proposal，主人确认后才能提交；
+- 如需航班状态 API，单独评估网络权限、数据来源和延误更新规则。
 
 ======================================================================
-十一、旅行、地点切换与机票
+八、参考资料
 ======================================================================
 
-动态位置不写入 SOUL.md、USER.md、MEMORY.md 或 QQ systemPrompt，也不需要在
-到达当天让模型“修改记忆”。每次任务按当前时间查询有效位置，时间到后自然切换。
+QWeather：
 
-广州飞往无锡、8 月 16 日只是架构示例，不是主人的事实，当前数据库和记忆中均未
-写入该行程。主人真实的“最近出行”目前只有需求背景：可能出行，但目的地、日期、
-时间和交通工具都尚未确定；由于主人没有要求 kurumi 保存一条具体计划，本轮也未
-创建 tentative trip。
-
-以后处理类似广州飞往无锡的真实行程时：
-
-- 如果这是实际行程，必须由主人确认准确的出发/预计到达时间和目的地区域；
-- 常规天气地点建议在“预计到达目的地”时切换，不在 8 月 16 日 00:00 切换；
-- 10:30 仍在广州时，常规简报仍使用广州；
-- 可额外启用旅行日双城简报：出发前给广州天气，同时给预计到达时段的无锡天气；
-- 没有航班状态 API 时，机器人不知道延误，只能按已确认时间或主人手动修订；
-- 以后接入航班状态工具，优先使用 actual_arrival，其次 estimated_arrival，最后
-  scheduled_arrival 更新位置生效时刻。
-
-机票截图不是天气第一版能力。以后流程应为：
-
-1. 验证 QQ 图片接收和图像理解/OCR；
-2. 解析为 proposed trip，不直接落为 confirmed；
-3. 向主人回显航班号、出发/到达机场、当地日期、时区和预计到达时间；
-4. 主人明确确认后调用位置/行程 commit 工具；
-5. 原图按隐私策略删除或短期保存，数据库只留必要的脱敏摘要。
-
-主人只是讨论、举例或询问某城市时，绝不能修改位置。只有明确表达“我现在在”、
-“我将在某时到达”并且明确要求记录时，才可生成 proposal；只有确认 proposal 后
-才允许写入事实。主人可确认保存一条目的地/日期/交通方式仍未知的 tentative trip，
-但它不会改变天气地点。位置切换必须另有已确认且足够精确的到达时刻。
-
-======================================================================
-十二、提示词与 Skill 的修改时机
-======================================================================
-
-在天气工具通过单元测试、权限审计和端到端测试之前，现有提示词继续声明天气未
-启用。不能先改成“有天气能力”再补代码。
-
-上线第一阶段后，将能力描述修改为：
-
-  你不具备开放式互联网搜索能力。
-  你只能调用系统明确提供并列入允许名单的工具。
-  当前允许的外部数据能力只有只读天气查询。
-  天气数据必须来自 personal_weather_get_brief 的实际返回，不得凭记忆或猜测。
-  你不能使用 Shell、sudo、任意 HTTP、任意文件读写或未提供的工具。
-  工具失败或数据过期时必须明确说明。
-
-第二阶段位置工具上线后再加入：
-
-  动态地点只通过受限的位置 proposal/commit 工具维护，不修改系统提示词、
-  USER.md 或 MEMORY.md。讨论和假设不能触发位置写入；歧义必须确认。
-
-同步修改路径：
-
-  chatbot/AGENTS.md
-  chatbot/TOOLS.md
-  chatbot/skills/personal-weather/SKILL.md
-  openclaw.json -> channels.qqbot.systemPrompt
-  openclaw.json -> tools.alsoAllow / group deny / plugins 配置
-  docs/1_bot基础功能开发备忘录.txt
-  docs/2_天气模块的开发.txt
-
-======================================================================
-十三、分阶段开发与验收
-======================================================================
-
-Phase 0：确认与安全基线
-
-[x] 核对当前权限、Cron、QQ 插件和 OpenClaw 本机版本。
-[x] 确认当前 Cron 任务数为 0。
-[x] 核对 QWeather 官方 Host、认证和新 v1 API，并完成真实四组件冒烟。
-[ ] 将主 Agent 工具 profile 收紧为 minimal 并验证 QQ，或先收紧群聊工具白名单。
-[x] 主人确认广州/无锡只是示例，不写入事实。
-[x] 主人确认默认地点为广东省广州市天河区，使用区级行政中心坐标。
-[x] 主人确认每日 10:30 和 Asia/Shanghai。
-[ ] 轮换已在聊天中出现过的 QWeather Key。
-
-Phase 1A：只读客户端和工具
-
-[x] 创建 personal-weather 插件骨架和测试。
-[x] 实现 Host/路径/认证/SSRF/超时/大小/并发/重试/缓存限制。
-[x] 实现地点初始化、current/daily/hourly/alerts 组合查询。
-[x] 实现 personal_weather_get_brief，保持 optional。
-[x] 使用响应夹具测试正常、空数据、未知枚举、401、403、429、5xx 和超时。
-[x] 真实 QWeather 冒烟和缓存复用通过，不在输出和日志显示 Key。
-
-Phase 1B：QQ 和每日简报
-
-[ ] 向主人发送一条最简单的 QQ 主动文本测试，并确认腾讯侧可接收。
-[ ] 确定性每日简报 dry-run。
-[ ] 以 disabled 状态创建 10:30 Cron，检查配置和目标。
-[ ] 手动运行一次并检查 QQ 投递与 Cron history。
-[ ] 启用任务，记录 job ID、回滚命令和失败告警。
-[ ] 更新提示词、TOOLS.md、Skill 和开发备忘录的已验收状态。
-
-Phase 2：位置时间线和旅行
-
-[x] 实现 SQLite Schema、迁移、重叠 trigger、proposal/audit 基础和权限保护。
-[x] 初始化已确认的广州天河默认地点；没有初始化当前位置区间或行程。
-[ ] 实现地点候选消歧写入和位置/出行事务 API。
-[ ] 实现 proposal -> owner confirm -> commit 两阶段写入。
-[ ] 测试跨日、跨时区、出发/到达、取消、延误和区间边界。
-[ ] 实现旅行日可选双城简报。
-
-Phase 3：突发天气
-
-[ ] 实现官方预警轮询、update/cancel 和去重。
-[ ] 实现可选临近降雨 episode 与冷却。
-[ ] 实现个人高温阈值，区分个人提示与官方预警。
-[ ] 使用 command Cron/插件服务，无新事件输出 NO_REPLY。
-[ ] 测试断网、重启、重复响应、消息失败和数据库锁。
-
-Phase 4：图片与航班
-
-[ ] 验证 QQ 图片输入与图像理解/OCR。
-[ ] 机票解析只生成 proposal，确认后再 commit。
-[ ] 决定是否接入航班状态 API 及其单独网络权限。
-[ ] 设计原图保存、脱敏、删除和审计规则。
-
-======================================================================
-十四、已经确认的信息与剩余决策
-======================================================================
-
-已确认：
-
-1. 默认地点是广东省广州市天河区，区级行政中心坐标足够，不保存住址。
-2. 广州/无锡/8 月 16 日是架构示例，不是实际行程；不得继续追问无锡区县。
-3. 主人有真实“最近出行”需求，但目前时间、目的地和交通方式均未确定；等主人
-   通过 QQ 明确要求 kurumi 记录时再走 proposal/confirm，开发者不代写事实。
-4. 每日简报为 10:30、Asia/Shanghai；当前格式包含实况、体感、湿度、风、今日
-   高低温/日夜天气、紫外线、24 小时降雨趋势和官方预警。空气质量和穿衣建议不在
-   第一版，因为尚未接入对应数据/规则。
-5. 第一版只面向可信主人 QQ 私聊；群聊本轮不处理。
-6. 第一版不处理机票截图、OCR、航班状态或自动延误修订。
-
-仍需主人或上线流程决定：
-
-1. 正式上线前提供轮换后的 QWeather Key；旧 Key 已出现在聊天中。
-2. 首次 QQ 主动投递测试是否成功；未成功前不能启用 10:30 Cron。
-3. Phase 3 前再确认安静时段、哪些官方预警可突破安静时段、个人高温阈值和是否
-   启用临近降雨。
-
-这些剩余项不影响当前代码开发，但阻止自动推送正式启用。
-
-======================================================================
-十五、头像结论
-======================================================================
-
-QQ 平台已经设置好的头像足以正常运行，OpenClaw 不需要本地头像文件。
-
-为了备份、未来网页 UI、文档或重新上传，建议可选保留一份：
-
-  chatbot/assets/avatar/kurumi-avatar.png
-
-Ubuntu 能正常使用 `.png`、`.jpg` 和 `.jpeg`。若两份是同一张图：
-
-- 插画、透明背景或需要反复编辑：优先 PNG；
-- 照片或文件体积需要更小：优先高质量 JPG；
-- 不必同时保留完全相同的两份，保留分辨率更高的原始版本即可。
-
-头像不是天气功能依赖。主人上传图片后，再归档并在 `chatbot/IDENTITY.md` 中记录
-相对路径；不得根据本地文件自动修改 QQ 平台头像。
-
-======================================================================
-十六、官方参考
-======================================================================
-
-QWeather API Host：
-https://dev.qweather.com/en/docs/configuration/api-host/
-
-QWeather 认证：
-https://dev.qweather.com/en/docs/configuration/authentication/
-
-GeoAPI City Lookup：
-https://dev.qweather.com/en/docs/api/geoapi/city-lookup/
-
-Current Weather v1：
-https://dev.qweather.com/en/docs/api/weather/weather-current/
-
-Daily Forecast v1：
-https://dev.qweather.com/en/docs/api/weather/weather-daily-forecast/
-
-Hourly Forecast v1：
-https://dev.qweather.com/en/docs/api/weather/weather-hourly-forecast/
-
-Weather Alert：
-https://dev.qweather.com/docs/api/warning/weather-alert/
-
-缓存与更新频率：
-https://dev.qweather.com/en/docs/best-practices/cache/
-
-请求优化与错误处理：
-https://dev.qweather.com/en/docs/best-practices/optimize-requests/
-
-Minutely Precipitation：
-https://dev.qweather.com/docs/api/minutely/minutely-precipitation/
+- API Host：https://dev.qweather.com/en/docs/configuration/api-host/
+- 认证：https://dev.qweather.com/en/docs/configuration/authentication/
+- GeoAPI City Lookup：https://dev.qweather.com/en/docs/api/geoapi/city-lookup/
+- Weather API v1：https://dev.qweather.com/en/docs/api/weather/
+- Weather Alert：https://dev.qweather.com/docs/api/warning/weather-alert/
+- 缓存与请求优化：https://dev.qweather.com/en/docs/best-practices/cache/
 
 本机 OpenClaw 文档：
 
-  /home/afrangry/.npm-global/lib/node_modules/openclaw/docs/automation/cron-jobs.md
-  /home/afrangry/.npm-global/lib/node_modules/openclaw/docs/cli/cron.md
-  /home/afrangry/.npm-global/lib/node_modules/openclaw/docs/plugins/tool-plugins.md
-  /home/afrangry/.npm-global/lib/node_modules/openclaw/docs/gateway/config-tools.md
-
-======================================================================
-十七、开发日志与验收记录
-======================================================================
-
-2026-08-06 / Phase 1A、1B（代码侧）
-
-1. 使用 OpenClaw `plugins init` 和 skill-creator 初始化约定，正式源码写入：
-
-   chatbot/plugins/personal-weather/
-   chatbot/skills/personal-weather/SKILL.md
-
-2. 安全边界已实现：专属 `*.re.qweatherapi.com` Host、客户端内部派生 URL、固定
-   endpoint、GET、API Key header、默认严格 SSRF/DNS pinning、0 redirect、
-   capture=false、绝对超时/总预算、1 MiB、全局并发 4、有限重试、稳定脱敏错误。
-
-3. 一次复核发现 Host/Origin 信任 policy 会放宽部分私网检查，已从实现中移除并
-   增加私网 DNS 拦截测试。另移除不正确的静态 bearer-token 方案；未来 JWT 必须
-   由私钥生成短期 Token。
-
-4. 实现 unknown 网络 JSON 运行时 parser、统一 WeatherBrief、确定性中文 formatter、
-   current/daily/hourly/alerts 组合查询、GeoAPI operator CLI 和 fresh cache。
-
-5. SQLite v1 初始化完成：
-
-   state/personal-weather/              mode 700
-   state/personal-weather/weather.sqlite mode 600
-
-   只 seed 默认天河与 owner 通知偏好；未 seed 行程、位置区间或 proposal。
-
-6. 离线验收：
-
-   npm run build                        PASS
-   npm test                             PASS（7 files / 71 tests）
-   npm run plugin:build                 PASS
-   npm run plugin:validate              PASS
-   skill quick_validate                 PASS
-   npm audit --omit=dev                 PASS（生产依赖 0 vulnerabilities）
-
-7. 真实冒烟：现有专属 Host/API Key 成功读取 GeoAPI，并将“天河区 + 广州市”唯一
-   匹配到 LocationID `101280109`；Weather API v1 的实况、日预报、小时预报和官方
-   预警也成功。随后立即重复查询，四组件均为 cached-fresh，不再联网。终端输出未
-   出现 Key。此结果只证明当前账号/Host/Key 组合可用。
-
-8. 本轮刻意未执行：
-
-   - 未把插件链接安装进 OpenClaw；
-   - 未修改 `openclaw.json`、QQ systemPrompt、AGENTS.md 当前能力声明或工具授权；
-   - 未创建或启用 Cron；
-   - 未向 QQ 发送任何消息；
-   - 未开放群聊、通用联网、文件、exec、sudo 或 coder；
-   - 未创建任何实际旅行记录。
-
-下一次继续点：先轮换 QWeather Key，再执行 P1C 的链接安装/inspect、SecretRef 配置、
-`tools.alsoAllow` 精确授权、QQ 主动文本测试和 disabled Cron 验收。只有全部通过后，
-才更新能力提示词并启用每日推送。
+- `/home/afrangry/.npm-global/lib/node_modules/openclaw/docs/automation/cron-jobs.md`
+- `/home/afrangry/.npm-global/lib/node_modules/openclaw/docs/cli/cron.md`
+- `/home/afrangry/.npm-global/lib/node_modules/openclaw/docs/plugins/tool-plugins.md`
+- `/home/afrangry/.npm-global/lib/node_modules/openclaw/docs/gateway/config-tools.md`

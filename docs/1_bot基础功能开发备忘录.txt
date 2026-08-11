@@ -30,14 +30,21 @@ Bot 名称：kurumi
 - 模型 naiccc/gpt-5.6-terra 已完成真实对话测试。
 - kurumi 第一版身份、人格、用户资料、安全规则和长期记忆骨架已建立。
 
-当前能力边界：
+当前能力边界（截至 2026-08-11）：
 
-- 只把自然语言对话视为已验收核心能力。
-- 暂无已验收的联网检索、实时天气、文件写入、通用工具调用、主机命令、sudo、coder Agent 或 Git 维护能力。
-- 和风天气凭证已配置，但凭证存在不等于天气工具已经可用。
+- 自然语言对话已验收；主人私聊当前精确准入 3 个 optional 天气/规划工具：
+  `personal_weather_get_brief`、`personal_planning_state_get`、
+  `personal_planning_change_propose`。其中后两者属于 P2A：状态工具只读，提案工具
+  只生成 pending 草稿，不提交行程或切换天气地点。
+- 天气插件只访问配置好的 QWeather 专属 Host，不等于开放通用联网搜索。
+- 一次性 QQ 主动消息已获得腾讯发送 API 成功回执，主人已确认客户端收到并在 QQ 回复。
+- 暂无文件写入、任意 HTTP、通用工具调用、主机命令、sudo、coder Agent 或 Git
+  维护能力；P2A 不提供 commit/discard，位置切换、提醒修改和主动预警仍未实现。
 - MEMORY.md 与 memory/ 已被运行时扫描，且 MEMORY.md 已进入主 Agent 的新会话提示词。
 - memory-core 的语义检索索引、Embedding 和自动写入仍待单独验收。
-- OpenClaw Cron 调度器已启用，但当前任务数为 0，尚未创建任何主动提醒。
+- OpenClaw Cron 调度器已启用；天气简报任务在 disabled 状态下手动验收 1 次，
+  命令成功且 QQ delivered，主人确认收到后已正式启用。下一次运行是
+  2026-08-06 10:30（Asia/Shanghai），之后每天同一时间运行。
 - 当前不是“所有工具完全关闭”：`messaging` profile 保留消息与部分会话工具；
   文件、命令、sudo、浏览器、通用 Web、Cron 管理和 coder 能力仍未向模型开放。
 
@@ -217,12 +224,12 @@ P0 安全与基础维护
 [x] 模型与 QQ 文本对话连通。
 [x] kurumi 系统提示词 v1。
 [x] 建立长期记忆、知识库和 workspace skills 目录骨架。
-[ ] 轮换曾在聊天中明文出现的模型 Key、QQ AppSecret 和天气 Key。
-[ ] 将 qqbot 加入 plugins.allow 显式信任列表。
+[x] 主人确认已轮换曾在聊天中明文出现的凭证；轮换后的天气 Key 已通过真实 GeoAPI 查询。
+[x] `plugins.allow` 已显式仅信任 qqbot 与 personal-weather。
 [ ] 评估将全局 tools.profile 从 messaging 收紧为 minimal，并完成 QQ 私聊/群聊回归测试。
-[ ] 在 profile 收紧前，将群聊工具白名单限制为仅 session_status，或至少显式拒绝
-    message、sessions_list、sessions_history、sessions_send、qqbot_remind、
-    qqbot_channel_api、personal_weather_* 和全部位置写入工具。
+[x] 在 profile 收紧前，群聊已显式拒绝 message、sessions_list、sessions_history、
+    sessions_spawn、sessions_send、Agent 委派、qqbot_remind、qqbot_channel_api 和
+    `personal_weather_get_brief`；未来位置写工具上线时继续加入拒绝项。
 
 P1 长期记忆与知识库
 
@@ -236,12 +243,20 @@ P1 长期记忆与知识库
 
 P2 单项工具能力
 
-[~] 按 docs/2_天气模块的开发.txt 分阶段实现和风天气模块。
+[x] 天气模块第一阶段 P1A/P1B/P1C 已上线；后续旅行与主动预警继续独立开发。
 [x] 第一阶段代码：只读客户端、parser、formatter、SQLite/cache、optional Tool、CLI、
     Skill、71 项测试、插件校验和真实 QWeather v1 冒烟。
-[ ] 第一阶段上线：轮换天气 Key、链接安装/inspect、精确授权、QQ 主动文本测试、
-    disabled 10:30 Cron 验收后再启用。
-[ ] 第二阶段：地点消歧、位置时间线、旅行计划与自动切换。
+[x] P1C 上线基础：轮换天气 Key、link 安装、runtime inspect、SecretRef、精确工具授权、
+    群聊 deny、提示词同步及模型实际调用回归。
+[x] QQ 主动文本：发送 API 成功，主人确认客户端收到并在 QQ 回复。
+[x] 每日 10:30、Asia/Shanghai 的 Cron 已创建为 disabled；强制手动运行 1 次，
+    命令成功、QQ delivered、run history 正常；该次运行结束时仍为 disabled。
+[x] 主人确认收到第二条 Cron 真实简报；每日任务已启用，下一次为
+    2026-08-06 10:30（Asia/Shanghai）。
+[x] P2A（2026-08-11）：主人私聊状态读取与严格 trip.create proposal 预览；只写
+    change_proposals.pending 草稿，不写 trips/location_periods/preferences。
+[ ] P2B：地点消歧、proposal 冻结/hash/revision/TTL、主人确认后的原子 commit、审计和幂等。
+[ ] P2C：确认式行程与天气地点时间线联动、跨时区/日期级时间/返程规则。
 [ ] 第三阶段：官方预警、临近降雨、高温规则、去重与冷却。
 [ ] 第四阶段：机票截图解析、行程确认和可选航班状态更新。
 [ ] 网页检索：来源引用、域名与网络权限、提示注入防护。
@@ -511,6 +526,121 @@ I. 敏感领域与内容边界
 本轮 QQ 消息：无。
 本轮 Cron 修改：无，任务数仍为 0。
 
-下一步：主人轮换已出现在聊天中的天气 Key 后，按
-`docs/2_天气模块的开发.txt` 顶部 P1C 执行链接安装、SecretRef、精确
-`tools.alsoAllow`、QQ 主动文本和 disabled Cron 验收。
+该阶段当时记录的 P1C 下一步，现已在下一节全部完成。
+
+======================================================================
+十三、2026-08-06 天气模块 P1C 上线完成
+======================================================================
+
+本轮修改路径：
+
+  openclaw.json
+      链接插件、SecretRef、plugins.allow、tools.alsoAllow、群聊 deny 和 QQ 渠道提示词。
+
+  chatbot/AGENTS.md
+  chatbot/TOOLS.md
+  chatbot/BOT_SETUP.md
+  docs/1_bot基础功能开发备忘录.txt
+  docs/2_天气模块的开发.txt
+
+完成结果：
+
+1. 主人确认凭证已轮换；轮换后的 QWeather Key 通过“天河区 + 广州市”真实 GeoAPI
+   查询，唯一匹配 LocationID `101280109`，全程未输出 Key。
+2. `personal-weather` 以本地 link 方式安装。首次安装因配置 Schema 要求 apiHost 而
+   安全失败并自动回滚；先用 disabled entry 写入 env 模板和 SecretRef 后重试成功。
+   安装过程不需要联网，没有遗留半安装状态。
+3. `plugins.allow` 仅包含 `qqbot` 与 `personal-weather`；`tools.alsoAllow` 只新增
+   `personal_weather_get_brief`。群聊显式拒绝天气、消息外发、会话历史/委派、文件、
+   命令和 Agent 工具，没有开放 coding/full、通用 Web、文件、exec 或 sudo。
+4. `openclaw config validate`、`plugins doctor`、runtime inspect 均通过；插件只注册
+   一个 optional 天气工具，没有服务、HTTP route、Hook 或其他 capability。
+5. Gateway 重启后仅监听 loopback，RPC 正常；QQ channel 为 running/connected 且
+   lastError 为空。一次 safe restart 的交接窗口未及时拉起，随后普通 systemd restart
+   恢复，配置和数据未回滚。
+6. 新隔离会话中，模型实际调用天气工具 1 次、失败 0 次，返回广州天河实时天气；
+   固定 `daily-brief` CLI 也成功生成确定性中文简报。
+7. 向白名单主人私聊发送一条带 P1C 标记的一次性天气测试。OpenClaw 回执满足
+   `handledBy=core`、`via=direct`、`deliveryStatus=sent` 且 messageId 非空；主人
+   随后确认客户端实际收到，并在 QQ 回复“收到”。
+8. 创建每日任务：
+
+   job ID：34943273-2723-4556-8bc2-f03b8ae356ad
+   declaration key：personal-weather.daily-brief.v1
+   schedule：30 10 * * *
+   timezone：Asia/Shanghai
+   创建时 enabled：false
+   run history：1
+
+   任务固定执行 `/usr/bin/node dist/cli.js daily-brief`，cwd 限定在天气插件目录，
+   总超时 60 秒、无输出超时 30 秒、输出上限 16384 bytes，并向主人 QQ 私聊 announce。
+   未使用 `--best-effort-deliver`，因此投递失败会把本次 run 标成失败；独立故障告警
+   尚未实现，正式启用后需通过 `openclaw cron runs --id <job-id>` 和 Gateway 日志检查。
+
+9. 主人确认第一次测试后，已强制运行 disabled job 一次。固定命令退出码 0，run
+   status 为 `ok`，QQ `deliveryStatus=delivered`，耗时 844 ms；历史记录为 1 条。
+   运行后 `enabled=false`、`nextRunAt=null`，证明手动验收没有隐式启用任务。
+
+10. 主人确认第二条真实天气简报已正常收到。随后正式启用任务并脱敏复核：
+
+    enabled：true
+    lastStatus：ok
+    last deliveryStatus：delivered
+    next run：2026-08-06 10:30:00（Asia/Shanghai）
+
+P1C 当前结论：上线完成。每天 10:30 自动发送已生效；没有新增通用联网、文件、
+exec、sudo、群聊天气或 coder 权限。下一阶段按 TODO 独立开发旅行位置或主动预警。
+
+Cron 操作与回滚：
+
+  保持停用：openclaw cron disable 34943273-2723-4556-8bc2-f03b8ae356ad
+  手动验收：openclaw cron run 34943273-2723-4556-8bc2-f03b8ae356ad
+  查看历史：openclaw cron runs --id 34943273-2723-4556-8bc2-f03b8ae356ad
+  正式启用：openclaw cron enable 34943273-2723-4556-8bc2-f03b8ae356ad
+  删除任务：openclaw cron rm 34943273-2723-4556-8bc2-f03b8ae356ad
+
+插件最小停用/回滚顺序：先禁用 Cron；再从 `tools.alsoAllow` 中移除天气工具；然后
+`openclaw plugins disable personal-weather`，必要时执行
+`openclaw plugins uninstall personal-weather --force`，最后重启 Gateway 并运行
+`openclaw config validate`、`openclaw plugins doctor`。link 卸载不会删除
+`chatbot/plugins/personal-weather/` 源码；卸载不会自动清理 `tools.alsoAllow`。
+
+======================================================================
+十四、2026-08-11 天气/个人计划 P2A 开发记录
+======================================================================
+
+本轮目标：在不开放搜索、文件、exec、sudo、Coder 或 commit 权限的前提下，让 kurumi
+能够读取最小化个人计划状态，并把主人明确要求记录的出行内容转换为严格类型的待确认
+proposal 预览。
+
+本轮实现：
+
+1. `chatbot/plugins/personal-weather/src/planning.ts` 新增 P2A 状态摘要与
+   `trip.create` 输入校验；拒绝未知字段、未知枚举、非法时区、倒置/过长/超范围时间窗。
+2. `personal_planning_state_get` 仅返回默认/有效地点、每日简报时刻、行程摘要、未过期
+   pending proposal 和能力开关；不返回坐标、QWeather LocationID、原始来源文本或凭证。
+3. `personal_planning_change_propose` 只接受版本化 typed request，由服务端生成
+   canonical facts、derivedEffects、缺失字段、警告、TTL 和 payload Hash；目的地保持
+   `resolution=pending`，到达日期/时间不明确时不会派生地点切换。
+4. `WeatherStore` 增加只读行程/提案摘要，以及带事务、UUID、SHA-256、TTL 和大小限制的
+   `change_proposals.pending` 写入；不会写入 trips、location_periods 或偏好。
+5. 两个规划工具均要求可信 owner 元数据和 `qqbot` 私聊；配置的 `tools.alsoAllow` 已
+   精确加入两个工具，群聊 deny 也同步加入。commit/discard 尚未开放。
+
+验证结果：
+
+- 插件 8 个测试文件、74 项测试通过；TypeScript build、plugin build、plugin validate、
+  config validate、plugins doctor 和 runtime inspect 均通过。
+- runtime inspect 显示 3 个工具：`personal_weather_get_brief`、
+  `personal_planning_state_get`、`personal_planning_change_propose`，无诊断项。
+- 离线调用已验证 owner guard：非主人上下文返回 forbidden；主人上下文可读取天河区
+  最小化状态摘要；未在生产数据库创建测试提案。
+- 本次未新增联网能力，也未修改 Cron、默认地点、系统提示词之外的记忆/知识库文件。
+- 当前受限终端无法连接 systemd user bus，Gateway foreground 启动还遇到 loopback
+  解析为 `0.0.0.0` 的环境错误，因此 QQ 私聊端到端 P2A 回归待在正常 Gateway 环境
+  恢复后执行；这不是代码测试失败。
+
+P2A 回滚：从 `tools.alsoAllow` 和群聊 deny 中移除两个 `personal_planning_*` 工具，
+重新构建/校验并重启 Gateway；保留 `change_proposals` 表中的 pending 草稿，不手工删除
+数据库文件。下一步进入 P2B：地点消歧、proposal commit 的 TTL/hash/revision/幂等/审计
+和事务提交器，仍不开放搜索或通用写入。

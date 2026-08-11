@@ -1,6 +1,6 @@
 ---
 name: personal-weather
-description: Query the owner's current weather, daily or hourly forecast, rain trend, and official alerts through the restricted personal weather tool. Use for weather questions and for explicit requests to record, review, or change the owner's recent travel; travel persistence remains unavailable until its proposal/confirm tools are deployed.
+description: Query the owner's current weather, daily or hourly forecast, rain trend, and official alerts through the restricted personal weather tool. For an explicit owner request to record recent travel, create a typed pending proposal preview; commit, location switching, and reminder changes remain unavailable.
 ---
 
 # Personal Weather
@@ -15,13 +15,27 @@ description: Query the owner's current weather, daily or hourly forecast, rain t
 
 The confirmed fallback location is 广东省广州市天河区. The tool resolves any future confirmed location interval before using that fallback; do not edit prompts or memory files to switch locations.
 
+## Planning state and proposal preview
+
+1. In the owner's QQ private chat, use `personal_planning_state_get` when the owner asks
+   what weather location, daily brief schedule, trips, or pending proposals are currently
+   known. Treat the result as a minimized summary, not as permission to change anything.
+2. Use `personal_planning_change_propose` only after the owner explicitly asks to record a
+   real travel plan. Send only the documented `schema_version=1` `trip.create` shape; do
+   not invent effects, place IDs, URLs, database fields, or subject IDs.
+3. Show the returned preview, missing fields, warnings, proposal ID, and expiry. State
+   explicitly that this created only a pending proposal draft: no trip was committed, no
+   location was switched, and no reminder or Cron was changed. P2A has no commit/discard
+   tool, so never claim the proposal is saved as a confirmed trip.
+
 ## Travel statements
 
 - Treat examples, hypotheticals, city comparisons, and “if I go somewhere” as discussion only. Do not save them.
 - A statement such as “I may travel soon” is not automatically a save request. Persist only when the owner clearly asks to record it.
 - A real trip may remain tentative with unknown destination, date, or transport. Unknown fields must stay unknown and must not switch the weather location or create a reminder.
-- When travel write tools are unavailable, say plainly that the information has not been saved. Do not claim persistence through chat context, `MEMORY.md`, a system prompt, JSON, files, or direct database access.
-- After Phase 2 tools are deployed, create a frozen proposal, show the complete preview and effects, and commit only after an explicit owner confirmation tied to that proposal. Never commit an example.
+- When the proposal tool is unavailable, say plainly that the information has not been saved. Do not claim persistence through chat context, `MEMORY.md`, a system prompt, JSON, files, or direct database access.
+- P2A can create only a pending preview. Even after an owner says “确认”, do not claim a
+  committed trip until a future P2B commit tool is deployed and returns success.
 - A confirmed weather-location interval starts at the confirmed arrival time, not at midnight. If arrival time is only date-level or unknown, do not schedule an automatic switch.
 
 ## Safety and privacy
