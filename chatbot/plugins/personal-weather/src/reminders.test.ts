@@ -259,11 +259,25 @@ describe("personal reminders", () => {
         status: "scheduled",
         failureCode: "cron_update_unknown",
       });
+      const repeated = await commitReminderProposal(
+        store,
+        { proposal_id: proposed.proposalId, payload_hash: proposed.payloadHash },
+        CONTEXT,
+        scheduler.value,
+      );
+      expect(repeated).toMatchObject({ ok: true, status: "update_unknown", idempotent: true });
+      expect(scheduler.update).toHaveBeenCalledTimes(1);
       const cancel = proposeReminderCancellation(store, {
         schema_version: 1,
         request: { kind: "reminder.cancel", reminder_id: scheduled.reminder.reminderId },
       }, CONTEXT);
       expect(cancel).toMatchObject({ ok: false, error: { code: "reminder_unavailable" } });
+      const anotherUpdate = proposeReminderUpdate(store, updateInput(
+        scheduled.reminder.reminderId,
+        "2026-08-12T21:30",
+        "不应再次写入",
+      ), CONTEXT);
+      expect(anotherUpdate).toMatchObject({ ok: false, error: { code: "reminder_unavailable" } });
       expect(scheduler.update).toHaveBeenCalledTimes(1);
     } finally {
       store.close();

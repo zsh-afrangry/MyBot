@@ -1,12 +1,15 @@
 kurumi 受控搜索与模型能力架构设计
 
 首次设计：2026-08-12
-最后更新：2026-08-12（补充任务/功能解耦判断、Provider 方案待决）
-状态：架构设计阶段；尚未选择搜索供应商，尚未开放任何联网搜索、网页抓取或浏览器能力。
+最后更新：2026-08-18（DeepSeek、OpenClaw web_search/Terra Responses、受控回滚、QQ Eval 与 MVP 收尾门槛拆分）
+状态：架构设计与验证阶段；DeepSeek 已接入受控 Adapter，并通过主人 QQ 私聊最终正向验收；
+OpenClaw 通用 `web_search` 和自定义 Terra `/responses` 传输已完成诊断验证，最终常驻权限已收敛为
+`personal_web_search`；Terra 原生 `web_search` 尚未通过 OpenClaw 自定义 Provider 接入，
+`web_fetch` 和 browser 仍未开放，完整 S3 验收尚未完成。
 
 本文中的相对路径均以 OpenClaw 项目根目录为基准。本文描述设计与开发计划，不授予运行时
 权限；实际能力以 `openclaw.json`、运行时工具清单和端到端验收为准。任何 API Key、Token、
-账号或完整 QQ 身份标识都不得写入本文。
+账号或完整 QQ 身份标识都决定是否接写入本文。
 
 TODO（随开发更新）：
 
@@ -21,6 +24,35 @@ TODO（随开发更新）：
 - [ ] S5：只有出现真实组合/延迟搜索用例后，才实现固定 `sequence` / `scheduled` 模板。
 - [ ] S6：只有结果列表稳定后，才评估“打开本次搜索返回的单条 result ID”；不得接受任意 URL。
 - [ ] A3：只有真实任务需要并行依赖、汇合或补偿时，才评审 DAG Workflow Engine。
+
+DeepSeek 优先验证轨道（D 项不能替代 S0-S3 的上线门槛）：
+
+- [x] D0.1：完成 DeepSeek 静态配置、SecretRef、Gateway 环境和无泄密检查。
+- [x] D0.2：完成 DeepSeek Responses API 的真实 Web Search smoke test；固定公开 query，验证
+  `/responses`、`deepseek-v4-flash`、`web_search`、`web_search_call`、完成状态和来源 URL。
+- [x] D0.3：完成认证失败、超时、429/5xx、异常响应和超大响应的离线错误契约测试；确认不自动
+  重复请求。真实 Provider 故障、权限和费用侧验收仍归入 D3.1/S3.7。
+- [x] D1.1：用脱敏真实响应建立 parser/normalizer fixture，转换为受控 `kind: "answer"`、最多
+  5 条 citations 和 `Provenance`，保留来源、时间和不可信内容标记。
+- [x] D1.2：完成“GPT-Terra 主 Agent -> `personal_web_search` -> DeepSeek”委派链路测试（离线
+  tool/runtime 替身）；验证
+  主 Agent 只传递受约束 query，最终回答使用来源证据，不把 DeepSeek 摘要当作无来源事实。
+- [x] D1.3：完成视觉边界离线契约测试；含图片、图表、扫描 PDF 的问题明确标记为未完成视觉核验，
+  不把文本检索 Worker 当作视觉路径。真实带附件的主 Agent 端到端行为仍需按模型能力另行验收。
+- [x] D2.1：完成 Provider/Adapter 与 OpenClaw runtime 的离线接入测试；受控包装工具仍需精确权限
+  变更后才可见，`web_fetch`、browser 或 exec 未开放。通用 `web_search` 的后续诊断性开放另见
+  D2.2，不作为受控 Search MVP 已上线的依据。
+- [x] D2.2：完成 OpenClaw 通用 `web_search` 的主人 QQ 私聊正向验收；确认工具实际调用
+  `web_search`，并由已选的 `deepseek-search` Provider 返回 `kind: "answer"`。
+- [x] D2.3：完成自定义 Terra `openai-responses` Provider 的 QQ 验收；确认 OpenClaw 实际请求
+  `POST /v1/responses`，并确认通用 `web_search` 可以作为 OpenClaw 工具运行在该 Responses 回合中。
+- [ ] D2.4：若仍需要 Terra 原生 `tools: [{"type":"web_search"}]`，单独设计并验收适配层；当前
+  OpenClaw 内置原生搜索注入只匹配官方 `openai` Provider 和官方 OpenAI API Base URL，不会对
+  自定义 `naiccc` Provider 自动注入。
+- [ ] D3.1：完成主人 QQ 私聊正向验收，以及群聊/非主人/无 Key/上游失败的负向验收；目前主人
+  私聊正向、当前事件与小众 query 成功样例、撤权、插件禁用/恢复和离线无 Key/上游故障已覆盖，
+  群聊/非主人仍待收尾，主模型真实上游失败的可观测错误路径已记录但降级策略尚未固化；结果通过
+  后才能将 S0.2、S3.3 等对应门槛更新为完成。
 
 各阶段的可执行子任务、验收目标、停止条件和回滚边界见第十三节。顶部 S0-S3 阶段项以该阶段
 全部 Must Pass 完成为准；Should Pass 可以作为稳定化债务继续保留。“代码已写”不等于“能力
@@ -347,15 +379,21 @@ deny、文档状态”是否一致。当前工具数量仍少，不开发可动�
 
   personal_web_search({ query })
 
-首版输出只包括最多 5 条：
+首版输出最多包含 5 个来源；Provider 可以返回结构化结果列表，也可以返回带来源的综合答案。
+DeepSeek 当前走后者，不能伪装成已独立核验的结构化结果列表：
 
-  result_id
-  title
-  snippet
-  canonical_https_url
-  source_domain
-  published_at（上游提供时）
+  kind: results | answer
+  query
+  provider
+  results[]（`kind: results` 时）
+  content（`kind: answer` 时）
+  citations[]（最多 5 个；DeepSeek 为 Provider 报告来源）
+  externalContent: { untrusted: true, source: web_search, wrapped: true }
   searched_at
+
+`results[]` 中的单条仍包含 `result_id`、`title`、`snippet`、`canonical_https_url`、`source_domain`
+和上游提供时的 `published_at`。`answer` 的 citation URL 必须通过同一 HTTPS/公网 canonicalizer；
+没有可解析来源时不能把自然语言回答冒充为已检索证据。
 
 固定边界：
 
@@ -513,6 +551,8 @@ MVP Must Pass：
 - 专用 API Key 是否已获批；
 - 每分钟、每天和每月的保守调用上限，以及 Provider 账户费用硬上限；
 - 原始 query 是否允许进入 Provider，以及哪些明显私人信息必须在外发前删除；
+- 本机 OpenClaw 是否允许保留原始会话和 trajectory（2026-08-18 已确认：仅作为受限 MVP
+  妥协，详见下方 ADR）；
 - 是否接受首版只有结果摘要和链接、不能打开网页全文。
 
 MVP 后 Should Pass：
@@ -521,6 +561,27 @@ MVP 后 Should Pass：
 - audit 的长期保留/删除期限；
 - 是否需要精确到单次费用的本地核算；
 - 是否需要比明显 Secret 拦截更复杂的 query 隐私分类。
+
+MVP 本地会话/trajectory 留存 ADR（2026-08-18，主人确认）：
+
+- 决定：当前 MVP 接受本机 OpenClaw 保留原始用户会话和 trajectory；其中可能包含用户原始
+  搜索 query 及模型的 `finalPromptText`。这是为了维持现有多轮上下文和排障能力的有限妥协，
+  不等同于“原始 query 默认不持久化”。
+- 保持的插件边界：`personal-search` 不自行写入原始 query；其结构化 audit 只记录 hash、长度、
+  状态、配额和耗时等最小字段；持久化的 `personal_web_search` 助手 tool-call 及 tool-result/
+  details 中的 query 必须继续替换为 `[redacted search query]`。该边界已由自动化测试和主人 QQ
+  回归验证。
+- 适用范围：仅限当前单一主人 QQ 私聊、本机部署、公开网页搜索 MVP。群聊仍永久 disabled；本决定
+  不授权把原始会话/trajectory 同步到云端、共享给其他用户或作为通用日志/分析数据导出；也不改变
+  query 发送给 DeepSeek Provider 的既有受控外发边界。
+- 风险承认：现有格式守卫会拒绝明显的 Key、票号、证件号、OpenID/QQ ID 等，但不是对所有语义化
+  私人信息的完备识别；原始聊天正文若含未识别的私人信息，仍可能进入本机会话/trajectory。
+- 强制回收项（S2.4/S4.5，不因本次接受而豁免）：盘点实际持久化路径、文件权限与备份/同步边界；
+  验证日志轮转、会话/trajectory 的保留期限与可验证删除；评估 OpenClaw 是否可在不破坏多轮上下文
+  的前提下做宿主级脱敏；扩展敏感 query 的合成 canary 和回归；在开放多用户、群聊、远程访问或
+  云同步前重新评审该决定。Provider 侧的数据保留、删除和 Key 撤销仍属于 S0.2，未由本 ADR 代替。
+- 状态：本条将“未决定的保留边界”转为“有范围、有约束、可回收的 MVP 例外”；它不使 S1.7、S2.4、
+  S0.2 或正式上线的长期隐私治理自动通过。
 
 Must 信息未确认不妨碍完成架构与 mock 接口设计，但会阻止真实 Search API 接入和端到端验收；
 Should 信息不阻止首次 MVP。
@@ -582,11 +643,19 @@ S0：设计冻结与外部依赖确认（不写运行代码、不开放权限）
   验收目标：
   - Provider 提供正式 API，而非模拟浏览器或复用个人登录 Cookie；
   - 支持固定 Host 的服务端搜索，且可限制结果数量、超时和响应大小；
+  - 若采用 DeepSeek，必须固定官方 Responses API `/responses`、`deepseek-v4-flash` 和服务端
+    `web_search`；不得把普通 Chat Completions Tool Calls 当作联网能力；
   - 已明确每分钟、每日、每月调用或费用上限及 429/超限语义；
   - Key 可单独创建、轮换和撤销，不与个人主账号高权限凭证复用；
   - 已记录 Provider 会接收哪些 query/元数据以及默认保留政策。
 
   阻塞关系：未完成本项，可以写接口和 mock；不能完成真实客户端及 S3 端到端验收。
+
+  当前验收结论（2026-08-12 21:23，Asia/Shanghai）：DeepSeek Provider、官方 Responses `/responses`、
+  `deepseek-v4-flash`、服务端 `web_search`、固定 endpoint、SecretRef、查询外发边界和本地
+  minute/day/concurrent 规则均已记录并通过相应代码/运行时证据；但 Provider 账户侧的费用上限、
+  月度/日度额度、数据保留/删除政策和 Key 撤销流程尚未形成主人确认的 ADR。因此 S0.2 仍未完成，
+  不能把连通性 smoke 或本地配额误写成 Provider 商业/隐私决策。
 
 - [x] [Must Pass] S0.3：定义配置、SecretRef 和运行环境契约。
 
@@ -653,11 +722,15 @@ S0：设计冻结与外部依赖确认（不写运行代码、不开放权限）
   网络边界或回滚；不存在未决定却会改变 MVP 安全边界的问题；此时 `tools.alsoAllow` 和系统
   提示词仍未声明搜索可用。
 
+  当前结论（2026-08-12 21:23，Asia/Shanghai）：S0.2 的 Provider 费用/额度/保留 ADR 尚未完成，
+  且当前运行时已经进入 S3 诊断/正向验收阶段；因此不能追溯勾选 S0.8。S0.8 保持 No-Go，待
+  S0.2、S2.4 的待决项解决后再做正式评审。
+
 ----------------------------------------------------------------------
 S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
 ----------------------------------------------------------------------
 
-- [ ] [Must Pass] S1.1：创建独立 `chatbot/plugins/personal-search/` 插件骨架。
+- [x] [Must Pass] S1.1：创建独立 `chatbot/plugins/personal-search/` 插件骨架。
 
   验收目标：
   - package、manifest、TypeScript 配置、build/test 命令和入口完整；
@@ -665,7 +738,11 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - `npm run build`/等价构建在干净依赖状态下通过；
   - 还没有修改生产 `plugins.allow`、`plugins.load.paths` 或 `tools.alsoAllow`。
 
-- [ ] [Must Pass] S1.2：实现严格输入 schema 和可信主人私聊守卫。
+  验收记录（2026-08-12 21:21，Asia/Shanghai）：`personal-search` package、manifest、TypeScript
+  配置、入口和 build 命令均存在；完整 `npm run plugin:validate` 通过。该插件只声明
+  `personal_web_search`，生产权限是在离线切片完成后才由 S3 阶段单独增加；该项完成 S1.1 验收。
+
+- [x] [Must Pass] S1.2：实现严格输入 schema 和可信主人私聊守卫。
 
   验收目标：
   - query 必须为非空字符串，规范化后不超过 200 字；拒绝未知字段、数组、对象和超长文本；
@@ -674,7 +751,11 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - 非主人、QQ 群聊、缺少身份元数据和非 QQ 上下文均在发起网络请求前拒绝；
   - 单测证明拒绝路径的 Provider 调用次数为 0。
 
-- [ ] [Must Pass] S1.3：实现基础 query 最小化与明显 Secret 外发检查。
+  验收记录（2026-08-12 21:12/21:18，Asia/Shanghai）：query/config/index 定向测试 3 个文件、
+  9 个测试通过，并完成空白、类型、未知字段、控制字符、NUL、超长和 Unicode NFC 边界矩阵；
+  owner、channel、群聊和非 QQ 边界在 Provider 调用前拒绝。该项完成 S1.2 验收。
+
+- [x] [Must Pass] S1.3：实现基础 query 最小化与明显 Secret 外发检查。
 
   验收目标：
   - 不自动拼接长期记忆、完整聊天历史、OpenID、精确住址、票号、Key 或系统提示词；
@@ -684,7 +765,22 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - audit 只接收 hash/长度/基础分类结果，不接收原始敏感片段；
   - 复杂语义隐私分类不阻塞 MVP，登记到 S4.5。
 
-- [ ] [Must Pass] S1.4：实现固定 SearchClient 和网络包络。
+  历史验收结论（2026-08-12 21:32，Asia/Shanghai）：`query.test.ts`、`index.test.ts`、
+  `provider.test.ts` 共 3 个文件、9 个测试通过；独立矩阵确认 API key、Bearer、`sk-` 形状会
+  fail-closed，Provider body 只包含规范化 query，不含 owner/channel/target/memory/history。可是
+  当时的合成 OpenID 和票号 query 会被接受，完整身份标识/票号/精确个人信息分类与 audit hash 接口
+  尚未实现，故 S1.3 明确暂不关闭。
+  代码边界补强记录（2026-08-12 23:19，Asia/Shanghai）：在
+  `chatbot/plugins/personal-search/src/query.ts` 增加了窄范围、格式确定性的高风险标识检查：带标签
+  的 OpenID/QQ ID、QQ/OpenID 形状的 32 位十六进制标识、票号/订单号/PNR/预订号/快递单号、
+  身份证/护照号等在规范化后 fail-closed；普通公开主题（例如 OpenClaw ticket documentation）
+  不受影响。`query.test.ts`、`index.test.ts`、`provider.test.ts` 验证了工具层和 Provider 层均在
+  发出请求前拒绝合成高风险标识，Provider mock request 次数为 0；全插件 9 个测试文件、38 个
+  测试通过，TypeScript build 通过，构建产物未包含完整的合成 canary。该改动只实现可确定的格式
+  边界，不引入复杂语义隐私分类器；在该记录时 audit 只接收 hash/长度/基础分类结果的接口和私人
+  内容确认流程仍未实现，因此 S1.3 继续不勾选。结构化 audit 接口的后续实现见 S1.7 记录。
+
+- [x] [Must Pass] S1.4：实现固定 SearchClient 和网络包络。
 
   验收目标：
   - origin/path/method/auth header 全部来自经校验的配置；tool input 无法覆盖；
@@ -693,7 +789,19 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - 401/403/429/5xx、DNS、连接、TLS、超时分别映射到稳定错误码；
   - 错误对象、日志和堆栈的对外文本不包含认证 Header 或完整响应正文。
 
-- [ ] [Must Pass] S1.5：实现响应 parser、normalizer、去重与 provenance。
+  当前验收结论（2026-08-12 21:33，Asia/Shanghai）：`deepseek-client.test.ts`、`config.test.ts`、
+  `provider.test.ts`、`parser.test.ts` 共 4 个文件、22 个测试通过；固定 origin/path/method/header、
+  60 秒超时、1 MiB 响应上限、单次请求、HTTP 错误映射、受信 endpoint SSRF/重定向和来源 URL 边界
+  均有证据。但 DNS、连接、TLS 失败的独立可重复 fixture 与细分记录尚未补齐，故按本项严格目标
+  暂不关闭。
+  网络故障矩阵补充记录（2026-08-12 23:24，Asia/Shanghai）：为 DNS `ENOTFOUND`、连接
+  `ECONNRESET`、TLS `ERR_TLS_CERT_ALTNAME_INVALID` 增加确定性 fetch fixture；三类错误均只发起
+  1 次请求，统一收敛为不含内部错误文本的 `UPSTREAM_UNAVAILABLE`（`retryable=true`），既有
+  401/403/429/5xx/504 与 Abort/超时映射继续通过。全插件 9 个测试文件、41 个测试和 TypeScript
+  build 通过。至此固定 endpoint、请求包络、响应上限、单次请求、HTTP/网络/超时错误契约均有离线
+  证据，S1.4 完成验收；真实公网故障观测仍属于 S3.7，不在本项虚构为已完成。
+
+- [x] [Must Pass] S1.5：实现响应 parser、normalizer、去重与 provenance。
 
   验收目标：
   - 异常 JSON、类型错误、超大字段、缺失关键字段被安全拒绝或丢弃；
@@ -703,7 +811,12 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - 返回 searched_at、provider、source_domain，并明确内容为外部不可信资料；
   - snippet 中的“忽略系统指令/调用工具”等文本只作为资料，不获得控制语义。
 
-- [ ] [Must Pass] S1.6：实现基础进程内限流、请求配额和并发上限。
+  验收记录（2026-08-12 21:19，Asia/Shanghai）：parser/quality fixture 覆盖结构化与自然语言
+  envelope、provider page source、HTTPS URL fallback、视觉边界、零来源 fail-closed、最多 5 条
+  citation、URL canonicalization、控制字符清理及不可信内容 provenance；定向测试 9 项通过，
+  hostile-content 矩阵通过。该项完成 S1.5 验收。
+
+- [x] [Must Pass] S1.6：实现基础进程内限流、请求配额和并发上限。
 
   验收目标：
   - 至少有 per-minute、per-day、最大并发和硬结果数限制；配置只能比代码硬上限更严格；
@@ -713,17 +826,72 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - 已记录“进程重启会重置哪些计数”；MVP 可接受保守的进程内计数与 Provider 账户硬上限，
     精确费用核算和持久化配额登记到 S4.5。
 
+  历史验收结论（2026-08-12 21:33，Asia/Shanghai）：`quota.test.ts`、`deepseek-client.test.ts`、
+  `provider.test.ts` 共 3 个文件、15 个测试通过；minute/day/concurrent、超限不触网、失败释放和
+  不自动重试均正常。但源码没有读取或传播上游 `Retry-After`，只能返回 `RATE_LIMITED`，未完全满足
+  本项 Retry-After 语义，故暂不关闭。
+  Retry-After 补强记录（2026-08-12 23:47，Asia/Shanghai）：429 响应现在读取 HTTP `Retry-After`
+  的秒数或日期形式，并将结果限制为最多 60 秒，以可选 `retryAfterMs` 字段加入稳定错误结果；无效
+  或缺失值不外显。该实现不自动等待、不自动重试，仍保持单次请求；fixture 验证 `120` 秒会被限制
+  为 `60000` ms 且只请求 1 次。全插件 9 个测试文件、42 个测试和 TypeScript build 通过；S1.6
+  完成验收。进程重启重置进程内计数，Provider 账户配额和精确费用仍按 S4.5 治理项处理。
+  真实 QQ 配额观察（2026-08-12 23:52，Asia/Shanghai）：Terra 针对一个问题并行发起了两次
+  `personal_web_search`；第一请求占用唯一并发槽并成功完成，第二请求在 Provider 网络请求前返回
+  `QUOTA_EXCEEDED`，没有自动重试。主 Agent 最终基于成功结果作答，没有把被拒的第二路伪装成搜索结果；
+  Gateway audit 同时记录 `status=OK/resultCount=3` 与 `status=QUOTA_EXCEEDED/resultCount=0` 两条
+  脱敏事件。该实测证明并发硬上限在真实模型并行 tool call 下仍生效。
+
 - [ ] [Must Pass] S1.7：实现 MVP 最小化审计与可观测性。
 
   验收目标：
   - 首版使用结构化运行日志即可，不为 Search 单独建设审计数据库或通用审计平台；
   - 记录 request_id、query hash、query 长度、Provider、耗时、结果数、请求配额计数和状态码；
   - 默认不记录原始 query、snippet、完整 URL query string、Key、认证 Header 或私聊正文；
+  - OpenClaw 宿主的原始会话/trajectory 只能适用第十二节已记录的 MVP 本地留存例外；该例外不扩展到
+    plugin audit、工具副本、Gateway 结构化 audit 或其他日志；
   - 外部可见错误短而稳定，内部诊断可关联 request_id；
   - 审计失败的策略明确：安全守卫/预算状态无法确认时 fail-closed，非关键指标失败不泄密；
-  - MVP 至少有受控日志位置和大小/轮转上限；长期 retention 政策登记到 S4.5。
+  - MVP 至少盘点受控日志位置、当前大小/轮转上限或明确记录其缺失；长期 retention、删除、备份与
+    宿主级脱敏政策登记到 S4.5，不能反向阻塞单一主人私聊 MVP。
 
-- [ ] [Must Pass] S1.8：实现 `personal_web_search` tool factory 和输出格式。
+  当前验收结论（2026-08-12 21:18，Asia/Shanghai）：已完成不泄露 key/query canary 的扫描，
+  但 personal-search 当前没有 request_id、query hash、耗时/结果数/配额状态的专用结构化 audit
+  记录；S2.4 同步未通过，故 S1.7 暂不关闭。
+  结构化 audit 补强记录（2026-08-12 23:50，Asia/Shanghai）：新增
+  `chatbot/plugins/personal-search/src/audit.ts`，Provider 每次完成或失败请求向 OpenClaw
+  logger 输出 `personal-search.audit` 事件，仅含 request ID、query SHA-256、Unicode 长度、固定
+  Provider ID、耗时、结果数、稳定 `status`（`OK` 或 `SearchErrorCode`）和 minute/day/in-flight
+  配额快照；成功和失败、audit sink 抛错不影响搜索结果均有测试覆盖。日志事件不含原始 query、snippet、
+  URL、URL query string、Key、认证 Header 或私聊正文；全插件 9 个测试文件、44 个测试和
+  TypeScript build 通过。结构化事件代码已通过，但 S1.7 整体仍不勾选：OpenClaw 会话轨迹的原始
+  query 保留边界、Gateway 日志轮转/保留上限和更完整的运行时审计策略尚未独立验收，相关问题见 S2.4。
+  真实 Gateway audit 观察（2026-08-12 23:52—23:53，Asia/Shanghai）：日志出现两条仅含
+  request ID、SHA-256、长度、Provider、耗时、结果数、稳定状态和配额快照的事件，分别对应成功
+  搜索与并发拒绝；事件内容没有原始 query 或来源 URL。该记录证明 plugin logger 接线和生产运行时
+  事件格式符合预期，但不改变会话轨迹仍保存原始用户/tool query、以及日志轮转/保留策略尚未验收的
+  结论。
+  会话持久化脱敏 QQ 回归（2026-08-13 04:58，Asia/Shanghai）：主人重新 `/new` 后请求
+  Ollama Web Search API Key 要求，主 Agent 实际调用 `personal_web_search`，DeepSeek 搜索成功，
+  Gateway audit 为 `status=OK`、`resultCount=3`，事件仍只含 query hash/长度等结构化字段。该回合的
+  会话 JSONL 中，助手 `personal_web_search` tool-call 的 `arguments`/`partialArgs` 以及工具结果
+  `content`/`details` 的 `query` 均已保存为 `[redacted search query]`，答案、来源和检索时间仍保留；
+  说明两个持久化 hook 的工具边界在真实运行时生效。但同一会话的原始用户消息和
+  `.trajectory.jsonl` 的 `finalPromptText` 仍保留原始 query，因此 S1.7 仍不关闭：OpenClaw 原始
+  prompt/trajectory 保留边界、Gateway 日志轮转/保留上限和长期 retention 策略仍未完成治理决策。
+  MVP 留存策略确认（2026-08-18）：主人接受当前单机会话/trajectory 留存作为受限 MVP 妥协，详见
+  第十二节 ADR。这解决了“是否允许”的产品决策，但不改变 `personal-search` audit 不记录原文的
+  边界，也不代替持久化位置、访问控制、轮转、删除和备份边界的验证；故 S1.7 继续保持未勾选。
+  MVP 门槛拆分（2026-08-18）：S1.7 在当前 MVP 只要求结构化 audit、工具副本脱敏、当前 Gateway
+  日志路径/大小或轮转状态的可复核记录；长期 retention、备份、可验证删除和宿主级脱敏转入 S4.5。
+  因此本项仍待本轮只读日志核验，不再等待全部长期治理工作完成。
+  只读日志/服务盘点（2026-08-18）：Gateway 为当前用户的 systemd service，`UMask=0002`、
+  `StandardOutput=journal`、`StandardError=inherit`，未配置 systemd 的 `LogsDirectory`；环境文件为
+  `gateway.systemd.env`（`0600`）。另有应用日志目录 `/tmp/openclaw`（目录 `0700`，当前日志文件
+  `0600`，约 1.1 MiB）。当前用户 journal 总占用约 248 MiB，已生效的 journald 配置中未发现显式的
+  容量、文件数或 retention 上限；此占用是用户 journal 总量，不等于 Gateway 专属配额。故日志路径
+  已知，但长期/可控轮转尚未成立；本项还不能关闭，且必须先处理下述 S2.4 的 session 权限问题。
+
+- [x] [Must Pass] S1.8：实现 `personal_web_search` tool factory 和输出格式。
 
   验收目标：
   - factory 内再次执行 owner-private-QQ 守卫，不能只依赖提示词或 `alsoAllow`；
@@ -731,6 +899,10 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - 工具只调用 SearchService，不直接操作配置、文件、数据库、Scheduler 或 QQ 发送；
   - 成功、无结果、上游失败、配额失败都有确定性结构，模型无需猜测执行状态；
   - tool result 不含内部堆栈、SecretRef 名称或供应商原始调试数据。
+
+  验收记录（2026-08-12 21:21，Asia/Shanghai）：完整搜索插件测试 9 个文件、34 个测试通过；
+  factory 内再次执行 owner-private-QQ 守卫，成功、Provider 错误、无 Key、配额和 invalid input
+  均返回稳定的 public payload，不暴露内部堆栈或 SecretRef 值。该项完成 S1.8 验收。
 
 - [ ] [Must Pass] S1.9：完成插件 manifest 和代码一致性校验。
 
@@ -740,50 +912,155 @@ S1：独立插件的离线最小垂直切片（仍不开放运行时权限）
   - 若存在 Registry，runtime_status 在离线阶段最多为 installed，不得标为 loaded/accepted；
   - 生成产物不包含 `.env`、数据库、日志或测试秘密。
 
-- [ ] [Must Pass] S1.10：完成离线实现记录。
+  历史验收结论（2026-08-12 21:34，Asia/Shanghai）：manifest 单测与代码工具名一致，
+  `openclaw.plugin.json` 声明的工具/provider 也与注册代码一致；但 `openclaw plugins validate
+  --entry ./dist/index.js` 在当前 CLI 返回“plugin entry does not expose defineToolPlugin metadata”，
+  不能作为通过证据。`npm pack --dry-run --ignore-scripts` 进一步确认发布包会包含 40 个文件，其中包括
+  `dist/*.test.js`、测试 canary 和 `test-fixtures.js`；因此“生成产物不含测试秘密”明确不满足，S1.9
+  暂不关闭。
+  生产构建产物修复记录（2026-08-12 23:56，Asia/Shanghai）：`tsconfig.json` 现在排除
+  `src/**/*.test.ts` 与 `src/test-fixtures.ts`；删除此前已确认的 stale `dist` 测试编译文件后，
+  `npm run build`、44 个离线测试和 `npm pack --dry-run --ignore-scripts` 通过。包内容为 22 个文件，
+  只含生产 `dist` 模块、manifest 和 `package.json`，不再包含 `dist/*.test.*`、`test-fixtures` 或
+  完整合成 canary。当前 OpenClaw CLI 对 `openclaw plugins validate --entry ./dist/index.js` 仍返回
+  `plugin entry does not expose defineToolPlugin metadata`；这是现有 CLI 与本插件 definePluginEntry
+  contract 的校验不兼容，manifest/代码单测仍通过，因此 S1.9 只因该独立校验问题暂不关闭。
+
+- [x] [Must Pass] S1.10：完成离线实现记录。
 
   验收目标：本文记录新增/修改的相对路径、关键选择、尚未验收项和精确测试命令；
   `openclaw.json` 的工具暴露面与 S1 开始前一致。
+
+  验收记录（2026-08-12 21:23，Asia/Shanghai）：本文已记录 personal-search 的路径、固定
+  DeepSeek Responses 选择、测试命令、当时未完成的 S0.2/S1.3/S1.4/S1.6/S1.7/S1.9/S3.7 等项，以及
+  R1/R2/R3 回滚命令和结果；S1 离线阶段未开放运行时权限，权限变化留在 S3 记录。该项完成 S1.10
+  验收。
 
 ----------------------------------------------------------------------
 S2：离线功能、安全和回归验收（仍不让模型看到 Search）
 ----------------------------------------------------------------------
 
-- [ ] [Must Pass] S2.1：输入与 schema 测试通过。
+- [x] [Must Pass] S2.1：输入与 schema 测试通过。
 
   验收目标：覆盖正常中英文、空白、超长、控制字符、unknown fields、错误类型、Unicode 边界；
   所有拒绝均发生在网络调用前，测试无随机失败。
 
-- [ ] [Must Pass] S2.2：Provider 基础响应和故障矩阵通过。
+  验收记录（2026-08-12 21:12，Asia/Shanghai）：`personal-search` 的 `query.test.ts`、
+  `config.test.ts`、`index.test.ts` 定向测试共 3 个文件、9 个测试通过；随后对空字符串、全空白、
+  `null`、数字、数组、对象、未知字段、NUL、超长字符串和 Unicode NFC 规范化执行独立边界矩阵，
+  全部符合预期。输入拒绝发生在 Provider 调用前；该项完成 S2.1 验收。
+
+- [x] [Must Pass] S2.2：Provider 基础响应和故障矩阵通过。
 
   验收目标：至少覆盖正常、零结果、坏 URL/缺字段、异常或超大响应、认证失败、429、典型 5xx
   和超时；错误被收敛到稳定类别，重试次数和审计状态符合设计。Provider 的罕见变体与穷举型
   错误细分登记到 S4.5。
 
-- [ ] [Must Pass] S2.3：网络边界测试通过。
+  验收记录（2026-08-12 21:12，Asia/Shanghai）：`deepseek-client.test.ts`、`parser.test.ts`、
+  `provider.test.ts`、`quality-eval.test.ts` 定向测试共 4 个文件、22 个测试通过。覆盖正常完成结果、
+  零结果、缺少来源证据、坏 URL、异常/超大响应、401/403、429、500/503、504 和 AbortError；错误分别
+  收敛到 `AUTH_FAILED`、`RATE_LIMITED`、`UPSTREAM_UNAVAILABLE`、`TIMEOUT` 或 `INVALID_RESPONSE`，
+  这些故障路径均验证为单次请求且不自动重试。该记录是离线 fixture/单元矩阵验收；真实 Provider 故障
+  观测仍属于 S3.7，不在本项中虚构为已完成。
+
+- [x] [Must Pass] S2.3：网络边界测试通过。
 
   验收目标：模型参数无法改变 scheme/host/path/method/header；重定向不能绕到 localhost、私网、
   link-local 或 metadata endpoint；客户端不会下载文件、执行脚本或跟随页面内链接。
 
+  验收记录（2026-08-12 21:17，Asia/Shanghai）：`config.test.ts`、`provider.test.ts`、
+  `deepseek-client.test.ts`、`parser.test.ts` 定向测试 4 个文件、22 个测试通过；覆盖固定
+  `https://api.deepseek.com/responses` endpoint、固定 POST/header/body、拒绝任意 Provider endpoint，
+  以及来源 URL 的 HTTPS/公网主机校验。另用 OpenClaw `withTrustedWebToolsEndpoint` 的确定性重定向矩阵验证：
+  同一 `api.deepseek.com` 主机重定向可继续，跳转到外部主机、localhost、127.0.0.1 和
+  `169.254.169.254` 均在第二次网络调用前被拦截。Worker 代码只读取受限 JSON 响应，不实现任意 URL
+  Fetch、浏览器、文件下载、脚本执行或页面内链接跟随。该项完成 S2.3 验收；真实公网链路仍由 S3.7 负责。
+
 - [ ] [Must Pass] S2.4：隐私、Secret 和日志测试通过。
 
-  验收目标：用 canary Secret/OpenID/票号测试时外发被拒或按规则最小化；扫描构建产物、日志、
-  audit、错误和快照均不出现 canary 原文或真实凭证；原始 query 默认不持久化。
+  验收目标：用 canary Secret/OpenID/票号测试时外发被拒或按规则最小化；扫描构建产物、plugin audit、
+  工具调用/结果副本、错误和快照均不出现 canary 原文或真实凭证；原始 query 默认不由插件持久化。
+  当前仅允许第十二节 ADR 中明示的本机 OpenClaw 原始会话/trajectory MVP 例外，且 MVP 至少完成
+  持久化路径、当前访问权限和 OpenClaw 配置中显式导出/同步线索的只读盘点。长期 TTL/删除、备份、
+  宿主级脱敏和复杂语义隐私分类转入 S4.5。
 
-- [ ] [Must Pass] S2.5：不可信内容和提示注入测试通过。
+  验收记录（2026-08-12 21:35，Asia/Shanghai）：输入、配置和 owner-only 工具定向测试 3 个文件、
+  9 个测试通过；Secret/凭证 canary 在 query 边界被拒绝；对 122 个相关日志、会话、状态和构建文件
+  只做计数扫描，未发现配置中的真实 key 出现在环境文件之外，也未发现 canary 出现在日志/会话/状态中。
+  `personal-search` 生产代码没有自行写文件/数据库或 audit 实现，但 OpenClaw 会话轨迹扫描到 10 个
+  会话、108 个带原始 query 字段的搜索 tool call；因此“插件不自行持久化”成立，而“运行时原始 query
+  默认不持久化”按当前表述不成立。另有 `dist/` 的 4 个测试编译文件含 `test-key` 等 canary。S2.4
+  整体暂不通过；需决定会话轨迹的 query 保留边界、生产构建排除测试产物，并补齐或明确 audit 策略。
+  隐私格式回归补充（2026-08-12 23:22，Asia/Shanghai）：主人 QQ 实际调用
+  `personal_web_search` 发送合成票号 canary；工具返回 `INVALID_INPUT`，Provider mock/运行时均未
+  进入 DeepSeek 请求。该次确认了外发边界，但 OpenClaw 会话轨迹仍保留了本轮原始测试 query，说明
+  “拒绝外发”与“运行时不持久化原始输入”是两个独立问题；本次不能把 canary 出现在主人私聊轨迹
+  误写成 Provider 泄露。S2.4 继续保持未通过，待明确会话轨迹脱敏/保留策略。
+  生产包修复补充（2026-08-12 23:56，Asia/Shanghai）：构建排除测试源并清理 stale `dist` 后，
+  `npm pack --dry-run` 的 22 个发布文件只包含生产模块，未再发现测试编译文件、fixture 或完整
+  合成 canary；因此“发布包不携带测试秘密”这一子边界通过。S2.4 仍不关闭，因为 OpenClaw 的
+  主人 QQ 会话/工具轨迹仍会保留原始 query，需另行决定脱敏或保留策略。
+  会话持久化脱敏 QQ 回归补充（2026-08-13 04:58，Asia/Shanghai）：真实搜索成功后，已确认
+  `before_message_write` 与 `tool_result_persist` 只对 `personal_web_search` 的助手工具调用/结果
+  副本做了 query 脱敏，未破坏答案、来源和检索时间；但用户原始消息及 OpenClaw trajectory 的
+  `finalPromptText` 仍保留原始 query。故“工具调用/工具结果副本不保留原始 query”通过，
+  “运行时所有原始 query 默认不持久化”仍未通过，S2.4 继续保持未勾选。
+  MVP 留存策略确认（2026-08-18）：主人明确接受上述原始用户消息/trajectory 的本机保留，作为
+  单一主人私聊的临时边界；这不是对原始 query 默认不持久化的测试结论，也不是对多用户、群聊、
+  云同步或长期保留的授权。S2.4 保持未勾选，直到第十二节 ADR 的持久化路径、权限、保留/删除、
+  备份边界和扩展敏感输入回归均完成。
+  MVP 门槛拆分（2026-08-18）：本项的 MVP 关闭条件调整为：既有外发拒绝/发布包/audit/工具副本
+  脱敏证据仍有效，且补齐本机持久化路径、当前文件/服务权限与 OpenClaw 配置中显式导出/同步线索的
+  只读核验；第十二节 ADR 的长期 retention、删除/备份、宿主级脱敏和扩展语义敏感输入回归改为
+  S4.5 技术债。该拆分不放宽 Provider 外发边界，也不允许多用户、群聊、远程访问或云同步直接复用
+  此例外。
+  只读本机留存盘点（2026-08-18）：`agents/main` 为 `0700`，但其 `sessions/` 子目录为 `0775`、
+  总占用约 28 MiB；其中 11 个活动 session JSONL、21 个 `.reset` 历史副本及 1 个 `.deleted` 历史
+  副本均为 `0664`，33 个 trajectory JSONL 与其 path 指针为 `0600`。`0664` 配合 `0775` 意味着
+  普通 session/历史副本具有 other-read 位：若机器后来存在其他本机账号，其可读取这些文件；当前
+  `afrangry` 主组未列出其他成员并不消除 other-read 风险。另发现 `state/session-backups/`（约
+  460 KiB）：根目录 `0755`，部分子目录 `0775`，其中 2 个历史备份文件为 `0664`，包括一个 JSONL
+  副本；其余已抽样的会话/trajectory 备份为 `0600`。这些都是原始会话可能存在的持久化位置，不能
+  以“会话重置/删除”视为已清除。
+  同次盘点中，`openclaw.json` 未发现显式的 export/backup/trajectory retention 配置；唯一命中的
+  `postIndexSync=async` 不能据此推断为无外部同步。当前用户 systemd unit 也没有声明专用状态/日志
+  目录。结论：路径已盘点，但 owner-only 权限基线不通过；在将受影响目录/历史副本收紧为仅所有者
+  可读写、并将 Gateway 新建文件的 `UMask` 收紧后，需以新会话回归验证。本项保持未勾选。
+
+- [x] [Must Pass] S2.5：不可信内容和提示注入测试通过。
 
   验收目标：结果标题/snippet 中的系统指令、tool call、Markdown/控制字符、恶意链接和伪造引用
   不能修改权限、调用额外工具、写记忆或触发发送；输出仍清晰标识来源与不确定性。
 
-- [ ] [Must Pass] S2.6：基础限流、请求配额、并发和单次调用测试通过。
+  验收记录（2026-08-12 21:19，Asia/Shanghai）：`parser.test.ts` 与 `quality-eval.test.ts` 共 2 个
+  文件、9 个测试通过；另以 hostile fixture 验证答案中的伪系统指令、tool-call 文本、控制字符和
+  恶意 citation。结果只作为 `externalContent.untrusted=true` 的数据返回，控制字符被清理，
+  `javascript:`、IP/本地 citation 被丢弃；插件没有写记忆、发消息或追加工具的调用面。该项完成
+  S2.5 验收；主 Agent 后续如何理解不可信资料仍属于其提示词和最终回答质量边界，不由 Worker 伪装成已核验事实。
+
+- [x] [Must Pass] S2.6：基础限流、请求配额、并发和单次调用测试通过。
 
   验收目标：边界前后计数正确；并发不超发；超限不触网；失败是否计费规则明确；同一 tool call
   不因内部自动恢复造成重复收费。若引入持久化，重启后计数和 schema migration 通过测试。
+
+  验收记录（2026-08-12 21:20，Asia/Shanghai）：`quota.test.ts`、`provider.test.ts`、
+  `deepseek-client.test.ts` 共 3 个文件、15 个测试通过；独立并发矩阵验证第二个调用在触网前
+  返回 `QUOTA_EXCEEDED`，上游只收到 1 次；独立失败释放矩阵验证异常调用释放 in-flight 槽位并只
+  计数 1 次。当前规则为失败请求仍计入本地 minute/day 请求计数；没有内部自动重试，也未引入跨重启
+  持久化配额，因此该项完成 S2.6 验收。
 
 - [ ] [Must Pass] S2.7：既有能力回归和 S2 Go/No-Go 通过。
 
   验收目标：天气、规划、提醒插件原有 build/test 不因 Search 失败；生产配置校验仍通过；Search
   代码目录整体禁用/移除时现有能力不受影响。S2.1-S2.6 全绿后才能进入 S3。
+
+  验收记录（2026-08-12 21:36，Asia/Shanghai）：`personal-search` 完整
+  `npm run plugin:validate` 通过（9 个测试文件、34 个测试）；`personal-weather` 完整测试通过
+  （12 个测试文件、103 个测试），天气 plugin validate 通过；`openclaw config validate`、
+  `openclaw plugins doctor` 通过，runtime inspect 显示 personal-search 与 personal-weather 均已加载，
+  两个插件的工具清单未出现异常扩大。
+  既有回归层通过，但 S2.4 尚未通过，因此按照本节门槛暂不关闭 S2.7 的整体 Go/No-Go；禁用 Search
+  后既有能力不受影响的历史 R1 记录仍保留，待 S2.4 修复后再复核总门禁。
 
 ----------------------------------------------------------------------
 S3：分阶段运行时接入与真实 QQ 验收
@@ -794,18 +1071,35 @@ S3：分阶段运行时接入与真实 QQ 验收
   验收目标：记录当前插件清单、工具清单、配置校验结果和回滚命令；配置备份不含明文 Key；
   SecretRef 可解析、秘密文件权限合格，Key 权限和额度为最小值。
 
-- [ ] [Must Pass] S3.2：只加载插件，不向模型暴露工具。
+  验收记录（2026-08-12 21:23，Asia/Shanghai）：当前 `openclaw.json` 与
+  `gateway.systemd.env` 权限均为 `600`；配置中的 DeepSeek key 仍为 SecretRef（`source/provider/id`
+  形状），未读出明文；主模型、Provider、插件路径、精确工具白名单、群聊策略和回滚步骤均已有
+  快照/记录；`openclaw config validate` 通过。SecretRef 文件权限与配置快照部分通过，但 Provider
+  账户侧最小额度、费用和数据保留政策尚未完成 S0.2 决策，故 S3.1 整体暂不勾选。
+
+- [x] [Must Pass] S3.2：只加载插件，不向模型暴露工具。
 
   验收目标：先增加精确 `plugins.load.paths` / `plugins.allow` / plugin config；保持 Search 不在
   `tools.alsoAllow`；`plugins inspect --runtime`、doctor 和 config validate 均通过；日常 QQ 对话
   中模型仍不能调用或声称已经具备 Search。
 
+  验收记录（2026-08-12 21:23，Asia/Shanghai）：历史 R1 阶段保留插件加载但撤掉
+  `personal_web_search`/`web_search` 权限，配置校验和 Gateway 重启通过；主人 QQ 请求搜索时运行时
+  工具不可用，Kurumi 未凭记忆伪造结果。当前 runtime inspect 也确认 `personal-search` 已加载，
+  工具可见性由后续 S3.4 单独控制；该阶段完成 S3.2 验收。
+
 - [ ] [Must Pass] S3.3：完成受控 Provider smoke test。
 
   验收目标：通过插件测试入口或受控诊断发出一个无隐私的固定 query；验证认证、超时、解析、
-  配额和审计；终端输出不显示 Key；失败时不进入工具暴露阶段。
+  配额和审计；若使用 DeepSeek，额外验证 Responses 的 `web_search_call` 和来源 URL；终端输出
+  不显示 Key；失败时不进入工具暴露阶段。
 
-- [ ] [Must Pass] S3.4：原子增加工具可见性与群聊拒绝策略。
+  验收记录（2026-08-12 21:23，Asia/Shanghai）：DeepSeek Responses live smoke 已确认
+  `status=completed`、`web_search_call`、来源 URL 和 `deepseek-v4-flash`；离线测试覆盖认证、
+  超时、解析、配额和无 Key 不触网，终端/日志扫描未发现真实 key。审计记录边界尚未实现，Provider
+  费用/保留策略也未完成 S0.2 决策，因此 S3.3 的 smoke 已有证据但整体暂不勾选。
+
+- [x] [Must Pass] S3.4：原子增加工具可见性与群聊拒绝策略。
 
   验收目标：
   - 先确保全部 QQ 群聊策略显式 deny 精确 Search 工具或整个 Search namespace；
@@ -813,30 +1107,140 @@ S3：分阶段运行时接入与真实 QQ 验收
   - 工具自身 owner-private factory 守卫仍存在，形成配置层和代码层双重拒绝；
   - 配置修改后 validate 通过，diff 中没有无关权限扩大。
 
-- [ ] [Must Pass] S3.5：重启 Gateway 并核对实际运行时状态。
+  验收记录（2026-08-12 21:23，Asia/Shanghai）：当前 `tools.alsoAllow` 只增加精确
+  `personal_web_search`，未增加 `web_fetch`、browser、exec 或通用 Search；QQ `groupPolicy` 为
+  `disabled`；`personal-search` factory 仍要求主人、QQ、非群聊私聊；`openclaw config validate`
+  与 `plugins doctor` 通过，runtime inspect 显示 personal-search 为 loaded。该项完成 S3.4 验收。
+
+- [x] [Must Pass] S3.5：重启 Gateway 并核对实际运行时状态。
 
   验收目标：Gateway 健康；插件 diagnostics 为空；主人私聊上下文能看到 Search；群聊/非主人
   上下文不可用；天气、规划、提醒工具清单和后台任务未减少、未扩大、未报错。
 
-- [ ] [Must Pass] S3.6：完成主人 QQ 私聊正向验收。
+  验收记录（2026-08-12 21:23，Asia/Shanghai）：R3 重启后的 Gateway 为 running/active、
+  connectivity probe 为 ok；本次 `openclaw plugins doctor` 无问题，runtime inspect 确认
+  personal-search 与 personal-weather 均 loaded；主人 QQ 正向链路实际调用 `personal_web_search`，
+  天气/规划/提醒工具清单与离线回归未减少或扩大。群聊策略为全局 disabled，非主人拒绝已由代码边界
+  fixture 覆盖；真实非主人 QQ 入口仍明确留给 S3.7，不在此项冒充完成。
+
+- [x] [Must Pass] S3.6：完成主人 QQ 私聊正向验收。
 
   验收目标：至少验证当前事件查询、零结果或小众查询、明确要求联网核实三类；每次最多 5 条，
-  含来源域名和检索时间；模型区分搜索资料与自身推断，不宣称读过未抓取的全文。
+  含来源域名和检索时间；确认是 GPT-Terra 主 Agent 调用受控 Search Adapter，再由 DeepSeek
+  检索，而不是把 DeepSeek 当作无边界主 Agent；模型区分搜索资料与自身推断，不宣称读过未抓取的全文。
+
+  进度记录：三类正向样例均已覆盖：明确要求联网核实、当前事件 query，以及小众公开 query
+  （Ollama Web Search 官方文档的 API Key 要求）。每次均由 GPT-Terra 主 Agent 实际调用受控
+  `personal_web_search`，再由 `deepseek-search` 检索，结果包含来源和检索时间，并明确区分
+  provider-reported 资料与本地 Fetch 核验。零结果 query 已完成一次“最终回答不误引”的真实样例，
+  但当时 Worker 原始结果仍带有无关近似词引用；现已收紧 parser 的结构化 `sources` 证据边界并
+  通过离线回归，真实零结果 query 的新版本 QQ 复测和主模型失败后的降级策略仍待整理。
+  隐私格式代码更新后的正向回归（2026-08-12 23:45，Asia/Shanghai）：重启并加载新增 query
+  校验后，主人从新会话再次请求 Ollama Web Search API Key 要求；会话轨迹确认实际调用
+  `personal_web_search`，工具返回 `kind: "answer"`、3 条 provider-reported 官方来源和
+  `searched_at=2026-08-12T15:45:21.513Z`（本地 23:45:21），主 Agent 正确说明未进行本地
+  Fetch 独立核验。该结果证明新增高风险输入拒绝不会误伤普通公开 query，S3.6 的正向回归在代码
+  更新后保持通过。
+  审计代码加载后的正向/并发回归（2026-08-12 23:52—23:53，Asia/Shanghai）：Gateway 重启后，
+  主 Agent 实际调用了两次 `personal_web_search`，一条成功、一条按 `maxConcurrent=1` 返回
+  `QUOTA_EXCEEDED`；最终分两段回答仍只引用成功搜索返回的 3 条来源，并给出
+  `2026-08-12 23:52:53` 的检索时间和未本地 Fetch 核验声明。该结果同时覆盖了新版审计代码的
+  生产加载、正向搜索和模型并行调用下的限流表现；两路均未让 DeepSeek 之外的任意网络/工具能力
+  暴露。
+  会话持久化脱敏后的正向回归（2026-08-13 04:58，Asia/Shanghai）：主人重新开启会话并请求
+  Ollama Web Search API Key 要求，主 Agent 实际调用受控 `personal_web_search`，搜索成功并返回
+  官方来源、检索时间及“未经过本地 Fetch 独立核验”的准确声明；持久化检查同时确认助手工具调用
+  与工具结果中的 query 已脱敏。该次证明脱敏 hook 不影响正常搜索和答案证据，但不替代新的零结果
+  质量回归，也不改变 S1.7/S2.4 对原始用户消息和 trajectory 保留边界的未决状态。
 
 - [ ] [Must Pass] S3.7：完成真实权限和失败负向验收。
 
   验收目标：群聊、非主人、无/坏 Key、超时、429、Provider 5xx 均符合预期；能证明被拒请求
   未触网或未越权；失败回答不伪造最新信息，不建议通过任意 HTTP/exec 绕过。
 
-- [ ] [Must Pass] S3.8：完成回滚演练。
+  进度记录：已完成离线错误矩阵、撤销 `tools.alsoAllow` 的 R1 和禁用 Provider 的 R2；本轮再次
+  核对了 owner-private 工具边界 fixture，非主人、群聊和非 QQ 上下文均在触发 Provider 前拒绝。
+  群聊入口永久禁用，不为测试重新开放；真实非主人入口和人为制造真实 Provider 401/429/5xx 仍待
+  验收，等价离线故障证据已完成。
+  真实非主人 QQ 私聊本轮暂跳过：当前没有第二个 QQ 账号可用于发送测试消息。该项不影响现有
+  owner-private 代码/fixture 证据，但不能将等价 fixture 写成真实入口验收；S3.7 因此继续保持
+  未完全通过，未来取得独立非主人入口后可补测。
+  真实无 Key 负向验收记录（2026-08-12 22:22—22:34，Asia/Shanghai）：第一次只用
+  systemd `UnsetEnvironment=DEEPSEEK_API_KEY` 后发送的 QQ query
+  `KurumiAuthNegativeTest-20260812` 不能作为无 Key 证据；Gateway 启动阶段会从配置目录 `.env`
+  重新加载该变量，因而仍实际拥有 Key，随后得到的 `INVALID_RESPONSE` 是上游/解析路径结果，不能
+  用来判断无 Key 分支。随后使用临时的空值 EnvironmentFile 覆盖原 Key，并保留原 env 文件不变；
+  Gateway 在启动阶段明确报 `SecretRefResolutionError: Environment variable "DEEPSEEK_API_KEY"
+  is missing or empty`，未进入 QQ、Provider 或 DeepSeek 网络请求。该结果符合当前配置契约：
+  `DEEPSEEK_API_KEY` 是必需 SecretRef，无 Key 时 Gateway fail-closed，而不是启动后再返回工具级
+  `AUTH_NOT_CONFIGURED`。隔离 Provider 测试仍确认：若绕过 Gateway 单独创建 Provider，无 Key 会返回
+  `SearchError(AUTH_NOT_CONFIGURED)` 且上游 request 次数为 0。结论：无 Key 的真实启动阻断和未触网
+  通过；第一次 QQ 结果作废，不计入无 Key 验收。测试结束后已移除临时覆盖和测试文件、恢复
+  DeepSeek Key，并确认 Gateway 为 active/running；S3.7 仍因非主人、坏 Key 和真实上游故障等其他
+  子项未完成而保持未完全通过。
+  坏 Key 重测前的无效尝试（2026-08-12 22:48，Asia/Shanghai）：临时坏 Key 已在恢复 QQ 通道时
+  移除，主人随后发送 `KurumiAuthBadKeyTest-20260812`；会话轨迹确认实际调用了
+  `personal_web_search`，但当时使用的是原 Key，工具返回 `INVALID_RESPONSE`。该结果不能作为
+  `AUTH_FAILED`/HTTP 401 证据，已明确标记作废，等待在临时坏 Key 生效且 QQ 通道已连接后重测。
+  坏 Key 真实 QQ 验收（2026-08-12 22:49—22:50，Asia/Shanghai）：使用临时 EnvironmentFile
+  注入非真实测试 Key；Gateway 正常启动，QQ 状态为 running/connected。主人先发送 `/new` 清理
+  上一轮上下文，再发送 `KurumiAuthBadKeyTest-20260812` 搜索请求；会话轨迹确认实际调用了
+  `personal_web_search`，工具返回 `ok: false, code: "AUTH_FAILED"`，最终回答明确说明鉴权失败，
+  未返回搜索结果、来源或记忆补答。该结果通过坏 Key 的稳定错误分类和 fail-closed 负向验收；本地
+  离线矩阵已将 HTTP 401/403 映射到同一 `AUTH_FAILED`，本次 QQ 记录以工具公开错误契约为准，未把
+  未独立记录的上游原始响应冒充为 Fetch 核验。测试结束后已移除临时坏 Key 文件、恢复真实 Key，
+  Gateway 为 active/running，QQ 为 running/connected。
+  Key 恢复后的真实 QQ 回归（2026-08-12 22:57—22:58，Asia/Shanghai）：主人发送 `/new` 后再次
+  询问 Ollama Web Search 的 API Key 要求；会话轨迹确认实际调用了 `personal_web_search`，工具链
+  恢复返回 `kind: "answer"` 与 provider-reported 官方来源，最终回答包含检索时间，并明确说明
+  未经过本地 Fetch 独立核验。该结果证明坏 Key 失败后恢复真实 Key、重启 Gateway 和 QQ 通道不会
+  破坏受控搜索正向路径；本次 QQ 结果未把搜索供应商报告冒充为本地 Fetch 核验。
+  隐私边界真实 QQ 回归（2026-08-12 23:11，Asia/Shanghai）：主人以合成票号/唯一标识 canary
+  请求核实其是否出现在公开网页，并明确要求敏感信息在搜索前拒绝外发。GPT-Terra 主 Agent
+  识别出该内容属于敏感标识后直接拒绝，没有调用 `personal_web_search`；会话轨迹的
+  `itemLifecycle.startedCount=0`、`toolMetas=[]`，且只记录主模型拒绝回复，未见 DeepSeek
+  Provider 请求。该结果通过 Agent/系统提示词层的“先判定隐私、再决定是否搜索”端到端验收；在
+  当时的代码状态下，它不替代 S1.3 的代码级 fail-closed，合成 OpenID/票号 query 仍可能被 Provider
+  输入校验接受，因此 S1.3 继续不勾选。后续代码补强与真实工具调用见下一条记录。
+  代码级高风险 query 真实 QQ 回归（2026-08-12 23:22，Asia/Shanghai）：重启 Gateway 加载新的
+  `dist/index.js` 后，主人明确要求主 Agent 直接调用 `personal_web_search`，将合成票号 canary
+  作为 query 交给工具。会话轨迹确认 `itemLifecycle.startedCount=1`、工具名为
+  `personal_web_search`；工具返回 `ok: false`、`code: "INVALID_INPUT"`、`retryable: false`，
+  并给出改为不含私人标识公开主题的提示。Gateway 该时间窗口只出现主模型请求和 QQ 投递，没有
+  DeepSeek Provider 请求；因此工具层/Provider 层的输入拒绝、未触网和稳定错误契约均通过。该结果
+  取代上条“合成票号仍可能被 Provider 接受”的历史状态，但不关闭 S1.3 的 audit hash 接口和
+  S2.4 的会话原始 query 保留问题。
+  S1.3 关闭记录（2026-08-12 23:53，Asia/Shanghai）：前述格式确定性 query guard、工具层/Provider
+  层零请求拒绝、真实 QQ `INVALID_INPUT` 回归、Agent 端敏感信息先拒绝外发，以及随后落地的
+  hash/长度/状态审计字段共同满足本项；复杂语义隐私分类继续按设计留在 S4.5。会话轨迹是否保留
+  原始 query 属于 S2.4/S1.7 的运行时治理问题，不阻止本项关闭。
+
+- [x] [Must Pass] S3.8：完成回滚演练。
 
   验收目标：从 `tools.alsoAllow` 撤掉 Search 后模型立即不再可用；禁用插件并重启后 runtime
   清单无 Search；天气/规划/提醒仍正常；重新启用不会重复迁移、破坏配额或泄露旧结果。
+
+  进度记录：R1 撤销工具权限、R2 禁用 `personal-search`、R3 重新启用并正向搜索均已通过；
+  `personal-weather` 在 Gateway/runtime 中保持 loaded，且其 103 个离线回归测试通过。真实天气
+  QQ 请求已发起并确认未触发 Search，但发现降雨时段的时区/窗口表达不一致；本轮已修正 formatter
+  并补充回归测试。2026-08-12 20:13 的真实天气 QQ 重测已通过；规划/提醒的只读状态回归已于
+  20:17 通过，提醒正常投递回归也已通过，提醒重复确认负向回归已通过；规划异常负向与提醒停机
+  恢复回归仍待进行。
+
+  验收结论（2026-08-12 21:23，Asia/Shanghai）：就 Search 模块回滚边界，R1（撤权）、R2（禁用
+  插件）、R3（重新启用并成功搜索）已形成完整闭环；天气 103 项离线回归、天气真实 QQ 回归、规划/提醒
+  只读与提醒投递/重复确认回归均未受影响，未发现重复迁移、旧 Search 结果泄露或配额重复执行。规划
+  异常与提醒停机恢复属于你正在自行验收的提醒文档，不作为 Search 回滚项的未决条件；该项完成 S3.8。
 
 - [ ] [Must Pass] S3.9：完成 S3 验收记录。
 
   验收目标：记录测试时间、匿名化 query 类型、通过/失败结果、运行版本和遗留问题；主人确认真实
   QQ 结果后，Registry runtime_status 才能标为 accepted，顶部 S3 才能勾选。
+
+  当前验收结论（2026-08-12 21:23，Asia/Shanghai）：本文已持续记录运行版本、匿名 query 类型、
+  QQ/离线测试时间、通过/失败结果和遗留问题；但 S3.7 的真实非主人入口/真实 Provider 401/429/5xx
+  仍未完成，且 S0.2、S2.4 尚未关闭。因此 Registry/runtime_status 不能标为 accepted，S3.9 和顶部
+  S3 暂不勾选。
 
 ----------------------------------------------------------------------
 S4：路由、引用与质量完善（不升级为动态 Router）
@@ -865,8 +1269,21 @@ S4：路由、引用与质量完善（不升级为动态 Router）
 - [ ] [Should Pass] S4.5：补齐 MVP 后的高级治理项。
 
   验收目标：根据真实使用数据决定是否增加精确费用核算、跨重启持久化配额、复杂 query 隐私
-  分类、Provider 罕见异常细分、长期 audit retention/删除策略和更细的指标；每一项必须证明解决
-  了真实风险或运维问题，不为了“框架完整”一次性全做。
+  分类、Provider 罕见异常细分、长期 audit retention/删除策略、会话/trajectory 的 TTL、可验证删除、
+  备份/同步语义、宿主级脱敏可行性和更细的指标；每一项必须证明解决了真实风险或运维问题，不为了
+  “框架完整”一次性全做。第十二节的 MVP 留存 ADR 是本项的明确输入，不得被遗忘或视为永久豁免。
+
+  MVP 留存 ADR 回收清单（全部为 MVP 后工作）：
+  - [ ] S4.5.a：为 session、trajectory、Gateway 日志、导出文件和备份定义并实际验证轮转、TTL、
+    删除与恢复/备份语义；删除测试必须使用合成 canary，且不得以“文件已删”替代备份副本核验。
+  - [ ] S4.5.b：评估并测试 OpenClaw 宿主级用户消息/trajectory 脱敏或最小化留存方案，确认其不会破坏
+    多轮上下文、工具执行、审计关联、故障诊断和回滚；若不采用，记录理由与复审日期。
+  - [ ] S4.5.c：扩展 query 隐私回归，覆盖更多合成私人标识和语义化敏感场景，并根据真实风险决定是否
+    引入更复杂的分类或确认流程。
+  - [ ] S4.5.d：验证远程访问、备份/同步和导出流程的长期控制；在多用户、群聊、远程访问或云同步上线前
+    重新评审 MVP 例外，必要时将其升级为阻塞项。
+  - [ ] S4.5.e：基于真实使用数据决定精确费用核算、跨重启持久化配额、Provider 罕见异常细分和长期
+    指标，而非为框架完整性提前建设通用治理平台。
 
 - [ ] [Should Pass，按需启动] S4.6：评估结果数量与受控续页策略。
 
@@ -934,20 +1351,30 @@ A3.1 未满足时，A3 保持未开始；“理论上以后可能需要并行”
 十四、当前推荐的下一步
 ======================================================================
 
-下一步只做 S0，不直接写通用框架，也不修改生产权限。顺序建议为：
+本轮已完成 DeepSeek 受控链路、OpenClaw 通用 `web_search`、Terra `/responses` 传输、离线故障
+矩阵、R1/R2/R3 权限回滚和最终 `personal_web_search` 正向验收；诊断用的通用 `web_search` 已从
+常驻 `tools.alsoAllow` 撤回。下一步不建设通用 Task Engine，也不继续把全局
+`tool_choice: "required"` 挂在 QQ 多轮 Agent 上。建议按以下顺序推进：
 
-  S0.1 范围冻结
-      -> S0.2 Provider/费用/隐私决策
-      -> S0.3 配置与 SecretRef 契约
-      -> S0.6 模块边界
-      -> S0.7 MVP 验收矩阵
-      -> S0.8 Go/No-Go
+  1. 收尾 S3.7/S3.9：天气 formatter 和规划/提醒正常只读、提案、提交、投递及提醒重复确认路径
+     已通过相应回归；受控搜索的离线 Provider 故障与等价权限证据已完成。真实非主人 QQ 因当前
+     没有第二账号暂跳过，不能把 S3.7 标成完全通过；下一步继续整理最终验收记录和引用质量收尾，
+     规划异常与提醒停机恢复仍按各自文档继续。群聊已永久禁用，不为测试重新开放。
+  2. 先完成 S1.7/S2.4 的 MVP 留存基线：盘点当前会话、trajectory 和 Gateway 日志路径、当前权限
+     与 OpenClaw 配置中显式导出/同步线索，复核 plugin audit/工具副本仍脱敏；TTL/删除、备份和宿主
+     级脱敏继续保留为 S4.5。任何多用户、群聊、远程访问或云同步前，仍必须完成 S4.5 并重新评审。
+  3. 当前事件、小众 query 和零结果 query 均已有正向 QQ Eval；零结果样例的最终回答通过。代码已
+     收紧结构化回答的 `sources` 证据边界：明确 `sources: []` 时不再把无关 `open_page` 提升为来源，
+     并已有离线回归；尚未用该版本重新做一次真实零结果 QQ 回归，后续可作为质量复核，再继续确认
+     引用、时效、延迟和失败降级，不把一次 Provider 报告当作本地 Fetch 核验。
+  4. 保持最终稳定路径为“GPT-Terra 主 Agent -> `personal_web_search` -> DeepSeek Responses
+     Web Search”；原生 Terra 搜索作为独立的 D2.4 适配研究，不阻塞受控搜索 MVP。
+  5. 只有原生搜索适配或搜索结果组合需求出现真实收益时，再做单独的协议适配或固定 `sequence`；
+     天气、提醒、搜索至少出现第二/第三种真实组合需求前，不提取公共 `TaskSpec` / `TriggerSpec` /
+     `ExecutionContext` / `Provenance`，也不建设通用 Task Engine。
 
-  S0.4 Registry 与 S0.5 完整 Plan IR 契约作为 Should Pass，可并行记录，但不阻止 S1/S3 MVP。
-
-S0 可以暴露真正缺失的信息，并使 S1 变成一个边界明确、可删除、可离线验收的独立插件，而不是
-一次全系统重构。当前最大的外部阻塞项仍是 Search Provider、专用 Key、预算/配额和 query 隐私
-政策；其余架构与 mock 开发不依赖真实 Key。
+S0.2 的 Provider 费用、配额、数据外发和保留政策仍是正式上线前的决策项。S0.4 Registry 与 S0.5
+完整 Plan IR 契约可以继续作为 Should Pass 记录，但不应阻塞当前单步搜索链路的安全验收。
 
 ======================================================================
 十五、开发记录（2026-08-12，Search MVP 第一轮）
@@ -961,16 +1388,23 @@ S0 可以暴露真正缺失的信息，并使 S1 变成一个边界明确、可�
 - OpenClaw Plugin Runtime 已提供 `api.runtime.webSearch.search(...)`，插件可以在不依赖通用 agent
   tool wrapper 的情况下调用已选择的 Search Provider。
 
-本轮实现决策（Provider 尚未完成可用性验收，优先验证 DeepSeek）：
+本轮实现决策（Provider 尚未完成最终可用性验收，优先验证 DeepSeek）：
 
 1. 新建 `chatbot/plugins/personal-search/`，只注册 `personal_web_search`；
-2. 包装 OpenClaw 的内部 `runtime.webSearch`，不重复实现 Provider HTTP/SecretRef transport；
+2. `personal_web_search` 包装 OpenClaw 的内部 `runtime.webSearch`；由于官方 DeepSeek Provider
+   目前不拥有 `webSearchProviders`，本插件额外只实现一个固定的 DeepSeek Responses Provider
+   Adapter，Provider HTTP/SecretRef 代码不向模型暴露，也不提取为通用 transport；
 3. MVP 代码固定 `count = 5` 和搜索结果边界，但不把 Provider、Host、URL、Header 或 count
    交给模型；最终 Provider 必须通过 S0.2 的结构化结果、费用、隐私、稳定性和权限审查；
 4. Provider Key 或其他凭证由所选 Provider 的 SecretRef 表面管理，不进入 `personal-search` 配置；
-5. 即使以后启用某个 Provider，也不把通用 `web_search` 加入 `tools.alsoAllow`；只有包装工具可见；
-6. 当前先用注入的 mock runner 完成 S1/S2；本轮只预置不启用的 DeepSeek Provider 配置，
-   不安装 Provider、不重启 Gateway、不向 QQ 暴露 Search，也不扩大生产权限。
+5. 首版受控上线原则不把通用 `web_search` 作为包装工具的替代，也不以开放通用工具来代替权限边界；
+   只有包装工具可见才算受控能力。2026-08-12 的后续诊断测试临时开放了通用 `web_search`，详见
+   下方实测记录，不能据此标记 S3 正式上线；
+6. 先用注入的 mock runner 完成 S1/S2，并用固定公开 query 完成 Provider live smoke；随后已安装并
+   加载本地插件、完成配置校验和 Gateway 重启。为进入 S3.4/S3.5，已将精确的
+   `personal_web_search` 加入 `tools.alsoAllow`；本轮为验证 OpenClaw 通用能力又临时保留了通用
+   `web_search`，但 `web_fetch`、browser 或 exec 仍未开放。QQ 正向/负向验收和回滚演练完成前，
+   不将此状态视为正式上线。
 
 DeepSeek 作为检索后端的记录方案（2026-08-12）：
 
@@ -986,11 +1420,17 @@ DeepSeek 作为检索后端的记录方案（2026-08-12）：
 3. 这里必须使用 DeepSeek Responses API，不能把普通 OpenAI-compatible Chat Completions 的
    Tool Calls 误认为已经具备联网能力。DeepSeek 的 Tool Calls 文档明确要求由调用方提供工具执行；
    Responses API 文档才定义了由服务端执行的 `web_search` 和 `web_search_call`。
-4. 当前配置只是“模型/传输预置”，不是 Search Provider 已上线：OpenClaw 官方 DeepSeek Provider
-   目前是模型 Provider，不声明 `webSearchProviders`。因此本配置不会自动开放通用 `web_search`，
-   也不会改变 `tools.alsoAllow`。后续仍需由 `personal-search` 或一个专用 Provider Adapter
-   注册受控搜索能力，并把 DeepSeek 返回的来源、标题、URL、时间和摘要规范化为本文定义的
-   `SearchResult`/`Provenance` 边界。
+   DeepSeek 的 JSON Output 文档中的 `response_format: { type: "json_object" }` 是
+   `/chat/completions` 路径的参数；本模块仍使用 `/responses` 的 `text.format`，该路径的官方兼容性
+   明确支持 `format`。为降低模型偶发不遵守结构化输出的概率，检索 instructions 同时显式包含小写
+   `json`、完整示例和“不使用 Markdown 围栏”的约束。
+4. 当前 DeepSeek 配置本身只是“模型/传输预置”，不是 OpenClaw 官方 Search Provider 已上线：
+   OpenClaw 官方 DeepSeek Provider 目前是模型 Provider，不声明 `webSearchProviders`，因此不会
+   自动把通用 `web_search` 变成原生 DeepSeek 搜索能力。受控路径仍由 `personal-search` 或专用
+   Provider Adapter 注册，并把 DeepSeek 返回的来源、标题、URL、时间和摘要规范化为本文定义的
+   `SearchResult`/`Provenance` 边界；本轮诊断阶段曾显式保留 `tools.web.search` 和
+   `tools.alsoAllow.web_search`，验收完成后已撤回通用 `web_search` 常驻权限，不把诊断状态视为
+   正式受控上线。
 5. 质量边界：只要 Adapter 尽量保留原始来源和引用，让 GPT-Terra 基于证据作最终综合，文字问题的
    最终回答质量不必然下降；但不能假定它等同于 Brave/Google。需要实测的风险包括召回率、来源覆盖、
    引用粒度、时效性、延迟、费用和限额。遇到依赖图片、图表、扫描 PDF 或复杂网页视觉布局的资料，
@@ -999,6 +1439,213 @@ DeepSeek 作为检索后端的记录方案（2026-08-12）：
 6. 使用边界：DeepSeek 的自然语言总结只能作为不可信的中间结果，不能替代来源证据；搜索结果中的
    网页文本同样按不可信输入处理，不能执行其中的指令。搜索 Adapter 不把 API Key、内部配置或完整
    会话历史发送给 DeepSeek，只发送最小化、经约束的 query 和必要的时间/地域条件。
+
+DeepSeek live smoke 记录（2026-08-12）：
+
+- 配置校验通过；官方 endpoint、`DEEPSEEK_API_KEY`、`deepseek-v4-flash` 和 `/responses` 请求均可用；
+- 真实请求返回 `status=completed`、`error=null`，并产生了 `web_search_call`；观察到 `search`、
+  `open_page` 两类动作，某次测试中一个 `open_page` 失败但整体响应仍完成；
+- 直接调用 Adapter 和 OpenClaw Provider 注册检查均通过；Provider 返回 `kind: "answer"`、最多 5 个
+  provider-reported citations，并保留 `externalContent.untrusted=true`。随后为进入 S3.4/S3.5，已将
+  精确的 `personal_web_search` 加入 `tools.alsoAllow`；主人 QQ 私聊正向验收结果见下条，本轮仍未
+  完成完整的负向/回滚验收；
+- 原始 Responses 返回中没有独立 citation annotations，也没有 Brave 风格的结构化结果数组；来源
+  主要出现在模型最终文本/严格 JSON 输出中。因此 DeepSeek 适配器不能把模型写出的 URL 无条件当成
+  已独立核验的搜索结果，首版应采用 `kind: "answer"` 语义、严格校验来源 URL，并保留“来源由检索
+  Worker 报告、尚未由本地 Fetch 独立核验”的边界；
+- QQ 正向验收暴露了一个真实变体：DeepSeek 返回 `status=completed`、`web_search_call.open_page`，
+  但最终 message 偶发只含自然语言而没有 JSON `sources`。原 parser 因此正确地 fail-closed，返回
+  “无法核验”，但这掩盖了已经发生的页面检索；现已修复：instructions 增加 DeepSeek 要求的
+  `json`/示例，`max_output_tokens` 提高到 2,000，Provider 请求超时提高到 60 秒；parser 在没有 JSON
+  envelope 时只从已完成 `open_page` URL 及回答中的 HTTPS URL 生成 provider-reported citations，
+  两者都没有时仍拒绝结果。该修复已有离线回归测试。
+- 首个主人 QQ 私聊正向验收通过：GPT-Terra 主 Agent 调用了精确的 `personal_web_search`，Adapter
+  委派 DeepSeek Responses Web Search，返回 `kind: "answer"`、结论和来源 URL；QQ 回复明确说明来源
+  均为 DeepSeek 检索 Worker 报告、尚未由本地 Fetch 独立核验。该结果证明主链路可用，但仅覆盖“明确
+  要求联网核实”的一个公开文档 query，不足以勾选完整 S3.6/D3.1。
+- D0.3、D1.3、D3.1 尚未完成；S0.2 仍不能仅凭这次连通性测试勾选。
+
+---------------------------------------------------------------------
+OpenClaw 通用 web_search 与 Terra Responses 实测记录（2026-08-12）
+---------------------------------------------------------------------
+
+本节记录的是运行时验证结果，不把一次正向测试等同于完整 S3 上线验收。
+
+测试 A：OpenClaw 通用 `web_search`
+
+- 初次测试曾把当前 Terra 模型的 `params.extra_body.tool_choice` 全局设为
+  `"required"`。该配置会作用于 QQ Agent 的每一轮模型请求；一次测试中出现 Terra 首次
+  `502`、多轮重复模型请求、已经发送答案后仍继续请求，最后触发 `LLM idle timeout (120s)`。
+  因此没有提高超时时间，而是移除了全局 `required`，保留用户消息对 `web_search` 的明确要求。
+- 调整后重测成功：会话轨迹明确出现 `assistant toolCall.name = "web_search"`，对应的
+  `toolResult` 为 `provider = "deepseek-search"`、`kind = "answer"`，并带有
+  `externalContent.untrusted = true` 和 `source = "web_search"`。
+- 本次 QQ 端到端耗时约 43 秒，其中 DeepSeek 检索约 14.8 秒；无 502、无模型空闲超时，
+  最终正常发送回答。
+- 结论：OpenClaw 通用 `web_search` 已实际接入并可工作；当前稳定路径是主 Agent 调用
+  OpenClaw 通用工具，再由 `deepseek-search` Provider 执行 DeepSeek Responses Web Search。
+  全局 `tool_choice: "required"` 不适合作为多轮 QQ Agent 的常驻配置。
+
+测试 B：Terra `openai-responses` 与原生搜索边界
+
+- 临时增加 `naiccc-responses` Provider：Base URL 为 `https://naiccc.com/v1`，协议为
+  `openai-responses`，模型为 `gpt-5.6-terra`；测试结束后已删除临时 Provider，并恢复主模型
+  为 `naiccc/gpt-5.6-terra`。
+- B-1 不携带工具的 QQ 测试实际请求了：
+  `POST https://naiccc.com/v1/responses`；返回 `status=200`，模型请求耗时约 11.9 秒。
+  结论：OpenClaw 可以通过自定义 Provider 调用 Terra `/responses`。
+- B-2 在同一 Responses 主模型下要求搜索。会话轨迹明确显示调用的是 OpenClaw 通用
+  `web_search`，工具结果为 `provider = "deepseek-search"`、`kind = "answer"`，检索耗时约
+  15.5 秒；同时两轮模型请求都命中了 `naiccc-responses` 的 `/responses`。
+- 结论：Terra `/responses` 传输和“Responses 回合承载 OpenClaw 通用搜索工具”均已验证，
+  但本轮没有走 Terra 原生 `tools: [{"type":"web_search"}]`。这不是对 Terra 原生搜索能力
+  的否定；是 OpenClaw 内置原生搜索注入的 Provider 边界：源码要求模型 API 为
+  `openai-responses`、Provider 标识归一化为官方 `openai`，且 Base URL 为官方 OpenAI 地址。
+  自定义 `naiccc` Provider 即使协议兼容，也不会被该内置注入路径选中。
+- 测试期间主模型曾临时切换到 `naiccc-responses`，结束后已恢复为 `naiccc/gpt-5.6-terra`；
+  最终配置保留 `personal_web_search` 和 `deepseek-search`，已撤回通用 `web_search`，
+  `web_fetch`、browser 和 exec 仍未开放。若要做 Terra 原生搜索，必须另立 D2.4 适配方案和独立
+  验收，不能把 B-2 的通用搜索结果写成原生搜索已接入。
+
+离线失败与视觉边界验收（2026-08-12）：
+
+- 在 `chatbot/plugins/personal-search/` 执行 `npm run plugin:validate`，构建通过，9 个测试文件、
+  34 个测试全部通过；本轮复核时间为 20:50（Asia/Shanghai）。`git diff --check` 和
+  `openclaw config validate` 也通过。
+- HTTP 错误契约覆盖 401/403 -> `AUTH_FAILED`，429 -> `RATE_LIMITED`，500/503 ->
+  `UPSTREAM_UNAVAILABLE`，504 -> `TIMEOUT`；网络 Abort 映射为 `TIMEOUT`，非法 JSON 与超过 1 MiB
+  的响应映射为 `INVALID_RESPONSE`。每个故障 fixture 都断言请求只发出 1 次，当前客户端不自动重试。
+- 无 `DEEPSEEK_API_KEY` 时，Provider 在发起请求前返回 `AUTH_NOT_CONFIGURED`；未知 Provider
+  endpoint 仍返回 `CONFIG_INVALID`。
+- Worker 请求指令和工具描述现在明确声明：检索 Worker 只接收文本，没有图片、图表或扫描 PDF 的
+  视觉读取能力；对应 fixture 保留“未完成视觉核验”的降级回答，并保持
+  `externalContent.untrusted=true`。这完成的是离线契约，不等于带附件的主 Agent 真实验收。
+- 新增 `quality-eval.test.ts` 作为质量契约基线：当前事件和小众公开 query 必须返回 1—5 个
+  provider-reported citations、`searched_at`、`took_ms` 和不可信内容标记；零结果若没有任何可
+  核验来源则保持 `INVALID_RESPONSE`/fail-closed，不把无来源的自然语言总结冒充搜索证据。该基线
+  不评价 DeepSeek 的召回率或事实正确率，真实 QQ query 仍需单独记录。
+- `src/index.test.ts` 的权限 fixture 进一步确认：只有 `qqbot` 主人私聊上下文允许进入受控 Provider；
+  `senderIsOwner=false`、群聊目标和非 QQ channel 均在 `runtime.webSearch.search` 前拒绝，且断言
+  Provider 调用次数为 0。这是等价的非主人/群聊负向证据，不冒充真实第二 QQ 账号验收。
+- 以上是离线和模拟上游验收，尚未替代真实 QQ 群聊/非主人拒绝、运行时撤权和 Gateway 重启后的
+  回滚验收；这些作为下一阶段 D3.1/S3.7/S3.8 继续执行。
+
+真实权限、回滚与最终受控配置验收（2026-08-12）：
+
+- R1：临时从 `tools.alsoAllow` 撤掉 `personal_web_search` 与 `web_search`，validate 通过并重启
+  Gateway。主人 QQ 私聊要求搜索时，运行时工具列表没有通用 `web_search`，Kurumi 拒绝凭记忆
+  回答；未发生搜索结果伪造。随后恢复权限并重启。
+- R2：保留搜索名称在 `tools.alsoAllow`，但通过 `openclaw plugins disable personal-search` 禁用
+  插件并重启。主人 QQ 私聊再次要求搜索时，日志记录 `web_search is disabled or no provider is
+  available`；没有可用 Provider，未返回伪造来源。天气插件仍为 `loaded`。
+- R3：通过 `openclaw plugins enable personal-search` 恢复插件并重启；Gateway 状态为
+  `running/active`、connectivity probe `ok`，`personal-search` 与 `personal-weather` 均为
+  `loaded`。随后一次搜索成功，证明恢复不会破坏搜索链路。
+- 回滚后的既有模块回归：`chatbot/plugins/personal-weather/` 执行 `npm test`，12 个测试文件、
+  102 个测试全部通过；这证明天气、规划、提醒的现有代码回归未受本轮 Search 配置/插件操作影响，
+  但尚未再发起一条真实天气 QQ 消息作为运行时投递验收。
+- 最终收敛配置：主模型 `naiccc/gpt-5.6-terra`；`tools.web.search.enabled=true`、Provider 为
+  `deepseek-search`；`tools.alsoAllow` 仅保留精确的 `personal_web_search`，通用 `web_search`
+  已撤回；`web_fetch`、browser、exec 未开放；QQ 群聊仍为 `disabled`。
+- 最终 QQ 会话轨迹明确记录：`assistant toolCall.name = personal_web_search`，工具结果为
+  `provider = deepseek-search`、`kind = answer`、`source_verification = provider_reported`、
+  `took_ms = 12906`，并保留 `externalContent.untrusted=true`；最终回答明确说明来源未经过本地
+  Fetch 独立核验。该结果完成最终受控包装工具正向验收，但不等于完整 S3.7/S3.9 已完成。
+- 当前事件查询的 QQ 首轮重测未形成搜索 Eval：2026-08-12 18:29:07 和 18:33:19（Asia/Shanghai），
+  主模型 `naiccc/gpt-5.6-terra` 均在首轮模型输出前失败。中转层 HTTP 外壳为 200/SSE，但流内
+  返回 `Upstream service temporarily unavailable`；OpenClaw 将其归类为 `timeout`、状态 408，
+  且 `fallbackConfigured=false`。两次会话的 `itemLifecycle.startedCount=0`、没有
+  `personal_web_search`/DeepSeek 请求；QQ API 均返回 200 并成功发送通用错误提示。因此这两次
+  不能判定为搜索失败，也不能计入当前事件、延迟或引用质量 Eval。
+- 随后重发同一类当前事件 query 成功：2026-08-12 18:39:41（Asia/Shanghai），主 Agent 实际调用
+  `personal_web_search`，委派 `deepseek-search`，返回 `kind: "answer"`、5 条 provider-reported
+  citations、`searched_at=2026-08-12T10:39:41.567Z`、`took_ms=56149`，并保留
+  `source_verification: "provider_reported"` 与 `externalContent.untrusted=true`。最终回答引用
+  了 OpenClaw 官方 Releases 和 Releases Atom Feed，明确说明未经过本地 Fetch 独立核验。该次满足
+  当前事件 Eval 的结构、引用、时效和降级声明要求，可计为 S3.6 的当前事件正向样例；它不证明
+  搜索事实已被本地二次核验，也不替代零结果/小众 query 验收。
+- Ollama 文档小众 query 的 QQ 验收也符合预期：第一次消息于 18:44:36（Asia/Shanghai）进入，
+  18:44:41 在 `gpt-5.6-terra` 首轮模型输出前因 `Upstream service temporarily unavailable`
+  失败，未调用 Search，也没有 DeepSeek 请求；该次不计为搜索失败。第二次于 18:48:12 重发后，
+  主 Agent 在 18:48:16 实际调用 `personal_web_search`，委派 `deepseek-search`，于
+  `2026-08-12T10:48:27.333Z` 收到 `kind: "answer"`、2 条 citations，`took_ms=11165`，最终
+  于 18:48:35 正常回复。回答覆盖本地/自托管与 Ollama 托管服务的 Key 差异，并明确声明未经过
+  本地 Fetch 独立核验；该次可计为 S3.6 的小众 query 正向样例。
+- 该 Ollama 测试验证的是“当前受控搜索链路能够检索 Ollama 官方文档”，不是 Ollama Web Search
+  Provider 的连通性或配置。实际调用链仍是“GPT-Terra -> `personal_web_search` -> `deepseek-search`”；
+  当前 `openclaw.json` 没有 `models.providers.ollama`、`OLLAMA_API_KEY` 或
+  `tools.web.search.provider: "ollama"`，因此没有为这次文档查询引入 Ollama 配置。
+- 零结果 query 的 QQ 验收符合“最终回答不得误引”的预期：2026-08-12 19:22:48（Asia/Shanghai），
+  主 Agent 实际调用 `personal_web_search`，委派 `deepseek-search`，工具回合完成且耗时 `10643ms`。
+  Worker 的内容明确表示完整标识符没有匹配资料，但同时返回了两个与测试标识符无关的近似动画引用；
+  主 Agent 正确识别这些引用与完整标识符无关，最终没有输出任何来源链接，并明确回答“没有可靠搜索
+  结果”。该次证明最终回答层具备防止无关引用扩散的能力，但不等于 Worker 已严格实现零结果
+  `citations: []`/fail-closed；应将“零结果时近似词引用噪声”作为后续质量契约与实现改进项。
+- 零结果契约收紧（2026-08-13 04:30，Asia/Shanghai）：`parser.ts` 现在将结构化回答的
+  `sources` 视为唯一证据边界；当 Worker 明确返回 `sources: []` 时，不再把同一 Responses 回合中
+  的 `web_search_call.open_page` 近似页面提升为 citations，仍按无来源证据 fail-closed。新增回归
+  覆盖“结构化空 sources + 无关 open_page”组合；personal-search 共 10 个测试文件、48 个测试，
+  TypeScript build 通过。
+- 会话持久化脱敏补强（2026-08-13 04:30，Asia/Shanghai）：利用当前 OpenClaw Plugin Runtime
+  的 typed `before_message_write` 与 `tool_result_persist` 钩子，只改写
+  `personal_web_search` 的持久化助手 tool-call 参数和 tool-result/details 中的 `query` 字段为
+  `[redacted search query]`；当前回合实际执行和模型收到的原始结果不被修改，用户原始聊天正文也
+  不做全局改写。新增 `chatbot/plugins/personal-search/src/persistence.ts` 及 3 个单测；
+  `openclaw plugins inspect --runtime personal-search` 确认 `hookCount=2`、两个 typed hooks 已注册。
+  Gateway 已重启并恢复 active/running，QQ WebSocket 为 connected；该边界随后在 04:58 的主人
+  QQ 搜索回归中确认生效：工具参数/结果副本已脱敏。S1.7/S2.4 仍不关闭：OpenClaw 原始用户
+  消息与 trajectory 仍保留原始 query，日志轮转/长期 retention 未定，用户原始私聊正文的保留边界
+  仍属于治理决策。
+- 天气既有能力 QQ 回归未完全通过：2026-08-12 19:28（Asia/Shanghai），主 Agent 正确调用
+  `personal_weather_get_brief`，未调用 `personal_web_search`；QWeather 的实况、今日预报、最高
+  降雨概率 70% 和预警状态均成功返回，主模型也正常完成回复。但原始 `rainWindows` 中最高
+  概率 0.7 的窗口是 `2026-08-13T08:00Z`—`12:00Z`，换算为 `Asia/Shanghai` 应为次日
+  16:00—20:00；最终回答却写成次日 08:00—12:00。与此同时，天气工具的 `formattedText` 将
+  最高概率 70% 与首个 40% 窗口 04:00—10:00 拼在一起，也存在“概率与时段不对应”的表达问题。
+  结论：搜索接入没有改变天气路由，天气链路和数据获取正常；当时的天气运行时回归不能记为
+  完全通过，问题分为 Agent 对 UTC 的解释和 formatter 将全局最高概率与首个窗口混用两部分。
+- 天气 formatter 修正与离线回归（2026-08-12 20:05，Asia/Shanghai）：`formatRainSummary` 现在
+  保持降雨窗口按时间排序，并将每个窗口的时间与自身 `maxProbability` 一起输出；最高概率窗口
+  从同一 `rainWindows` 集合中选择，不再把全局最高概率和首个窗口拼接。新增多窗口回归用例，验证
+  `04:00—10:00` 的 40% 与 `16:00—20:00` 的 70% 不会错配；`personal-weather` 的 12 个测试
+  文件、103 个测试全部通过，TypeScript build 与 `openclaw config validate` 也通过。另在
+  `chatbot/AGENTS.md` 的通用回答质量规则中加入时区/UTC 识别提示，不绑定天气或某个固定地区；
+  随后的真实 QQ 天气重测结果见下一条记录。
+- 天气 formatter 修复后的真实 QQ 重测（2026-08-12 20:13，Asia/Shanghai）已通过：会话日志显示主
+  Agent 实际调用 `personal_weather_get_brief`，未调用 `personal_web_search`；工具返回的 UTC 窗口
+  `20:00Z—02:00Z`、`04:00Z—05:00Z`、`06:00Z—07:00Z`、`08:00Z—13:00Z` 被正确换算为本地
+  `04:00—10:00`（40%）、`12:00—13:00`（42%）、`14:00—15:00`（34%）、`16:00—21:00`
+  （77%）。最终回答逐项保留了窗口与概率的绑定，并将最高 77% 指向 `16:00—21:00`，同时明确
+  `Asia/Shanghai` 与查询时间。该次天气运行时回归通过；它不改变规划/提醒真实投递回归仍待完成的
+  状态。
+- 规划/提醒只读联合真实 QQ 回归（2026-08-12 20:17，Asia/Shanghai）已通过：主人从新会话发起
+  只读查询，主 Agent 并行调用 `personal_planning_state_get` 与 `personal_reminder_state_get`，
+  没有调用 `personal_web_search`，也没有调用任何 proposal/commit/change/cancel 工具。回答正确
+  汇总了默认天气地点与 `10:30` 简报、1 条既有 `planned` 无锡航班、1 条历史 pending 行程提案
+  及其过期时间，以及“当前没有活动提醒”；工具和日志均未显示本轮产生写入或 Cron 变更。该次证明
+  规划/提醒的只读路由、权限边界和搜索隔离正常，不等于真实提醒投递、异常确认或停机恢复回归已完成。
+- 提醒 proposal 预览真实 QQ 回归（2026-08-12 20:19，Asia/Shanghai）已通过：主人明确要求生成
+  “15 分钟后提醒我”的一次性提案，主 Agent 实际调用 `personal_reminder_propose`，将相对时间
+  换算为 `2026-08-12 20:34`（`Asia/Shanghai`），返回 `pending`、内容和仅主人 QQ 私聊投递的
+  预览，并明确尚未提交、尚未创建 Cron。该步骤按设计仅持久化一条 `reminder_proposals` 草稿，
+  不创建正式提醒；日志未出现 `personal_reminder_commit`、其他修改/取消工具或
+  `personal_web_search`。提案确认提交和实际投递结果见后续记录。
+- 提醒 proposal 提交真实 QQ 回归（2026-08-12 20:21，Asia/Shanghai）已通过：主人在同一私聊中
+  明确确认提案，主 Agent 使用预览返回的准确 proposal ID 与 payload Hash 调用
+  `personal_reminder_commit`，工具返回 `scheduled`，时间为 `20:34`，无 warning。随后读取 Gateway
+  Cron 列表，确认该提醒只注册了一条受管任务，目标为主人 QQ 私聊，未产生重复任务；回复正确使用
+  “已登记为 scheduled/到点投递”，没有提前声称已送达。实际投递结果见下一条记录。
+- 提醒实际投递真实 QQ 回归（2026-08-12 20:34，Asia/Shanghai）已通过：主人确认收到“主人，提醒
+  时间到了：提醒提案回归测试”。`openclaw cron runs --id` 显示该受管任务于 `20:34:00` 执行，
+  固定 `reminder-cli.js deliver` 返回 0，`status=ok`、`delivered=true`、`deliveryStatus=delivered`、
+  运行次数为 1，目标为主人 QQ 私聊；Gateway 对账随后记录 `delivered=1`、`failed=0`、`retries=0`、
+  `unknown=0`。投递后活动 Cron 列表只剩每日天气简报，证明一次性提醒已清理且没有重复任务。
+- 提醒重复确认负向真实 QQ 回归（2026-08-12 20:45，Asia/Shanghai）已通过：主人在原私聊中再次
+  发送“确认”，主 Agent 使用同一 proposal ID/Hash 再次调用 `personal_reminder_commit`；工具返回
+  `idempotent=true`，既有提醒终态为 `delivered`，没有创建第二条 Cron，活动列表仍只剩每日天气简报。
+  原始工具结果的外层 `status` 为 `scheduling_failed`，但 `warnings` 为空且嵌套提醒状态明确为
+  `delivered`；主 Agent 正确以已完成的幂等结果向主人解释，没有把它误报为新的失败或重复投递。
+  该次完成的是提醒侧幂等/重复确认回归，不等于受控搜索的权限或上游故障负向验收。
 
 官方依据：
 

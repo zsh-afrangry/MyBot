@@ -1,0 +1,26 @@
+{
+  "id": "personal-search",
+  "name": "Personal Search",
+  "description": "Owner-only controlled public web search through DeepSeek Responses Web Search.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "personal_web_search"
+    ],
+    "webSearchProviders": [
+      "deepseek-search"
+    ]
+  },
+  "toolMetadata": {
+    "personal_web_search": {
+      "optional": true
+    }
+  }
+}

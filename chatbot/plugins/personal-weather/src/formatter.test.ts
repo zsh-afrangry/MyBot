@@ -64,6 +64,47 @@ describe("formatWeatherBrief", () => {
     expect(text).not.toMatch(/undefined|null|NaN/u);
   });
 
+  it("keeps precipitation probabilities bound to their own windows", () => {
+    const brief = baseBrief();
+    brief.next24Hours = {
+      availableHours: 8,
+      maxPrecipitationProbability: 0.7,
+      rainWindows: [
+        {
+          startTime: "2026-08-12T20:00:00.000Z",
+          endTime: "2026-08-13T02:00:00.000Z",
+          maxProbability: 0.4,
+          precipitationType: "rain",
+        },
+        {
+          startTime: "2026-08-13T04:00:00.000Z",
+          endTime: "2026-08-13T05:00:00.000Z",
+          maxProbability: 0.42,
+          precipitationType: "rain",
+        },
+        {
+          startTime: "2026-08-13T06:00:00.000Z",
+          endTime: "2026-08-13T07:00:00.000Z",
+          maxProbability: 0.34,
+          precipitationType: "rain",
+        },
+        {
+          startTime: "2026-08-13T08:00:00.000Z",
+          endTime: "2026-08-13T12:00:00.000Z",
+          maxProbability: 0.7,
+          precipitationType: "rain",
+        },
+      ],
+    };
+
+    const text = formatWeatherBrief(brief);
+
+    expect(text).toContain("04:00～10:00约40%");
+    expect(text).toContain("16:00～20:00约70%");
+    expect(text).toContain("最高降雨概率70%，对应时段16:00～20:00");
+    expect(text).not.toContain("最高降雨概率70%，对应时段04:00～10:00");
+  });
+
   it("never claims no alerts when alert data is unavailable", () => {
     const brief = baseBrief();
     brief.alerts = { availability: "unavailable", state: "unavailable", items: [] };

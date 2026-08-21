@@ -1,5 +1,5 @@
 import type { QwMeasurement, QwWind } from "./types.js";
-import type { WeatherBrief } from "./weather-model.js";
+import type { RainWindow, WeatherBrief } from "./weather-model.js";
 
 export interface FormatWeatherOptions {
   greeting?: boolean;
@@ -112,32 +112,65 @@ function formatRainSummary(brief: WeatherBrief): string {
   }
 
   const probability = hourly.maxPrecipitationProbability;
-  const window = hourly.rainWindows[0];
+  const windows = [...hourly.rainWindows].sort(
+    (left, right) => Date.parse(left.startTime) - Date.parse(right.startTime),
+  );
+  const peakWindow = windows.reduce<RainWindow | undefined>((best, candidate) => {
+    if (candidate.maxProbability === undefined) {
+      return best;
+    }
+    if (
+      !best ||
+      best.maxProbability === undefined ||
+      candidate.maxProbability > best.maxProbability
+    ) {
+      return candidate;
+    }
+    return best;
+  }, undefined);
   const parts: string[] = [];
-  if (probability !== undefined) {
+  if (windows.length > 0) {
+    parts.push(
+      `未来24小时降雨趋势：${windows
+        .map((window) => formatRainWindow(window, brief.location.timezone))
+        .join("；")}`,
+    );
+  } else if (probability !== undefined) {
     parts.push(`未来24小时最高降雨概率${formatRatio(probability)}`);
-  } else if (window) {
-    parts.push("未来24小时预计有降水");
   } else {
     parts.push("未来24小时降雨概率数据不完整");
   }
 
-  if (window) {
+  if (peakWindow?.maxProbability !== undefined) {
     parts.push(
-      `主要时段${formatClock(window.startTime, brief.location.timezone)}～${formatClock(
-        window.endTime,
+      `最高降雨概率${formatRatio(peakWindow.maxProbability)}，对应时段${formatRainWindowClock(
+        peakWindow,
         brief.location.timezone,
       )}`,
     );
+  } else if (windows.length > 0) {
+    parts.push("未来24小时预计有降水");
   }
+
   if (probability !== undefined && probability >= 0.6) {
     parts.push("出门建议带伞");
   } else if (probability !== undefined && probability >= 0.3) {
     parts.push("可能有雨，可带伞");
-  } else if (window) {
+  } else if (windows.length > 0) {
     parts.push("可留意临近天气变化");
   }
   return `${parts.join("，")}。`;
+}
+
+function formatRainWindow(window: RainWindow, timezone: string): string {
+  const range = formatRainWindowClock(window, timezone);
+  return window.maxProbability !== undefined
+    ? `${range}约${formatRatio(window.maxProbability)}`
+    : range;
+}
+
+function formatRainWindowClock(window: RainWindow, timezone: string): string {
+  return `${formatClock(window.startTime, timezone)}～${formatClock(window.endTime, timezone)}`;
 }
 
 function formatTemperature(measurement: QwMeasurement): string {

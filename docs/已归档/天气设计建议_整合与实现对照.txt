@@ -1,0 +1,390 @@
+kurumi 天气设计建议：整合与实现对照
+
+最后更新：2026-08-13
+文档性质：历史设计整合、代码对照和取舍记录
+当前实现的权威记录：`docs/2_天气模块的开发.txt`
+
+摘要
+----
+
+本文整合了两份已经归档并删除的历史建议：一份天气模块第一版总体设计，以及一份在此基础上加入
+“薄架构、垂直切片、typed proposal、确定性联动和安全边界”的 P2 评审修订版。两份原文的内容已
+合并到本文，不再单独保留。
+
+对照当前 `chatbot/plugins/personal-weather/` 源码后，结论是：天气查询、固定地点、缓存、
+简报、固定 10:30 投递、严格行程 proposal/commit、SQLite 安全边界和基础事务能力已经落地；
+地点消歧后的自动切换、主动预警、动态天气简报时间、OCR/航班能力仍未落地。旧建议中的一部分
+直接模型工具和 LLM 定时触发方案已被当前更窄、更确定性的实现替代，不应再照搬。
+
+本文保留设计演进和判断依据，不把数据库预留表、测试夹具或目标架构误报为已上线功能。
+后续阅读时以本文的实现对照和 `docs/2` 的当前事实为准。
+
+一、对照范围与判定标准
+======================
+
+审计过的实现：
+
+- `chatbot/plugins/personal-weather/src/config.ts`：Host、SecretRef 解析和凭证校验；
+- `src/qweather-client.ts`：固定 QWeather 客户端、SSRF 防护、超时、响应上限、重试和 GeoAPI 查询；
+- `src/parsers.ts`、`src/types.ts`：外部 JSON 的白名单式解析、清洗和长度限制；
+- `src/weather-service.ts`、`src/weather-model.ts`：天气聚合、缓存和结果模型；
+- `src/formatter.ts`：确定性中文简报；
+- `src/store.ts`：SQLite schema、默认地点、有效地点读取、缓存和事务入口；
+- `src/planning.ts`、`src/planning-repository.ts`：行程 proposal/commit、Hash/TTL、审计、幂等；
+- `src/cli.ts`：`health`、`db:init`、`lookup`、`brief`、`daily-brief`；
+- `src/index.ts`：实际向 Agent 暴露的工具和主人 QQ 私聊守卫；
+- `src/*test.ts`：配置、网络客户端、解析器、天气服务、SQLite、行程和运行时元数据测试；
+- `openclaw.json`、`openclaw.plugin.json`、`chatbot/skills/personal-weather/SKILL.md`：运行时准入、
+  SecretRef、QQ/Cron 和模型调用边界。
+
+本轮只读检查中，`openclaw cron list --json` 因 Gateway 临时以 1006 关闭而未能重新读取运行时任务；
+固定 10:30 的判断来自当前配置、模块文档和此前已完成的 Cron 验收，Gateway 恢复后仍应再做一次运行时核对。
+
+三种结论：
+
+- **A：已实现**：当前代码和运行配置已有可验证实现；若与旧文档写法不同，以代码为准。
+- **B：暂未实现但值得扩展**：有真实需求或已有结构预留，适合在后续垂直切片中实现；不能写成当前能力。
+- **C：不建议照搬**：旧建议中的方案未实现，但当前代码的窄接口、确定性流程或分层已经更安全/更简单，
+  不需要为了形式一致重新实现。
+
+二、两份文档合并后的稳定设计
+============================
+
+1. 领域能力、模型认知和控制平面分开
+------------------------------------
+
+天气查询是领域能力；模型负责理解用户请求和组织表达；地点生效、缓存、重试、提案状态、定时投递、
+去重和权限属于程序控制。模型不能通过提示词、JSON、SQL、Shell 或 Cron 命令直接改变现实状态。
+
+稳定的数据流是：
+
+  QQ 私聊
+      -> Agent 选择已准入的窄工具
+      -> WeatherService / PlanningService
+      -> QWeatherClient 或受限 SQLite
+      -> 结构化结果、审计和确定性投递
+
+固定天气简报则是：
+
+  受管 Cron
+      -> 固定 `daily-brief` CLI
+      -> 读取当前有效地点
+      -> 查询和风天气
+      -> 确定性格式化
+      -> QQ 私聊投递
+
+2. 动态地点属于结构化事实，不属于系统提示词
+----------------------------------------------
+
+默认地点是广东省广州市天河区，写入 `places` 和 `notification_preferences`。未来地点应使用带时区的
+有效时间段；天气查询按可信系统时间读取 effective place。这样不需要在到达日修改系统提示词、
+`MEMORY.md`、`USER.md` 或 Cron。
+
+3. 先做薄的垂直切片，不提前实现通用工作流
+--------------------------------------------
+
+第一版只需要稳定的天气读取、固定投递和 typed 行程 proposal/commit。完整 Workflow、DAG、通用
+Capability Registry、跨领域自动联动只有在第二个真实重复场景出现后才值得抽象。数据库可以预留字段，
+但预留不代表业务已经具备。
+
+4. 所有写入采用“候选事实 -> 预览 -> 明确确认 -> 事务提交”
+---------------------------------------------------------
+
+模型提交的是受限请求，不是任意 effects。后端生成规范化事实和预览，主人在同一 QQ 私聊确认后才提交。
+提交时再次校验 owner 上下文、状态、TTL、payload Hash 和幂等条件。已提交事实的取消/修改应是新的
+proposal，不应直接删除历史。
+
+三、A 类：旧文档已经落地的内容
+==============================
+
+3.1 Skill、Tool、Automation、Memory 的职责分离
+------------------------------------------------
+
+旧建议正确地区分了：Tool 执行动作，Skill 指导模型何时使用，Automation/Cron 负责时间，Memory 不
+适合保存频繁变化的任务事实。当前对应实现为：
+
+- `chatbot/skills/personal-weather/SKILL.md` 只描述工具使用和不落库规则；
+- `src/index.ts` 暴露工具；
+- `src/cli.ts` 提供固定的非模型 `daily-brief`；
+- SQLite 保存地点、缓存、行程、proposal 和审计；
+- 系统提示词只声明边界，不承载当前天气地点或动态行程。
+
+这是已实现的分层，不需要再把所有内容塞回 Skill 或提示词。
+
+3.2 固定 Host、SecretRef 和窄 QWeather 客户端
+----------------------------------------------
+
+已实现：
+
+- `config.ts` 只接受专属 `*.re.qweatherapi.com` Host，拒绝 IP、路径、端口、协议和控制字符；
+- `openclaw.json` 使用 `${QWEATHER_API_HOST}` 与 `QWEATHER_API_KEY` SecretRef；
+- `qweather-client.ts` 从校验后的 Host 派生 HTTPS URL，使用 `X-QW-Api-Key`；
+- 请求固定为 GET，禁止重定向，启用 OpenClaw SSRF 防护；
+- 有单请求超时、总预算、最大响应体、全局并发上限、有限重试和稳定公开错误；
+- API Key 不进入提示词、proposal、SQLite、文档、日志或返回文本。
+
+旧文档列出的具体接口名称是早期设计示例。当前代码使用已测试的适配路径：current、daily、hourly、
+weather alert 和 GeoAPI city lookup。无需为了匹配旧文档而恢复旧路径。
+
+3.3 天气查询和确定性简报
+------------------------
+
+`personal_weather_get_brief` 是当前唯一的天气读取工具：无参数、只读、读取当前有效地点，返回：
+
+- 实况：天气、温度、体感、湿度、风、降水、紫外线等可用字段；
+- 今日高低温和昼夜天气；
+- 未来 24 小时逐小时降雨趋势；
+- 官方预警状态和预警条目；
+- 数据来源、生成时间、组件质量和 warning。
+
+`WeatherService` 并行加载四类组件，current 是必要组件，daily/hourly/alerts 可独立降级；失败时不会
+把“数据不可用”说成“没有预警”。`formatter.ts` 生成确定性中文文本，并保留和风天气归因。
+
+3.4 缓存、解析、错误和数据可信边界
+------------------------------------
+
+已实现：
+
+- current 10 分钟、daily 60 分钟、hourly 30 分钟、alerts 5 分钟缓存；
+- 缓存 JSON、大小、过期时间和 payload hash 受约束；
+- 外部响应先作为 `unknown` 解析，字段、数组、文本、日期、枚举和控制字符经过限制；
+- 单个坏的预报/预警条目可以丢弃，但核心结构错误会显式失败；
+- QWeather 文本会清理控制字符和双向覆盖字符，并限制 Unicode 长度；
+- 上游错误、缓存状态和组件缺失通过稳定 code/warning 呈现，不输出原始响应或堆栈。
+
+这比“让模型自己解释原始天气 JSON”更可靠，旧建议中的输入校验和不可信边界已经以更具体的代码落地。
+
+3.5 默认地点和有效地点读取
+----------------------------
+
+已实现：
+
+- 默认地点固定为广东省广州市天河区，精度为 district，坐标和 QWeather LocationID 为受控元数据；
+- `WeatherStore.getEffectivePlace(atUtc)` 按半开区间 `[effective_from, effective_until)` 读取确认的
+  `location_periods`；
+- 存在确认时间段时覆盖默认地点，否则回到默认地点；
+- 数据库触发器拒绝确认时间段重叠；
+- 测试覆盖生效边界、相邻区间、取消区间和不改变默认地点的 tentative trip。
+
+因此“到时间自然切换，不唤醒模型修改提示词”已经作为读取机制实现；尚未实现的是由行程提交自动创建
+这些时间段，见 B 类。
+
+3.6 每日 10:30 简报和固定投递边界
+----------------------------------
+
+已实现的程序入口是 `src/cli.ts` 的 `daily-brief`，当前运行配置使用 `Asia/Shanghai` 的固定每日
+10:30 任务和隔离运行。CLI 直接调用 WeatherService 和 formatter，不重新唤起模型；任务目标、QQ
+收件人、argv 和工作目录由受管配置提供。
+
+旧文档中“用 Automation 唤醒 Agent 生成天气消息”的表达已被这个确定性 CLI 替代，后者更容易测试、
+恢复和判断投递结果。
+
+3.7 行程 proposal/commit 基础切片
+---------------------------------
+
+虽然它后来被写入天气 P2 设计，但当前已经实现：
+
+- `personal_planning_state_get`：读取最小化天气地点、简报时间、行程和 pending proposal 摘要；
+- `personal_planning_change_propose`：仅接受 schema version 1 的 `trip.create`，严格拒绝未知字段，
+  保存 canonical facts、缺失字段、warning、预览、TTL 和 Hash；
+- `personal_planning_change_commit`：主人 QQ 私聊中以 proposal ID + payload Hash 确认；
+- 事务写入一条 `planned` trip、更新 proposal、写 audit；重复提交幂等；
+- 目的地仍可保持 unresolved 文本，不伪造坐标，不创建 location_period，不切换天气地点。
+
+这正是第二份建议提出的“事实/策略/动作分离”和“模型不直接提供 effects”的第一版实现。
+
+3.8 SQLite、权限和测试
+-----------------------
+
+已实现：
+
+- schema migration version 1/2；
+- `places`、`notification_preferences`、`trips`、`location_periods`、`change_proposals`、
+  `notification_state`、`api_cache`、`audit_log` 和 `schema_migrations` 表；
+- state 目录 0700、数据库 0600、SQLite WAL、foreign keys、busy timeout 和 secure delete；
+- owner 私聊工具守卫、群聊禁用、精确工具 allowlist；
+- 配置验证、插件 doctor/runtime inspect、构建、插件验证和天气插件测试均已通过。
+
+四、B 类：暂未实现但可以扩展
+============================
+
+以下内容在旧文档中有明确设计，当前代码有部分结构基础或真实需求，但不能当作已上线能力。
+
+4.1 受控地点消歧和 location_period 派生
+-----------------------------------------
+
+当前情况：
+
+- `QWeatherClient.lookupPlace()` 和 CLI `lookup` 已存在；
+- GeoAPI 响应解析和候选限制已测试；
+- `places`、`location_periods`、重叠触发器和 `getEffectivePlace()` 已存在；
+- 但 Agent 没有地点消歧工具，`planning.ts` 会把目的地保留为 unresolved 文本；
+- trip commit 不创建 `location_period`，`derivedEffects` 为空。
+
+可扩展方案：
+
+1. 提案阶段使用受控 GeoAPI 候选和主人选择，生成 canonical `place_id`；
+2. 仅在已确认行程、目的地已消歧、到达时间是 exact/window 时派生位置时间段；
+3. 在同一个 PlanningService/SQLite 事务中写 trip、location_period 和 audit；
+4. 日期级、出发时间误当到达时间、目的地不明确、延误未知时保持 fail-safe，不切换地点；
+5. 已提交地点的变更使用新 proposal，不提供任意 location_set 工具。
+
+4.2 confirmed trip 跟随天气和旅行日双城简报
+----------------------------------------------
+
+当前 schema 已有 `trips.weather_mode` 和 `notification_preferences.travel_dual_city_enabled`，但这些是
+结构字段，不是完整策略引擎。当前 commit 明确返回 `locationPeriodCreated=false` 和
+`weatherLocationChanged=false`。
+
+后续可以先实现一种明确策略：主人确认开启后，`planned` trip 在有效到达窗口创建目的地 period；旅行日
+在切换前可生成双城摘要。策略自身需要 revision、确认、审计、撤销和测试，不能只在提示词里写一个布尔值。
+
+4.3 主动天气预警、临近降雨和高温
+--------------------------------
+
+当前情况：
+
+- `WeatherService` 已能读取 alerts 和 hourly；
+- schema 已预留 `official_alerts_enabled`、`rain_enabled`、`heat_enabled`、阈值、cooldown 和
+  `notification_state`；
+- 但代码没有天气 condition checker、通知 outbox、事件状态读写、官方预警更新/解除逻辑，也没有
+  15 分钟/小时级天气检查任务；
+- 因此目前只有天气查询和每日简报，不会主动发送突发天气消息。
+
+可扩展方案：
+
+- 先做无 LLM 的固定 checker/dispatcher；
+- 官方预警优先，事件 key 使用稳定 alert ID/更新时间/替代关系；
+- 再做临近降雨和个人高温阈值；
+- 通过 `notification_state`、cooldown、quiet hours、outbox、lease 和稳定 event key 去重；
+- 无新事件时不调用模型、不发送 QQ；
+- 上游失败时标记 stale/failed，不伪造“无预警”；
+- 只有需要自然语言润色时才考虑调用模型，不能让模型成为高频检测器。
+
+4.4 动态天气简报时间
+--------------------
+
+当前 `notification_preferences.daily_minute_of_day` 已存在，`planning_state` 能读出 10:30；但生产
+天气 Cron 仍是固定 10:30，CLI 不读取该偏好，因此“只改 SQLite 就改变 Cron”目前不成立。
+
+以后如确有需求，应增加固定频率、无 LLM 的 dispatcher，或受信 reconciler，把偏好转换为 next_due，
+并定义时区/DST、停机补发、并发锁、重复投递和恢复默认时间。提醒模块已有自己的 Cron adapter/reconciler，
+不能把它误认为天气偏好调度已经完成。
+
+4.5 图片、OCR 和航班状态
+------------------------
+
+当前没有图片/OCR、票务结构化提取或航班状态 API。可以按独立外部能力后置实现：
+
+- 图片只生成待确认 proposal，不直接写入行程；
+- 原图、票号、PNR 和精确行程需要单独的隐私保留/删除策略；
+- 航班状态需要独立 Host、凭证、限流、失败和数据可信度评审；
+- 不能因为天气已有网络权限就自动获得航班 API 权限。
+
+4.6 QWeather 鉴权迁移和更细粒度降雨
+--------------------------------------
+
+当前使用受 SecretRef 保护的 API Key，代码没有 JWT 流程；旧文档提出的未来鉴权迁移可以作为运维任务，
+但不是天气模块当前功能缺口。
+
+旧文档建议使用分钟级降水接口。当前代码使用 24 小时 hourly 数据生成降雨趋势，已经满足每日简报的
+基础需求。只有在主动降雨预警需要更细时间粒度时，才应单独增加 minutely 客户端方法、缓存和成本评估，
+不应为了复刻旧文档先扩大接口面。
+
+五、C 类：不建议按旧文档实现
+============================
+
+5.1 不直接暴露 `weather_lookup_location`、`user_location_set_period`
+---------------------------------------------------------------------
+
+第一版建议把这些设计成模型可见工具，但当前实现采用了更安全的边界：
+
+- GeoAPI lookup 保留在受限客户端/CLI，未来由 PlanningService 内部调用；
+- 地点写入必须属于 typed proposal 的后端 effects；
+- 模型不能传坐标、LocationID、SQL、effects 或任意 subject；
+- commit 只能确认冻结的 proposal。
+
+直接暴露“按字符串写地点时间段”的工具会绕过提案确认、Revision、重叠检查和审计，因此不值得为了接口
+数量对齐而实现。
+
+5.2 不单独暴露 `user_location_get_effective`
+----------------------------------------------
+
+天气工具内部已经在可信系统时间读取 effective place；规划状态工具只返回最小地点摘要。把精确坐标、
+LocationID 和完整时间线作为普通模型工具输出会增加敏感信息暴露，当前组合式接口已经足够。
+
+5.3 不用 Heartbeat 或 condition trigger 唤醒模型做高频天气检查
+--------------------------------------------------------------
+
+旧建议曾考虑 Automation condition trigger：先运行检查脚本，再在 `fire=true` 时运行 Agent。当前更好的
+默认方案是固定、无模型的 checker/dispatcher：它直接判断事件、写状态并按受控渠道投递。这样不会重复加载 QQ
+上下文、不会让模型决定是否重复提醒，也更容易限流和恢复。未来如果确实需要语言润色，可以把它作为低频的
+可选后处理，不能让模型承担检测、去重或 Cron 管理。
+
+5.4 不增加一次性“地点切换提醒”作为核心机制
+----------------------------------------------
+
+旧建议允许在抵达时再创建一条提醒，告诉主人地点已切换。它可以作为可选 UX，但不是状态正确性的必要条件。
+`getEffectivePlace()` 按时间段计算，进程重启或通知失败都不会阻止天气查询切换；因此不应把额外提醒当作核心依赖。
+
+5.5 不提前实现完整 schema v2、通用 action registry 或 DAG workflow
+-------------------------------------------------------------------
+
+当前数据库已经有 schema version 2、PlanningRepository、事务入口、Hash/TTL 和审计；这足以支撑当前垂直切片。
+旧文档提出的 `proposal_operations`、`proposal_results`、`automation_policies`、`outbox_events` 等表，
+只有在一次 proposal 真正包含多个跨表 effect、需要异步投递或出现第二个重复领域时才迁移。
+
+同理，不为天气单独创建完整通用 Workflow/DAG、Capability Registry 或大量空 Service。先扩展现有
+PlanningService 边界，再从真实重复中抽象。
+
+5.6 不恢复任意 HTTP、Shell、文件写入、sudo 或通用消息发送
+-----------------------------------------------------------
+
+这些能力在旧文档中被列为明确非目标。当前固定 Host、固定路径、固定 QQ 目标和固定 CLI 的安全边界更好，
+无需为了“通用化”牺牲可审计性。
+
+六、当前与后续的实现路线
+========================
+
+当前已完成（以 `docs/2_天气模块的开发.txt` 为准）：
+
+- P1A/P1B/P1C：QWeather 只读查询、缓存、解析、确定性简报、每日 10:30 投递和运行时准入；
+- P2A/P2B-commit：状态读取、typed trip proposal、Hash/TTL/上下文、事务提交、审计和幂等；
+- P2C-0：PlanningService/PlanningRepository 与 WeatherStore 事务边界；
+- 基础 SQLite location_period 读取和重叠约束，但没有自动派生业务。
+
+后续建议顺序：
+
+1. **P2B-location/P2C**：地点目录消歧、proposal discard、确认式 trip -> location_period 派生，
+   先覆盖 exact/window 到达时间和不切换的歧义负例；
+2. **P3**：若主人确实需要主动提醒，再实现无 LLM 预警/降雨/高温 checker、notification_state、
+   outbox、冷却、quiet hours、失败恢复；
+3. **P2D**：只有需要修改天气简报时间时，才实现天气偏好 dispatcher/reconciler；
+4. **P4**：独立评审图片/OCR 和航班状态。
+
+搜索、邮件、文件、Git/coder Agent 不属于天气模块，保持各自文档和授权边界。
+
+七、最终判断
+============
+
+两份旧文档中真正应保留的核心是：
+
+- 动态事实放结构化存储，不放提示词；
+- 领域能力与调度、权限、状态、投递分离；
+- 模型只表达受限请求，程序确定性校验和生成 effects；
+- 写入必须预览、确认、事务、审计和幂等；
+- 高频天气检查不能依赖模型；
+- 先做垂直切片，再根据真实重复抽象。
+
+当前代码已经把其中相当一部分实现得比旧建议更窄、更安全：天气查询无参数、当前天气地点由后端读取、行程由
+proposal/commit 管理、每日投递走确定性 CLI、外部响应先清洗再进入业务模型。未实现的功能应按 B 类路线
+逐项增加，而不是恢复 C 类的宽接口或一次性搭建完整通用平台。
+
+八、相关路径
+============
+
+- 当前实现记录：`docs/2_天气模块的开发.txt`
+- 设计来源：已合并的天气模块第一版总体设计和 P2 评审修订版
+- 天气插件：`chatbot/plugins/personal-weather/`
+- 天气 Skill：`chatbot/skills/personal-weather/SKILL.md`
+- 主配置：`openclaw.json`
