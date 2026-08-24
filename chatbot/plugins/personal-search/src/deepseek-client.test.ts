@@ -64,6 +64,7 @@ describe("DeepSeek Responses client", () => {
   it.each([
     [401, "AUTH_FAILED"],
     [403, "AUTH_FAILED"],
+    [402, "BUDGET_EXHAUSTED"],
     [429, "RATE_LIMITED"],
     [500, "UPSTREAM_UNAVAILABLE"],
     [503, "UPSTREAM_UNAVAILABLE"],
@@ -77,7 +78,10 @@ describe("DeepSeek Responses client", () => {
       apiKey: "test-key",
     });
 
-    await expect(client.search("public query")).rejects.toMatchObject({ code });
+    await expect(client.search("public query")).rejects.toMatchObject({
+      code,
+      retryable: status === 429 || status === 500 || status === 503 || status === 504,
+    });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 

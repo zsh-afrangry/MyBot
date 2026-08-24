@@ -19,6 +19,7 @@ import type {
   WeatherBrief,
   WeatherLocation,
 } from "./weather-model.js";
+import type { ResolvedWeatherLocation } from "./weather-location.js";
 
 export interface WeatherServiceOptions {
   now?: () => number;
@@ -34,6 +35,13 @@ const CACHE_TTL_SECONDS = {
 interface LoadedComponent {
   payload: unknown;
   quality: ComponentQuality;
+}
+
+interface WeatherBriefLocationSource {
+  location: WeatherLocation;
+  cacheIdentity: string;
+  placeId?: number;
+  attributions: string[];
 }
 
 export class WeatherService {
@@ -53,21 +61,49 @@ export class WeatherService {
 
   async getBrief(signal?: AbortSignal): Promise<WeatherBrief> {
     const nowMs = this.#now();
+    const effective = this.#store.getEffectivePlace(Math.floor(nowMs / 1000));
+    return this.#getBrief({
+      location: toWeatherLocation(effective),
+      cacheIdentity: String(effective.place.id),
+      placeId: effective.place.id,
+      attributions: [],
+    }, signal);
+  }
+
+  /**
+   * Read weather for a one-shot GeoAPI result without writing a Place, trip,
+   * preference, or location period. The normal API cache remains available.
+   */
+  async getBriefForLocation(
+    location: ResolvedWeatherLocation,
+    signal?: AbortSignal,
+  ): Promise<WeatherBrief> {
+    return this.#getBrief({
+      location: location.weatherLocation,
+      cacheIdentity: location.cacheIdentity,
+      attributions: location.attributions,
+    }, signal);
+  }
+
+  async #getBrief(
+    locationSource: WeatherBriefLocationSource,
+    signal?: AbortSignal,
+  ): Promise<WeatherBrief> {
+    const nowMs = this.#now();
     const generatedAt = new Date(nowMs).toISOString();
     const nowUtc = Math.floor(nowMs / 1000);
-    const effective = this.#store.getEffectivePlace(Math.floor(nowMs / 1000));
     this.#store.deleteExpiredApiCache(nowUtc);
     const coordinates = {
-      latitude: effective.place.latitude,
-      longitude: effective.place.longitude,
+      latitude: locationSource.location.latitude,
+      longitude: locationSource.location.longitude,
     };
 
     const [currentResult, dailyResult, hourlyResult, alertsResult] =
       await Promise.allSettled([
         this.#loadComponent(
           "current",
-          `v1:current:${effective.place.id}`,
-          effective.place.id,
+          `v1:current:${locationSource.cacheIdentity}`,
+          locationSource.placeId,
           CACHE_TTL_SECONDS.current,
           () => this.#client.getCurrent(coordinates, signal),
           (payload) => parseQWeatherCurrent(payload).ok,
@@ -75,8 +111,8 @@ export class WeatherService {
         ),
         this.#loadComponent(
           "daily",
-          `v1:daily:${effective.place.id}:${localDateKey(nowMs, effective.place.timezone)}`,
-          effective.place.id,
+          `v1:daily:${locationSource.cacheIdentity}:${localDateKey(nowMs, locationSource.location.timezone)}`,
+          locationSource.placeId,
           CACHE_TTL_SECONDS.daily,
           () => this.#client.getDaily(coordinates, signal),
           (payload) => parseQWeatherDaily(payload).ok,
@@ -84,8 +120,8 @@ export class WeatherService {
         ),
         this.#loadComponent(
           "hourly",
-          `v1:hourly:${effective.place.id}`,
-          effective.place.id,
+          `v1:hourly:${locationSource.cacheIdentity}`,
+          locationSource.placeId,
           CACHE_TTL_SECONDS.hourly,
           () => this.#client.getHourly(coordinates, signal),
           (payload) => parseQWeatherHourly(payload).ok,
@@ -93,8 +129,8 @@ export class WeatherService {
         ),
         this.#loadComponent(
           "alerts",
-          `v1:alerts:${effective.place.id}`,
-          effective.place.id,
+          `v1:alerts:${locationSource.cacheIdentity}`,
+          locationSource.placeId,
           CACHE_TTL_SECONDS.alerts,
           () => this.#client.getAlerts(coordinates, signal),
           (payload) => parseQWeatherAlerts(payload).ok,
@@ -117,7 +153,8 @@ export class WeatherService {
       hourly: unavailableQuality(),
       alerts: unavailableQuality(),
     };
-    const attributions = new Set(current.data.metadata.attributions);
+    const attributions = new Set(locationSource.attributions);
+    addAttributions(attributions, current.data.metadata.attributions);
 
     let today: WeatherBrief["today"];
     if (dailyResult.status === "fulfilled") {
@@ -199,7 +236,7 @@ export class WeatherService {
 
     return {
       schemaVersion: 1,
-      location: toWeatherLocation(effective),
+      location: locationSource.location,
       generatedAt,
       current: {
         condition: current.data.condition,
@@ -228,7 +265,7 @@ export class WeatherService {
   async #loadComponent(
     endpointKind: keyof typeof CACHE_TTL_SECONDS,
     cacheKey: string,
-    placeId: number,
+    placeId: number | undefined,
     ttlSeconds: number,
     fetcher: () => Promise<unknown>,
     validator: (payload: unknown) => boolean,
@@ -256,7 +293,7 @@ export class WeatherService {
     this.#store.putApiCache({
       cacheKey,
       endpointKind,
-      placeId,
+      ...(placeId !== undefined ? { placeId } : {}),
       ...(tag ? { metadataTag: tag } : {}),
       fetchedAtUtc: nowUtc,
       expiresAtUtc: nowUtc + ttlSeconds,
@@ -273,9 +310,7 @@ function toWeatherLocation(effective: EffectivePlace): WeatherLocation {
   const { place } = effective;
   return {
     displayName: place.displayName,
-    shortName: [place.adm2?.replace(/[市]$/u, ""), place.district?.replace(/[区县]$/u, "")]
-      .filter(Boolean)
-      .join(""),
+    shortName: formatPersistentPlaceShortName(place),
     latitude: place.latitude,
     longitude: place.longitude,
     timezone: place.timezone,
@@ -283,6 +318,28 @@ function toWeatherLocation(effective: EffectivePlace): WeatherLocation {
       ? { qweatherLocationId: place.qweatherLocationId }
       : {}),
   };
+}
+
+/**
+ * Produce a compact but unambiguous label for a persisted place. `district`
+ * cannot serve as the leaf name because QWeather may label a district or a
+ * county-level city as `city`; localityName is the raw GeoAPI result instead.
+ */
+function formatPersistentPlaceShortName(place: EffectivePlace["place"]): string {
+  const localityName = place.localityName.trim();
+  if (!localityName) return place.displayName;
+
+  const administrativeName = place.adm2?.trim();
+  if (!administrativeName) return localityName;
+  if (sameAdministrativeName(administrativeName, localityName)) return localityName;
+  if (localityName.includes(administrativeName)) return localityName;
+
+  const compactAdministrativeName = administrativeName.replace(/[市]$/u, "");
+  return compactAdministrativeName ? `${compactAdministrativeName}${localityName}` : localityName;
+}
+
+function sameAdministrativeName(left: string, right: string): boolean {
+  return left.replace(/[市区县]$/u, "") === right.replace(/[市区县]$/u, "");
 }
 
 function freshQuality(fetchedAt: string): ComponentQuality {

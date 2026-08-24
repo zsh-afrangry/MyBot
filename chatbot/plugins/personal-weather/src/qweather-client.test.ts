@@ -260,6 +260,30 @@ describe("QWeatherClient", () => {
     ).rejects.toMatchObject({ code: "AUTH_FAILED" });
   });
 
+  it("allows a location lookup without an administrative-area hint", async () => {
+    const guardedFetchMock = vi.fn(
+      async (_params: Parameters<typeof fetchWithSsrFGuard>[0]) =>
+        guardedResponse(
+          new Response('{"code":"200","location":[]}', {
+            headers: { "content-type": "application/json" },
+          }),
+        ),
+    );
+    const client = new QWeatherClient(config(), {
+      guardedFetch: guardedFetchMock as unknown as typeof fetchWithSsrFGuard,
+    });
+
+    await client.lookupPlace({ location: "番禺区" });
+
+    const request = guardedFetchMock.mock.calls[0]?.[0];
+    expect(request?.url).toBeTypeOf("string");
+    if (!request?.url) throw new Error("GeoAPI request URL was not captured");
+    const url = new URL(request.url);
+    expect(url.searchParams.get("location")).toBe("番禺区");
+    expect(url.searchParams.has("adm")).toBe(false);
+    expect(url.searchParams.get("range")).toBe("cn");
+  });
+
   it("releases guarded resources when JSON parsing fails", async () => {
     const release = vi.fn(async () => undefined);
     const guardedFetch = vi.fn(async () =>

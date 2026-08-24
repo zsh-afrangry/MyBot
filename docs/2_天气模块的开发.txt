@@ -1,13 +1,20 @@
 kurumi 天气与出行模块：开发和维护记录
 
-最后更新：2026-08-12
-状态：P1 天气查询、P2A/P2B 行程 proposal/commit 和 P2C-0 规划边界已完成；地点切换、主动预警、
-图片/OCR 和航班状态仍未完成。
+最后更新：2026-08-24
+状态：P1D 临时指定地点查询、P2A/P2B 行程 proposal/commit、P2C-0 规划边界均已完成并完成相应验收；
+Profile P0 当前所在地已完成代码、迁移、离线验证和只读 QQ 验收，但确认式写入发现同轮自提交，等待
+《6_受控变更与二次确认机制》接入后重测。持久地点精确展示的 v4 迁移、离线回归和 QQ `formattedText`
+验收均已完成。地点区间派生、主动预警、图片/OCR 和航班状态尚未完成。
+
+现在应该从哪里继续：继续完成 Profile P0 的只读/解析 QQ 验收，同时先修复跨领域二次确认门槛，随后重测
+Profile 写入；再按真实行程需求做 P2B-location/P2C。主动通知、图片/OCR 和航班状态仍分别评审。主模型切换
+不改变本模块的 QWeather、Proposal 或 Cron 边界。
 
 摘要
 ----
 
-当前模块是主人 QQ 私聊可用的定向天气能力：通过固定 QWeather 专属 Host 查询广州天河默认地点，
+当前模块是主人 QQ 私聊可用的定向天气能力：通过固定 QWeather 专属 Host 查询 Profile 当前所在地
+（首次迁移时为广州天河），
 返回实况、今日/小时预报、降雨趋势和官方预警；每日 10:30 简报由固定 CLI/Cron 投递。行程部分
 只允许主人明确要求保存后生成 typed proposal，再以同一私聊中的 proposal ID + payload hash 确认提交
 为 `planned` trip。当前不会自动消歧目的地、切换天气地点、创建 location_period、修改提醒或调用通用网络。
@@ -18,6 +25,19 @@ kurumi 天气与出行模块：开发和维护记录
 
 - [x] P1A/P1B/P1C：只读 QWeather 客户端、缓存、确定性中文简报、固定 CLI、每日 10:30 Cron、
   SecretRef、插件加载、工具准入、QQ 主动投递和离线/运行时验收。
+- [x] P1D：为天气读取增加受控的临时地点查询。代码、13 个测试文件共 110 项回归、构建、插件验证、
+  配置验证、Gateway 健康检查及主人 QQ 端到端验收均已通过。无地点参数继续读取当前有效地点；
+  显式地点只用于本次查询，经 QWeather 地点检索和消歧后读取天气，不写
+  places/trips/location_periods/preferences。输入表达用户意图，不直接暴露 URL、坐标、Provider 私有
+  参数或密钥；温度、湿度、降水概率等是返回字段而不是查询输入。时间范围只在真实需求出现时以受限
+  语义扩展。
+- [-] Profile P0：`current_location` 是个人资料事实而非天气偏好；代码、v2→v3 迁移、离线回归、构建、
+  插件与配置验证及只读 QQ 验收已通过。2026-08-23 普通更新请求发生同轮 proposal → commit，故确认式
+  写入尚未验收通过；统一修复见《6_受控变更与二次确认机制》。它只支持受控地点的
+  `current_location.set`，不增加 `home_location`、任意资料编辑器或航班到达自动更新。
+- [x] P1 展示精度：已为持久地点增加 v4 `locality_name`，修正县级市/区县被展示成上级城市的问题；
+  生产库迁移、构建、120 项离线回归、插件和配置验证已通过。2026-08-24 12:02（Asia/Shanghai）主人 QQ
+  调用 `personal_weather_get_brief` 并原样返回 `formattedText`，首行是“镇江扬中：”，验收通过。
 - [x] P2A：`personal_planning_state_get` 状态读取、严格 `trip.create` proposal 预览和 QQ 私聊回归。
 - [x] P2B-commit：Hash/TTL/上下文校验、事务提交、审计、幂等和 QQ 回归；第二条无锡航班行程已
   提交为 `planned`，没有创建 location_period 或切换天气地点。
@@ -31,15 +51,72 @@ kurumi 天气与出行模块：开发和维护记录
 
 这些 TODO 是当前真实未完成项；已删除历史探查和重复的 P2C-0 实施过程，正式结果见后文实现边界。
 
+P1D 已确认实施约定与实现结果（2026-08-23）：
+
+- 首版只处理一个显式地点的临时只读查询，例如“番禺区现在下雨吗”。无地点参数时必须保持当前
+  effective-place 查询行为。
+- 工具只接受用户意图层的地点文本和可选上级行政区；后端固定调用 QWeather GeoAPI 消歧后，复用
+  既有实况、每日、逐小时和预警读取。不得要求主人提供或提交坐标、LocationID、URL、Host、
+  Provider 私有参数或密钥。
+- 唯一可信候选才继续查询；同名/多候选地点返回最小候选信息并要求主人澄清；未找到地点明确返回，
+  不用默认地点或公开网页搜索猜测。
+- 临时查询不写入 places、trips、location_periods 或 Profile；短期 API cache 仍可作为运行缓存。
+  它不改变当前所在地、当前有效地点、每日简报或 Cron。
+- “现在是否下雨”以本次实况组件实际返回的条件/降水字段和查询时间为准；预报和预警只能补充风险，
+  不能替代当前实况。组件缺失时必须明确缺失。
+- “广州现在哪几个区在下”属于 P1E 级别的受控区域聚合：需要固定区县目录、并发/配额预算和聚合语义，
+  不纳入 P1D。
+- 工具参数为可选 `location` 和可选 `administrative_area`；后者不能脱离前者单独提交。解析层只接受
+  唯一可信候选；多个候选返回最小候选摘要，`NO_DATA` 返回未找到，格式异常不伪装成“未找到”。
+- 临时地点经过 GeoAPI 后以短期、不可反推地点 ID 的缓存身份参与 API cache；成功查询不创建或修改任何
+  业务状态。无地点路径保留既有 cache key 和 `getEffectivePlace(now)` 行为，避免影响当前所在地和每日简报。
+- 本轮新增地点解析单元测试和临时查询服务测试；全插件回归、TypeScript 构建、`plugin:validate`、
+  `openclaw config validate`、已加载插件检查及 Gateway health 均通过。
+- 主人 QQ 端到端验收已通过：能查询任意指定地区天气；无地点时仍正确返回当前有效地点天气；
+  “朝阳区”出现多个候选时会请求补充信息；不存在地点会明确拒绝而非猜测、回退当前所在地或改用搜索。
+
+Profile P0 与天气的已实现边界（2026-08-24，确认式写入 QQ 验收未通过）：
+
+- `profile_current_location` 是当前所在地的唯一事实来源；迁移 v3 仅一次性以原天河天气默认地点初始化它，
+  之后不再与 `notification_preferences.default_place_id` 双写。
+- `personal_profile_change_propose` 只接受 `current_location.set`，先用相同的 QWeather GeoAPI 唯一候选解析；
+  当前 `personal_profile_change_commit` 校验同一主人范围内的 ID/hash 并原子提交/写审计，但尚未能证明确认来自
+  后续一条可信主人消息。首轮 QQ 更新测试因此失败，后续以《6_受控变更与二次确认机制》为准。
+- “朝阳区”Profile 地点歧义 QQ 验收已通过：Agent 要求补充北京/长春，后续只读状态确认未创建 pending proposal，
+  当前所在地仍为江苏省镇江扬中、revision 为 2。同日不存在地点测试亦已通过，并由后续只读状态确认无
+  Profile、行程、提醒、天气设置或 Cron 副作用。
+- Profile → 天气消费者 QQ 验收已通过：无显式地点参数的 `personal_weather_get_brief` 实际查询
+  江苏省镇江扬中，工具结果标明 Profile 当前所在地、Asia/Shanghai 查询时间、QWeather/fresh 数据来源；
+  没有回退到旧广州天河。该只读验证不等同于确认式写入通过。
+- `places.locality_name`（迁移 v4）保存唯一 QWeather GeoAPI 候选的原始叶子地点名；不能把 GeoAPI 的
+  `type=city` 当作“只有市级精度”的结论。它与 `display_name`、`adm1`、`adm2`、`district` 分开保存，
+  使县级市“扬中”即使 `district=NULL` 仍可作为显示叶子。既有记录只在迁移内回填该字段，生产 Profile
+  仍为“江苏省镇江扬中”、revision 仍为 2。
+- 持久地点简报标题由 `adm2 + locality_name` 确定性生成（“江苏省镇江扬中”→“镇江扬中”）；没有可用
+  上级市或叶子名时才退回完整 `display_name`。这只是展示层修复，不改变坐标查询、缓存身份、天气数据、
+  当前所在地、行程、提醒或 Cron。临时地点查询已按其 GeoAPI 结果显示，不走该持久化回填路径。
+- 2026-08-24 12:02（Asia/Shanghai）主人 QQ 验收通过：调用 `personal_weather_get_brief` 后原样输出的
+  `formattedText` 首行为“镇江扬中：现在多云，31.7°C…”，且附带 QWeather 归因和本地查询时间。该验证覆盖
+  确定性 Formatter；固定 `daily-brief` CLI 复用同一 WeatherService/Formatter 路径。
+- `getEffectivePlace(now)` 仍允许未来已确认的 `location_period` 覆盖；没有此类区间时读取
+  `profile_current_location`。天气读取与 `daily-brief` 因而是 Profile 的消费者，不能反向写入 Profile。
+- “我已经到了某地”可产生待确认 Profile 提案；临时天气查询、记录飞机行程、预计航班落地、提醒和 Cron
+  都不会自动修改当前所在地。航班到达后的自动更新仍是明确待办。
+
 ======================================================================
 二、当前能力与非目标
 ======================================================================
 
 已实现的天气能力：
 
-- 默认地点：广东省广州市天河区；未来有效地点由受控结构化数据决定，不修改提示词/记忆文件。
-- `personal_weather_get_brief`：主人 QQ 私聊可用、无参数、只读；返回实况、今日预报、未来 24 小时
-  降雨趋势、官方预警、数据时间、来源和缓存状态。
+- 当前所在地：Profile P0 迁移初始值为广东省广州市天河区；后续只能由受控 Profile proposal/commit 修改，
+  不修改提示词/记忆文件。天气是该事实的消费者。
+- 已持久化地点的工具结果保留完整 `displayName`；确定性简报可使用“上级市 + GeoAPI 叶子名”的紧凑标题，
+  但不得把县级市或区县只写成上级市。
+- `personal_weather_get_brief`：主人 QQ 私聊可用、只读；可省略参数读取当前有效地点，也可提交可选
+  `location` 与 `administrative_area` 查询一个临时地点。返回实况、今日预报、未来 24 小时降雨趋势、
+  官方预警、数据时间、来源和缓存状态；P1D 的 QQ 验收已通过。
+- 临时查询不得改变任何持久化地点状态；省略地点时保持既有当前有效地点行为。
 - 固定 `daily-brief` CLI + `Asia/Shanghai` 每日 10:30 Cron，隔离运行并向主人 QQ 私聊投递。
 - QWeather 专属 Host 和固定路径：GeoAPI City Lookup、current、daily、hourly、weather alert。
 
@@ -53,7 +130,7 @@ kurumi 天气与出行模块：开发和维护记录
 - 未消歧目的地只保存短文本；当前不写 `location_periods`/`notification_preferences`，不改变天气地点或 Cron。
 
 明确非目标：通用网页、任意 HTTP、Shell、文件/数据库直写、sudo、通用 Cron、群聊天气工具、模型改提示词/记忆、
-自动位置切换、主动预警、机票 OCR 和航班状态。
+任意 Profile 字段编辑、基于行程/预计航班的自动位置切换、主动预警、机票 OCR 和航班状态。
 
 ======================================================================
 三、架构与代码路径
@@ -62,6 +139,8 @@ kurumi 天气与出行模块：开发和维护记录
   主人 QQ 私聊
        |
        +--> personal_weather_get_brief（只读天气）
+       +--> personal_profile_state_get（只读当前所在地）
+       +--> personal_profile_change_propose/commit（确认式 Profile 写入）
        +--> personal_planning_state_get（只读状态）
        +--> personal_planning_change_propose（pending 预览）
        `--> personal_planning_change_commit（Hash 匹配后事务提交）
@@ -69,13 +148,17 @@ kurumi 天气与出行模块：开发和维护记录
                     v
              personal-weather 插件
        QWeatherClient -> WeatherService -> Formatter
+       ProfileService（profile.ts） -> ProfileRepository -> WeatherStore 事务
        PlanningService（planning.ts） -> PlanningRepository -> WeatherStore 事务
 
 关键文件：
 
 - `chatbot/plugins/personal-weather/src/index.ts`：工具声明、主人私聊守卫、运行时适配。
-- `src/qweather-client.ts`：固定 Host/路径、请求超时、响应限制、重试和错误分类。
-- `src/weather-service.ts`：缓存和实况/预报/预警组合。
+- `src/qweather-client.ts`：固定 Host/路径、GeoAPI City Lookup、请求超时、响应限制、重试和错误分类。
+- `src/weather-location.ts`：受限地点意图的 GeoAPI 消歧、唯一候选判断和最小候选摘要。
+- `src/profile.ts` / `src/profile-repository.ts`：`current_location` 的读模型、冻结提案、确认/过期/幂等策略和
+  受限 SQL 写入；逻辑所有权是 Profile，当前由该插件承载。
+- `src/weather-service.ts`：Profile 当前/未来地点区间与临时地点的缓存和实况/预报/预警组合。
 - `src/formatter.ts`：确定性中文简报。
 - `src/planning.ts`：typed proposal、预览、TTL/hash/上下文、确认和幂等策略。
 - `src/planning-repository.ts`：proposals/trips/audit 的受限 SQL CRUD，不解释模型输入或生成任意 effects。
@@ -110,13 +193,36 @@ Key 只能通过环境变量或插件 SecretRef 提供，不能进入源码、`o
 - 到达时间未知或仅日期级时，不自动切换天气地点；目的地未消歧时不伪造坐标或 LocationID。
 - proposal commit 只接受冻结 ID/hash/上下文，后端生成实际写入；模型不提供 SQL、effects、坐标或 URL。
 
-SQLite 主要表：`places`、`notification_preferences`、`location_periods`、`trips`、
-`change_proposals`、`notification_state`、`api_cache`、`audit_log`、`schema_migrations`。
-其中 `location_periods` 与通知去重表是后续 TODO 的结构预留，不代表对应业务已经上线。
+地点与定时简报的解耦原则：
+
+- `profile_current_location` 是主人当前所在地；trip 是计划事实；location_period 是未来经确认、带生效时间的
+  地点上下文；临时天气查询只是本轮只读输入。四者不能相互覆盖或混成“默认天气地点”。
+- 主人明确陈述已到达某地时，Profile 只在确认后更新 `current_location`。机票或行程确认只更新 trip；
+  即使目的地与到达时间窗齐全，也不能在记录机票或预计落地时自动修改当前所在地。
+- 每日简报 Cron 继续执行固定 `daily-brief`，不把某个地点硬编码到任务参数。运行时由
+  `getEffectivePlace(now)` 解析生效中的 location_period，没有匹配区间时读取 Profile current_location；
+  因而未来地点变化不需要重写 Cron。
+- 当前每日简报为 630 minute-of-day，即 Asia/Shanghai 10:30，时区模式为 fixed。是否在跨时区旅行时
+  改为 active_place 是独立产品决定，不能由记录行程自动推断。
+
+SQLite 主要表：`places`、`profile_current_location`、`notification_preferences`、`location_periods`、
+`trips`、`change_proposals`、`notification_state`、`api_cache`、`audit_log`、`schema_migrations`。
+其中 `profile_current_location` 已由迁移 v3 上线，`places.locality_name` 已由迁移 v4 上线；`location_periods` 与通知去重表仍是后续 TODO 的结构预留，
+不代表基于行程的自动地点切换已经上线。
 
 ======================================================================
-五、P2C-0 正式结果与后续边界
+五、Profile P0、P2C-0 正式结果与后续边界
 ======================================================================
+
+Profile P0 的正式结果：
+
+- `profile_current_location` 以 `places` 的受控地点引用、来源、确认时间和 revision 表示主人当前所在地；
+  没有 `home_location`、自由 Profile JSON、精确地址或聊天原文。
+- Profile 提案使用既有 `change_proposals` 的封闭 `location_set` kind，但拥有独立的 ProfileService/
+  ProfileRepository；这是复用已验证的 proposal/transaction 边界，不是提前建设通用 Task Engine。
+- 迁移 v3 从旧天气默认地点种子化当前所在地；迁移 v4 为持久地点补存 GeoAPI 叶子名。有效天气地点没有
+  active location_period 时读取该 Profile 地点；展示精度不依赖 Provider `type`，也不改变坐标查询。
+- 本轮不创建 location_period，不改行程、提醒、Cron、长期记忆，也不会在航班预计到达后自动更新 Profile。
 
 P2C-0 的正式结果：
 
@@ -126,8 +232,9 @@ P2C-0 的正式结果：
   事务 callback 内组合写入，未来可以原子扩展 `trip + location_period + audit`。
 - 已验证 Repository 写入后发生异常会回滚，不残留 trip；既有 committed proposal 重放幂等且不增加 trip/audit。
 
-本结果不包含：地点消歧、location_period 创建、discard、新工具、航班 OCR、搜索、Cron 或提醒改动。
-因此不再保留旧的“P2C-0 下一步提取 Service”探查记录；后续直接从顶部 P2B-location/P2C TODO 开始。
+本 P2C-0 结果本身不包含：location_period 创建、discard、航班 OCR、搜索、Cron 或提醒改动。
+P1D 已另行完成临时天气查询所需的 GeoAPI 消歧，Profile P0 复用同一受控解析边界；因此不再保留旧的
+“P2C-0 下一步提取 Service”探查记录，QQ 验收完成后再从 P2B-location/P2C TODO 继续地点区间派生。
 
 ======================================================================
 六、验证与运维
@@ -139,7 +246,10 @@ P2C-0 的正式结果：
   npm run build
   npm run plugin:validate
 
-当前全插件回归为 12 个测试文件、103 项通过；配置/插件运行时验收：
+持久地点展示修复后全插件回归为 14 个测试文件、120 项通过；TypeScript 构建、`plugin:validate` 与
+`openclaw config validate` 已通过。生产 SQLite 已完成 v4 迁移并只读核验：地点仍为江苏省镇江扬中、
+`locality_name=扬中`、Profile revision 仍为 2。Gateway 已重启且健康检查正常；2026-08-24 12:02 QQ
+`formattedText` 验收以“镇江扬中：”通过。配置/插件运行时检查：
 
   openclaw config validate
   openclaw plugins doctor
@@ -158,6 +268,7 @@ P2C-0 的正式结果：
 
 - 基础人格、权限、记忆、主机/coder 计划：`docs/1_bot基础功能开发备忘录.txt`。
 - 一次性提醒实现与验收：`docs/3_个人提醒.txt`。
-- 受控搜索/模型能力架构：`docs/4_受控搜索模块设计.txt`，当前仍在开发，本次未修改。
-- 历史天气设计整合与代码对照：`docs/已归档/天气设计建议_整合与实现对照.txt`。
+- 受控搜索：`docs/4_受控搜索模块设计.txt`。
+- 主模型与 fallback：`docs/5_主模型fallback处理.txt`。
+- 受控变更与二次确认：`docs/6_受控变更与二次确认机制.txt`。
 - QWeather 官方文档：`https://dev.qweather.com/en/docs/`。

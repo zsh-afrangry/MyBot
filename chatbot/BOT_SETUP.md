@@ -16,12 +16,17 @@
 实际运行凭证文件是 `~/.openclaw/.env`（权限 600），而不是本工作区的 `.env`。
 OpenClaw 会刻意忽略工作区 `.env` 内的模型 API Key，避免附件或工作区内容注入凭证；因此不要在此目录复制真实密钥。
 
-模板在 `openclaw.env.template`。当需要重新配置或轮换凭证时，根据模板更新实际的 `~/.openclaw/.env`：
+模板在项目根目录的 `gateway.systemd.env.example`。当需要重新配置或轮换凭证时，根据模板更新实际的
+`/home/afrangry/.openclaw/gateway.systemd.env`（权限 `600`）：
 
 - `QQBOT_APP_ID`
 - `QQBOT_APP_SECRET`
-- 所选模型提供商对应的 API Key（模板默认 `OPENAI_API_KEY`）
+- 当前 Terra/Qwen/备用模型提供商对应的 API Key（按实际 provider 契约启用）
 - 天气服务的 API Key 和专属 Host（插件已链接安装；Key 通过 SecretRef 从环境读取）
+
+`chatbot/openclaw.env.template` 仅为旧文档保留的兼容指针，不再单独维护变量清单。Qwen 插件安装后，
+只按插件实际报告的环境变量启用 `gateway.systemd.env` 中对应的一项 Qwen Key；不要同时填写多个 Qwen
+变量，也不要把 Key 写入 `openclaw.json`。
 
 QQ 的 `clientSecret` 已配置为从 `QQBOT_APP_SECRET` 环境变量读取，不会写入 `openclaw.json`。QQ AppID 不是密钥，但需要同步写入配置。
 

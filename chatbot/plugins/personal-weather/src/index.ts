@@ -22,6 +22,11 @@ import {
   TIME_PRECISIONS,
 } from "./planning.js";
 import {
+  commitProfileChange,
+  getProfileState,
+  proposeProfileChange,
+} from "./profile.js";
+import {
   commitReminderProposal,
   getReminderState,
   proposeReminderCancellation,
@@ -33,6 +38,7 @@ import {
 } from "./reminders.js";
 import { ReminderStore, type ReminderDelivery } from "./reminder-store.js";
 import { WeatherStore } from "./store.js";
+import { resolveWeatherLocation } from "./weather-location.js";
 import { WeatherService } from "./weather-service.js";
 import type { WeatherBriefResult } from "./weather-model.js";
 
@@ -51,6 +57,43 @@ const configSchema = Type.Object(
       description: "QWeather dedicated API hostname without scheme or path.",
     }),
     apiKey: Type.Union([Type.String(), secretRefSchema]),
+  },
+  { additionalProperties: false },
+);
+
+const weatherBriefParameters = Type.Object(
+  {
+    location: Type.Optional(Type.String({
+      minLength: 1,
+      maxLength: 80,
+      description: "Temporary weather location text, such as 番禺区. Omit for the owner's effective weather place.",
+    })),
+    administrative_area: Type.Optional(Type.String({
+      minLength: 1,
+      maxLength: 80,
+      description: "Optional superior administrative area used only to disambiguate location, such as 广州市.",
+    })),
+  },
+  { additionalProperties: false },
+);
+
+const profileStateParameters = Type.Object({}, { additionalProperties: false });
+const profileChangeParameters = Type.Object(
+  {
+    schema_version: Type.Literal(1),
+    request: Type.Object(
+      {
+        kind: Type.Literal("current_location.set"),
+        location: Type.Object(
+          {
+            text: Type.String({ minLength: 1, maxLength: 80 }),
+            administrative_area: Type.Optional(Type.String({ minLength: 1, maxLength: 80 })),
+          },
+          { additionalProperties: false },
+        ),
+      },
+      { additionalProperties: false },
+    ),
   },
   { additionalProperties: false },
 );
@@ -185,7 +228,7 @@ const reminderCommitParameters = planningCommitParameters;
 const personalWeatherPlugin = defineToolPlugin({
   id: "personal-weather",
   name: "Personal Weather",
-  description: "Owner-only weather reads and typed travel proposal previews for kurumi.",
+  description: "Owner-only Profile, weather, travel, and reminder capabilities for kurumi.",
   activation: { onStartup: true },
   configSchema,
   tools: (tool) => [
@@ -193,18 +236,53 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_weather_get_brief",
       label: "Personal weather brief",
       description:
-        "Read the owner's effective location and return verified current conditions, today's forecast, the next 24-hour rain trend, and official alert status. This tool cannot change location, files, prompts, memory, Cron, or travel records.",
-      parameters: Type.Object({}, { additionalProperties: false }),
+        "Read verified current conditions, today's forecast, the next 24-hour rain trend, and official alert status for the owner's effective weather place or one explicit temporary location. A temporary location never changes preferences, trips, location periods, files, prompts, memory, Cron, or travel records.",
+      parameters: weatherBriefParameters,
       optional: true,
-      async execute(_params, rawConfig, context): Promise<WeatherBriefResult> {
+      async execute(params, rawConfig, context): Promise<WeatherBriefResult> {
         let store: WeatherStore | undefined;
         try {
+          if (params.location === undefined && params.administrative_area !== undefined) {
+            return {
+              ok: false,
+              code: "INVALID_INPUT",
+              retryable: false,
+              message: "administrative_area 只能与 location 一起使用。",
+            };
+          }
           const config = resolvePersonalWeatherConfig(rawConfig);
           store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
           const client = new QWeatherClient(config);
-          const brief = await new WeatherService(store, client).getBrief(
-            context.signal,
-          );
+          const service = new WeatherService(store, client);
+          let brief;
+          if (params.location === undefined) {
+            brief = await service.getBrief(context.signal);
+          } else {
+            const resolution = await resolveWeatherLocation(client, {
+              location: params.location,
+              ...(params.administrative_area === undefined
+                ? {}
+                : { administrativeArea: params.administrative_area }),
+            }, context.signal);
+            if (resolution.kind === "not_found") {
+              return {
+                ok: false,
+                code: "LOCATION_NOT_FOUND",
+                retryable: false,
+                message: "未找到可用于天气查询的地点，请补充城市或上级行政区。",
+              };
+            }
+            if (resolution.kind === "ambiguous") {
+              return {
+                ok: false,
+                code: "LOCATION_AMBIGUOUS",
+                retryable: false,
+                message: "地点名称存在多个候选，请补充城市或上级行政区后重试。",
+                candidates: resolution.candidates,
+              };
+            }
+            brief = await service.getBriefForLocation(resolution.location, context.signal);
+          }
           return {
             ok: true,
             brief,
@@ -216,6 +294,92 @@ const personalWeatherPlugin = defineToolPlugin({
           store?.close();
         }
       },
+    }),
+    tool({
+      name: "personal_profile_state_get",
+      label: "Personal Profile state",
+      description:
+        "Read the owner's minimized Profile state, currently limited to the confirmed current location and pending Profile proposals. Owner QQ private chat only; this tool never changes state.",
+      parameters: profileStateParameters,
+      optional: true,
+      factory: ({ toolContext }): AnyAgentTool => ({
+        name: "personal_profile_state_get",
+        label: "Personal Profile state",
+        description: "Read the owner's current Profile location without changing any state.",
+        parameters: profileStateParameters,
+        async execute() {
+          if (!isTrustedOwnerPrivateQq(toolContext)) return forbiddenResult();
+          let store: WeatherStore | undefined;
+          try {
+            store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
+            return payloadTextResult(getProfileState(store));
+          } catch (error) {
+            return payloadTextResult(asWeatherError(error).toPublicResult());
+          } finally {
+            store?.close();
+          }
+        },
+      }),
+    }),
+    tool({
+      name: "personal_profile_change_propose",
+      label: "Propose a Profile change",
+      description:
+        "Create a typed pending preview to set the owner's current Profile location after trusted GeoAPI disambiguation. It never commits a profile change, alters trips, reminders, Cron, memory, or files.",
+      parameters: profileChangeParameters,
+      optional: true,
+      factory: ({ toolContext, config }): AnyAgentTool => ({
+        name: "personal_profile_change_propose",
+        label: "Propose a Profile change",
+        description:
+          "Create a pending current_location.set preview for explicit owner statements such as 已经到了某地. A unique place is required before confirmation.",
+        parameters: profileChangeParameters,
+        async execute(_toolCallId, params, signal) {
+          if (!isTrustedOwnerPrivateQq(toolContext)) return forbiddenResult();
+          let store: WeatherStore | undefined;
+          try {
+            const resolvedConfig = resolvePersonalWeatherConfig(config);
+            store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
+            return payloadTextResult(await proposeProfileChange(
+              store,
+              new QWeatherClient(resolvedConfig),
+              params,
+              signal,
+            ));
+          } catch (error) {
+            return payloadTextResult(asWeatherError(error).toPublicResult());
+          } finally {
+            store?.close();
+          }
+        },
+      }),
+    }),
+    tool({
+      name: "personal_profile_change_commit",
+      label: "Commit a Profile change",
+      description:
+        "Commit exactly one frozen current-location Profile proposal after explicit owner confirmation. The proposal ID and payload hash must match; it changes no trip, reminder, Cron, memory, or file.",
+      parameters: planningCommitParameters,
+      optional: true,
+      factory: ({ toolContext }): AnyAgentTool => ({
+        name: "personal_profile_change_commit",
+        label: "Commit a Profile change",
+        description:
+          "Commit one hash-matched pending current location change in the owner's QQ private chat. Repeated confirmation is idempotent.",
+        parameters: planningCommitParameters,
+        async execute(_toolCallId, params) {
+          if (!isTrustedOwnerPrivateQq(toolContext)) return forbiddenResult();
+          let store: WeatherStore | undefined;
+          try {
+            store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
+            return payloadTextResult(commitProfileChange(store, params));
+          } catch (error) {
+            return payloadTextResult(asWeatherError(error).toPublicResult());
+          } finally {
+            store?.close();
+          }
+        },
+      }),
     }),
     tool({
       name: "personal_planning_state_get",

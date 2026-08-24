@@ -30,6 +30,7 @@ test("creates a versioned private database and seeds only the confirmed default 
 
     const place = store.getDefaultPlace();
     assert.equal(place.displayName, "广东省广州市天河区");
+    assert.equal(place.localityName, "天河区");
     assert.equal(place.precision, "district");
     assert.equal(place.timezone, "Asia/Shanghai");
     assert.equal(place.source, "qweather_location_list");
@@ -61,12 +62,14 @@ test("creates a versioned private database and seeds only the confirmed default 
         "notification_preferences",
         "notification_state",
         "places",
+        "profile_current_location",
         "schema_migrations",
         "trips",
       ]);
 
       assert.equal(queryCount(database, "places"), 1);
       assert.equal(queryCount(database, "notification_preferences"), 1);
+      assert.equal(queryCount(database, "profile_current_location"), 1);
       assert.equal(queryCount(database, "trips"), 0);
       assert.equal(queryCount(database, "location_periods"), 0);
       assert.equal(queryCount(database, "change_proposals"), 0);
@@ -80,6 +83,8 @@ test("creates a versioned private database and seeds only the confirmed default 
       assert.deepEqual(migrations, [
         { version: 1, name: "initial_personal_weather_schema" },
         { version: 2, name: "trip_destination_text_for_unresolved_places" },
+        { version: 3, name: "profile_current_location_from_weather_default" },
+        { version: 4, name: "place_locality_name_for_precise_weather_labels" },
       ]);
       const tripColumns = database.prepare("PRAGMA table_info(trips)").all()
         .map((row) => (row as { name: string }).name);
@@ -87,7 +92,7 @@ test("creates a versioned private database and seeds only the confirmed default 
       assert.ok(tripColumns.includes("destination_administrative_area"));
       assert.equal(
         (database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
-        2,
+        4,
       );
     } finally {
       database.close();
@@ -103,12 +108,82 @@ test("creates a versioned private database and seeds only the confirmed default 
     try {
       assert.equal(queryCount(database, "places"), 1);
       assert.equal(queryCount(database, "notification_preferences"), 1);
-      assert.equal(queryCount(database, "schema_migrations"), 2);
+      assert.equal(queryCount(database, "profile_current_location"), 1);
+      assert.equal(queryCount(database, "schema_migrations"), 4);
     } finally {
       database.close();
     }
   } finally {
     reopened.close();
+  }
+});
+
+test("migrates an existing v2 weather database into one Profile current location and a leaf name", () => {
+  const fixture = createStore();
+  fixture.store.close();
+
+  const legacy = new DatabaseSync(fixture.databasePath);
+  try {
+    // This reconstructs the exact persisted shape before migration v3 without
+    // hand-writing a parallel copy of the lengthy v1/v2 schema.
+    legacy.exec(`
+      DROP TABLE profile_current_location;
+      DROP TRIGGER places_locality_name_required_insert;
+      DROP TRIGGER places_locality_name_required_update;
+      ALTER TABLE places DROP COLUMN locality_name;
+      DELETE FROM schema_migrations WHERE version IN (3, 4);
+      PRAGMA user_version = 2;
+    `);
+  } finally {
+    legacy.close();
+  }
+
+  const upgraded = new WeatherStore({ stateDirectory: fixture.stateDirectory, now: () => FIXED_NOW + 1 });
+  try {
+    const currentLocation = upgraded.getCurrentLocation();
+    assert.equal(currentLocation.place.displayName, "广东省广州市天河区");
+    assert.equal(currentLocation.place.localityName, "天河区");
+    assert.equal(currentLocation.source, "migrated_from_weather_default");
+    assert.equal(currentLocation.confirmedAtUtc, FIXED_NOW + 1);
+    assert.equal(upgraded.getEffectivePlace(FIXED_NOW + 1).source, "current_location");
+  } finally {
+    upgraded.close();
+  }
+});
+
+test("backfills a county-level city leaf name from a v3 persistent place", () => {
+  const fixture = createStore();
+  fixture.store.close();
+
+  const legacy = new DatabaseSync(fixture.databasePath);
+  try {
+    legacy.exec(`
+      DROP TRIGGER places_locality_name_required_insert;
+      DROP TRIGGER places_locality_name_required_update;
+      ALTER TABLE places DROP COLUMN locality_name;
+      DELETE FROM schema_migrations WHERE version = 4;
+      PRAGMA user_version = 3;
+    `);
+    legacy.prepare(`
+      UPDATE places
+      SET display_name = '江苏省镇江扬中',
+          adm1 = '江苏省',
+          adm2 = '镇江',
+          district = NULL,
+          precision = 'city'
+      WHERE place_key = 'cn:guangdong:guangzhou:tianhe:district-centre'
+    `).run();
+  } finally {
+    legacy.close();
+  }
+
+  const upgraded = new WeatherStore({ stateDirectory: fixture.stateDirectory, now: () => FIXED_NOW + 1 });
+  try {
+    const currentLocation = upgraded.getCurrentLocation();
+    assert.equal(currentLocation.place.displayName, "江苏省镇江扬中");
+    assert.equal(currentLocation.place.localityName, "扬中");
+  } finally {
+    upgraded.close();
   }
 });
 
@@ -122,7 +197,7 @@ test("confirmed half-open location periods override the default only inside the 
       recordState: "confirmed",
     });
 
-    assert.equal(store.getEffectivePlace(1_999).source, "default");
+    assert.equal(store.getEffectivePlace(1_999).source, "current_location");
 
     const atStart = store.getEffectivePlace(2_000);
     assert.equal(atStart.source, "location_period");
@@ -132,7 +207,7 @@ test("confirmed half-open location periods override the default only inside the 
     assert.equal(atStart.effectiveUntilUtc, 3_000);
 
     assert.equal(store.getEffectivePlace(2_999).source, "location_period");
-    assert.equal(store.getEffectivePlace(3_000).source, "default");
+    assert.equal(store.getEffectivePlace(3_000).source, "current_location");
   } finally {
     store.close();
   }
@@ -147,7 +222,7 @@ test("cancelled periods never override the default place", () => {
       untilUtc: 3_000,
       recordState: "cancelled",
     });
-    assert.equal(store.getEffectivePlace(2_500).source, "default");
+    assert.equal(store.getEffectivePlace(2_500).source, "current_location");
   } finally {
     store.close();
   }
@@ -230,7 +305,7 @@ test("tentative trips may omit destination, dates, and transport without changin
       database.close();
     }
 
-    assert.equal(store.getEffectivePlace(FIXED_NOW).source, "default");
+    assert.equal(store.getEffectivePlace(FIXED_NOW).source, "current_location");
   } finally {
     store.close();
   }
@@ -307,6 +382,7 @@ function queryCount(database: DatabaseSync, tableName: string): number {
     "notification_preferences",
     "trips",
     "location_periods",
+    "profile_current_location",
     "change_proposals",
     "schema_migrations",
   ]);
@@ -336,6 +412,7 @@ function insertPlaceAndPeriod(
         adm1,
         adm2,
         district,
+        locality_name,
         latitude,
         longitude,
         timezone,
@@ -344,7 +421,7 @@ function insertPlaceAndPeriod(
         created_at_utc,
         updated_at_utc
       ) VALUES ('test:wuxi:binhu', '江苏省无锡市滨湖区', 'CN', '江苏省', '无锡市',
-                '滨湖区', 31.5260, 120.2840, 'Asia/Shanghai', 'district', 'operator', ?, ?)
+                '滨湖区', '滨湖区', 31.5260, 120.2840, 'Asia/Shanghai', 'district', 'operator', ?, ?)
     `).run(FIXED_NOW, FIXED_NOW);
 
     const place = database.prepare(

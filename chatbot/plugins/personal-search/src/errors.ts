@@ -8,6 +8,7 @@ export type SearchErrorCode =
   | "INVALID_INPUT"
   | "RATE_LIMITED"
   | "QUOTA_EXCEEDED"
+  | "BUDGET_EXHAUSTED"
   | "TIMEOUT"
   | "UPSTREAM_UNAVAILABLE"
   | "INVALID_RESPONSE"
@@ -21,6 +22,7 @@ const PUBLIC_MESSAGES: Record<SearchErrorCode, string> = {
   INVALID_INPUT: "搜索 query 无效或包含不应外发的敏感内容；请改为不含私人标识的公开主题。",
   RATE_LIMITED: "搜索服务请求过于频繁，请稍后再试。",
   QUOTA_EXCEEDED: "搜索服务已达到本地保守配额，请稍后再试。",
+  BUDGET_EXHAUSTED: "搜索服务账户余额或额度不足，请联系主人处理。",
   TIMEOUT: "搜索服务响应超时。",
   UPSTREAM_UNAVAILABLE: "搜索服务暂时不可用。",
   INVALID_RESPONSE: "搜索服务返回了无法核验的结果。",

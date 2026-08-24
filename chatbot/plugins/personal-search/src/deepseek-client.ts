@@ -160,6 +160,7 @@ async function requestDeepSeekJson(options: DeepSeekRequestOptions): Promise<unk
 function mapHttpError(status: number, retryAfterHeader: string | null = null): SearchError {
   if (status === 401) return new SearchError("AUTH_FAILED");
   if (status === 403) return new SearchError("AUTH_FAILED");
+  if (status === 402) return new SearchError("BUDGET_EXHAUSTED");
   if (status === 429) {
     const retryAfterMs = parseRetryAfterMs(retryAfterHeader);
     return new SearchError("RATE_LIMITED", {

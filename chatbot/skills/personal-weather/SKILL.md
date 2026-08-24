@@ -1,6 +1,6 @@
 ---
 name: personal-weather
-description: Query the owner's current weather, daily or hourly forecast, rain trend, and official alerts through the restricted personal weather tool. For an explicit owner request to record travel, create a typed pending proposal preview and, only after a clear follow-up confirmation, commit its exact frozen version as a planned trip. Personal reminders are owner-private, typed proposal/commit operations; location switching remains unavailable.
+description: Query the owner's current weather, daily or hourly forecast, rain trend, and official alerts through the restricted personal weather tool. The owner's current Profile location can be changed only through a typed proposal and explicit confirmation; travel plans never auto-change it. Travel and reminder writes use their own typed proposal/commit operations.
 ---
 
 # Personal Weather
@@ -8,12 +8,43 @@ description: Query the owner's current weather, daily or hourly forecast, rain t
 ## Weather queries
 
 1. Check whether `personal_weather_get_brief` is actually available.
-2. If available, call it with its empty parameter object. Never invent a location, URL, API field, or credential.
-3. Base all current conditions, forecasts, rain advice, and alerts on the returned data. Preserve any stale-data or unavailable-component warning.
-4. Distinguish “official alert data is unavailable” from “the successful response says there are no official alerts.”
-5. If the tool is absent or fails, state that the live query was not completed. Do not answer real-time weather from memory.
+2. If the owner did not explicitly ask about another place, call it with an empty parameter object to read the
+   current effective weather place. If the owner names a place, pass only `location` and, when useful to
+   disambiguate, `administrative_area`. Never invent coordinates, LocationID, URL, API field, or credential.
+3. A temporary location query is read-only: it does not change the Profile current location, effective place, trip,
+   location period, daily brief, Cron, prompt, or memory.
+4. If the tool returns `LOCATION_AMBIGUOUS`, show the minimal candidates and ask the owner to clarify the
+   city or superior administrative area. If it returns `LOCATION_NOT_FOUND`, say so plainly. Do not silently
+   fall back to the current location or use public web search as a weather-data fallback.
+5. Base all current conditions, forecasts, rain advice, and alerts on the returned data. Preserve any
+   stale-data or unavailable-component warning. Current rain must be based on the current component, not
+   inferred from a forecast or alert.
+6. Preserve the returned `location.displayName` as the actual query place. When using deterministic
+   `formattedText`, preserve its location heading; never collapse a county-level city or district into only its
+   parent city.
+7. Distinguish “official alert data is unavailable” from “the successful response says there are no official alerts.”
+8. If the tool is absent or fails, state that the live query was not completed. Do not answer real-time weather from memory.
 
-The confirmed fallback location is 广东省广州市天河区. The tool resolves any future confirmed location interval before using that fallback; do not edit prompts or memory files to switch locations.
+The Profile current-location migration seed is 广东省广州市天河区. The tool resolves any future confirmed location interval before reading the Profile current location; do not edit prompts or memory files to switch locations.
+
+## Personal Profile: current location
+
+1. Use `personal_profile_state_get` for a read-only summary of the confirmed `current_location` and any pending
+   Profile location proposals.
+2. When the owner explicitly says they have arrived at, are now in, or wants to update their current location, use
+   `personal_profile_change_propose` with only `schema_version=1`, `kind=current_location.set`, and a location text
+   plus optional `administrative_area`. Do not require coordinates, LocationID, URLs, or credentials.
+3. A successful proposal is only a pending preview. Show its old/new location, effects, proposal ID, payload hash,
+   and expiry. It does not modify any Profile field until a separate confirmation.
+4. Use `personal_profile_change_commit` only after the owner explicitly confirms the exact pending Profile proposal
+   in the same QQ private chat. Copy the returned ID/hash; never guess either. Repeated confirmation may be
+   idempotent. Hash mismatch, expiry, ambiguity, or no result means no Profile mutation happened.
+5. `current_location` is personal state, not a weather preference or trip side effect. A temporary weather query,
+   a future/possible trip, a flight schedule, or an estimated arrival must never update it. This MVP has no
+   `home_location`, arbitrary Profile field editor, automatic flight-arrival update, or Profile-backed memory write.
+6. After a successful commit, later weather requests without an explicit temporary location and the fixed daily
+   weather brief consume the new Profile location. The commit does not change trips, reminders, Cron, memory, or
+   any future `location_period`.
 
 ## Planning state, proposal preview, and commit
 

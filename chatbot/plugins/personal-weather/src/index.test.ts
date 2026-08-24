@@ -4,19 +4,26 @@ import { describe, expect, it } from "vitest";
 import entry, { isTrustedOwnerPrivateQq } from "./index.js";
 
 describe("personal-weather plugin metadata", () => {
-  it("declares only the reviewed weather, planning, and owner-reminder tools", () => {
+  it("declares only the reviewed weather, Profile, planning, and owner-reminder tools", () => {
     const metadata = getToolPluginMetadata(entry);
     expect(metadata?.activation).toEqual({ onStartup: true });
-    expect(metadata?.tools).toHaveLength(11);
+    expect(metadata?.tools).toHaveLength(14);
     expect(metadata?.tools[0]).toMatchObject({
       name: "personal_weather_get_brief",
       optional: true,
       parameters: {
         type: "object",
         additionalProperties: false,
+        properties: {
+          location: { type: "string" },
+          administrative_area: { type: "string" },
+        },
       },
     });
     expect(metadata?.tools.slice(1).map((tool) => tool.name)).toEqual([
+      "personal_profile_state_get",
+      "personal_profile_change_propose",
+      "personal_profile_change_commit",
       "personal_planning_state_get",
       "personal_planning_change_propose",
       "personal_planning_change_commit",

@@ -16,6 +16,14 @@ export interface WeatherLocation {
   qweatherLocationId?: string;
 }
 
+/** Minimal safe information used when a location query needs owner clarification. */
+export interface WeatherLocationCandidate {
+  displayName: string;
+  administrativeArea: string;
+  country: string;
+  timezone: string;
+}
+
 export type ComponentState = "fresh" | "cached-fresh" | "unavailable";
 
 export interface ComponentQuality {
@@ -79,4 +87,5 @@ export type WeatherBriefResult =
       code: string;
       retryable: boolean;
       message: string;
+      candidates?: WeatherLocationCandidate[];
     };

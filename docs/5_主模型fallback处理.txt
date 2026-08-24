@@ -1,0 +1,110 @@
+Kurumi 主模型与 fallback 处理（MVP）
+
+首次记录：2026-08-21
+最后更新：2026-08-22
+状态：已运行的默认模型链为“百炼 Token Plan qwen3.7-plus → naiccc/gpt-5.6-terra”。
+文本、图片、天气、提醒只读、受控搜索和认证失败 fallback 均已完成本机或主人 QQ 验收。
+
+======================================================================
+一、现在应该从哪里继续
+======================================================================
+
+当前不需要继续更换模型或接入模型原生联网。保持该链路并观察真实使用中的成本、稳定性和回答质量。
+只有出现明确故障、套餐变化、模型能力需求或可复现的质量问题时，才打开对应事项：
+
+- 需要验证其他 fallback 故障类型时，使用可回滚的临时 Provider；不要移除生产 SecretRef 来制造故障。
+- 需要使用 Qwen/Terra 的模型原生联网时，作为独立能力立项；它不能绕过受控搜索的权限与来源边界。
+- Token Plan 的模型、价格、限额或接口协议变化时，先核对官方资料和本机配置，再做最小回归。
+
+======================================================================
+二、当前配置事实
+======================================================================
+
+1. 默认链
+
+openclaw.json 的 agents.defaults.model 使用：
+
+- primary：bailian-token-plan/qwen3.7-plus
+- fallbacks：naiccc/gpt-5.6-terra
+
+这是同一 Kurumi Agent 内的故障回退顺序，不是两个独立 Agent。QQ 会话若显式用 /model 固定模型，
+不应被当作默认链 fallback 已覆盖的证明。
+
+2. 百炼 Token Plan Provider
+
+稳定版 OpenClaw 已安装官方 Qwen Provider 插件，但该版本没有可直接使用的 qwen-token-plan Provider；
+其 beta 版本要求升级 Core。为避免为了一个接入点将稳定 Gateway 升为 beta，当前注册最小 custom Provider：
+
+- Provider id：bailian-token-plan
+- baseUrl：https://token-plan.cn-beijing.maas.aliyuncs.com/apps/anthropic
+- API 形状：anthropic-messages
+- 模型：qwen3.7-plus，声明支持 text、image
+- Key：只从 gateway.systemd.env 的 QWEN_TOKEN_PLAN_API_KEY SecretRef 读取
+- reasoning：false，避免向尚未验证的兼容层猜测/注入额外 thinking 参数
+
+环境变量 QWEN_TOKEN_PLAN_BASE_URL 指向 compatible-mode/v1，是 Token Plan 的 OpenAI-compatible 地址，
+但当前稳定 custom Provider 不读取它；实际运行的是上述 apps/anthropic 端点。变量保留用于将来明确的
+兼容模式实验，不能据此误判当前请求路径。
+
+3. 与业务工具的关系
+
+更换主模型没有放宽任何工具：
+
+- 天气、行程和提醒仍沿用原有受限工具与确认协议；
+- public search 仍固定为 personal_web_search → DeepSeek Search Worker；
+- 通用 web_search、web_fetch、浏览器、Shell、任意 Cron 或任意 QQ 发送均未开放；
+- 百炼 Harness 原生联网目前未启用。
+
+======================================================================
+三、正式验收结论
+======================================================================
+
+| 范围 | 结论 |
+| --- | --- |
+| 配置与启动 | 配置校验、Provider/插件检查、Gateway health 与 QQ 连接均正常。 |
+| Qwen 文本 | 本机直连与主人 QQ 文本对话均成功。 |
+| Qwen 视觉 | 真实 QQ 图片附件以 text + image 注入模型后，模型能描述画面并说明不可辨识文字；普通文件引用不应被误当作已看见图片。 |
+| 天气 | Qwen 能调用只读天气工具，既有时区与降雨窗口格式化边界未被模型切换破坏。 |
+| 提醒 | QQ 的“只读查询当前提醒状态”仅调用 state_get，没有 proposal、commit、创建、修改、取消或 Cron 写入。 |
+| 受控搜索 | Qwen 实际调用 owner-only personal_web_search，获得 DeepSeek 返回；来源/本地 Fetch 说明遵从搜索模块契约。详见文档 4。 |
+| fallback | 用可回滚的临时错误 Key 触发 Qwen 401 后，默认链成功改用 Terra；恢复正确 Key 后主模型恢复为 Qwen。 |
+
+这证明主链、已允许的多模态输入、现有窄工具和至少一种 Provider 认证失败场景能够协同工作；
+不等于所有上游故障类型和所有模型原生能力都已覆盖。
+
+======================================================================
+四、尚未验证或不属于本 MVP 的事项
+======================================================================
+
+- Qwen 的 429、5xx、连接异常、长时间无响应、响应格式异常等是否都会触发默认 fallback；
+- Agent 总超时与 Provider timeout 的精确交互，以及长搜索/长视觉请求的体验；
+- 账单、套餐限额、并发限制、Key 生命周期与 402/余额耗尽时的运营处理；
+- Qwen/Terra 模型原生 Search、网页抓取、引用格式或 Agent 平台高级能力；
+- 多模型的质量/成本评测与按任务路由。
+
+这些均不应通过破坏生产密钥、开放通用网络工具或升级 Core beta 来“顺手测试”。发生真实需求时，
+先定义成功/失败语义、成本上限和回滚方案，再用临时且可恢复的配置验证。
+
+======================================================================
+五、变更与回滚
+======================================================================
+
+修改模型配置后：
+
+1. 确认 Key 仅在 gateway.systemd.env，不进入 git、文档、日志或 QQ 消息；
+2. 执行 openclaw config validate、插件检查和 Gateway health；
+3. 重启 Gateway 后先验证普通 QQ 文本，再验证受影响的窄工具；
+4. 若主模型异常，保留原配置副本，将 primary 改回已知可用的 naiccc/gpt-5.6-terra，
+   或暂时移除不稳定 Provider；不要删除业务 SQLite 或放宽工具权限。
+
+关联文档：
+
+- 系统级模型与权限边界：docs/1_bot基础功能开发备忘录.txt
+- 天气/行程：docs/2_天气模块的开发.txt
+- 提醒：docs/3_个人提醒.txt
+- 受控搜索：docs/4_受控搜索模块设计.txt
+
+参考资料（接入前应重新核对其当期版本）：
+
+- 阿里云百炼 OpenClaw 指南：https://www.alibabacloud.com/help/en/model-studio/openclaw
+- OpenClaw Qwen Provider 文档：https://docs.openclaw.ai/zh-CN/providers/qwen

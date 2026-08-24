@@ -1,7 +1,7 @@
 {
   "id": "personal-weather",
   "name": "Personal Weather",
-  "description": "Owner-only weather reads and typed travel proposal previews for kurumi.",
+  "description": "Owner-only Profile, weather, travel, and reminder capabilities for kurumi.",
   "version": "0.1.0",
   "configSchema": {
     "type": "object",
@@ -73,6 +73,9 @@
   "contracts": {
     "tools": [
       "personal_weather_get_brief",
+      "personal_profile_state_get",
+      "personal_profile_change_propose",
+      "personal_profile_change_commit",
       "personal_planning_state_get",
       "personal_planning_change_propose",
       "personal_planning_change_commit",
@@ -89,6 +92,15 @@
     "personal_weather_get_brief": {
       "optional": true,
       "replaySafe": true
+    },
+    "personal_profile_state_get": {
+      "optional": true
+    },
+    "personal_profile_change_propose": {
+      "optional": true
+    },
+    "personal_profile_change_commit": {
+      "optional": true
     },
     "personal_planning_state_get": {
       "optional": true

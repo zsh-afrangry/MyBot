@@ -12,11 +12,12 @@ import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
 import { PlanningRepository } from "./planning-repository.js";
+import { ProfileRepository } from "./profile-repository.js";
 
 const DATABASE_FILE_NAME = "weather.sqlite";
 /** Internal subject key for this single-owner deployment. */
 export const OWNER_SUBJECT_ID = "owner";
-const LATEST_SCHEMA_VERSION = 2;
+const LATEST_SCHEMA_VERSION = 4;
 // Keep this as a string: SQLite's maximum signed integer is larger than
 // JavaScript's Number.MAX_SAFE_INTEGER, and the value is interpolated into SQL.
 const SQLITE_MAX_INTEGER_LITERAL = "9223372036854775807";
@@ -32,6 +33,7 @@ const DEFAULT_PLACE = {
   adm1: "广东省",
   adm2: "广州市",
   district: "天河区",
+  localityName: "天河区",
   latitude: 23.1356,
   longitude: 113.3354,
   timezone: "Asia/Shanghai",
@@ -49,6 +51,7 @@ const INITIAL_SCHEMA_SQL = String.raw`
     adm1 TEXT,
     adm2 TEXT,
     district TEXT,
+    locality_name TEXT NOT NULL CHECK (length(locality_name) BETWEEN 1 AND 200),
     latitude REAL NOT NULL CHECK (latitude BETWEEN -90.0 AND 90.0),
     longitude REAL NOT NULL CHECK (longitude BETWEEN -180.0 AND 180.0),
     timezone TEXT NOT NULL CHECK (length(timezone) BETWEEN 1 AND 100),
@@ -313,6 +316,8 @@ export interface Place {
   adm1: string | null;
   adm2: string | null;
   district: string | null;
+  /** The exact GeoAPI leaf name selected by the owner, independent of provider type labels. */
+  localityName: string;
   latitude: number;
   longitude: number;
   timezone: string;
@@ -340,6 +345,19 @@ export interface NotificationPreferences {
   revision: number;
 }
 
+/**
+ * The owner-facing Profile fact. It is deliberately separate from weather
+ * notification preferences: weather is only one consumer of this location.
+ */
+export interface CurrentLocation {
+  subjectId: string;
+  place: Place;
+  source: "owner_confirmed" | "migrated_from_weather_default" | "operator";
+  revision: number;
+  confirmedAtUtc: UnixSeconds;
+  updatedAtUtc: UnixSeconds;
+}
+
 export type EffectivePlace =
   | {
       source: "location_period";
@@ -347,6 +365,13 @@ export type EffectivePlace =
       locationPeriodId: number;
       effectiveFromUtc: UnixSeconds;
       effectiveUntilUtc: UnixSeconds | null;
+    }
+  | {
+      source: "current_location";
+      place: Place;
+      locationPeriodId: null;
+      effectiveFromUtc: UnixSeconds;
+      effectiveUntilUtc: null;
     }
   | {
       source: "default";
@@ -453,6 +478,7 @@ type PlaceRow = {
   adm1: string | null;
   adm2: string | null;
   district: string | null;
+  locality_name: string;
   latitude: number;
   longitude: number;
   timezone: string;
@@ -478,6 +504,14 @@ type PreferencesRow = {
   cooldown_minutes: number;
   travel_dual_city_enabled: number;
   revision: number;
+};
+
+type CurrentLocationRow = PlaceRow & {
+  subject_id: string;
+  source_kind: "owner_text" | "migration_seed" | "operator";
+  revision: number;
+  confirmed_at_utc: number;
+  updated_at_utc: number;
 };
 
 type TripSummaryRow = {
@@ -530,6 +564,7 @@ const MIGRATIONS: readonly Migration[] = [
           adm1,
           adm2,
           district,
+          locality_name,
           latitude,
           longitude,
           timezone,
@@ -538,7 +573,7 @@ const MIGRATIONS: readonly Migration[] = [
           source,
           created_at_utc,
           updated_at_utc
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT(place_key) DO NOTHING
       `).run(
         DEFAULT_PLACE.placeKey,
@@ -547,6 +582,7 @@ const MIGRATIONS: readonly Migration[] = [
         DEFAULT_PLACE.adm1,
         DEFAULT_PLACE.adm2,
         DEFAULT_PLACE.district,
+        DEFAULT_PLACE.localityName,
         DEFAULT_PLACE.latitude,
         DEFAULT_PLACE.longitude,
         DEFAULT_PLACE.timezone,
@@ -596,6 +632,89 @@ const MIGRATIONS: readonly Migration[] = [
               destination_administrative_area IS NULL
               OR length(destination_administrative_area) BETWEEN 1 AND 200
             );
+      `);
+    },
+  },
+  {
+    version: 3,
+    name: "profile_current_location_from_weather_default",
+    apply(database, appliedAtUtc) {
+      database.exec(`
+        CREATE TABLE profile_current_location (
+          subject_id TEXT PRIMARY KEY,
+          place_id INTEGER NOT NULL REFERENCES places(id) ON DELETE RESTRICT,
+          source_kind TEXT NOT NULL
+            CHECK (source_kind IN ('owner_text', 'migration_seed', 'operator')),
+          source_summary TEXT NOT NULL CHECK (length(source_summary) BETWEEN 1 AND 1000),
+          revision INTEGER NOT NULL DEFAULT 1 CHECK (revision >= 1),
+          confirmed_at_utc INTEGER NOT NULL CHECK (confirmed_at_utc >= 0),
+          created_at_utc INTEGER NOT NULL CHECK (created_at_utc >= 0),
+          updated_at_utc INTEGER NOT NULL CHECK (updated_at_utc >= created_at_utc)
+        ) STRICT;
+
+        CREATE INDEX profile_current_location_place_index
+          ON profile_current_location(place_id);
+      `);
+
+      // The former weather default was already explicitly confirmed by the
+      // owner. Seed the new Profile fact once so no deployment loses a valid
+      // current location or requires a second confirmation.
+      database.prepare(`
+        INSERT INTO profile_current_location (
+          subject_id, place_id, source_kind, source_summary, revision,
+          confirmed_at_utc, created_at_utc, updated_at_utc
+        )
+        SELECT subject_id, default_place_id, 'migration_seed',
+               '由已确认的旧天气默认地点迁移', 1, ?, ?, ?
+        FROM notification_preferences
+      `).run(appliedAtUtc, appliedAtUtc, appliedAtUtc);
+    },
+  },
+  {
+    version: 4,
+    name: "place_locality_name_for_precise_weather_labels",
+    apply(database) {
+      // GeoAPI uses provider-specific type labels: a Chinese district or
+      // county-level city may still be reported as `city`. Persist the raw
+      // selected leaf name rather than deriving it from that label at display
+      // time. The initial schema has a strict non-null column; old databases
+      // receive a nullable column, are fully backfilled in this transaction,
+      // then protected against future empty writes by triggers.
+      const placeColumns = database.prepare("PRAGMA table_info(places)").all()
+        .map((row) => (row as { name: string }).name);
+      if (!placeColumns.includes("locality_name")) {
+        database.exec("ALTER TABLE places ADD COLUMN locality_name TEXT;");
+      }
+      database.exec(`
+        UPDATE places
+        SET locality_name = CASE
+          WHEN adm1 IS NOT NULL
+            AND adm2 IS NOT NULL
+            AND length(adm1) > 0
+            AND length(adm2) > 0
+            AND substr(display_name, 1, length(adm1) + length(adm2)) = adm1 || adm2
+            AND length(substr(display_name, length(adm1) + length(adm2) + 1)) > 0
+            THEN substr(display_name, length(adm1) + length(adm2) + 1)
+          WHEN district IS NOT NULL AND length(trim(district)) > 0 THEN trim(district)
+          ELSE display_name
+        END
+        WHERE locality_name IS NULL OR length(trim(locality_name)) = 0;
+
+        CREATE TRIGGER places_locality_name_required_insert
+        BEFORE INSERT ON places
+        WHEN NEW.locality_name IS NULL
+          OR length(trim(NEW.locality_name)) NOT BETWEEN 1 AND 200
+        BEGIN
+          SELECT RAISE(ABORT, 'places.locality_name is required');
+        END;
+
+        CREATE TRIGGER places_locality_name_required_update
+        BEFORE UPDATE OF locality_name ON places
+        WHEN NEW.locality_name IS NULL
+          OR length(trim(NEW.locality_name)) NOT BETWEEN 1 AND 200
+        BEGIN
+          SELECT RAISE(ABORT, 'places.locality_name is required');
+        END;
       `);
     },
   },
@@ -654,6 +773,34 @@ export class WeatherStore {
     }
 
     return mapPlace(row);
+  }
+
+  /** Read the single source of truth for the owner's current Profile location. */
+  getCurrentLocation(subjectId = OWNER_SUBJECT_ID): CurrentLocation {
+    assertSubjectId(subjectId);
+    this.#assertOpen();
+
+    const row = this.#database.prepare(`
+      SELECT place.*, current.subject_id, current.source_kind, current.revision,
+             current.confirmed_at_utc, current.updated_at_utc
+      FROM profile_current_location AS current
+      JOIN places AS place ON place.id = current.place_id
+      WHERE current.subject_id = ?
+      LIMIT 1
+    `).get(subjectId) as CurrentLocationRow | undefined;
+
+    if (!row) {
+      throw new Error(`No current Profile location is configured for subject ${subjectId}`);
+    }
+
+    return {
+      subjectId: row.subject_id,
+      place: mapPlace(row),
+      source: mapCurrentLocationSource(row.source_kind),
+      revision: row.revision,
+      confirmedAtUtc: row.confirmed_at_utc,
+      updatedAtUtc: row.updated_at_utc,
+    };
   }
 
   getNotificationPreferences(subjectId = OWNER_SUBJECT_ID): NotificationPreferences {
@@ -740,11 +887,12 @@ export class WeatherStore {
       };
     }
 
+    const current = this.getCurrentLocation(subjectId);
     return {
-      source: "default",
-      place: this.getDefaultPlace(subjectId),
+      source: "current_location",
+      place: current.place,
       locationPeriodId: null,
-      effectiveFromUtc: null,
+      effectiveFromUtc: current.confirmedAtUtc,
       effectiveUntilUtc: null,
     };
   }
@@ -821,6 +969,23 @@ export class WeatherStore {
     }
   }
 
+  /** Same transaction boundary as planning, scoped to Profile persistence. */
+  withProfileTransaction<T>(callback: (repository: ProfileRepository) => T): T {
+    this.#assertOpen();
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const result = callback(new ProfileRepository({
+        database: this.#database,
+        subjectId: OWNER_SUBJECT_ID,
+      }));
+      this.#database.exec("COMMIT");
+      return result;
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
   listPendingProposals(
     subjectId = OWNER_SUBJECT_ID,
     atUtc = this.getNowUtc(),
@@ -854,14 +1019,11 @@ export class WeatherStore {
   }
 
   createPendingProposal(input: {
-    kind: "trip_create";
+    kind: "trip_create" | "location_set";
     payloadJson: string;
     previewText: string;
     expiresAtUtc: UnixSeconds;
   }): CreatedPendingProposal {
-    if (input.kind !== "trip_create") {
-      throw new TypeError("P2A only accepts trip_create proposals");
-    }
     assertJsonText(input.payloadJson, "payloadJson", 64 * 1024);
     assertMultilineText(input.previewText, "previewText", 4000);
 
@@ -1170,6 +1332,7 @@ function mapPlace(row: PlaceRow): Place {
     adm1: row.adm1,
     adm2: row.adm2,
     district: row.district,
+    localityName: row.locality_name,
     latitude: row.latitude,
     longitude: row.longitude,
     timezone: row.timezone,
@@ -1178,6 +1341,19 @@ function mapPlace(row: PlaceRow): Place {
     source: row.source,
   };
 
+}
+
+function mapCurrentLocationSource(
+  value: CurrentLocationRow["source_kind"],
+): CurrentLocation["source"] {
+  switch (value) {
+    case "owner_text":
+      return "owner_confirmed";
+    case "migration_seed":
+      return "migrated_from_weather_default";
+    case "operator":
+      return "operator";
+  }
 }
 
 function mapTripSummary(row: TripSummaryRow): TripSummary {

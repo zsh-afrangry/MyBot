@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 
 import { OWNER_SUBJECT_ID } from "./store.js";
 import type {
+  CurrentLocation,
   EffectivePlace,
   NotificationPreferences,
   PendingProposalSummary,
@@ -50,8 +51,12 @@ export interface PlanningState {
   ok: true;
   schemaVersion: 1;
   asOfUtc: UnixSeconds;
+  profile: {
+    currentLocation: PlanningPlaceSummary;
+    currentLocationSource: CurrentLocation["source"];
+    currentLocationConfirmedAtUtc: UnixSeconds;
+  };
   weather: {
-    defaultPlace: PlanningPlaceSummary;
     effectivePlace: PlanningPlaceSummary;
     effectiveSource: EffectivePlace["source"];
     dailyBrief: {
@@ -155,7 +160,7 @@ export type PlanningFailure = {
 
 export function getPlanningState(store: WeatherStore): PlanningState {
   const asOfUtc = store.getNowUtc();
-  const defaultPlace = store.getDefaultPlace();
+  const currentLocation = store.getCurrentLocation();
   const effectivePlace = store.getEffectivePlace(asOfUtc);
   const preferences = store.getNotificationPreferences();
 
@@ -163,8 +168,12 @@ export function getPlanningState(store: WeatherStore): PlanningState {
     ok: true,
     schemaVersion: 1,
     asOfUtc,
+    profile: {
+      currentLocation: summarizePlace(currentLocation.place),
+      currentLocationSource: currentLocation.source,
+      currentLocationConfirmedAtUtc: currentLocation.confirmedAtUtc,
+    },
     weather: {
-      defaultPlace: summarizePlace(defaultPlace),
       effectivePlace: summarizePlace(effectivePlace.place),
       effectiveSource: effectivePlace.source,
       dailyBrief: {

@@ -14,7 +14,7 @@ export interface Coordinates {
 
 export interface GeoLookupInput {
   location: string;
-  adm: string;
+  adm?: string;
 }
 
 type GuardedFetch = typeof fetchWithSsrFGuard;
@@ -128,10 +128,19 @@ export class QWeatherClient {
 
   async lookupPlace(input: GeoLookupInput, signal?: AbortSignal): Promise<unknown> {
     const location = validateLookupText(input.location);
-    const adm = validateLookupText(input.adm);
+    const adm = input.adm === undefined ? undefined : validateLookupText(input.adm);
+    const query: Record<string, string> = {
+      location,
+      range: "cn",
+      number: "5",
+      lang: "zh",
+    };
+    if (adm !== undefined) {
+      query.adm = adm;
+    }
     const payload = await this.#requestJson(
       "/geo/v2/city/lookup",
-      { location, adm, range: "cn", number: "5", lang: "zh" },
+      query,
       signal,
     );
     assertGeoApiBusinessStatus(payload);

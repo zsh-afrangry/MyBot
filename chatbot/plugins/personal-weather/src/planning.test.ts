@@ -13,6 +13,12 @@ import {
 import { WeatherStore } from "./store.js";
 
 const NOW = Math.floor(Date.now() / 1000);
+const FUTURE_ARRIVAL_EARLIEST = new Date(
+  (NOW + 2 * 24 * 60 * 60) * 1000,
+).toISOString();
+const FUTURE_ARRIVAL_LATEST = new Date(
+  (NOW + 2 * 24 * 60 * 60 + 2 * 60 * 60) * 1000,
+).toISOString();
 const temporaryRoots: string[] = [];
 
 afterEach(() => {
@@ -27,13 +33,14 @@ describe("P2 planning slice", () => {
     try {
       const state = getPlanningState(store);
       expect(state.ok).toBe(true);
-      expect(state.weather.defaultPlace).toEqual({
+      expect(state.profile.currentLocation).toEqual({
         displayName: "广东省广州市天河区",
         countryCode: "CN",
         timezone: "Asia/Shanghai",
         precision: "district",
       });
-      expect(state.weather.effectiveSource).toBe("default");
+      expect(state.profile.currentLocationSource).toBe("migrated_from_weather_default");
+      expect(state.weather.effectiveSource).toBe("current_location");
       expect(state.weather.dailyBrief.localTime).toBe("10:30");
       expect(state.trips).toEqual([]);
       expect(state.pendingProposals).toEqual([]);
@@ -133,8 +140,8 @@ describe("P2 planning slice", () => {
           destination: { text: "无锡", administrative_area: "江苏省" },
           transport_mode: "air",
           arrival: {
-            earliest: "2026-08-16T14:00:00+08:00",
-            latest: "2026-08-16T16:00:00+08:00",
+            earliest: FUTURE_ARRIVAL_EARLIEST,
+            latest: FUTURE_ARRIVAL_LATEST,
             precision: "window",
             timezone: "Asia/Shanghai",
           },
@@ -167,7 +174,7 @@ describe("P2 planning slice", () => {
       const state = getPlanningState(store);
       expect(state.trips).toHaveLength(1);
       expect(state.pendingProposals).toEqual([]);
-      expect(store.getEffectivePlace(NOW).source).toBe("default");
+      expect(store.getEffectivePlace(NOW).source).toBe("current_location");
 
       const retried = commitPlanningProposal(store, {
         proposal_id: proposal.proposalId,

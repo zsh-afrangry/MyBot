@@ -50,12 +50,12 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 function initializeDatabase(): number {
   const store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
   try {
-    const place = store.getDefaultPlace();
+    const currentLocation = store.getCurrentLocation();
     printJson({
       ok: true,
       databaseReady: true,
-      defaultLocation: place.displayName,
-      qweatherLocationId: place.qweatherLocationId,
+      currentLocation: currentLocation.place.displayName,
+      currentLocationSource: currentLocation.source,
     });
     return 0;
   } finally {
