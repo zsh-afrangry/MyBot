@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { buildConfirmationInstruction, type ConfirmationScope } from "./confirmation-gate.js";
 import { OWNER_SUBJECT_ID } from "./store.js";
 import type {
   CurrentLocation,
@@ -101,6 +102,8 @@ export interface PlanningChangeProposalResult {
   status: "pending";
   kind: "trip_create";
   previewText: string;
+  /** Exact sentence the owner must send back to approve this proposal. */
+  confirmationInstruction: string;
   canonicalFacts: {
     domain: "weather_travel";
     schemaVersion: 1;
@@ -153,7 +156,11 @@ export type PlanningFailure = {
       | "proposal_hash_mismatch"
       | "proposal_expired"
       | "proposal_unavailable"
-      | "proposal_payload_invalid";
+      | "proposal_payload_invalid"
+      | "approval_required"
+      | "grant_expired"
+      | "grant_replayed"
+      | "confirmation_context_mismatch";
     message: string;
   };
 };
@@ -204,6 +211,7 @@ export function getPlanningState(store: WeatherStore): PlanningState {
 export function commitPlanningProposal(
   store: WeatherStore,
   rawInput: unknown,
+  scope?: ConfirmationScope,
 ): PlanningCommitResult | PlanningFailure {
   const parsed = parseCommitInput(rawInput);
   if (!parsed.ok) return parsed;
@@ -252,6 +260,20 @@ export function commitPlanningProposal(
       return proposalFailure("proposal_expired", "该提案已过期，未提交任何行程。请重新创建提案。");
     }
 
+    const grant = repository.checkApprovalGrant({
+      proposalId: proposal.proposalId,
+      payloadHash: proposal.payloadHash,
+      scope: scope ?? { primary: "unbound", delivery: [] },
+      atUtc: nowUtc,
+      consume: true,
+    });
+    if (!grant.ok) {
+      return proposalFailure(grant.code, grantMessage(grant.code, {
+        proposalId: proposal.proposalId,
+        payloadHash: proposal.payloadHash,
+      }));
+    }
+
     let commitInput: TripCreateCommitInput;
     try {
       commitInput = buildCommitInput(proposal, store, nowUtc);
@@ -271,6 +293,7 @@ export function commitPlanningProposal(
     })) {
       throw new Error("Proposal changed while being committed");
     }
+    repository.markConfirmationProposalCommitted(proposal.proposalId, nowUtc);
     repository.insertOwnerAudit({
       action: "trip.committed",
       entityType: "trip",
@@ -292,6 +315,7 @@ export function commitPlanningProposal(
 export function proposePlanningChange(
   store: WeatherStore,
   rawInput: unknown,
+  scope?: ConfirmationScope,
 ): PlanningChangeProposalResult | PlanningFailure {
   const asOfUtc = store.getNowUtc();
   const parsed = parsePlanningChangeInput(rawInput, asOfUtc);
@@ -337,13 +361,20 @@ export function proposePlanningChange(
   }
 
   const payloadJson = JSON.stringify(canonicalFacts);
-  const previewText = buildProposalPreview(canonicalFacts, missingFields, warnings);
+  const basePreview = buildProposalPreview(canonicalFacts, missingFields, warnings);
   const created = store.createPendingProposal({
     kind: "trip_create",
     payloadJson,
-    previewText,
+    previewText: basePreview,
     expiresAtUtc: asOfUtc + PROPOSAL_TTL_SECONDS,
+    ...(scope === undefined ? {} : { scope }),
   });
+  const confirmationInstruction = buildConfirmationInstruction(created.proposalId, created.payloadHash);
+  const previewText = [
+    basePreview,
+    "请在本次主人 QQ 私聊回复下面这一行原文，确认后才会提交：",
+    confirmationInstruction,
+  ].join("\n");
 
   return {
     ok: true,
@@ -353,6 +384,7 @@ export function proposePlanningChange(
     status: "pending",
     kind: "trip_create",
     previewText,
+    confirmationInstruction,
     canonicalFacts,
     derivedEffects: [],
     missingFields,
@@ -361,6 +393,26 @@ export function proposePlanningChange(
     expiresAtUtc: created.expiresAtUtc,
     persistedAs: "change_proposals",
   };
+}
+
+function grantMessage(
+  code: "approval_required" | "grant_expired" | "grant_replayed" | "confirmation_context_mismatch",
+  proposal?: { proposalId: string; payloadHash: string },
+): string {
+  switch (code) {
+    case "approval_required":
+      return proposal === undefined
+        ? "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。"
+        : `需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：${
+          buildConfirmationInstruction(proposal.proposalId, proposal.payloadHash)
+        }`;
+    case "grant_expired":
+      return "确认已过期，请重新确认最新提案。";
+    case "grant_replayed":
+      return "该确认已被使用，不能重复提交。";
+    case "confirmation_context_mismatch":
+      return "确认来自不同的主人 QQ 私聊上下文，不能提交该提案。";
+  }
 }
 
 function parseCommitInput(

@@ -8,17 +8,38 @@ import { afterEach, describe, expect, it } from "vitest";
 import { reminderStateDirectory } from "./paths.js";
 import { ReminderStore, REMINDER_TIMEZONE } from "./reminder-store.js";
 import { reconcileReminderState } from "./reminder-reconciler.js";
-import { commitReminderProposal, proposeReminderCreate, type ReminderCronScheduler } from "./reminders.js";
+import { commitReminderProposal as commitReminderProposalImpl, proposeReminderCreate, type ReminderCronScheduler } from "./reminders.js";
 
 const NOW_UTC = Math.floor(Date.parse("2026-08-12T12:00:00Z") / 1000);
 const CONTEXT = {
   delivery: { channel: "qqbot" as const, to: "qqbot:c2c:test-owner", accountId: "default" },
+  scope: {
+    primary: "conversation:qqbot:c2c:test-owner",
+    delivery: ["conversation:qqbot:c2c:test-owner", "target:qqbot:c2c:test-owner"],
+  },
 };
 const directories: string[] = [];
 
 afterEach(() => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
+
+async function commitReminderProposal(
+  store: ReminderStore,
+  input: { proposal_id: string; payload_hash: string },
+  context: typeof CONTEXT,
+  scheduler: ReminderCronScheduler,
+) {
+  store.recordInboundConfirmation({
+    channel: "qqbot",
+    conversationId: "qqbot:c2c:test-owner",
+    messageId: `confirm-${input.proposal_id}`,
+    content: `确认 ${input.proposal_id} ${input.payload_hash}`,
+    isGroup: false,
+    senderIsOwner: true,
+  });
+  return commitReminderProposalImpl(store, input, context, scheduler);
+}
 
 describe("personal reminder reconciliation", () => {
   it("adopts a scheduled job and marks the CLI delivery delivered from Gateway run history", async () => {

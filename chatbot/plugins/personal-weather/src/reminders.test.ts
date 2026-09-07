@@ -8,7 +8,7 @@ import { main as reminderCliMain } from "./reminder-cli.js";
 import { reminderStateDirectory } from "./paths.js";
 import { ReminderStore, REMINDER_TIMEZONE } from "./reminder-store.js";
 import {
-  commitReminderProposal,
+  commitReminderProposal as commitReminderProposalImpl,
   getReminderState,
   proposeReminderCancellation,
   proposeReminderCreate,
@@ -20,6 +20,10 @@ import {
 const NOW_UTC = Math.floor(Date.parse("2026-08-12T12:00:00Z") / 1000);
 const CONTEXT: TrustedReminderContext = {
   delivery: { channel: "qqbot", to: "qqbot:c2c:test-owner", accountId: "default" },
+  scope: {
+    primary: "conversation:qqbot:c2c:test-owner",
+    delivery: ["conversation:qqbot:c2c:test-owner", "target:qqbot:c2c:test-owner"],
+  },
 };
 
 const temporaryDirectories: string[] = [];
@@ -29,6 +33,23 @@ afterEach(() => {
     rmSync(directory, { recursive: true, force: true });
   }
 });
+
+async function commitReminderProposal(
+  store: ReminderStore,
+  input: { proposal_id: string; payload_hash: string },
+  context: TrustedReminderContext,
+  scheduler: ReminderCronScheduler,
+) {
+  store.recordInboundConfirmation({
+    channel: "qqbot",
+    conversationId: "qqbot:c2c:test-owner",
+    messageId: `confirm-${input.proposal_id}`,
+    content: `确认 ${input.proposal_id} ${input.payload_hash}`,
+    isGroup: false,
+    senderIsOwner: true,
+  });
+  return commitReminderProposalImpl(store, input, context, scheduler);
+}
 
 describe("personal reminders", () => {
   it("creates a hash-bound proposal and schedules it exactly once after confirmation", async () => {

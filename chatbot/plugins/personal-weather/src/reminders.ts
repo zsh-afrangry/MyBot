@@ -1,5 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 
+import { buildConfirmationInstruction, type ConfirmationScope } from "./confirmation-gate.js";
+
 import {
   REMINDER_SUBJECT_ID,
   REMINDER_TIMEZONE,
@@ -20,6 +22,7 @@ const LOCAL_DATETIME_PATTERN = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/u;
 
 export interface TrustedReminderContext {
   delivery: ReminderDelivery;
+  scope?: ConfirmationScope;
 }
 
 export interface ReminderCreateProposeInput {
@@ -95,7 +98,11 @@ export type ReminderFailure = {
       | "proposal_context_mismatch"
       | "reminder_not_found"
       | "reminder_unavailable"
-      | "scheduler_failed";
+      | "scheduler_failed"
+      | "approval_required"
+      | "grant_expired"
+      | "grant_replayed"
+      | "confirmation_context_mismatch";
     message: string;
   };
 };
@@ -108,6 +115,8 @@ export interface ReminderProposalResult {
   status: "pending";
   kind: "reminder_create" | "reminder_cancel" | "reminder_update";
   previewText: string;
+  /** Exact sentence the owner must send back to approve this proposal. */
+  confirmationInstruction: string;
   canonicalFacts: {
     kind: "reminder.create" | "reminder.cancel" | "reminder.update";
     content?: string;
@@ -247,6 +256,7 @@ export function proposeReminderCreate(
     delivery: context.delivery,
     expiresAtUtc,
     atUtc: nowUtc,
+    ...(context.scope === undefined ? {} : { scope: context.scope }),
   });
   return {
     ok: true,
@@ -260,8 +270,10 @@ export function proposeReminderCreate(
       `- 时间：${payload.schedule.localDateTime}（${REMINDER_TIMEZONE}，一次）`,
       `- 内容：${payload.content}`,
       "- 投递：仅主人 QQ 私聊",
-      "请在本次私聊明确确认；确认后才会创建受限的定时任务。",
+      "请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：",
+      buildConfirmationInstruction(proposalId, payloadHash),
     ].join("\n"),
+    confirmationInstruction: buildConfirmationInstruction(proposalId, payloadHash),
     canonicalFacts: {
       kind: "reminder.create",
       content: payload.content,
@@ -313,6 +325,7 @@ export function proposeReminderCancellation(
     delivery: context.delivery,
     expiresAtUtc,
     atUtc: nowUtc,
+    ...(context.scope === undefined ? {} : { scope: context.scope }),
   });
   return {
     ok: true,
@@ -326,8 +339,10 @@ export function proposeReminderCancellation(
       `- 原时间：${formatShanghaiDateTime(reminder.scheduledAtUtc)}（${REMINDER_TIMEZONE}）`,
       `- 原内容：${reminder.content}`,
       "- 影响：仅取消这条尚未投递的主人私聊提醒",
-      "请在本次私聊明确确认；确认后才会移除受限的定时任务。",
+      "请在本次私聊回复下面这一行原文；确认后才会移除受限的定时任务：",
+      buildConfirmationInstruction(proposalId, payloadHash),
     ].join("\n"),
+    confirmationInstruction: buildConfirmationInstruction(proposalId, payloadHash),
     canonicalFacts: { kind: "reminder.cancel", reminderId: reminder.reminderId },
     derivedEffects: [{ kind: "reminder.cancel", target: "owner_qq_private" }],
     requiresConfirmation: true,
@@ -400,6 +415,7 @@ export function proposeReminderUpdate(
     delivery: context.delivery,
     expiresAtUtc,
     atUtc: nowUtc,
+    ...(context.scope === undefined ? {} : { scope: context.scope }),
   });
   return {
     ok: true,
@@ -415,8 +431,10 @@ export function proposeReminderUpdate(
       `- 原内容：${reminder.content}`,
       `- 新内容：${nextContent}`,
       "- 影响：在原有受限定时任务上原地更新，不会创建第二条提醒",
-      "请在本次私聊明确确认；确认后才会应用修改。",
+      "请在本次私聊回复下面这一行原文；确认后才会应用修改：",
+      buildConfirmationInstruction(proposalId, payloadHash),
     ].join("\n"),
+    confirmationInstruction: buildConfirmationInstruction(proposalId, payloadHash),
     canonicalFacts: {
       kind: "reminder.update",
       reminderId: reminder.reminderId,
@@ -476,9 +494,37 @@ export async function commitReminderProposal(
     });
     return failure("proposal_expired", "该提醒提案已过期，未创建任何定时任务。" );
   }
-  if (proposal.kind === "reminder_create") return commitCreateProposal(store, proposal, scheduler, nowUtc);
-  if (proposal.kind === "reminder_cancel") return commitCancelProposal(store, proposal, scheduler, nowUtc);
-  return commitUpdateProposal(store, proposal, scheduler, nowUtc);
+  const grant = store.checkApprovalGrant({
+    proposalId: proposal.proposalId,
+    payloadHash: proposal.payloadHash,
+    scope: context.scope ?? { primary: "unbound", delivery: [] },
+    atUtc: nowUtc,
+    consume: false,
+  });
+  if (!grant.ok) {
+    return gateFailure(grant.code, { proposalId: proposal.proposalId, payloadHash: proposal.payloadHash });
+  }
+  if (proposal.kind === "reminder_create") return commitCreateProposal(store, proposal, scheduler, nowUtc, context.scope);
+  if (proposal.kind === "reminder_cancel") return commitCancelProposal(store, proposal, scheduler, nowUtc, context.scope);
+  return commitUpdateProposal(store, proposal, scheduler, nowUtc, context.scope);
+}
+
+function gateFailure(
+  code: "approval_required" | "grant_expired" | "grant_replayed" | "confirmation_context_mismatch",
+  proposal?: { proposalId: string; payloadHash: string },
+): ReminderFailure {
+  const message = code === "approval_required"
+    ? proposal === undefined
+      ? "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。"
+      : `需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：${
+        buildConfirmationInstruction(proposal.proposalId, proposal.payloadHash)
+      }`
+    : code === "grant_expired"
+      ? "确认已过期，请重新确认最新提案。"
+      : code === "grant_replayed"
+        ? "该确认已被使用，不能重复提交。"
+        : "确认来自不同的主人 QQ 私聊上下文，不能提交该提案。";
+  return failure(code, message);
 }
 
 async function commitCreateProposal(
@@ -486,6 +532,7 @@ async function commitCreateProposal(
   proposal: StoredReminderProposal,
   scheduler: ReminderCronScheduler,
   nowUtc: number,
+  scope?: ConfirmationScope,
 ): Promise<ReminderCommitResult | ReminderFailure> {
   const facts = parseStoredCreatePayload(proposal.payloadJson);
   if (!facts) return failure("proposal_unavailable", "提案的提醒内容无效，请重新生成。" );
@@ -504,6 +551,7 @@ async function commitCreateProposal(
     proposalId: proposal.proposalId,
     payloadHash: proposal.payloadHash,
     atUtc: nowUtc,
+    ...(scope === undefined ? {} : { scope }),
   });
 
   try {
@@ -539,6 +587,7 @@ async function commitCancelProposal(
   proposal: StoredReminderProposal,
   scheduler: ReminderCronScheduler,
   nowUtc: number,
+  scope?: ConfirmationScope,
 ): Promise<ReminderCommitResult | ReminderFailure> {
   const facts = parseStoredCancelPayload(proposal.payloadJson);
   if (!facts) return failure("proposal_unavailable", "提案的取消目标无效，请重新生成。" );
@@ -562,6 +611,7 @@ async function commitCancelProposal(
     payloadHash: proposal.payloadHash,
     reminderId: reminder.reminderId,
     atUtc: nowUtc,
+    ...(scope === undefined ? {} : { scope }),
   })) {
     return failure("proposal_unavailable", "取消提案状态发生变化，未完成取消。" );
   }
@@ -575,6 +625,7 @@ async function commitUpdateProposal(
   proposal: StoredReminderProposal,
   scheduler: ReminderCronScheduler,
   nowUtc: number,
+  scope?: ConfirmationScope,
 ): Promise<ReminderCommitResult | ReminderFailure> {
   const facts = parseStoredUpdatePayload(proposal.payloadJson);
   if (!facts || !facts.base.cronJobId) {
@@ -603,6 +654,7 @@ async function commitUpdateProposal(
     nextScheduledAtUtc: facts.next.scheduledAtUtc,
     scheduleChanged,
     atUtc: nowUtc,
+    ...(scope === undefined ? {} : { scope }),
   });
   if (!applied) return failure("proposal_unavailable", "修改提案与当前提醒状态不一致，未提交任何更新。");
 

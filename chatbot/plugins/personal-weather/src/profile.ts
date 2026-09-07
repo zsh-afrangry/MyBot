@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 
+import { buildConfirmationInstruction, type ConfirmationScope } from "./confirmation-gate.js";
 import { OWNER_SUBJECT_ID } from "./store.js";
 import type {
   CurrentLocation,
@@ -64,6 +65,12 @@ export interface ProfileChangeProposalResult {
   proposalId: string;
   payloadHash: string;
   previewText: string;
+  /**
+   * The exact sentence the owner must send back to approve this proposal. It is
+   * returned verbatim so the model relays it instead of inventing a protocol of
+   * its own, and so the owner never hand-transcribes the 64-character hash.
+   */
+  confirmationInstruction: string;
   canonicalFacts: {
     domain: "personal_profile";
     schemaVersion: 1;
@@ -121,7 +128,11 @@ export type ProfileFailure = {
       | "proposal_hash_mismatch"
       | "proposal_expired"
       | "proposal_unavailable"
-      | "proposal_payload_invalid";
+      | "proposal_payload_invalid"
+      | "approval_required"
+      | "grant_expired"
+      | "grant_replayed"
+      | "confirmation_context_mismatch";
     message: string;
   };
   candidates?: WeatherLocationCandidate[];
@@ -167,6 +178,7 @@ export async function proposeProfileChange(
   client: QWeatherClient,
   rawInput: unknown,
   signal?: AbortSignal,
+  scope?: ConfirmationScope,
 ): Promise<ProfileChangeProposalResult | ProfileUnchangedResult | ProfileFailure> {
   const parsed = parseProfileChangeInput(rawInput);
   if (!parsed.ok) return parsed;
@@ -214,16 +226,26 @@ export async function proposeProfileChange(
   };
   const nowUtc = store.getNowUtc();
   const payloadJson = JSON.stringify(facts);
-  const previewText = buildLocationPreview(
+  const basePreview = buildLocationPreview(
     summarizeCurrentLocation(current),
     summarizeResolvedLocation(facts.location),
   );
   const created = store.createPendingProposal({
     kind: "location_set",
     payloadJson,
-    previewText,
+    previewText: basePreview,
     expiresAtUtc: nowUtc + PROPOSAL_TTL_SECONDS,
+    ...(scope === undefined ? {} : { scope }),
   });
+  // The instruction can only be appended once the proposal exists, since it
+  // carries the generated id and hash. Telling the owner merely to "confirm
+  // clearly" is what let the model invent its own confirmation wording.
+  const confirmationInstruction = buildConfirmationInstruction(created.proposalId, created.payloadHash);
+  const previewText = [
+    basePreview,
+    "请在本次主人 QQ 私聊回复下面这一行原文，确认后才会更新：",
+    confirmationInstruction,
+  ].join("\n");
 
   return {
     ok: true,
@@ -233,6 +255,7 @@ export async function proposeProfileChange(
     proposalId: created.proposalId,
     payloadHash: created.payloadHash,
     previewText,
+    confirmationInstruction,
     canonicalFacts: {
       domain: "personal_profile",
       schemaVersion: 1,
@@ -249,6 +272,7 @@ export async function proposeProfileChange(
 export function commitProfileChange(
   store: WeatherStore,
   rawInput: unknown,
+  scope?: ConfirmationScope,
 ): ProfileCommitResult | ProfileFailure {
   const parsed = parseCommitInput(rawInput);
   if (!parsed.ok) return parsed;
@@ -301,6 +325,20 @@ export function commitProfileChange(
       return profileFailure("proposal_expired", "该当前所在地变更提案已过期，未提交任何资料。请重新创建。");
     }
 
+    const grant = repository.checkApprovalGrant({
+      proposalId: proposal.proposalId,
+      payloadHash: proposal.payloadHash,
+      scope: scope ?? { primary: "unbound", delivery: [] },
+      atUtc: nowUtc,
+      consume: true,
+    });
+    if (!grant.ok) {
+      return profileFailure(grant.code, grantMessage(grant.code, {
+        proposalId: proposal.proposalId,
+        payloadHash: proposal.payloadHash,
+      }));
+    }
+
     const placeId = repository.upsertConfirmedPlace(facts.location, nowUtc);
     repository.replaceCurrentLocation({
       placeId,
@@ -315,6 +353,7 @@ export function commitProfileChange(
     })) {
       throw new Error("Profile proposal changed while being committed");
     }
+    repository.markConfirmationProposalCommitted(proposal.proposalId, nowUtc);
     repository.insertOwnerAudit({
       action: "profile.current_location.updated",
       entityType: "profile_current_location",
@@ -329,6 +368,26 @@ export function commitProfileChange(
     });
     return committedResult(proposal.proposalId, store.getCurrentLocation(), false);
   });
+}
+
+function grantMessage(
+  code: "approval_required" | "grant_expired" | "grant_replayed" | "confirmation_context_mismatch",
+  proposal?: { proposalId: string; payloadHash: string },
+): string {
+  switch (code) {
+    case "approval_required":
+      return proposal === undefined
+        ? "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。"
+        : `需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：${
+          buildConfirmationInstruction(proposal.proposalId, proposal.payloadHash)
+        }`;
+    case "grant_expired":
+      return "确认已过期，请重新确认最新提案。";
+    case "grant_replayed":
+      return "该确认已被使用，不能重复提交。";
+    case "confirmation_context_mismatch":
+      return "确认来自不同的主人 QQ 私聊上下文，不能提交该提案。";
+  }
 }
 
 function currentLocationEffects(): ProfileChangeProposalResult["effects"] {
@@ -369,7 +428,7 @@ function buildLocationPreview(
     "生效：确认提交时立即生效。",
     "影响：后续未指定地点的天气查询和每日天气简报将读取新所在地。",
     "不会修改：行程、提醒、Cron、长期记忆或任何常住地资料。",
-    "尚未提交；请在本次主人 QQ 私聊明确确认后才会更新。",
+    "尚未提交。",
   ].join("\n");
 }
 

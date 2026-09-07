@@ -13,11 +13,23 @@ import { DatabaseSync } from "node:sqlite";
 
 import { PlanningRepository } from "./planning-repository.js";
 import { ProfileRepository } from "./profile-repository.js";
+import {
+  ensureConfirmationGateSchema,
+  findConfirmationProposalForInbound,
+  issueApprovalGrant,
+  listConfirmationProposalsForInbound,
+  registerConfirmationProposal,
+  scopeFromInboundEvent,
+  type ConfirmationDomain,
+  type ConfirmationInboundEvent,
+  type ConfirmationProposalRow,
+  type ConfirmationScope,
+} from "./confirmation-gate.js";
 
 const DATABASE_FILE_NAME = "weather.sqlite";
 /** Internal subject key for this single-owner deployment. */
 export const OWNER_SUBJECT_ID = "owner";
-const LATEST_SCHEMA_VERSION = 4;
+const LATEST_SCHEMA_VERSION = 5;
 // Keep this as a string: SQLite's maximum signed integer is larger than
 // JavaScript's Number.MAX_SAFE_INTEGER, and the value is interpolated into SQL.
 const SQLITE_MAX_INTEGER_LITERAL = "9223372036854775807";
@@ -718,6 +730,13 @@ const MIGRATIONS: readonly Migration[] = [
       `);
     },
   },
+  {
+    version: 5,
+    name: "confirmation_gate_tables",
+    apply(database) {
+      ensureConfirmationGateSchema(database);
+    },
+  },
 ];
 
 export class WeatherStore {
@@ -902,6 +921,63 @@ export class WeatherStore {
     return normalizeUnixSeconds(this.#now());
   }
 
+  /** Record a trusted inbound confirmation without exposing message text to the domain. */
+  listInboundConfirmationCandidates(event: ConfirmationInboundEvent): ConfirmationProposalRow[] {
+    if (!event.messageId) return [];
+    const scope = scopeFromInboundEvent(event);
+    if (!scope) return [];
+    const nowUtc = typeof event.timestamp === "number" && Number.isFinite(event.timestamp)
+      ? Math.max(0, Math.floor(event.timestamp > 10_000_000_000 ? event.timestamp / 1000 : event.timestamp))
+      : this.getNowUtc();
+    this.#assertOpen();
+    return listConfirmationProposalsForInbound(this.#database, {
+      subjectId: OWNER_SUBJECT_ID,
+      scope,
+      content: event.content,
+      nowUtc,
+    });
+  }
+
+  findInboundConfirmation(event: ConfirmationInboundEvent): ConfirmationProposalRow | undefined {
+    const candidates = this.listInboundConfirmationCandidates(event);
+    return candidates.length === 1 ? candidates[0] : undefined;
+  }
+
+  recordInboundConfirmation(event: ConfirmationInboundEvent, expectedProposalId?: string): boolean {
+    if (!event.messageId || event.replyToIsQuote === true) return false;
+    const scope = scopeFromInboundEvent(event);
+    if (!scope) return false;
+    const nowUtc = typeof event.timestamp === "number" && Number.isFinite(event.timestamp)
+      ? Math.max(0, Math.floor(event.timestamp > 10_000_000_000 ? event.timestamp / 1000 : event.timestamp))
+      : this.getNowUtc();
+    this.#assertOpen();
+    this.#database.exec("BEGIN IMMEDIATE");
+    try {
+      const proposal = findConfirmationProposalForInbound(this.#database, {
+        subjectId: OWNER_SUBJECT_ID,
+        scope,
+        content: event.content,
+        nowUtc,
+      });
+      if (!proposal || (expectedProposalId !== undefined && proposal.proposalId !== expectedProposalId)) {
+        this.#database.exec("COMMIT");
+        return false;
+      }
+      const issued = issueApprovalGrant(this.#database, {
+        proposal,
+        confirmationMessageId: event.messageId,
+        confirmationContent: event.content,
+        scope,
+        nowUtc,
+      });
+      this.#database.exec("COMMIT");
+      return issued.ok;
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
   listTripSummaries(
     subjectId = OWNER_SUBJECT_ID,
     limit = 10,
@@ -1023,6 +1099,7 @@ export class WeatherStore {
     payloadJson: string;
     previewText: string;
     expiresAtUtc: UnixSeconds;
+    scope?: ConfirmationScope;
   }): CreatedPendingProposal {
     assertJsonText(input.payloadJson, "payloadJson", 64 * 1024);
     assertMultilineText(input.previewText, "previewText", 4000);
@@ -1070,6 +1147,17 @@ export class WeatherStore {
         createdAtUtc,
         createdAtUtc,
       );
+      const domain: ConfirmationDomain = input.kind === "location_set" ? "personal_profile" : "planning";
+      registerConfirmationProposal(this.#database, {
+        proposalId,
+        domain,
+        actionKind: input.kind,
+        subjectId: OWNER_SUBJECT_ID,
+        payloadHash,
+        scope: input.scope ?? { primary: "unbound", delivery: [] },
+        createdAtUtc,
+        expiresAtUtc,
+      });
       this.#database.exec("COMMIT");
     } catch (error) {
       this.#database.exec("ROLLBACK");

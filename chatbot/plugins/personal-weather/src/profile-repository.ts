@@ -1,5 +1,12 @@
 import { DatabaseSync } from "node:sqlite";
 
+import {
+  checkApprovalGrant,
+  markConfirmationProposalCommitted,
+  markConfirmationProposalExpired,
+  type ConfirmationGrantCheck,
+  type ConfirmationScope,
+} from "./confirmation-gate.js";
 import type { UnixSeconds } from "./store.js";
 import type { ProfileLocationRecord } from "./weather-location.js";
 
@@ -53,11 +60,45 @@ export class ProfileRepository {
   }
 
   expirePendingProposal(proposalId: string, atUtc: UnixSeconds): boolean {
-    return Number(this.#database.prepare(`
+    const changed = Number(this.#database.prepare(`
       UPDATE change_proposals
       SET status = 'expired', updated_at_utc = ?
       WHERE proposal_id = ? AND subject_id = ? AND kind = 'location_set' AND status = 'pending'
     `).run(atUtc, proposalId, this.#subjectId).changes) === 1;
+    if (changed) {
+      markConfirmationProposalExpired(this.#database, {
+        proposalId,
+        subjectId: this.#subjectId,
+        atUtc,
+      });
+    }
+    return changed;
+  }
+
+  checkApprovalGrant(input: {
+    proposalId: string;
+    payloadHash: string;
+    scope: ConfirmationScope;
+    atUtc: UnixSeconds;
+    consume: boolean;
+  }): ConfirmationGrantCheck {
+    return checkApprovalGrant(this.#database, {
+      proposalId: input.proposalId,
+      domain: "personal_profile",
+      subjectId: this.#subjectId,
+      payloadHash: input.payloadHash,
+      scope: input.scope,
+      nowUtc: input.atUtc,
+      consume: input.consume,
+    });
+  }
+
+  markConfirmationProposalCommitted(proposalId: string, atUtc: UnixSeconds): void {
+    markConfirmationProposalCommitted(this.#database, {
+      proposalId,
+      subjectId: this.#subjectId,
+      atUtc,
+    });
   }
 
   /** Reuse a known QWeather place rather than inserting duplicate coordinates. */

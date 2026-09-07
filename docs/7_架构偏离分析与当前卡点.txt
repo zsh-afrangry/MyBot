@@ -1,0 +1,626 @@
+kurumi 架构偏离分析与当前卡点
+
+最后更新：2026-09-01（晚间，两次真实验收失败后的钩子链路调查）
+状态：偏离分析（一–五、八）仍为分析性内容，不含实施方案；
+卡点部分（六、七、九、十）已进入实施。九、9.1 的 S1–S9 为已完成事实，
+但 S10 两次真实验收均失败，暴露出更上游的卡点 C（见十）：
+插件注册的 inbound_claim 钩子在本机从不触发，S1–S9 全部位于该钩子下游。
+即代码侧修复本身有效且已验证，但整条链路仍未闭环，原因不在 Gate 逻辑内。
+依据：docs/tp.txt（架构参考 V1.0）与 2026-08-31 对 openclaw.json、两个插件源码、
+已安装 openclaw 2026.7.1-2 的实测核对；2026-09-01 对 weather.sqlite 的只读查询
+与 personal-weather 的构建、回归、插件/配置验证实测；2026-09-01 晚对已安装 dist
+的只读通读（dispatch / hook-runner / message-hook-mappers / hook-types.d.ts）
+与两次真实 QQ 会话（18:50、19:13）的失败取证。
+
+======================================================================
+现在应该从哪里继续
+======================================================================
+
+1. 先处理主人当前指定的 bug（优先级最高，与本文无关，独立处理）。
+2. 当前唯一阻塞点是卡点 C（见十）：插件在 index.ts:734 注册的 inbound_claim
+   钩子在本机从不触发，因此 recordInboundConfirmation 永远不被调用，
+   approval_grants 永远无行。这是 2026-09-01 两次真实验收（18:50、19:13）
+   失败的共同原因，与 Gate 内部逻辑无关——插件侧逻辑已逐段实测为正确（10.3）。
+3. 下一步是选定替代钩子并实施。三条候选路径的实测对比见 10.4：
+   before_agent_run（阻塞式、已 await、带 senderIsOwner，缺 messageId）、
+   message_received（无条件触发、带 messageId，但 fire-and-forget 且缺三个字段）、
+   conversation binding（已否决：会夺走该会话的 agent 执行权，见 10.4 C）。
+   尚未选定，需主人批准后再动代码。
+4. 卡点 A 与 B 的代码修复已完成且验证有效（S1–S9 全绿，见九、9.1），
+   但注意 A 的原根因判断是错的（详见 10.2 与 §六 A.1 更正）：Host 并非"尚未解析
+   主人身份"，dispatch:1506 确实设置了 senderIsOwner，只是该路径需要 pluginOwnedBinding
+   而本机无此绑定。S4/S5 因此建立在错误前提上——已实测为无害（scope 匹配是
+   重复约束），但它们不是修复，真正的修复是换钩子。
+5. 卡点 C 解除并完成 S10 后，再做 S11 过期提案清理。
+6. 正向链路闭环后，再按"五、纠偏方向"处理容器错位。
+   硬约束：容器拆分应在第二个领域能力落地之前或同时完成，不要晚于它。
+
+======================================================================
+一、核心结论（一句话诊断）
+======================================================================
+
+一句话：偏离不在于某个模块做错了，而在于所有跨领域的东西都长在了名为
+personal-weather 的第一个领域容器里。
+
+  跨领域的 Profile、Planning、Reminder、Confirmation Gate、地点消歧 ——
+  全部住在 personal-weather 内部。
+
+weather 已从"第一个领域能力"悄悄变成事实上的公共底座。14 个业务工具全部注册在该插件下，
+weather.sqlite 同时存放 Profile 事实、Planning 行程和 Gate 提案：
+Profile 的"我在哪"这个人的事实，存在一个叫天气的库里。
+
+这就是"能感觉到但说不上来"的那个偏离。它不是任何单条设计的错误，而是容器归属的错误，
+因此不会体现在任何一份模块文档的自查里。
+
+======================================================================
+二、项目定位（主人 2026-08-31 明确确认，作为硬约束）
+======================================================================
+
+weather 是众多计划能力中的第一个，不是项目主题；项目目标不是天气机器人，
+也不应变成"围绕 weather 开发"。
+
+- 后续任何设计不得以 weather 为中心。
+- 不得因为"personal-weather 已有现成机制"而把新能力塞进该插件。
+- 新增跨领域机制（治理、控制、Primitive）必须落在领域之外的位置。
+- 判断新需求归属时，先问"它属于哪个领域"，不问"weather 那边有没有现成的"。
+
+======================================================================
+三、逐条偏离（按对"说不上来的偏离感"的解释力排序）
+======================================================================
+
+① 容器错位（根因）
+  现状：personal-weather 内含 Weather、Profile、Planning、Reminder 四个领域。
+  证据：14/14 业务工具在该插件；store.ts 约 53KB、reminder-store.ts 约 49KB、
+        reminders.ts 约 39KB、index.ts 约 35KB；state/personal-weather/weather.sqlite
+        同时是 Profile 与 Planning 的库。
+  后果：下一个能力只有两条路——复制机械，或也塞进 personal-weather。引力已形成。
+  注：文档已承认这是"MVP 部署容器"，但承认不消除结构后果。
+
+② 阶段跳跃
+  tp.txt 阶段1=原子领域能力（天气/论文/股票/Git），阶段2=Primitive，阶段3=控制语义
+  （立即/定时/暂停/恢复/确认）。实际：阶段1 只有天气一家，阶段2 只有 Search，
+  却已在做阶段3 的"确认"，且是在阶段1 的容器里做。
+  判断：Gate 本身必须做（同轮自提交是真实安全缺陷），偏的是位置与范围框定，不是决策。
+
+③ 地点消歧方向倒置
+  现状：Profile 的 current_location 由 QWeather GeoAPI 消歧——天气 Provider 成了
+        个人资料事实的身份来源。
+  tp.txt：受控地点目录应是 Primitive Capability（与 OCR/Calculator/Time 同级）。
+  后果：任何"我在哪/去哪"类能力都必须经天气插件借路。
+
+④ 控制语义已重复实现，却仍被当作"未到抽象时机"
+  现状：Reminder 自建完整私有控制平面（reminder-gateway.ts / reminder-reconciler.ts /
+        reminder-reconciler-service.ts：Cron adapter、reconciler、lease、稳定声明键、
+        有限重试、unknown 闸门）；Weather 每日 10:30 简报另有固定 CLI/Cron。
+  tp.txt 原则二：能力与控制分离，不各自重复实现定时/暂停/恢复。
+  判断：重复需求已出现（约 1.5 套），阶段3 的触发条件其实已满足。
+        "等真实重复需求再抽象"本是防过早抽象，目前正被用来为累积重复背书。
+
+⑤ 能力分类未落地
+  现状：只有 openclaw.json 里 15 条字符串的平铺 tools.alsoAllow，无类型/信任等级/
+        外发属性/依赖/状态。只读 personal_weather_get_brief、不可信外发
+        personal_web_search、需 grant 的 personal_profile_change_commit 完全同级。
+  实证代价：doc 6 的 "[x] 修正 personal_weather_get_brief 缺少插件级主人私聊守卫"
+        —— 守卫逐工具手写，所以会漏。
+
+⑥ 横切治理是复制而非横切
+  现状：审计三套并行（weather.sqlite 的 audit_log、reminders.sqlite 的
+        reminder_audit_log、personal-search/src/audit.ts）；主人校验逐工具手写；
+        配额只有 personal-search 有 quota.ts；预算/限流/超时全局缺失。
+  tp.txt §15：这些应包围每一次能力调用。
+  复合后果：唯一真正跨领域的 Gate 却位于 personal-weather 内，Search 与未来插件无法复用。
+
+⑦ 文档重心失衡
+  现状：doc 6 已 1411 行 / 127KB，超过其余文档之和，内容几乎全是单一机制的
+        LIVE-01～16 试错流水；同期第二个领域能力进展为零。
+  后果："能力—控制—编排解耦"只有在第二个非天气领域出现时才可能被验证，目前无法验证。
+  附带：这也违反 tp2.txt 的"状态快照而非意图追踪"规则。
+
+======================================================================
+四、不算偏离的部分（避免过度纠偏）
+======================================================================
+
+- 缺 ExecutionPolicy 与显式 Model Stage：正确。tp.txt 只在需要独立运行语义时才要求显式化。
+- 无 DAG / 动态 Router / TaskSpec / 中央 control.sqlite：正确，属明确延期项。
+- 领域各自持有 SQLite、不做跨库分布式事务：正确决定，应保留。
+- Gate 采用"统一契约与失败码，领域继续拥有状态与事务"：边界选得准，应保留。
+
+======================================================================
+五、纠偏方向（原则，非实施方案）
+======================================================================
+
+1. 把 Confirmation Gate 移出 personal-weather：它按定义就是跨领域治理组件。
+2. 把 Profile、Planning、Reminder 从 weather 容器中析出；weather 只保留天气。
+3. 把受控地点目录/消歧提为独立 Primitive，与"谁是天气 Provider"解耦。
+4. 让能力目录成为真的目录：每个工具声明类别、是否写入、是否需 grant、信任等级、
+   是否外发；主人校验/审计/幂等由同一边界统一施加，而非逐工具手写。
+5. 把已存在的约 1.5 套调度实现记为阶段3 的触发证据，做最小共享控制面
+   （立即/定时/暂停/恢复/确认），仍不做 DAG。
+6. 用第二个非天气领域的薄纵切片验证解耦是否成立——这是唯一真实检验。
+
+排序约束：不在卡点未解时做大重构；但容器拆分要早于（或同期于）第二个领域能力，
+否则新领域会把本次偏离固化，拆分成本更高。
+
+======================================================================
+六、卡点 A/B 定性记录（B 已修复；A 的根因判断已被否证，见十）
+======================================================================
+
+本节保留定性过程与取舍理由，用于说明"为什么这样修"，
+并完整保留 A.1 的误判过程作为教训（不删，理由见 A.5）。
+现状以九、9.1 与十为准；两者冲突时以十为准。
+
+卡点 A —— inbound hook 侧拿不到 senderIsOwner（2026-08-31 定性，2026-09-01 根因已更正）
+
+  A.1 【已更正，2026-09-01】原判断"Host 尚未解析主人身份（时序问题）"是错的
+    原表述：构造 inboundClaimEvent（dispatch:1145）早于 resolveCommandAuthorization
+    （dispatch:1496），故 hook 触发时主人身份在 Host 内尚不存在。
+    实测否证：dispatch-DnzGTpPs.js:1496-1507 在调用 inbound_claim 之前就已经
+    调用 resolveCommandAuthorization，并显式构造了带该位的事件：
+        1496  const bindingAuthorization = resolveCommandAuthorization({...})
+        1504  const authorizedInboundClaimEvent = {
+        1505    ...inboundClaimEvent,
+        1506    senderIsOwner: bindingAuthorization.senderIsOwner
+        1507  }
+    即 Host 完全有能力、也确实在传这个字段。原判断把"我们收不到"误读成
+    "Host 算不出来"。
+    真实情况：该赋值只在 pluginOwnedBinding 分支内（dispatch:1489 起），
+    而本机 current_conversation_bindings 表为 0 行 → 该分支从不进入 →
+    整个 inbound_claim 钩子从不触发（详见十、卡点 C）。
+    所以"insufficient 字段"只是表象，真正的事实是"该钩子根本没跑"。
+    仍然成立的部分：toPluginInboundClaimEvent（message-hook-mappers-CLWKm8aG.js:165-196）
+    确实不产出 senderIsOwner，非绑定路径下该字段确实缺失；
+    PluginHookInboundClaimEvent.senderIsOwner?: boolean 确实在契约里
+    （hook-types-DQ9eTy2x.d.ts:233），插件读它并不违约。
+
+  A.2 不对称性（关键事实，决定了修复方向）
+    工具边界拿得到该位：dist/agent-tools-BD8WL7ny.js:959 senderIsOwner: options?.senderIsOwner
+    → index.ts:753 isTrustedOwnerPrivateQq 与 confirmation-gate.ts:108
+      scopeFromToolContext 都能正常判定主人。
+    实证：22:13:18 proposal 成功生成，证明工具侧主人判定是好的；
+    仅 inbound hook 侧缺该位。所以这是单侧缺口，不是整体身份体系失效。
+
+  A.3 后果【已更正，2026-09-01】
+    原表述：index.ts:775 与 confirmation-gate.ts:122 的 senderIsOwner === true
+    要求导致每条真实入站消息提前 return，是 approval_grants 无行的原因。
+    更正：这两处 owner 门确实会 return，但它们从不被执行到 —— 承载它们的
+    inbound_claim 钩子在本机从不触发（十、卡点 C）。因此它们不是 2026-08-30
+    LIVE-07-A 失败的原因，只是一层"若能跑到也会挡住"的冗余阻塞。
+    S4/S5 删除这两处后，approval_grants 仍为 0 行 —— 2026-09-01 两次真实验收
+    （18:50、19:13）已实证这一点，也正是发现卡点 C 的契机。
+    结论不变的部分：任何真实 QQ 确认都不可能成功，与主人回复内容无关；
+    LIVE-05/06/07 等正向写入验收全部被阻塞。只是阻塞点比原判断更靠上游。
+
+  A.4 候选方案与取舍（方案 C 已获批准并实施，见 9.0/9.1）
+    方案 A 用 commandAuthorized 代替：否决。它表达"是否按命令解释该消息"
+      （dist/channel2.runtime:215 shouldComputeCommandAuthorized），
+      不是主人身份，语义错位且会放宽边界。
+    方案 B 插件自行用 senderId + allowlist 反推：否决。等于在插件内重建
+      Host 的信任判定，违反 tp.txt 原则五与本文既定禁止绕法。
+    方案 C（推荐）把主人断言下移到工具边界：
+      inbound hook 只记录"发生了什么"（messageId、content、scope、时间），
+      不再自称已验证主人、不签发 grant；grant 改在 commit 时签发，
+      此时 toolContext.senderIsOwner 可用（A.2 已证明）。
+      安全性不降低，理由：proposal 只在主人已验证的工具上下文中创建；
+      候选仅在 scope 匹配该 proposal 时才可能被选中（scopesMatch，
+      confirmation-gate.ts:395）；QQ 私聊中他人 conversationId/senderId 不同，
+      无法与主人 proposal 的 scope 匹配；commit 仍要求
+      isTrustedOwnerPrivateQq() === true。"必须存在提案之后到达的真实入站消息"
+      这一条——即防同轮自提交的核心性质——完整保留。
+    方案 D 上游修 Host：正当但当前不可行。不应改已安装 dist 充当生产方案。
+      【2026-09-01 更正】该方案的原描述"把主人解析移到第 1145 行之前"基于
+      A.1 的错误前提，现已不成立：Host 本来就在 hook 之前解析了主人身份。
+      真正值得上报上游的是卡点 C —— runInboundClaim（非定向版）在整个 dist
+      中零调用点，见 10.5。
+
+  A.5 本节整体定性【2026-09-01 追加】
+    卡点 A 作为"独立卡点"实际上不存在，它是卡点 C 的一个症状：
+    因为钩子不触发，所以字段看起来永远缺失。
+    保留本节的意义是记录这次误判的过程与证据，避免下次再从
+    "字段缺失"直接跳到"时序问题"这个结论 —— 正确的下一步本应是
+    先确认钩子是否真的被调用（即先验证执行，再解释字段）。
+    这条教训已写入 10.6。
+
+  禁止的绕法（保持不变）：改已安装 dist 当生产方案；从 senderId / QQ 白名单 /
+  消息正文 / 模型上下文反推主人身份；手工插入 approval_grants。
+
+卡点 B —— Gate 解析缺陷（自有代码，可立即修，2026-08-31 实测确认）
+  1. confirmation-gate.ts:99 的 UUID_PATTERN 带 ^...$ 整串锚点，
+     嵌在自然语言中的 proposal_id 提取实测为 null。
+  2. 只带正确 hash 时，可能因唯一 pending proposal 被错误选中。
+  3. confirmation-gate.ts:384 的确认前缀正则拒绝"我已查看并明确确认…"（实测 false）。
+  修复方向：token 边界解析 + 强制同时携带同一 proposal_id 与 payload_hash 的双字段绑定；
+  自然语言兼容范围由测试固定，不靠"让模型换说法"替代解析器修复。
+
+当前已验证状态（2026-08-31 实跑）
+  personal-weather：15 个测试文件、125 项全部通过。
+  Profile：revision=2，当前所在地 江苏省镇江扬中。
+  负向、只读、fail-closed 边界大量通过；正向写入路径未验收。
+  结论：系统当前是"安全但功能未闭环"，不是"不安全"。
+
+======================================================================
+七、LIVE-07-A 真实确认链失败案例（2026-08-30 22:13–22:14）
+======================================================================
+
+性质：这不是测试，是主人真实的所在地变更（已到宿迁市宿豫区）。结果为未落库。
+真实影响：Profile 仍是江苏省镇江扬中，后续未指定地点的天气与每日 10:30 简报
+都在报错误城市。该事实变更需在卡点修复后重新提交。
+
+根因见 7.4（多重阻塞点）与十（最上游的卡点 C）。
+本节开头曾两次给出过错误的"唯一根因"结论，均已更正，此处不再重复断言，
+以免第三次形成需要推翻的表述。
+
+7.1 模型行为问题（需落到 AGENTS.md 的行为约束）
+
+① 编造后端要求。后端只返回错误码 approval_required，其中没有"需显式包含
+   proposalId/payloadHash"这一信息，模型却将其讲成具体机制。与 doc 6 记录的
+   Search 把 platform.openai.com 改写为 providers.openai.com 属同一类保真度问题。
+② 自创绕过确认闸门的协议。doc 6 第三节已明令禁止"要求 Kurumi 通过纯确认/换前缀
+   规避解析缺陷"，模型恰好做了此事，且它并未被授权定义确认格式。本条最需警惕。
+③ 它教的咒语本身无效。已实测：`我确认变更 proposalId=...` 在
+   confirmation-gate.ts:384 前缀正则上失败（确认 后紧跟 变，既非分隔符也非串尾）。
+   反而第一次朴素的"确认"能过解析器，只卡在 senderIsOwner。
+   即模型"更明确"的建议严格更差：原本只坏 Host 一处，新话术在解析器与 Host 两处都坏。
+④ 让主人做了两次注定失败的劳动，含手抄 64 位 SHA-256。
+⑤ 有只读工具却不用。模型列了三条假设，但 personal_profile_state_get 会直接返回
+   提案真实 ID/hash/TTL/状态。猜了三条，没查一次。
+⑥ TTL 假设错误。profile.ts:19 PROPOSAL_TTL_SECONDS = 24*60*60（24 小时），
+   全程仅 39 秒，不可能过期。
+⑦ 把内部测试编号泄漏进真实对话（"这可能是 LIVE-03 测试要观察的行为之一"）。
+   且属误引：LIVE-03 是 Planning 同轮负向，与 Profile 确认链无关。
+   模型把主人的开发测试框架与真实请求混同。
+
+应记一功：模型两次失败后停止重试并如实上报，未谎称成功、未无限重试。
+失败模式是"诊断错误"而非"伪造结果"，该边界守住了。
+
+⑧b 编造不存在的状态机（2026-09-01 两次会话新增，与 ① 同类但更严重）
+   18:50 与 19:13 两轮中，kurumi 分别讲出：
+     "我在同一轮里多次重试把确认状态消耗掉了"
+     "我已经尝试了 4 次提交"
+     "先暂停这个提案，避免继续消耗确认状态"
+   实测：全程 approval_grants = 0 行 —— 不存在任何"确认状态"可被消耗，
+   也不存在"暂停提案"这一操作或状态值（status 只有 pending/committed/expired）。
+   模型把一个纯粹的 approval_required 错误码，叙述成了一套有余量、会被耗尽、
+   可暂停的资源模型。这比 ① 更严重：① 是编造后端要求，本条是编造后端状态机，
+   且该叙述会直接误导主人以为"再等等/换个时机就能成"。
+   附带：同一轮把中英文混进一句（"hasn't 过期"），并在未调用任何只读工具的
+   前提下断言提案过期状态 —— 与 ⑤ 同一毛病，修复 ⑤ 时应一并覆盖。
+
+7.2 契约与设计缺口（非模型过错，需落到 Gate）
+
+⑧ 从未定义规范确认格式。doc 6 §4.2 要求确认必须同时明确携带 proposal_id 与
+   payload_hash，但未定义主人应如何书写，模型因此即兴发明。缺口在设计层。
+   附带可用性判断：要求主人在 QQ 手抄 64 位 hash 不是可行的确认方式；
+   预览应给出一行可直接复制的确认文本，由解析器负责接受。
+⑨ 解析器现行为与契约矛盾，且构成埋伏。裸"确认"在仅有一个 pending 提案时会被绑定
+   （parseConfirmationText 返回空对象，两个过滤条件均不生效，唯一候选直接命中）。
+   因此卡点 A 一旦单独修好，系统会立即开始接受 §4.2 明令禁止的弱确认——
+   链路不会变正确，而会变成"以错误方式通"。
+   结论：卡点 B 必须与卡点 A 同时修，或早于 A。这是本案例最重要的排序结论。
+
+7.3 已核实（2026-09-01 只读查询 state/personal-weather/weather.sqlite）
+
+- 提案 e4787f7a-65ef-4fae-9612-bb5f7fdbefc2：domain=personal_profile,
+  action_kind=location_set, status=pending, 创建 2026-08-30 22:13:10 CST,
+  TTL 到期 2026-08-31 22:13:10 CST。按当前墙上时间（2026-09-01）已过期，
+  故该提案不可再用于确认，宿迁变更必须重新走一次 propose。
+- approval_grants 表行数 = 0。证实 grant 从未签发，与卡点 A 的判定一致。
+- profile_current_location：revision=2，source_kind=owner_text，仍是镇江扬中。
+- 单 run 双 commit：未发生。两次 commit 分别在 22:13:44 与 22:14:35 两个独立回合，
+  每回合一次，不构成 doc 6 的 LIVE-02B-COMMIT-NO-GRANT 单调用约束违规。
+
+7.4 根因修正（替代 §七 开头旧结论，2026-09-01）
+
+旧表述"唯一真实根因：卡点 A"不准确。实测该回合有两条并存的 pending 提案：
+  d7b5507c-31d3-4367-aeaa-c9e868ee17ab  planning/trip_create   22:12:35
+  e4787f7a-65ef-4fae-9612-bb5f7fdbefc2  personal_profile       22:13:10
+因此两轮失败各有多个独立阻塞点，卡点 A 只是最先命中的那个：
+
+  第 2 轮 裸"确认"：① 卡点 A（senderIsOwner）；
+    ② 即使 A 修好也会被 index.ts:791 的 candidates.length !== 1 歧义规则拒绝，
+       因为当时有两条 pending 提案。
+  第 3 轮 "我确认变更 …"：① 卡点 A；
+    ② 卡点 B.3 前缀正则拒绝（确认 后紧跟 变）。
+       若仅修 B.3，因 B.1 提取不到 proposalId，只剩 hash 过滤，
+       而该 hash 只属 Profile 提案，反而能收敛到唯一候选。
+
+设计含义（强化 ⑨ 的排序结论）：多领域并存 pending 提案是常态而非例外，
+裸确认在真实使用中本就不可判定。强制 proposal_id + payload_hash 双字段绑定
+不仅是安全要求，也是多领域并存下唯一确定的消歧手段。
+
+======================================================================
+八、附带待办
+======================================================================
+
+- 按 tp2.txt 规则把 doc 6 收敛为：Gate 契约 + 当前阻塞点 + 已验收矩阵结论，
+  删除 LIVE 试错流水与已被取代的中间态。
+- doc 6 中 Search 报告把工具返回的 platform.openai.com 改写为 providers.openai.com
+  的保真度问题，仍为独立待修项。
+
+======================================================================
+九、卡点 A+B 修复方案与步骤（2026-09-01 主人批准，B 与 A 同批实施）
+======================================================================
+
+9.0 方案定性与最小形态修正
+
+  取方案 C（主人断言下移到工具边界）+ 卡点 B 修复，一批改完。
+  相对 §六 A.4 的 C 描述，读 store.ts 后确认可进一步简化：
+  不需要把 grant 签发搬到 commit，保持"inbound 签发 / commit 消费"现有架构，
+  只删除冗余的 owner 门。原因：
+
+    listPendingConfirmationProposals 已先按 subjectId = OWNER_SUBJECT_ID 过滤，
+    再执行 scopesMatch（confirmation-gate.ts:395）。proposal 的 scope 只能由
+    主人已验证的工具上下文创建（scopeFromToolContext 要求 senderIsOwner === true）。
+    QQ 私聊中他人的 conversationId/senderId 不同 → 与主人 proposal scope 交集为空
+    → 候选为 0 → 签不出 grant。
+    即 inbound 处的 owner 门与 scope 匹配是重复约束；删前者不放开任何东西。
+    commit 侧 isTrustedOwnerPrivateQq() 保持不变，仍是真正的授权边界。
+
+  安全净变化：防同轮自提交性质完整保留（模型无法伪造入站消息，grant 必须来自
+  提案之后到达的真实消息）；并补上原本声称有、实际缺失的双字段绑定。
+
+  不做的事：不改已安装 dist、不碰 Host；方案 D（上游把身份解析移到
+  dispatch:1145 之前）单独记为上游 issue，不阻塞本地闭环。Host 将来若补上
+  senderIsOwner，本方案无需回退，只是多一个可用信号。
+
+9.1 实施步骤（每步完成后就地标记，附实测结论）
+
+  [x] S1  confirmation-gate.ts:99 完成。整串锚点 UUID_PATTERN 被 token 边界的
+          UUID_IN_TEXT_PATTERN / HASH_IN_TEXT_PATTERN 取代（负向前后查断言，
+          而非 ^...$）。附带收益：过长 hex 串不再产生部分匹配，已由
+          "does not match an over-long hex run as a hash" 固定。卡点 B.1 已解除。
+  [x] S2  confirmation-gate.ts 完成。parseConfirmationText 返回类型收紧为
+          { proposalId: string; payloadHash: string } | undefined（两字段不再可选），
+          缺任一即 undefined。调用方随之简化为 id 与 hash 双字段精确比对，
+          删掉原先的 hash-only 回退分支。doc 6 §4.2 声称的双字段绑定至此才真正成立。
+  [x] S3  confirmation-gate.ts 完成。前缀正则改为只要求肯定词出现在句首，
+          不再要求其后紧跟分隔符，故"我确认变更 …"（动词直接接宾语）可通过。
+          否定意图检查仍在前置位置，先于任何提取执行。卡点 B.3 已解除。
+  [x] S4  confirmation-gate.ts:140 完成。scopeFromInboundEvent 只保留
+          channel==="qqbot" 与 !isGroup；senderIsOwner 要求删除，并就地注明
+          原因（Host 在构造入站事件时尚未解析主人身份，见 §六 A.1）与
+          替代的安全依据（scope 绑定 + 工具边界断言）。
+  [x] S5  index.ts:775 完成。recordInboundConfirmation 入口同样删除
+          senderIsOwner；messageId、channel、isGroup、replyToIsQuote 判断保留。
+          index.ts:753 isTrustedOwnerPrivateQq 未改动，仍是真正的授权边界。
+  [x] S6  前提修正后并入 S7。原表述不准确：checkApprovalGrant 本就已区分
+          approval_required（无 grant 行）、confirmation_context_mismatch（scope 不匹配）、
+          grant_expired、grant_replayed 四码。真实缺口不在错误码，而在
+          approval_required 的消息文本没有给出所需格式 —— 这才是模型自创
+          "backend requirement" 措辞的空间。修法即 S7 的规范文本。
+  [x] S7  完成，落在两处：
+          ① 新增 buildConfirmationInstruction(proposalId, payloadHash)，
+             产出唯一规范确认文本 `确认 proposalId=… payloadHash=…`；
+          ② 该文本同时写入 approval_required 报错消息与提案预览
+             （profile.ts / planning.ts / reminders.ts 三处 propose 全部覆盖，
+             reminders 的 create/cancel/update 三个预览均已带上）。
+          profile.ts:422 原本那句含糊的"请…明确确认"已删除，改为"回复下面这一行原文"
+          加规范文本 —— 这句含糊指引正是缺口 ⑧ 的直接来源。主人不再手抄 64 位 hash。
+          实现细节：预览须在 createPendingProposal 之后拼接，因为 id 与 hash
+          此前尚不存在；落库的 previewText 存基础版，返回给模型的带指令行。
+  [x] S8  confirmation-gate.test.ts 完成，新增 11 项（5→16）。覆盖：
+          正向"我确认变更 <id> <hash>"；buildConfirmationInstruction 原文；
+          裸"确认"、仅 id、仅 hash 三种拒绝；否定式拒绝；过长 hex 拒绝；
+          hash 不匹配拒绝；陌生人 scope 拒绝；群消息拒绝；
+          多条 pending 并存时精确命中其一而另一条仍 pending（§7.4 实测场景，
+          注意这与旧的"裸确认歧义拒绝"是两条不同断言，两者都保留）；
+          预览指令 → 解析器 → 落库的端到端往返。
+          发现（重要）：旧 5 项全部显式传 senderIsOwner: true，
+          这正是 125 项全绿却掩盖了生产失败的原因 —— 测试把 Host 从不设置的字段
+          当成既有事实。新增的 LIVE-07-A 回归项一律不传该字段。
+          变异验证：临时把 senderIsOwner 门加回 scopeFromInboundEvent，
+          确认恰好 2 项失败（LIVE-07-A 回归 + 多提案绑定），随后已还原。
+          即新测试确实绑定在真实缺陷上，非空跑。
+  [x] S9  完成（Node 24.19.0；shell 默认 22.17.0 不满足 openclaw CLI 的
+          >=24.15.0 <25 要求，需先切 PATH，记此以免下次重踩）。
+          - tsc --noEmit：通过。
+          - 全量离线回归：15 文件 136 项全通过（基线 125 + 新增 11）。
+          - openclaw plugins validate：Plugin personal-weather is valid.
+          - openclaw config validate：Config valid: ~/.openclaw/openclaw.json
+  [!] S10 已尝试两次，均失败，当前被卡点 C 阻塞（见十）。不是代码回退，
+          而是发现 S1–S9 全部位于一个从不触发的钩子下游。
+          第 1 次 18:50：失败原因是 Gateway 进程自 08-27 起未重启，
+            从未加载 09-01 的构建（Node ESM 模块只在进程启动时求值一次）。
+            证据：预览文本仍是旧格式、approval_grants=0、进程 uptime 4 天
+            vs dist mtime 17:28。这一次失败是我的流程错误 —— 我把"重载 Gateway"
+            并入 S10 交给主人，未指出"不重载则改动完全不生效"。已于 19:06:41
+            重启（新 PID 1634498，3 插件加载，QQ WebSocket 已连接，
+            Node v26.5.1 下无 SQLite 报错）。
+          第 2 次 19:13：Gateway 已是新构建，主人按预览原文回复了规范确认文本，
+            仍返回 approval_required。这一次排除了所有"构建/文本/解析"类解释，
+            直接指向钩子链路，遂展开十的调查。
+          预期不变（待卡点 C 解除后重跑）：回复规范确认行后
+          approval_grants 出现 1 行、profile_current_location revision 由 2 变 3。
+          离线回归不能替代此步已被两次失败强力证实：136 项全在插件进程内，
+          未经过 Host 的入站钩子链路，而真正的卡点恰恰只在该链路上暴露。
+  [ ] S11 清理 weather.sqlite 中 status=pending 但已过墙上时间的历史提案
+          （d7b5507c… planning、e4787f7a… profile），避免过期提案参与歧义判定。
+          只走既有 markConfirmationProposalExpired 路径，不手改数据库。
+
+9.2 完成后需回写的文档
+
+  [x] doc 7：S1–S9 结论已就地标记（含 S6 前提修正与 S8 变异验证结论）；
+      顶部"从哪里继续"与状态行已改为当前事实；卡点 A/B 的代码侧已从"阻塞"
+      改为已解决。S10/S11 仍为待执行，其勾选留待执行后回填。
+  [ ] doc 6：按 tp2.txt 收敛，写入 Gate 最终契约与规范确认格式，
+          删除被本轮结论取代的 LIVE 流水。
+  [ ] doc 2 与 doc 1：Profile P0 的第 3/5 项确认式写入状态改为已验收（S10 通过后）。
+  [ ] chatbot/AGENTS.md：落 §7.1 的模型行为约束（不得编造后端要求、
+          不得自创确认协议、有只读工具先查再猜、不得泄漏内部测试编号）。
+  [ ] chatbot/TOOLS.md：Profile P0 "QQ 端到端验收待完成"改为实际状态。
+  [ ] 十的结论需回写：§六 A.1/A.3/A.4 已就地更正；仍需更正代码内注释
+      （confirmation-gate.ts:132、index.ts:775、confirmation-gate.test.ts
+      的 LIVE-07-A 用例注释三处都还写着已被否证的"时序"解释）。
+
+======================================================================
+十、卡点 C —— inbound_claim 钩子在本机从不触发（2026-09-01 实测）
+======================================================================
+
+本节是 2026-09-01 晚"先调查清楚，获得完整信息"的完整结果。
+全程只读：只读已安装 dist、只读 SQLite、只读日志，未改任何代码。
+
+10.0 一句话结论
+
+  插件在 index.ts:734 注册的 api.on("inbound_claim", ...) 在本机是死代码。
+  S1–S9 修好的每一处都在这个从不被调用的函数下游，因此代码正确而链路不通。
+  这解释了为什么 136 项离线测试全绿、两次真实验收却都失败。
+
+10.1 触发条件链（逐段实测，每段都是必要条件）
+
+  ① runInboundClaim（非定向版，会遍历所有插件的 inbound_claim 处理器）
+     定义并导出于 hook-runner-global-BmIrGlLG.js:689，
+     但在整个 dist 中零调用点 —— 无人调用它。
+  ② 唯一活着的调用点是 runInboundClaimForPluginOutcome，
+     位于 dispatch-DnzGTpPs.js:1501。
+  ③ 该调用点在 if (pluginOwnedBinding) 块内（dispatch:1489 起），
+     即必须存在"插件拥有的会话绑定"才会进入。
+  ④ pluginOwnedBinding 来自 dispatch:1301 的 resolveConversationBindingRecord，
+     数据源是 state/openclaw.sqlite 的 current_conversation_bindings 表。
+  ⑤ 该表实测 0 行。
+
+  链断在 ⑤。结论：③ 永不为真 → ② 永不执行 → 插件的 inbound_claim 永不被调用。
+  注意 ① 的存在使这件事更隐蔽：SDK 里有一个"看起来会遍历所有插件"的运行器，
+  只是没人调用它，所以按契约注册钩子是合理行为，失败并非插件误用。
+
+10.2 由此产生的两处认知更正
+
+  (a) senderIsOwner 并非"Host 算不出来"（原 §六 A.1 已就地更正）。
+      dispatch:1496 先解析，1504-1507 显式把 senderIsOwner 注入事件后才调用钩子。
+      Host 侧设计是完整的，只是该路径需要绑定。
+  (b) S4/S5（删除两处 owner 门）建立在错误前提上。
+      已实测为无害 —— scope 匹配是重复约束，删掉不放开任何东西
+      （理由见 9.0，且 S8 变异测试已固定该性质）—— 但它们不是修复。
+      不建议回退：回退会让代码重新依赖一个非绑定路径下确实不存在的字段。
+
+10.3 插件侧逻辑已逐段证明正确（决定了修复范围＝只换钩子，不动 Gate）
+
+  这一段很重要：它把"要改什么"限定在钩子选择上，避免又一次去改本来是对的代码。
+  用 19:14 那条真实消息逐段验证：
+
+  ① 消息确实到达 Gateway。日志 19:14:43.340 有完整消息文本，
+     即入站链路本身没丢消息，问题在分发到插件这一步。
+  ② parseConfirmationText 对该真实文本返回两个字段齐全的结果（S1–S3 有效）。
+  ③ scopesMatch 通过：primary 相等，且 delivery 在
+     sender:275E81F98DE0DB44476B0FA1B97965EC 上有交集。
+  ④ 用真实候选查询（listConfirmationProposalsForInbound）打到线上库，
+     返回恰好 1 条、且正是宿迁那条提案 —— 无歧义。
+  结论：若钩子被调用，这条确认会成功落库。Gate 逻辑不需要再改。
+
+  附带发现（无害，但记下以免将来误判）：
+  target: 前缀两侧不一致 —— 存储侧是 target:qqbot:c2c:<id>，
+  入站侧是 target:c2c:<id>，因为 stripChannelPrefix
+  （message-hook-mappers-CLWKm8aG.js:117-126）剥掉了 channel 前缀。
+  这两个 target 条目永远无法互相匹配。当前无害，因为 primary 与 sender:
+  两条都能匹配上。但这意味着 delivery 里的 target: 条目实际上是死条目，
+  将来若把匹配逻辑收紧到只看 target:，会静默失效。
+
+10.4 三条候选替代路径（实测对比，尚未选定，需主人批准）
+
+  候选 A：before_agent_run
+    触发性：确定触发。两个调用点 cli-runner-DE2P2Dy_.js:773-818 与
+      selection-JInn13lc.js:13922-13950，均为 await。
+    执行方式：runModifyingHook —— 顺序执行、被 await。
+      官方描述"Fires after session resolution and workspace preparation,
+      before model inference"，是真正的阻塞式输入闸门。
+    时序：确定早于模型推理。这是三条里唯一能保证"同一轮内 commit 就能看到 grant"的。
+    字段（hook-types-DQ9eTy2x.d.ts:1071-1079 PluginHookBeforeAgentRunEvent）：
+      prompt、messages、systemPrompt、accountId、channelId、senderId、
+      senderIsOwner ✓
+      senderIsOwner 溯源：get-reply-OTG64ybi.js:3809 command.senderIsOwner，
+      与喂给工具上下文的 agent-tools-BD8WL7ny.js:959 是同一个 params 对象 ——
+      这正是 propose 一侧一直正常的原因，可信度与工具边界等同。
+    上下文（PluginHookAgentContext，:389）：runId、agentId、sessionKey、sessionId、
+      channel、chatId（"Conversation target id … Mirrors channelId"）、senderId。
+    返回值：InputGateDecision | void，void 即 pass（:1081、:132）。
+      所以只观察不拦截是合法用法，不会改变任何现有行为。
+    缺口（唯一）：没有 messageId。事件与上下文都没有。
+      这直接冲突于 approval_grants 的 UNIQUE(proposal_id, confirmation_message_id)
+      重放保护 —— 该唯一约束目前依赖 messageId。
+      需要一个替代键：runId 是候选（每轮唯一、上下文里有），
+      但语义是"一次 agent run"而非"一条消息"，等价性需先论证再落地。
+    isGroup/conversationId：不直接给，但 chatId 镜像会话目标，
+      可从其前缀（c2c: / group:）推导。属推导而非直取，需测试固定。
+
+  候选 B：message_received
+    触发性：确定触发，且无条件 —— dispatch:1568 只检查
+      ctx.SuppressMessageReceivedHooks !== true 与 hasHooks（:1436）。
+      不需要任何绑定。这是它最大的优点。
+    执行方式：fireAndForgetHook（:1438）→ runVoidHook，
+      源码注释明写"Runs in parallel (fire-and-forget)"。
+      fireAndForgetHook（hook-runner-global-BmIrGlLG.js:141-145）只挂一个
+      .catch()，不 await。
+    时序：调用点 :1568 在 agent 运行之前，但因为不被 await，
+      与 agent run 构成真实竞态。插件的 SQLite 写入是同步且很快，
+      实践中大概率先完成，但没有任何硬保证。
+      风险的具体形态：偶发地在同一轮 commit 时 grant 还没落库 →
+      主人看到一次莫名的 approval_required，再发一轮才成 ——
+      这正是最难复现、最伤信任的失败形态。
+    字段（hook-types.d.ts:237-256 + mapper :221-267 实际填充）：
+      messageId ✓（重放保护可直接沿用，这是它相对 A 的关键优势）、
+      senderId、sessionKey、runId、from、content、replyToIsQuote、
+      metadata.to（形如 qqbot:c2c:<id>）。
+    缺口：无 channel、无 isGroup、无 conversationId、无 senderIsOwner。
+      channel 可从 metadata.provider 取；isGroup 与 conversationId 可从
+      metadata.to 的前缀推导。
+      注意 message_received 的 metadata 不含 groupId（inbound_claim 的含），
+      所以 isGroup 只能靠 to 前缀推导，比 A 更间接。
+      senderIsOwner 完全拿不到 —— 但按 9.0 已论证的"scope 匹配是重复约束"，
+      这一项不构成安全损失。
+
+  候选 C：让插件真正建立 conversation binding（走 Host 设计的定向路径）
+    结论：否决。不是成本问题，是语义不可接受。
+    实测依据：绑定存在时，dispatch:1489-1567 会把该会话交给插件处理，
+      而 runClaimingHookForPluginOutcome（hook-runner-global:545-571）的返回语义是：
+        处理器返回 handled → status "handled" → dispatch:1517-1526 直接 return，
+          agent 完全不运行；
+        处理器注册了但没返回 handled → status "declined"（:571）→
+          dispatch:1544-1553 发一条"binding declined"通知后 return，agent 同样不运行；
+        只有 no_handler / missing_plugin（:546-548，即根本没注册处理器）才会
+          fallthrough 到 agent。
+      也就是说：一旦注册了处理器，这个会话就再也不会到达 kurumi。
+      而我们要的恰恰是"记录确认之后让 agent 继续正常对话"，
+      在这套返回语义下没有对应的出口值。
+    附带：绑定还会改变该会话的路由语义（binding 一旦建立会持续生效，
+      touchConversationBindingRecord 会续期），影响范围远超确认闸门。
+    因此 C 不再作为候选保留，除非上游提供"observe 但不接管"的返回值。
+
+  倾向（供主人裁决，非决定）：A 与 B 各有一处硬缺口，且互补 ——
+  A 缺 messageId（影响重放保护的键），B 缺时序保证（影响可靠性）。
+  倾向 A：时序保证无法在插件侧补救，而重放键可以（runId 或 messageId
+  的等价替代可以论证并用测试固定）。用不可补救的缺口去换可补救的缺口不划算。
+  但 A 需要先解决重放键的等价性论证，不能直接开工。
+
+10.5 值得上报上游的两项（不阻塞本地闭环）
+
+  ① runInboundClaim 零调用点。SDK 导出了一个遍历全部插件 inbound_claim
+     处理器的运行器（hook-runner-global-BmIrGlLG.js:689），
+     但 dist 内无任何调用点。看形态像是回归：非定向的 inbound_claim
+     分发路径被移除或改造，只剩下定向（绑定）版本，
+     而 PLUGIN_HOOK_NAMES 与类型契约仍完整保留 inbound_claim。
+     后果：任何插件按契约注册 inbound_claim，在没有绑定的情况下静默永不触发，
+     且无任何警告或日志提示。这是最坏的一类失败 —— 契约在、代码在、就是不跑。
+     建议上报时附本节 10.1 的条件链。
+  ② before_agent_run 事件缺 messageId。
+     该钩子被定位为输入闸门，而任何需要"每条消息只生效一次"的闸门
+     都需要一个消息级幂等键；当前只能退到 runId。
+     建议上游在事件里补 messageId。
+
+  两项都不改已安装 dist（保持既定禁止绕法），仅作为 issue 记录。
+
+10.6 本轮流程教训（写给下一次的自己）
+
+  ① 先验证"是否被执行"，再解释"字段为何缺失"。
+     本轮最大的浪费是：看到 senderIsOwner 缺失，直接去读 dispatch 找时序解释，
+     得出一个自洽但错误的结论（§六 A.1），并基于它改了 S4/S5。
+     正确的第一步本应是加一行日志或用一次真实消息确认"钩子有没有被调用"。
+     一个自洽的解释不等于一个被验证的解释。
+  ② 测试全绿不代表链路可用。136 项全在插件进程内，
+     完全绕过 Host 入站链路。更严重的是 S8 发现的那件事：
+     旧 5 项测试显式传 senderIsOwner: true，把 Host 从不设置的字段
+     当成既有事实 —— 测试不仅没发现缺陷，还在积极地掩盖它。
+     凡是跨进程边界的字段，测试里不应替 Host 填值。
+  ③ 构建 ≠ 生效。Node ESM 模块只在进程启动时求值一次，
+     不重启 Gateway 的改动完全不生效。凡涉及插件代码变更的验收，
+     "重载 Gateway"必须是我主动执行并声明的步骤，不能并入交给主人的步骤里。
+     18:50 那次失败完全由此造成。
+  ④ 不要在未验证前提上动手。19:13 之后我没有立即改钩子，
+     而是先做完本节调查 —— 这是对的，应保持。

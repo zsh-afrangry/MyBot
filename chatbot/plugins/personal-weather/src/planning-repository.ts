@@ -1,5 +1,12 @@
 import { DatabaseSync } from "node:sqlite";
 
+import {
+  checkApprovalGrant,
+  markConfirmationProposalCommitted,
+  markConfirmationProposalExpired,
+  type ConfirmationGrantCheck,
+  type ConfirmationScope,
+} from "./confirmation-gate.js";
 import type {
   TripCreateCommitInput,
   TripCreateProposalForCommit,
@@ -44,11 +51,45 @@ export class PlanningRepository {
   }
 
   expirePendingProposal(proposalId: string, atUtc: UnixSeconds): boolean {
-    return Number(this.#database.prepare(`
+    const changed = Number(this.#database.prepare(`
       UPDATE change_proposals
       SET status = 'expired', updated_at_utc = ?
       WHERE proposal_id = ? AND subject_id = ? AND kind = 'trip_create' AND status = 'pending'
     `).run(atUtc, proposalId, this.#subjectId).changes) === 1;
+    if (changed) {
+      markConfirmationProposalExpired(this.#database, {
+        proposalId,
+        subjectId: this.#subjectId,
+        atUtc,
+      });
+    }
+    return changed;
+  }
+
+  checkApprovalGrant(input: {
+    proposalId: string;
+    payloadHash: string;
+    scope: ConfirmationScope;
+    atUtc: UnixSeconds;
+    consume: boolean;
+  }): ConfirmationGrantCheck {
+    return checkApprovalGrant(this.#database, {
+      proposalId: input.proposalId,
+      domain: "planning",
+      subjectId: this.#subjectId,
+      payloadHash: input.payloadHash,
+      scope: input.scope,
+      nowUtc: input.atUtc,
+      consume: input.consume,
+    });
+  }
+
+  markConfirmationProposalCommitted(proposalId: string, atUtc: UnixSeconds): void {
+    markConfirmationProposalCommitted(this.#database, {
+      proposalId,
+      subjectId: this.#subjectId,
+      atUtc,
+    });
   }
 
   insertPlannedTrip(input: TripCreateCommitInput, atUtc: UnixSeconds): number {

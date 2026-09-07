@@ -67,6 +67,19 @@ describe("Profile P0 current_location", () => {
       expect(proposal.previewText).toContain("广东省广州市天河区 → 江苏省镇江市扬中");
       expect(store.getCurrentLocation().place.displayName).toBe("广东省广州市天河区");
 
+      expect(commitProfileChange(store, {
+        proposal_id: proposal.proposalId,
+        payload_hash: proposal.payloadHash,
+      })).toMatchObject({ ok: false, error: { code: "approval_required" } });
+
+      expect(store.recordInboundConfirmation({
+        channel: "qqbot",
+        messageId: "profile-confirm-1",
+        content: `确认 ${proposal.proposalId} ${proposal.payloadHash}`,
+        isGroup: false,
+        senderIsOwner: true,
+      })).toBe(true);
+
       const beforeCommit = new DatabaseSync(databasePath, { readOnly: true });
       try {
         expect(countRows(beforeCommit, "change_proposals")).toBe(1);

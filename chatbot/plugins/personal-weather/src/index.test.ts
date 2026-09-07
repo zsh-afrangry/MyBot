@@ -49,5 +49,6 @@ describe("personal-weather plugin metadata", () => {
     expect(isTrustedOwnerPrivateQq({ ...base, deliveryContext: { ...base.deliveryContext, to: "qqbot:group:123" } })).toBe(false);
     expect(isTrustedOwnerPrivateQq({ ...base, messageChannel: "telegram" })).toBe(false);
     expect(isTrustedOwnerPrivateQq({ ...base, deliveryContext: { channel: "qqbot", to: "qqbot:c2c:owner" } })).toBe(true);
+    expect(isTrustedOwnerPrivateQq({ ...base, deliveryContext: { channel: "qqbot" } })).toBe(false);
   });
 });

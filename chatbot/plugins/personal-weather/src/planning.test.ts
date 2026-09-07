@@ -151,6 +151,14 @@ describe("P2 planning slice", () => {
       assert.equal(proposal.ok, true);
       if (!proposal.ok) return;
 
+      expect(store.recordInboundConfirmation({
+        channel: "qqbot",
+        messageId: "planning-confirm-1",
+        content: `确认 ${proposal.proposalId} ${proposal.payloadHash}`,
+        isGroup: false,
+        senderIsOwner: true,
+      })).toBe(true);
+
       const committed = commitPlanningProposal(store, {
         proposal_id: proposal.proposalId,
         payload_hash: proposal.payloadHash,

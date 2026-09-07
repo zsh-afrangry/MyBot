@@ -11,13 +11,35 @@ import {
 } from "./reminder-reconciler-service.js";
 import { reminderStateDirectory } from "./paths.js";
 import { ReminderStore, REMINDER_TIMEZONE } from "./reminder-store.js";
-import { commitReminderProposal, proposeReminderCreate, type ReminderCronScheduler } from "./reminders.js";
+import { commitReminderProposal as commitReminderProposalImpl, proposeReminderCreate, type ReminderCronScheduler } from "./reminders.js";
 
 const directories: string[] = [];
+
+const TEST_SCOPE = {
+  primary: "conversation:qqbot:c2c:test-owner",
+  delivery: ["conversation:qqbot:c2c:test-owner", "target:qqbot:c2c:test-owner"],
+};
 
 afterEach(() => {
   for (const directory of directories.splice(0)) rmSync(directory, { recursive: true, force: true });
 });
+
+async function commitReminderProposal(
+  store: ReminderStore,
+  input: { proposal_id: string; payload_hash: string },
+  context: { delivery: { channel: "qqbot"; to: string; accountId: string } },
+  scheduler: ReminderCronScheduler,
+) {
+  store.recordInboundConfirmation({
+    channel: "qqbot",
+    conversationId: "qqbot:c2c:test-owner",
+    messageId: `confirm-${input.proposal_id}`,
+    content: `确认 ${input.proposal_id} ${input.payload_hash}`,
+    isGroup: false,
+    senderIsOwner: true,
+  });
+  return commitReminderProposalImpl(store, input, { ...context, scope: TEST_SCOPE }, scheduler);
+}
 
 describe("personal reminder reconciler service", () => {
   it("runs a local pass and releases its single-instance lock", () => {
@@ -99,6 +121,7 @@ describe("personal reminder reconciler service", () => {
     const store = new ReminderStore({ stateDirectory, now: () => now });
     const context = {
       delivery: { channel: "qqbot" as const, to: "qqbot:c2c:test-owner", accountId: "default" },
+      scope: TEST_SCOPE,
     };
     try {
       const proposed = proposeReminderCreate(store, {
@@ -160,6 +183,7 @@ describe("personal reminder reconciler service", () => {
     const store = new ReminderStore({ stateDirectory, now: () => now });
     const context = {
       delivery: { channel: "qqbot" as const, to: "qqbot:c2c:test-owner", accountId: "default" },
+      scope: TEST_SCOPE,
     };
     try {
       const proposed = proposeReminderCreate(store, {
@@ -192,6 +216,7 @@ describe("personal reminder reconciler service", () => {
     const store = new ReminderStore({ stateDirectory, now: () => now });
     const context = {
       delivery: { channel: "qqbot" as const, to: "qqbot:c2c:test-owner", accountId: "default" },
+      scope: TEST_SCOPE,
     };
     try {
       const proposed = proposeReminderCreate(store, {

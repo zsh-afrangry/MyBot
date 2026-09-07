@@ -56,8 +56,10 @@ test("creates a versioned private database and seeds only the confirmed default 
 
       assert.deepEqual(tableNames, [
         "api_cache",
+        "approval_grants",
         "audit_log",
         "change_proposals",
+        "confirmation_proposals",
         "location_periods",
         "notification_preferences",
         "notification_state",
@@ -85,6 +87,7 @@ test("creates a versioned private database and seeds only the confirmed default 
         { version: 2, name: "trip_destination_text_for_unresolved_places" },
         { version: 3, name: "profile_current_location_from_weather_default" },
         { version: 4, name: "place_locality_name_for_precise_weather_labels" },
+        { version: 5, name: "confirmation_gate_tables" },
       ]);
       const tripColumns = database.prepare("PRAGMA table_info(trips)").all()
         .map((row) => (row as { name: string }).name);
@@ -92,7 +95,7 @@ test("creates a versioned private database and seeds only the confirmed default 
       assert.ok(tripColumns.includes("destination_administrative_area"));
       assert.equal(
         (database.prepare("PRAGMA user_version").get() as { user_version: number }).user_version,
-        4,
+        5,
       );
     } finally {
       database.close();
@@ -109,7 +112,7 @@ test("creates a versioned private database and seeds only the confirmed default 
       assert.equal(queryCount(database, "places"), 1);
       assert.equal(queryCount(database, "notification_preferences"), 1);
       assert.equal(queryCount(database, "profile_current_location"), 1);
-      assert.equal(queryCount(database, "schema_migrations"), 4);
+      assert.equal(queryCount(database, "schema_migrations"), 5);
     } finally {
       database.close();
     }

@@ -10,6 +10,22 @@ import {
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
+import {
+  checkApprovalGrant,
+  ensureConfirmationGateSchema,
+  findConfirmationProposalForInbound,
+  issueApprovalGrant,
+  listConfirmationProposalsForInbound,
+  markConfirmationProposalCommitted,
+  markConfirmationProposalExpired,
+  registerConfirmationProposal,
+  scopeFromInboundEvent,
+  type ConfirmationInboundEvent,
+  type ConfirmationGrantCheck,
+  type ConfirmationProposalRow,
+  type ConfirmationScope,
+} from "./confirmation-gate.js";
+
 export const REMINDER_SUBJECT_ID = "owner";
 export const REMINDER_TIMEZONE = "Asia/Shanghai";
 export const REMINDER_MAX_ATTEMPTS = 3;
@@ -127,6 +143,7 @@ export class ReminderStore {
       this.#database.exec(INITIAL_SCHEMA_SQL);
       migrateReminderProposalKinds(this.#database);
       this.#database.exec(RETRY_MIGRATION_SQL);
+      ensureConfirmationGateSchema(this.#database);
       chmodSync(this.databasePath, 0o600);
     } catch (error) {
       this.#database.close();
@@ -156,28 +173,41 @@ export class ReminderStore {
     delivery: ReminderDelivery;
     expiresAtUtc: number;
     atUtc: number;
+    scope?: ConfirmationScope;
   }): void {
     this.#assertOpen();
-    this.#database.prepare(`
-      INSERT INTO reminder_proposals (
-        proposal_id, subject_id, kind, status, payload_json, payload_hash,
-        request_context_hash, delivery_channel, delivery_to, delivery_account_id,
-        expires_at_utc, created_at_utc, updated_at_utc
-      ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(
-      input.proposalId,
-      REMINDER_SUBJECT_ID,
-      input.kind,
-      input.payloadJson,
-      input.payloadHash,
-      input.requestContextHash,
-      input.delivery.channel,
-      input.delivery.to,
-      input.delivery.accountId,
-      input.expiresAtUtc,
-      input.atUtc,
-      input.atUtc,
-    );
+    this.#transaction(() => {
+      this.#database.prepare(`
+        INSERT INTO reminder_proposals (
+          proposal_id, subject_id, kind, status, payload_json, payload_hash,
+          request_context_hash, delivery_channel, delivery_to, delivery_account_id,
+          expires_at_utc, created_at_utc, updated_at_utc
+        ) VALUES (?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(
+        input.proposalId,
+        REMINDER_SUBJECT_ID,
+        input.kind,
+        input.payloadJson,
+        input.payloadHash,
+        input.requestContextHash,
+        input.delivery.channel,
+        input.delivery.to,
+        input.delivery.accountId,
+        input.expiresAtUtc,
+        input.atUtc,
+        input.atUtc,
+      );
+      registerConfirmationProposal(this.#database, {
+        proposalId: input.proposalId,
+        domain: "personal_reminder",
+        actionKind: input.kind,
+        subjectId: REMINDER_SUBJECT_ID,
+        payloadHash: input.payloadHash,
+        scope: input.scope ?? { primary: "unbound", delivery: [] },
+        createdAtUtc: input.atUtc,
+        expiresAtUtc: input.expiresAtUtc,
+      });
+    });
   }
 
   getProposal(proposalId: string): StoredReminderProposal | undefined {
@@ -195,11 +225,95 @@ export class ReminderStore {
 
   expireProposal(proposalId: string, atUtc: number): boolean {
     this.#assertOpen();
-    return Number(this.#database.prepare(`
+    const changed = Number(this.#database.prepare(`
       UPDATE reminder_proposals
       SET status = 'expired', updated_at_utc = ?
       WHERE proposal_id = ? AND subject_id = ? AND status = 'pending'
     `).run(atUtc, proposalId, REMINDER_SUBJECT_ID).changes) === 1;
+    if (changed) {
+      markConfirmationProposalExpired(this.#database, {
+        proposalId,
+        subjectId: REMINDER_SUBJECT_ID,
+        atUtc,
+      });
+    }
+    return changed;
+  }
+
+  checkApprovalGrant(input: {
+    proposalId: string;
+    payloadHash: string;
+    scope: ConfirmationScope;
+    atUtc: number;
+    consume: boolean;
+  }): ConfirmationGrantCheck {
+    this.#assertOpen();
+    return checkApprovalGrant(this.#database, {
+      proposalId: input.proposalId,
+      domain: "personal_reminder",
+      subjectId: REMINDER_SUBJECT_ID,
+      payloadHash: input.payloadHash,
+      scope: input.scope,
+      nowUtc: input.atUtc,
+      consume: input.consume,
+    });
+  }
+
+  listInboundConfirmationCandidates(event: ConfirmationInboundEvent): ConfirmationProposalRow[] {
+    if (!event.messageId) return [];
+    const scope = scopeFromInboundEvent(event);
+    if (!scope) return [];
+    const nowUtc = typeof event.timestamp === "number" && Number.isFinite(event.timestamp)
+      ? Math.max(0, Math.floor(event.timestamp > 10_000_000_000 ? event.timestamp / 1000 : event.timestamp))
+      : this.getNowUtc();
+    this.#assertOpen();
+    return listConfirmationProposalsForInbound(this.#database, {
+      subjectId: REMINDER_SUBJECT_ID,
+      scope,
+      content: event.content,
+      nowUtc,
+    });
+  }
+
+  findInboundConfirmation(event: ConfirmationInboundEvent): ConfirmationProposalRow | undefined {
+    const candidates = this.listInboundConfirmationCandidates(event);
+    return candidates.length === 1 ? candidates[0] : undefined;
+  }
+
+  recordInboundConfirmation(event: ConfirmationInboundEvent, expectedProposalId?: string): boolean {
+    if (!event.messageId || event.replyToIsQuote === true) return false;
+    const scope = scopeFromInboundEvent(event);
+    if (!scope) return false;
+    const nowUtc = typeof event.timestamp === "number" && Number.isFinite(event.timestamp)
+      ? Math.max(0, Math.floor(event.timestamp > 10_000_000_000 ? event.timestamp / 1000 : event.timestamp))
+      : this.getNowUtc();
+    this.#assertOpen();
+    return this.#transaction(() => {
+      const proposal = findConfirmationProposalForInbound(this.#database, {
+        subjectId: REMINDER_SUBJECT_ID,
+        scope,
+        content: event.content,
+        nowUtc,
+      });
+      if (!proposal || (expectedProposalId !== undefined && proposal.proposalId !== expectedProposalId)) return false;
+      const issued = issueApprovalGrant(this.#database, {
+        proposal,
+        confirmationMessageId: event.messageId as string,
+        confirmationContent: event.content,
+        scope,
+        nowUtc,
+      });
+      return issued.ok;
+    });
+  }
+
+  markConfirmationProposalCommitted(proposalId: string, atUtc: number): void {
+    this.#assertOpen();
+    markConfirmationProposalCommitted(this.#database, {
+      proposalId,
+      subjectId: REMINDER_SUBJECT_ID,
+      atUtc,
+    });
   }
 
   createSchedulingReminder(input: {
@@ -212,9 +326,18 @@ export class ReminderStore {
     proposalId: string;
     payloadHash: string;
     atUtc: number;
+    scope?: ConfirmationScope;
   }): boolean {
     this.#assertOpen();
     return this.#transaction(() => {
+      const grant = this.checkApprovalGrant({
+        proposalId: input.proposalId,
+        payloadHash: input.payloadHash,
+        scope: input.scope ?? { primary: "unbound", delivery: [] },
+        atUtc: input.atUtc,
+        consume: true,
+      });
+      if (!grant.ok) throw new Error(`Confirmation grant rejected: ${grant.code}`);
       const inserted = this.#database.prepare(`
         INSERT INTO reminders (
           reminder_id, subject_id, status, content, scheduled_at_utc, timezone,
@@ -263,6 +386,11 @@ export class ReminderStore {
       if (Number(committed.changes) !== 1) {
         throw new Error("Reminder proposal changed while being committed");
       }
+      markConfirmationProposalCommitted(this.#database, {
+        proposalId: input.proposalId,
+        subjectId: REMINDER_SUBJECT_ID,
+        atUtc: input.atUtc,
+      });
       this.insertAudit({
         action: "reminder.scheduling",
         entityType: "reminder",
@@ -635,9 +763,18 @@ export class ReminderStore {
     payloadHash: string;
     reminderId: string;
     atUtc: number;
+    scope?: ConfirmationScope;
   }): boolean {
     this.#assertOpen();
     return this.#transaction(() => {
+      const grant = this.checkApprovalGrant({
+        proposalId: input.proposalId,
+        payloadHash: input.payloadHash,
+        scope: input.scope ?? { primary: "unbound", delivery: [] },
+        atUtc: input.atUtc,
+        consume: true,
+      });
+      if (!grant.ok) return false;
       const cancelled = this.#database.prepare(`
         UPDATE reminders
         SET status = 'cancelled', cancelled_at_utc = ?, updated_at_utc = ?
@@ -671,6 +808,11 @@ export class ReminderStore {
       if (Number(committed.changes) !== 1) {
         throw new Error("Reminder cancellation proposal changed while being committed");
       }
+      markConfirmationProposalCommitted(this.#database, {
+        proposalId: input.proposalId,
+        subjectId: REMINDER_SUBJECT_ID,
+        atUtc: input.atUtc,
+      });
       this.insertAudit({
         action: "reminder.cancelled",
         entityType: "reminder",
@@ -700,9 +842,18 @@ export class ReminderStore {
     nextScheduledAtUtc: number;
     scheduleChanged: boolean;
     atUtc: number;
+    scope?: ConfirmationScope;
   }): boolean {
     this.#assertOpen();
     return this.#transaction(() => {
+      const grant = this.checkApprovalGrant({
+        proposalId: input.proposalId,
+        payloadHash: input.payloadHash,
+        scope: input.scope ?? { primary: "unbound", delivery: [] },
+        atUtc: input.atUtc,
+        consume: true,
+      });
+      if (!grant.ok) return false;
       const proposal = this.#database.prepare(`
         SELECT 1
         FROM reminder_proposals
@@ -769,6 +920,12 @@ export class ReminderStore {
         input.atUtc,
       ).changes) === 1;
       if (!committed) throw new Error("Reminder update proposal changed while being committed");
+
+      markConfirmationProposalCommitted(this.#database, {
+        proposalId: input.proposalId,
+        subjectId: REMINDER_SUBJECT_ID,
+        atUtc: input.atUtc,
+      });
 
       this.insertAudit({
         action: "reminder.update_requested",
