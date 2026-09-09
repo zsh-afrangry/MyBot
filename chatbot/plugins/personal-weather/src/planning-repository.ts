@@ -6,7 +6,7 @@ import {
   markConfirmationProposalExpired,
   type ConfirmationGrantCheck,
   type ConfirmationScope,
-} from "./confirmation-gate.js";
+} from "@kurumi/confirmation-core";
 import type {
   TripCreateCommitInput,
   TripCreateProposalForCommit,

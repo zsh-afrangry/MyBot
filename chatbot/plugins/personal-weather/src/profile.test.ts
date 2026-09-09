@@ -1,3 +1,4 @@
+import { scopeFromToolContext } from "@kurumi/confirmation-core";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -14,6 +15,8 @@ import type { QWeatherClient } from "./qweather-client.js";
 import { WeatherStore } from "./store.js";
 import { geoLookupFixture } from "./test-fixtures.js";
 
+const CONFIRMATION_SCOPE = scopeFromToolContext({ messageChannel: "qqbot", senderIsOwner: true,
+  deliveryContext: { to: "qqbot:c2c:test-owner", accountId: "default" } })!;
 const NOW = 1_786_032_000;
 const temporaryRoots: string[] = [];
 
@@ -57,7 +60,7 @@ describe("Profile P0 current_location", () => {
           kind: "current_location.set",
           location: { text: "扬中市", administrative_area: "镇江市" },
         },
-      });
+      }, undefined, CONFIRMATION_SCOPE);
       assert.equal(proposal.ok, true);
       if (!proposal.ok || proposal.status !== "pending") return;
       expect(proposal.canonicalFacts.currentLocation).toMatchObject({
@@ -70,10 +73,12 @@ describe("Profile P0 current_location", () => {
       expect(commitProfileChange(store, {
         proposal_id: proposal.proposalId,
         payload_hash: proposal.payloadHash,
-      })).toMatchObject({ ok: false, error: { code: "approval_required" } });
+      }, CONFIRMATION_SCOPE)).toMatchObject({ ok: false, error: { code: "approval_required" } });
 
       expect(store.recordInboundConfirmation({
         channel: "qqbot",
+        conversationId: "qqbot:c2c:test-owner",
+        accountId: "default",
         messageId: "profile-confirm-1",
         content: `确认 ${proposal.proposalId} ${proposal.payloadHash}`,
         isGroup: false,
@@ -93,7 +98,7 @@ describe("Profile P0 current_location", () => {
       const committed = commitProfileChange(store, {
         proposal_id: proposal.proposalId,
         payload_hash: proposal.payloadHash,
-      });
+      }, CONFIRMATION_SCOPE);
       assert.equal(committed.ok, true);
       if (!committed.ok) return;
       expect(committed.idempotent).toBe(false);
@@ -114,7 +119,7 @@ describe("Profile P0 current_location", () => {
       const repeated = commitProfileChange(store, {
         proposal_id: proposal.proposalId,
         payload_hash: proposal.payloadHash,
-      });
+      }, CONFIRMATION_SCOPE);
       expect(repeated).toMatchObject({ ok: true, idempotent: true });
 
       const afterCommit = new DatabaseSync(databasePath, { readOnly: true });

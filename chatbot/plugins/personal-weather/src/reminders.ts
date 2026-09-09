@@ -1,6 +1,7 @@
+import { formatDateTime } from "./time-display.js";
 import { createHash, randomUUID } from "node:crypto";
 
-import { buildConfirmationInstruction, type ConfirmationScope } from "./confirmation-gate.js";
+import { buildConfirmationInstruction, type ConfirmationScope } from "@kurumi/confirmation-core";
 
 import {
   REMINDER_SUBJECT_ID,
@@ -141,6 +142,8 @@ export interface ReminderProposalResult {
   }>;
   requiresConfirmation: true;
   expiresAtUtc: number;
+  /** Presentation only; authorization continues to use expiresAtUtc. */
+  expiresAtDisplay: { utc: string; local: string; timezone: "Asia/Shanghai" };
   persistedAs: "reminder_proposals";
 }
 
@@ -247,6 +250,7 @@ export function proposeReminderCreate(
   const payloadHash = sha256(payloadJson);
   const proposalId = randomUUID();
   const expiresAtUtc = nowUtc + PROPOSAL_TTL_SECONDS;
+  const expiresAtDisplay = formatProposalExpiry(expiresAtUtc);
   store.createPendingProposal({
     proposalId,
     kind: "reminder_create",
@@ -270,6 +274,7 @@ export function proposeReminderCreate(
       `- 时间：${payload.schedule.localDateTime}（${REMINDER_TIMEZONE}，一次）`,
       `- 内容：${payload.content}`,
       "- 投递：仅主人 QQ 私聊",
+      `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
       "请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：",
       buildConfirmationInstruction(proposalId, payloadHash),
     ].join("\n"),
@@ -282,6 +287,7 @@ export function proposeReminderCreate(
     derivedEffects: [{ kind: "reminder.schedule", target: "owner_qq_private" }],
     requiresConfirmation: true,
     expiresAtUtc,
+    expiresAtDisplay,
     persistedAs: "reminder_proposals",
   };
 }
@@ -316,6 +322,7 @@ export function proposeReminderCancellation(
   const payloadHash = sha256(payloadJson);
   const proposalId = randomUUID();
   const expiresAtUtc = nowUtc + PROPOSAL_TTL_SECONDS;
+  const expiresAtDisplay = formatProposalExpiry(expiresAtUtc);
   store.createPendingProposal({
     proposalId,
     kind: "reminder_cancel",
@@ -339,6 +346,7 @@ export function proposeReminderCancellation(
       `- 原时间：${formatShanghaiDateTime(reminder.scheduledAtUtc)}（${REMINDER_TIMEZONE}）`,
       `- 原内容：${reminder.content}`,
       "- 影响：仅取消这条尚未投递的主人私聊提醒",
+      `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
       "请在本次私聊回复下面这一行原文；确认后才会移除受限的定时任务：",
       buildConfirmationInstruction(proposalId, payloadHash),
     ].join("\n"),
@@ -347,6 +355,7 @@ export function proposeReminderCancellation(
     derivedEffects: [{ kind: "reminder.cancel", target: "owner_qq_private" }],
     requiresConfirmation: true,
     expiresAtUtc,
+    expiresAtDisplay,
     persistedAs: "reminder_proposals",
   };
 }
@@ -406,6 +415,7 @@ export function proposeReminderUpdate(
   const payloadHash = sha256(payloadJson);
   const proposalId = randomUUID();
   const expiresAtUtc = nowUtc + PROPOSAL_TTL_SECONDS;
+  const expiresAtDisplay = formatProposalExpiry(expiresAtUtc);
   store.createPendingProposal({
     proposalId,
     kind: "reminder_update",
@@ -431,6 +441,7 @@ export function proposeReminderUpdate(
       `- 原内容：${reminder.content}`,
       `- 新内容：${nextContent}`,
       "- 影响：在原有受限定时任务上原地更新，不会创建第二条提醒",
+      `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
       "请在本次私聊回复下面这一行原文；确认后才会应用修改：",
       buildConfirmationInstruction(proposalId, payloadHash),
     ].join("\n"),
@@ -451,6 +462,7 @@ export function proposeReminderUpdate(
     derivedEffects: [{ kind: "reminder.update", target: "owner_qq_private" }],
     requiresConfirmation: true,
     expiresAtUtc,
+    expiresAtDisplay,
     persistedAs: "reminder_proposals",
   };
 }
@@ -988,4 +1000,13 @@ export function formatShanghaiDateTime(atUtc: number): string {
   });
   const parts = new Map(formatter.formatToParts(new Date(atUtc * 1000)).map((part) => [part.type, part.value]));
   return `${parts.get("year") ?? ""}-${parts.get("month") ?? ""}-${parts.get("day") ?? ""} ${parts.get("hour") ?? ""}:${parts.get("minute") ?? ""}`;
+}
+
+/** Shared by all reminder proposal kinds; never persisted into frozen action payloads. */
+function formatProposalExpiry(expiresAtUtc: number): ReminderProposalResult["expiresAtDisplay"] {
+  return {
+    utc: new Date(expiresAtUtc * 1000).toISOString(),
+    local: formatDateTime(expiresAtUtc, REMINDER_TIMEZONE),
+    timezone: REMINDER_TIMEZONE,
+  };
 }

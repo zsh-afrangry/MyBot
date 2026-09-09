@@ -24,7 +24,7 @@ import {
   type ConfirmationInboundEvent,
   type ConfirmationProposalRow,
   type ConfirmationScope,
-} from "./confirmation-gate.js";
+} from "@kurumi/confirmation-core";
 
 const DATABASE_FILE_NAME = "weather.sqlite";
 /** Internal subject key for this single-owner deployment. */

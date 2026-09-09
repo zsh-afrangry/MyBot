@@ -1,0 +1,343 @@
+Kurumi 确认治理独立化与自动验收：阶段归档
+
+归档日期：2026-09-08
+现在应该从哪里继续：返回 docs/7_架构偏离分析与当前卡点.txt 查看当前剩余工作。
+状态：本阶段修复及列明的自动验收已完成；本文冻结为历史记录，不表示全部 tp 架构工作完成。
+TODO：本归档无执行中的任务；未覆盖验收和架构债务已保留在原文档当前入口。
+
+阶段结论
+- 公共确认机制迁出 personal-weather，形成 confirmation-core 与 personal-confirmation。
+- 入站改接实际等待的 reply_dispatch，强化身份/会话绑定、跨库唯一性和事务授权。
+- 行程增加确定性 displayTimes，日期错误已通过真实 QQ 只读复测。
+- 自动验收最终 20 项后端 + 4 项真实主模型测试全部通过；生产库观察计数和 Profile revision 未变。
+- 持久证据：docs/verification/confirmation-acceptance.json；复现入口：chatbot/tests/acceptance/README.md。
+- 自动验收使用合成 QQ 入站和受限模型测试循环；QQ 真实正向确认、完整生产 Agent 循环仍未覆盖。
+- 本次归档仅整理文档，没有重新执行测试、重启服务或更改生产代码/数据库。
+
+整理说明
+删除顶部重复进度流水和已被自动测试替代的人工提案步骤，保留最终实现、证据边界、
+故障原因、数据库快照、部署回退及防止再次误判的结论。下文环境和服务状态均为该阶段观察值。
+
+======================================================================
+一、项目目标与本次决策
+======================================================================
+
+设计依据：docs/tp.txt；记录习惯：docs/tp2.txt。
+项目是基于 OpenClaw 的 QQ 个人助手 Kurumi，不能以天气功能作为所有能力和控制机制的容器。
+
+修复前确认的偏离（修复后的剩余问题见第五节）：
+1. personal-weather 同时承载 Weather、Profile、Planning、Reminder 和跨领域确认治理。
+2. Profile/Planning 共用 weather.sqlite，Profile 地点解析依赖天气模块的 QWeather GeoAPI。
+3. 天气定时简报与提醒调度各有实现；鉴权、审计、配额等跨能力治理尚未统一。
+4. 尚无可作为策略输入的统一能力目录：能力类别、副作用、确认需求、依赖和运行状态分散声明。
+
+这些是实际边界问题。没有完整 DAG、动态 Router 或中央控制库，本身不构成偏离；
+tp 明确要求由真实重复需求推动抽象，不能为了架构完整性先搭一个大框架。
+
+本轮已作出的选择及原因：
+- 从多个现有领域已经共同使用的确认机制入手，迁出公共逻辑并独立消息入口。
+  新功能复用确认时依赖 @kurumi/confirmation-core，不需要依赖 personal-weather。
+- 公共层只定义确认契约、候选路由与 grant 规则；业务库和本地事务仍由领域拥有。
+  不做跨库业务事务、不搬生产表、不为此次故障同时重写全部调度器。
+- 新插件通过 Host 实际等待的 reply_dispatch 记录确认，返回 void 继续默认模型回合。
+  模型仍需调用已有 commit 工具；入站记录本身不提交业务、不发送回复。
+- 这是第一次边界纠偏，不能据此宣称 tp 架构已经全部实现。
+
+======================================================================
+二、部署与项目结构
+======================================================================
+
+台式机 Linux：afrangry@100.79.1.105（Tailscale SSH）。
+部署根：/home/afrangry/.openclaw
+机器人工作区：/home/afrangry/.openclaw/chatbot
+Host：/home/afrangry/.npm-global/lib/node_modules/openclaw
+Host 版本：2026.7.1-2；QQ 适配器：2026.7.1；Node：v26.5.1。
+Gateway 用户服务：openclaw-gateway.service。
+本地审阅副本：C:/Users/afrangry/PycharmProjects/MyBot。
+以下相对路径均以部署根为基准。
+
+2.1 新增的公共包
+chatbot/packages/confirmation-core
+- src/gate.ts：统一确认文本、提案索引、scope、grant 签发/消费、状态更新。
+- src/registry.ts：领域存储适配接口、运行期注册/卸载、跨库候选唯一性与诊断。
+- src/index.ts：公共导出。
+- src/confirmation.test.ts：不依赖任何天气代码，以 notes/tasks 示例领域验证通用性与边界。
+- package.json / package-lock.json / tsconfig.json / vitest.config.ts：独立构建和测试。
+
+2.2 新增的确认插件
+chatbot/plugins/personal-confirmation
+- src/index.ts：reply_dispatch 注册、无消息正文的状态日志、启动健康信息。
+- src/inbound.ts：从可信 Host 上下文读取当前 QQ 原始消息证据。
+- src/inbound.test.ts / src/index.test.ts：入站拒绝条件、注册名称、记录先于回合继续、返回 void。
+- openclaw.plugin.json：独立插件身份和启动激活，不向模型增加工具。
+- 不导入 personal-weather，也不直接知道 weather.sqlite 或 reminders.sqlite 路径。
+
+2.3 现有业务插件
+chatbot/plugins/personal-weather
+- src/index.ts：仍注册 14 个工具，新增两个存储适配器的服务注册/卸载；已删除旧 inbound_claim 接入。
+- src/confirmation-gate.ts 已删除，调用方改为导入 @kurumi/confirmation-core。
+- weather-service.ts / qweather-client.ts / parsers.ts / formatter.ts：天气数据访问与表达。
+- weather-location.ts：天气地点和 Profile 地点解析，仍依赖 QWeather GeoAPI。
+- profile.ts / profile-repository.ts：所在地提案与提交。
+- planning.ts / planning-repository.ts：行程提案与提交。
+- reminders.ts / reminder-store.ts：提醒业务与持久化。
+- store.ts：Weather/Profile/Planning 的存储与本地事务。
+- reminder-gateway.ts / reminder-reconciler*.ts：受限 Cron、只读 Host 状态查询、对账及有限重试。
+- cli.ts / reminder-cli.ts：确定性简报与提醒投递入口。
+该插件仍是混合业务容器，尚未完成领域拆分。
+
+chatbot/plugins/personal-search
+独立注册 personal_web_search，使用受控 DeepSeek 搜索，有配额、审计和持久化脱敏。
+本轮未迁移其鉴权或修改其查询逻辑。
+
+QQ 适配器部署路径：
+/home/afrangry/.openclaw/npm/projects/openclaw-qqbot-d3553f72f8/node_modules/@openclaw/qqbot
+仓库不包含完整 Host/QQ 适配器源码工程。
+
+======================================================================
+三、确认故障的证据与修复后的链路
+======================================================================
+
+3.1 已确认的旧入口问题
+原 personal-weather 注册 inbound_claim。
+当前 Host dist/dispatch-DnzGTpPs.js:1489–1508 只在 pluginOwnedBinding 分支定向调用
+runInboundClaimForPluginOutcome；2026-09-07 只读核对 current_conversation_bindings 为 0。
+因此当前普通 QQ 消息不能通过该分支进入旧处理器。源码和已部署入口当时一致。
+不能仅因 SDK 有钩子名称就认定消息路径实际会调用它，也不能由此直接断言上游回归。
+
+3.2 新源码链路
+主人私聊可信工具上下文（Host senderIsOwner=true）
+  -> 领域 propose 写待确认业务提案及公共提案索引
+  -> 下一条真实 QQ 消息的 reply_dispatch
+  -> personal-confirmation 从原始上下文构造确认事件
+  -> confirmation-core 遍历已注册存储适配器，所有库候选合计恰好一条
+  -> 候选所属业务库事务内签发 grant
+  -> 回到默认模型回合，由已有 commit 工具检查主人权限并消费 grant
+  -> 领域事务提交业务变更。
+
+运行期注册的适配器：profile-planning、personal-reminder。
+使用带版本的 process-local Symbol 注册表，解决 Host 分别加载公共包副本时的发现问题。
+注册项由业务服务 start 注册、stop 注销；重复注册失败，部分启动失败会撤销已注册项。
+不是中央业务数据库，也没有允许模型注册任意后端的工具。
+
+3.3 新入站边界
+- 只接受 qqbot、ChatType=direct、明确 c2c 对象。
+- 只用当前 RawBody、MessageSidFull/MessageSid、SenderId、Timestamp。
+- 不回退到历史 ID、runId、模型正文、引用正文或处理时刻伪造消息证据。
+- 拒绝引用、尾部分发、sendPolicy=deny、字段缺失、超过 5 分钟的陈旧消息、超前 30 秒的时间。
+- 账号缺省按 Host 默认账号 default；保留实际 AccountId 和 SessionKey。
+- 新工具 scope 带账号；账号、私聊对象、发送者或两端明确会话键冲突时拒绝。
+- 两端必须有明确且一致的私聊对象，unbound 与 unbound 相等不再能授权。
+- 历史无账号 scope 在当前带账号入站下不匹配，需要重新生成提案。
+  修改前所有已查到的旧提案均已过期，无需以清理旧提案作为本次故障修复前提。
+
+3.4 确认协议与事务
+- 规范文本：确认 proposalId=… payloadHash=…
+- ID 与 Hash 必须同时精确匹配；多个 ID/Hash 的混合确认直接拒绝。
+- 保留已有肯定前缀/否定式检查，包括“我确认变更 …”；未承诺理解任意自然语言条件句。
+- 普通聊天与引用不打开确认存储。多个库拥有同一候选时不去重，按歧义拒绝。
+- 任一后端打开或查询失败，不对另一个库的部分结果签发 grant。
+- grant TTL 仍为 5 分钟且不超过提案有效期；同一提案和消息 ID 有唯一约束。
+- Profile/Planning、Reminder 原有 grant 消费与业务事务不迁移；提醒 Cron 策略不变。
+- 新建确认表的 domain 允许独立领域名；已有生产表保留原 CHECK，不做 DDL 迁移。
+  新领域使用其自己的存储适配器/新库，不能假定可直接往旧 Weather 库塞新领域。
+
+3.5 诊断
+日志只记 component、outcome 和适配器名，不记录正文、完整身份标识、ID/Hash 或异常原文。
+结果区分 no_backends、no_match、ambiguous、recorded、rejected、storage_error。
+recorded 表示确认记录已存在或本次成功记录，不等于模型已提交、更不等于业务已投递。
+不合资格的原始消息和普通聊天静默忽略；此类情况需核对入口元数据，不能只凭缺日志判断钩子未调用。
+
+======================================================================
+四、数据库、验证与当前验收边界
+======================================================================
+
+4.1 生产库（本次未迁移）
+state/personal-weather/weather.sqlite：地点、Profile、行程、天气状态、审计、confirmation_proposals/approval_grants。
+state/personal-reminders/reminders.sqlite：提醒、提案、投递重试、审计、confirmation_proposals/approval_grants。
+state/openclaw.sqlite：Host 绑定与 Cron 状态；提醒对账只读查询 Host 表。
+路径解析仍在 chatbot/plugins/personal-weather/src/paths.ts。
+
+2026-09-07 修复前只读快照：
+- current_conversation_bindings=0；两库 approval_grants 均为 0。
+- Profile revision=2，所在地为江苏省镇江扬中。
+- Weather 库确认提案 5 条、Reminder 库 2 条，全部超过 expires_at_utc。
+- “status=pending”不等于“当前仍有效”；候选查询本来就排除已超期记录。
+本轮不把过去的“到宿迁”陈述当作今天所在地，更不手工伪造生产 grant 或直接改所在地。
+
+4.2 本轮真实执行的隔离验证
+台式机修改前：Weather 15 文件/136 项通过；Search 10 文件/49 项通过。
+修改后：confirmation-core 1 文件/11 项；personal-confirmation 2 文件/14 项；Weather 日期补丁后 15 文件/138 项通过。
+上述三个修改包 TypeScript 构建通过，personal-weather 的 Host 工具插件验证通过。
+候选 openclaw.json 配置验证通过；实际 Host 列表中 personal-weather、personal-search、personal-confirmation 均 loaded。
+Gateway 于 2026-09-08 00:19:40 CST 重启，00:19:44 启动日志确认两个后端均可见。
+服务 active/running，监听与 QQ 就绪，启动日志没有插件错误；这证明加载和适配器发现，不等于真实确认验收。
+重启后的只读检查：两库 grant 仍为 0，当前有效提案均为 0。
+
+新增覆盖：
+- 非天气领域独立复用，确认消息重复不增加 grant，消费后重放拒绝。
+- 同 session 不同账号/发送者/对象，跨 session，无账号与无绑定拒绝。
+- 两库重复候选、后端部分失败、关闭资源、无敏感信息诊断。
+- 真实 Planning + Reminder 两库只确认目标领域，未确认提醒不能调用调度。
+- QQ 原始字段、引用/群聊/尾部/时间边界、插件注册返回 void 与默认回合继续顺序。
+
+两条旧正向测试原先依赖 unbound==unbound，现在显式使用主人私聊 scope；
+这不是把旧测试结果当作新绑定规则的证据。另有独立负向测试保证无绑定不能授权。
+
+证据边界：本节注册测试使用模拟 Host API；第四节后续记录真实 Host 自动验收与真实 QQ 只读验收。
+真实 QQ 正向提案/确认/提交及完整生产 Agent 循环尚未验收。
+openclaw plugins validate --entry 仅适用于 defineToolPlugin 元数据；
+personal-confirmation 使用 definePluginEntry，和 Search 一样通过构建/测试与实际 Host 加载验证。
+
+4.3 已完成的真实 QQ 只读验收与日期修复
+当前协作方式：以主机自动验收为主，逐阶段保存证据并更新文档。下面保留已完成的真实 QQ 只读验收与日期修复记录。
+自动测试每次使用新进程加载构建产物，不需要反复重启生产 Gateway，也不清理主人的新会话。
+未来修改生产源码时仍需先构建、回归、部署并核对服务加载。历史会话清理是之前单独授权的一次性操作。
+
+第一轮测试文本：
+请查询你当前保存的所在地和待确认的所在地变更、已保存的行程和待确认的行程，以及当前有效的提醒。
+请以实际工具查询结果为准，只报告结果，不创建或修改任何内容。
+
+第一轮实际结果（2026-09-08 00:39–00:40 CST）：
+新会话 agents/main/sessions/79868bc8-dfaa-44a1-bcd5-7ebc72cd2505.jsonl 中记录了
+personal_profile_state_get、personal_planning_state_get、personal_reminder_state_get 各一次，均 ok=true；
+没有 propose/commit。所在地为江苏省镇江扬中、无有效待确认提案、保存行程 1 条、有效提醒 0 条。
+业务计数及 revision 与 00:32 基线一致。
+但航班时间 1786753500/1786762200 秒对应 Asia/Shanghai 的 2026-08-15 08:25/10:50，
+模型回复却写 2026-08-14，日期提前一天。已用确定性时间库核算，不能将本轮整体记为通过。
+工具原来只返回 UTC 秒数，缺少可直接呈现的当地日期；当前选择补充确定性显示字段，
+不改历史行程数据。显示时区明确来自当前 Profile，不冒充原始航班时区或目的地时区。
+
+日期补丁已实施：
+- chatbot/plugins/personal-weather/src/planning.ts：getPlanningState 为每条行程增加 displayTimes；
+  包含当前 Profile 的 IANA 时区、时区来源以及四个带偏移的出发/到达时间端点，缺失时间保留 null。
+  保留原数值与 precision；确定性格式化覆盖真实回归样本、跨日时区、UTC 与 null。
+- chatbot/plugins/personal-weather/src/index.ts：行程查询工具描述要求使用 displayTimes，保留精度，
+  避免模型从 Unix 秒数自行计算日期。
+- planning.ts 同时删除预览中的“后续版本才会提供提交能力”错误提示，改为当前规范确认后才可提交。
+- planning.test.ts：新增固定日期回归并验证查询返回的显示字段及陈旧预览文本不再出现。
+- 生产库只读调用新函数，确认为 2026-08-15 08:25 / 10:50，均 +08:00；未修改行程。
+- 补丁前文件备份：state/development-backups/planning-display-20260908，按仓库相对路径保存。
+  回退本补丁时恢复其中的三个源码文件，重新构建 personal-weather 并重启，不需要数据库回退。
+
+本轮复测文本：
+请重新查询已保存的行程，告诉我航班的出发和到达日期、时间及显示时区。
+请以本次工具查询返回的时间为准，保留时间精度，只查询，不修改任何记录。
+
+日期复测结果（2026-09-08 01:01:22–01:01:36 CST）：通过。
+同一新会话记录中实际调用 personal_planning_state_get 一次，工具结果包含 displayTimes。
+QQ 回复正确列出 2026-08-15T08:25:00+08:00 与 2026-08-15T10:50:00+08:00，
+保留 Asia/Shanghai、Profile 时区来源和 exact 精度，并纠正上一轮的 8 月 14 日错误。
+没有 propose/commit；两库提案/grant/行程/提醒/审计计数、Profile revision 与清理后基线一致。
+这证明本轮显示字段与模型回答一致，不代表任意未来回答都不会出错。
+
+4.4 主机自动验收（本轮完成）
+
+精确源码路径：chatbot/tests/acceptance。
+host-driver.mjs 使用已安装 Host 的公开 reply-runtime/hook-runtime SDK，直接调用真实
+dispatchInboundMessageWithDispatcher，真实 personal-confirmation 插件注册进独立进程的钩子运行器。
+dispatcher 的 deliver 只收集本地结果，合成 QQ 入站只存在于测试进程。
+domain-fixture.mjs 负责领域测试适配：真实 Store、领域服务及工具工厂，独立 SQLite。
+Profile 地点查询使用固定测试 Provider；提醒使用记录调用的假调度器，不创建生产 Cron、不投递 QQ。
+生产包没有反向依赖测试目录；本轮只新增测试设施和记录，没有修改生产能力/治理代码或放宽权限。
+
+阶段 A：真实分发先运行确认钩子，再进入业务处理；未确认提交返回 approval_required；
+有效确认后行程恰好 1 条，grant consumed。
+阶段 B：实际工具拒绝非主人/群聊上下文；错误账号、发送者、私聊对象、会话、引用、
+陈旧消息、裸确认、否定式、错误 Hash 均不能授权；过期提案索引和过期 grant 被拒绝。
+Host 对同一消息 ID 去重；应用层重复确认幂等。真实 Planning 工具可经分发完成提案和提交。
+Profile+Planning+Reminder 同时 pending 时，Profile 的确认只修改 Profile；Reminder 必须收到自己的
+确认才会调用测试调度器。另启动独立 Node 子进程重开持久化库，已提交提案仍幂等。
+A+B 最终 20 项全部通过，完整报告位于：
+/home/afrangry/.openclaw/state/acceptance/kurumi-acceptance-KiWwL6/report.json
+独立进程证据位于同目录 restart-result.json。
+
+阶段 C：实际配置主模型 bailian-token-plan/qwen3.7-plus，经已安装 Anthropic SDK 调用，
+模型输入采用当前 chatbot/AGENTS.md 加隔离测试边界，仅暴露三个真实 Planning 工具。
+每轮最多 6 次工具循环、每个模型请求超时 60 秒、无自动 Provider 重试；凭证只从现有环境 SecretRef 在内存读取。
+四轮结果：
+1. 自然语言提案：模型先查询再 propose，pending=1、行程=0、grant=0；返回完整确认文本。
+2. 裸“确认”：模型没有调用写工具，要求补齐完整文本；数据库不变。
+3. 规范确认：Host 钩子签发，模型实际调用 commit；行程=1、审计=1、提案 committed、grant consumed。
+4. 重复确认：模型再次调用 commit，工具返回 idempotent=true；业务与审计均无新增。
+报告位于：/home/afrangry/.openclaw/state/acceptance/kurumi-acceptance-4AtWcD/model-report.json。
+检查最终测试库行程字段，标题、南京市/江苏省、rail、weather_mode=none 与模型输入一致。
+
+阶段边界：这里替换了认知调度循环和 QQ 传输，真实模型通过受限测试循环运行，
+并非完整生产 Agent 的上下文管理、模型 fallback 或 QQ 身份认证/投递验收。
+本轮没有把 chat.send 的客户端 runId 当成生产 QQ message ID，没有伪造生产 grant。
+24 项通过只说明已列用例的结果，不能推出所有能力或任意自然语言均已覆盖。
+
+生产库收尾检查：Weather change_proposals=8、confirmation_proposals=5、grant=0、trips=1、audit_log=5、Profile revision=2；
+Reminder confirmation_proposals=2、grant=0、reminders=8、reminder_audit_log=39。与自动测试前观察一致。
+所有新增授权和业务记录均位于独立测试目录，生产 Gateway 保持 active。
+复现命令与支持范围见 chatbot/tests/acceptance/README.md；每次运行保留新的测试库和报告。
+
+未来真实 QQ 抽验仍需核对真实入站字段、grant 消费与领域落库，不能只凭机器人口头回复判定成功。
+本轮主机测试已替代逐条人工转发，但未替代 QQ 传输和适配器身份认证；不人工制造生产授权记录。
+
+2026-09-08 00:32 会话清理前后业务基线一致：
+- Weather 库确认提案 5、grant 0、行程 1、audit_log 5；Profile revision=2。
+- Reminder 库确认提案 2、grant 0、提醒历史共 8、reminder_audit_log 39。
+- 两库均没有仍在有效期内的 pending 确认提案；提醒总数不等于当前有效提醒数。
+删除范围只包含 /home/afrangry/.openclaw/agents/main/sessions 的内容，
+保留业务数据库、人格/规则文件、长期记忆及会话目录本身。
+
+======================================================================
+五、剩余架构工作与独立问题
+======================================================================
+
+- Profile/Planning/Reminder 仍在 personal-weather 构建部署，Profile/Planning 仍共用 weather.sqlite。
+  本次公共机制已经迁出，业务容器和存储拆分需要逐一明确数据所有权及兼容迁移。
+- Profile 地点事实仍依赖 QWeather GeoAPI；独立地点目录/Provider 边界尚未实现。
+- 天气简报和提醒仍有不同调度入口，没有公共声明式任务控制层。
+- 两个业务插件仍分别显式施加主人鉴权；审计、配额、超时并非统一治理。
+  不应把本次确认公共包误称为已完成所有权限治理。
+- 能力 manifest/工具参数已有元数据，缺少的是统一策略目录，而不是完全没有能力声明。
+- 模型回答保真度仍需独立处理：历史上存在编造后端要求、自创确认格式、猜提案状态、
+  改写 Search 来源域名等现象。chatbot/AGENTS.md 本轮没有改动，工具结果不能由模型叙述替代。
+- doc 6 的长篇历史试错未在本轮整理；后续请以本文件当前状态与实际代码为准。
+
+======================================================================
+六、部署、构建与回退记录
+======================================================================
+
+构建顺序（在台式机）：
+1. chatbot/packages/confirmation-core：npm ci --ignore-scripts，npm run build，npm test。
+2. chatbot/plugins/personal-confirmation：npm ci --ignore-scripts，npm run build，npm test。
+3. chatbot/plugins/personal-weather：npm ci --ignore-scripts，npm run build，npm test，npm run plugin:validate。
+两个消费包通过 file:../../packages/confirmation-core 依赖公共包；先构建公共包再构建插件。
+修改时使用已缓存 npm 依赖离线安装，未修改 Host、QQ 适配器或模型权限。
+
+原文件备份目录：
+/home/afrangry/.openclaw/state/development-backups/confirmation-20260908
+包含首次同步前被改动的源码/文档；候选配置也存放于此，权限受限，含凭证的配置不可写入 Git。
+本地保留同一份源码便于审阅；构建、测试和生产运行在台式机。
+删除了旧 Gate 源码对应的 dist/confirmation-gate.js 与 dist/confirmation-gate.d.ts，
+避免源码迁出后遗留同名旧实现；当前调用方统一导入公共包。
+实际配置仅增加 personal-confirmation 的 plugins.allow、plugins.load.paths 和 enabled 条目。
+tools.alsoAllow 仍为原有 15 个工具；未扩大模型工具权限，QQ 访问策略不变。
+启用前先验证独立候选配置，切换时检查原配置未发生并发变化，再原子替换并重启服务。
+原生产配置备份：上述备份目录/openclaw.json.before-confirmation。
+切换时间与原配置摘要：上述备份目录/rollout.json。
+
+回退顺序：
+1. 从备份恢复 personal-weather 原 package.json、package-lock.json 和所有被改动的 src 文件，
+   包括旧 src/confirmation-gate.ts；原测试/锁文件补充备份取自此次修改前一致的远端 HEAD。
+2. 在 personal-weather 安装原锁定依赖并重新构建，不能仅恢复源码后继续用新 dist。
+3. 恢复原配置备份，再重启 Gateway 并检查加载状态。
+4. 新增公共包和确认插件可先保留为未启用文件；不需要删除生产数据或回滚数据库表。
+回退会恢复旧入口及其已知确认阻塞，只用于撤销本次部署；不代表恢复正常确认能力。
+
+======================================================================
+七、需要保留的纠错结论
+======================================================================
+
+- 旧解释“Host 总是在入站钩子之后才解析主人身份”错误：绑定分支实际先解析再调用定向钩子。
+  旧入口的主要问题是当前无绑定场景不可达；已删除相关错误源码注释。
+- 旧 scopesMatch 的 OR 匹配不能泛化为跨账号、跨发送者安全；本轮加入冲突拒绝和无绑定拒绝。
+- 旧“清理过期提案才能消除歧义”不是成立前提：查询原本已经按有效期过滤。
+- message_received 的 fire-and-forget 不能保证异步处理完成后模型才执行；本轮选择实际被等待的 reply_dispatch。
+- 代码、单元测试、Host 加载、真实 QQ 端到端是不同证据，不能互相冒充。
+- 当前 Host engines 接受 >=22.22.3 <23 || >=24.15.0 <25 || >=25.9.0；
+  台式机 Node26.5.1 满足，本地历史 Node22.17 不满足，不能把 Node24 写成唯一可用版本。

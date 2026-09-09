@@ -1,10 +1,10 @@
 kurumi 个人提醒：开发与验收记录
 
-最后更新：2026-08-22
-状态：已归档；提醒核心链路、原地修改、重启恢复和真实 QQ 负向回归均已完成。
+最后更新：2026-09-10
+状态：旧提醒领域的验收记录保留；新增确认入口后的生产完整链路仍待验收。D1 提案到期显示已部署，回归与隔离真实模型验收通过。
 
-现在应该从哪里继续：仅在出现新的提醒需求、实际缺陷，或保留策略到期维护时重新打开本文。
-没有真实需求时不再扩展提醒工作流或通用任务引擎。
+现在应该从哪里继续：按 docs/verification/2026-09-10_文档与现状复核.txt 的 TODO 处理已有缺陷和确认/Cron 验收；该文件兼任持续开发记录。
+当前不扩展提醒工作流或通用任务引擎，不预设拆独立插件。
 
 摘要
 ----
@@ -15,7 +15,7 @@ kurumi 个人提醒：开发与验收记录
 但历史终态不会通过 `state_get` 注入模型上下文。
 
 ======================================================================
-一、顶部 TODO（归档时全部完成）
+一、当前 TODO 与旧领域验收
 ======================================================================
 
 - [x] R0/R1：专用提醒封装、create/state/cancel proposal/commit、TTL/hash/上下文绑定、审计和幂等。
@@ -32,7 +32,11 @@ kurumi 个人提醒：开发与验收记录
   提案不得后台删除；终态提醒建议保留 180 天，提案 90 天，审计 365 天。未来清理必须先备份、dry-run、
   批次事务、稳定 ID 和清理审计。
 
-当前没有未完成的提醒功能 TODO。会话压缩、JSONL 轮换和旧 QQ 测试会话治理不属于本模块，详见
+- [待验收] personal-confirmation → grant → create/update/cancel → 真实 Gateway Cron 的完整链路；旧 R3 结果不替代新入口验收。
+- [D1 已实现] 三类提案增加 expiresAtDisplay（UTC、本地时间、Asia/Shanghai）与“提案确认截止”预览，原 epoch、TTL、payload/hash 不变。
+- [待验证] 新显示字段在完整生产 Agent/QQ 中的表现；隔离模型和后端测试边界见持续开发记录。
+
+会话压缩、JSONL 轮换和旧 QQ 测试会话治理不属于本模块，详见
 `docs/1_bot基础功能开发备忘录.txt`；搜索不属于本模块，详见 `docs/4_受控搜索模块设计.txt`。
 
 ======================================================================
@@ -62,13 +66,18 @@ kurumi 个人提醒：开发与验收记录
 创建：`personal_reminder_propose` 生成 `reminder.create` pending 预览；只有同一私聊明确确认后，
 `personal_reminder_commit` 才注册受管 Cron。
 
+当前确认入口：领域注册存储适配器 → personal-confirmation 接收可信 QQ reply_dispatch → confirmation-core 签发一次性 grant。
+创建、修改、取消均在 reminders.sqlite 内强制消费对应 grant；模型只知道 ID/hash 不能取得授权。
+规范文本为“确认 proposalId=… payloadHash=…”，以本次提案返回的 confirmationInstruction 为准。
+expiresAtDisplay 是显示字段，不是授权输入；“提案确认截止”与提醒触发时间分别呈现，不能混用。
+
 取消：`personal_reminder_cancel_propose` -> `personal_reminder_cancel_commit`，只引用既有提醒 ID；
 删除 Cron 失败时不修改本地取消状态。
 
 修改：`personal_reminder_change_propose` 绑定状态为 scheduled、retry 为 scheduled 且有受管 Cron 的提醒，
 展示旧/新时间和内容，并声明“原地更新、不创建第二条任务”。commit 流程：
 
-1. 复核 proposal TTL、payload hash、私聊上下文、旧内容/时间/job ID 和 retry 状态。
+1. 复核 proposal TTL、payload hash、私聊上下文、旧内容/时间/job ID 和 retry 状态，并在本地事务中验证/消费确认 grant。
 2. 事务保存新本地期望值并写 `reminder.update_requested` 审计。
 3. 只改内容时不访问 Gateway；改时间时只调用
    `cron.update({id: oldJobId, patch:{schedule:{kind:"at",at:<new UTC ISO>}}})`。
@@ -91,8 +100,9 @@ kurumi 个人提醒：开发与验收记录
 - `chatbot/skills/personal-weather/SKILL.md`：何时提案、确认和不落库规则。
 - `state/personal-reminders/reminders.sqlite`：独立提醒库，目录 0700、数据库 0600。
 
-核心表：`reminders`、`reminder_proposals`、`reminder_retry_state`、`reminder_audit_log`。
+核心表：`reminders`、`reminder_proposals`、`reminder_retry_state`、`reminder_audit_log`、`confirmation_proposals`、`approval_grants`。
 `state_get` 只选活动状态；终态、提案历史和审计不作为工具结果返回，因此不会因数据库保留自动进入模型上下文。
+其查询入口会先只读查询 Gateway 并将确定的对账结果写回 Reminder 状态库；不能把它描述为所有存储均完全无写入。
 
 ======================================================================
 五、验证与当前运行事实
@@ -107,12 +117,20 @@ kurumi 个人提醒：开发与验收记录
   openclaw config validate
   openclaw plugins doctor
 
-真实 QQ 已验收：正常创建/投递、取消后新建、原地改时间与内容、Gateway 重启只投递一次、创建/取消重复确认
+旧领域版本真实 QQ 已验收：正常创建/投递、取消后新建、原地改时间与内容、Gateway 重启只投递一次、创建/取消重复确认
 幂等、`/new` 后无有效提案拒绝、Hash 不匹配/过期拒绝，以及 `cron.update` unknown 后状态可见和后续写操作阻断。
 
 2026-08-22 的主模型切换回归：主人 QQ 的“只读查询当前提醒状态”只调用
 `personal_reminder_state_get`，没有创建、修改、取消、proposal/commit 或 Cron 写入；结果为当前无活动提醒。
-这证明 Qwen 前端没有放宽提醒写入边界。此前 R3c.2 的测试夹具已清理，正式审计仍由模块保存。
+这证明该次只读请求没有触发写操作，不能由此证明所有写入边界均安全。此前 R3c.2 的测试夹具已清理，正式审计仍由模块保存。
+
+2026-09-10 D1 回归：Reminder/Planning 针对性 20 项、全业务 15 文件/140 项、构建与插件校验通过。
+两个新增测试覆盖历史 epoch 和跨日本地时间，三种提案显示与 SQLite 一致、截止瞬间仍拒绝、原调度不变。
+新增无业务依赖的 src/time-display.ts，Planning 保留旧导出兼容，Reminder 不依赖 Planning 领域。
+当前阶段模型/部署记录与精确证据路径以持续开发记录的 D1 节为准。
+2026-09-10 01:36:19 CST 重启后 Gateway 健康、两个确认后端及 QQ ready 已核对；生产业务/Cron 计数未变。
+20 项 Host 后端验收与 1 项真实主模型到期显示验收通过；后者只生成隔离草稿，不覆盖完整生产 Agent/QQ。
+持久证据：docs/verification/reminder-expiry-acceptance.json。
 
 ======================================================================
 六、回滚与文档边界
@@ -126,4 +144,4 @@ kurumi 个人提醒：开发与验收记录
 天气/行程：`docs/2_天气模块的开发.txt`；基础人格、记忆、会话治理和未来能力：
 `docs/1_bot基础功能开发备忘录.txt`；受控搜索：`docs/4_受控搜索模块设计.txt`。
 
-后续只有提醒新需求、实际缺陷或保留策略到期维护才重新打开本文；不再把会话或搜索方案复制到这里。
+本文维护 Reminder 的实现状态和验收结果，跨领域 TODO/开发循环由持续开发记录统一维护；会话或搜索问题留在对应文档。

@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 import { afterEach, describe, expect, it } from "vitest";
 
-import { buildConfirmationInstruction, parseConfirmationText } from "./confirmation-gate.js";
+import { buildConfirmationInstruction, parseConfirmationText, recordRegisteredConfirmation } from "@kurumi/confirmation-core";
 import { commitPlanningProposal, proposePlanningChange } from "./planning.js";
 import { ReminderStore } from "./reminder-store.js";
 import { commitReminderProposal, proposeReminderCreate, type ReminderCronScheduler, type TrustedReminderContext } from "./reminders.js";
@@ -26,6 +26,35 @@ afterEach(() => {
 });
 
 describe("Confirmation Gate", () => {
+  it("routes Planning and Reminder across their actual independent stores without confirming both", async () => {
+    const weather = createWeatherStore();
+    const root = mkdtempSync(join(tmpdir(), "kurumi-cross-domain-"));
+    directories.push(root);
+    const reminder = new ReminderStore({ stateDirectory: join(root, "state"), now: () => NOW });
+    try {
+      const planning = proposePlanningChange(weather, { schema_version: 1,
+        request: { kind: "trip.create", destination: { text: "无锡" } } }, SCOPE);
+      const reminderProposal = proposeReminderCreate(reminder, { schema_version: 1,
+        request: { kind: "reminder.create", content: "跨领域确认测试",
+          schedule: { local_date_time: "2026-08-12T20:30", timezone: "Asia/Shanghai" } } }, REMINDER_CONTEXT);
+      expect(planning.ok && reminderProposal.ok).toBe(true);
+      if (!planning.ok || !reminderProposal.ok) return;
+      // Keep fixtures open so the domain commit results can be inspected below.
+      const provider = (id: string, store: WeatherStore | ReminderStore) => ({ id, open: () => ({
+        listInboundConfirmationCandidates: store.listInboundConfirmationCandidates.bind(store),
+        recordInboundConfirmation: store.recordInboundConfirmation.bind(store), close() {},
+      }) });
+      expect(recordRegisteredConfirmation({ channel: "qqbot", conversationId: "qqbot:c2c:gate-owner",
+        messageId: "cross-domain-message", isGroup: false, timestamp: NOW,
+        content: buildConfirmationInstruction(planning.proposalId, planning.payloadHash),
+      }, () => {}, [provider("profile-planning", weather), provider("personal-reminder", reminder)])).toBe("recorded");
+      expect(commitPlanningProposal(weather, { proposal_id: planning.proposalId, payload_hash: planning.payloadHash }, SCOPE)).toMatchObject({ ok: true });
+      expect(await commitReminderProposal(reminder, { proposal_id: reminderProposal.proposalId,
+        payload_hash: reminderProposal.payloadHash }, REMINDER_CONTEXT,
+      { add: async () => { throw Error("must not schedule an unconfirmed reminder"); }, remove: async () => {} }))
+        .toMatchObject({ ok: false, error: { code: "approval_required" } });
+    } finally { weather.close(); reminder.close(); }
+  });
   it("rejects a same-run planning commit until a trusted later inbound message issues a grant", () => {
     const store = createWeatherStore();
     try {
@@ -218,12 +247,9 @@ describe("parseConfirmationText", () => {
 
 describe("Confirmation Gate without a host-resolved owner bit", () => {
   it("commits when the inbound event omits senderIsOwner (LIVE-07-A regression)", () => {
-    // The host builds the inbound hook event before it resolves owner identity,
-    // so senderIsOwner is always absent in production (docs/7 §六 A.1). Every
-    // pre-existing gate test set it explicitly, which is why the suite stayed
-    // green while the real 宿迁 change could never commit. Authorization is
-    // enforced at the commit tool boundary; scope binding is what protects the
-    // inbound side.
+    // The current reply_dispatch adapter binds original message identity to
+    // owner-created proposals. Tool authorization remains a separate boundary;
+    // this test makes no claim about other host hooks' owner-resolution order.
     const store = createWeatherStore();
     try {
       const proposal = proposePlanningChange(store, {

@@ -1,6 +1,9 @@
+import { formatDateTime as formatPlanningDateTime } from "./time-display.js";
+// Preserve the existing planning export for callers and regression tests.
+export { formatDateTime as formatPlanningDateTime } from "./time-display.js";
 import { createHash } from "node:crypto";
 
-import { buildConfirmationInstruction, type ConfirmationScope } from "./confirmation-gate.js";
+import { buildConfirmationInstruction, type ConfirmationScope } from "@kurumi/confirmation-core";
 import { OWNER_SUBJECT_ID } from "./store.js";
 import type {
   CurrentLocation,
@@ -48,6 +51,18 @@ export interface PlanningTimeWindow {
   timezone: string;
 }
 
+export interface PlanningTripDisplay extends TripSummary {
+  /** Presentation in the owner's current Profile timezone, not the trip's original timezone. */
+  displayTimes: {
+    timezone: string;
+    timezoneSource: "profile.currentLocation";
+    departureEarliest: string | null;
+    departureLatest: string | null;
+    arrivalEarliest: string | null;
+    arrivalLatest: string | null;
+  };
+}
+
 export interface PlanningState {
   ok: true;
   schemaVersion: 1;
@@ -67,7 +82,7 @@ export interface PlanningState {
       timezone: string;
     };
   };
-  trips: TripSummary[];
+  trips: PlanningTripDisplay[];
   pendingProposals: PendingProposalSummary[];
   capabilities: {
     stateRead: true;
@@ -190,7 +205,17 @@ export function getPlanningState(store: WeatherStore): PlanningState {
         timezone: preferences.dailyTimezone,
       },
     },
-    trips: store.listTripSummaries(),
+    trips: store.listTripSummaries().map(trip => ({
+      ...trip,
+      displayTimes: {
+        timezone: currentLocation.place.timezone,
+        timezoneSource: "profile.currentLocation" as const,
+        departureEarliest: formatPlanningDateTime(trip.departureEarliestUtc, currentLocation.place.timezone),
+        departureLatest: formatPlanningDateTime(trip.departureLatestUtc, currentLocation.place.timezone),
+        arrivalEarliest: formatPlanningDateTime(trip.arrivalEarliestUtc, currentLocation.place.timezone),
+        arrivalLatest: formatPlanningDateTime(trip.arrivalLatestUtc, currentLocation.place.timezone),
+      },
+    })),
     pendingProposals: store.listPendingProposals(),
     capabilities: {
       stateRead: true,
@@ -769,7 +794,7 @@ function buildProposalPreview(
     `- 交通方式：${formatTransportMode(facts.transportMode)}`,
     `- 到达信息：${formatWindow(facts.arrival)}`,
     "- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。",
-    "- 下一步：主人明确确认后，后续版本才会提供提交能力。",
+    "- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。",
   ];
   if (missingFields.length > 0) {
     lines.push(`- 待补充：${missingFields.join("、")}`);
@@ -794,6 +819,7 @@ function formatMinuteOfDay(minute: number): string {
   const minutes = minute % 60;
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}`;
 }
+
 
 function formatTransportMode(mode: TransportMode): string {
   return {

@@ -24,7 +24,7 @@ import {
   type ConfirmationGrantCheck,
   type ConfirmationProposalRow,
   type ConfirmationScope,
-} from "./confirmation-gate.js";
+} from "@kurumi/confirmation-core";
 
 export const REMINDER_SUBJECT_ID = "owner";
 export const REMINDER_TIMEZONE = "Asia/Shanghai";

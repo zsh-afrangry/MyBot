@@ -1,3 +1,4 @@
+import { scopeFromToolContext } from "@kurumi/confirmation-core";
 import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -8,10 +9,13 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   commitPlanningProposal,
   getPlanningState,
+  formatPlanningDateTime,
   proposePlanningChange,
 } from "./planning.js";
 import { WeatherStore } from "./store.js";
 
+const CONFIRMATION_SCOPE = scopeFromToolContext({ messageChannel: "qqbot", senderIsOwner: true,
+  deliveryContext: { to: "qqbot:c2c:test-owner", accountId: "default" } })!;
 const NOW = Math.floor(Date.now() / 1000);
 const FUTURE_ARRIVAL_EARLIEST = new Date(
   (NOW + 2 * 24 * 60 * 60) * 1000,
@@ -28,6 +32,13 @@ afterEach(() => {
 });
 
 describe("P2 planning slice", () => {
+  it("renders the observed flight on August 15 in Shanghai and handles timezone date boundaries", () => {
+    expect(formatPlanningDateTime(1786753500, "Asia/Shanghai")).toBe("2026-08-15T08:25:00+08:00");
+    expect(formatPlanningDateTime(1786762200, "Asia/Shanghai")).toBe("2026-08-15T10:50:00+08:00");
+    expect(formatPlanningDateTime(1786753500, "America/New_York")).toBe("2026-08-14T20:25:00-04:00");
+    expect(formatPlanningDateTime(1786753500, "UTC")).toBe("2026-08-15T00:25:00+00:00");
+    expect(formatPlanningDateTime(null, "Asia/Shanghai")).toBeNull();
+  });
   it("returns a minimized state with the confirmed Tianhe default", () => {
     const { store } = createStore();
     try {
@@ -72,6 +83,7 @@ describe("P2 planning slice", () => {
       expect(result.derivedEffects).toEqual([]);
       expect(result.missingFields).toEqual(["destination_place", "arrival_time_window"]);
       expect(result.previewText).toContain("不修改地点");
+      expect(result.previewText).not.toContain("后续版本");
 
       const state = getPlanningState(store);
       expect(state.pendingProposals).toHaveLength(1);
@@ -147,12 +159,14 @@ describe("P2 planning slice", () => {
           },
           weather_mode: "switch_at_arrival",
         },
-      });
+      }, CONFIRMATION_SCOPE);
       assert.equal(proposal.ok, true);
       if (!proposal.ok) return;
 
       expect(store.recordInboundConfirmation({
         channel: "qqbot",
+        conversationId: "qqbot:c2c:test-owner",
+        accountId: "default",
         messageId: "planning-confirm-1",
         content: `确认 ${proposal.proposalId} ${proposal.payloadHash}`,
         isGroup: false,
@@ -162,7 +176,7 @@ describe("P2 planning slice", () => {
       const committed = commitPlanningProposal(store, {
         proposal_id: proposal.proposalId,
         payload_hash: proposal.payloadHash,
-      });
+      }, CONFIRMATION_SCOPE);
       assert.equal(committed.ok, true);
       if (!committed.ok) return;
       expect(committed.status).toBe("committed");
@@ -181,13 +195,19 @@ describe("P2 planning slice", () => {
 
       const state = getPlanningState(store);
       expect(state.trips).toHaveLength(1);
+      expect(state.trips[0]?.displayTimes).toMatchObject({
+        timezone: "Asia/Shanghai", timezoneSource: "profile.currentLocation",
+        departureEarliest: null, departureLatest: null,
+        arrivalEarliest: formatPlanningDateTime(Date.parse(FUTURE_ARRIVAL_EARLIEST) / 1000, "Asia/Shanghai"),
+        arrivalLatest: formatPlanningDateTime(Date.parse(FUTURE_ARRIVAL_LATEST) / 1000, "Asia/Shanghai"),
+      });
       expect(state.pendingProposals).toEqual([]);
       expect(store.getEffectivePlace(NOW).source).toBe("current_location");
 
       const retried = commitPlanningProposal(store, {
         proposal_id: proposal.proposalId,
         payload_hash: proposal.payloadHash,
-      });
+      }, CONFIRMATION_SCOPE);
       expect(retried).toMatchObject({ ok: true, idempotent: true, trip: { id: committed.trip.id } });
 
       const database = new DatabaseSync(databasePath, { readOnly: true });

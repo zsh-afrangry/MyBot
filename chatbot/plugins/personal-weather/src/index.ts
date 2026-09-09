@@ -7,7 +7,7 @@ import { callGatewayTool } from "openclaw/plugin-sdk/agent-harness-runtime";
 import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
 
 import { resolvePersonalWeatherConfig } from "./config.js";
-import { scopeFromToolContext, type ConfirmationInboundEvent } from "./confirmation-gate.js";
+import { scopeFromToolContext, registerConfirmationBackend } from "@kurumi/confirmation-core";
 import { asWeatherError } from "./errors.js";
 import { formatWeatherBrief } from "./formatter.js";
 import { reminderStateDirectory, weatherStateDirectory } from "./paths.js";
@@ -395,14 +395,14 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_planning_state_get",
       label: "Personal planning state",
       description:
-        "Read a minimized summary of the owner's weather place, daily brief schedule, saved trips, and pending proposals. Owner QQ private chat only; this tool never changes state.",
+        "Read a minimized summary of the owner's weather place, daily brief schedule, saved trips, and pending proposals. Present trip dates from displayTimes with its timezone; do not calculate dates from epoch seconds. Preserve time precision. Owner QQ private chat only; this tool never changes state.",
       parameters: planningStateParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_planning_state_get",
         label: "Personal planning state",
         description:
-          "Read the owner's minimized weather and travel planning state. This tool is read-only.",
+          "Read the owner's minimized weather and travel planning state. Present trip dates from displayTimes with its timezone, preserving precision; do not calculate dates from epoch seconds. This tool is read-only.",
         parameters: planningStateParameters,
         async execute() {
           if (!isTrustedOwnerPrivateQq(toolContext)) {
@@ -530,14 +530,14 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_reminder_propose",
       label: "Propose a personal reminder",
       description:
-        "Create a typed preview for one future owner-private reminder. It stores only a pending proposal; it does not create Cron, send QQ messages, or change any existing reminder.",
+        "Create a typed preview for one future owner-private reminder. It stores only a pending proposal; it does not create Cron, send QQ messages, or change any existing reminder. Present proposal expiry using expiresAtDisplay; do not calculate it from epoch seconds or confuse it with reminder time.",
       parameters: reminderCreateParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_reminder_propose",
         label: "Propose a personal reminder",
         description:
-          "Create a pending one-time reminder preview. Use an explicit future Asia/Shanghai local date and time; never supply a recipient or Cron expression.",
+          "Create a pending one-time reminder preview. Use an explicit future Asia/Shanghai local date and time; never supply a recipient or Cron expression. Present proposal expiry using expiresAtDisplay; do not calculate it from epoch seconds or confuse it with reminder time.",
         parameters: reminderCreateParameters,
         async execute(_toolCallId, params) {
           const context = trustedReminderContext(toolContext);
@@ -597,14 +597,14 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_reminder_change_propose",
       label: "Propose personal reminder change",
       description:
-        "Create a typed preview to change the content and/or time of one existing owner-private reminder in place. It never creates a second Cron job and requires a separate explicit confirmation.",
+        "Create a typed preview to change the content and/or time of one existing owner-private reminder in place. It never creates a second Cron job and requires a separate explicit confirmation. Present proposal expiry using expiresAtDisplay; do not calculate it from epoch seconds or confuse it with reminder time.",
       parameters: reminderUpdateParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_reminder_change_propose",
         label: "Propose personal reminder change",
         description:
-          "Create a pending owner-private reminder change preview. The existing managed Cron job is updated only after confirmation.",
+          "Create a pending owner-private reminder change preview. The existing managed Cron job is updated only after confirmation. Present proposal expiry using expiresAtDisplay; do not calculate it from epoch seconds or confuse it with reminder time.",
         parameters: reminderUpdateParameters,
         async execute(_toolCallId, params) {
           const context = trustedReminderContext(toolContext);
@@ -664,13 +664,13 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_reminder_cancel_propose",
       label: "Propose personal reminder cancellation",
       description:
-        "Create a pending preview to cancel one known, unexpired owner-private reminder. It does not cancel anything until a separate explicit confirmation commit.",
+        "Create a pending preview to cancel one known, unexpired owner-private reminder. It does not cancel anything until a separate explicit confirmation commit. Present proposal expiry using expiresAtDisplay; do not calculate it from epoch seconds or confuse it with reminder time.",
       parameters: reminderCancelParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_reminder_cancel_propose",
         label: "Propose personal reminder cancellation",
-        description: "Create a pending cancellation preview for one active owner-private reminder.",
+        description: "Create a pending cancellation preview for one active owner-private reminder. Present proposal expiry using expiresAtDisplay; do not calculate it from epoch seconds or confuse it with reminder time.",
         parameters: reminderCancelParameters,
         async execute(_toolCallId, params) {
           const context = trustedReminderContext(toolContext);
@@ -731,10 +731,27 @@ const personalWeatherPlugin = defineToolPlugin({
 const registerPersonalWeatherTools = personalWeatherPlugin.register;
 personalWeatherPlugin.register = (api) => {
   registerPersonalWeatherTools(api);
-  api.on("inbound_claim", (event) => {
-    recordInboundConfirmation(event as ConfirmationInboundEvent);
-  });
   if (api.registrationMode !== "full") return;
+  let unregisterBackends: Array<() => void> = [];
+  api.registerService({
+    id: "personal-domain-confirmation-backends",
+    start() {
+      try {
+        unregisterBackends.push(registerConfirmationBackend({
+          id: "profile-planning",
+          open: () => new WeatherStore({ stateDirectory: weatherStateDirectory() }),
+        }));
+        unregisterBackends.push(registerConfirmationBackend({
+          id: "personal-reminder",
+          open: () => new ReminderStore({ stateDirectory: reminderStateDirectory() }),
+        }));
+      } catch (error) {
+        for (const unregister of unregisterBackends.splice(0)) unregister();
+        throw error;
+      }
+    },
+    stop() { for (const unregister of unregisterBackends.splice(0)) unregister(); },
+  });
   api.registerService(createReminderReconcilerService({ scheduler: createGatewayReminderScheduler() }));
 };
 
@@ -769,44 +786,6 @@ function trustedReminderContext(toolContext: {
   };
   const scope = scopeFromToolContext(toolContext);
   return scope === undefined ? { delivery } : { delivery, scope };
-}
-
-function recordInboundConfirmation(event: ConfirmationInboundEvent): void {
-  // No senderIsOwner check: the host has not resolved owner identity at this
-  // point in dispatch, so the field is always absent (docs/7 §六 A.1). Owner
-  // authorization is enforced at the commit tool boundary; scope binding keeps
-  // a non-owner message from ever matching an owner-created proposal.
-  if (!event.messageId || event.channel !== "qqbot" || event.isGroup || event.replyToIsQuote === true) return;
-  const nowUtc = typeof event.timestamp === "number" && Number.isFinite(event.timestamp)
-    ? Math.max(0, Math.floor(event.timestamp > 10_000_000_000 ? event.timestamp / 1000 : event.timestamp))
-    : Math.floor(Date.now() / 1000);
-  let weatherStore: WeatherStore | undefined;
-  let reminderStore: ReminderStore | undefined;
-  try {
-    weatherStore = new WeatherStore({ stateDirectory: weatherStateDirectory(), now: () => nowUtc });
-    reminderStore = new ReminderStore({ stateDirectory: reminderStateDirectory(), now: () => nowUtc });
-    const inbound = { ...event, timestamp: nowUtc };
-    const weatherCandidates = weatherStore.listInboundConfirmationCandidates(inbound);
-    const reminderCandidates = reminderStore.listInboundConfirmationCandidates(inbound);
-    // A bare confirmation must never commit two domains. The adapters also
-    // reject multiple pending proposals within one domain; this cross-database
-    // check preserves the same ambiguity rule across the plugin boundary.
-    const candidates = [...weatherCandidates, ...reminderCandidates];
-    if (candidates.length !== 1) return;
-    const proposal = candidates[0];
-    if (!proposal) return;
-    if (weatherCandidates.length === 1) {
-      weatherStore.recordInboundConfirmation(inbound, proposal.proposalId);
-    } else if (reminderCandidates.length === 1) {
-      reminderStore.recordInboundConfirmation(inbound, proposal.proposalId);
-    }
-  } catch {
-    // A confirmation adapter failure must not claim or block the inbound turn;
-    // the commit path remains fail-closed until a durable grant exists.
-  } finally {
-    weatherStore?.close();
-    reminderStore?.close();
-  }
 }
 
 function forbiddenResult() {

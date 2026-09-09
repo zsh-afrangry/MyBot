@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { buildConfirmationInstruction, type ConfirmationScope } from "./confirmation-gate.js";
+import { buildConfirmationInstruction, type ConfirmationScope } from "@kurumi/confirmation-core";
 import { OWNER_SUBJECT_ID } from "./store.js";
 import type {
   CurrentLocation,

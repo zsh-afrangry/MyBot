@@ -17,7 +17,8 @@
     "openclaw": ">=2026.5.17"
   },
   "dependencies": {
-    "typebox": "^1.1.38"
+    "typebox": "^1.1.38",
+    "@kurumi/confirmation-core": "file:../../packages/confirmation-core"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

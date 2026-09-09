@@ -52,6 +52,51 @@ async function commitReminderProposal(
 }
 
 describe("personal reminders", () => {
+  it.each([
+    [1787746608, "2026-08-26T12:16:48.000Z", "2026-08-26T20:16:48+08:00"],
+    [1787761008, "2026-08-26T16:16:48.000Z", "2026-08-27T00:16:48+08:00"],
+  ])("renders proposal expiry %s without confusing it with the reminder schedule", async (expiry, utc, local) => {
+    let nowUtc = expiry - 86400;
+    const store = new ReminderStore({ stateDirectory: join(createDirectory(), "state"), now: () => nowUtc });
+    const scheduler = fakeScheduler();
+    try {
+      const created = proposeReminderCreate(store, createInput("2026-08-28T12:00", "到期显示回归"), CONTEXT);
+      expect(created.ok).toBe(true);
+      if (!created.ok) return;
+      const check = (proposal: typeof created) => {
+        expect(proposal).toMatchObject({ expiresAtUtc: expiry, expiresAtDisplay: { utc, local, timezone: REMINDER_TIMEZONE } });
+        expect(proposal.previewText).toContain(`提案确认截止：${local}（${REMINDER_TIMEZONE}）`);
+        expect(Date.parse(local) / 1000).toBe(store.getProposal(proposal.proposalId)?.expiresAtUtc);
+        expect(Date.parse(utc) / 1000).toBe(expiry);
+      };
+      check(created);
+      expect(getReminderState(store).activeReminders).toEqual([]);
+      expect(scheduler.add).not.toHaveBeenCalled();
+      const scheduled = await commitReminderProposal(store,
+        { proposal_id: created.proposalId, payload_hash: created.payloadHash }, CONTEXT, scheduler.value);
+      expect(scheduled.ok).toBe(true);
+      if (!scheduled.ok) return;
+      const updated = proposeReminderUpdate(store, updateInput(scheduled.reminder.reminderId, "2026-08-28T13:00", "修改显示回归"), CONTEXT);
+      const cancelled = proposeReminderCancellation(store, {
+        schema_version: 1, request: { kind: "reminder.cancel", reminder_id: scheduled.reminder.reminderId },
+      }, CONTEXT);
+      expect(updated.ok).toBe(true);
+      expect(cancelled.ok).toBe(true);
+      if (!updated.ok || !cancelled.ok) return;
+      check(updated);
+      check(cancelled);
+      expect(store.getReminder(scheduled.reminder.reminderId)?.scheduledAtUtc).toBe(Date.parse("2026-08-28T04:00:00Z") / 1000);
+      expect(scheduler.add).toHaveBeenCalledTimes(1);
+      expect(scheduler.update).not.toHaveBeenCalled();
+      expect(scheduler.remove).not.toHaveBeenCalled();
+      nowUtc = expiry;
+      expect(await commitReminderProposalImpl(store,
+        { proposal_id: updated.proposalId, payload_hash: updated.payloadHash }, CONTEXT, scheduler.value))
+        .toMatchObject({ ok: false, error: { code: "proposal_expired" } });
+      expect(scheduler.update).not.toHaveBeenCalled();
+    } finally { store.close(); }
+  });
+
   it("creates a hash-bound proposal and schedules it exactly once after confirmation", async () => {
     const { store } = createStore();
     try {
