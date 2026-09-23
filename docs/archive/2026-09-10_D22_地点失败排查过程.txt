@@ -1,0 +1,14 @@
+D22 新增真实用户失败样本与修复计划（待实施）
+样本：2026-09-10 10:45，主人报告已到重庆大学虎溪科学城校区。
+只读核对：生产会话 140263aa-6067-4a9a-9a01-84d89d9fba28.jsonl，第6～10行：先一次 personal_profile_state_get（扬中/revision2/无pending），再一次 personal_profile_change_propose；location.text=重庆大学虎溪科学城校区，administrative_area=重庆市沙坪坝区（模型补入，用户原话未提供）。工具返回 ok=false/code=UPSTREAM_UNAVAILABLE/retryable=false/message=天气服务暂时不可用。最终回复称地理服务挂了、等待恢复。
+实时只读计数仍为 change_proposals8/confirmation_proposals5/approval_grants0/trips1/audit_log5；结合失败发生在创建提案之前，未发现该消息新增提案或事实。没有重复工具调用或 NO_REPLY。
+判定：失败时未写入符合确认边界；用户意图未完成，错误原因解释过度确定。现有通用HTTP错误映射不足以证明服务宕机，对应时间段日志未找到原始地理HTTP状态，暂不判定根因。Profile错误使用天气文案是领域呈现泄漏。lookupPlace调用city/lookup，校区细粒度地点与城市级解析的适配需要核验；不能直接认定校区不存在或静默降级成重庆市。
+下一阶段将此实际失败优先纳入：1. 只读隔离探测原地点/城市对照，保留脱敏HTTP状态和业务状态，区分请求参数、无匹配、权限及服务故障；2. 复核地点精度与Profile契约，提出最小修复，不增加校园定位新功能、不未经确认更改所在地；3. 将错误归因和无写入纳入后端及默认Agent验收；4. 再继续已提交行程补全/修改/删除/含糊修改反例，检查不得以新建冒充更新并回归正常创建确认。按既定循环记录修改、失败和测试结果。
+该消息发生在12:05 D20/D21部署之前，但那两项不修复地理请求失败，不能据部署推断已解决。本次仅核对并登记计划，未修改业务代码或生产事实。
+D22 实施决定：真实地点外发探测被自动审批拒绝，已向主人申请明确授权，尚未执行。先完成不依赖外部请求的错误呈现修复：Profile提案捕获异常使用独立Profile上下文文案；未知错误不再由异常兜底认定地理服务宕机；保留错误码及retryable语义，明确不可由retryable推断恢复时间。先不把HTTP404一概改为地点不存在（可能为路径问题）。增加模拟失败不写入与错误输出测试；真实根因待批准后核验。
+
+D22 当前快照：本地 profile.ts 增加 profileProposalError，由 Profile 持有错误文案并保留已知传输 code/retryable；未知本地异常返回 PROFILE_OPERATION_FAILED，不暴露异常详情或直接归咎上游。index.ts 仅 Profile propose 的捕获点使用该函数，其他领域未改。profile.test.ts 新增三项样本（两种重试标志下无写入、未知异常不误归属/不泄漏）；这些测试尚未执行，不记为通过。git diff --check 通过。
+台式机备份已完成：state/development-backups/profile-errors-20260910/{profile.ts,profile.test.ts,index.ts}。随后 scp 遇 Tailscale 身份复核，源码同步未确认完成；未构建、未重启、未声称部署。认证恢复后先核对文件再测试。本机无该插件 vitest 依赖，实际运行验收仍在台式机。真实地点探测未执行，根因未确定，不能将文案修复视为地点解析修复。
+D22 已获主人明确地点外发授权，Tailscale恢复。真实对照：原location+adm组合HTTP400；去掉adm后HTTP200并返回重庆/永川等5个城市候选；重庆查询正常，沙坪坝+重庆正常且唯一候选。证据 profile-geo-provider-probe.json。不能倒推历史原始HTTP必然同样，但当前原参数可复现请求拒绝，不支持宕机诊断。
+探针初次未展开env占位符，未发出请求；随后urllib未解gzip而误标invalidJson，修正解压后有效结果如上，不把探针失败算服务失败。官方city lookup参数依据：https://dev.qweather.com/docs/api/geoapi/city-lookup/ 。
+实施追加：HTTP及Geo业务400映射REQUEST_REJECTED（不重试），不改404语义；Profile参数说明上级行政区不可编造/拼地址，歧义结果说明城市候选不能当校区定位，不自行降级。增加HTTP/业务400两项回归。先前151项和构建通过；追加修改待重测。

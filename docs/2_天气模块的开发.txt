@@ -1,14 +1,15 @@
 kurumi 天气与出行模块：开发和维护记录
 
-最后更新：2026-08-24
-状态：P1D 临时指定地点查询、P2A/P2B 行程 proposal/commit、P2C-0 规划边界均已完成并完成相应验收；
-Profile P0 当前所在地已完成代码、迁移、离线验证和只读 QQ 验收，但确认式写入发现同轮自提交，等待
-《6_受控变更与二次确认机制》接入后重测。持久地点精确展示的 v4 迁移、离线回归和 QQ `formattedText`
-验收均已完成。地点区间派生、主动预警、图片/OCR 和航班状态尚未完成。
+最后更新：2026-09-10（现行确认机制与验收范围校准）
+D18/D20 当前补充：Planning 时间未知时应省略窗口；领域预览补标题/出发信息和中文缺失项，明确提交后不能修改/补全。单成功提案的最终原文交付由无领域依赖的 controlled-replies 支持；它位于 MVP 容器，不属于天气领域逻辑。提交后模型表述仍需后续反例验收。
+状态：既有天气、行程和 Profile 能力保留；早期同轮自提交已通过公共确认 grant 修复后端门槛。
+9 月 8 日完成隔离确认验收与 Planning displayTimes 日期修复；9 月 10 日 D1 阶段业务回归 140 项通过，D10 后为 142 项。
+D13 已补 Reminder 新入口真实 QQ 正向样本；Profile/Planning 仍待各自生产正向抽验，历史成功不代表所有错误交付已通过。
+D10：Planning/Profile 提案及 pending state 已有 expiresAtDisplay（UTC、本地日期、Profile 时区），不改变 epoch/hash/TTL；142 项回归与完整默认 Agent 截止显示/确认/幂等通过，证据 docs/verification/proposal-expiry-acceptance.json。
+地点区间派生、主动预警、图片/OCR 和航班状态属于暂缓扩展。
 
-现在应该从哪里继续：继续完成 Profile P0 的只读/解析 QQ 验收，同时先修复跨领域二次确认门槛，随后重测
-Profile 写入；再按真实行程需求做 P2B-location/P2C。主动通知、图片/OCR 和航班状态仍分别评审。主模型切换
-不改变本模块的 QWeather、Proposal 或 Cron 边界。
+现在应该从哪里继续：按 docs/verification/2026-09-10_文档与现状复核.txt 处理已有 bug 与验收缺口。
+优先错误交付、重复调用及确认闭环；不因旧扩展 TODO 自动开展 P2B-location/P2C。
 
 摘要
 ----
@@ -33,7 +34,7 @@ Profile 写入；再按真实行程需求做 P2B-location/P2C。主动通知、�
   语义扩展。
 - [-] Profile P0：`current_location` 是个人资料事实而非天气偏好；代码、v2→v3 迁移、离线回归、构建、
   插件与配置验证及只读 QQ 验收已通过。2026-08-23 普通更新请求发生同轮 proposal → commit，故确认式
-  写入尚未验收通过；统一修复见《6_受控变更与二次确认机制》。它只支持受控地点的
+  这是修复前失败记录；当前后端已强制 grant，生产 QQ 正向确认待重测。它只支持受控地点的
   `current_location.set`，不增加 `home_location`、任意资料编辑器或航班到达自动更新。
 - [x] P1 展示精度：已为持久地点增加 v4 `locality_name`，修正县级市/区县被展示成上级城市的问题；
   生产库迁移、构建、120 项离线回归、插件和配置验证已通过。2026-08-24 12:02（Asia/Shanghai）主人 QQ
@@ -43,13 +44,13 @@ Profile 写入；再按真实行程需求做 P2B-location/P2C。主动通知、�
   提交为 `planned`，没有创建 location_period 或切换天气地点。
 - [x] P2C-0：PlanningService/PlanningRepository 与 WeatherStore 事务边界完成；跨表业务策略不再
   塞回纯 SQLite Store。
-- [ ] P2B 维护：把 `buildProposalPreview` 中的“P2A 预览”改成中性标题。
+- [x] D8 展示维护：`buildProposalPreview` 已去除“P2A 预览”，保留“待确认的出行计划提案”；既有 Planning 7 项与构建通过，9 月 10 日已部署。旧提案不重写。
 - [ ] P2B-location/P2C：受控地点目录消歧、proposal discard、确认式 location_period 派生；
   只有确认的到达时刻/窗口才能切换天气地点。
 - [ ] P2D/P3：偏好驱动调度、官方预警、临近降雨和高温规则、事件去重/冷却、安静时段和失败可见性。
 - [ ] P4：图片/OCR、机票隐私保留、可选航班状态 API；单独评审，不把截图原文直接写入长期记忆。
 
-这些 TODO 是当前真实未完成项；已删除历史探查和重复的 P2C-0 实施过程，正式结果见后文实现边界。
+上述扩展项记录未实现范围，不是当前 bug 清单；当前任务顺序以复核记录为准。下文历史验收保留当时范围。
 
 P1D 已确认实施约定与实现结果（2026-08-23）：
 
@@ -80,8 +81,8 @@ Profile P0 与天气的已实现边界（2026-08-24，确认式写入 QQ 验收�
 - `profile_current_location` 是当前所在地的唯一事实来源；迁移 v3 仅一次性以原天河天气默认地点初始化它，
   之后不再与 `notification_preferences.default_place_id` 双写。
 - `personal_profile_change_propose` 只接受 `current_location.set`，先用相同的 QWeather GeoAPI 唯一候选解析；
-  当前 `personal_profile_change_commit` 校验同一主人范围内的 ID/hash 并原子提交/写审计，但尚未能证明确认来自
-  后续一条可信主人消息。首轮 QQ 更新测试因此失败，后续以《6_受控变更与二次确认机制》为准。
+  当前 `personal_profile_change_commit` 校验 ID/hash/TTL/确认 scope，并在事务中检查与消费后续消息 grant。
+  grant 由独立 personal-confirmation 的 reply_dispatch 入口核验原始 QQ 消息签发；新入口生产正向闭环待验。
 - “朝阳区”Profile 地点歧义 QQ 验收已通过：Agent 要求补充北京/长春，后续只读状态确认未创建 pending proposal，
   当前所在地仍为江苏省镇江扬中、revision 为 2。同日不存在地点测试亦已通过，并由后续只读状态确认无
   Profile、行程、提醒、天气设置或 Cron 副作用。
@@ -272,3 +273,7 @@ P1D 已另行完成临时天气查询所需的 GeoAPI 消歧，Profile P0 复用
 - 主模型与 fallback：`docs/5_主模型fallback处理.txt`。
 - 受控变更与二次确认：`docs/6_受控变更与二次确认机制.txt`。
 - QWeather 官方文档：`https://dev.qweather.com/en/docs/`。
+
+D22（2026-09-10）：城市查询HTTP/业务400明确为REQUEST_REJECTED、不重试；Profile错误由Profile文案呈现，未知本地异常不归咎服务。校区查询返回城市候选不能视为校区定位，需澄清而非自行降级。153项及真实接口/隔离库验收通过，13:18部署。未实现校区POI新能力，D23原话复验已通过列明控制与零写入检查；证据及持续TODO见复核记录。
+
+D23：Profile歧义/无匹配标记requiresUserInput；装配根准入Profile提案，独立clarification-gate控制同run/session的后续同工具，防止模型自行创建替代地点提案。156项通过，原话复验第二次尝试被拦截且零写入，13:27部署。不是校区定位功能，也不保证首调语义从不改写；范围及剩余问题以复核记录为准。

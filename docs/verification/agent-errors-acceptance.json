@@ -1,0 +1,651 @@
+{
+  "stage": "D2-default-host-errors",
+  "boundary": "Configured primary; actual default Host agent; synthetic QQ and local collected delivery. No production QQ transport, no services or Cron.",
+  "reports": [
+    {
+      "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-Xcwfhg",
+      "model": "bailian-token-plan/qwen3.7-plus",
+      "mode": "default Host agent; synthetic QQ context; collected delivery; no plugin services",
+      "delivered": [
+        {
+          "payload": {
+            "text": "已执行一次调用，返回失败。实际错误信息：\n\n- **错误码**: `proposal_not_found`\n- **原因**: \"未找到可提交的行程提案。\"\n\n符合预期——该提案 ID 不存在，后端正确返回了 `proposal_not_found`，未触发任何写入或重试。",
+            "replyToTag": false,
+            "replyToId": "aec35eb3-4d1b-4640-a2a9-a03251d21f87",
+            "audioAsVoice": false
+          },
+          "info": {
+            "kind": "final",
+            "assistantMessageIndex": 2
+          }
+        }
+      ],
+      "starts": [],
+      "dispatch": {
+        "queuedFinal": true,
+        "counts": {
+          "tool": 0,
+          "block": 0,
+          "final": 1
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "执行隔离后端验收：只调用一次 personal_planning_change_commit，proposalId=00000000-0000-4000-8000-000000000000，payloadHash=0000000000000000000000000000000000000000000000000000000000000000。该测试提案不存在；如失败，告诉我实际错误码和原因，不要重试，也不要创建提案。"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "toolu_c25d6dde82bf4d6f8ef415ce",
+              "name": "personal_planning_change_commit",
+              "arguments": {
+                "proposal_id": "00000000-0000-4000-8000-000000000000",
+                "payload_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            }
+          ]
+        },
+        {
+          "role": "toolResult",
+          "toolName": "personal_planning_change_commit",
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"proposal_not_found\",\n    \"message\": \"未找到可提交的行程提案。\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "已执行一次调用，返回失败。实际错误信息：\n\n- **错误码**: `proposal_not_found`\n- **原因**: \"未找到可提交的行程提案。\"\n\n符合预期——该提案 ID 不存在，后端正确返回了 `proposal_not_found`，未触发任何写入或重试。"
+            }
+          ]
+        }
+      ],
+      "status": "collected; inspect tool results before treating as acceptance"
+    },
+    {
+      "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-Yy7C0q",
+      "scenario": "hash",
+      "expected": "proposal_hash_mismatch",
+      "model": "bailian-token-plan/qwen3.7-plus",
+      "mode": "default Host agent; synthetic QQ context; collected delivery; no plugin services",
+      "delivered": [
+        {
+          "payload": {
+            "text": "后端已正确拒绝，结果如下：\n\n- **错误码**：`proposal_hash_mismatch`\n- **原因**：「提案内容已变化，请重新查询状态并确认最新预览。」\n\n说明后端对 `proposalId` 与 `payloadHash` 的匹配校验生效——传入全零 hash 与任何实际 pending 提案的内容摘要不一致，因此被拒绝，未发生写入。",
+            "replyToTag": false,
+            "replyToId": "cbfe1ce8-4045-44e5-933f-eccb068e7181",
+            "audioAsVoice": false
+          },
+          "info": {
+            "kind": "final",
+            "assistantMessageIndex": 2
+          }
+        }
+      ],
+      "starts": [],
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "dispatch": {
+        "queuedFinal": true,
+        "counts": {
+          "tool": 0,
+          "block": 0,
+          "final": 1
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "执行隔离后端负向验收：只调用一次 personal_planning_change_commit，proposalId=c2760d1a-79e2-4153-92e2-5decddd8d468，payloadHash=0000000000000000000000000000000000000000000000000000000000000000。本消息不构成提交授权；测试只核对后端拒绝。请告诉我实际错误码和原因，不要重试，也不要创建提案。"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "toolu_d3c2918b2ada4dadb957f15e",
+              "name": "personal_planning_change_commit",
+              "arguments": {
+                "proposal_id": "c2760d1a-79e2-4153-92e2-5decddd8d468",
+                "payload_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            }
+          ]
+        },
+        {
+          "role": "toolResult",
+          "toolName": "personal_planning_change_commit",
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"proposal_hash_mismatch\",\n    \"message\": \"提案内容已变化，请重新查询状态并确认最新预览。\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "后端已正确拒绝，结果如下：\n\n- **错误码**：`proposal_hash_mismatch`\n- **原因**：「提案内容已变化，请重新查询状态并确认最新预览。」\n\n说明后端对 `proposalId` 与 `payloadHash` 的匹配校验生效——传入全零 hash 与任何实际 pending 提案的内容摘要不一致，因此被拒绝，未发生写入。"
+            }
+          ]
+        }
+      ],
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-60alPX",
+      "scenario": "expired",
+      "expected": "proposal_expired",
+      "model": "bailian-token-plan/qwen3.7-plus",
+      "mode": "default Host agent; synthetic QQ context; collected delivery; no plugin services",
+      "delivered": [
+        {
+          "payload": {
+            "text": "后端负向验收结果：\n\n- **错误码**: `approval_required`\n- **原因**: 后端要求下一条主人 QQ 私聊中必须包含明确确认才能提交该提案。返回的 message 要求原样发送：`确认 proposalId=755265ff-b08c-42ee-b650-37048e3144ac payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2`\n\n符合预期：即使 proposal_id 和 payload_hash 格式正确且来自主人 QQ 私聊，后端仍拒绝未显式声明\"确认\"的提交请求，强制走 proposal → 明确确认 → commit 的完整路径。",
+            "replyToTag": false,
+            "replyToId": "780d7dc0-3205-4f43-98c9-427b540ad7c5",
+            "audioAsVoice": false
+          },
+          "info": {
+            "kind": "final",
+            "assistantMessageIndex": 2
+          }
+        }
+      ],
+      "starts": [],
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "dispatch": {
+        "queuedFinal": true,
+        "counts": {
+          "tool": 0,
+          "block": 0,
+          "final": 1
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "执行隔离后端负向验收：只调用一次 personal_planning_change_commit，proposalId=755265ff-b08c-42ee-b650-37048e3144ac，payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2。本消息不构成提交授权；测试只核对后端拒绝。请告诉我实际错误码和原因，不要重试，也不要创建提案。"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "toolu_0c2ebe4139614b618f2366a8",
+              "name": "personal_planning_change_commit",
+              "arguments": {
+                "proposal_id": "755265ff-b08c-42ee-b650-37048e3144ac",
+                "payload_hash": "77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2"
+              }
+            }
+          ]
+        },
+        {
+          "role": "toolResult",
+          "toolName": "personal_planning_change_commit",
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"approval_required\",\n    \"message\": \"需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：确认 proposalId=755265ff-b08c-42ee-b650-37048e3144ac payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "后端负向验收结果：\n\n- **错误码**: `approval_required`\n- **原因**: 后端要求下一条主人 QQ 私聊中必须包含明确确认才能提交该提案。返回的 message 要求原样发送：`确认 proposalId=755265ff-b08c-42ee-b650-37048e3144ac payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2`\n\n符合预期：即使 proposal_id 和 payload_hash 格式正确且来自主人 QQ 私聊，后端仍拒绝未显式声明\"确认\"的提交请求，强制走 proposal → 明确确认 → commit 的完整路径。"
+            }
+          ]
+        }
+      ],
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "status": "acceptance-failed",
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'approval_required'\n- 'proposal_expired'\n"
+    },
+    {
+      "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-owjr5N",
+      "scenario": "expired",
+      "expected": "proposal_expired",
+      "model": "bailian-token-plan/qwen3.7-plus",
+      "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+      "delivered": [
+        {
+          "payload": {
+            "text": "后端负向验收结果：\n\n- **error code**: `proposal_expired`\n- **message**: `该提案已过期，未提交任何行程。请重新创建提案。`\n\n后端正确拒绝了该提交，原因是指定的 proposal_id 对应的提案已过期（或不存在）。未进行重试，也未创建任何提案。",
+            "replyToTag": false,
+            "replyToId": "7506cf5f-8503-4f48-be10-c594b6a5f840",
+            "audioAsVoice": false
+          },
+          "info": {
+            "kind": "final",
+            "assistantMessageIndex": 2
+          }
+        }
+      ],
+      "starts": [],
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "dispatch": {
+        "queuedFinal": true,
+        "counts": {
+          "tool": 0,
+          "block": 0,
+          "final": 1
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "执行隔离后端负向验收：只调用一次 personal_planning_change_commit，proposalId=df0f5123-cf16-4ee4-9972-d343e4579d8f，payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2。本消息不构成提交授权；测试只核对后端拒绝。请告诉我实际错误码和原因，不要重试，也不要创建提案。"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "toolu_a3b6ff2f03784e3998844db8",
+              "name": "personal_planning_change_commit",
+              "arguments": {
+                "proposal_id": "df0f5123-cf16-4ee4-9972-d343e4579d8f",
+                "payload_hash": "77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2"
+              }
+            }
+          ]
+        },
+        {
+          "role": "toolResult",
+          "toolName": "personal_planning_change_commit",
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"proposal_expired\",\n    \"message\": \"该提案已过期，未提交任何行程。请重新创建提案。\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "后端负向验收结果：\n\n- **error code**: `proposal_expired`\n- **message**: `该提案已过期，未提交任何行程。请重新创建提案。`\n\n后端正确拒绝了该提交，原因是指定的 proposal_id 对应的提案已过期（或不存在）。未进行重试，也未创建任何提案。"
+            }
+          ]
+        }
+      ],
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 1,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "expired",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-r3nNm8",
+      "scenario": "unapproved",
+      "expected": "approval_required",
+      "model": "bailian-token-plan/qwen3.7-plus",
+      "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+      "delivered": [
+        {
+          "payload": {
+            "text": "后端返回结果：\n\n- `ok`: `false`\n- `error.code`: **`approval_required`**\n- `error.message`: 需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：确认 proposalId=2c305c21-3b1c-4270-9d33-39d704e8f0ad payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2\n\n拒绝原因：本轮没有附带主人明确确认提交该 proposalId + payloadHash 的授权文本，后端按 proposal 流程要求显式确认，返回 `approval_required` 拦截。未重试，未创建提案。",
+            "replyToTag": false,
+            "replyToId": "9a4fc347-8b07-4f5f-9876-2c30d444eca8",
+            "audioAsVoice": false
+          },
+          "info": {
+            "kind": "final",
+            "assistantMessageIndex": 2
+          }
+        }
+      ],
+      "starts": [],
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "dispatch": {
+        "queuedFinal": true,
+        "counts": {
+          "tool": 0,
+          "block": 0,
+          "final": 1
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "执行隔离后端负向验收：只调用一次 personal_planning_change_commit，proposalId=2c305c21-3b1c-4270-9d33-39d704e8f0ad，payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2。本消息不构成提交授权；测试只核对后端拒绝。请告诉我实际错误码和原因，不要重试，也不要创建提案。"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "toolu_330c2cfa2b30405f80e1e242",
+              "name": "personal_planning_change_commit",
+              "arguments": {
+                "payload_hash": "77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2",
+                "proposal_id": "2c305c21-3b1c-4270-9d33-39d704e8f0ad"
+              }
+            }
+          ]
+        },
+        {
+          "role": "toolResult",
+          "toolName": "personal_planning_change_commit",
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"approval_required\",\n    \"message\": \"需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：确认 proposalId=2c305c21-3b1c-4270-9d33-39d704e8f0ad payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "后端返回结果：\n\n- `ok`: `false`\n- `error.code`: **`approval_required`**\n- `error.message`: 需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：确认 proposalId=2c305c21-3b1c-4270-9d33-39d704e8f0ad payloadHash=77fbcaf3eb33b410da738a02476d05e7f3a3cd2971673c68cba790518ef344a2\n\n拒绝原因：本轮没有附带主人明确确认提交该 proposalId + payloadHash 的授权文本，后端按 proposal 流程要求显式确认，返回 `approval_required` 拦截。未重试，未创建提案。"
+            }
+          ]
+        }
+      ],
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "status": "passed"
+    },
+    {
+      "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-1Dsfe4",
+      "scenario": "profile-hash",
+      "expected": "proposal_hash_mismatch",
+      "model": "bailian-token-plan/qwen3.7-plus",
+      "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+      "delivered": [
+        {
+          "payload": {
+            "text": "负向验收通过 ✅\n\n**实际错误码**：`proposal_hash_mismatch`\n\n**错误原因**：`payloadHash` 与后端存储的提案内容哈希不匹配。\n\n**分析**：\n- 传入的 `payloadHash` 是全零（`000...000`），这是伪造的/无效的 hash 值\n- 后端正确校验了 hash 一致性，拒绝了提交\n- 符合预期的安全边界：只有精确匹配的提案才能被 commit\n\n这正是期望的负向行为——没有有效提案或 hash 不匹配时，后端会拒绝写入，保护数据一致性。",
+            "replyToTag": false,
+            "replyToId": "5fef8d02-364c-4b79-b122-8d297a7f9e76",
+            "audioAsVoice": false
+          },
+          "info": {
+            "kind": "final",
+            "assistantMessageIndex": 2
+          }
+        }
+      ],
+      "starts": [],
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "personal_profile",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "dispatch": {
+        "queuedFinal": true,
+        "counts": {
+          "tool": 0,
+          "block": 0,
+          "final": 1
+        }
+      },
+      "messages": [
+        {
+          "role": "user",
+          "content": "执行隔离后端负向验收：只调用一次 personal_profile_change_commit，proposalId=6c67e811-b97b-409b-b98d-95ed675a1a21，payloadHash=0000000000000000000000000000000000000000000000000000000000000000。本消息不构成提交授权；测试只核对后端拒绝。请告诉我实际错误码和原因，不要重试，也不要创建提案。"
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "toolu_3392f49f6dd241dc8803638c",
+              "name": "personal_profile_change_commit",
+              "arguments": {
+                "proposal_id": "6c67e811-b97b-409b-b98d-95ed675a1a21",
+                "payload_hash": "0000000000000000000000000000000000000000000000000000000000000000"
+              }
+            }
+          ]
+        },
+        {
+          "role": "toolResult",
+          "toolName": "personal_profile_change_commit",
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"proposal_hash_mismatch\",\n    \"message\": \"提案内容已变化，请重新查询资料状态并确认最新预览。\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "负向验收通过 ✅\n\n**实际错误码**：`proposal_hash_mismatch`\n\n**错误原因**：`payloadHash` 与后端存储的提案内容哈希不匹配。\n\n**分析**：\n- 传入的 `payloadHash` 是全零（`000...000`），这是伪造的/无效的 hash 值\n- 后端正确校验了 hash 一致性，拒绝了提交\n- 符合预期的安全边界：只有精确匹配的提案才能被 commit\n\n这正是期望的负向行为——没有有效提案或 hash 不匹配时，后端会拒绝写入，保护数据一致性。"
+            }
+          ]
+        }
+      ],
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "personal_profile",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "status": "passed"
+    }
+  ]
+}

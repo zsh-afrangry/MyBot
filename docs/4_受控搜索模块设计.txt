@@ -1,9 +1,11 @@
 kurumi 受控搜索模块设计（MVP）
 
 首次立项：2026-08-12
-最后更新：2026-08-22
-状态：主人 QQ 私聊中的受控公开搜索已经可用并完成端到端验收；它仍是 MVP，尚未达到可完全归档的
-质量、留存和多账号治理状态。
+最后更新：2026-09-10（现状和历史验收范围校准）
+状态：受控搜索已实现且早期 QQ 成功样本存在；后续出现 INVALID_RESPONSE、重复调用与来源改写，尚未闭环。
+当前优先复现已有问题，质量、留存和多账号治理尚不足以完全归档。
+9 月 10 日 D6：实际 DeepSeek 单条公开查询 completed，现有 parser 返回 3 个有效来源；未复现 INVALID_RESPONSE。证据 docs/verification/search-provider-acceptance.json；单样本不代表长期可用率或完整 Host/QQ 结果保真。
+D7 补充：完整默认 Agent 经 QQ 同款缓冲分发，只调用一次搜索，回复保留全部 4 个来源 URL 且无替换/新增；证据 docs/verification/search-agent-acceptance.json。采用明确保真要求的单样本，QQ 网络未测。
 
 ======================================================================
 一、现在应该从哪里继续
@@ -68,7 +70,7 @@ kurumi 受控搜索模块设计（MVP）
 
 1. 输入限制
 
-- 查询长度上限 200 个字符；固定返回数量 5；不接受调用方指定 Provider、模型、URL、请求头、深度、
+- 查询长度上限 200 个字符；最多返回 5 个来源，不保证每次有 5 条；不接受调用方指定 Provider、模型、URL、请求头、深度、
   重试次数或抓取参数。
 - 搜索请求在进入上游前检查明显敏感标识符（如票号、证件号、OpenID 等）。命中时在本地以
   INVALID_INPUT 拒绝，不提交公开搜索服务。
@@ -77,6 +79,7 @@ kurumi 受控搜索模块设计（MVP）
 2. 身份和工具准入
 
 - 仅主人 QQ 私聊可用；工具自身和 OpenClaw 精确 allowlist 双重限制。
+- D5 已补齐缺失/空白 deliveryContext.to 时的工具级拒绝，返回 FORBIDDEN_CONTEXT 且不调用搜索；53 项回归通过，2026-09-10 02:27:30 已重启部署。证据 docs/verification/search-context-acceptance.json。
 - 群聊没有业务工具权限；陌生人或不满足上下文条件的调用必须失败，而不是降级为通用搜索。
 - 没有第二个 QQ 账号时，代码/夹具的拒绝测试可以证明逻辑，真实非主人 QQ 验收仍列为待办。
 
@@ -85,7 +88,8 @@ kurumi 受控搜索模块设计（MVP）
 - DeepSeek Key 仅通过 SecretRef 读取 gateway.systemd.env，文档、仓库、日志和工具结果不输出 Key。
 - 上游固定为 DeepSeek API 与指定 Responses Search 模型；调用超时 60 秒，响应上限 1 MiB，
   最大并发 1，不做自动重试。
-- 本地配额为每分钟 6 次、每日 50 次。触顶、无 Key、鉴权失败和 402 预算耗尽均必须明确返回，
+- 本地配额为每分钟 6 次、每日 50 次，保存在 SearchQuota 进程内；窗口按 epoch 划分，日界为 UTC，重启后计数重置。
+  它不是跨重启持久化预算。触顶、无 Key、鉴权失败和 402 预算耗尽均必须明确返回，
   不伪造搜索答案。
 
 4. 留存的 MVP 妥协
@@ -122,9 +126,10 @@ OpenClaw 通用 WebSearchOutput 还可表达 results、raw 和 error 等封闭�
 
 - CONFIG_INVALID、AUTH_NOT_CONFIGURED、AUTH_FAILED、FORBIDDEN_CONTEXT、INVALID_INPUT；
 - RATE_LIMITED、QUOTA_EXCEEDED、BUDGET_EXHAUSTED（HTTP 402）；
-- TIMEOUT、UPSTREAM_UNAVAILABLE、INVALID_RESPONSE、INTERNAL_ERROR。
+- TIMEOUT、UPSTREAM_UNAVAILABLE、INVALID_RESPONSE、REQUEST_CANCELLED。
 
-其中 INVALID_RESPONSE 表示上游返回无法安全核验的形状，不应被包装成“找到了来源”；
+其中 INVALID_RESPONSE 表示本地插件无法核验上游结果，不应被包装成“找到了来源”或推断为服务端自己的判定；
+retryable=false 表示本次请求不应自动重试，不证明 Provider 永久故障。D12 已明确公开消息和工具描述，53 项回归及默认 Agent 错误归属复验通过；证据 docs/verification/search-error-attribution-acceptance.json。
 AUTH_FAILED 只说明本次认证失败，不泄露 Key 或请求细节。错误默认不自动改走其他搜索 Provider，
 避免数据来源和计费路径在用户无感知时改变。
 
@@ -148,7 +153,7 @@ AUTH_FAILED 只说明本次认证失败，不泄露 Key 或请求细节。错误
 5. 核对审计只有摘要、没有明文敏感查询或密钥。
 
 ======================================================================
-七、已完成验收（保留正式结论）
+七、历史阶段验收（不代表 9 月 10 日重新通过）
 ======================================================================
 
 | 范围 | 正式结论 |
@@ -167,6 +172,10 @@ AUTH_FAILED 只说明本次认证失败，不泄露 Key 或请求细节。错误
 ======================================================================
 八、MVP 未完成项与重新评审条件
 ======================================================================
+
+- [待复现] 文档 6 后续记录过 INVALID_RESPONSE、非重试错误后重复调用、成功结果漏报和来源域名改写；早期成功样本不覆盖这些问题。
+- [边界] 插件持久化副本脱敏不代表 Host 会话、journal、引用索引全部脱敏；全层仅摘要不是当前已实现契约。
+- 本轮进度、证据和后续安排统一见 docs/verification/2026-09-10_文档与现状复核.txt。
 
 - [ ] Provider 运营确认：由主人确认实际套餐、计费/日配额、Key 轮换与注销流程；文档不记录动态价格。
 - [ ] 留存治理：在改变单机主人私聊边界前，完成会话、trajectory、日志、备份与同步的权限和 TTL 方案。

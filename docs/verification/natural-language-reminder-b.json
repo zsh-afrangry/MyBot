@@ -1,0 +1,196 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-gd3nYH",
+  "scenario": "reminder-proposal",
+  "variation": "natural-b",
+  "expected": "pending",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "主人，已经帮你生成好提醒提案啦～二十分钟后（05:17）提醒你起来活动一下，现在还是待确认状态哦～\n\n确认 proposalId=01eaf819-64df-4de0-a71e-91a9ad5801ab payloadHash=b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78\n\n需要的时候把上面这行发给我确认就好啦～",
+        "replyToTag": false,
+        "replyToId": "63152db3-5469-400f-8bb0-1f51ccfc1a6e",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "input": "帮我安排二十分钟后起来活动一下，先别提交。",
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我安排二十分钟后起来活动一下，先别提交。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_b2446cf76acf41248966279f",
+          "name": "personal_reminder_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "reminder.create",
+              "content": "起来活动一下！二十分钟到了，站起来伸展伸展吧～",
+              "schedule": {
+                "local_date_time": "2026-09-10T05:17",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_reminder_propose",
+      "toolCallId": "toolu_b2446cf76acf41248966279f",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"01eaf819-64df-4de0-a71e-91a9ad5801ab\",\n  \"payloadHash\": \"b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78\",\n  \"status\": \"pending\",\n  \"kind\": \"reminder_create\",\n  \"previewText\": \"主人，已生成一份待确认提醒提案：\\n- 时间：2026-09-10T05:17（Asia/Shanghai，一次）\\n- 内容：起来活动一下！二十分钟到了，站起来伸展伸展吧～\\n- 投递：仅主人 QQ 私聊\\n- 提案确认截止：2026-09-11T04:57:38+08:00（Asia/Shanghai）\\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\\n确认 proposalId=01eaf819-64df-4de0-a71e-91a9ad5801ab payloadHash=b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78\",\n  \"confirmationInstruction\": \"确认 proposalId=01eaf819-64df-4de0-a71e-91a9ad5801ab payloadHash=b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78\",\n  \"canonicalFacts\": {\n    \"kind\": \"reminder.create\",\n    \"content\": \"起来活动一下！二十分钟到了，站起来伸展伸展吧～\",\n    \"schedule\": {\n      \"atUtc\": 1788988620,\n      \"localDateTime\": \"2026-09-10T05:17\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"recurrence\": \"once\"\n    }\n  },\n  \"derivedEffects\": [\n    {\n      \"kind\": \"reminder.schedule\",\n      \"target\": \"owner_qq_private\"\n    }\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789073858,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-10T20:57:38.000Z\",\n    \"local\": \"2026-09-11T04:57:38+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"reminder_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "主人，已经帮你生成好提醒提案啦～二十分钟后（05:17）提醒你起来活动一下，现在还是待确认状态哦～\n\n确认 proposalId=01eaf819-64df-4de0-a71e-91a9ad5801ab payloadHash=b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78\n\n需要的时候把上面这行发给我确认就好啦～"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [
+        {
+          "domain": "personal_reminder",
+          "status": "pending",
+          "n": 1
+        }
+      ],
+      "grants": []
+    }
+  },
+  "callAnalysis": {
+    "attempts": [
+      {
+        "id": "toolu_b2446cf76acf41248966279f",
+        "name": "personal_reminder_propose",
+        "arguments": {
+          "schema_version": 1,
+          "request": {
+            "kind": "reminder.create",
+            "content": "起来活动一下！二十分钟到了，站起来伸展伸展吧～",
+            "schedule": {
+              "local_date_time": "2026-09-10T05:17",
+              "timezone": "Asia/Shanghai"
+            }
+          }
+        },
+        "outcome": "success",
+        "signature": "[\"personal_reminder_propose\",{\"request\":{\"content\":\"起来活动一下！二十分钟到了，站起来伸展伸展吧～\",\"kind\":\"reminder.create\",\"schedule\":{\"local_date_time\":\"2026-09-10T05:17\",\"timezone\":\"Asia/Shanghai\"}},\"schema_version\":1}]",
+        "result": {
+          "ok": true,
+          "schemaVersion": 1,
+          "proposalId": "01eaf819-64df-4de0-a71e-91a9ad5801ab",
+          "payloadHash": "b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78",
+          "status": "pending",
+          "kind": "reminder_create",
+          "previewText": "主人，已生成一份待确认提醒提案：\n- 时间：2026-09-10T05:17（Asia/Shanghai，一次）\n- 内容：起来活动一下！二十分钟到了，站起来伸展伸展吧～\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：2026-09-11T04:57:38+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\n确认 proposalId=01eaf819-64df-4de0-a71e-91a9ad5801ab payloadHash=b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78",
+          "confirmationInstruction": "确认 proposalId=01eaf819-64df-4de0-a71e-91a9ad5801ab payloadHash=b263e5a52cd17b5693a2b9ca9a0fea3d1b9c412eac87e64f38828ae35c724d78",
+          "canonicalFacts": {
+            "kind": "reminder.create",
+            "content": "起来活动一下！二十分钟到了，站起来伸展伸展吧～",
+            "schedule": {
+              "atUtc": 1788988620,
+              "localDateTime": "2026-09-10T05:17",
+              "timezone": "Asia/Shanghai",
+              "recurrence": "once"
+            }
+          },
+          "derivedEffects": [
+            {
+              "kind": "reminder.schedule",
+              "target": "owner_qq_private"
+            }
+          ],
+          "requiresConfirmation": true,
+          "expiresAtUtc": 1789073858,
+          "expiresAtDisplay": {
+            "utc": "2026-09-10T20:57:38.000Z",
+            "local": "2026-09-11T04:57:38+08:00",
+            "timezone": "Asia/Shanghai"
+          },
+          "persistedAs": "reminder_proposals"
+        }
+      }
+    ],
+    "unmatchedResults": [],
+    "totalCalls": 1,
+    "successes": 1,
+    "schemaRejections": 0,
+    "businessRejections": 0,
+    "unknownOrUnmatched": 0,
+    "sameArgumentsAfterFailure": 0,
+    "correctedSchemaSuccesses": 0,
+    "repeatedSuccessRequests": 0
+  },
+  "status": "acceptance-failed",
+  "error": "Proposal reply must display the actual local deadline date and time",
+  "databaseCountsVerified": {
+    "personal-weather/weather.sqlite": {
+      "trips": 0,
+      "change_proposals": 0,
+      "approval_grants": 0
+    },
+    "personal-reminders/reminders.sqlite": {
+      "reminders": 0,
+      "reminder_proposals": 1,
+      "approval_grants": 0
+    }
+  }
+}

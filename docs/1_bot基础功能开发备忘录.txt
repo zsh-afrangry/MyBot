@@ -1,10 +1,13 @@
 kurumi 个人机器人：基础功能开发备忘录
 
-最后更新：2026-08-24
+最后更新：2026-09-10（文档校准；历史验收日期保留）
+D16～D21 当前补充：验收已区分纠错/重试/多次成功，并以数据库校验确认口令；单成功提案由通用呈现支持原文交付。公开提案/提醒 UUID 避开已复现的 Host fc- 误脱敏冲突，不改权限和旧数据。提交后能力虚述等仍见持续 TODO。
 状态：核心 QQ Bot 已稳定运行；天气 P1D 临时地点查询、个人提醒、受控公开搜索和主模型 fallback
 均已有独立模块文档。个人资料 Profile P0 已完成代码、数据库迁移、离线验证及只读 QQ 验收；持久地点的
 精确展示已完成 v4 数据迁移、离线回归与 QQ `formattedText` 验收。其确认式写入在 QQ 验收中暴露同轮自提交，
-统一修复设计见《6_受控变更与二次确认机制》。
+现已接入独立 confirmation-core 与 personal-confirmation，commit 强制消费后续入站确认 grant；D13 已通过真实主人 QQ Reminder 正向确认与后台送达，其他领域不据此视为通过。
+当前唯一 TODO 与开发记录：docs/verification/2026-09-10_文档与现状复核.txt。
+D10 已补齐 Profile/Planning 提案及 pending state 的 expiresAtDisplay；与 Reminder 共用无业务依赖时间显示函数。142 项业务回归、20 项后端确认回归及完整默认 Agent 的截止显示/确认/幂等复验通过，D13 随后已补 Reminder 真实 QQ 后台送达样本。
 
 ======================================================================
 一、当前应从哪里继续
@@ -18,8 +21,8 @@ kurumi 个人机器人：基础功能开发备忘录
 - 主模型、fallback、视觉或模型原生联网：见《5_主模型fallback处理》。
 - 跨领域 proposal/后续确认/commit 控制边界：见《6_受控变更与二次确认机制》。
 
-当前近期目标分为两条：继续完成 Profile P0 中不涉及 commit 的 QQ 验收；并设计、实施跨领域的
-受控变更与二次确认机制，修复同轮自提交后再重测 Profile 写入。Profile 解决主人明确陈述
+当前优先修复已有错误交付、重复调用等问题，并补齐新确认入口的完整 Host/生产验收；不扩充新领域。
+公共确认机制已实施，具体覆盖范围以复核记录和验收 JSON 为准。Profile 解决主人明确陈述
 “我已经到了江苏省镇江市扬中市”后的当前所在地变更；天气只是读取该事实的第一个消费者，不拥有该事实。
 验收完成后、选择第一个大型领域需求（如论文、股票或游戏知识）之前，先做一次架构就绪审计；审计用于
 确认边界和缺口，不以提前建成通用 Router、DAG 或 Workflow Engine 为目标。
@@ -33,9 +36,9 @@ Profile P0 设计与实施状态（先设计完整边界、只实现首个真实
    当前所在地属于 Profile。第一版不添加 `home_location`，也不做任意 key/value 资料编辑器。
 2. [x] 把 `current_location` 定义为受控地点引用及其确认元数据，而不是自由文本、街道地址、精确 GPS 或模型记忆。
    地点先由固定 QWeather GeoAPI 消歧；唯一候选才能进入提案。
-3. [-] 新增窄的 Profile 读取、`current_location.set` 提案和提交路径；当前 ID/hash/TTL/事务/审计可校验
-   提案完整性，却尚不能强制“后续主人消息确认”。2026-08-23 QQ 验收发现模型可同轮 propose → commit；
-   统一确认闸门见《6_受控变更与二次确认机制》，不把它扩张为通用 Task Engine。
+3. [-] Profile 读取、`current_location.set` 提案和提交已实现；当前除 ID/hash/TTL 外还强制检查并消费确认 grant。
+   2026-08-23 的同轮自提交是修复前失败证据；9 月 8 日隔离确认验收已通过，新入口 Reminder 的 D13 后台闭环已通过，Profile/Planning 生产正向仍待独立样本。
+   公共闸门不扩张为通用 Task Engine。
 4. [x] 将“未指定地点的天气”改为读取 Profile 的当前所在地。临时天气查询仍只影响本轮；行程、提醒、Cron
    和长期记忆不因本次 Profile P0 自动改动。
 5. [-] 已完成离线迁移/回归、构建、插件/配置验证，以及只读 Profile 状态 QQ 验收；地点歧义 QQ 验收
@@ -65,8 +68,8 @@ Profile P0 实际实现（2026-08-23）：
   不参与后续双写；Profile 成为当前所在地的唯一事实来源。
 - 主人私聊专用工具为 `personal_profile_state_get`、`personal_profile_change_propose`、
   `personal_profile_change_commit`。唯一地点候选才产生 `current_location.set` pending proposal；当前 commit
-  检查 ID/hash/TTL/已有上下文并可原子更新 Profile、标记 proposal、写入最小审计，但尚未能要求后续入站主人
-  消息的 approval grant。因此不能将其表述为已完成二次确认，修复设计和验收见《6_受控变更与二次确认机制》。
+  检查 ID/hash/TTL/确认范围与 approval grant，原子更新 Profile、消费 grant、标记 proposal 并写入最小审计。
+  grant 由独立 personal-confirmation 的 reply_dispatch 入口核验可信 QQ 原始消息后签发；D13 Reminder 生产后台闭环已通过，Profile 仍待独立正向样本。
 - `getEffectivePlace(now)` 先读取未来可能存在的已确认 `location_period`，否则读取 Profile 的
   `current_location`；因此后续未指定地点天气和每日简报会消费 Profile。临时天气查询、行程提交、提醒、
   Cron、记忆和预计航班到达均不会自动修改 Profile。
@@ -74,7 +77,7 @@ Profile P0 实际实现（2026-08-23）：
   Provider 的 `type` 或 `district` 推断。旧记录在迁移中以明确行政前缀/原 district/完整展示名依次回填，
   新写入受非空触发器保护。简报紧凑标题使用“上级市 + 叶子名”，所以“江苏省镇江扬中”显示为“镇江扬中”，
   不会退化成“镇江”；这不改变 Profile 当前所在地、坐标、QWeather 请求、行程、提醒或 Cron。
-- 本轮已通过 TypeScript 构建、插件验证、配置验证，以及 14 个测试文件共 120 项回归；其中覆盖 v2→v4
+- 2026-08-24 历史阶段通过 TypeScript 构建、插件验证、配置验证，以及 14 个测试文件共 120 项回归；其中覆盖 v2→v4
   数据库迁移、县级市 `type=city` 的保存/展示、唯一地点、歧义/未找到、Hash 拒绝、过期、幂等提交和天气
   有效地点切换。2026-08-24 QQ 对 `personal_weather_get_brief` 的 `formattedText` 验收已通过；固定
   `daily-brief` CLI 复用同一 WeatherService/Formatter 路径。
@@ -128,13 +131,13 @@ MVP 选择：在没有第二、第三个真实组合需求前，不为了抽象�
 四、配置、数据与文档边界
 ======================================================================
 
-- 运行配置：openclaw.json。密钥仅在 gateway.systemd.env 中以环境变量保存，仓库和文档只保留变量名。
+- 运行配置：openclaw.json。systemd 使用 gateway.systemd.env，部署目录也存在 .env；本轮未比较凭证值。仓库和文档只保留变量名。
 - Gateway：用户级 systemd 服务 openclaw-gateway.service；改动配置后先校验，再 daemon-reload/restart。
 - 人格与工具提示：chatbot/AGENTS.md、chatbot/TOOLS.md；业务插件各自拥有实现、测试和本地 SQLite。
 - 运行数据：state/ 下的模块独立目录。不要通过手改 Gateway SQLite 或生产业务库来“修复”状态。
 - 文档职责：
   - 本文只记录系统级边界、跨模块决定和未开始的通用工作；
-  - 2、3、4、5 分别是天气、提醒、受控搜索、主模型 fallback 的唯一实施记录；
+  - 2、3、4、5 分别维护天气、提醒、受控搜索、主模型 fallback 的现行契约；持续 TODO 与增量开发记录统一在复核记录；
   - 临时探查、一次性脚本改造过程和被正式结论替代的草稿不再保留在 docs 中。
 
 ======================================================================

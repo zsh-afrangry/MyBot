@@ -1,0 +1,24 @@
+{
+  "healthOk": true,
+  "qq": {
+    "running": true,
+    "connected": true
+  },
+  "started": "Thu 2026-09-10 13:18:10 CST",
+  "databases": {
+    "personal-weather": {
+      "change_proposals": 8,
+      "confirmation_proposals": 5,
+      "approval_grants": 0,
+      "trips": 1,
+      "audit_log": 5
+    },
+    "personal-reminders": {
+      "reminder_proposals": 18,
+      "confirmation_proposals": 3,
+      "approval_grants": 1,
+      "reminders": 9,
+      "reminder_audit_log": 43
+    }
+  }
+}

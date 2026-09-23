@@ -1,171 +1,163 @@
 Kurumi 现有问题复核、TODO 与开发记录
 
-日期：2026-09-10（Asia/Shanghai）
-现在应该从哪里继续：D1 已部署并完成列明验收；下一阶段 D2 优先核查完整 Host 的错误交付/重复调用，再补生产确认与实际 Cron 验收。
-状态：本文件作为持续维护的唯一工作 TODO 与开发记录；D1 后端修复、回归、隔离真实模型、重启与文档整理完成，完整生产 QQ 表达仍待抽验。
-TODO
-- [完成] 区分最初设计、实际代码、历史验收和当前未知项。
-- [完成] 核对部署和业务库计数；恢复 SSH；确认上轮未同步的文档差异。
-- [待执行] 真实生产确认闭环和现有 Reminder create/update/cancel 的适配器验收。
-- [待复现] 错误结果交付、重复调用、Search 正常响应和来源保真。
-- [D1 已完成] 提醒到期时间增加确定性显示；140 项业务回归、20 项后端验收和1项隔离真实模型显示验收通过。完整生产 QQ 的显示表现仍待抽验。
-- [待整理] 文档 3 已随 D1 校准；其余文档 1/2/4/5/6 仍需按下列核对结果更新现行叙述，历史证据不能自动升级为新版本验收。
-- [暂缓] 新功能和非修 bug 所必需的架构拆分。
-- [完成 D1 文档循环] 修改前记录计划、旧实现失败、新实现通过、部署与证据均已写入；本阶段校准文档 3，最后重新阅读本记录与文档 3。
+最后更新：2026-09-10（D22/D23 已完成列明验收并部署）
+现在应该从哪里继续：D22/D23 地点错误分类及同轮澄清守卫已部署，原话隔离复验已通过列明检查；继续行程能力边界反例，不扩充新功能。
+状态：已完成列明自动验收及真实主人 QQ Reminder 后台送达样本；非主人/所有领域/所有历史 bug 不在该样本覆盖范围。
 
-一、原始目标与需要纠正的判断
+当前 TODO
+- [完成列明样本] D22 地点请求拒绝分类/Profile错误归属及城市候选澄清，153项+真实领域/默认Agent固定参数验收通过；D23原话样本由控制层阻止替代提案，其他话术未全部覆盖。
+- [完成] D16 调用分类：校验纠错/原样重试/多次成功分别统计，五项本地与台式机测试通过，原始失败不改写。
+- [完成批次] D17 四条固定自然话术：2自动通过/2自动失败，其中1自动通过的语义仍不合格；仅1条完整满足本轮要求。
+- [完成列明样本] D18 时间契约、D19 关联观察、D20 单成功提案原文交付、D21 公开UUID误脱敏兼容。
+- [部分闭环] 单成功提案漏截止已通过原文交付复验；行程未知时间已补契约并复验，提交后能力虚述仍未普遍解决。
+- [完成] 文档 1～7 与代码/部署复核；旧诊断和历史验收已与现行契约分开。
+- [完成] D1/D10：Reminder、Planning、Profile 提案截止确定性显示；D8：移除 P2A 内部标题。
+- [完成] D5：Search 缺失/空白私聊目标时拒绝；D12：明确 INVALID_RESPONSE 是本地无法核验，不推断服务端判定或永久故障。
+- [完成列明样本] D2/D11 错误交付及单次调用；D7 搜索 URL 保真；D9/D10 完整默认 Agent 的提案/确认/幂等。
+- [完成隔离验收] D4 实际 Gateway cron.add/update/remove，修改同 ID，重复提交不重复 RPC，取消后任务清空。
+- [后台通过] D13 真实 QQ 提案→确认→落库/调度→到点投递；单次运行、通道 delivered，手机端可见性未另行确认。
+- [完成列明样本] D14 通用完整确认口令回复规则；提醒参数格式说明和校验失败不原样重试。
+- [完成列明样本] D15 行程仅新增的能力边界、未知可选字段省略提示；默认 Agent 三轮复验通过。
+- [保留待复现] 历史 NO_REPLY、Search 上游 INVALID_RESPONSE/来源改写；重复参数请求已在 D14 捕获并补提示，长期表现未确认，不靠改 Host 或换模型宣称修好。
+- [条件不足] 非主人真实 QQ 验收仍需第二账号；fallback 429/5xx/超时等不是本轮已通过项目。
+- [暂缓] 新能力、业务拆包/拆库、通用 Router/DAG/Runtime；只由实际缺陷或重复需求推动抽象。
 
-tp 的核心是认知、领域/基础能力、控制/编排和横切治理分开；事实、偏好、动作分开；搜索显式使用；权限不随依赖自动继承。
-天气是第一个领域案例。tp 同时要求先稳定单元能力，真实重复需求出现后再抽象公共层，暂缓完整 Router/DAG/通用 Runtime。
+工作循环
+读取文档→分析现状→查看代码→找问题→列计划并写入→修改→记录修改→执行测试→记录结果→整理文档→重新阅读，随后继续下一阶段。
+本文件是唯一持续 TODO 与增量开发入口；模块文档维护现行契约。需要产品决定时可以询问、选择推荐方案或跳过并记录。
+为减少旧过程占用上下文，D1～D12 的原始计划、失败过程和部署记录已完整按字节归档到：
+docs/archive/2026-09-10_D1-D12_阶段详细记录.txt。下列阶段摘要和当前 TODO 为继续工作的依据。
 
-文档 1 明确说明 Profile 逻辑上拥有当前所在地，天气只是消费者；MVP 为复用地点目录与 SQLite 事务暂由天气插件承载。
-文档 3 的 R4 明确记录暂不拆独立 Reminder 插件，因为已独立文件/数据库模块化。
-文档 6 明确说明装配根不等于循环依赖，未认为大规模拆分是修复确认 bug 的前提。
+不可丢失的设计判断
+- tp 目标是通用个人助手；天气只是第一个领域，不能围绕天气定义其他能力。
+- 认知、领域能力、控制和横切治理分开；事实/偏好/动作分开，授权不随依赖继承。
+- 文档 1/3 明确允许 MVP 暂共用插件容器；同插件/同数据库不等于逻辑所有权或循环依赖。现在不要求一领域一插件。
+- confirmation-core 不依赖天气或 Host；personal-confirmation 只适配可信入站。领域直接依赖无业务内容的 time-display，不互相导入领域实现。
+- 当前正确入口是 reply_dispatch。旧 inbound_claim 在现有绑定下不可达；旧“先修 Host owner mapper”方案已被替代，不能照归档旧方案改 Host dist。
 
-因此上次把“优先拆 Reminder/业务容器”列作下一步过于靠前。当前应服从主人本轮目标：先把已有 bug 和验收缺口处理好。
-公共确认治理已有真实跨领域复用需求，独立化有依据；它不意味着每个领域必须立即独立插件/数据库。
+运行位置与最后基线
+SSH：afrangry@100.79.1.105；部署根 /home/afrangry/.openclaw；业务工作区 chatbot。
+本地审阅副本 C:/Users/afrangry/PycharmProjects/MyBot。
+Host：/home/afrangry/.npm-global/lib/node_modules/openclaw，2026.7.1-2；台式机 Node 26.5.1。
+服务：systemctl --user 的 openclaw-gateway.service；最后重启 2026-09-10 12:05:55 CST，health ok=true、QQ running/connected=true、两个确认后端已注册。
+主模型 bailian-token-plan/qwen3.7-plus，fallback naiccc/gpt-5.6-terra；搜索固定 DeepSeek。未修改模型、通用工具权限或业务 schema；生产授权仅由 D13 主人真实确认正常签发/消费，没有手动改写。
+Weather：change_proposals=8、confirmation_proposals=5、approval_grants=0、trips=1、audit_log=5，Profile revision=2（江苏省镇江扬中）。
+Reminder 最新：reminder_proposals=18、confirmation_proposals=3、approval_grants=1（consumed）、reminders=9（历史总数）、reminder_audit_log=43；生产 Host cron_jobs=1（日常简报）。
+Reminder 在 D13 前为 proposals=17/index=2/grants=0/reminders=8/audit=39；D13 后新增一份真实测试提案/授权/终态提醒，12:05 重启后计数再核对未变。后续消息仍需重新核对实时状态。
+旧测试会话已按主人此前授权删除；没有再次清空新会话。没有提交或推送 Git。
+D12 当时收尾复核：106 个两端共有源码/测试/文档文件按 LF 统一后的 SHA256 全部一致，git diff --check 通过。D12 后生产上述计数再次核对仍一致。
+首个 D2 测试进程曾忽略 SIGTERM；最终核对原 PID、精确命令与已保存报告后强制结束，该 PID 已消失。后续驱动在保存报告/关闭库后退出，未停止生产 Gateway。
 
-二、逐份文档结论（已阅读，不等于每句话都重新验收）
+阶段摘要与证据（均位于 docs/verification）
 
-1_基础功能：设计边界仍有依据；“commit 尚不强制后续消息 grant”“统一机制待实施”的当前描述已过时。
-  新代码已有强制 grant；生产真实 QQ 正向确认仍待补验。文档中“天气不拥有 Profile”应保留。
+D1 提醒截止显示：三类提案增加 expiresAtDisplay/确认截止预览，TTL/hash 不变。140 项业务、20 项后端、1 项受限真实模型显示验收通过。
+证据 reminder-expiry-acceptance.json；旧实现新回归失败及回退路径在阶段详细记录。
 
-2_天气模块：临时地点只读、Profile 唯一当前地点、行程提交不自动改地点/Cron，与检查的代码边界相符。
-  确认机制状态和 120 项测试计数是旧阶段记录，未包含新公共包/插件及 displayTimes 补丁。
-  buildProposalPreview 的“P2A 预览”仍在 planning.ts（函数内），是尚未完成的小型展示清理。
-  地点区间派生、预警调度、OCR、航班状态属于扩展需求，不能因为列在 TODO 就当作当前 bug。
+D2 默认 Host 错误路径：新增 run-agent-errors.mjs，真实默认 Agent/工具/SQLite；后续使用 QQ 同款缓冲分发。
+5 个成功样本：Planning 不存在/错误 hash/过期/无 grant，Profile 错误 hash；单次调用并报告错误。另保留 1 次过期夹具失败，不计为通过。
+证据 agent-errors-acceptance.json。过期回复曾附加“或不存在”，故错误码通过不等于每句话已严格保真。QQ 网络与旧会话未覆盖。
 
-3_个人提醒：独立 reminders.sqlite、受限 Cron adapter、固定 CLI、unknown/有限重试等设计仍存在。
-  D1 已更新文档 3：区分旧领域验收与新 Gate 验收，补齐 grant 表/消费、到期显示及最新回归；不再称当前所有路径全部完成。
-  9 月 8 日自动验收中的调度器是假实现，没有验证新入口下的真实 cron.add/update/remove 或 QQ 到点投递。
+D3 文档校准：文档 1/2/4/5 修正现行描述，文档 6 改为当前契约，原 1411 行完整保存在 docs/archive/2026-08-30_确认机制历史回归原稿.txt；原稿含失效诊断/方案，只供追溯。
+文档 1～7 按本轮后续修复同步更新。代码/历史验收/当前未覆盖条件分别表述，不把旧成功升级为新版本全通过。
 
-4_受控搜索：独立 personal-search、固定 DeepSeek 数据路径、查询/来源限制和插件持久化脱敏仍有代码依据。
-  文档 6 记录后来的 INVALID_RESPONSE、来源域名改写、Host 多处原文留存，文档 4 没有完整反映这些已知问题。
-  6/min、50/day 是 SearchQuota 的进程内计数，天窗口按 UTC epoch 划分；不是跨重启持久化的日预算。
-  “最多五个来源”比“固定返回五条”准确。插件脱敏不能代表 Host 会话、journal 和引用索引均脱敏。
+D4 真实 Cron：独立 loopback Gateway + 实际参数构造器/RPC/领域事务，合成确认 hook；创建、同 ID 修改、取消三项通过。
+隔离库最终 cron_jobs=0、提醒 1 条 cancelled、3 条 grant consumed、审计 5；子 Gateway 已停止。未运行到点 CLI/QQ 投递，也不是默认 Agent。
+证据 real-cron-acceptance.json。测试组合实际参数构造器与 RPC，未直接调用 index.ts 私有调度器工厂。
 
-5_主模型 fallback：主模型 bailian-token-plan/qwen3.7-plus、fallback naiccc/gpt-5.6-terra 与 9 月 10 日实际配置一致。
-  401 fallback/图片等为文档历史验收，本轮未重新触发；429/5xx/超时等仍不能宣称已全部覆盖。
-  systemd EnvironmentFiles 仍指向 /home/afrangry/.openclaw/gateway.systemd.env；同时存在 .env。
-  测试驱动会读取 .env，未核对两文件凭证是否相同，也未输出任何凭证值。
+D5 Search 目标守卫：旧实现 4 个新增样本都调用了搜索，修复后缺上下文/目标/空白目标返回 FORBIDDEN_CONTEXT 且零外部调用。
+Search 53 项/10 文件通过、构建/配置通过，已部署；未声称真实非主人已利用该缺口。
+证据 search-context-acceptance.json；备份 state/development-backups/search-context-20260910。
 
-6_受控变更：1411 行，旧计划、重复待办、历史结果和当前状态混合，是失真的主要来源。
-  已删除的 personal-weather/src/confirmation-gate.ts 和旧 inbound_claim 方案仍被当作当前实现。
-  “必须修 Host 身份 mapper 后才能继续”的旧方案已被实际可达的 reply_dispatch 插件方案替代；不能照旧方案改 Host dist。
-  LIVE-03B 已记录后端无 grant 拒绝通过，但后文仍笼统说 Planning 后端分支未观察到；不同子项未清楚区分。
-  旧过期提案 ID、逐条人工转发计划均不能直接作为今日测试步骤。
-  历史失败仍需保留可定位的案例；缺少新证据时不能把 LIVE-01～16 整体改为通过。
+D6 Search 上游：单条公开 SQLite 查询，实际 DeepSeek HTTP 200/completed/未截断，现有 parser 保留 3 个有效来源；未复现 INVALID_RESPONSE。
+证据 search-provider-acceptance.json；测试传输观察器复用受信 SDK，替代默认 HTTP 包装，不是完整 Host。仅保存形状/正常化内容，不保存原始 thinking/密钥。
 
-7_架构偏离：确认独立化、日期修复及 24 项自动验收有归档与 JSON 证据，但不能代表全部现有 bug 已处理。
-  本轮将当前入口改为 bug/验收优先，补回文档 6 中未完全闭环的问题，并纠正物理拆分优先的建议。
+D7 完整 Agent Search：真实主模型和 DeepSeek，仅 1 次搜索，4 个 URL 全部原样交付且无新增/替换，声明 Provider 报告、未本地 Fetch；搜索约 52.6 秒。
+证据 search-agent-acceptance.json；只在临时目录加载观察 hook，保留原持久化脱敏。单样本且明确要求 URL 保真，不代表所有自然话术/长期可用率/QQ 网络。
 
-三、实际代码与运行证据
+D8 提案标题：去掉“P2A 预览”，保留“待确认的出行计划提案”；既有 Planning 7 项、构建、配置通过，已部署，不重写旧提案。
+证据 planning-title-acceptance.json；备份 state/development-backups/planning-title-20260910。
 
-代码入口：
-- chatbot/plugins/personal-weather/src/index.ts：14 个业务工具、主人私聊守卫、两个确认后端适配器、Reminder reconciler。
-- chatbot/packages/confirmation-core/src/gate.ts、registry.ts：ID/hash、scope、grant 与跨领域唯一候选。
-- chatbot/plugins/personal-confirmation/src/inbound.ts、index.ts：可信 QQ 原始字段、时效/引用限制、reply_dispatch 接入。
-- chatbot/plugins/personal-weather/src/planning.ts、profile.ts、reminders.ts：领域提案与提交。
-- chatbot/plugins/personal-search/src/index.ts、provider.ts、deepseek-client.ts、quota.ts：受控搜索和进程内配额。
+D9 完整 Agent 正向确认：真实 Agent 首轮 propose，后续合成确认触发实际 hook/grant/commit，trip=1、grant consumed=1，第三轮幂等且快照不变。
+证据 agent-confirmation-acceptance.json；测试库广州天河种子不是生产扬中。首轮暴露 Planning 截止仍是“UTC + epoch”，转 D10。
 
-2026-09-10 约 01:07～01:10 CST 只读观察：
-- OpenClaw 2026.7.1-2，Gateway active/running，进程自 2026-09-08 01:04:07 CST 启动。
-- 自有插件配置包含 personal-weather、personal-search、personal-confirmation；精确 tools.alsoAllow 为 15 项。
-- QQ dmPolicy=allowlist、groupPolicy=disabled。
-- Weather：change_proposals=8、confirmation_proposals=5、approval_grants=0、trips=1、audit_log=5、Profile revision=2。
-- Reminder：reminder_proposals=17、confirmation_proposals=2、approval_grants=0、reminders=8、reminder_audit_log=39。
-- Host cron_jobs=1，表达式 30 10 * * *，Asia/Shanghai，command；最近 9 月 8、9 日定时记录均 ok/delivered。
-  这是 Host 投递状态，未要求主人重新核对 QQ 客户端实际可见性。
-- 最新工具审计仍是 9 月 8 日 personal_planning_state_get，未观察到此后生产正向提交证据。
-- 日志关键词统计未命中 error/failed/INVALID_RESPONSE 等；没有新相关调用，不能由安静日志证明旧问题已消失。
-- 两端按 LF 统一换行比较：105 个源码/配置描述/测试/文档文件一致；唯一内容差异为 doc7，另缺 9 月 8 日归档。
-  这是同步前快照，与上轮 SSH 中断一致；非全盘文件或生产 dist 完整性审计。
+D10 补齐 Planning/Profile 截止：propose 和 pending state 增加 expiresAtDisplay，采用当前 Profile 时区；三个领域直接复用 formatTimestamp，未改冻结 payload/hash/TTL。
+新增 2 个跨日期回归在旧实现失败；修复后 142 项业务、20 项后端通过，构建/配置通过。默认 Agent 正确显示本地日期/时区并继续确认/幂等，生产已部署。
+证据 proposal-expiry-acceptance.json；备份 state/development-backups/proposal-expiry-20260910。曾有新增测试类型检查失败，修正后构建通过，原失败记录保留。
 
-既有证据：docs/verification/confirmation-acceptance.json；chatbot/tests/acceptance/README.md。
-20 项后端 + 4 项真实模型测试覆盖已列用例，使用隔离 SQLite、合成 QQ 入站和受限模型循环。
-未测试完整生产 Agent/fallback/QQ 网络，Reminder 使用假调度器。初次只读复核未重跑；D1 后续重跑了 20 项后端验收，未重跑旧 4 项 Planning 模型测试。
+D11 Search 不可重试：固定无效响应经过实际 Provider/parser，默认 Agent 只调用一次并报告 INVALID_RESPONSE/retryable=false；没有 DeepSeek 请求。
+证据 search-error-agent-acceptance.json。模型曾误写“服务端认为响应不可核验”，故仅码/次数通过，归属转 D12。
 
-四、当前卡点与修复优先级
+D12 Search 错误归属：消息明确“本地搜索插件无法核验上游返回的结果”，工具说明不把 retryable=false 推断为 Provider 永久故障；不改变 parser/code/重试策略。
+53 项 Search、构建/配置通过；同一错误默认 Agent 单次调用，正确说明本地校验。03:01:29 已重启健康。
+证据 search-error-attribution-acceptance.json；备份 state/development-backups/search-error-message-20260910。未宣称所有模型解释错误均被消除。
 
-A. 验收阻塞：生产端确认闭环未证实。
-先核对真实适配器输入与默认 Agent 的工具上下文，补齐 Profile/Planning/Reminder 的确认链路和对应后端证据。
-生产验收要检查 proposal、grant、commit、审计/领域结果；提醒进一步核对受管 Cron，避免把“已登记”当作“已送达”。
-优先在隔离环境覆盖完整 Host 路径，真实 QQ 仅补适配器/投递所需的最少抽验，不要求主人逐条代发大批回归。
+测试运行说明：chatbot/tests/acceptance/README.md。
+主模型外发授权：主人已明确允许现有主模型接收 AGENTS/SOUL/TOOLS 和合成测试消息；首次自动审批拦截已解除，不是当前阻塞。
 
-B. 历史功能缺陷：待复现，不冒充今日已经复现。
-- LIVE-02C：工具报错后仅出现通用 failed 通知，模型 NO_REPLY，未把实际错误交付给用户。
-- LIVE-03F：实际调用工具后却声称没有调用；LIVE-03H 个例恢复不能证明这一类问题已修复。
-- LIVE-09-B/02B/15E：在规定单次调用或非重试错误后重复工具请求；应检查真实 Host 工具循环和错误语义。
-- LIVE-04B：D1 已给 Reminder 三种提案增加到期显示，后端与隔离主模型验收通过；完整生产 QQ 表达仍待抽验。
-  Planning 的 displayTimes 只针对行程展示；两处当前共用无业务依赖的 time-display.ts。
-- LIVE-15E：Search 连续 INVALID_RESPONSE，以及成功回复改写来源域名。需先区分上游形状、严格 parser 与模型表达。
-  没有原始响应/复现证据前，不直接放宽 parser、不判定 Provider 宕机、不换模型或搜索 Provider。
+D13 真实 QQ 样本（已完成后台闭环）
+首轮仅一次 personal_reminder_propose，pending，无新授权/提醒/Cron；提案确认截止与提醒时间分开且正确。真实后续确认仅一次 commit，personal_reminder 授权恰一条 consumed/accepted。
+提案 98e8ee1c-6f24-429b-83e8-94b8899235c7，提醒 6b5d0365-30b0-4128-b5a4-06f271a6498c，Cron bdb5aa81-c6d8-4084-b49d-84f29c7c1a04。
+03:49:00.003 触发固定 command，1642ms 完成，唯一运行 ok/delivered；03:49:34 对账写回 delivered。一次性 Cron 自动移除，总数回到 1（日常简报）。无重试，无手动数据库授权或清理。
+最新 Reminder：proposals=18、confirmation_proposals=3、approval_grants=1(consumed)、reminders=9、audit=43；Weather 各表数量与原基线相同。历史终态/审计保留。
+证据 docs/verification/qq-confirmation-acceptance.json。后台通道送达不等同于手机可见性；主人尚未另外确认到点消息可见。
+首轮可用性缺口：模型拆列 ID/hash，没有原样交付完整 confirmationInstruction，转 D14。
 
-C. 已知维护项与边界。
-- “P2A 预览”旧标题：源码仍在，低优先级展示问题。
-- Host 原文留存：文档 4 接受单机 MVP 会话/trajectory 留存，文档 6 更强的“所有层只存摘要”验收要求与其冲突。
-  先明确数据层与要求适用范围，再判定应修复的实际违反项；9 月 8 日只清理 sessions，不等于已完成全 Host 留存治理。
-- QWeather 旧 UPSTREAM_UNAVAILABLE 后已有成功地点提案及持续简报，不能直接当作今天仍阻断。
-- 非主人真实 QQ 测试仍缺第二账号；代码/模拟上下文测试不替代真实通道认证。
+D14 完成：完整口令交付与参数错误提示（03:55:55 重启部署）
+AGENTS.md 增加跨领域完整 confirmationInstruction 原样单独交付规则，展示不代表授权；增加 schema 失败不得原样重试规则。index.ts 为提醒 create/update 的 local_date_time 补明确 YYYY-MM-DDTHH:mm 无秒/偏移说明。未改变校验、权限、存储、payload、hash 或 Host。
+首次提醒隔离样本两次相同带秒参数被 Host 拒绝，第三次修正后只生成一份 pending；完整口令正确，但单次调用断言失败。证据 confirmation-instruction-reminder-initial.json；保留失败，不算通过。
+补充参数说明后 reminder-proposal 单次成功、完整口令、无 grant/reminder/调度调用；confirm 普通仅提案话术也完整交付口令，后续提交与重复确认保持幂等。证据 confirmation-instruction-reminder-acceptance.json、confirmation-instruction-planning-acceptance.json。构建与配置检查通过，重启后 health=true、QQ ready、两个确认后端已注册。
+备份 state/development-backups/confirmation-instruction-20260910；本地未保存 dist（原目录不存在），以台式机构建产物为部署依据。只验证列明模型样本，不保证所有重复调用已消除。
 
-五、下一阶段的具体做法与结束标准
+D15 完成列明样本：行程能力边界与可选参数
+planning.ts 当前只支持 trip.create。D14 回复曾无依据承诺“修改提案”；AGENTS 明确不能修改/删除已提交行程、不能以新增冒充更新、不能继承提醒的修改能力。没有新增业务功能。
+首次复验（planning-capability-initial.json）给未提供的可选 departure/arrival 填空字符串，Host 拒绝后模型正确省略；两次调用未满足驱动严格单次断言，未进入提交阶段。该有效纠错不同于 D14 原样重试，失败保留。
+补充可选字段直接省略规则后，planning-capability-acceptance.json：仅一次 propose、完整口令、后续 commit 成功、重复确认幂等，未承诺已有行程修改。人工检查补充于自动 SQL/口令断言；没有自动语义评分器。
+04:01:06 重启部署；与 D14 共用原始备份 state/development-backups/confirmation-instruction-20260910。规则是模型引导，权限仍由后端严格控制。
+残余边界：该回复仍有“后续地点消歧功能完成后单独处理”的未来表述，不视为已授权开发计划或已支持自动联动。此类表达需后续自然话术样本定量核对，不因一个通过样本宣称能力幻觉全部解决。
 
-1. 按本清单将 doc1～6 的已过时现行叙述替换为准确状态，保留必要历史证据和未覆盖条件。
-2. 建立现有 bug 的最小复现用例：先确认链路与错误交付，再到期时间和 Search；每项保存回复/工具/SQL/调度证据。
-3. 仅在复现明确后修改对应层；确定性业务校验留在后端，不能靠反复换话术或手工改生产数据获得通过。
-4. 每阶段构建/回归、部署后重启并核对加载，再更新正式结果。无需因文档修改重启生产服务。
-5. 结束标准：当前已有能力的列明缺陷均有修复验收或明确的未解决边界，文档状态与证据一致；不以新增功能数量或拆包数量衡量。
+D15 当时复核：04:01 重启后 health=true、QQ ready、两个确认后端均注册；生产 Reminder/Cron 计数与 D13 终态一致。git diff --check 通过；已重新完整阅读本记录。
 
-以上第一至五节为初始只读复核结果；后续修改与验收由下面的阶段记录更新。
+D16 完成：调用分析与状态验证
+call-analysis.mjs 按 ID/唯一旧顺序配对，区分 schema 纠错、业务拒绝、原样重试、多次成功和未知结果；不从工具成功推断写入。五项本地及台式机测试通过。原失败记录不改写。驱动允许有界 schema 纠错，但保留单一成功、pending/事实/授权/跨域检查。
 
-六、工作循环与阶段 D1：提醒提案到期时间
+D17 完成有限自然话术批次，发现新缺口
+natural-language-reminder-a.json 完整满足该样本要求；planning-a 两次业务拒绝、无写入；reminder-b 漏确认截止、只有 pending；planning-b 自动通过确认/幂等但仍承诺补全，人工语义不通过。四份报告含独立 SQLite 行数。2/4 仅为自动断言结果，不是可靠率或两项完整通过。
 
-工作约定（主人本轮确认）：读取文档 → 分析现状 → 查看代码 → 找到问题 → 列出并写入计划 → 修改代码 → 记录修改 → 测试 → 记录测试结果 → 整理该部分文档 → 再次读取。
-方案选择由当前缺陷与实际依赖推动；需要产品决定时才征求意见，其余选择推荐方案并记录理由，不自动要求一领域一插件。
+D18/D19：时间契约补齐、回复层观察
+Planning schema 描述说明未知时间省略、带时区 ISO/31天范围；propose/commit 描述明确仅新增。原两话术复验不再编造时间，null 时间/确认/幂等通过，但提交后能力虚述仍出现，未关闭该问题。planning-contract-a/b.json 保留结果。
+实际 Host QQ 同款分发中 after_tool_call 与 reply_payload_sending 具有相同 runId/sessionKey；只读观察插件留在隔离测试，不部署生产。
 
-D1 分析与顺序调整：
-- 重新读取本文、tp2、文档 3 和 Reminder 三种提案的返回代码。历史 LIVE-04B 的原始 epoch 正确、模型换算错误。
-- 修改前三种提案都只返回 expiresAtUtc 数值，预览没有确定性的到期日期；Planning 的 displayTimes 不覆盖这里。
-- 选择先完成这个可独立验证的小缺陷，以便后续确认验收使用完整预览；不把它当作生产确认入口已验收。
+D20 完成限定范围的提案原文交付
+controlled-replies.ts 是当前 MVP 容器的通用呈现支持，不导入天气/行程/提醒/授权存储；装配根显式准入五个现有提案工具。单一已观察工具完成事件、成功 pending、有效预览、同 run/session、QQ final 且无先前输出时交付后端 previewText，保留其他 payload 字段。TTL 5分钟/容量256；混合、失败、缺字段、媒体、分段不改写，不取消消息、不签发授权、不改 Host。
+Planning 领域预览补标题/出发信息，缺失项改中文，并明确提交后不能修改/补全；冻结 payload/hash 不变。controlled-reply-planning-acceptance.json 证明最终原文/数据库口令/确认/幂等；这次提交回复正确，但不代表能力虚述普遍解决。
+新增6项边界测试；首次 strict optional 类型构建失败已修正，完整148项通过，预览调整后14项相关复验通过。初次 Reminder 自动判定错误的教训见 D21。
 
-D1 已执行方案（修改前写入，以下步骤均已完成其列明范围）：
-1. 在现有业务插件内部复用无业务依赖的时间格式化函数：从 planning.ts 提取既有格式化逻辑，保持其导出兼容；不让 Reminder 导入 Planning 领域。
-2. Reminder 三种成功提案增加 expiresAtDisplay（明确 UTC、Asia/Shanghai、带偏移的本地时间），保留 expiresAtUtc、原始 TTL 和冻结 payload/hash。
-3. 三种预览明确标注“提案确认截止”，与实际提醒触发时间分开；相关工具描述要求采用返回显示值。
-4. 用历史 epoch=1787746608（UTC 2026-08-26 12:16:48；上海 20:16:48）和跨 UTC/本地日期的样本验证。
-5. 验证 create/update/cancel 均返回一致显示，显示时间往返对应数据库 expires_at_utc；只生成提案不调用调度，边界时刻仍按旧 TTL 拒绝。
-6. 台式机保存修改前源码，先记录新回归在旧实现下失败，再修改实现；运行相关测试、完整业务回归、构建/插件验证及现有 20 项后端验收。
-7. 部署后重启 Gateway 并核对加载/数据库基线；结果写回本文和文档 3，最后重读。真实模型与 QQ 表达另记实际覆盖程度。
+D21 完成公开 UUID 与 Host 脱敏的兼容修复
+实际 Host 模式 (fc-[A-Za-z0-9]{10,}) 误脱敏 UUID 子串，造成不可用口令；固定非敏感 UUID 可独立复现。初次 controlled-reply-reminder-acceptance.json 保留 status=passed 原判定，但 overallStatus=failed-reference-integrity，绝不算通过。
+confirmation-core/public-id.ts 仅为新公开 proposal/reminder ID 做加密随机 UUID 拒绝采样，避开 fc-，最多16次后抛错；无 Host 依赖，不关闭脱敏、不改 schema/hash/旧记录，内部 grant ID 不变。生产既有提案冲突计数0。
+验收驱动新增真实 SQLite proposal_id/hash 与工具/最终口令交叉断言，防止“工具和回复一起错却通过”。public-id-redaction-acceptance.json：固定序列与256个新ID通过实际 Host 脱敏器。public-id-build-test.log：核心14项、业务148项及构建通过。
+controlled-reply-reminder-fixed.json：原漏截止话术复验通过，最终预览及数据库口令一致。非单调用纠错仍单独检查字段/口令，不以严格原文条件混淆纠错质量。
 
-D1 当前不涉及：业务拆库、公共 Runtime、模型切换、生产授权记录或 Cron 变更；不删除会话。
+部署与后续入口
+12:05:55（Asia/Shanghai）已重启，health=true，QQ running/connected=true，确认后端注册；生产计数未变，证据 d16-d21-deployment.json。未提交/推送 Git，未改 Host、生产配置权限、旧会话或业务事实；隔离测试没有发送 QQ。
+备份：state/development-backups/call-analysis-20260910、planning-contract-20260910、controlled-replies-20260910、public-id-20260910。
+当前剩余：提交后/无工具回合仍可能虚述行程修改能力；混合工具或分段场景不在原文替换范围；NO_REPLY、来源改写、fallback故障矩阵和非主人真实QQ未全部覆盖。D20 新呈现尚无生产真人 QQ 抽验，不能把隔离分发等同于完整网络验收。
+下一阶段优先做“已提交行程后请求补全/修改”的有限隔离反例，核对是否错误调用创建工具及数据库有无新记录；再决定结果呈现或工具契约的最小修复。不扩展行程修改功能，不继续堆提示词宣称解决。
+阶段完整过程已归档 docs/archive/2026-09-10_D16-D21_阶段详细记录.txt；归档 SHA256：a88a1117fe5f084b0ccb84f9469e1d660b436c3a24044e8201414c2693f11de4。
 
-D1 复现与修改记录：
-- 台式机 01:28:59 新增的两个回归在旧实现下均失败：缺少 expiresAtDisplay，原 expiresAtUtc 正确；这证明输出契约缺口，不冒充重新复现了历史模型错误。
-- 修改 reminders.ts：三类成功提案增加显示字段与“提案确认截止”预览；不写入冻结 payload，不改变 TTL/hash 或调度时间。
-- 新增 src/time-display.ts：迁入已有确定性时区格式化函数；planning.ts 保留原 formatPlanningDateTime 导出兼容，Reminder 直接依赖无领域内容的函数。
-- index.ts：三种提案的静态和实际工具描述均要求使用返回的显示字段；台式机回归已通过。
-- 源码备份：/home/afrangry/.openclaw/state/development-backups/reminder-expiry-20260910（按仓库相对路径保存）。
-- 失败日志：/home/afrangry/.openclaw/state/acceptance/reminder-expiry-20260910/before.log。
-- 针对性 Reminder/Planning 20 项、全业务 15 文件/140 项已通过；TypeScript 构建和插件校验通过。
-- 补充验收已完成：tests/acceptance/run-reminder-expiry.mjs 用真实主模型生成一条隔离提醒草稿，逐字核对显示字段并与测试库 epoch 对账。只暴露 propose，不开放 commit 或调用调度；仍不是完整生产 Agent/QQ 验收。
+最终整理：15 个本轮关键源码/测试/记录按 LF 标准化的两端 SHA256 核对一致，git diff --check 通过；已完整重读并删除 D15 的失效“下一阶段”计划，继续入口统一为顶部当前 TODO。
 
-D1 最终结果与部署：
-- 旧实现两个新增样本失败；修复后 Reminder/Planning 针对性 20 项、全业务 140 项、现有 Host 后端验收 20 项通过。针对性 20 项包含在 140 项内，不重复相加。
-- 真实主模型 bailian-token-plan/qwen3.7-plus 的 1 项显示验收通过：只调用一次 personal_reminder_propose，正确保留 UTC、本地截止时间和时区；测试库只有 pending 草稿，无 grant、提醒实体、领域审计或生产 Cron。
-- TypeScript 构建、personal-weather 插件验证及生产配置校验通过。
-- 2026-09-10 01:36:19 CST 重启 openclaw-gateway.service；active/running，Gateway health ok=true，确认后端 personal-reminder/profile-planning 均注册，QQ ready 日志可见。
-- 重启前后 Weather（proposal=8、确认索引=5、grant=0、trip=1、audit=5、Profile revision=2）、Reminder（proposal=17、确认索引=2、grant=0、reminders=8、audit=39）和 Host Cron=1 均一致。
-- 持久证据：docs/verification/reminder-expiry-acceptance.json，含旧/新测试日志、后端 SQL 快照、脱敏模型工具/回复、生产前后计数与启动检查。
-- 原始后端报告：state/acceptance/kurumi-acceptance-w0seMi/report.json；模型报告：state/acceptance/kurumi-acceptance-E32jx4/reminder-expiry-report.json。
-- 原始日志目录：state/acceptance/reminder-expiry-20260910。证据 JSON 已取回本地，未保存密钥或原始 Provider 思考块。
-- 回退：从源码备份恢复 reminders.ts、planning.ts、index.ts、reminders.test.ts；重新构建/验证后重启。新增 time-display.ts 可暂留为未引用文件；不回滚业务数据。
-- 文档 3 已同步当前实现与验收范围；文档 7 保留入口。D1 未变更模型配置、数据库 schema、Cron、权限或会话历史，没有提交/推送 Git。
-
-七、下一阶段 D2（尚未开始实施）
-
-优先问题：LIVE-02C 的错误结果漏报/NO_REPLY，以及 LIVE-09-B/02B/15E 的重复工具请求。
-先重读本记录和文档 6 的对应案例，再检查实际 Host 工具结果 → 默认模型回合 → 最终投递路径。
-现有 model-driver 手工循环不覆盖该路径，不能用它直接宣布 Host 的 NO_REPLY 问题已复现/修复。
-先寻找可运行的完整 Host 隔离入口、在测试库制造无副作用的固定失败，核对错误码、调用次数、最终回复和 SQL。
-若需要真实 QQ 消息才能验证最后一段，集中为最小抽验请求给主人；不先改 Host dist、不先更换模型或放宽错误/权限规则。
-确认问题层级后再写具体修改方案。生产正向确认、真实 Cron、Search 和其余文档校准仍按上方 TODO 保留。
+D22 完成列明修复、验收与部署
+真实主人10:45样本：读取Profile后只调用一次propose，UPSTREAM_UNAVAILABLE/retryable=false，未写入；模型将其解释为服务挂了。当前原参数复现HTTP400；移除模型补入的adm后HTTP200但返回重庆及周边城市候选；沙坪坝+重庆返回唯一候选。不能倒推历史HTTP必然相同，但当前证据不支持宕机。地点外发已获主人明确授权，Tailscale已恢复。
+修复：qweather-client HTTP/业务400返回REQUEST_REJECTED且不自动重试；Profile自行持有错误说明，未知本地异常不归咎上游、不泄漏详情；不改404语义。参数契约要求行政区有用户依据、不拼完整地址；歧义说明不能把城市候选当校区或自行降精度。没有新增POI能力、替换Provider、拆插件、改权限或绕过确认。
+代码：personal-weather/src/{profile.ts,index.ts,errors.ts,qweather-client.ts}；回归profile.test.ts/qweather-client.test.ts。153项测试、构建、配置通过。真实受保护客户端+隔离SQLite三样本通过：原参数拒绝零写入；校区歧义零写入；沙坪坝仅pending、Profile revision及grant不变。默认Agent固定参数错误样本单次调用/正确错误码/零写入通过；人工检查仍有把本地核对建议称“服务提示”的轻微归属不准，不宣称所有表述已保真。
+证据：profile-geo-provider-probe.json、profile-geo-domain-acceptance.json、profile-geo-agent-acceptance.json、profile-errors-build-test.log、profile-geo-deployment.json（均docs/verification）。脚本在chatbot/tests/acceptance/{probe-profile-geo.py,run-profile-geo.mjs,run-agent-errors.mjs profile-geo}；官方接口依据 https://dev.qweather.com/docs/api/geoapi/city-lookup/ 。探针曾未展开env、未解gzip，属于探针问题，纠正后才使用结果，详录归档docs/archive/2026-09-10_D22_地点失败排查过程.txt。
+13:18:10 Asia/Shanghai已重启，health/QQ running/connected均true，生产Weather8/5/0/1/5、Reminder18/3/1/9/43均未变。备份state/development-backups/profile-errors-20260910。未提交或推送Git。真实主人所在地未改；当前校区精确定位并未实现。
+D22后续自然话术复验及其暴露问题已转D23闭环；其他待测范围见下文。
+D23 完成同轮澄清守卫与原话复验（13:27:12部署）
+原自然样本profile-geo-natural-initial.json失败：两次propose，先歧义、后模型改沙坪坝产生pending1；无grant/实际Profile更新。原始失败保留。
+修复：Profile not_found/ambiguous显式requiresUserInput=true；clarification-gate.ts仅消费该结果标记，按runId/sessionKey/tool显式准入拦截同轮后续同工具。装配根当前仅准入Profile propose，通用控制模块不导入领域/存储/确认核心、不解析自然语言、不签授权。TTL5分钟/容量256；下一run不继承；缺关联信息不猜测身份。普通错误和其他工具放行。新建文件及3项边界测试在personal-weather/src/clarification-gate{,.test}.ts。
+156项测试、构建、配置通过；实际客户端三条领域路径再次通过。profile-geo-natural-fixed.json：首调歧义，第二次被USER_CLARIFICATION_REQUIRED拦截，proposal/grant/trip均0、Profile revision不变；最终询问主人城市/区县选择。不是模型停止尝试，而是控制层阻止了第二次执行。严格区分调用尝试与领域写入，验收驱动允许被证实阻止的后续调用，不允许替代提案。
+边界：本轮工具集仅Profile propose，默认Agent真实主模型/实际GeoAPI/QQ同款缓冲分发，无真实QQ网络；未验证模型首调已改写地点、并发调用抢先执行、缺run/session、进程重启或TTL过期等情形。最终回复附带校区属沙坪坝的模型陈述未由工具候选证实，不能把该地理陈述算验收结论。这里只证明该绕过澄清样本被阻止，不声称所有幻觉解决。
+部署：13:27:12 Asia/Shanghai重启，health/QQ running/connected=true，生产Weather8/5/0/1/5、Reminder18/3/1/9/43不变。证据clarification-gate-build-test.log、clarification-gate-deployment.json和上述自然样本，均docs/verification。沿用D22原文件备份，新增守卫可通过移除装配调用回退；未提交/推送Git。
+下一阶段：已提交行程补全/修改/删除/含糊修改反例；先检验实际调用和数据库，再决定修复，不能以新建冒充修改。所在地精度和模型首调改写仍为未覆盖项，暂不增加POI能力。

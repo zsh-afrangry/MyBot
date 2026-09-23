@@ -1,4 +1,4 @@
-import { formatDateTime as formatPlanningDateTime } from "./time-display.js";
+import { formatDateTime as formatPlanningDateTime, formatTimestamp } from "./time-display.js";
 // Preserve the existing planning export for callers and regression tests.
 export { formatDateTime as formatPlanningDateTime } from "./time-display.js";
 import { createHash } from "node:crypto";
@@ -83,7 +83,7 @@ export interface PlanningState {
     };
   };
   trips: PlanningTripDisplay[];
-  pendingProposals: PendingProposalSummary[];
+  pendingProposals: Array<PendingProposalSummary & { expiresAtDisplay: ReturnType<typeof formatTimestamp> }>;
   capabilities: {
     stateRead: true;
     proposalPreview: true;
@@ -141,6 +141,7 @@ export interface PlanningChangeProposalResult {
   warnings: string[];
   requiresConfirmation: true;
   expiresAtUtc: UnixSeconds;
+  expiresAtDisplay: ReturnType<typeof formatTimestamp>;
   persistedAs: "change_proposals";
 }
 
@@ -216,7 +217,9 @@ export function getPlanningState(store: WeatherStore): PlanningState {
         arrivalLatest: formatPlanningDateTime(trip.arrivalLatestUtc, currentLocation.place.timezone),
       },
     })),
-    pendingProposals: store.listPendingProposals(),
+    pendingProposals: store.listPendingProposals().map(proposal => ({
+      ...proposal, expiresAtDisplay: formatTimestamp(proposal.expiresAtUtc, currentLocation.place.timezone),
+    })),
     capabilities: {
       stateRead: true,
       proposalPreview: true,
@@ -386,12 +389,15 @@ export function proposePlanningChange(
   }
 
   const payloadJson = JSON.stringify(canonicalFacts);
-  const basePreview = buildProposalPreview(canonicalFacts, missingFields, warnings);
+  const expiresAtUtc = asOfUtc + PROPOSAL_TTL_SECONDS;
+  const expiresAtDisplay = formatTimestamp(expiresAtUtc, canonicalFacts.origin.timezone);
+  const basePreview = [buildProposalPreview(canonicalFacts, missingFields, warnings),
+    `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`].join("\n");
   const created = store.createPendingProposal({
     kind: "trip_create",
     payloadJson,
     previewText: basePreview,
-    expiresAtUtc: asOfUtc + PROPOSAL_TTL_SECONDS,
+    expiresAtUtc,
     ...(scope === undefined ? {} : { scope }),
   });
   const confirmationInstruction = buildConfirmationInstruction(created.proposalId, created.payloadHash);
@@ -416,6 +422,7 @@ export function proposePlanningChange(
     warnings,
     requiresConfirmation: true,
     expiresAtUtc: created.expiresAtUtc,
+    expiresAtDisplay,
     persistedAs: "change_proposals",
   };
 }
@@ -788,16 +795,19 @@ function buildProposalPreview(
   warnings: string[],
 ): string {
   const lines = [
-    "待确认的出行计划提案（P2A 预览）",
+    "待确认的出行计划提案",
+    `- 标题：${facts.title}`,
     `- 目的地：${facts.destination.text}`,
     `- 当前天气参考地：${facts.origin.displayName}`,
     `- 交通方式：${formatTransportMode(facts.transportMode)}`,
+    `- 出发信息：${formatWindow(facts.departure)}`,
     `- 到达信息：${formatWindow(facts.arrival)}`,
     "- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。",
     "- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。",
+    "- 当前行程仅支持新增；提交后不能修改或补全这条记录。",
   ];
   if (missingFields.length > 0) {
-    lines.push(`- 待补充：${missingFields.join("、")}`);
+    lines.push(`- 尚未确定：${missingFields.map(field => field === "destination_place" ? "目的地确认" : "到达时间").join("、")}`);
   }
   if (warnings.length > 0) {
     lines.push(`- 说明：${warnings.join(" ")}`);

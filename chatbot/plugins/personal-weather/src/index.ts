@@ -7,6 +7,8 @@ import { callGatewayTool } from "openclaw/plugin-sdk/agent-harness-runtime";
 import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
 
 import { resolvePersonalWeatherConfig } from "./config.js";
+import { registerControlledReplies } from "./controlled-replies.js";
+import { registerClarificationGate } from "./clarification-gate.js";
 import { scopeFromToolContext, registerConfirmationBackend } from "@kurumi/confirmation-core";
 import { asWeatherError } from "./errors.js";
 import { formatWeatherBrief } from "./formatter.js";
@@ -26,6 +28,7 @@ import {
   commitProfileChange,
   getProfileState,
   proposeProfileChange,
+  profileProposalError,
 } from "./profile.js";
 import {
   commitReminderProposal,
@@ -86,8 +89,8 @@ const profileChangeParameters = Type.Object(
         kind: Type.Literal("current_location.set"),
         location: Type.Object(
           {
-            text: Type.String({ minLength: 1, maxLength: 80 }),
-            administrative_area: Type.Optional(Type.String({ minLength: 1, maxLength: 80 })),
+            text: Type.String({ minLength: 1, maxLength: 80, description: "The owner's stated place. City lookup does not guarantee campus/building precision; do not silently replace the place with a broader city." }),
+            administrative_area: Type.Optional(Type.String({ minLength: 1, maxLength: 80, description: "Optional user-supported superior administrative division, such as 重庆 for 沙坪坝. Omit when unknown; never invent a district or concatenate a full address as an administrative filter." })),
           },
           { additionalProperties: false },
         ),
@@ -101,8 +104,8 @@ const profileChangeParameters = Type.Object(
 const planningStateParameters = Type.Object({}, { additionalProperties: false });
 const planningTimeWindowSchema = Type.Object(
   {
-    earliest: Type.String({ minLength: 1, maxLength: 80 }),
-    latest: Type.String({ minLength: 1, maxLength: 80 }),
+    earliest: Type.String({ minLength: 1, maxLength: 80, description: "User-supported earliest instant in ISO-8601 with Z or numeric UTC offset, including when precision is date. Never invent an instant for an unknown date." }),
+    latest: Type.String({ minLength: 1, maxLength: 80, description: "User-supported latest instant in ISO-8601 with Z or numeric UTC offset; not before earliest and at most 31 days after it." }),
     precision: Type.Union(TIME_PRECISIONS.map((value) => Type.Literal(value))),
     timezone: Type.String({ minLength: 1, maxLength: 100 }),
   },
@@ -125,8 +128,8 @@ const planningChangeParameters = Type.Object(
         transport_mode: Type.Optional(
           Type.Union(TRANSPORT_MODES.map((value) => Type.Literal(value))),
         ),
-        departure: Type.Optional(planningTimeWindowSchema),
-        arrival: Type.Optional(planningTimeWindowSchema),
+        departure: Type.Optional({ ...planningTimeWindowSchema, description: "Optional departure window. Omit this entire object when the user has not provided a date/time or says it is undecided. A draft can be created without it; do not use empty strings or an invented broad range." }),
+        arrival: Type.Optional({ ...planningTimeWindowSchema, description: "Optional arrival window. Omit this entire object when the user has not provided a date/time or says it is undecided. A draft can be created without it; do not use empty strings or an invented broad range." }),
         weather_mode: Type.Optional(
           Type.Union([
             Type.Literal("none"),
@@ -163,6 +166,7 @@ const reminderCreateParameters = Type.Object(
         schedule: Type.Object(
           {
             local_date_time: Type.String({
+              description: "Local date and time in YYYY-MM-DDTHH:mm format, exactly 16 characters, without seconds or UTC offset. timezone is supplied separately.",
               minLength: 16,
               maxLength: 16,
               pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$",
@@ -209,6 +213,7 @@ const reminderUpdateParameters = Type.Object(
         schedule: Type.Optional(Type.Object(
           {
             local_date_time: Type.String({
+              description: "Local date and time in YYYY-MM-DDTHH:mm format, exactly 16 characters, without seconds or UTC offset. timezone is supplied separately.",
               minLength: 16,
               maxLength: 16,
               pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$",
@@ -308,13 +313,13 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_profile_state_get",
       label: "Personal Profile state",
       description:
-        "Read the owner's minimized Profile state, currently limited to the confirmed current location and pending Profile proposals. Owner QQ private chat only; this tool never changes state.",
+        "Read the owner's minimized Profile state, currently limited to the confirmed current location and pending Profile proposals. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers. Owner QQ private chat only; this tool never changes state.",
       parameters: profileStateParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_profile_state_get",
         label: "Personal Profile state",
-        description: "Read the owner's current Profile location without changing any state.",
+        description: "Read the owner's current Profile location without changing any state. Present pending proposal confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers.",
         parameters: profileStateParameters,
         async execute() {
           if (!isTrustedOwnerPrivateQq(toolContext)) return forbiddenResult();
@@ -334,14 +339,14 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_profile_change_propose",
       label: "Propose a Profile change",
       description:
-        "Create a typed pending preview to set the owner's current Profile location after trusted GeoAPI disambiguation. It never commits a profile change, alters trips, reminders, Cron, memory, or files.",
+        "Create a typed pending preview to set the owner's current Profile location after trusted GeoAPI disambiguation. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers. It never commits a profile change, alters trips, reminders, Cron, memory, or files.",
       parameters: profileChangeParameters,
       optional: true,
       factory: ({ toolContext, config }): AnyAgentTool => ({
         name: "personal_profile_change_propose",
         label: "Propose a Profile change",
         description:
-          "Create a pending current_location.set preview for explicit owner statements such as 已经到了某地. A unique place is required before confirmation.",
+          "Create a pending current_location.set preview for explicit owner statements such as 已经到了某地. A unique place is required before confirmation. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers.",
         parameters: profileChangeParameters,
         async execute(_toolCallId, params, signal) {
           if (!isTrustedOwnerPrivateQq(toolContext)) return forbiddenResult();
@@ -357,7 +362,7 @@ const personalWeatherPlugin = defineToolPlugin({
               scopeFromToolContext(toolContext),
             ));
           } catch (error) {
-            return payloadTextResult(asWeatherError(error).toPublicResult());
+            return payloadTextResult(profileProposalError(error));
           } finally {
             store?.close();
           }
@@ -395,14 +400,14 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_planning_state_get",
       label: "Personal planning state",
       description:
-        "Read a minimized summary of the owner's weather place, daily brief schedule, saved trips, and pending proposals. Present trip dates from displayTimes with its timezone; do not calculate dates from epoch seconds. Preserve time precision. Owner QQ private chat only; this tool never changes state.",
+        "Read a minimized summary of the owner's weather place, daily brief schedule, saved trips, and pending proposals. Present trip dates from displayTimes and confirmation deadlines from expiresAtDisplay with their timezones; do not calculate dates from epoch seconds. Preserve time precision. Owner QQ private chat only; this tool never changes state.",
       parameters: planningStateParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_planning_state_get",
         label: "Personal planning state",
         description:
-          "Read the owner's minimized weather and travel planning state. Present trip dates from displayTimes with its timezone, preserving precision; do not calculate dates from epoch seconds. This tool is read-only.",
+          "Read the owner's minimized weather and travel planning state. Present trip dates from displayTimes and confirmation deadlines from expiresAtDisplay with their timezones, preserving precision; do not calculate dates from epoch seconds. This tool is read-only.",
         parameters: planningStateParameters,
         async execute() {
           if (!isTrustedOwnerPrivateQq(toolContext)) {
@@ -430,14 +435,14 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_planning_change_propose",
       label: "Propose a personal planning change",
       description:
-        "Create a typed, owner-only preview for a travel plan. It stores only a pending proposal; it does not commit a trip, change the weather location, alter reminders, edit Cron, or send messages.",
+        "Create a typed, owner-only preview for a travel plan. Present confirmation deadlines from expiresAtDisplay with its timezone, separately from trip dates; do not calculate epoch dates. It stores only a pending proposal; it does not commit a trip, change the weather location, alter reminders, edit Cron, or send messages. Only trip.create is supported: do not offer to update, complete or delete an already committed trip.",
       parameters: planningChangeParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_planning_change_propose",
         label: "Propose a personal planning change",
         description:
-          "Create a typed pending travel proposal for owner confirmation. No business state is committed.",
+          "Create a typed pending travel proposal for owner confirmation. Present confirmation deadlines from expiresAtDisplay with its timezone, separately from trip dates; do not calculate epoch dates. No business state is committed. Only trip.create is supported: do not offer to update, complete or delete an already committed trip.",
         parameters: planningChangeParameters,
         async execute(_toolCallId, params) {
           if (!isTrustedOwnerPrivateQq(toolContext)) {
@@ -465,14 +470,14 @@ const personalWeatherPlugin = defineToolPlugin({
       name: "personal_planning_change_commit",
       label: "Commit a personal planning proposal",
       description:
-        "Commit exactly one previously previewed owner travel proposal after explicit owner confirmation. The proposal ID and payload hash must match the frozen pending proposal. This writes only a planned trip record; it never changes the weather location, reminders, Cron, files, or host.",
+        "Commit exactly one previously previewed owner travel proposal after explicit owner confirmation. The proposal ID and payload hash must match the frozen pending proposal. This writes only a planned trip record; it never changes the weather location, reminders, Cron, files, or host. Only trip.create is supported: do not offer to update, complete or delete an already committed trip.",
       parameters: planningCommitParameters,
       optional: true,
       factory: ({ toolContext }): AnyAgentTool => ({
         name: "personal_planning_change_commit",
         label: "Commit a personal planning proposal",
         description:
-          "Commit a hash-matched pending trip proposal in the owner's QQ private chat. This cannot change weather location or schedules.",
+          "Commit a hash-matched pending trip proposal in the owner's QQ private chat. This cannot change weather location or schedules. Only trip.create is supported: do not offer to update, complete or delete an already committed trip.",
         parameters: planningCommitParameters,
         async execute(_toolCallId, params) {
           if (!isTrustedOwnerPrivateQq(toolContext)) {
@@ -732,6 +737,11 @@ const registerPersonalWeatherTools = personalWeatherPlugin.register;
 personalWeatherPlugin.register = (api) => {
   registerPersonalWeatherTools(api);
   if (api.registrationMode !== "full") return;
+  registerClarificationGate(api, new Set(["personal_profile_change_propose"]));
+  registerControlledReplies(api, new Set([
+    "personal_profile_change_propose", "personal_planning_change_propose",
+    "personal_reminder_propose", "personal_reminder_change_propose", "personal_reminder_cancel_propose",
+  ]));
   let unregisterBackends: Array<() => void> = [];
   api.registerService({
     id: "personal-domain-confirmation-backends",

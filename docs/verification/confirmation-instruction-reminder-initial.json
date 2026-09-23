@@ -1,0 +1,181 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-NJycMX",
+  "scenario": "reminder-proposal",
+  "expected": "pending",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "主人，提案已生成：\n\n- 提醒时间：2026-09-10 03:59（Asia/Shanghai，一次）\n- 内容：确认链路验收\n- 提案过期：2026-09-11 03:50:00+08:00\n\n本轮不提交。需要提交时，请在本次私聊回复下面这一行原文：\n\n确认 proposalId=8e5a7bf6-e376-40fd-b3c0-96d859574cae payloadHash=12cfdd82ea6eeaa13a2ed63ea0b767f27e888e73f6013c3e4126dc4a60f83639",
+        "replyToTag": false,
+        "replyToId": "5f9c80fb-f9b5-468b-9a70-079f2d0c62b0",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 4
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "请生成一个10分钟后提醒我‘确认链路验收’的提案，本轮先不要提交。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_0dd02203cda146e9863d35f7",
+          "name": "personal_reminder_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "reminder.create",
+              "content": "确认链路验收",
+              "schedule": {
+                "local_date_time": "2026-09-10T03:59:00",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_reminder_propose",
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "Validation failed for tool \"personal_reminder_propose\":\n  - request.schedule.local_date_time: must not have more than 16 characters\n  - request.schedule.local_date_time: must match pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$\"\n\nReceived arguments:\n{\n  \"schema_version\": 1,\n  \"request\": {\n    \"kind\": \"reminder.create\",\n    \"content\": \"确认链路验收\",\n    \"schedule\": {\n      \"local_date_time\": \"2026-09-10T03:59:00\",\n      \"timezone\": \"Asia/Shanghai\"\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_9bc39e37813b4a9e86c15b2d",
+          "name": "personal_reminder_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "reminder.create",
+              "content": "确认链路验收",
+              "schedule": {
+                "local_date_time": "2026-09-10T03:59:00",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_reminder_propose",
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "Validation failed for tool \"personal_reminder_propose\":\n  - request.schedule.local_date_time: must not have more than 16 characters\n  - request.schedule.local_date_time: must match pattern \"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}$\"\n\nReceived arguments:\n{\n  \"schema_version\": 1,\n  \"request\": {\n    \"kind\": \"reminder.create\",\n    \"content\": \"确认链路验收\",\n    \"schedule\": {\n      \"local_date_time\": \"2026-09-10T03:59:00\",\n      \"timezone\": \"Asia/Shanghai\"\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_773c80040fe04ea89740a1e6",
+          "name": "personal_reminder_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "reminder.create",
+              "content": "确认链路验收",
+              "schedule": {
+                "local_date_time": "2026-09-10T03:59",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_reminder_propose",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"8e5a7bf6-e376-40fd-b3c0-96d859574cae\",\n  \"payloadHash\": \"12cfdd82ea6eeaa13a2ed63ea0b767f27e888e73f6013c3e4126dc4a60f83639\",\n  \"status\": \"pending\",\n  \"kind\": \"reminder_create\",\n  \"previewText\": \"主人，已生成一份待确认提醒提案：\\n- 时间：2026-09-10T03:59（Asia/Shanghai，一次）\\n- 内容：确认链路验收\\n- 投递：仅主人 QQ 私聊\\n- 提案确认截止：2026-09-11T03:50:00+08:00（Asia/Shanghai）\\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\\n确认 proposalId=8e5a7bf6-e376-40fd-b3c0-96d859574cae payloadHash=12cfdd82ea6eeaa13a2ed63ea0b767f27e888e73f6013c3e4126dc4a60f83639\",\n  \"confirmationInstruction\": \"确认 proposalId=8e5a7bf6-e376-40fd-b3c0-96d859574cae payloadHash=12cfdd82ea6eeaa13a2ed63ea0b767f27e888e73f6013c3e4126dc4a60f83639\",\n  \"canonicalFacts\": {\n    \"kind\": \"reminder.create\",\n    \"content\": \"确认链路验收\",\n    \"schedule\": {\n      \"atUtc\": 1788983940,\n      \"localDateTime\": \"2026-09-10T03:59\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"recurrence\": \"once\"\n    }\n  },\n  \"derivedEffects\": [\n    {\n      \"kind\": \"reminder.schedule\",\n      \"target\": \"owner_qq_private\"\n    }\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789069800,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-10T19:50:00.000Z\",\n    \"local\": \"2026-09-11T03:50:00+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"reminder_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "主人，提案已生成：\n\n- 提醒时间：2026-09-10 03:59（Asia/Shanghai，一次）\n- 内容：确认链路验收\n- 提案过期：2026-09-11 03:50:00+08:00\n\n本轮不提交。需要提交时，请在本次私聊回复下面这一行原文：\n\n确认 proposalId=8e5a7bf6-e376-40fd-b3c0-96d859574cae payloadHash=12cfdd82ea6eeaa13a2ed63ea0b767f27e888e73f6013c3e4126dc4a60f83639"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [
+        {
+          "domain": "personal_reminder",
+          "status": "pending",
+          "n": 1
+        }
+      ],
+      "grants": []
+    }
+  },
+  "status": "acceptance-failed",
+  "error": "Expected exactly one actual tool call\n\n3 !== 1\n"
+}

@@ -1,0 +1,1877 @@
+{
+  "stage": "D10-proposal-expiry",
+  "logs": {
+    "regression.log": "\n> openclaw-plugin-personal-weather@0.1.0 test\n> vitest run --config ./vitest.config.ts\n\n\n RUN  v3.2.7 /home/afrangry/.openclaw/chatbot/plugins/personal-weather\n\n ✓ src/formatter.test.ts (4 tests) 23ms\n ✓ src/parsers.test.ts (31 tests) 28ms\n ✓ src/qweather-client.test.ts (15 tests) 38ms\n ✓ src/weather-service.test.ts (5 tests) 22ms\n ✓ src/config.test.ts (12 tests) 9ms\n ✓ src/reminder-gateway.test.ts (2 tests) 4ms\n ✓ src/weather-location.test.ts (6 tests) 14ms\n ✓ src/planning.test.ts (8 tests) 419ms\n ✓ src/reminder-reconciler-service.test.ts (8 tests) 410ms\n ✓ src/reminder-reconciler.test.ts (3 tests) 434ms\n ✓ src/profile.test.ts (7 tests) 416ms\n ✓ src/confirmation-gate.test.ts (17 tests) 697ms\n ✓ src/store.test.ts (9 tests) 727ms\n ✓ src/reminders.test.ts (13 tests) 724ms\n ✓ src/index.test.ts (2 tests) 6ms\n\n Test Files  15 passed (15)\n      Tests  142 passed (142)\n   Start at  02:48:09\n   Duration  3.18s (transform 1.08s, setup 0ms, collect 5.22s, tests 3.97s, environment 3ms, prepare 1.19s)\n\n",
+    "build-fixed.log": "\n> openclaw-plugin-personal-weather@0.1.0 build\n> tsc -p tsconfig.json\n\n",
+    "restart.log": "ExecMainStartTimestamp=Thu 2026-09-10 02:52:30 CST\nActiveState=active\nSubState=running\n",
+    "before.log": "\n> openclaw-plugin-personal-weather@0.1.0 test\n> vitest run --config ./vitest.config.ts src/planning.test.ts src/profile.test.ts\n\n\n RUN  v3.2.7 /home/afrangry/.openclaw/chatbot/plugins/personal-weather\n\n ❯ src/planning.test.ts (8 tests | 1 failed) 261ms\n   × P2 planning slice > displays proposal expiry across the UTC/local date boundary without changing frozen facts 37ms\n     → expected undefined to deeply equal { …(3) }\n   ✓ P2 planning slice > renders the observed flight on August 15 in Shanghai and handles timezone date boundaries 12ms\n   ✓ P2 planning slice > returns a minimized state with the confirmed Tianhe default 23ms\n   ✓ P2 planning slice > persists a typed pending proposal without committing business state 26ms\n   ✓ P2 planning slice > rejects unknown fields, unsupported requests, and invalid windows 41ms\n   ✓ P2 planning slice > commits an exact pending proposal once, preserves unresolved destination text, and audits it 41ms\n   ✓ P2 planning slice > rolls back a planning repository write when the service transaction fails 40ms\n   ✓ P2 planning slice > rejects a mismatched hash and expires an outdated proposal without creating a trip 40ms\n ❯ src/profile.test.ts (7 tests | 1 failed) 251ms\n   × Profile P0 current_location > displays proposal expiry in the current Profile timezone without changing its revision 56ms\n     → expected undefined to deeply equal { …(3) }\n   ✓ Profile P0 current_location > seeds the Profile current location from the confirmed legacy weather default 42ms\n   ✓ Profile P0 current_location > previews then commits a confirmed current location without changing weather preferences or trips 44ms\n   ✓ Profile P0 current_location > requires a clarification for ambiguous locations and does not create a proposal 37ms\n   ✓ Profile P0 current_location > rejects an unresolvable location without falling back to the current location 22ms\n   ✓ Profile P0 current_location > rejects an altered proposal hash before mutating the Profile 26ms\n   ✓ Profile P0 current_location > expires an unconfirmed location proposal without mutating the Profile 23ms\n\n Test Files  2 failed (2)\n      Tests  2 failed | 13 passed (15)\n   Start at  02:45:53\n   Duration  672ms (transform 164ms, setup 0ms, collect 314ms, tests 512ms, environment 0ms, prepare 120ms)\n\n\n⎯⎯⎯⎯⎯⎯⎯ Failed Tests 2 ⎯⎯⎯⎯⎯⎯⎯\n\n FAIL  src/planning.test.ts > P2 planning slice > displays proposal expiry across the UTC/local date boundary without changing frozen facts\nAssertionError: expected undefined to deeply equal { …(3) }\n\n- Expected: \n{\n  \"local\": \"2026-08-27T00:16:48+08:00\",\n  \"timezone\": \"Asia/Shanghai\",\n  \"utc\": \"2026-08-26T16:16:48.000Z\",\n}\n\n+ Received: \nundefined\n\n ❯ src/planning.test.ts:44:39\n     42|       if (!result.ok) return;\n     43|       const display = { utc: \"2026-08-26T16:16:48.000Z\", local: \"2026-…\n     44|       expect(result.expiresAtDisplay).toEqual(display);\n       |                                       ^\n     45|       expect(result.previewText).toContain(`提案确认截止：${display.local}`);\n     46|       expect(getPlanningState(store).pendingProposals[0].expiresAtDisp…\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/2]⎯\n\n FAIL  src/profile.test.ts > Profile P0 current_location > displays proposal expiry in the current Profile timezone without changing its revision\nAssertionError: expected undefined to deeply equal { …(3) }\n\n- Expected: \n{\n  \"local\": \"2026-08-27T00:16:48+08:00\",\n  \"timezone\": \"Asia/Shanghai\",\n  \"utc\": \"2026-08-26T16:16:48.000Z\",\n}\n\n+ Received: \nundefined\n\n ❯ src/profile.test.ts:40:39\n     38|       if (!result.ok || result.status !== \"pending\") return;\n     39|       const display = { utc: \"2026-08-26T16:16:48.000Z\", local: \"2026-…\n     40|       expect(result.expiresAtDisplay).toEqual(display);\n       |                                       ^\n     41|       expect(result.expiresAtUtc).toBe(1787761008);\n     42|       expect(result.previewText).toContain(`提案确认截止：${display.local}`);\n\n⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/2]⎯\n\n",
+    "build.log": "\n> openclaw-plugin-personal-weather@0.1.0 build\n> tsc -p tsconfig.json\n\nsrc/planning.test.ts(46,14): error TS2532: Object is possibly 'undefined'.\nsrc/profile.test.ts(44,14): error TS2532: Object is possibly 'undefined'.\nsrc/profile.test.ts(45,14): error TS2532: Object is possibly 'undefined'.\n",
+    "config.log": "Config valid: ~/.openclaw/openclaw.json\n"
+  },
+  "backend": {
+    "stage": "host-dispatch",
+    "directory": "/home/afrangry/.openclaw/state/acceptance/kurumi-acceptance-NK5IUA",
+    "startedAt": "2026-09-09T18:50:58.471Z",
+    "boundary": "Real Host dispatcher, confirmation plugin, domain services and SQLite; synthetic QQ input, deterministic cognition, fake scheduler; no QQ network or model provider.",
+    "tests": [
+      {
+        "name": "A1: real Host dispatch reaches plugin before domain proposal",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 0,
+            "change_proposals": 0,
+            "audit_log": 0,
+            "proposals": [],
+            "grants": [],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 0,
+            "change_proposals": 1,
+            "audit_log": 0,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "grants": [],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "A2: commit without a new confirmation is denied",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 0,
+            "change_proposals": 1,
+            "audit_log": 0,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "grants": [],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 0,
+            "change_proposals": 1,
+            "audit_log": 0,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "grants": [],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "A3: real dispatch issues grant before commit and persists exactly one trip",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 0,
+            "change_proposals": 1,
+            "audit_log": 0,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "grants": [],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B1: application replay is idempotent and does not create another grant or trip",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B2: the actual tool factory rejects a non-owner and a group context",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B3: wrong account",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 2,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B4: wrong sender in same session",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 2,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 3,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 2
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B5: wrong peer in same session",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 3,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 2
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 4,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 3
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B6: wrong session",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 4,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 3
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 5,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 4
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B7: quoted confirmation",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 5,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 4
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 6,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 5
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B8: stale message",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 6,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 5
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 7,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 6
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B9: bare confirmation",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 7,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 6
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 8,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 7
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B10: denied confirmation",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 8,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 7
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 9,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 8
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B11: expired proposal index cannot issue a grant",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 9,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 8
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 10,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 9
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B12: expired grant cannot commit",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 10,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 9
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 11,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 10
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B13: duplicate transport message is deduplicated by the real Host",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 11,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 10
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 12,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 11
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B14: actual planning tools propose and commit through Host confirmation",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 12,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 11
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 2,
+            "change_proposals": 13,
+            "audit_log": 2,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 11
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "name": "B15: Profile confirmation does not authorize pending Planning or Reminder",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 2,
+            "change_proposals": 13,
+            "audit_log": 2,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 11
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 2,
+            "change_proposals": 15,
+            "audit_log": 3,
+            "proposals": [
+              {
+                "domain": "personal_profile",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 12
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_profile",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 2
+          },
+          "reminder": {
+            "reminders": 1,
+            "reminder_audit_log": 2,
+            "proposals": [
+              {
+                "domain": "personal_reminder",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_reminder",
+                "status": "consumed",
+                "n": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "B16: wrong payload hash cannot issue a grant or change a trip",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 2,
+            "change_proposals": 15,
+            "audit_log": 3,
+            "proposals": [
+              {
+                "domain": "personal_profile",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 12
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_profile",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 2
+          },
+          "reminder": {
+            "reminders": 1,
+            "reminder_audit_log": 2,
+            "proposals": [
+              {
+                "domain": "personal_reminder",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_reminder",
+                "status": "consumed",
+                "n": 1
+              }
+            ]
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 2,
+            "change_proposals": 16,
+            "audit_log": 3,
+            "proposals": [
+              {
+                "domain": "personal_profile",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 13
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_profile",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 2
+          },
+          "reminder": {
+            "reminders": 1,
+            "reminder_audit_log": 2,
+            "proposals": [
+              {
+                "domain": "personal_reminder",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_reminder",
+                "status": "consumed",
+                "n": 1
+              }
+            ]
+          }
+        }
+      },
+      {
+        "name": "B17: committed proposal remains idempotent in a fresh process",
+        "passed": true,
+        "before": {
+          "profilePlanning": {
+            "trips": 2,
+            "change_proposals": 16,
+            "audit_log": 3,
+            "proposals": [
+              {
+                "domain": "personal_profile",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 13
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_profile",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 2
+          },
+          "reminder": {
+            "reminders": 1,
+            "reminder_audit_log": 2,
+            "proposals": [
+              {
+                "domain": "personal_reminder",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_reminder",
+                "status": "consumed",
+                "n": 1
+              }
+            ]
+          }
+        },
+        "after": {
+          "profilePlanning": {
+            "trips": 2,
+            "change_proposals": 16,
+            "audit_log": 3,
+            "proposals": [
+              {
+                "domain": "personal_profile",
+                "status": "committed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 13
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_profile",
+                "status": "consumed",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 2
+              },
+              {
+                "domain": "planning",
+                "status": "expired",
+                "n": 1
+              },
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "profileRevision": 2
+          },
+          "reminder": {
+            "reminders": 1,
+            "reminder_audit_log": 2,
+            "proposals": [
+              {
+                "domain": "personal_reminder",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "personal_reminder",
+                "status": "consumed",
+                "n": 1
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "finishedAt": "2026-09-09T18:50:58.953Z"
+  },
+  "model": {
+    "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-gjd74a",
+    "scenario": "confirm",
+    "expected": "committed",
+    "model": "bailian-token-plan/qwen3.7-plus",
+    "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+    "delivered": [
+      {
+        "payload": {
+          "text": "好的，已生成待确认的出行计划提案，本轮只保存草稿、不提交。\n\n**提案预览**\n- 标题：隔离确认验收\n- 目的地：江苏省南京市\n- 交通方式：火车/高铁\n- 天气模式：none\n- 出发/到达时间：未设置\n- 确认截止：2026-09-11 02:51:03（Asia/Shanghai）\n\n**完整确认口令**\n```\n确认 proposalId=f9a64dab-e3ca-48c0-9134-81f64c1ef819 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\n```\n\n请主人直接在下一条消息里原样回复上面那行 `确认 ...` 文本，我才会调用提交工具。过期或哈希不匹配将不会写入。",
+          "replyToTag": false,
+          "replyToId": "31dca2cc-47ad-4042-9013-586f35a3b778",
+          "audioAsVoice": false
+        },
+        "info": {
+          "kind": "final",
+          "assistantMessageIndex": 2
+        }
+      },
+      {
+        "payload": {
+          "text": "收到，已用提案 ID 和哈希精确匹配提交 ✅\n\n**行程落地信息**\n- 行程 ID：`1`\n- 状态：`planned`\n- 标题：隔离确认验收\n- 目的地：江苏省南京市（文字记录）\n- 交通方式：火车/高铁\n- 出发/到达时间：未设置\n- 天气模式：none\n\n**边界确认**\n- 仅写入行程记录，**没有切换天气地点**、**没有创建 location_period**、**没有修改提醒或 Cron**。\n- 目的地目前未通过受控目录消歧，后续如要启用天气地点联动，需等地点消歧功能完成后单独确认。",
+          "replyToTag": false,
+          "replyToId": "e72f5917-7058-4b0c-8452-2bbe4ccdd4b1",
+          "audioAsVoice": false
+        },
+        "info": {
+          "kind": "final",
+          "assistantMessageIndex": 2
+        }
+      },
+      {
+        "payload": {
+          "text": "收到重复确认，本次响应为 **幂等 (idempotent: true)**，行程未重复写入。\n\n**当前状态**\n- 行程 ID：`1` 已存在且状态仍为 `planned`\n- 与上一次提交的内容完全一致，无新增修订\n- 天气地点、提醒、Cron 均未受影响\n\n如需新建另一条提案或修改现有行程，请告诉我下一步要做什么。",
+          "replyToTag": false,
+          "replyToId": "37f8cf62-d093-45a4-9d4f-959be08378a2",
+          "audioAsVoice": false
+        },
+        "info": {
+          "kind": "final",
+          "assistantMessageIndex": 2
+        }
+      }
+    ],
+    "starts": [],
+    "before": {
+      "profilePlanning": {
+        "trips": 0,
+        "change_proposals": 0,
+        "audit_log": 0,
+        "proposals": [],
+        "grants": [],
+        "profileRevision": 1
+      },
+      "reminder": {
+        "reminders": 0,
+        "reminder_audit_log": 0,
+        "proposals": [],
+        "grants": []
+      }
+    },
+    "dispatch": {
+      "queuedFinal": true,
+      "counts": {
+        "tool": 0,
+        "block": 0,
+        "final": 1
+      }
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "请为我生成一条待确认的出行计划提案：标题‘隔离确认验收’，目的地江苏省南京市，交通方式铁路，不设置天气切换，不填写时间。本轮只生成提案和完整确认口令，等我下一条消息确认后再提交。"
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "toolu_e8a0df5f88964dc89b5c8c44",
+            "name": "personal_planning_change_propose",
+            "arguments": {
+              "schema_version": 1,
+              "request": {
+                "kind": "trip.create",
+                "title": "隔离确认验收",
+                "destination": {
+                  "text": "南京市",
+                  "administrative_area": "江苏省"
+                },
+                "transport_mode": "rail",
+                "weather_mode": "none"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "role": "toolResult",
+        "toolName": "personal_planning_change_propose",
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"f9a64dab-e3ca-48c0-9134-81f64c1ef819\",\n  \"payloadHash\": \"b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"status\": \"pending\",\n  \"kind\": \"trip_create\",\n  \"previewText\": \"待确认的出行计划提案\\n- 目的地：南京市\\n- 当前天气参考地：广东省广州市天河区\\n- 交通方式：火车/高铁\\n- 到达信息：未提供\\n- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。\\n- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。\\n- 待补充：destination_place、arrival_time_window\\n- 说明：目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。 尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\\n- 提案确认截止：2026-09-11T02:51:03+08:00（Asia/Shanghai）\\n请在本次主人 QQ 私聊回复下面这一行原文，确认后才会提交：\\n确认 proposalId=f9a64dab-e3ca-48c0-9134-81f64c1ef819 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"confirmationInstruction\": \"确认 proposalId=f9a64dab-e3ca-48c0-9134-81f64c1ef819 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"canonicalFacts\": {\n    \"domain\": \"weather_travel\",\n    \"schemaVersion\": 1,\n    \"kind\": \"trip_create\",\n    \"title\": \"隔离确认验收\",\n    \"origin\": {\n      \"displayName\": \"广东省广州市天河区\",\n      \"countryCode\": \"CN\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"precision\": \"district\"\n    },\n    \"destination\": {\n      \"text\": \"南京市\",\n      \"administrativeArea\": \"江苏省\",\n      \"resolution\": \"pending\"\n    },\n    \"transportMode\": \"rail\",\n    \"departure\": null,\n    \"arrival\": null,\n    \"weatherMode\": \"none\",\n    \"sourceKind\": \"owner_text\"\n  },\n  \"derivedEffects\": [],\n  \"missingFields\": [\n    \"destination_place\",\n    \"arrival_time_window\"\n  ],\n  \"warnings\": [\n    \"目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。\",\n    \"尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\"\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789066263,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-10T18:51:03.000Z\",\n    \"local\": \"2026-09-11T02:51:03+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"change_proposals\"\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "好的，已生成待确认的出行计划提案，本轮只保存草稿、不提交。\n\n**提案预览**\n- 标题：隔离确认验收\n- 目的地：江苏省南京市\n- 交通方式：火车/高铁\n- 天气模式：none\n- 出发/到达时间：未设置\n- 确认截止：2026-09-11 02:51:03（Asia/Shanghai）\n\n**完整确认口令**\n```\n确认 proposalId=f9a64dab-e3ca-48c0-9134-81f64c1ef819 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\n```\n\n请主人直接在下一条消息里原样回复上面那行 `确认 ...` 文本，我才会调用提交工具。过期或哈希不匹配将不会写入。"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": "确认 proposalId=f9a64dab-e3ca-48c0-9134-81f64c1ef819 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "toolu_d3067eac885c423587a8ffbe",
+            "name": "personal_planning_change_commit",
+            "arguments": {
+              "proposal_id": "f9a64dab-e3ca-48c0-9134-81f64c1ef819",
+              "payload_hash": "b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+            }
+          }
+        ]
+      },
+      {
+        "role": "toolResult",
+        "toolName": "personal_planning_change_commit",
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"f9a64dab-e3ca-48c0-9134-81f64c1ef819\",\n  \"status\": \"committed\",\n  \"idempotent\": false,\n  \"trip\": {\n    \"id\": 1,\n    \"title\": \"隔离确认验收\",\n    \"state\": \"planned\",\n    \"originDisplayName\": \"广东省广州市天河区\",\n    \"destinationDisplayName\": null,\n    \"destinationText\": \"南京市\",\n    \"destinationAdministrativeArea\": \"江苏省\",\n    \"transportMode\": \"rail\",\n    \"departureEarliestUtc\": null,\n    \"departureLatestUtc\": null,\n    \"departurePrecision\": \"unknown\",\n    \"arrivalEarliestUtc\": null,\n    \"arrivalLatestUtc\": null,\n    \"arrivalPrecision\": \"unknown\",\n    \"weatherMode\": \"none\",\n    \"revision\": 1\n  },\n  \"locationPeriodCreated\": false,\n  \"weatherLocationChanged\": false,\n  \"warnings\": [\n    \"行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。\",\n    \"当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。\"\n  ]\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "收到，已用提案 ID 和哈希精确匹配提交 ✅\n\n**行程落地信息**\n- 行程 ID：`1`\n- 状态：`planned`\n- 标题：隔离确认验收\n- 目的地：江苏省南京市（文字记录）\n- 交通方式：火车/高铁\n- 出发/到达时间：未设置\n- 天气模式：none\n\n**边界确认**\n- 仅写入行程记录，**没有切换天气地点**、**没有创建 location_period**、**没有修改提醒或 Cron**。\n- 目的地目前未通过受控目录消歧，后续如要启用天气地点联动，需等地点消歧功能完成后单独确认。"
+          }
+        ]
+      },
+      {
+        "role": "user",
+        "content": "确认 proposalId=f9a64dab-e3ca-48c0-9134-81f64c1ef819 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "toolu_f151a5a575f7415ca6d2196b",
+            "name": "personal_planning_change_commit",
+            "arguments": {
+              "proposal_id": "f9a64dab-e3ca-48c0-9134-81f64c1ef819",
+              "payload_hash": "b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+            }
+          }
+        ]
+      },
+      {
+        "role": "toolResult",
+        "toolName": "personal_planning_change_commit",
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"f9a64dab-e3ca-48c0-9134-81f64c1ef819\",\n  \"status\": \"committed\",\n  \"idempotent\": true,\n  \"trip\": {\n    \"id\": 1,\n    \"title\": \"隔离确认验收\",\n    \"state\": \"planned\",\n    \"originDisplayName\": \"广东省广州市天河区\",\n    \"destinationDisplayName\": null,\n    \"destinationText\": \"南京市\",\n    \"destinationAdministrativeArea\": \"江苏省\",\n    \"transportMode\": \"rail\",\n    \"departureEarliestUtc\": null,\n    \"departureLatestUtc\": null,\n    \"departurePrecision\": \"unknown\",\n    \"arrivalEarliestUtc\": null,\n    \"arrivalLatestUtc\": null,\n    \"arrivalPrecision\": \"unknown\",\n    \"weatherMode\": \"none\",\n    \"revision\": 1\n  },\n  \"locationPeriodCreated\": false,\n  \"weatherLocationChanged\": false,\n  \"warnings\": [\n    \"行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。\",\n    \"当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。\"\n  ]\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "收到重复确认，本次响应为 **幂等 (idempotent: true)**，行程未重复写入。\n\n**当前状态**\n- 行程 ID：`1` 已存在且状态仍为 `planned`\n- 与上一次提交的内容完全一致，无新增修订\n- 天气地点、提醒、Cron 均未受影响\n\n如需新建另一条提案或修改现有行程，请告诉我下一步要做什么。"
+          }
+        ]
+      }
+    ],
+    "after": {
+      "profilePlanning": {
+        "trips": 1,
+        "change_proposals": 1,
+        "audit_log": 1,
+        "proposals": [
+          {
+            "domain": "planning",
+            "status": "committed",
+            "n": 1
+          }
+        ],
+        "grants": [
+          {
+            "domain": "planning",
+            "status": "consumed",
+            "n": 1
+          }
+        ],
+        "profileRevision": 1
+      },
+      "reminder": {
+        "reminders": 0,
+        "reminder_audit_log": 0,
+        "proposals": [],
+        "grants": []
+      }
+    },
+    "turns": [
+      {
+        "phase": "proposal",
+        "state": {
+          "profilePlanning": {
+            "trips": 0,
+            "change_proposals": 1,
+            "audit_log": 0,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "pending",
+                "n": 1
+              }
+            ],
+            "grants": [],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "phase": "confirmed",
+        "state": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      },
+      {
+        "phase": "repeated",
+        "state": {
+          "profilePlanning": {
+            "trips": 1,
+            "change_proposals": 1,
+            "audit_log": 1,
+            "proposals": [
+              {
+                "domain": "planning",
+                "status": "committed",
+                "n": 1
+              }
+            ],
+            "grants": [
+              {
+                "domain": "planning",
+                "status": "consumed",
+                "n": 1
+              }
+            ],
+            "profileRevision": 1
+          },
+          "reminder": {
+            "reminders": 0,
+            "reminder_audit_log": 0,
+            "proposals": [],
+            "grants": []
+          }
+        }
+      }
+    ],
+    "status": "passed"
+  },
+  "productionAfter": {
+    "personal-weather/weather.sqlite": {
+      "change_proposals": 8,
+      "confirmation_proposals": 5,
+      "approval_grants": 0,
+      "trips": 1,
+      "audit_log": 5
+    },
+    "personal-reminders/reminders.sqlite": {
+      "reminder_proposals": 17,
+      "confirmation_proposals": 2,
+      "approval_grants": 0,
+      "reminders": 8,
+      "reminder_audit_log": 39
+    },
+    "openclaw.sqlite": {
+      "cron_jobs": 1
+    }
+  },
+  "health": {
+    "ok": true,
+    "exit": 0,
+    "qqReady": true,
+    "confirmationBackendsRegistered": true
+  }
+}

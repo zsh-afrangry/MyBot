@@ -1,3 +1,8 @@
+/** Presentation only: callers retain their original epoch/TTL for authorization. */
+export function formatTimestamp<T extends string>(atUtc: number, timezone: T) {
+  return { utc: new Date(atUtc * 1000).toISOString(), local: formatDateTime(atUtc, timezone), timezone };
+}
+
 /** Deterministic ISO-style local timestamp; never ask the model to calculate epoch dates. */
 export function formatDateTime(atUtc: number, timezone: string): string;
 export function formatDateTime(atUtc: number | null, timezone: string): string | null;

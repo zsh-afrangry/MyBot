@@ -7,7 +7,7 @@ import {
   mkdirSync,
   openSync,
 } from "node:fs";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 
@@ -15,6 +15,7 @@ import { PlanningRepository } from "./planning-repository.js";
 import { ProfileRepository } from "./profile-repository.js";
 import {
   ensureConfirmationGateSchema,
+  createPublicUuid,
   findConfirmationProposalForInbound,
   issueApprovalGrant,
   listConfirmationProposalsForInbound,
@@ -1121,7 +1122,7 @@ export class WeatherStore {
       throw new TypeError("Proposal expiry must be within seven days");
     }
 
-    const proposalId = randomUUID();
+    const proposalId = createPublicUuid();
     const payloadHash = createHash("sha256").update(input.payloadJson).digest("hex");
     const requestContextHash = createHash("sha256")
       .update(`${OWNER_SUBJECT_ID}|${input.kind}|${payloadHash}`)

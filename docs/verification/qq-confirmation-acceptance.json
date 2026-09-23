@@ -1,0 +1,81 @@
+{
+  "checkedAtUtc": "2026-09-09T19:50:57.056096+00:00",
+  "stage": "D13",
+  "scope": "real owner QQ confirmation and backend channel delivery; device visibility not independently verified",
+  "proposal": {
+    "proposal_id": "98e8ee1c-6f24-429b-83e8-94b8899235c7",
+    "status": "committed",
+    "payload_hash": "35d959102f7d40c278a33fd66dbaf21bc9fc4eb1c0fe2ddea429a5aab89a4c7a",
+    "committed_at_utc": 1788983121,
+    "result_reminder_id": "6b5d0365-30b0-4128-b5a4-06f271a6498c"
+  },
+  "grants": [
+    {
+      "domain": "personal_reminder",
+      "status": "consumed",
+      "issued_at_utc": 1788983116,
+      "consumed_at_utc": 1788983121,
+      "consumption_result": "accepted"
+    }
+  ],
+  "reminder": {
+    "reminder_id": "6b5d0365-30b0-4128-b5a4-06f271a6498c",
+    "status": "delivered",
+    "content": "确认链路验收",
+    "scheduled_at_utc": 1788983340,
+    "timezone": "Asia/Shanghai",
+    "cron_job_id": "bdb5aa81-c6d8-4084-b49d-84f29c7c1a04",
+    "dispatched_at_utc": 1788983340,
+    "delivered_at_utc": 1788983374,
+    "failure_code": null
+  },
+  "runs": [
+    {
+      "seq": 1,
+      "status": "ok",
+      "delivery_status": "delivered",
+      "delivered": 1,
+      "run_at_ms": 1788983340003,
+      "duration_ms": 1642,
+      "summary": "主人，提醒时间到了：确认链路验收"
+    }
+  ],
+  "audit": [
+    {
+      "action": "reminder.scheduling",
+      "entity_type": "reminder",
+      "created_at_utc": 1788983121
+    },
+    {
+      "action": "reminder.scheduled",
+      "entity_type": "reminder",
+      "created_at_utc": 1788983121
+    },
+    {
+      "action": "reminder.delivery_claimed",
+      "entity_type": "reminder",
+      "created_at_utc": 1788983340
+    },
+    {
+      "action": "reminder.delivered",
+      "entity_type": "reminder",
+      "created_at_utc": 1788983374
+    }
+  ],
+  "counts": {
+    "reminder_proposals": 18,
+    "confirmation_proposals": 3,
+    "approval_grants": 1,
+    "reminders": 9,
+    "reminder_audit_log": 43
+  },
+  "weatherCounts": {
+    "change_proposals": 8,
+    "confirmation_proposals": 5,
+    "approval_grants": 0,
+    "trips": 1,
+    "audit_log": 5
+  },
+  "cronCount": 1,
+  "testCronRemaining": 0
+}

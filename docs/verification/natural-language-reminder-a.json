@@ -1,0 +1,222 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-GVJzjm",
+  "scenario": "reminder-proposal",
+  "variation": "natural-a",
+  "expected": "pending",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "主人，安排如下：\n\n- 时间：2026-09-10 05:06（Asia/Shanghai，一次性）\n- 内容：喝水\n- 投递：主人 QQ 私聊\n- 提案确认截止：2026-09-11 04:56:16（Asia/Shanghai）\n\n确认没问题后，回复下面这行原文，我才会创建定时任务：\n\n确认 proposalId=acb6e6f8-ad77-4764-a125-ef8acbd7a702 payloadHash=bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2",
+        "replyToTag": false,
+        "replyToId": "d0816437-793b-4842-a8f7-7fb0c6774f7d",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "input": "十分钟后提醒我喝水，先让我看看安排。",
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "十分钟后提醒我喝水，先让我看看安排。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_5de791d325c1454c88d22113",
+          "name": "personal_reminder_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "reminder.create",
+              "content": "喝水",
+              "schedule": {
+                "local_date_time": "2026-09-10T05:06",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_reminder_propose",
+      "toolCallId": "toolu_5de791d325c1454c88d22113",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"acb6e6f8-ad77-4764-a125-ef8acbd7a702\",\n  \"payloadHash\": \"bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2\",\n  \"status\": \"pending\",\n  \"kind\": \"reminder_create\",\n  \"previewText\": \"主人，已生成一份待确认提醒提案：\\n- 时间：2026-09-10T05:06（Asia/Shanghai，一次）\\n- 内容：喝水\\n- 投递：仅主人 QQ 私聊\\n- 提案确认截止：2026-09-11T04:56:16+08:00（Asia/Shanghai）\\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\\n确认 proposalId=acb6e6f8-ad77-4764-a125-ef8acbd7a702 payloadHash=bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2\",\n  \"confirmationInstruction\": \"确认 proposalId=acb6e6f8-ad77-4764-a125-ef8acbd7a702 payloadHash=bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2\",\n  \"canonicalFacts\": {\n    \"kind\": \"reminder.create\",\n    \"content\": \"喝水\",\n    \"schedule\": {\n      \"atUtc\": 1788987960,\n      \"localDateTime\": \"2026-09-10T05:06\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"recurrence\": \"once\"\n    }\n  },\n  \"derivedEffects\": [\n    {\n      \"kind\": \"reminder.schedule\",\n      \"target\": \"owner_qq_private\"\n    }\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789073776,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-10T20:56:16.000Z\",\n    \"local\": \"2026-09-11T04:56:16+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"reminder_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "主人，安排如下：\n\n- 时间：2026-09-10 05:06（Asia/Shanghai，一次性）\n- 内容：喝水\n- 投递：主人 QQ 私聊\n- 提案确认截止：2026-09-11 04:56:16（Asia/Shanghai）\n\n确认没问题后，回复下面这行原文，我才会创建定时任务：\n\n确认 proposalId=acb6e6f8-ad77-4764-a125-ef8acbd7a702 payloadHash=bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [
+        {
+          "domain": "personal_reminder",
+          "status": "pending",
+          "n": 1
+        }
+      ],
+      "grants": []
+    }
+  },
+  "callAnalysis": {
+    "attempts": [
+      {
+        "id": "toolu_5de791d325c1454c88d22113",
+        "name": "personal_reminder_propose",
+        "arguments": {
+          "schema_version": 1,
+          "request": {
+            "kind": "reminder.create",
+            "content": "喝水",
+            "schedule": {
+              "local_date_time": "2026-09-10T05:06",
+              "timezone": "Asia/Shanghai"
+            }
+          }
+        },
+        "outcome": "success",
+        "signature": "[\"personal_reminder_propose\",{\"request\":{\"content\":\"喝水\",\"kind\":\"reminder.create\",\"schedule\":{\"local_date_time\":\"2026-09-10T05:06\",\"timezone\":\"Asia/Shanghai\"}},\"schema_version\":1}]",
+        "result": {
+          "ok": true,
+          "schemaVersion": 1,
+          "proposalId": "acb6e6f8-ad77-4764-a125-ef8acbd7a702",
+          "payloadHash": "bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2",
+          "status": "pending",
+          "kind": "reminder_create",
+          "previewText": "主人，已生成一份待确认提醒提案：\n- 时间：2026-09-10T05:06（Asia/Shanghai，一次）\n- 内容：喝水\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：2026-09-11T04:56:16+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\n确认 proposalId=acb6e6f8-ad77-4764-a125-ef8acbd7a702 payloadHash=bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2",
+          "confirmationInstruction": "确认 proposalId=acb6e6f8-ad77-4764-a125-ef8acbd7a702 payloadHash=bd507d79f5d1165ef3cba2521e4e7dc840a3320149e2b5a1e9b5b0208dd77ae2",
+          "canonicalFacts": {
+            "kind": "reminder.create",
+            "content": "喝水",
+            "schedule": {
+              "atUtc": 1788987960,
+              "localDateTime": "2026-09-10T05:06",
+              "timezone": "Asia/Shanghai",
+              "recurrence": "once"
+            }
+          },
+          "derivedEffects": [
+            {
+              "kind": "reminder.schedule",
+              "target": "owner_qq_private"
+            }
+          ],
+          "requiresConfirmation": true,
+          "expiresAtUtc": 1789073776,
+          "expiresAtDisplay": {
+            "utc": "2026-09-10T20:56:16.000Z",
+            "local": "2026-09-11T04:56:16+08:00",
+            "timezone": "Asia/Shanghai"
+          },
+          "persistedAs": "reminder_proposals"
+        }
+      }
+    ],
+    "unmatchedResults": [],
+    "totalCalls": 1,
+    "successes": 1,
+    "schemaRejections": 0,
+    "businessRejections": 0,
+    "unknownOrUnmatched": 0,
+    "sameArgumentsAfterFailure": 0,
+    "correctedSchemaSuccesses": 0,
+    "repeatedSuccessRequests": 0
+  },
+  "turns": [
+    {
+      "phase": "proposal",
+      "state": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": []
+        }
+      }
+    }
+  ],
+  "status": "passed",
+  "databaseCountsVerified": {
+    "personal-weather/weather.sqlite": {
+      "trips": 0,
+      "change_proposals": 0,
+      "approval_grants": 0
+    },
+    "personal-reminders/reminders.sqlite": {
+      "reminders": 0,
+      "reminder_proposals": 1,
+      "approval_grants": 0
+    }
+  }
+}

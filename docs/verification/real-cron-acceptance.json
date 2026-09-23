@@ -1,0 +1,498 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/kurumi-acceptance-enmjpj",
+  "boundary": "Real isolated Gateway RPC/Cron storage, actual domain transactions and confirmation hook; deterministic cognition; no model or QQ network; jobs scheduled one day ahead and removed before shutdown",
+  "tests": [
+    {
+      "name": "Create: confirmation grant -> real cron.add -> scheduled reminder",
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "passed": true,
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 1,
+          "reminder_audit_log": 2,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "committed",
+              "n": 1
+            }
+          ],
+          "grants": [
+            {
+              "domain": "personal_reminder",
+              "status": "consumed",
+              "n": 1
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Update: new grant -> real cron.update on same job ID",
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 1,
+          "reminder_audit_log": 2,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "committed",
+              "n": 1
+            }
+          ],
+          "grants": [
+            {
+              "domain": "personal_reminder",
+              "status": "consumed",
+              "n": 1
+            }
+          ]
+        }
+      },
+      "passed": true,
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 1,
+          "reminder_audit_log": 4,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "committed",
+              "n": 2
+            }
+          ],
+          "grants": [
+            {
+              "domain": "personal_reminder",
+              "status": "consumed",
+              "n": 2
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cancel: own grant -> real cron.remove -> cancelled reminder",
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 1,
+          "reminder_audit_log": 4,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "committed",
+              "n": 2
+            }
+          ],
+          "grants": [
+            {
+              "domain": "personal_reminder",
+              "status": "consumed",
+              "n": 2
+            }
+          ]
+        }
+      },
+      "passed": true,
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 1,
+          "reminder_audit_log": 5,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "committed",
+              "n": 3
+            }
+          ],
+          "grants": [
+            {
+              "domain": "personal_reminder",
+              "status": "consumed",
+              "n": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "rpc": [
+    {
+      "method": "cron.add",
+      "params": {
+        "name": "kurumi.personal-reminder.39172639-49db-4396-b93e-f085a6a98377",
+        "declarationKey": "personal-reminder:39172639-49db-4396-b93e-f085a6a98377:1789064460",
+        "enabled": true,
+        "schedule": {
+          "kind": "at",
+          "at": "2026-09-10T18:21:00.000Z"
+        },
+        "sessionTarget": "isolated",
+        "wakeMode": "now",
+        "payload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "dist/reminder-cli.js",
+            "deliver",
+            "--id",
+            "39172639-49db-4396-b93e-f085a6a98377"
+          ],
+          "cwd": "/home/afrangry/.openclaw/chatbot/plugins/personal-weather",
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 4096
+        },
+        "delivery": {
+          "mode": "announce",
+          "channel": "qqbot",
+          "to": "qqbot:c2c:acceptance-owner",
+          "accountId": "default"
+        },
+        "deleteAfterRun": true
+      },
+      "result": {
+        "created": true,
+        "job": {
+          "id": "86c6e0c3-c07e-4642-baea-f2eb92f8216a",
+          "declarationKey": "personal-reminder:39172639-49db-4396-b93e-f085a6a98377:1789064460",
+          "name": "kurumi.personal-reminder.39172639-49db-4396-b93e-f085a6a98377",
+          "enabled": true,
+          "deleteAfterRun": true,
+          "createdAtMs": 1788978097674,
+          "updatedAtMs": 1788978097674,
+          "schedule": {
+            "kind": "at",
+            "at": "2026-09-10T18:21:00.000Z"
+          },
+          "sessionTarget": "isolated",
+          "wakeMode": "now",
+          "payload": {
+            "kind": "command",
+            "argv": [
+              "/usr/bin/node",
+              "dist/reminder-cli.js",
+              "deliver",
+              "--id",
+              "39172639-49db-4396-b93e-f085a6a98377"
+            ],
+            "cwd": "/home/afrangry/.openclaw/chatbot/plugins/personal-weather",
+            "timeoutSeconds": 20,
+            "noOutputTimeoutSeconds": 10,
+            "outputMaxBytes": 4096
+          },
+          "delivery": {
+            "mode": "announce",
+            "channel": "qqbot",
+            "to": "qqbot:c2c:acceptance-owner",
+            "accountId": "default"
+          },
+          "state": {
+            "nextRunAtMs": 1789064460000
+          },
+          "nextRunAtMs": 1789064460000
+        }
+      }
+    },
+    {
+      "method": "cron.update",
+      "params": {
+        "id": "86c6e0c3-c07e-4642-baea-f2eb92f8216a",
+        "patch": {
+          "schedule": {
+            "kind": "at",
+            "at": "2026-09-10T19:21:00.000Z"
+          }
+        }
+      },
+      "result": {
+        "id": "86c6e0c3-c07e-4642-baea-f2eb92f8216a",
+        "declarationKey": "personal-reminder:39172639-49db-4396-b93e-f085a6a98377:1789064460",
+        "name": "kurumi.personal-reminder.39172639-49db-4396-b93e-f085a6a98377",
+        "enabled": true,
+        "deleteAfterRun": true,
+        "createdAtMs": 1788978097674,
+        "updatedAtMs": 1788978097791,
+        "schedule": {
+          "kind": "at",
+          "at": "2026-09-10T19:21:00.000Z"
+        },
+        "sessionTarget": "isolated",
+        "wakeMode": "now",
+        "payload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "dist/reminder-cli.js",
+            "deliver",
+            "--id",
+            "39172639-49db-4396-b93e-f085a6a98377"
+          ],
+          "cwd": "/home/afrangry/.openclaw/chatbot/plugins/personal-weather",
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 4096
+        },
+        "delivery": {
+          "mode": "announce",
+          "channel": "qqbot",
+          "to": "qqbot:c2c:acceptance-owner",
+          "accountId": "default"
+        },
+        "state": {
+          "nextRunAtMs": 1789068060000
+        }
+      }
+    },
+    {
+      "method": "cron.remove",
+      "params": {
+        "id": "86c6e0c3-c07e-4642-baea-f2eb92f8216a"
+      },
+      "result": {
+        "ok": true,
+        "removed": true
+      }
+    }
+  ],
+  "created": {
+    "result": {
+      "ok": true,
+      "schemaVersion": 1,
+      "proposalId": "c3a00ebc-f676-4554-b6ef-d3c2e26127b2",
+      "kind": "reminder_create",
+      "status": "scheduled",
+      "idempotent": false,
+      "reminder": {
+        "reminderId": "39172639-49db-4396-b93e-f085a6a98377",
+        "content": "isolated real Cron acceptance",
+        "scheduledAtUtc": 1789064460,
+        "localDateTime": "2026-09-11 02:21",
+        "timezone": "Asia/Shanghai",
+        "state": "scheduled"
+      },
+      "warnings": []
+    },
+    "jobs": [
+      {
+        "id": "86c6e0c3-c07e-4642-baea-f2eb92f8216a",
+        "declarationKey": "personal-reminder:39172639-49db-4396-b93e-f085a6a98377:1789064460",
+        "name": "kurumi.personal-reminder.39172639-49db-4396-b93e-f085a6a98377",
+        "enabled": true,
+        "deleteAfterRun": true,
+        "createdAtMs": 1788978097674,
+        "updatedAtMs": 1788978097674,
+        "schedule": {
+          "kind": "at",
+          "at": "2026-09-10T18:21:00.000Z"
+        },
+        "sessionTarget": "isolated",
+        "wakeMode": "now",
+        "payload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "dist/reminder-cli.js",
+            "deliver",
+            "--id",
+            "39172639-49db-4396-b93e-f085a6a98377"
+          ],
+          "cwd": "/home/afrangry/.openclaw/chatbot/plugins/personal-weather",
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 4096
+        },
+        "delivery": {
+          "mode": "announce",
+          "channel": "qqbot",
+          "to": "qqbot:c2c:acceptance-owner",
+          "accountId": "default"
+        },
+        "state": {
+          "nextRunAtMs": 1789064460000
+        },
+        "nextRunAtMs": 1789064460000
+      }
+    ]
+  },
+  "updated": {
+    "result": {
+      "ok": true,
+      "schemaVersion": 1,
+      "proposalId": "c404f6dd-c0b5-488f-9eba-d9fec8b48e91",
+      "kind": "reminder_update",
+      "status": "updated",
+      "idempotent": false,
+      "reminder": {
+        "reminderId": "39172639-49db-4396-b93e-f085a6a98377",
+        "content": "updated isolated acceptance",
+        "scheduledAtUtc": 1789068060,
+        "localDateTime": "2026-09-11 03:21",
+        "timezone": "Asia/Shanghai",
+        "state": "scheduled"
+      },
+      "warnings": []
+    },
+    "jobs": [
+      {
+        "id": "86c6e0c3-c07e-4642-baea-f2eb92f8216a",
+        "declarationKey": "personal-reminder:39172639-49db-4396-b93e-f085a6a98377:1789064460",
+        "name": "kurumi.personal-reminder.39172639-49db-4396-b93e-f085a6a98377",
+        "enabled": true,
+        "deleteAfterRun": true,
+        "createdAtMs": 1788978097674,
+        "updatedAtMs": 1788978097791,
+        "schedule": {
+          "kind": "at",
+          "at": "2026-09-10T19:21:00.000Z"
+        },
+        "sessionTarget": "isolated",
+        "wakeMode": "now",
+        "payload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "dist/reminder-cli.js",
+            "deliver",
+            "--id",
+            "39172639-49db-4396-b93e-f085a6a98377"
+          ],
+          "cwd": "/home/afrangry/.openclaw/chatbot/plugins/personal-weather",
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 4096
+        },
+        "delivery": {
+          "mode": "announce",
+          "channel": "qqbot",
+          "to": "qqbot:c2c:acceptance-owner",
+          "accountId": "default"
+        },
+        "state": {
+          "nextRunAtMs": 1789068060000
+        },
+        "nextRunAtMs": 1789068060000
+      }
+    ]
+  },
+  "cancelled": {
+    "ok": true,
+    "schemaVersion": 1,
+    "proposalId": "3bbc92d5-d0ad-4971-b889-87cc786e2839",
+    "kind": "reminder_cancel",
+    "status": "cancelled",
+    "idempotent": false,
+    "reminder": {
+      "reminderId": "39172639-49db-4396-b93e-f085a6a98377",
+      "content": "updated isolated acceptance",
+      "scheduledAtUtc": 1789068060,
+      "localDateTime": "2026-09-11 03:21",
+      "timezone": "Asia/Shanghai",
+      "state": "cancelled"
+    },
+    "warnings": []
+  },
+  "status": "passed",
+  "gatewayStopped": true,
+  "storageVerification": {
+    "state/openclaw.sqlite": {
+      "cron_jobs": 0
+    },
+    "state/personal-weather/weather.sqlite": {
+      "approval_grants": 0,
+      "grantStatuses": []
+    },
+    "state/personal-reminders/reminders.sqlite": {
+      "reminders": 1,
+      "approval_grants": 3,
+      "reminder_audit_log": 5,
+      "reminderStatuses": [
+        [
+          "cancelled",
+          1
+        ]
+      ],
+      "grantStatuses": [
+        [
+          "consumed",
+          3
+        ]
+      ]
+    }
+  },
+  "productionAfter": {
+    "personal-weather/weather.sqlite": {
+      "change_proposals": 8,
+      "confirmation_proposals": 5,
+      "approval_grants": 0,
+      "trips": 1,
+      "audit_log": 5
+    },
+    "personal-reminders/reminders.sqlite": {
+      "reminder_proposals": 17,
+      "confirmation_proposals": 2,
+      "approval_grants": 0,
+      "reminders": 8,
+      "reminder_audit_log": 39
+    },
+    "openclaw.sqlite": {
+      "cron_jobs": 1
+    }
+  },
+  "productionGateway": "ExecMainStartTimestamp=Thu 2026-09-10 01:36:19 CST\nActiveState=active\nSubState=running\n"
+}

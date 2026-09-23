@@ -1,0 +1,124 @@
+{
+  "stage": "D12-search-error-attribution",
+  "logs": {
+    "regression.log": "\n> openclaw-plugin-personal-search@0.1.0 test\n> vitest run --config ./vitest.config.ts\n\n\n RUN  v3.2.7 /home/afrangry/.openclaw/chatbot/plugins/personal-search\n\n ✓ src/persistence.test.ts (3 tests) 3ms\n ✓ src/manifest.test.ts (1 test) 6ms\n ✓ src/query.test.ts (5 tests) 12ms\n ✓ src/quota.test.ts (2 tests) 5ms\n ✓ src/parser.test.ts (6 tests) 13ms\n ✓ src/quality-eval.test.ts (4 tests) 12ms\n ✓ src/config.test.ts (3 tests) 8ms\n ✓ src/deepseek-client.test.ts (15 tests) 41ms\n ✓ src/provider.test.ts (6 tests) 20ms\n ✓ src/index.test.ts (8 tests) 9ms\n\n Test Files  10 passed (10)\n      Tests  53 passed (53)\n   Start at  02:59:45\n   Duration  2.83s (transform 570ms, setup 0ms, collect 4.78s, tests 131ms, environment 2ms, prepare 917ms)\n\n",
+    "restart.log": "ExecMainStartTimestamp=Thu 2026-09-10 03:01:29 CST\nActiveState=active\nSubState=running\n",
+    "build.log": "\n> openclaw-plugin-personal-search@0.1.0 build\n> tsc -p tsconfig.json\n\n",
+    "config.log": "Config valid: ~/.openclaw/openclaw.json\n"
+  },
+  "model": {
+    "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-JC1uxC",
+    "scenario": "search-error",
+    "expected": "INVALID_RESPONSE",
+    "model": "bailian-token-plan/qwen3.7-plus",
+    "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+    "delivered": [
+      {
+        "payload": {
+          "text": "搜索失败了，具体情况如下：\n\n- **错误码**：`INVALID_RESPONSE`\n- **是否可重试**：`retryable: false`（不可重试）\n- **错误信息**：本地搜索插件无法核验上游返回的结果，未生成可用搜索答案。\n\n这是 DeepSeek Search 上游返回的内容未能通过本地插件的校验，导致没有生成可用的合成答案。由于标记为 `retryable=false`，我不会再次调用。\n\n如果需要了解 SQLite 事务原子性的信息，可以稍后再试，或者我可以基于已有的通用知识来回答（但我会明确区分哪些是通用知识、哪些未经验证）。",
+          "replyToTag": false,
+          "replyToId": "cc81b47a-7732-457b-aa1a-087d24e9d137",
+          "audioAsVoice": false
+        },
+        "info": {
+          "kind": "final",
+          "assistantMessageIndex": 2
+        }
+      }
+    ],
+    "starts": [],
+    "before": {
+      "profilePlanning": {
+        "trips": 0,
+        "change_proposals": 0,
+        "audit_log": 0,
+        "proposals": [],
+        "grants": [],
+        "profileRevision": 1
+      },
+      "reminder": {
+        "reminders": 0,
+        "reminder_audit_log": 0,
+        "proposals": [],
+        "grants": []
+      }
+    },
+    "dispatch": {
+      "queuedFinal": true,
+      "counts": {
+        "tool": 0,
+        "block": 0,
+        "final": 1
+      }
+    },
+    "messages": [
+      {
+        "role": "user",
+        "content": "请只调用一次 personal_web_search，查询 SQLite 事务的原子性。如果失败，请说明实际错误码和是否可重试，不要再次调用工具，也不要用记忆编造搜索结果。"
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "toolCall",
+            "id": "toolu_68bf484203d6400490241824",
+            "name": "personal_web_search",
+            "arguments": {
+              "query": "[redacted search query]"
+            }
+          }
+        ]
+      },
+      {
+        "role": "toolResult",
+        "toolName": "personal_web_search",
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": false,\n  \"code\": \"INVALID_RESPONSE\",\n  \"retryable\": false,\n  \"message\": \"本地搜索插件无法核验上游返回的结果，未生成可用搜索答案。\"\n}"
+          }
+        ]
+      },
+      {
+        "role": "assistant",
+        "content": [
+          {
+            "type": "text",
+            "text": "搜索失败了，具体情况如下：\n\n- **错误码**：`INVALID_RESPONSE`\n- **是否可重试**：`retryable: false`（不可重试）\n- **错误信息**：本地搜索插件无法核验上游返回的结果，未生成可用搜索答案。\n\n这是 DeepSeek Search 上游返回的内容未能通过本地插件的校验，导致没有生成可用的合成答案。由于标记为 `retryable=false`，我不会再次调用。\n\n如果需要了解 SQLite 事务原子性的信息，可以稍后再试，或者我可以基于已有的通用知识来回答（但我会明确区分哪些是通用知识、哪些未经验证）。"
+          }
+        ]
+      }
+    ],
+    "after": {
+      "profilePlanning": {
+        "trips": 0,
+        "change_proposals": 0,
+        "audit_log": 0,
+        "proposals": [],
+        "grants": [],
+        "profileRevision": 1
+      },
+      "reminder": {
+        "reminders": 0,
+        "reminder_audit_log": 0,
+        "proposals": [],
+        "grants": []
+      }
+    },
+    "searchResult": {
+      "ok": false,
+      "code": "INVALID_RESPONSE",
+      "retryable": false,
+      "message": "本地搜索插件无法核验上游返回的结果，未生成可用搜索答案。"
+    },
+    "status": "passed"
+  },
+  "review": "Reply attributes rejection to local plugin, preserves INVALID_RESPONSE and retryable=false; one actual tool call; transport is fixed invalid fixture, no DeepSeek request",
+  "health": {
+    "ok": true,
+    "exit": 0,
+    "qqReady": true,
+    "confirmationBackendsRegistered": true
+  }
+}

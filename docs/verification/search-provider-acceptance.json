@@ -1,0 +1,123 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/search-provider-7SsnzM",
+  "query": "SQLite 官方文档如何解释事务的原子性？请给出官方文档来源。",
+  "boundary": "Actual configured DeepSeek provider/parser/quota; test transport observer uses same trusted endpoint SDK. Public query only; no Host agent or QQ delivery.",
+  "audit": [
+    {
+      "event": "personal-search.audit",
+      "requestId": "1a2ca11a-f1de-4a7a-bdc2-93edc4b41432",
+      "queryHash": "a8eb9f3dbeaa3c1a9668f5a954e62772ada8ba8395024ae912489f1a67de472c",
+      "queryLength": 32,
+      "provider": "deepseek-search",
+      "elapsedMs": 12870,
+      "resultCount": 3,
+      "status": "OK",
+      "quota": {
+        "minuteCount": 0,
+        "dayCount": 1,
+        "inFlight": 0
+      }
+    }
+  ],
+  "requests": [
+    {
+      "endpoint": "https://api.deepseek.com/responses",
+      "model": "deepseek-v4-flash",
+      "httpStatus": 200,
+      "bytes": 8878,
+      "truncated": false,
+      "shape": {
+        "status": "completed",
+        "incomplete_details": null,
+        "output": [
+          {
+            "type": "reasoning",
+            "status": "completed",
+            "content": [
+              {
+                "type": "reasoning_text",
+                "textLength": 280
+              }
+            ]
+          },
+          {
+            "type": "web_search_call",
+            "status": "completed",
+            "actionType": "search"
+          },
+          {
+            "type": "reasoning",
+            "status": "completed",
+            "content": [
+              {
+                "type": "reasoning_text",
+                "textLength": 296
+              }
+            ]
+          },
+          {
+            "type": "web_search_call",
+            "status": "completed",
+            "actionType": "open_page"
+          },
+          {
+            "type": "web_search_call",
+            "status": "completed",
+            "actionType": "open_page"
+          },
+          {
+            "type": "reasoning",
+            "status": "completed",
+            "content": [
+              {
+                "type": "reasoning_text",
+                "textLength": 1890
+              }
+            ]
+          },
+          {
+            "type": "message",
+            "status": "completed",
+            "content": [
+              {
+                "type": "output_text",
+                "textLength": 1657
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "result": {
+    "schema_version": 1,
+    "kind": "answer",
+    "provider": "deepseek-search",
+    "query": "SQLite 官方文档如何解释事务的原子性？请给出官方文档来源。",
+    "content": "SQLite 官方文档对事务原子性（Atomicity）的解释主要集中在两个官方页面：\n\n1. 《Atomic Commit In SQLite》（https://sqlite.org/atomiccommit.html）开头即定义：\"Atomic commit means that either all database changes within a single transaction occur or none of them occur. With atomic commit, it is as if many different writes to different sections of the database file occur instantaneously and simultaneously.\"（原子提交意味着单个事务内对数据库的所有更改要么全部发生，要么全不发生；在效果上，仿佛对数据库文件各处的多次写入是瞬间、同时完成的。）文档还强调：\"SQLite has the important property that transactions appear to be atomic even if the transaction is interrupted by an operating system crash or power failure.\"（即使事务被操作系统崩溃或断电打断，SQLite 中的事务仍表现为原子的。）该文详细描述了实现这种原子性假象的机制（如回滚日志 rollback journal、文件锁、flush/fsync 等），并说明在使用 WAL（预写日志）时也支持原子提交，但实现机制不同。\n\n2. 《SQLite is Transactional》（https://sqlite.org/transactional.html）把原子性列为 ACID 之首，并写道：\"All changes within a single transaction in SQLite either occur completely or not at all, even if the act of writing the change out to the disk is interrupted by a program crash, an operating system crash, or a power failure.\"（SQLite 单个事务内的所有更改要么完整发生、要么完全不发生，即使把更改写入磁盘的过程被程序崩溃、操作系统崩溃或断电打断也不例外。）该页还说明这些特性经过模拟崩溃与断电的专门测试框架验证。\n\n此外，SQLite 语言参考的 BEGIN TRANSACTION 一节（https://www.sqlite.org/lang_transaction.html）也指出 SQLite 支持带回滚和原子提交的事务。如需进一步了解原子性背后的技术实现细节，建议查阅上述《Atomic Commit In SQLite》官方技术文档。",
+    "citations": [
+      {
+        "title": "Atomic Commit In SQLite — SQLite 官方文档",
+        "url": "https://sqlite.org/atomiccommit.html"
+      },
+      {
+        "title": "SQLite is Transactional — SQLite 官方文档",
+        "url": "https://sqlite.org/transactional.html"
+      },
+      {
+        "title": "SQL As Understood By SQLite: BEGIN TRANSACTION（官方语言参考）",
+        "url": "https://www.sqlite.org/lang_transaction.html"
+      }
+    ],
+    "source_verification": "provider_reported",
+    "searched_at": "2026-09-09T18:31:09.089Z",
+    "took_ms": 12869,
+    "externalContent": {
+      "untrusted": true,
+      "source": "web_search",
+      "wrapped": true,
+      "provider": "deepseek-search"
+    }
+  },
+  "status": "passed"
+}

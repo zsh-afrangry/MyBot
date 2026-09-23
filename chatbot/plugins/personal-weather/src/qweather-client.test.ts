@@ -25,6 +25,18 @@ function guardedResponse(
 }
 
 describe("QWeatherClient", () => {
+  it.each(["http", "business"])("classifies %s 400 as request rejection, without retry or response leakage", async (kind) => {
+    const guardedFetch = vi.fn(async () => guardedResponse(new Response(
+      JSON.stringify({ code: "400", private: "do-not-return" }),
+      { status: kind === "http" ? 400 : 200, headers: { "content-type": "application/json" } },
+    ))) as unknown as typeof fetchWithSsrFGuard;
+    const sleep = vi.fn(async () => undefined);
+    const client = new QWeatherClient(config(), { guardedFetch, sleep });
+    await expect(client.lookupPlace({ location: "测试校区", adm: "测试行政区" }))
+      .rejects.toMatchObject({ code: "REQUEST_REJECTED", retryable: false });
+    expect(guardedFetch).toHaveBeenCalledTimes(1);
+    expect(sleep).not.toHaveBeenCalled();
+  });
   it("uses fixed current path with latitude before longitude and header auth", async () => {
     const guardedFetchMock = vi.fn(
       async (_params: Parameters<typeof fetchWithSsrFGuard>[0]) =>

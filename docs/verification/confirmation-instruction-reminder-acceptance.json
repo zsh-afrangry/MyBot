@@ -1,0 +1,143 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-JWdLM4",
+  "scenario": "reminder-proposal",
+  "expected": "pending",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "已生成提案，时间 2026-09-10 04:03（Asia/Shanghai），内容“确认链路验收”，一次性提醒，投递到主人 QQ 私聊。\n\n提案 ID：`0a8c79e1-223f-41ae-9f11-1f1ed9b9a1fb`\nPayload Hash：`34aade78c9967c6e10fef966f76ef01583efa4c44704de7eb0334a026ef66aea`\n确认截止：2026-09-11 03:53（Asia/Shanghai）\n\n确认口令：\n\n确认 proposalId=0a8c79e1-223f-41ae-9f11-1f1ed9b9a1fb payloadHash=34aade78c9967c6e10fef966f76ef01583efa4c44704de7eb0334a026ef66aea\n\n本轮只展示，未提交。确认口令必须原样回复后才会创建定时任务。",
+        "replyToTag": false,
+        "replyToId": "ecedd6b5-906a-4e76-961b-739894a5a275",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "请生成一个10分钟后提醒我‘确认链路验收’的提案，本轮先不要提交。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_482fdb42d66b4975b99ed51a",
+          "name": "personal_reminder_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "reminder.create",
+              "content": "确认链路验收",
+              "schedule": {
+                "local_date_time": "2026-09-10T04:03",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_reminder_propose",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"0a8c79e1-223f-41ae-9f11-1f1ed9b9a1fb\",\n  \"payloadHash\": \"34aade78c9967c6e10fef966f76ef01583efa4c44704de7eb0334a026ef66aea\",\n  \"status\": \"pending\",\n  \"kind\": \"reminder_create\",\n  \"previewText\": \"主人，已生成一份待确认提醒提案：\\n- 时间：2026-09-10T04:03（Asia/Shanghai，一次）\\n- 内容：确认链路验收\\n- 投递：仅主人 QQ 私聊\\n- 提案确认截止：2026-09-11T03:53:55+08:00（Asia/Shanghai）\\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\\n确认 proposalId=0a8c79e1-223f-41ae-9f11-1f1ed9b9a1fb payloadHash=34aade78c9967c6e10fef966f76ef01583efa4c44704de7eb0334a026ef66aea\",\n  \"confirmationInstruction\": \"确认 proposalId=0a8c79e1-223f-41ae-9f11-1f1ed9b9a1fb payloadHash=34aade78c9967c6e10fef966f76ef01583efa4c44704de7eb0334a026ef66aea\",\n  \"canonicalFacts\": {\n    \"kind\": \"reminder.create\",\n    \"content\": \"确认链路验收\",\n    \"schedule\": {\n      \"atUtc\": 1788984180,\n      \"localDateTime\": \"2026-09-10T04:03\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"recurrence\": \"once\"\n    }\n  },\n  \"derivedEffects\": [\n    {\n      \"kind\": \"reminder.schedule\",\n      \"target\": \"owner_qq_private\"\n    }\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789070035,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-10T19:53:55.000Z\",\n    \"local\": \"2026-09-11T03:53:55+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"reminder_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "已生成提案，时间 2026-09-10 04:03（Asia/Shanghai），内容“确认链路验收”，一次性提醒，投递到主人 QQ 私聊。\n\n提案 ID：`0a8c79e1-223f-41ae-9f11-1f1ed9b9a1fb`\nPayload Hash：`34aade78c9967c6e10fef966f76ef01583efa4c44704de7eb0334a026ef66aea`\n确认截止：2026-09-11 03:53（Asia/Shanghai）\n\n确认口令：\n\n确认 proposalId=0a8c79e1-223f-41ae-9f11-1f1ed9b9a1fb payloadHash=34aade78c9967c6e10fef966f76ef01583efa4c44704de7eb0334a026ef66aea\n\n本轮只展示，未提交。确认口令必须原样回复后才会创建定时任务。"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [
+        {
+          "domain": "personal_reminder",
+          "status": "pending",
+          "n": 1
+        }
+      ],
+      "grants": []
+    }
+  },
+  "turns": [
+    {
+      "phase": "proposal",
+      "state": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": []
+        }
+      }
+    }
+  ],
+  "status": "passed"
+}

@@ -32,6 +32,28 @@ afterEach(() => {
 });
 
 describe("P2 planning slice", () => {
+  it("displays proposal expiry across the UTC/local date boundary without changing frozen facts", () => {
+    const { store, databasePath } = createStore(1787761008 - 86400);
+    try {
+      const result = proposePlanningChange(store, { schema_version: 1, request: {
+        kind: "trip.create", destination: { text: "南京" }, transport_mode: "rail", weather_mode: "none",
+      } }, CONFIRMATION_SCOPE);
+      assert.equal(result.ok, true);
+      if (!result.ok) return;
+      const display = { utc: "2026-08-26T16:16:48.000Z", local: "2026-08-27T00:16:48+08:00", timezone: "Asia/Shanghai" };
+      expect(result.expiresAtDisplay).toEqual(display);
+      expect(result.previewText).toContain(`提案确认截止：${display.local}`);
+      expect(getPlanningState(store).pendingProposals[0]?.expiresAtDisplay).toEqual(display);
+      const db = new DatabaseSync(databasePath, { readOnly: true });
+      try {
+        const row = db.prepare("SELECT expires_at_utc,payload_hash,payload_json FROM change_proposals WHERE proposal_id=?").get(result.proposalId) as { expires_at_utc: number; payload_hash: string; payload_json: string };
+        expect(row.expires_at_utc).toBe(1787761008);
+        expect(row.payload_hash).toBe(result.payloadHash);
+        expect(row.payload_json).not.toContain("expiresAtDisplay");
+        expect(countRows(db, "trips")).toBe(0);
+      } finally { db.close(); }
+    } finally { store.close(); }
+  });
   it("renders the observed flight on August 15 in Shanghai and handles timezone date boundaries", () => {
     expect(formatPlanningDateTime(1786753500, "Asia/Shanghai")).toBe("2026-08-15T08:25:00+08:00");
     expect(formatPlanningDateTime(1786762200, "Asia/Shanghai")).toBe("2026-08-15T10:50:00+08:00");
@@ -282,10 +304,10 @@ describe("P2 planning slice", () => {
   });
 });
 
-function createStore(): { store: WeatherStore; databasePath: string } {
+function createStore(nowUtc = NOW): { store: WeatherStore; databasePath: string } {
   const root = mkdtempSync(join(tmpdir(), "personal-weather-planning-"));
   temporaryRoots.push(root);
-  const store = new WeatherStore({ stateDirectory: join(root, "state"), now: () => NOW });
+  const store = new WeatherStore({ stateDirectory: join(root, "state"), now: () => nowUtc });
   return { store, databasePath: store.databasePath };
 }
 

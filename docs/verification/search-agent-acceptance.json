@@ -1,0 +1,140 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-84YoTz",
+  "scenario": "search",
+  "expected": "answer",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "根据搜索结果，OpenAI 官方文档把 Responses API 定位为其新一代面向智能体（agent）的统一 API，主要用途包括：\n\n1. **统一接口**：把 Chat Completions 的文本生成与已废弃的 Assistants API 工具调用能力整合，官方称\"代表在 OpenAI 上构建智能体的未来方向\"；\n2. **内置托管工具**：开发者可在一次请求中启用 `web_search`、`file_search`、`code_interpreter`、`computer_use`、`image_generation` 及远程 MCP 服务器，由服务端模型自行调用；\n3. **有状态多轮会话**：响应默认被存储并带 `id`，可用 `previous_response_id` 在服务端延续对话，也支持无状态模式；\n4. **推理模型与智能体循环**：跨轮保留推理状态，返回类型化的 output 项，专为多模态与推理模型（GPT-5 系列）设计；\n5. **语义化流式与多模态输入输出**：使用类型化事件流，便于监听文本增量、工具调用等事件。\n\n工具返回的全部来源 URL（按原样列出）：\n\n- https://developers.openai.com/api/docs/guides/migrate-to-responses\n- https://developers.openai.com/blog/responses-api\n- https://help.openai.com/en/articles/8550641-assistants-api-v2-faq\n- https://apidog.com/blog/openai-responses-api/\n\n**明确说明**：以上全部内容（包括摘要和来源链接）均由 `deepseek-search` Provider 报告返回，未做任何本地 Fetch 或抓取核验。搜索结果整体被标记为 `untrusted`，仅作为参考信息；如需确认细节，建议直接查阅 OpenAI 官方文档站。",
+        "replyToTag": false,
+        "replyToId": "6d429de3-4649-48c2-93dc-a76a43ba41e5",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "请只调用一次 personal_web_search，查询 OpenAI Responses API 官方文档介绍的主要用途。根据实际结果简要回答，并逐条原样列出工具返回的全部来源 URL；不要补充或改写链接，也不要重试。明确这些是 Provider 报告、没有本地 Fetch 核验。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_e0556baad1b043b7ad96607c",
+          "name": "personal_web_search",
+          "arguments": {
+            "query": "[redacted search query]"
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_web_search",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"provider\": \"deepseek-search\",\n  \"result\": {\n    \"schema_version\": 1,\n    \"kind\": \"answer\",\n    \"provider\": \"deepseek-search\",\n    \"query\": \"[redacted search query]\",\n    \"content\": \"OpenAI 官方文档把 Responses API（POST /v1/responses）定位为其新一代、面向智能体（agent）的统一 API，主要目的包括：1) 统一与“面向未来”：它把 Chat Completions 的简洁文本生成与（现已废弃的）Assistants API 的工具调用能力整合进单一接口；官方“迁移到 Responses API”文档明确说“The Responses API represents the future direction for building agents on OpenAI”（代表在 OpenAI 上构建智能体的未来方向），并建议新项目使用它（Assistants API 已于 2025 年 8 月宣布弃用、2026 年 8 月移除）。2) 内置托管工具（agentic tool-use）：开发者可在一次请求中启用 web search、file search、code interpreter、computer use、image generation 等工具以及远程 MCP 服务器，由模型在服务端自行决定并调用，免去自己维护工具循环。3) 有状态多轮会话：响应默认被存储并带 id，可用 previous_response_id 在服务端延续对话而无需重发整段历史；也可用 store:false、手动回放 item 或加密 reasoning 项保持无状态。4) 支持推理模型与智能体循环（agentic loop）：保留模型的推理状态跨轮延续，返回类型化的 output 项（文本、工具调用、推理摘要等），并专为多模态与推理模型（如 GPT-5 系列）设计。5) 语义化流式与多模态输入输出：使用类型化事件流，便于监听文本增量、工具调用等事件。说明：OpenAI 官方文档站（developers.openai.com）对直接抓取返回 403，未能整页核验，以上内容综合自官方页面在搜索结果中的原文摘要、官方开发者博客摘要及一份详细第三方指南；如需要，建议再通过官方文档站做最终核对。\",\n    \"citations\": [\n      {\n        \"title\": \"Migrate to the Responses API | OpenAI API\",\n        \"url\": \"https://developers.openai.com/api/docs/guides/migrate-to-responses\"\n      },\n      {\n        \"title\": \"Why we built the Responses API | OpenAI Developers\",\n        \"url\": \"https://developers.openai.com/blog/responses-api\"\n      },\n      {\n        \"title\": \"Assistants API (v2) FAQ | OpenAI Help Center\",\n        \"url\": \"https://help.openai.com/en/articles/8550641-assistants-api-v2-faq\"\n      },\n      {\n        \"title\": \"How to use the OpenAI Responses API | Apidog\",\n        \"url\": \"https://apidog.com/blog/openai-responses-api/\"\n      }\n    ],\n    \"source_verification\": \"provider_reported\",\n    \"searched_at\": \"2026-09-09T18:35:52.145Z\",\n    \"took_ms\": 52599,\n    \"externalContent\": {\n      \"untrusted\": true,\n      \"source\": \"web_search\",\n      \"wrapped\": true,\n      \"provider\": \"deepseek-search\"\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "根据搜索结果，OpenAI 官方文档把 Responses API 定位为其新一代面向智能体（agent）的统一 API，主要用途包括：\n\n1. **统一接口**：把 Chat Completions 的文本生成与已废弃的 Assistants API 工具调用能力整合，官方称\"代表在 OpenAI 上构建智能体的未来方向\"；\n2. **内置托管工具**：开发者可在一次请求中启用 `web_search`、`file_search`、`code_interpreter`、`computer_use`、`image_generation` 及远程 MCP 服务器，由服务端模型自行调用；\n3. **有状态多轮会话**：响应默认被存储并带 `id`，可用 `previous_response_id` 在服务端延续对话，也支持无状态模式；\n4. **推理模型与智能体循环**：跨轮保留推理状态，返回类型化的 output 项，专为多模态与推理模型（GPT-5 系列）设计；\n5. **语义化流式与多模态输入输出**：使用类型化事件流，便于监听文本增量、工具调用等事件。\n\n工具返回的全部来源 URL（按原样列出）：\n\n- https://developers.openai.com/api/docs/guides/migrate-to-responses\n- https://developers.openai.com/blog/responses-api\n- https://help.openai.com/en/articles/8550641-assistants-api-v2-faq\n- https://apidog.com/blog/openai-responses-api/\n\n**明确说明**：以上全部内容（包括摘要和来源链接）均由 `deepseek-search` Provider 报告返回，未做任何本地 Fetch 或抓取核验。搜索结果整体被标记为 `untrusted`，仅作为参考信息；如需确认细节，建议直接查阅 OpenAI 官方文档站。"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "searchResult": {
+    "ok": true,
+    "provider": "deepseek-search",
+    "result": {
+      "schema_version": 1,
+      "kind": "answer",
+      "provider": "deepseek-search",
+      "query": "OpenAI Responses API official documentation main purposes",
+      "content": "OpenAI 官方文档把 Responses API（POST /v1/responses）定位为其新一代、面向智能体（agent）的统一 API，主要目的包括：1) 统一与“面向未来”：它把 Chat Completions 的简洁文本生成与（现已废弃的）Assistants API 的工具调用能力整合进单一接口；官方“迁移到 Responses API”文档明确说“The Responses API represents the future direction for building agents on OpenAI”（代表在 OpenAI 上构建智能体的未来方向），并建议新项目使用它（Assistants API 已于 2025 年 8 月宣布弃用、2026 年 8 月移除）。2) 内置托管工具（agentic tool-use）：开发者可在一次请求中启用 web search、file search、code interpreter、computer use、image generation 等工具以及远程 MCP 服务器，由模型在服务端自行决定并调用，免去自己维护工具循环。3) 有状态多轮会话：响应默认被存储并带 id，可用 previous_response_id 在服务端延续对话而无需重发整段历史；也可用 store:false、手动回放 item 或加密 reasoning 项保持无状态。4) 支持推理模型与智能体循环（agentic loop）：保留模型的推理状态跨轮延续，返回类型化的 output 项（文本、工具调用、推理摘要等），并专为多模态与推理模型（如 GPT-5 系列）设计。5) 语义化流式与多模态输入输出：使用类型化事件流，便于监听文本增量、工具调用等事件。说明：OpenAI 官方文档站（developers.openai.com）对直接抓取返回 403，未能整页核验，以上内容综合自官方页面在搜索结果中的原文摘要、官方开发者博客摘要及一份详细第三方指南；如需要，建议再通过官方文档站做最终核对。",
+      "citations": [
+        {
+          "title": "Migrate to the Responses API | OpenAI API",
+          "url": "https://developers.openai.com/api/docs/guides/migrate-to-responses"
+        },
+        {
+          "title": "Why we built the Responses API | OpenAI Developers",
+          "url": "https://developers.openai.com/blog/responses-api"
+        },
+        {
+          "title": "Assistants API (v2) FAQ | OpenAI Help Center",
+          "url": "https://help.openai.com/en/articles/8550641-assistants-api-v2-faq"
+        },
+        {
+          "title": "How to use the OpenAI Responses API | Apidog",
+          "url": "https://apidog.com/blog/openai-responses-api/"
+        }
+      ],
+      "source_verification": "provider_reported",
+      "searched_at": "2026-09-09T18:35:52.145Z",
+      "took_ms": 52599,
+      "externalContent": {
+        "untrusted": true,
+        "source": "web_search",
+        "wrapped": true,
+        "provider": "deepseek-search"
+      }
+    }
+  },
+  "status": "passed"
+}

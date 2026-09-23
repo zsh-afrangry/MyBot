@@ -1,0 +1,92 @@
+[
+  {
+    "location": "重庆大学虎溪科学城校区",
+    "adm": "重庆市沙坪坝区",
+    "httpStatus": 400,
+    "contentEncoding": "gzip",
+    "businessCode": null,
+    "candidates": []
+  },
+  {
+    "location": "重庆大学虎溪科学城校区",
+    "adm": null,
+    "httpStatus": 200,
+    "contentEncoding": "gzip",
+    "businessCode": "200",
+    "candidates": [
+      {
+        "name": "重庆",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "永川",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "合川",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "南川",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "江津",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      }
+    ]
+  },
+  {
+    "location": "重庆",
+    "adm": null,
+    "httpStatus": 200,
+    "contentEncoding": "gzip",
+    "businessCode": "200",
+    "candidates": [
+      {
+        "name": "重庆",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "永川",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "合川",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "南川",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      },
+      {
+        "name": "江津",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      }
+    ]
+  },
+  {
+    "location": "沙坪坝",
+    "adm": "重庆",
+    "httpStatus": 200,
+    "contentEncoding": "gzip",
+    "businessCode": "200",
+    "candidates": [
+      {
+        "name": "沙坪坝",
+        "adm1": "重庆市",
+        "adm2": "重庆"
+      }
+    ]
+  }
+]

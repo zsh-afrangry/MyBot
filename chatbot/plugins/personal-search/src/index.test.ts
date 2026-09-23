@@ -77,4 +77,18 @@ describe("personal search tool boundary", () => {
     expect(search).not.toHaveBeenCalled();
     expect(result).toMatchObject({ content: [{ type: "text" }] });
   });
+
+  it.each([
+    { name: "missing delivery context", deliveryContext: undefined },
+    { name: "missing target", deliveryContext: { channel: "qqbot" } },
+    { name: "empty target", deliveryContext: { channel: "qqbot", to: "" } },
+    { name: "blank target", deliveryContext: { channel: "qqbot", to: " \t " } },
+  ])("rejects $name before contacting public search", async ({ deliveryContext }) => {
+    const search = vi.fn(async () => ({ provider: "deepseek-search", result: {} }));
+    const api = { config: {}, runtime: { webSearch: { search } } } as never;
+    const tool = createPersonalWebSearchTool(api, { ...ownerPrivateContext, deliveryContext } as never);
+    const result = await tool.execute("missing-context", { query: "public query" });
+    expect(search).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ content: [{ type: "text", text: expect.stringContaining("FORBIDDEN_CONTEXT") }] });
+  });
 });

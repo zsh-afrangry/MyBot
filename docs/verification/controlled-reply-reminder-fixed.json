@@ -1,0 +1,233 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-fucxHD",
+  "scenario": "reminder-proposal",
+  "variation": "natural-b",
+  "expected": "pending",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "主人，已生成一份待确认提醒提案：\n- 时间：2026-09-10T12:23（Asia/Shanghai，一次）\n- 内容：起来活动一下\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：2026-09-11T12:03:47+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\n确认 proposalId=956e6d48-587a-4930-bf68-ba1231d8a052 payloadHash=9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4",
+        "replyToTag": false,
+        "replyToId": "25265c4f-a5e1-4e73-9813-7b41ad2a6fa2",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "input": "帮我安排二十分钟后起来活动一下，先别提交。",
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我安排二十分钟后起来活动一下，先别提交。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_dce09bdab88846ebbe78967c",
+          "name": "personal_reminder_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "reminder.create",
+              "content": "起来活动一下",
+              "schedule": {
+                "local_date_time": "2026-09-10T12:23",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_reminder_propose",
+      "toolCallId": "toolu_dce09bdab88846ebbe78967c",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"956e6d48-587a-4930-bf68-ba1231d8a052\",\n  \"payloadHash\": \"9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4\",\n  \"status\": \"pending\",\n  \"kind\": \"reminder_create\",\n  \"previewText\": \"主人，已生成一份待确认提醒提案：\\n- 时间：2026-09-10T12:23（Asia/Shanghai，一次）\\n- 内容：起来活动一下\\n- 投递：仅主人 QQ 私聊\\n- 提案确认截止：2026-09-11T12:03:47+08:00（Asia/Shanghai）\\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\\n确认 proposalId=956e6d48-587a-4930-bf68-ba1231d8a052 payloadHash=9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4\",\n  \"confirmationInstruction\": \"确认 proposalId=956e6d48-587a-4930-bf68-ba1231d8a052 payloadHash=9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4\",\n  \"canonicalFacts\": {\n    \"kind\": \"reminder.create\",\n    \"content\": \"起来活动一下\",\n    \"schedule\": {\n      \"atUtc\": 1789014180,\n      \"localDateTime\": \"2026-09-10T12:23\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"recurrence\": \"once\"\n    }\n  },\n  \"derivedEffects\": [\n    {\n      \"kind\": \"reminder.schedule\",\n      \"target\": \"owner_qq_private\"\n    }\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789099427,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-11T04:03:47.000Z\",\n    \"local\": \"2026-09-11T12:03:47+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"reminder_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "好的，提醒提案已生成，还没提交：\n\n- 时间：2026-09-10 12:23\n- 内容：起来活动一下\n- 提案确认截止：2026-09-11 12:03:47\n\n需要的时候发下面这行确认就行：\n\n确认 proposalId=956e6d48-587a-4930-bf68-ba1231d8a052 payloadHash=9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [
+        {
+          "domain": "personal_reminder",
+          "status": "pending",
+          "n": 1
+        }
+      ],
+      "grants": []
+    }
+  },
+  "callAnalysis": {
+    "attempts": [
+      {
+        "id": "toolu_dce09bdab88846ebbe78967c",
+        "name": "personal_reminder_propose",
+        "arguments": {
+          "schema_version": 1,
+          "request": {
+            "kind": "reminder.create",
+            "content": "起来活动一下",
+            "schedule": {
+              "local_date_time": "2026-09-10T12:23",
+              "timezone": "Asia/Shanghai"
+            }
+          }
+        },
+        "outcome": "success",
+        "signature": "[\"personal_reminder_propose\",{\"request\":{\"content\":\"起来活动一下\",\"kind\":\"reminder.create\",\"schedule\":{\"local_date_time\":\"2026-09-10T12:23\",\"timezone\":\"Asia/Shanghai\"}},\"schema_version\":1}]",
+        "result": {
+          "ok": true,
+          "schemaVersion": 1,
+          "proposalId": "956e6d48-587a-4930-bf68-ba1231d8a052",
+          "payloadHash": "9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4",
+          "status": "pending",
+          "kind": "reminder_create",
+          "previewText": "主人，已生成一份待确认提醒提案：\n- 时间：2026-09-10T12:23（Asia/Shanghai，一次）\n- 内容：起来活动一下\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：2026-09-11T12:03:47+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\n确认 proposalId=956e6d48-587a-4930-bf68-ba1231d8a052 payloadHash=9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4",
+          "confirmationInstruction": "确认 proposalId=956e6d48-587a-4930-bf68-ba1231d8a052 payloadHash=9080af78fc7cc9f82d9962906a1f96640c294baf8be337bd7160508279d421f4",
+          "canonicalFacts": {
+            "kind": "reminder.create",
+            "content": "起来活动一下",
+            "schedule": {
+              "atUtc": 1789014180,
+              "localDateTime": "2026-09-10T12:23",
+              "timezone": "Asia/Shanghai",
+              "recurrence": "once"
+            }
+          },
+          "derivedEffects": [
+            {
+              "kind": "reminder.schedule",
+              "target": "owner_qq_private"
+            }
+          ],
+          "requiresConfirmation": true,
+          "expiresAtUtc": 1789099427,
+          "expiresAtDisplay": {
+            "utc": "2026-09-11T04:03:47.000Z",
+            "local": "2026-09-11T12:03:47+08:00",
+            "timezone": "Asia/Shanghai"
+          },
+          "persistedAs": "reminder_proposals"
+        }
+      }
+    ],
+    "unmatchedResults": [],
+    "totalCalls": 1,
+    "successes": 1,
+    "schemaRejections": 0,
+    "businessRejections": 0,
+    "unknownOrUnmatched": 0,
+    "sameArgumentsAfterFailure": 0,
+    "correctedSchemaSuccesses": 0,
+    "repeatedSuccessRequests": 0
+  },
+  "canonicalDatabaseChecks": {
+    "resultIdMatchesDatabase": true,
+    "instructionMatchesDatabase": true,
+    "deliveredContainsDatabaseInstruction": true
+  },
+  "turns": [
+    {
+      "phase": "proposal",
+      "state": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [
+            {
+              "domain": "personal_reminder",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": []
+        }
+      }
+    }
+  ],
+  "status": "passed",
+  "replyHookObservations": [
+    {
+      "hook": "after_tool_call",
+      "toolName": "personal_reminder_propose",
+      "runId": "28ecd909-523b-41b2-860b-dffd9d8da876",
+      "contextRunId": "28ecd909-523b-41b2-860b-dffd9d8da876",
+      "sessionKey": "agent:main:qqbot:direct:acceptance-owner",
+      "hasCanonicalPreview": true
+    },
+    {
+      "hook": "reply_payload_sending",
+      "kind": "final",
+      "runId": "28ecd909-523b-41b2-860b-dffd9d8da876",
+      "sessionKey": "agent:main:qqbot:direct:acceptance-owner",
+      "contextSessionKey": "agent:main:qqbot:direct:acceptance-owner",
+      "channel": "qqbot"
+    }
+  ]
+}

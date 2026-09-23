@@ -1,0 +1,206 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/profile-geo-xyEFfR",
+  "mode": "actual guarded client/domain; isolated DB; no model or QQ delivery",
+  "samples": [
+    {
+      "text": "重庆大学虎溪科学城校区",
+      "administrative_area": "重庆市沙坪坝区",
+      "expected": "REQUEST_REJECTED",
+      "result": {
+        "ok": false,
+        "code": "REQUEST_REJECTED",
+        "retryable": false,
+        "message": "地点查询参数被服务拒绝，本次没有创建提案或更新所在地。请核对地点名称与上级行政区；不要原样重试、编造行政区，或将此解释为服务宕机。 retryable 仅表示自动重试策略，不代表故障原因或恢复时间。"
+      },
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    },
+    {
+      "text": "重庆大学虎溪科学城校区",
+      "expected": "location_ambiguous",
+      "result": {
+        "ok": false,
+        "error": {
+          "code": "location_ambiguous",
+          "message": "尚未唯一解析出所说地点。返回的是城市/地区候选，不能认定已定位到具体校区或建筑；请澄清要记录的城市或地区及上级行政区，不要自行选取更粗地点替代。当前所在地未变更。"
+        },
+        "candidates": [
+          {
+            "displayName": "重庆市重庆",
+            "administrativeArea": "重庆市、重庆",
+            "country": "中国",
+            "timezone": "Asia/Shanghai"
+          },
+          {
+            "displayName": "重庆市重庆永川",
+            "administrativeArea": "重庆市、重庆",
+            "country": "中国",
+            "timezone": "Asia/Shanghai"
+          },
+          {
+            "displayName": "重庆市重庆合川",
+            "administrativeArea": "重庆市、重庆",
+            "country": "中国",
+            "timezone": "Asia/Shanghai"
+          },
+          {
+            "displayName": "重庆市重庆南川",
+            "administrativeArea": "重庆市、重庆",
+            "country": "中国",
+            "timezone": "Asia/Shanghai"
+          },
+          {
+            "displayName": "重庆市重庆江津",
+            "administrativeArea": "重庆市、重庆",
+            "country": "中国",
+            "timezone": "Asia/Shanghai"
+          }
+        ],
+        "requiresUserInput": true
+      },
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    },
+    {
+      "text": "沙坪坝",
+      "administrative_area": "重庆",
+      "expected": "pending",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "status": "pending",
+        "kind": "current_location_set",
+        "proposalId": "3b325ea6-036b-4028-a44e-be1ffa1d8e68",
+        "payloadHash": "bcaa716b8c3b00683c5ac6489a1b4c06b105caebac7cc6a542a75210f91744b6",
+        "previewText": "已生成待确认个人资料变更：\n当前所在地：广东省广州市天河区 → 重庆市重庆沙坪坝\n时区：Asia/Shanghai\n生效：确认提交时立即生效。\n影响：后续未指定地点的天气查询和每日天气简报将读取新所在地。\n不会修改：行程、提醒、Cron、长期记忆或任何常住地资料。\n尚未提交。\n- 提案确认截止：2026-09-11T13:26:21+08:00（Asia/Shanghai）\n请在本次主人 QQ 私聊回复下面这一行原文，确认后才会更新：\n确认 proposalId=3b325ea6-036b-4028-a44e-be1ffa1d8e68 payloadHash=bcaa716b8c3b00683c5ac6489a1b4c06b105caebac7cc6a542a75210f91744b6",
+        "confirmationInstruction": "确认 proposalId=3b325ea6-036b-4028-a44e-be1ffa1d8e68 payloadHash=bcaa716b8c3b00683c5ac6489a1b4c06b105caebac7cc6a542a75210f91744b6",
+        "canonicalFacts": {
+          "domain": "personal_profile",
+          "schemaVersion": 1,
+          "kind": "current_location_set",
+          "currentLocation": {
+            "displayName": "重庆市重庆沙坪坝",
+            "countryCode": "CN",
+            "timezone": "Asia/Shanghai",
+            "precision": "city"
+          },
+          "sourceKind": "owner_text"
+        },
+        "effects": {
+          "currentLocationChanged": true,
+          "weatherUsesCurrentLocation": true,
+          "tripChanged": false,
+          "reminderChanged": false,
+          "cronChanged": false,
+          "memoryChanged": false
+        },
+        "requiresConfirmation": true,
+        "expiresAtUtc": 1789104381,
+        "expiresAtDisplay": {
+          "utc": "2026-09-11T05:26:21.000Z",
+          "local": "2026-09-11T13:26:21+08:00",
+          "timezone": "Asia/Shanghai"
+        }
+      },
+      "before": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 0,
+          "audit_log": 0,
+          "proposals": [],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      },
+      "after": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "personal_profile",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    }
+  ],
+  "status": "passed"
+}

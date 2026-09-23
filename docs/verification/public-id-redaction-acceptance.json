@@ -1,0 +1,9 @@
+{
+  "host": "2026.7.1-2",
+  "badUuid": "00000000-0000-4000-80fc-000000000000",
+  "badRedacted": "00000000-0000-4000-80***",
+  "selectedCorrect": true,
+  "selectedSurvives": true,
+  "samples": 256,
+  "allGeneratedSurvive": true
+}

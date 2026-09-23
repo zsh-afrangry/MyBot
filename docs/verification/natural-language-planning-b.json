@@ -1,0 +1,519 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-L5qXGc",
+  "scenario": "confirm",
+  "variation": "natural-b",
+  "expected": "committed",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "主人好呀～已经帮你生成了出行计划提案：\n\n- 🚄 目的地：江苏南京\n- 交通方式：火车\n- 出发/到达时间：暂未填写\n\n提案确认截止：**2026-09-11 04:57（Asia/Shanghai）**\n\n确认后才真正写入行程。要保存的话，请回复下面这一行原文：\n\n确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d",
+        "replyToTag": false,
+        "replyToId": "21f50d04-87fc-44e8-9a24-587cab0a8163",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    },
+    {
+      "payload": {
+        "text": "已提交啦～🚄\n\n- 行程标题：南京出行\n- 目的地：江苏南京\n- 交通方式：火车\n- 出发/到达时间：待补充\n\n目前这条行程已保存为「已计划」状态，但目的地还没有通过受控地点目录消歧，所以天气地点暂未切换；后续有了出发/到达时间可以再补全。需要调整的话随时告诉我～",
+        "replyToTag": false,
+        "replyToId": "91255dc4-72b3-4f63-89b9-d139a2f7b0c7",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    },
+    {
+      "payload": {
+        "text": "这条行程刚才已经提交成功啦～这次重复确认是幂等的，没有生成重复记录，南京出行仍然只有一条 🚄\n\n如果后续确定了出发/到达时间，告诉我再帮你补全～",
+        "replyToTag": false,
+        "replyToId": "e13554b9-8c62-449b-86c1-700657e31cf6",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "input": "我打算坐火车去江苏南京，帮我保存这个出行计划，时间暂时留空。",
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "我打算坐火车去江苏南京，帮我保存这个出行计划，时间暂时留空。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_6b1b3ed6a9724b79bdfc4303",
+          "name": "personal_planning_change_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "trip.create",
+              "title": "南京出行",
+              "destination": {
+                "text": "南京",
+                "administrative_area": "江苏"
+              },
+              "transport_mode": "rail"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_propose",
+      "toolCallId": "toolu_6b1b3ed6a9724b79bdfc4303",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"8e80679c-909b-4808-98e9-e626b8469fe9\",\n  \"payloadHash\": \"078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d\",\n  \"status\": \"pending\",\n  \"kind\": \"trip_create\",\n  \"previewText\": \"待确认的出行计划提案\\n- 目的地：南京\\n- 当前天气参考地：广东省广州市天河区\\n- 交通方式：火车/高铁\\n- 到达信息：未提供\\n- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。\\n- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。\\n- 待补充：destination_place、arrival_time_window\\n- 说明：目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。 尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\\n- 提案确认截止：2026-09-11T04:57:41+08:00（Asia/Shanghai）\\n请在本次主人 QQ 私聊回复下面这一行原文，确认后才会提交：\\n确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d\",\n  \"confirmationInstruction\": \"确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d\",\n  \"canonicalFacts\": {\n    \"domain\": \"weather_travel\",\n    \"schemaVersion\": 1,\n    \"kind\": \"trip_create\",\n    \"title\": \"南京出行\",\n    \"origin\": {\n      \"displayName\": \"广东省广州市天河区\",\n      \"countryCode\": \"CN\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"precision\": \"district\"\n    },\n    \"destination\": {\n      \"text\": \"南京\",\n      \"administrativeArea\": \"江苏\",\n      \"resolution\": \"pending\"\n    },\n    \"transportMode\": \"rail\",\n    \"departure\": null,\n    \"arrival\": null,\n    \"weatherMode\": \"none\",\n    \"sourceKind\": \"owner_text\"\n  },\n  \"derivedEffects\": [],\n  \"missingFields\": [\n    \"destination_place\",\n    \"arrival_time_window\"\n  ],\n  \"warnings\": [\n    \"目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。\",\n    \"尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\"\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789073861,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-10T20:57:41.000Z\",\n    \"local\": \"2026-09-11T04:57:41+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"change_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "主人好呀～已经帮你生成了出行计划提案：\n\n- 🚄 目的地：江苏南京\n- 交通方式：火车\n- 出发/到达时间：暂未填写\n\n提案确认截止：**2026-09-11 04:57（Asia/Shanghai）**\n\n确认后才真正写入行程。要保存的话，请回复下面这一行原文：\n\n确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d"
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_41e715fdee634bfbbe62496f",
+          "name": "personal_planning_change_commit",
+          "arguments": {
+            "proposal_id": "8e80679c-909b-4808-98e9-e626b8469fe9",
+            "payload_hash": "078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d"
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_commit",
+      "toolCallId": "toolu_41e715fdee634bfbbe62496f",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"8e80679c-909b-4808-98e9-e626b8469fe9\",\n  \"status\": \"committed\",\n  \"idempotent\": false,\n  \"trip\": {\n    \"id\": 1,\n    \"title\": \"南京出行\",\n    \"state\": \"planned\",\n    \"originDisplayName\": \"广东省广州市天河区\",\n    \"destinationDisplayName\": null,\n    \"destinationText\": \"南京\",\n    \"destinationAdministrativeArea\": \"江苏\",\n    \"transportMode\": \"rail\",\n    \"departureEarliestUtc\": null,\n    \"departureLatestUtc\": null,\n    \"departurePrecision\": \"unknown\",\n    \"arrivalEarliestUtc\": null,\n    \"arrivalLatestUtc\": null,\n    \"arrivalPrecision\": \"unknown\",\n    \"weatherMode\": \"none\",\n    \"revision\": 1\n  },\n  \"locationPeriodCreated\": false,\n  \"weatherLocationChanged\": false,\n  \"warnings\": [\n    \"行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。\",\n    \"当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。\"\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "已提交啦～🚄\n\n- 行程标题：南京出行\n- 目的地：江苏南京\n- 交通方式：火车\n- 出发/到达时间：待补充\n\n目前这条行程已保存为「已计划」状态，但目的地还没有通过受控地点目录消歧，所以天气地点暂未切换；后续有了出发/到达时间可以再补全。需要调整的话随时告诉我～"
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_4fc9221cc5804567a297f3a3",
+          "name": "personal_planning_change_commit",
+          "arguments": {
+            "proposal_id": "8e80679c-909b-4808-98e9-e626b8469fe9",
+            "payload_hash": "078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d"
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_commit",
+      "toolCallId": "toolu_4fc9221cc5804567a297f3a3",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"8e80679c-909b-4808-98e9-e626b8469fe9\",\n  \"status\": \"committed\",\n  \"idempotent\": true,\n  \"trip\": {\n    \"id\": 1,\n    \"title\": \"南京出行\",\n    \"state\": \"planned\",\n    \"originDisplayName\": \"广东省广州市天河区\",\n    \"destinationDisplayName\": null,\n    \"destinationText\": \"南京\",\n    \"destinationAdministrativeArea\": \"江苏\",\n    \"transportMode\": \"rail\",\n    \"departureEarliestUtc\": null,\n    \"departureLatestUtc\": null,\n    \"departurePrecision\": \"unknown\",\n    \"arrivalEarliestUtc\": null,\n    \"arrivalLatestUtc\": null,\n    \"arrivalPrecision\": \"unknown\",\n    \"weatherMode\": \"none\",\n    \"revision\": 1\n  },\n  \"locationPeriodCreated\": false,\n  \"weatherLocationChanged\": false,\n  \"warnings\": [\n    \"行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。\",\n    \"当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。\"\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "这条行程刚才已经提交成功啦～这次重复确认是幂等的，没有生成重复记录，南京出行仍然只有一条 🚄\n\n如果后续确定了出发/到达时间，告诉我再帮你补全～"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 1,
+      "change_proposals": 1,
+      "audit_log": 1,
+      "proposals": [
+        {
+          "domain": "planning",
+          "status": "committed",
+          "n": 1
+        }
+      ],
+      "grants": [
+        {
+          "domain": "planning",
+          "status": "consumed",
+          "n": 1
+        }
+      ],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "callAnalysis": {
+    "attempts": [
+      {
+        "id": "toolu_6b1b3ed6a9724b79bdfc4303",
+        "name": "personal_planning_change_propose",
+        "arguments": {
+          "schema_version": 1,
+          "request": {
+            "kind": "trip.create",
+            "title": "南京出行",
+            "destination": {
+              "text": "南京",
+              "administrative_area": "江苏"
+            },
+            "transport_mode": "rail"
+          }
+        },
+        "outcome": "success",
+        "signature": "[\"personal_planning_change_propose\",{\"request\":{\"destination\":{\"administrative_area\":\"江苏\",\"text\":\"南京\"},\"kind\":\"trip.create\",\"title\":\"南京出行\",\"transport_mode\":\"rail\"},\"schema_version\":1}]",
+        "result": {
+          "ok": true,
+          "schemaVersion": 1,
+          "proposalId": "8e80679c-909b-4808-98e9-e626b8469fe9",
+          "payloadHash": "078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d",
+          "status": "pending",
+          "kind": "trip_create",
+          "previewText": "待确认的出行计划提案\n- 目的地：南京\n- 当前天气参考地：广东省广州市天河区\n- 交通方式：火车/高铁\n- 到达信息：未提供\n- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。\n- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。\n- 待补充：destination_place、arrival_time_window\n- 说明：目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。 尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\n- 提案确认截止：2026-09-11T04:57:41+08:00（Asia/Shanghai）\n请在本次主人 QQ 私聊回复下面这一行原文，确认后才会提交：\n确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d",
+          "confirmationInstruction": "确认 proposalId=8e80679c-909b-4808-98e9-e626b8469fe9 payloadHash=078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d",
+          "canonicalFacts": {
+            "domain": "weather_travel",
+            "schemaVersion": 1,
+            "kind": "trip_create",
+            "title": "南京出行",
+            "origin": {
+              "displayName": "广东省广州市天河区",
+              "countryCode": "CN",
+              "timezone": "Asia/Shanghai",
+              "precision": "district"
+            },
+            "destination": {
+              "text": "南京",
+              "administrativeArea": "江苏",
+              "resolution": "pending"
+            },
+            "transportMode": "rail",
+            "departure": null,
+            "arrival": null,
+            "weatherMode": "none",
+            "sourceKind": "owner_text"
+          },
+          "derivedEffects": [],
+          "missingFields": [
+            "destination_place",
+            "arrival_time_window"
+          ],
+          "warnings": [
+            "目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。",
+            "尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。"
+          ],
+          "requiresConfirmation": true,
+          "expiresAtUtc": 1789073861,
+          "expiresAtDisplay": {
+            "utc": "2026-09-10T20:57:41.000Z",
+            "local": "2026-09-11T04:57:41+08:00",
+            "timezone": "Asia/Shanghai"
+          },
+          "persistedAs": "change_proposals"
+        }
+      }
+    ],
+    "unmatchedResults": [],
+    "totalCalls": 1,
+    "successes": 1,
+    "schemaRejections": 0,
+    "businessRejections": 0,
+    "unknownOrUnmatched": 0,
+    "sameArgumentsAfterFailure": 0,
+    "correctedSchemaSuccesses": 0,
+    "repeatedSuccessRequests": 0
+  },
+  "turns": [
+    {
+      "phase": "proposal",
+      "state": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    },
+    {
+      "phase": "confirmed",
+      "state": {
+        "profilePlanning": {
+          "trips": 1,
+          "change_proposals": 1,
+          "audit_log": 1,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "committed",
+              "n": 1
+            }
+          ],
+          "grants": [
+            {
+              "domain": "planning",
+              "status": "consumed",
+              "n": 1
+            }
+          ],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    },
+    {
+      "phase": "repeated",
+      "state": {
+        "profilePlanning": {
+          "trips": 1,
+          "change_proposals": 1,
+          "audit_log": 1,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "committed",
+              "n": 1
+            }
+          ],
+          "grants": [
+            {
+              "domain": "planning",
+              "status": "consumed",
+              "n": 1
+            }
+          ],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    }
+  ],
+  "followUpCallAnalyses": [
+    {
+      "attempts": [
+        {
+          "id": "toolu_41e715fdee634bfbbe62496f",
+          "name": "personal_planning_change_commit",
+          "arguments": {
+            "proposal_id": "8e80679c-909b-4808-98e9-e626b8469fe9",
+            "payload_hash": "078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d"
+          },
+          "outcome": "success",
+          "signature": "[\"personal_planning_change_commit\",{\"payload_hash\":\"078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d\",\"proposal_id\":\"8e80679c-909b-4808-98e9-e626b8469fe9\"}]",
+          "result": {
+            "ok": true,
+            "schemaVersion": 1,
+            "proposalId": "8e80679c-909b-4808-98e9-e626b8469fe9",
+            "status": "committed",
+            "idempotent": false,
+            "trip": {
+              "id": 1,
+              "title": "南京出行",
+              "state": "planned",
+              "originDisplayName": "广东省广州市天河区",
+              "destinationDisplayName": null,
+              "destinationText": "南京",
+              "destinationAdministrativeArea": "江苏",
+              "transportMode": "rail",
+              "departureEarliestUtc": null,
+              "departureLatestUtc": null,
+              "departurePrecision": "unknown",
+              "arrivalEarliestUtc": null,
+              "arrivalLatestUtc": null,
+              "arrivalPrecision": "unknown",
+              "weatherMode": "none",
+              "revision": 1
+            },
+            "locationPeriodCreated": false,
+            "weatherLocationChanged": false,
+            "warnings": [
+              "行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。",
+              "当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。"
+            ]
+          }
+        }
+      ],
+      "unmatchedResults": [],
+      "totalCalls": 1,
+      "successes": 1,
+      "schemaRejections": 0,
+      "businessRejections": 0,
+      "unknownOrUnmatched": 0,
+      "sameArgumentsAfterFailure": 0,
+      "correctedSchemaSuccesses": 0,
+      "repeatedSuccessRequests": 0
+    },
+    {
+      "attempts": [
+        {
+          "id": "toolu_4fc9221cc5804567a297f3a3",
+          "name": "personal_planning_change_commit",
+          "arguments": {
+            "proposal_id": "8e80679c-909b-4808-98e9-e626b8469fe9",
+            "payload_hash": "078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d"
+          },
+          "outcome": "success",
+          "signature": "[\"personal_planning_change_commit\",{\"payload_hash\":\"078f7d239ca5cb921041eb10c864ca21ba28e8fb5ec89a484b59c7d510039a8d\",\"proposal_id\":\"8e80679c-909b-4808-98e9-e626b8469fe9\"}]",
+          "result": {
+            "ok": true,
+            "schemaVersion": 1,
+            "proposalId": "8e80679c-909b-4808-98e9-e626b8469fe9",
+            "status": "committed",
+            "idempotent": true,
+            "trip": {
+              "id": 1,
+              "title": "南京出行",
+              "state": "planned",
+              "originDisplayName": "广东省广州市天河区",
+              "destinationDisplayName": null,
+              "destinationText": "南京",
+              "destinationAdministrativeArea": "江苏",
+              "transportMode": "rail",
+              "departureEarliestUtc": null,
+              "departureLatestUtc": null,
+              "departurePrecision": "unknown",
+              "arrivalEarliestUtc": null,
+              "arrivalLatestUtc": null,
+              "arrivalPrecision": "unknown",
+              "weatherMode": "none",
+              "revision": 1
+            },
+            "locationPeriodCreated": false,
+            "weatherLocationChanged": false,
+            "warnings": [
+              "行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。",
+              "当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。"
+            ]
+          }
+        }
+      ],
+      "unmatchedResults": [],
+      "totalCalls": 1,
+      "successes": 1,
+      "schemaRejections": 0,
+      "businessRejections": 0,
+      "unknownOrUnmatched": 0,
+      "sameArgumentsAfterFailure": 0,
+      "correctedSchemaSuccesses": 0,
+      "repeatedSuccessRequests": 0
+    }
+  ],
+  "status": "passed",
+  "databaseCountsVerified": {
+    "personal-weather/weather.sqlite": {
+      "trips": 1,
+      "change_proposals": 1,
+      "approval_grants": 1
+    },
+    "personal-reminders/reminders.sqlite": {
+      "reminders": 0,
+      "reminder_proposals": 0,
+      "approval_grants": 0
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "checkedAtUtc": "2026-09-10T04:09:39.317174+00:00",
+  "health": true,
+  "confirmationBackendsStarted": true,
+  "counts": {
+    "personal-reminders/reminders.sqlite": {
+      "reminder_proposals": 18,
+      "confirmation_proposals": 3,
+      "approval_grants": 1,
+      "reminders": 9,
+      "reminder_audit_log": 43
+    },
+    "personal-weather/weather.sqlite": {
+      "change_proposals": 8,
+      "confirmation_proposals": 5,
+      "approval_grants": 0,
+      "trips": 1,
+      "audit_log": 5
+    }
+  },
+  "cronJobs": 1,
+  "qqConnected": true,
+  "qqRunning": true,
+  "qqReadyLogObserved": false,
+  "qqObservationNote": "No fresh READY line; health confirms running and connected. Journal shows WebSocket connected.",
+  "serviceRestartLocal": "2026-09-10 12:05:55 Asia/Shanghai"
+}

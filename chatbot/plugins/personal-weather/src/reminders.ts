@@ -1,7 +1,7 @@
-import { formatDateTime } from "./time-display.js";
-import { createHash, randomUUID } from "node:crypto";
+import { formatTimestamp } from "./time-display.js";
+import { createHash } from "node:crypto";
 
-import { buildConfirmationInstruction, type ConfirmationScope } from "@kurumi/confirmation-core";
+import { buildConfirmationInstruction, createPublicUuid, type ConfirmationScope } from "@kurumi/confirmation-core";
 
 import {
   REMINDER_SUBJECT_ID,
@@ -248,7 +248,7 @@ export function proposeReminderCreate(
   };
   const payloadJson = JSON.stringify(payload);
   const payloadHash = sha256(payloadJson);
-  const proposalId = randomUUID();
+  const proposalId = createPublicUuid();
   const expiresAtUtc = nowUtc + PROPOSAL_TTL_SECONDS;
   const expiresAtDisplay = formatProposalExpiry(expiresAtUtc);
   store.createPendingProposal({
@@ -320,7 +320,7 @@ export function proposeReminderCancellation(
   };
   const payloadJson = JSON.stringify(payload);
   const payloadHash = sha256(payloadJson);
-  const proposalId = randomUUID();
+  const proposalId = createPublicUuid();
   const expiresAtUtc = nowUtc + PROPOSAL_TTL_SECONDS;
   const expiresAtDisplay = formatProposalExpiry(expiresAtUtc);
   store.createPendingProposal({
@@ -413,7 +413,7 @@ export function proposeReminderUpdate(
   };
   const payloadJson = JSON.stringify(payload);
   const payloadHash = sha256(payloadJson);
-  const proposalId = randomUUID();
+  const proposalId = createPublicUuid();
   const expiresAtUtc = nowUtc + PROPOSAL_TTL_SECONDS;
   const expiresAtDisplay = formatProposalExpiry(expiresAtUtc);
   store.createPendingProposal({
@@ -551,7 +551,7 @@ async function commitCreateProposal(
   if (facts.scheduledAtUtc < nowUtc + MIN_LEAD_SECONDS) {
     return failure("proposal_unavailable", "提醒时间已太近或已过去，请重新生成一条未来提醒。" );
   }
-  const reminderId = randomUUID();
+  const reminderId = createPublicUuid();
   const eventKey = `personal-reminder:${reminderId}:${facts.scheduledAtUtc}`;
   store.createSchedulingReminder({
     reminderId,
@@ -1004,9 +1004,5 @@ export function formatShanghaiDateTime(atUtc: number): string {
 
 /** Shared by all reminder proposal kinds; never persisted into frozen action payloads. */
 function formatProposalExpiry(expiresAtUtc: number): ReminderProposalResult["expiresAtDisplay"] {
-  return {
-    utc: new Date(expiresAtUtc * 1000).toISOString(),
-    local: formatDateTime(expiresAtUtc, REMINDER_TIMEZONE),
-    timezone: REMINDER_TIMEZONE,
-  };
+  return formatTimestamp(expiresAtUtc, REMINDER_TIMEZONE);
 }

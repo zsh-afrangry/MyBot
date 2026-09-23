@@ -25,7 +25,7 @@ const PUBLIC_MESSAGES: Record<SearchErrorCode, string> = {
   BUDGET_EXHAUSTED: "搜索服务账户余额或额度不足，请联系主人处理。",
   TIMEOUT: "搜索服务响应超时。",
   UPSTREAM_UNAVAILABLE: "搜索服务暂时不可用。",
-  INVALID_RESPONSE: "搜索服务返回了无法核验的结果。",
+  INVALID_RESPONSE: "本地搜索插件无法核验上游返回的结果，未生成可用搜索答案。",
   REQUEST_CANCELLED: "搜索请求已取消。",
 };
 

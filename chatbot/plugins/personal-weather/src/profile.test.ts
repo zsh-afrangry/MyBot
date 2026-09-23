@@ -10,7 +10,9 @@ import {
   commitProfileChange,
   getProfileState,
   proposeProfileChange,
+  profileProposalError,
 } from "./profile.js";
+import { WeatherError } from "./errors.js";
 import type { QWeatherClient } from "./qweather-client.js";
 import { WeatherStore } from "./store.js";
 import { geoLookupFixture } from "./test-fixtures.js";
@@ -27,6 +29,51 @@ afterEach(() => {
 });
 
 describe("Profile P0 current_location", () => {
+  it.each([false, true])("preserves retry policy %s without asserting a geolocation outage or writing state", async (retryable) => {
+    const { store } = createStore();
+    try {
+      const before = getProfileState(store);
+      const failure = new WeatherError("UPSTREAM_UNAVAILABLE", { retryable });
+      const lookupPlace = vi.fn(async () => { throw failure; });
+      await expect(proposeProfileChange(store, { lookupPlace } as unknown as QWeatherClient,
+        { schema_version: 1, request: { kind: "current_location.set", location: { text: "测试校区" } } },
+        undefined, CONFIRMATION_SCOPE)).rejects.toBe(failure);
+      const result = profileProposalError(failure);
+      expect(result).toMatchObject({ ok: false, code: "UPSTREAM_UNAVAILABLE", retryable });
+      expect(result.message).toContain("不能确定");
+      expect(result.message).not.toContain("天气");
+      expect(lookupPlace).toHaveBeenCalledTimes(1);
+      expect(getProfileState(store)).toEqual(before);
+      expect(store.listPendingProposals()).toEqual([]);
+    } finally { store.close(); }
+  });
+
+  it("does not label a local exception as an upstream failure or expose its contents", () => {
+    const result = profileProposalError(new Error("private database path and secret"));
+    expect(result.code).toBe("PROFILE_OPERATION_FAILED");
+    expect(result.retryable).toBe(false);
+    expect(result.message).not.toContain("private");
+    expect(profileProposalError(new WeatherError("AUTH_FAILED")).message).toContain("鉴权失败");
+  });
+  it("displays proposal expiry in the current Profile timezone without changing its revision", async () => {
+    const { store } = createStore(1787761008 - 86400);
+    try {
+      const before = getProfileState(store).currentLocation;
+      const result = await proposeProfileChange(store, client(yangzhongFixture), { schema_version: 1,
+        request: { kind: "current_location.set", location: { text: "扬中市", administrative_area: "镇江市" } },
+      }, undefined, CONFIRMATION_SCOPE);
+      assert.equal(result.ok, true);
+      if (!result.ok || result.status !== "pending") return;
+      const display = { utc: "2026-08-26T16:16:48.000Z", local: "2026-08-27T00:16:48+08:00", timezone: "Asia/Shanghai" };
+      expect(result.expiresAtDisplay).toEqual(display);
+      expect(result.expiresAtUtc).toBe(1787761008);
+      expect(result.previewText).toContain(`提案确认截止：${display.local}`);
+      const state = getProfileState(store);
+      expect(state.pendingProposals[0]?.expiresAtDisplay).toEqual(display);
+      expect(state.pendingProposals[0]?.payloadHash).toBe(result.payloadHash);
+      expect(state.currentLocation).toEqual(before);
+    } finally { store.close(); }
+  });
   it("seeds the Profile current location from the confirmed legacy weather default", () => {
     const { store } = createStore();
     try {
@@ -257,11 +304,11 @@ function client(payload: unknown): QWeatherClient {
   } as unknown as QWeatherClient;
 }
 
-function createStore() {
+function createStore(nowUtc = NOW) {
   const root = mkdtempSync(join(tmpdir(), "personal-profile-test-"));
   temporaryRoots.push(root);
   return {
-    store: new WeatherStore({ stateDirectory: join(root, "state"), now: () => NOW }),
+    store: new WeatherStore({ stateDirectory: join(root, "state"), now: () => nowUtc }),
     databasePath: join(root, "state", "weather.sqlite"),
   };
 }

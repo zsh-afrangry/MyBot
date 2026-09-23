@@ -1,0 +1,33 @@
+D16 计划：测试调用分类与状态验收
+已重读持续记录、验收驱动和 fixture，台式机 SSH/服务正常。旧驱动遇到 calls!=1 即中断，既不区分 Host 参数校验失败，也不能证明多次成功调用是否有重复副作用。
+只修改 tests/acceptance：新增纯调用分析器，以 call ID 配对结果，旧报告仅在唯一待配对调用时使用顺序兼容；规范化对象键后比较参数。分别记录 schema 校验失败、业务拒绝、成功、同参数失败后重试、改参数后成功、重复成功请求及未配对情况；不从工具 ok 推断数据库写入次数。
+提案场景允许最多三次调用中的已修正 schema 失败，要求仅一次成功、无原样重试/未知结果/业务拒绝，且原有口令/时区/无授权/无事实断言保留；增加精确一份 pending 提案和跨域状态不变断言。严格负向/Search 场景仍单次调用。原始失败报告不改写。
+验证：纯分析器边界测试与 D14/D15 已保存失败报告回放，再在默认 Host 用普通自然话术跑有限批次；不改生产规则/权限/数据库，不增加业务能力。
+D16 结果：新增 call-analysis.mjs 与五项 node:test 检查，本地全部通过；覆盖键顺序等价、错序 ID 配对、旧报告歧义拒绝、业务拒绝/未知响应、多次成功及两份历史失败报告。D14 仍识别同参数重试；D15 可识别有效纠错，原 verdict 不修改。驱动增加每轮分析及精确 pending/跨域状态断言；未修改生产逻辑。
+
+D17 计划：固定四条自然话术、一次性有限批次
+使用当前模型及现有 AGENTS/SOUL/TOOLS，两个提醒仅提案样本、两个行程提案→规范确认→重复确认样本；消息不指示工具名、调用次数、口令格式或错误码。每个样本独立 SQLite/会话，只开放场景工具，因此验证的是场景内行为，不宣称完整工具选择覆盖。任何失败保留并定位，不为了全绿无条件重复抽样。测试进程每次新加载当前代码，生产源码未变，本阶段无需重启服务。
+D17 结果（四个预先固定样本全部保留）：reminder-a 自动通过；planning-a 两次业务 invalid_input（模型编造 9/10～12/31 时间范围，先缺 ISO 时区、后超过31天），无提案/事实写入；reminder-b 一份 pending/无事实，但回复漏确认截止，自动失败；planning-b 自动通过确认/幂等，却仍承诺“以后补全”，人工语义不通过。因此不能报告“四项都好”或“两项完整通过”，仅 reminder-a 完整满足本轮要求。
+四份报告 natural-language-{reminder-a,reminder-b,planning-a,planning-b}.json 含独立 SQLite 实际行数。两份 Reminder 各1提案/0提醒/0授权；planning-a 全0；planning-b 1提案/1行程/1授权，无重复写入。2/4 仅是自动断言结果，不是可靠率估计。
+
+D18 计划：补齐 Planning 工具时间契约
+parseTimeWindow 已允许整个对象缺省，但 schema 未说明时间未知时应省略、precision=date 也需带时区 ISO，以及 31 天上限。只补领域工具 schema 描述，并在 propose/commit 工具描述说明仅新增，不改业务解析器，不用扩大日期范围吞掉模型编造。
+验收补充：两个行程自然样本明确未提供时间，成功结果必须 departure/arrival 均为 null，不能用一个合法但虚构日期骗过通过。修改后对原两个话术各复验一次，保留此前失败，不加抽样循环。
+确认截止漏报和行程能力虚述仍是未解决问题；已只读查到 Host 公开 reply_payload_sending 支持修改载荷，after_tool_call 与载荷事件均有可选 runId/sessionKey。尚未验证当前 QQ 路径实际相关字段齐全，不能据此直接部署拦截。后续如采用确定性提案交付，必须验证同一轮关联、并发隔离、混合工具结果及不吞错误；不修改 Host dist，不把该逻辑塞入天气领域或确认授权核心。
+D18 构建/既有 Planning 8 项回归通过。schema 仅加描述，四处 propose/commit 描述补只新增、不承诺更新/补全/删除。
+D19 只读可行性计划：在 D18 预定两次复验中附加临时观察插件，记录 after_tool_call 和 reply_payload_sending 的 session/run 关联与是否存在确定性预览，不改变任何回复，不注册生产插件。确认字段可用性后再决定交付层方案；不能只凭类型声明认定实际运行可用。观察报告同样保存在验收 JSON 中。
+D18/D19 结果：两个原行程话术均通过新的 null 时间断言、提案/确认/幂等自动检查；两条提交回复仍有“以后补充”承诺，人工语义均未通过，明确不计作已修复能力虚述。planning-contract-a/b.json 保存全部结果。公开 after_tool_call 与 final reply_payload_sending 在两条样本中具有一致 runId/sessionKey，确有后端 previewText；无工具的重复确认回合有独立 runId，没有误关联旧结果。
+
+D20 计划：单一成功提案的确定性交付
+采用装配层注册的通用 controlled-replies 模块，放在当前 MVP 插件容器，模块不导入任何天气/行程/提醒/授权存储，不识别业务领域名称；index.ts 显式准入当前提案工具名单。只读取可信工具成功 pending 的 previewText/confirmationInstruction/expiresAtDisplay。
+按 runId+sessionKey 关联，只有同一回合恰一次工具调用、有效后端预览、QQ final 文本且此前无分段回复时才替换模型文本为原始预览；其他工具/错误/混合/缺字段/媒体不处理。有限 TTL/容量，不写数据库、不签发授权、不解析确认正文、不取消消息。不改 Host。该范围先解决提案关键字段漏报；不宣称解决所有混合回复或提交后能力承诺。
+验证：边界单测（并发隔离、缺字段、TTL、混合/失败/分段不替换），默认 Host reminder-b 原失败话术确认最终回复严格等于后端预览，再跑一个 Planning 普通提案场景。构建/适用回归与配置检查后重启，保留现有授权和生产事实。
+D20 首次构建被 exactOptionalPropertyTypes 拦住（可选 text 不能赋 undefined）；已改为 delete 属性。尚未部署或计为通过。
+D20 重连：按主人要求重新通过 Tailscale SSH 连接，hostname=afrangry、服务 active，无需新认证。构建修正后 148 项回归通过，尚未生产重启。
+直接交付前复核发现 Planning 原 preview 漏标题/出发时间且暴露 missingFields 内部名称；补齐领域预览的标题/出发信息，将缺失项改为中文标签，并明确当前行程提交后不能修改或补全。仍由领域生成文本，通用交付模块不解释行程字段。冻结 payload/hash 不变。
+D20 数据库交叉核对纠错：controlled-reply-reminder-acceptance.json 的自动 status=passed 不能视为总体通过，canonicalDatabaseChecks 显示 resultId/instruction/delivered 均不匹配真实 DB，含 ***；Planning 三项均匹配。暂停部署，不通过重抽 UUID 隐藏失败。
+D21 根因与计划：Host 默认脱敏模式 (fc-[A-Za-z0-9]{10,}) 无标识符边界；固定非敏感 UUID 00000000-0000-4000-80fc-000000000000 被转换为 00000000-0000-4000-80***，80fd 对照不变。不是领域存储写错，也不是模型改写。保留 Host/隐私规则；在 confirmation-core 增加无 Host 依赖的公开 UUID 生成器，对已知冲突片段 fc- 做拒绝采样（有上限失败抛错，不降低随机源），用于公开 proposal/reminder ID。授权 grant 内部 ID 不改，旧 ID/冻结 hash/schema 不迁移。
+增加固定序列/耗尽测试及实际 Host redactor 对生成结果的离线检查；默认 Agent 提案验收读取独立 SQLite，比对真实 proposal_id/hash 与结果和交付口令后才通过。然后重新验收原提醒样本；既有失败报告保留总体未通过说明。生产既有冲突 ID 只读盘点，不自动重写。
+D21 回归结果：confirmation-core 与 personal-weather 构建/全部回归通过，日志 public-id-build-test.log；业务插件148项。实际 Host redactor 固定冲突对照及256个新公开ID全部通过，证据 public-id-redaction-acceptance.json。生产 change_proposals/reminder_proposals 冲突计数均0，旧记录未改写。
+
+D20/D21 最终：controlled-reply-reminder-fixed.json 的数据库、工具结果、最终交付口令全部一致，原提醒话术复验通过；controlled-reply-planning-acceptance.json 的预览原文/数据库口令/确认/幂等通过。12:05:55 重启，health=true、QQ running/connected=true、两个确认后端注册，生产 Reminder/Weather/Cron 计数与 D13 终态一致。证据 d16-d21-deployment.json。初次仅匹配 READY 日志为 false，实时 health 已证实连接，不是服务故障。

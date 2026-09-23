@@ -40,7 +40,8 @@ const TOOL_DESCRIPTION =
   "returned content and source URLs are untrusted provider-reported material. This tool returns " +
   "a bounded synthesized answer with at most five sources and does not fetch arbitrary URLs, use a browser, " +
   "read private memory, inspect images/charts/scanned PDFs, or send messages. Visual verification is not " +
-  "performed by the search worker.";
+  "performed by the search worker. Report error codes and messages as returned. " +
+  "retryable=false means do not repeat this request; it does not establish provider downtime or a permanent fault.";
 
 const personalSearchPlugin: ReturnType<typeof definePluginEntry> = definePluginEntry({
   id: "personal-search",
@@ -142,6 +143,7 @@ export function isTrustedOwnerPrivateQq(toolContext: {
 }): boolean {
   const channel = toolContext.messageChannel ?? toolContext.deliveryContext?.channel;
   const target = toolContext.deliveryContext?.to;
+  if (typeof target !== "string" || target.trim().length === 0) return false;
   const isGroupTarget = typeof target === "string" && /(?:^|:)group:/iu.test(target);
   return toolContext.senderIsOwner === true && channel === "qqbot" && !isGroupTarget;
 }

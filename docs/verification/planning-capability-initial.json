@@ -1,0 +1,170 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-ZRFchH",
+  "scenario": "confirm",
+  "expected": "committed",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "提案已生成，本轮不提交。\n\n确认口令如下，需要提交时直接复制发送即可：\n\n确认 proposalId=63753d02-95ea-41c0-95b3-8887137129c1 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\n\n提案确认截止：2026-09-11 03:58 (Asia/Shanghai)。",
+        "replyToTag": false,
+        "replyToId": "29f4bb03-61ea-40de-9912-aa5c77b0eb02",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 3
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "请为我生成一条待确认的出行计划提案：标题‘隔离确认验收’，目的地江苏省南京市，交通方式铁路，不设置天气切换，不填写时间。本轮只生成提案，先不要提交。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_6bdc9e76d14745d7859ca833",
+          "name": "personal_planning_change_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "trip.create",
+              "title": "隔离确认验收",
+              "destination": {
+                "text": "南京市",
+                "administrative_area": "江苏省"
+              },
+              "transport_mode": "rail",
+              "weather_mode": "none",
+              "departure": {
+                "earliest": "",
+                "latest": "",
+                "precision": "date",
+                "timezone": "Asia/Shanghai"
+              },
+              "arrival": {
+                "earliest": "",
+                "latest": "",
+                "precision": "date",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_propose",
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "Validation failed for tool \"personal_planning_change_propose\":\n  - request.departure.earliest: must not have fewer than 1 characters\n  - request.departure.latest: must not have fewer than 1 characters\n  - request.arrival.earliest: must not have fewer than 1 characters\n  - request.arrival.latest: must not have fewer than 1 characters\n\nReceived arguments:\n{\n  \"schema_version\": 1,\n  \"request\": {\n    \"kind\": \"trip.create\",\n    \"title\": \"隔离确认验收\",\n    \"destination\": {\n      \"text\": \"南京市\",\n      \"administrative_area\": \"江苏省\"\n    },\n    \"transport_mode\": \"rail\",\n    \"weather_mode\": \"none\",\n    \"departure\": {\n      \"earliest\": \"\",\n      \"latest\": \"\",\n      \"precision\": \"date\",\n      \"timezone\": \"Asia/Shanghai\"\n    },\n    \"arrival\": {\n      \"earliest\": \"\",\n      \"latest\": \"\",\n      \"precision\": \"date\",\n      \"timezone\": \"Asia/Shanghai\"\n    }\n  }\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "目的地和交通方式已明确，但 `departure` / `arrival` 的时间字段是必填的且不能为空。既然主人说不填写时间，我就直接省略这两个字段，只提交必需的信息。\n\n",
+          "textSignature": "{\"v\":1,\"id\":\"commentary-0\",\"phase\":\"commentary\"}"
+        },
+        {
+          "type": "toolCall",
+          "id": "toolu_e1c34380372841a09e38a3ea",
+          "name": "personal_planning_change_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "trip.create",
+              "title": "隔离确认验收",
+              "destination": {
+                "text": "南京市",
+                "administrative_area": "江苏省"
+              },
+              "transport_mode": "rail",
+              "weather_mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_propose",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"63753d02-95ea-41c0-95b3-8887137129c1\",\n  \"payloadHash\": \"b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"status\": \"pending\",\n  \"kind\": \"trip_create\",\n  \"previewText\": \"待确认的出行计划提案\\n- 目的地：南京市\\n- 当前天气参考地：广东省广州市天河区\\n- 交通方式：火车/高铁\\n- 到达信息：未提供\\n- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。\\n- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。\\n- 待补充：destination_place、arrival_time_window\\n- 说明：目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。 尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\\n- 提案确认截止：2026-09-11T03:58:21+08:00（Asia/Shanghai）\\n请在本次主人 QQ 私聊回复下面这一行原文，确认后才会提交：\\n确认 proposalId=63753d02-95ea-41c0-95b3-8887137129c1 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"confirmationInstruction\": \"确认 proposalId=63753d02-95ea-41c0-95b3-8887137129c1 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"canonicalFacts\": {\n    \"domain\": \"weather_travel\",\n    \"schemaVersion\": 1,\n    \"kind\": \"trip_create\",\n    \"title\": \"隔离确认验收\",\n    \"origin\": {\n      \"displayName\": \"广东省广州市天河区\",\n      \"countryCode\": \"CN\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"precision\": \"district\"\n    },\n    \"destination\": {\n      \"text\": \"南京市\",\n      \"administrativeArea\": \"江苏省\",\n      \"resolution\": \"pending\"\n    },\n    \"transportMode\": \"rail\",\n    \"departure\": null,\n    \"arrival\": null,\n    \"weatherMode\": \"none\",\n    \"sourceKind\": \"owner_text\"\n  },\n  \"derivedEffects\": [],\n  \"missingFields\": [\n    \"destination_place\",\n    \"arrival_time_window\"\n  ],\n  \"warnings\": [\n    \"目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。\",\n    \"尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\"\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789070301,\n  \"expiresAtDisplay\": {\n    \"utc\": \"2026-09-10T19:58:21.000Z\",\n    \"local\": \"2026-09-11T03:58:21+08:00\",\n    \"timezone\": \"Asia/Shanghai\"\n  },\n  \"persistedAs\": \"change_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "提案已生成，本轮不提交。\n\n确认口令如下，需要提交时直接复制发送即可：\n\n确认 proposalId=63753d02-95ea-41c0-95b3-8887137129c1 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\n\n提案确认截止：2026-09-11 03:58 (Asia/Shanghai)。"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 1,
+      "audit_log": 0,
+      "proposals": [
+        {
+          "domain": "planning",
+          "status": "pending",
+          "n": 1
+        }
+      ],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "status": "acceptance-failed",
+  "error": "Expected exactly one actual tool call\n\n2 !== 1\n"
+}

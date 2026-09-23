@@ -1,0 +1,272 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-kRNIpb",
+  "scenario": "confirm",
+  "variation": "natural-a",
+  "expected": "committed",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "主人，规划工具要求出发/到达时间窗口不能超过 31 天，而且你还没定具体时间——我需要先知道一个大概的范围才能出草稿。\n\n请告诉我：\n1. 大概什么时候去？比如\"九月中下旬\"\"国庆期间\"\"十月内某一天\"这种就行。\n2. 当天往返还是多日停留？如果是多日，大概待到什么时候？\n3. 从哪里出发？默认按广州算吗？",
+        "replyToTag": false,
+        "replyToId": "5751cd91-5bea-4d5f-8c83-f8b92c9a2914",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 3
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "input": "帮我记一趟去南京的高铁行程，具体时间还没定。先给我看草稿。",
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "帮我记一趟去南京的高铁行程，具体时间还没定。先给我看草稿。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_4162427d72ad47cb97e29f0a",
+          "name": "personal_planning_change_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "trip.create",
+              "title": "南京行程",
+              "destination": {
+                "text": "南京",
+                "administrative_area": "江苏省"
+              },
+              "transport_mode": "rail",
+              "departure": {
+                "earliest": "2026-09-10",
+                "latest": "2026-12-31",
+                "precision": "date",
+                "timezone": "Asia/Shanghai"
+              },
+              "arrival": {
+                "earliest": "2026-09-10",
+                "latest": "2026-12-31",
+                "precision": "date",
+                "timezone": "Asia/Shanghai"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_propose",
+      "toolCallId": "toolu_4162427d72ad47cb97e29f0a",
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"departure 必须使用带时区的 ISO-8601 时间。\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_6b6af81b59104ebdb100a087",
+          "name": "personal_planning_change_propose",
+          "arguments": {
+            "request": {
+              "kind": "trip.create",
+              "title": "南京行程",
+              "destination": {
+                "text": "南京",
+                "administrative_area": "江苏省"
+              },
+              "transport_mode": "rail",
+              "departure": {
+                "earliest": "2026-09-10T00:00:00+08:00",
+                "latest": "2026-12-31T23:59:59+08:00",
+                "precision": "date",
+                "timezone": "Asia/Shanghai"
+              },
+              "arrival": {
+                "earliest": "2026-09-10T00:00:00+08:00",
+                "latest": "2026-12-31T23:59:59+08:00",
+                "precision": "date",
+                "timezone": "Asia/Shanghai"
+              }
+            },
+            "schema_version": 1
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_propose",
+      "toolCallId": "toolu_6b6af81b59104ebdb100a087",
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": false,\n  \"error\": {\n    \"code\": \"invalid_input\",\n    \"message\": \"departure 时间窗不能超过 31 天。\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "主人，规划工具要求出发/到达时间窗口不能超过 31 天，而且你还没定具体时间——我需要先知道一个大概的范围才能出草稿。\n\n请告诉我：\n1. 大概什么时候去？比如\"九月中下旬\"\"国庆期间\"\"十月内某一天\"这种就行。\n2. 当天往返还是多日停留？如果是多日，大概待到什么时候？\n3. 从哪里出发？默认按广州算吗？"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "callAnalysis": {
+    "attempts": [
+      {
+        "id": "toolu_4162427d72ad47cb97e29f0a",
+        "name": "personal_planning_change_propose",
+        "arguments": {
+          "schema_version": 1,
+          "request": {
+            "kind": "trip.create",
+            "title": "南京行程",
+            "destination": {
+              "text": "南京",
+              "administrative_area": "江苏省"
+            },
+            "transport_mode": "rail",
+            "departure": {
+              "earliest": "2026-09-10",
+              "latest": "2026-12-31",
+              "precision": "date",
+              "timezone": "Asia/Shanghai"
+            },
+            "arrival": {
+              "earliest": "2026-09-10",
+              "latest": "2026-12-31",
+              "precision": "date",
+              "timezone": "Asia/Shanghai"
+            }
+          }
+        },
+        "outcome": "business-rejected",
+        "signature": "[\"personal_planning_change_propose\",{\"request\":{\"arrival\":{\"earliest\":\"2026-09-10\",\"latest\":\"2026-12-31\",\"precision\":\"date\",\"timezone\":\"Asia/Shanghai\"},\"departure\":{\"earliest\":\"2026-09-10\",\"latest\":\"2026-12-31\",\"precision\":\"date\",\"timezone\":\"Asia/Shanghai\"},\"destination\":{\"administrative_area\":\"江苏省\",\"text\":\"南京\"},\"kind\":\"trip.create\",\"title\":\"南京行程\",\"transport_mode\":\"rail\"},\"schema_version\":1}]",
+        "result": {
+          "ok": false,
+          "error": {
+            "code": "invalid_input",
+            "message": "departure 必须使用带时区的 ISO-8601 时间。"
+          }
+        }
+      },
+      {
+        "id": "toolu_6b6af81b59104ebdb100a087",
+        "name": "personal_planning_change_propose",
+        "arguments": {
+          "request": {
+            "kind": "trip.create",
+            "title": "南京行程",
+            "destination": {
+              "text": "南京",
+              "administrative_area": "江苏省"
+            },
+            "transport_mode": "rail",
+            "departure": {
+              "earliest": "2026-09-10T00:00:00+08:00",
+              "latest": "2026-12-31T23:59:59+08:00",
+              "precision": "date",
+              "timezone": "Asia/Shanghai"
+            },
+            "arrival": {
+              "earliest": "2026-09-10T00:00:00+08:00",
+              "latest": "2026-12-31T23:59:59+08:00",
+              "precision": "date",
+              "timezone": "Asia/Shanghai"
+            }
+          },
+          "schema_version": 1
+        },
+        "outcome": "business-rejected",
+        "signature": "[\"personal_planning_change_propose\",{\"request\":{\"arrival\":{\"earliest\":\"2026-09-10T00:00:00+08:00\",\"latest\":\"2026-12-31T23:59:59+08:00\",\"precision\":\"date\",\"timezone\":\"Asia/Shanghai\"},\"departure\":{\"earliest\":\"2026-09-10T00:00:00+08:00\",\"latest\":\"2026-12-31T23:59:59+08:00\",\"precision\":\"date\",\"timezone\":\"Asia/Shanghai\"},\"destination\":{\"administrative_area\":\"江苏省\",\"text\":\"南京\"},\"kind\":\"trip.create\",\"title\":\"南京行程\",\"transport_mode\":\"rail\"},\"schema_version\":1}]",
+        "result": {
+          "ok": false,
+          "error": {
+            "code": "invalid_input",
+            "message": "departure 时间窗不能超过 31 天。"
+          }
+        }
+      }
+    ],
+    "unmatchedResults": [],
+    "totalCalls": 2,
+    "successes": 0,
+    "schemaRejections": 0,
+    "businessRejections": 2,
+    "unknownOrUnmatched": 0,
+    "sameArgumentsAfterFailure": 0,
+    "correctedSchemaSuccesses": 0,
+    "repeatedSuccessRequests": 0
+  },
+  "status": "acceptance-failed",
+  "error": "Business rejection requires separate evaluation\n\n2 !== 0\n",
+  "databaseCountsVerified": {
+    "personal-weather/weather.sqlite": {
+      "trips": 0,
+      "change_proposals": 0,
+      "approval_grants": 0
+    },
+    "personal-reminders/reminders.sqlite": {
+      "reminders": 0,
+      "reminder_proposals": 0,
+      "approval_grants": 0
+    }
+  }
+}

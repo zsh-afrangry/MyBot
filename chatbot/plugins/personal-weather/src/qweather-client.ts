@@ -292,6 +292,8 @@ export class QWeatherClient {
 
 function mapHttpStatus(response: Response): WeatherError {
   switch (response.status) {
+    case 400:
+      return new WeatherError("REQUEST_REJECTED");
     case 401:
       return new WeatherError("AUTH_FAILED");
     case 403:
@@ -409,6 +411,8 @@ function assertGeoApiBusinessStatus(value: unknown): void {
     throw new WeatherError("INVALID_RESPONSE");
   }
   switch (value.code) {
+    case "400":
+      throw new WeatherError("REQUEST_REJECTED");
     case "200":
       return;
     case "204":

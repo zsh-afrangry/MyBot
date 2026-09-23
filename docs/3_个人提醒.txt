@@ -1,7 +1,8 @@
 kurumi 个人提醒：开发与验收记录
 
 最后更新：2026-09-10
-状态：旧提醒领域的验收记录保留；新增确认入口后的生产完整链路仍待验收。D1 提案到期显示已部署，回归与隔离真实模型验收通过。
+D20/D21 当前补充：单一成功提案的 QQ final 回复直接使用后端预览，避免漏确认截止；混合/分段不在替换范围。新提案及提醒 UUID 避开 Host 已确认的 fc- 误脱敏模式，数据库/工具/交付口令交叉验收通过。此次新呈现只有默认 Host 隔离证据，未追加真人 QQ 抽验。
+状态：D13 新确认入口已通过真实主人 QQ 提案、确认、调度与后台通道投递；单次执行并自动删除一次性任务。手机端可见性未另行确认。证据 docs/verification/qq-confirmation-acceptance.json；旧领域验收保留各自日期。
 
 现在应该从哪里继续：按 docs/verification/2026-09-10_文档与现状复核.txt 的 TODO 处理已有缺陷和确认/Cron 验收；该文件兼任持续开发记录。
 当前不扩展提醒工作流或通用任务引擎，不预设拆独立插件。
@@ -33,8 +34,9 @@ kurumi 个人提醒：开发与验收记录
   批次事务、稳定 ID 和清理审计。
 
 - [待验收] personal-confirmation → grant → create/update/cancel → 真实 Gateway Cron 的完整链路；旧 R3 结果不替代新入口验收。
+- [D4 隔离通过] 合成 QQ 确认 hook → 真实领域事务 → 独立 Gateway cron.add/update/remove 三项通过；同 ID 修改、重复提交不重复 RPC、取消后任务清空，3 条 grant 均消费。证据 docs/verification/real-cron-acceptance.json；尚未覆盖生产 QQ 身份、默认 Agent 和到点 CLI/QQ 投递。
 - [D1 已实现] 三类提案增加 expiresAtDisplay（UTC、本地时间、Asia/Shanghai）与“提案确认截止”预览，原 epoch、TTL、payload/hash 不变。
-- [待验证] 新显示字段在完整生产 Agent/QQ 中的表现；隔离模型和后端测试边界见持续开发记录。
+- [通过单样本] D13 完整生产 Agent/QQ 正确区分提醒时间和确认截止；隔离模型和后台送达边界见持续开发记录。
 
 会话压缩、JSONL 轮换和旧 QQ 测试会话治理不属于本模块，详见
 `docs/1_bot基础功能开发备忘录.txt`；搜索不属于本模块，详见 `docs/4_受控搜索模块设计.txt`。

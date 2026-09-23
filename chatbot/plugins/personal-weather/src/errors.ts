@@ -2,6 +2,7 @@ import { SsrFBlockedError } from "openclaw/plugin-sdk/ssrf-runtime";
 
 export type WeatherErrorCode =
   | "CONFIG_INVALID"
+  | "REQUEST_REJECTED"
   | "AUTH_FAILED"
   | "FORBIDDEN"
   | "RATE_LIMITED"
@@ -13,6 +14,7 @@ export type WeatherErrorCode =
 
 const PUBLIC_MESSAGES: Record<WeatherErrorCode, string> = {
   CONFIG_INVALID: "天气服务尚未正确配置。",
+  REQUEST_REJECTED: "服务拒绝了请求参数，请核对输入；这不代表服务暂时宕机。",
   AUTH_FAILED: "天气服务鉴权失败。",
   FORBIDDEN: "天气服务拒绝了本次请求。",
   RATE_LIMITED: "天气服务请求过于频繁，请稍后再试。",

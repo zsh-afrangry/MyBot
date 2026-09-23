@@ -1,0 +1,108 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-0sB1x6",
+  "scenario": "search-error",
+  "expected": "INVALID_RESPONSE",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "搜索失败了，实际返回如下：\n\n- **错误码：** `INVALID_RESPONSE`\n- **错误信息：** \"搜索服务返回了无法核验的结果。\"\n- **是否可重试：** `false`（不可重试）\n\n这是 DeepSeek Search provider 返回的结构性错误（服务端认为响应不可核验），属于非瞬时性失败，工具层面也明确标记为不可重试。我不会再次调用，也不会凭记忆编造 SQLite 事务原子性的内容。\n\n如果需要，主人可以换个时间再让我试，或者直接告诉我你想了解的具体角度（比如 WAL 模式下的原子性保证、BEGIN/COMMIT 的行为、crash-safety 等），我再基于已有知识给出区分事实与推断的说明。",
+        "replyToTag": false,
+        "replyToId": "b54bef9f-9057-449d-b0be-3665775596e9",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "请只调用一次 personal_web_search，查询 SQLite 事务的原子性。如果失败，请说明实际错误码和是否可重试，不要再次调用工具，也不要用记忆编造搜索结果。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_160e338b2e9b4c448b920608",
+          "name": "personal_web_search",
+          "arguments": {
+            "query": "[redacted search query]"
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_web_search",
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": false,\n  \"code\": \"INVALID_RESPONSE\",\n  \"retryable\": false,\n  \"message\": \"搜索服务返回了无法核验的结果。\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "搜索失败了，实际返回如下：\n\n- **错误码：** `INVALID_RESPONSE`\n- **错误信息：** \"搜索服务返回了无法核验的结果。\"\n- **是否可重试：** `false`（不可重试）\n\n这是 DeepSeek Search provider 返回的结构性错误（服务端认为响应不可核验），属于非瞬时性失败，工具层面也明确标记为不可重试。我不会再次调用，也不会凭记忆编造 SQLite 事务原子性的内容。\n\n如果需要，主人可以换个时间再让我试，或者直接告诉我你想了解的具体角度（比如 WAL 模式下的原子性保证、BEGIN/COMMIT 的行为、crash-safety 等），我再基于已有知识给出区分事实与推断的说明。"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "searchResult": {
+    "ok": false,
+    "code": "INVALID_RESPONSE",
+    "retryable": false,
+    "message": "搜索服务返回了无法核验的结果。"
+  },
+  "status": "passed"
+}

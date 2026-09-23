@@ -1,4 +1,6 @@
 import { createHash } from "node:crypto";
+import { WeatherError, type WeatherErrorCode } from "./errors.js";
+import { formatTimestamp } from "./time-display.js";
 
 import { buildConfirmationInstruction, type ConfirmationScope } from "@kurumi/confirmation-core";
 import { OWNER_SUBJECT_ID } from "./store.js";
@@ -19,6 +21,28 @@ import type { LocationSetProposalForCommit } from "./profile-repository.js";
 const PROPOSAL_TTL_SECONDS = 24 * 60 * 60;
 const MAX_LOCATION_TEXT_LENGTH = 80;
 
+/** Profile owns its public error wording; transport codes do not prove an outage. */
+export function profileProposalError(error: unknown) {
+  if (!(error instanceof WeatherError)) {
+    return { ok: false as const, code: "PROFILE_OPERATION_FAILED", retryable: false,
+      message: "所在地更新提案处理失败，原因尚未确定；不能据此判断地理服务故障或承诺稍后恢复。请先核对提案状态。" };
+  }
+  const messages: Record<WeatherErrorCode, string> = {
+    CONFIG_INVALID: "所在地解析配置或请求未通过校验。",
+    REQUEST_REJECTED: "地点查询参数被服务拒绝，本次没有创建提案或更新所在地。请核对地点名称与上级行政区；不要原样重试、编造行政区，或将此解释为服务宕机。",
+    AUTH_FAILED: "所在地解析请求鉴权失败。",
+    FORBIDDEN: "所在地解析请求被服务拒绝。",
+    RATE_LIMITED: "所在地解析请求受到限流。",
+    TIMEOUT: "所在地解析请求超时，本次未取得可确认的地点。",
+    UPSTREAM_UNAVAILABLE: "所在地解析请求未成功；现有错误信息不能确定是请求问题还是服务故障，不能承诺等待后会恢复。",
+    INVALID_RESPONSE: "本地地点解析器无法核验服务返回的数据。",
+    NO_DATA: "所在地解析未取得可用地点数据。",
+    REQUEST_CANCELLED: "所在地解析请求已取消。",
+  };
+  return { ok: false as const, code: error.code, retryable: error.retryable,
+    message: messages[error.code] + " retryable 仅表示自动重试策略，不代表故障原因或恢复时间。" };
+}
+
 export interface ProfileLocationSummary {
   displayName: string;
   countryCode: string;
@@ -36,7 +60,7 @@ export interface ProfileState {
   pendingProposals: Array<Pick<
     PendingProposalSummary,
     "proposalId" | "previewText" | "payloadHash" | "expiresAtUtc" | "createdAtUtc"
-  >>;
+  > & { expiresAtDisplay: ReturnType<typeof formatTimestamp> }>;
   capabilities: {
     stateRead: true;
     currentLocationChange: true;
@@ -88,6 +112,7 @@ export interface ProfileChangeProposalResult {
   };
   requiresConfirmation: true;
   expiresAtUtc: UnixSeconds;
+  expiresAtDisplay: ReturnType<typeof formatTimestamp>;
 }
 
 export interface ProfileUnchangedResult {
@@ -136,6 +161,7 @@ export type ProfileFailure = {
     message: string;
   };
   candidates?: WeatherLocationCandidate[];
+  requiresUserInput?: true;
 };
 
 type FrozenCurrentLocationFacts = {
@@ -155,6 +181,7 @@ export function getProfileState(store: WeatherStore): ProfileState {
       previewText: proposal.previewText,
       payloadHash: proposal.payloadHash,
       expiresAtUtc: proposal.expiresAtUtc,
+      expiresAtDisplay: formatTimestamp(proposal.expiresAtUtc, currentLocation.place.timezone),
       createdAtUtc: proposal.createdAtUtc,
     }));
 
@@ -190,18 +217,19 @@ export async function proposeProfileChange(
       : { administrativeArea: parsed.input.request.location.administrativeArea }),
   }, signal);
   if (resolution.kind === "not_found") {
-    return profileFailure(
+    return { ...profileFailure(
       "location_not_found",
       "未找到可确认的地点；当前所在地没有发生任何变化。",
-    );
+    ), requiresUserInput: true };
   }
   if (resolution.kind === "ambiguous") {
     return {
       ...profileFailure(
         "location_ambiguous",
-        "地点名称存在多个候选，请补充城市或上级行政区后再变更当前所在地。",
+      "尚未唯一解析出所说地点。返回的是城市/地区候选，不能认定已定位到具体校区或建筑；请澄清要记录的城市或地区及上级行政区，不要自行选取更粗地点替代。当前所在地未变更。",
       ),
       candidates: resolution.candidates,
+      requiresUserInput: true,
     };
   }
 
@@ -230,11 +258,13 @@ export async function proposeProfileChange(
     summarizeCurrentLocation(current),
     summarizeResolvedLocation(facts.location),
   );
+  const expiresAtUtc = nowUtc + PROPOSAL_TTL_SECONDS;
+  const expiresAtDisplay = formatTimestamp(expiresAtUtc, current.place.timezone);
   const created = store.createPendingProposal({
     kind: "location_set",
     payloadJson,
-    previewText: basePreview,
-    expiresAtUtc: nowUtc + PROPOSAL_TTL_SECONDS,
+    previewText: `${basePreview}\n- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
+    expiresAtUtc,
     ...(scope === undefined ? {} : { scope }),
   });
   // The instruction can only be appended once the proposal exists, since it
@@ -243,6 +273,7 @@ export async function proposeProfileChange(
   const confirmationInstruction = buildConfirmationInstruction(created.proposalId, created.payloadHash);
   const previewText = [
     basePreview,
+    `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
     "请在本次主人 QQ 私聊回复下面这一行原文，确认后才会更新：",
     confirmationInstruction,
   ].join("\n");
@@ -266,6 +297,7 @@ export async function proposeProfileChange(
     effects: currentLocationEffects(),
     requiresConfirmation: true,
     expiresAtUtc: created.expiresAtUtc,
+    expiresAtDisplay,
   };
 }
 

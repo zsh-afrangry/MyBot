@@ -1,0 +1,313 @@
+{
+  "directory": "/home/afrangry/.openclaw/state/acceptance/agent-errors-KvWrMO",
+  "scenario": "confirm",
+  "expected": "committed",
+  "model": "bailian-token-plan/qwen3.7-plus",
+  "mode": "default Host agent via QQ buffered dispatcher; synthetic QQ context; collected delivery; no plugin services",
+  "delivered": [
+    {
+      "payload": {
+        "text": "提案已生成，摘要如下：\n\n- **标题**：隔离确认验收  \n- **目的地**：南京市（江苏省）  \n- **交通方式**：铁路  \n- **天气模式**：不切换  \n- **时间**：未填写  \n- **提案 ID**：`b02480da-759c-4f0e-895c-07818828c4b3`  \n- **Payload Hash**：`b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f`  \n- **状态**：pending（待确认）  \n- **过期时间**：UTC 1789065707  \n\n请在下一条消息中回复以下完整确认口令，确认后我再提交：\n\n```\n确认 proposalId=b02480da-759c-4f0e-895c-07818828c4b3 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\n```",
+        "replyToTag": false,
+        "replyToId": "d1dfabb1-3bc2-44f3-b67e-6a29d1af41a1",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    },
+    {
+      "payload": {
+        "text": "已提交 ✅\n\n- **行程 ID**：1\n- **标题**：隔离确认验收\n- **目的地**：南京市（江苏省）\n- **交通方式**：铁路\n- **状态**：planned\n- **天气模式**：none（未切换天气地点）\n- **到达/出发时间**：未填写（precision=unknown）\n\n注意：目的地尚未通过受控地点目录消歧，因此天气地点仍为广州天河，后续如需切换地点可在消歧功能完成后单独确认。本轮验收完成。",
+        "replyToTag": false,
+        "replyToId": "3cfef64f-9a2d-4320-b848-c44a04e67b8e",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    },
+    {
+      "payload": {
+        "text": "重复确认，幂等通过 ✅\n\n- **idempotent**: true — 该提案已在上一步提交，本次确认未产生新的写入或重复行程。\n- **行程 ID**：仍为 1，状态 `planned`，revision 未变。\n\n幂等机制正常工作，无需额外操作。",
+        "replyToTag": false,
+        "replyToId": "bcb37394-a6a9-4701-9880-9b99d696a39e",
+        "audioAsVoice": false
+      },
+      "info": {
+        "kind": "final",
+        "assistantMessageIndex": 2
+      }
+    }
+  ],
+  "starts": [],
+  "before": {
+    "profilePlanning": {
+      "trips": 0,
+      "change_proposals": 0,
+      "audit_log": 0,
+      "proposals": [],
+      "grants": [],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "dispatch": {
+    "queuedFinal": true,
+    "counts": {
+      "tool": 0,
+      "block": 0,
+      "final": 1
+    }
+  },
+  "messages": [
+    {
+      "role": "user",
+      "content": "请为我生成一条待确认的出行计划提案：标题‘隔离确认验收’，目的地江苏省南京市，交通方式铁路，不设置天气切换，不填写时间。本轮只生成提案和完整确认口令，等我下一条消息确认后再提交。"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_423b6065178d41fba28aaa1e",
+          "name": "personal_planning_change_propose",
+          "arguments": {
+            "schema_version": 1,
+            "request": {
+              "kind": "trip.create",
+              "title": "隔离确认验收",
+              "destination": {
+                "text": "南京市",
+                "administrative_area": "江苏省"
+              },
+              "transport_mode": "rail",
+              "weather_mode": "none"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_propose",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"b02480da-759c-4f0e-895c-07818828c4b3\",\n  \"payloadHash\": \"b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"status\": \"pending\",\n  \"kind\": \"trip_create\",\n  \"previewText\": \"待确认的出行计划提案\\n- 目的地：南京市\\n- 当前天气参考地：广东省广州市天河区\\n- 交通方式：火车/高铁\\n- 到达信息：未提供\\n- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。\\n- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。\\n- 待补充：destination_place、arrival_time_window\\n- 说明：目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。 尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\\n请在本次主人 QQ 私聊回复下面这一行原文，确认后才会提交：\\n确认 proposalId=b02480da-759c-4f0e-895c-07818828c4b3 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"confirmationInstruction\": \"确认 proposalId=b02480da-759c-4f0e-895c-07818828c4b3 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\",\n  \"canonicalFacts\": {\n    \"domain\": \"weather_travel\",\n    \"schemaVersion\": 1,\n    \"kind\": \"trip_create\",\n    \"title\": \"隔离确认验收\",\n    \"origin\": {\n      \"displayName\": \"广东省广州市天河区\",\n      \"countryCode\": \"CN\",\n      \"timezone\": \"Asia/Shanghai\",\n      \"precision\": \"district\"\n    },\n    \"destination\": {\n      \"text\": \"南京市\",\n      \"administrativeArea\": \"江苏省\",\n      \"resolution\": \"pending\"\n    },\n    \"transportMode\": \"rail\",\n    \"departure\": null,\n    \"arrival\": null,\n    \"weatherMode\": \"none\",\n    \"sourceKind\": \"owner_text\"\n  },\n  \"derivedEffects\": [],\n  \"missingFields\": [\n    \"destination_place\",\n    \"arrival_time_window\"\n  ],\n  \"warnings\": [\n    \"目的地尚未通过受控地点目录消歧；当前提案不会切换天气地点。\",\n    \"尚未提供到达时间窗；当前提案不会切换天气地点，仅记录出行意图。\"\n  ],\n  \"requiresConfirmation\": true,\n  \"expiresAtUtc\": 1789065707,\n  \"persistedAs\": \"change_proposals\"\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "提案已生成，摘要如下：\n\n- **标题**：隔离确认验收  \n- **目的地**：南京市（江苏省）  \n- **交通方式**：铁路  \n- **天气模式**：不切换  \n- **时间**：未填写  \n- **提案 ID**：`b02480da-759c-4f0e-895c-07818828c4b3`  \n- **Payload Hash**：`b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f`  \n- **状态**：pending（待确认）  \n- **过期时间**：UTC 1789065707  \n\n请在下一条消息中回复以下完整确认口令，确认后我再提交：\n\n```\n确认 proposalId=b02480da-759c-4f0e-895c-07818828c4b3 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f\n```"
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "确认 proposalId=b02480da-759c-4f0e-895c-07818828c4b3 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_9e76759528394336a2ebee1f",
+          "name": "personal_planning_change_commit",
+          "arguments": {
+            "proposal_id": "b02480da-759c-4f0e-895c-07818828c4b3",
+            "payload_hash": "b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_commit",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"b02480da-759c-4f0e-895c-07818828c4b3\",\n  \"status\": \"committed\",\n  \"idempotent\": false,\n  \"trip\": {\n    \"id\": 1,\n    \"title\": \"隔离确认验收\",\n    \"state\": \"planned\",\n    \"originDisplayName\": \"广东省广州市天河区\",\n    \"destinationDisplayName\": null,\n    \"destinationText\": \"南京市\",\n    \"destinationAdministrativeArea\": \"江苏省\",\n    \"transportMode\": \"rail\",\n    \"departureEarliestUtc\": null,\n    \"departureLatestUtc\": null,\n    \"departurePrecision\": \"unknown\",\n    \"arrivalEarliestUtc\": null,\n    \"arrivalLatestUtc\": null,\n    \"arrivalPrecision\": \"unknown\",\n    \"weatherMode\": \"none\",\n    \"revision\": 1\n  },\n  \"locationPeriodCreated\": false,\n  \"weatherLocationChanged\": false,\n  \"warnings\": [\n    \"行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。\",\n    \"当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。\"\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "已提交 ✅\n\n- **行程 ID**：1\n- **标题**：隔离确认验收\n- **目的地**：南京市（江苏省）\n- **交通方式**：铁路\n- **状态**：planned\n- **天气模式**：none（未切换天气地点）\n- **到达/出发时间**：未填写（precision=unknown）\n\n注意：目的地尚未通过受控地点目录消歧，因此天气地点仍为广州天河，后续如需切换地点可在消歧功能完成后单独确认。本轮验收完成。"
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": "确认 proposalId=b02480da-759c-4f0e-895c-07818828c4b3 payloadHash=b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "toolCall",
+          "id": "toolu_df87b6e05d20414eb0419800",
+          "name": "personal_planning_change_commit",
+          "arguments": {
+            "proposal_id": "b02480da-759c-4f0e-895c-07818828c4b3",
+            "payload_hash": "b18da6aa4b60ef6ad13bf7ac1b6bff19de492bb3a90e2baeb34dcab47966409f"
+          }
+        }
+      ]
+    },
+    {
+      "role": "toolResult",
+      "toolName": "personal_planning_change_commit",
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"schemaVersion\": 1,\n  \"proposalId\": \"b02480da-759c-4f0e-895c-07818828c4b3\",\n  \"status\": \"committed\",\n  \"idempotent\": true,\n  \"trip\": {\n    \"id\": 1,\n    \"title\": \"隔离确认验收\",\n    \"state\": \"planned\",\n    \"originDisplayName\": \"广东省广州市天河区\",\n    \"destinationDisplayName\": null,\n    \"destinationText\": \"南京市\",\n    \"destinationAdministrativeArea\": \"江苏省\",\n    \"transportMode\": \"rail\",\n    \"departureEarliestUtc\": null,\n    \"departureLatestUtc\": null,\n    \"departurePrecision\": \"unknown\",\n    \"arrivalEarliestUtc\": null,\n    \"arrivalLatestUtc\": null,\n    \"arrivalPrecision\": \"unknown\",\n    \"weatherMode\": \"none\",\n    \"revision\": 1\n  },\n  \"locationPeriodCreated\": false,\n  \"weatherLocationChanged\": false,\n  \"warnings\": [\n    \"行程已提交为 planned 记录。目的地尚未通过受控地点目录消歧，因此天气地点未切换。\",\n    \"当前不会修改每日提醒或 Cron；地点切换会在后续地点消歧功能完成后单独确认。\"\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "重复确认，幂等通过 ✅\n\n- **idempotent**: true — 该提案已在上一步提交，本次确认未产生新的写入或重复行程。\n- **行程 ID**：仍为 1，状态 `planned`，revision 未变。\n\n幂等机制正常工作，无需额外操作。"
+        }
+      ]
+    }
+  ],
+  "after": {
+    "profilePlanning": {
+      "trips": 1,
+      "change_proposals": 1,
+      "audit_log": 1,
+      "proposals": [
+        {
+          "domain": "planning",
+          "status": "committed",
+          "n": 1
+        }
+      ],
+      "grants": [
+        {
+          "domain": "planning",
+          "status": "consumed",
+          "n": 1
+        }
+      ],
+      "profileRevision": 1
+    },
+    "reminder": {
+      "reminders": 0,
+      "reminder_audit_log": 0,
+      "proposals": [],
+      "grants": []
+    }
+  },
+  "turns": [
+    {
+      "phase": "proposal",
+      "state": {
+        "profilePlanning": {
+          "trips": 0,
+          "change_proposals": 1,
+          "audit_log": 0,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "pending",
+              "n": 1
+            }
+          ],
+          "grants": [],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    },
+    {
+      "phase": "confirmed",
+      "state": {
+        "profilePlanning": {
+          "trips": 1,
+          "change_proposals": 1,
+          "audit_log": 1,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "committed",
+              "n": 1
+            }
+          ],
+          "grants": [
+            {
+              "domain": "planning",
+              "status": "consumed",
+              "n": 1
+            }
+          ],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    },
+    {
+      "phase": "repeated",
+      "state": {
+        "profilePlanning": {
+          "trips": 1,
+          "change_proposals": 1,
+          "audit_log": 1,
+          "proposals": [
+            {
+              "domain": "planning",
+              "status": "committed",
+              "n": 1
+            }
+          ],
+          "grants": [
+            {
+              "domain": "planning",
+              "status": "consumed",
+              "n": 1
+            }
+          ],
+          "profileRevision": 1
+        },
+        "reminder": {
+          "reminders": 0,
+          "reminder_audit_log": 0,
+          "proposals": [],
+          "grants": []
+        }
+      }
+    }
+  ],
+  "status": "passed"
+}
