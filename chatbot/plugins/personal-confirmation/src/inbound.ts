@@ -14,8 +14,12 @@ export function confirmationFromDispatch(
   const sender = ctx.SenderId;
   const account = ctx.AccountId;
   const session = ctx.SessionKey;
-  if (channel !== "qqbot" || typeof conversation !== "string"
-    || !/^(?:qqbot:)?c2c:[^\s:]+$/u.test(conversation)
+  const routeValid = channel === "qqbot"
+    ? typeof conversation === "string" && /^(?:qqbot:)?c2c:[^\s:]+$/u.test(conversation)
+    : channel === "kurumi-qq" && ctx.CommandAuthorized === true
+      && typeof sender === "string" && /^[0-9]{5,12}$/u.test(sender)
+      && conversation === `user:${sender}` && session === `agent:main:kurumi-qq:direct:${sender}`;
+  if (!routeValid || typeof conversation !== "string"
     || typeof messageId !== "string" || !messageId.trim() || messageId.length > 500
     || typeof sender !== "string" || !sender.trim()
     || typeof ctx.RawBody !== "string" || ctx.RawBody.length > 2000
@@ -24,7 +28,7 @@ export function confirmationFromDispatch(
   // reply-to text, or a processing timestamp as invented message evidence.
   if (ctx.Timestamp > nowMs + 30_000 || ctx.Timestamp < nowMs - 300_000) return undefined;
   return {
-    channel: "qqbot", conversationId: conversation, senderId: sender,
+    channel: channel as string, conversationId: conversation, senderId: sender,
     accountId: typeof account === "string" && account.trim() ? account.trim() : "default",
     ...(typeof session === "string" && session.trim() ? { sessionKey: session } : {}),
     messageId, content: ctx.RawBody, timestamp: ctx.Timestamp, isGroup: false,

@@ -12,9 +12,9 @@ export function parseInbound(event,a,selfId){
  if(!text.trim()&&!images.length)return null;
  return {id:`${selfId}:${event.user_id}:${event.message_id}`,messageId:String(event.message_id),text:text.slice(0,16000),images,replyId:reply?.data?.id};
 }
-export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverride,signal}){
+export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverride,signal,ingressKind='onebot'}){
  const a=account(cfg),msg=parseInbound(event,a,selfId);if(!msg)return {ignored:true};
- const ledger=new Ledger(a.stateDir);if(!ledger.admit(msg.id)){ledger.close();return {duplicate:true};}
+ const ledger=new Ledger(a.stateDir);if(!ledger.admit(msg.id,ingressKind)){ledger.close();return {duplicate:true};}
  try{
   const route=runtime.channel.routing.resolveAgentRoute({cfg,channel:CHANNEL,accountId:'default',peer:{kind:'direct',id:a.ownerId}});
   const to=`user:${a.ownerId}`;
@@ -24,7 +24,7 @@ export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverrid
   if(imageFailures||msg.images.length>3)body+='\n[部分图片未加载，不得声称看到了这些图片的细节。]';
   let quote;
   if(msg.replyId){try{quote=await quoteText(msg.replyId,a,selfId);}catch{}if(quote)body+='\n<quoted_message_untrusted>\n'+quote+'\n</quoted_message_untrusted>';else body+='\n[引用正文未加载]';}
-  const raw={Body:body,RawBody:body,BodyForAgent:body,BodyForCommands:msg.text,From:`${CHANNEL}:${a.ownerId}`,To:to,SessionKey:route.sessionKey,AccountId:'default',ChatType:'direct',SenderId:a.ownerId,SenderName:'主人',Provider:CHANNEL,Surface:CHANNEL,MessageSid:msg.messageId,Timestamp:Date.now(),OriginatingChannel:CHANNEL,OriginatingTo:to,CommandAuthorized:true};
+  const raw={Body:body,RawBody:msg.text,BodyForAgent:body,BodyForCommands:msg.text,From:`${CHANNEL}:${a.ownerId}`,To:to,SessionKey:route.sessionKey,AccountId:'default',ChatType:'direct',SenderId:a.ownerId,SenderName:'主人',Provider:CHANNEL,Surface:CHANNEL,MessageSid:msg.messageId,Timestamp:Number.isSafeInteger(event.time)&&event.time>0?event.time*1000:Date.now(),OriginatingChannel:CHANNEL,OriginatingTo:to,CommandAuthorized:true};
   if(media.length){raw.media=media;raw.SourceModality='image';}
   if(quote){raw.ReplyToBody=quote;raw.ReplyToId=String(msg.replyId);}
   const ctx=runtime.channel.reply.finalizeInboundContext(raw);

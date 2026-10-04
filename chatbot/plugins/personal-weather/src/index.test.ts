@@ -52,3 +52,10 @@ describe("personal-weather plugin metadata", () => {
     expect(isTrustedOwnerPrivateQq({ ...base, deliveryContext: { channel: "qqbot" } })).toBe(false);
   });
 });
+
+it('accepts the fusion owner route and refuses a mismatched sender or worker session', () => {
+ const ctx={messageChannel:'kurumi-qq',senderIsOwner:true,requesterSenderId:'365999865',sessionKey:'agent:main:kurumi-qq:direct:365999865',deliveryContext:{channel:'kurumi-qq',to:'user:365999865',accountId:'default'}};
+ expect(isTrustedOwnerPrivateQq(ctx)).toBe(true);
+ expect(isTrustedOwnerPrivateQq({...ctx,requesterSenderId:'123456'})).toBe(false);
+ expect(isTrustedOwnerPrivateQq({...ctx,sessionKey:'agent:worker:task'})).toBe(false);
+});

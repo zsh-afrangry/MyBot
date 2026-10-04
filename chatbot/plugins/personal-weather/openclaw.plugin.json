@@ -44,6 +44,16 @@
             "additionalProperties": false
           }
         ]
+      },
+      "reminderBackend": {
+        "type": "string",
+        "enum": [
+          "native-service"
+        ],
+        "description": "Trusted installed native service for typed, approved owner reminder records only."
+      },
+      "reminderRunnerRoot": {
+        "type": "string"
       }
     },
     "additionalProperties": false

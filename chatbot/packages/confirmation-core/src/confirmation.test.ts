@@ -103,3 +103,25 @@ describe("domain-independent confirmation governance", () => {
     expect(confirmationBackendIds()).not.toContain("test-notes");
   });
 });
+
+describe('Fusion channel confirmation scope', () => {
+  const ctx = {messageChannel:'kurumi-qq',senderIsOwner:true,requesterSenderId:'365999865',sessionKey:'agent:main:kurumi-qq:direct:365999865',deliveryContext:{to:'user:365999865',accountId:'default'}};
+  it('binds exact owner sender, route and main session', () => {
+    const scope = scopeFromToolContext(ctx)!;
+    expect(scope.primary).toBe('session:'+ctx.sessionKey);
+    expect(scopeFromInboundEvent({channel:'kurumi-qq',conversationId:'user:365999865',senderId:'365999865',sessionKey:ctx.sessionKey,accountId:'default',isGroup:false,content:'确认'})).toMatchObject({primary:scope.primary});
+    for(const change of [{senderIsOwner:false},{requesterSenderId:'123456'},{sessionKey:'agent:worker:task'},{deliveryContext:{to:'group:365999865'}}])expect(scopeFromToolContext({...ctx,...change})).toBeUndefined();
+  });
+});
+
+it('records and consumes a fusion confirmation through the shared backend registry', () => {
+  const f=fixture();
+  const sender='365999865',sessionKey='agent:main:kurumi-qq:direct:'+sender;
+  const freshScope=scopeFromToolContext({messageChannel:'kurumi-qq',senderIsOwner:true,requesterSenderId:sender,sessionKey,deliveryContext:{to:'user:'+sender,accountId:'default'}})!;
+  try {
+    f.db.prepare('UPDATE confirmation_proposals SET scope_json=?').run(JSON.stringify(freshScope));
+    const inbound={...event,channel:'kurumi-qq',senderId:sender,conversationId:'user:'+sender,sessionKey};
+    expect(recordRegisteredConfirmation(inbound,()=>{},[{id:'notes',open:()=>f.backend}])).toBe('recorded');
+    expect(checkApprovalGrant(f.db,{proposalId:id,payloadHash:hash,domain:'notes',subjectId:'owner',scope:freshScope,nowUtc:now,consume:true}).ok).toBe(true);
+  }finally{f.db.close();}
+});

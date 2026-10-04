@@ -1,4 +1,4 @@
-import { parseConfirmationText, type ConfirmationInboundEvent, type ConfirmationProposalRow } from "./gate.js";
+import { parseConfirmationText, scopeFromInboundEvent, type ConfirmationInboundEvent, type ConfirmationProposalRow } from "./gate.js";
 
 /** Business storage stays with its domain, including grant/commit transactions. */
 export interface ConfirmationBackend {
@@ -34,8 +34,8 @@ export function recordRegisteredConfirmation(
   report: (diagnostic: ConfirmationDiagnostic) => void,
   providers: readonly ConfirmationBackendProvider[] = [...registry().values()],
 ): ConfirmationOutcome {
-  if (!event.messageId || event.channel !== "qqbot" || event.isGroup || event.replyToIsQuote
-    || !parseConfirmationText(event.content)) return "ignored";
+  if (!event.messageId || !["qqbot", "kurumi-qq"].includes(event.channel) || event.isGroup || event.replyToIsQuote
+    || !scopeFromInboundEvent(event) || !parseConfirmationText(event.content)) return "ignored";
   const opened: ConfirmationBackend[] = [];
   let diagnostic: ConfirmationDiagnostic = { outcome: "no_match" };
   try {

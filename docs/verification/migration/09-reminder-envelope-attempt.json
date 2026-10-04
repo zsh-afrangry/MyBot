@@ -1,0 +1,88 @@
+{
+  "boundary": "Synthetic owner, real model and native domain confirmation. CRUD scheduled tomorrow, captured acknowledgements, no actual QQ send.",
+  "steps": [
+    {
+      "tool": "personal_reminder_propose",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "8f462329-ea72-4517-a334-8f71dd33938c",
+        "payloadHash": "3f7afe23a9cda78d11ce66ba5220edab9c8dcc0c8784bb923e2ef3b2186c53a9",
+        "status": "pending",
+        "kind": "reminder_create",
+        "previewText": "主人，已生成一份待确认提醒提案：\n- 时间：2026-10-06T07:11（Asia/Shanghai，一次）\n- 内容：架构验证：确定性提醒CRUD\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：2026-10-06T07:11:41+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\n确认 proposalId=8f462329-ea72-4517-a334-8f71dd33938c payloadHash=3f7afe23a9cda78d11ce66ba5220edab9c8dcc0c8784bb923e2ef3b2186c53a9",
+        "confirmationInstruction": "确认 proposalId=8f462329-ea72-4517-a334-8f71dd33938c payloadHash=3f7afe23a9cda78d11ce66ba5220edab9c8dcc0c8784bb923e2ef3b2186c53a9",
+        "canonicalFacts": {
+          "kind": "reminder.create",
+          "content": "架构验证：确定性提醒CRUD",
+          "schedule": {
+            "atUtc": 1791241860,
+            "localDateTime": "2026-10-06T07:11",
+            "timezone": "Asia/Shanghai",
+            "recurrence": "once"
+          }
+        },
+        "derivedEffects": [
+          {
+            "kind": "reminder.schedule",
+            "target": "owner_qq_private"
+          }
+        ],
+        "requiresConfirmation": true,
+        "expiresAtUtc": 1791241901,
+        "expiresAtDisplay": {
+          "utc": "2026-10-05T23:11:41.000Z",
+          "local": "2026-10-06T07:11:41+08:00",
+          "timezone": "Asia/Shanghai"
+        },
+        "persistedAs": "reminder_proposals"
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已生成提醒提案，**尚未提交**：\n\n- 时间：**2026-10-06 07:11（Asia/Shanghai，一次）**\n- 内容：架构验证：确定性提醒CRUD\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：**2026-10-06 07:11:41（Asia/Shanghai）**\n\n如需提交，请回复：\n\n`确认 proposalId=8f462329-ea72-4517-a334-8f71dd33938c payloadHash=3f7afe23a9cda78d11ce66ba5220edab9c8dcc0c8784bb923e2ef3b2186c53a9`"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "personal_reminder_commit",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "8f462329-ea72-4517-a334-8f71dd33938c",
+        "kind": "reminder_create",
+        "status": "scheduling_failed",
+        "idempotent": false,
+        "reminder": {
+          "reminderId": "3343ca7c-e401-4eec-92c2-89f3f23729c9",
+          "content": "架构验证：确定性提醒CRUD",
+          "scheduledAtUtc": 1791241860,
+          "localDateTime": "2026-10-06 07:11",
+          "timezone": "Asia/Shanghai",
+          "state": "failed"
+        },
+        "warnings": [
+          "定时任务注册结果不确定，未自动重试以避免重复提醒；请稍后查看状态或人工确认。"
+        ]
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "提醒提案已提交，但**定时任务注册失败**：\n\n- 提醒 ID：`3343ca7c-e401-4eec-92c2-89f3f23729c9`\n- 时间：2026-10-06 07:11（Asia/Shanghai）\n- 内容：架构验证：确定性提醒CRUD\n- 当前状态：`failed`\n\n注册结果不确定，系统未自动重试，以避免产生重复提醒。"
+          }
+        ]
+      }
+    }
+  ],
+  "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'scheduling_failed'\n- 'scheduled'\n          ^\n",
+  "passed": false
+}

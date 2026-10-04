@@ -1,0 +1,48 @@
+{
+  "reason": "Actual registration accepted but old response parser missed job.id; operator removes this exact test job before rerun. Domain failure audit preserved.",
+  "job": {
+    "id": "41ed27ce-64af-4564-8955-6fc285825972",
+    "declarationKey": "personal-reminder:3343ca7c-e401-4eec-92c2-89f3f23729c9:1791241860",
+    "name": "kurumi.personal-reminder.3343ca7c-e401-4eec-92c2-89f3f23729c9",
+    "enabled": true,
+    "deleteAfterRun": true,
+    "createdAtMs": 1791155510777,
+    "schedule": {
+      "kind": "at",
+      "at": "2026-10-05T23:11:00.000Z"
+    },
+    "sessionTarget": "isolated",
+    "wakeMode": "now",
+    "payload": {
+      "kind": "command",
+      "argv": [
+        "/usr/bin/node",
+        "dist/reminder-cli.js",
+        "deliver",
+        "--id",
+        "3343ca7c-e401-4eec-92c2-89f3f23729c9"
+      ],
+      "cwd": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/1b440cda-d7b8-4d4c-9f23-1ba0d7f36e16/captures/openclaw-plugin-build-svurvB/package-0/node_modules/personal-weather",
+      "timeoutSeconds": 20,
+      "noOutputTimeoutSeconds": 10,
+      "outputMaxBytes": 4096
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "kurumi-qq",
+      "to": "user:365999865",
+      "accountId": "default"
+    },
+    "state": {
+      "nextRunAtMs": 1791241860000
+    },
+    "updatedAtMs": 1791155510777,
+    "configRevision": "sha256:fq6akNVi5K9CxhR9Pa1CZ8W0_lY740bgLQlxavXY67c",
+    "nextRunAtMs": 1791241860000,
+    "effectiveAgentId": "main"
+  },
+  "removed": {
+    "ok": true,
+    "removed": true
+  }
+}

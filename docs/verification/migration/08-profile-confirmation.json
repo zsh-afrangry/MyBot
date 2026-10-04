@@ -1,0 +1,128 @@
+{
+  "boundary": "Synthetic owner and real model on fusion copy; temporarily set Panyu in isolated copy, negative commit without approval, then original confirmation text, idempotent replay and restore Yangzhong. No QQ send.",
+  "propose": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "已生成待确认设置提案，**尚未提交**：\n\n- 当前所在地：江苏省镇江扬中 → 广东省广州番禺\n- 仅影响后续未指定地点的天气查询和每日天气简报\n- 不修改行程、提醒、Cron、长期记忆或常住地资料\n- 确认截止：**2026-10-06 07:03:39（Asia/Shanghai）**\n\n如需提交，请回复：\n\n`确认 proposalId=7d6c16b6-0708-44a2-b624-448500fd5207 payloadHash=cb2794360823ff0e2de66275df5bca5786e5e238159a0641ac4b0bde6bbde354`"
+      }
+    ]
+  },
+  "proposalId": "7d6c16b6-0708-44a2-b624-448500fd5207",
+  "denied": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "后端已拒绝提交，结果为 `approval_required`：需要下一条主人 QQ 私聊中的明确确认。\n\n本次未提交，所在地仍未改变。"
+      }
+    ]
+  },
+  "deniedResult": {
+    "ok": false,
+    "error": {
+      "code": "approval_required",
+      "message": "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：确认 proposalId=7d6c16b6-0708-44a2-b624-448500fd5207 payloadHash=cb2794360823ff0e2de66275df5bca5786e5e238159a0641ac4b0bde6bbde354"
+    }
+  },
+  "confirmed": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "已确认并提交成功。\n\n当前所在地已更新为：**广东省广州番禺**。  \n行程、提醒、Cron 和长期记忆均未修改。"
+      }
+    ]
+  },
+  "commitResult": {
+    "ok": true,
+    "schemaVersion": 1,
+    "status": "committed",
+    "proposalId": "7d6c16b6-0708-44a2-b624-448500fd5207",
+    "idempotent": false,
+    "currentLocation": {
+      "displayName": "广东省广州番禺",
+      "countryCode": "CN",
+      "timezone": "Asia/Shanghai",
+      "precision": "city",
+      "source": "owner_confirmed",
+      "confirmedAtUtc": 1791155036,
+      "revision": 3
+    },
+    "effects": {
+      "currentLocationChanged": true,
+      "weatherUsesCurrentLocation": true,
+      "tripChanged": false,
+      "reminderChanged": false,
+      "cronChanged": false,
+      "memoryChanged": false
+    }
+  },
+  "replayed": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "重复确认已安全处理，提交结果为**幂等成功**。所在地仍为：**广东省广州番禺**，没有产生额外变更。"
+      }
+    ]
+  },
+  "replayResult": {
+    "ok": true,
+    "schemaVersion": 1,
+    "status": "committed",
+    "proposalId": "7d6c16b6-0708-44a2-b624-448500fd5207",
+    "idempotent": true,
+    "currentLocation": {
+      "displayName": "广东省广州番禺",
+      "countryCode": "CN",
+      "timezone": "Asia/Shanghai",
+      "precision": "city",
+      "source": "owner_confirmed",
+      "confirmedAtUtc": 1791155036,
+      "revision": 3
+    },
+    "effects": {
+      "currentLocationChanged": true,
+      "weatherUsesCurrentLocation": true,
+      "tripChanged": false,
+      "reminderChanged": false,
+      "cronChanged": false,
+      "memoryChanged": false
+    }
+  },
+  "passed": true,
+  "restored": {
+    "ok": true,
+    "schemaVersion": 1,
+    "status": "committed",
+    "proposalId": "d9d19163-1990-4d6f-84ea-e151e457fee3",
+    "idempotent": false,
+    "currentLocation": {
+      "displayName": "江苏省镇江扬中",
+      "countryCode": "CN",
+      "timezone": "Asia/Shanghai",
+      "precision": "city",
+      "source": "owner_confirmed",
+      "confirmedAtUtc": 1791155061,
+      "revision": 4
+    },
+    "effects": {
+      "currentLocationChanged": true,
+      "weatherUsesCurrentLocation": true,
+      "tripChanged": false,
+      "reminderChanged": false,
+      "cronChanged": false,
+      "memoryChanged": false
+    }
+  }
+}

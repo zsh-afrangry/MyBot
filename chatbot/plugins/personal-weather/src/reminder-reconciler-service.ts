@@ -123,10 +123,10 @@ export async function runReminderRetryMaintenanceOnce(
   try {
     const nowUtc = options.nowUtc ? options.nowUtc() : store.getNowUtc();
     const result: ReminderReconcilerRunResult = {
-      ...reconcileReminderState(store, {
+      ...(options.scheduler?.reconcile ? await options.scheduler.reconcile(store, nowUtc) : reconcileReminderState(store, {
         ...(options.gatewayDatabasePath ? { gatewayDatabasePath: options.gatewayDatabasePath } : {}),
         nowUtc,
-      }),
+      })),
       skipped: false,
       retriesScheduled: 0,
       retriesUnknown: 0,

@@ -49,7 +49,7 @@ export function createControlledReplies(allowedTools: ReadonlySet<string>, now =
     }
     const alreadyEmitted = entry.emitted;
     entry.emitted = true;
-    if (alreadyEmitted || entry.calls !== 1 || !entry.text || event.kind !== "final" || event.channel !== "qqbot" ||
+    if (alreadyEmitted || entry.calls !== 1 || !entry.text || event.kind !== "final" || !["qqbot", "kurumi-qq"].includes(event.channel ?? "") ||
       typeof event.payload.text !== "string" || event.payload.mediaUrl || event.payload.mediaUrls) return;
     return { payload: { ...event.payload, text: entry.text } };
   }

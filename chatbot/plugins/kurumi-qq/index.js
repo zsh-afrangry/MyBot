@@ -43,7 +43,7 @@ export default {id:CHANNEL,name:'Kurumi QQ',description:'Isolated owner-only One
     const a=account(api.config);const login=await onebot(a,'get_login_info',{});
     if(hasCurrentClientAuthority&&!hasCurrentClientAuthority())throw Error('Expired test authority');
     const captured=[];const deliverOverride=params.capture===true?async p=>{captured.push({text:p.text,mediaUrl:p.mediaUrl});}:undefined;
-    const result=await handleInbound({cfg:api.config,runtime,event:params.event,selfId:String(login.user_id),log:api.logger,deliverOverride});
+    const result=await handleInbound({cfg:api.config,runtime,event:params.event,selfId:String(login.user_id),log:api.logger,deliverOverride,ingressKind:'synthetic'});
     respond(true,{...result,...(params.capture===true?{captured}:{} )});
    }catch(e){respond(false,undefined,{code:'UNAVAILABLE',message:String(e.message).slice(0,180)});}
   },{scope:'operator.admin'});

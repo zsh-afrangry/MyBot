@@ -89,6 +89,21 @@ function reconcileOne(
     LIMIT 1
   `).get(declarationKey, reminder.cronJobId) as CronJobRow | undefined;
 
+  const run = database.prepare(`
+    SELECT status, delivery_status, delivered, run_at_ms, error, delivery_error
+    FROM cron_run_logs
+    WHERE job_id = ?
+    ORDER BY seq DESC
+    LIMIT 1
+  `).get(job?.job_id ?? reminder.cronJobId) as CronRunRow | undefined;
+  applyReminderObservation(store, reminder, job, run, nowUtc, result);
+}
+
+/** Shared outcome state machine; native RPC snapshots and legacy SQLite use identical rules. */
+export function applyReminderObservation(
+  store: ReminderStore, reminder: StoredReminder, job: CronJobRow | undefined,
+  run: CronRunRow | undefined, nowUtc: number, result: ReminderReconcileResult,
+): void {
   if (job && reminder.status === "scheduling") {
     if (store.markReminderScheduled({
       reminderId: reminder.reminderId,
@@ -130,13 +145,6 @@ function reconcileOne(
     return;
   }
 
-  const run = database.prepare(`
-    SELECT status, delivery_status, delivered, run_at_ms, error, delivery_error
-    FROM cron_run_logs
-    WHERE job_id = ?
-    ORDER BY seq DESC
-    LIMIT 1
-  `).get(jobId) as CronRunRow | undefined;
   const status = run ?? (job ? {
     status: job.last_run_status,
     delivery_status: job.last_delivery_status,
@@ -193,7 +201,7 @@ function normalizeFailureCode(value: string): string {
   return normalized || "delivery_failed";
 }
 
-type CronJobRow = {
+export type CronJobRow = {
   job_id: string;
   declaration_key: string | null;
   last_run_status: string | null;
@@ -202,7 +210,7 @@ type CronJobRow = {
   last_error: string | null;
 };
 
-type CronRunRow = {
+export type CronRunRow = {
   status: string | null;
   delivery_status: string | null;
   delivered: number | null;

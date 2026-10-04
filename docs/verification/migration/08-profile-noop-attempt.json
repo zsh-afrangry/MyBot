@@ -1,0 +1,16 @@
+{
+  "boundary": "Synthetic owner and real model on fusion copy; propose same existing Yangzhong city, negative commit without approval, then original confirmation text and idempotent replay. No QQ send.",
+  "propose": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "调用成功，但结果为**无需变更**：\n\n当前所在地已经是**江苏省镇江扬中**，因此**未创建设置提案，也未修改任何资料**。本轮未提交。"
+      }
+    ]
+  },
+  "error": "The expression evaluated to a falsy value:\n\n  assert(p.ok&&p.status==='pending')\n",
+  "passed": false
+}

@@ -31,7 +31,7 @@ export function buildReminderCronAddParams(input: ReminderCronAddInput): Record<
     },
     delivery: {
       mode: "announce",
-      channel: "qqbot",
+      channel: input.delivery.channel,
       to: input.delivery.to,
       ...(input.delivery.accountId ? { accountId: input.delivery.accountId } : {}),
     },

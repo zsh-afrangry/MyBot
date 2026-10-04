@@ -1,0 +1,23 @@
+{
+  "boundary": "Synthetic trusted owner, real model and QWeather tools, captured reply; unchanged preferences/trips required.",
+  "before": "799a3899e61f0aab65c93bc1ea486fdf5638070a3d481d1df02ab7afd69c4a49",
+  "reply": [
+    {
+      "text": "当前保存的天气地点：**江苏省镇江扬中**。\n\n已按你的要求临时查询**广州市番禺区**天气，未修改所在地或行程：\n\n- 现在：多云，**23.2°C**，体感 **21.9°C**\n- 湿度：75%，北风4级\n- 今日：**23.3～29.3°C**，晴间多云转少云\n- 未来24小时最高降雨概率：**0%**\n- 当前无官方气象预警\n\n查询成功，数据来自和风天气。"
+    }
+  ],
+  "tools": [
+    {
+      "name": "personal_profile_state_get",
+      "ok": true,
+      "error": null
+    },
+    {
+      "name": "personal_weather_get_brief",
+      "ok": true,
+      "error": null
+    }
+  ],
+  "after": "799a3899e61f0aab65c93bc1ea486fdf5638070a3d481d1df02ab7afd69c4a49",
+  "passed": true
+}

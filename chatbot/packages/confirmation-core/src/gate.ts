@@ -113,9 +113,13 @@ export function ensureConfirmationGateSchema(database: DatabaseSync): void {
 
 export function scopeFromToolContext(input: ConfirmationToolContext): ConfirmationScope | undefined {
   const channel = input.messageChannel ?? input.deliveryContext?.channel;
-  if (channel !== "qqbot" || input.senderIsOwner !== true) return undefined;
+  if (!["qqbot", "kurumi-qq"].includes(channel ?? "") || input.senderIsOwner !== true) return undefined;
   const target = input.deliveryContext?.to?.trim();
-  if (!target || !/^(?:qqbot:)?c2c:/u.test(target)) return undefined;
+  if (!target) return undefined;
+  if (channel === "qqbot" && !/^(?:qqbot:)?c2c:/u.test(target)) return undefined;
+  if (channel === "kurumi-qq" && (!/^user:[0-9]{5,12}$/u.test(target)
+    || target !== `user:${input.requesterSenderId}`
+    || input.sessionKey !== `agent:main:kurumi-qq:direct:${input.requesterSenderId}`)) return undefined;
   const delivery = uniqueStrings([
     target ? `target:${target}` : undefined,
     `account:${input.deliveryContext?.accountId?.trim() || "default"}`,
@@ -129,7 +133,10 @@ export function scopeFromToolContext(input: ConfirmationToolContext): Confirmati
 
 /** Binds inbound data to an owner-authorized proposal; does not grant tool access. */
 export function scopeFromInboundEvent(event: ConfirmationInboundEvent): ConfirmationScope | undefined {
-  if (event.channel !== "qqbot" || event.isGroup) return undefined;
+  if (!["qqbot", "kurumi-qq"].includes(event.channel) || event.isGroup) return undefined;
+  if (event.channel === "kurumi-qq" && (event.conversationId !== `user:${event.senderId}`
+    || !/^[0-9]{5,12}$/u.test(event.senderId ?? "")
+    || event.sessionKey !== `agent:main:kurumi-qq:direct:${event.senderId}`)) return undefined;
   const delivery = uniqueStrings([
     event.accountId?.trim() ? `account:${event.accountId.trim()}` : undefined,
     event.conversationId?.trim() ? `conversation:${event.conversationId.trim()}` : undefined,

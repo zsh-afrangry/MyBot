@@ -1,0 +1,29 @@
+{
+  "before": [
+    {
+      "status": "cancelled",
+      "n": 3
+    },
+    {
+      "status": "delivered",
+      "n": 6
+    }
+  ],
+  "after": [
+    {
+      "status": "cancelled",
+      "n": 3
+    },
+    {
+      "status": "delivered",
+      "n": 6
+    }
+  ],
+  "retryBefore": 9,
+  "retryAfter": 9,
+  "integrity": {
+    "integrity_check": "ok"
+  },
+  "foreignKeyErrors": 0,
+  "channelSchemaExpanded": true
+}

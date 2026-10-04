@@ -5,9 +5,9 @@ import {rpc,ready} from './rpc.mjs';
 await ready();
 const state='/home/afrangry/.openclaw-fusion',p=`${state}/openclaw.json`,cfg=JSON.parse(fs.readFileSync(p));
 const jobs=await rpc('cron.list',{includeDisabled:true});if(jobs.jobs?.some(j=>j.enabled))throw Error('Pending Cron tasks must be reviewed before closeout');
-const db=new DatabaseSync(`${state}/channel/channel.sqlite`,{readOnly:true});const inbound=db.prepare('SELECT id FROM inbound').all();db.close();
-// Do not rotate a conversation if an actual positive QQ event has arrived during testing.
-const syntheticOnly=inbound.every(x=>Number(x.id.split(':').at(-1))<0);
+const db=new DatabaseSync(`${state}/channel/channel.sqlite`,{readOnly:true});const inbound=db.prepare('SELECT id,origin FROM inbound').all();db.close();
+// Native QQ IDs can be negative too. Only explicit server-stamped provenance proves synthetic ingress.
+const syntheticOnly=inbound.every(x=>x.origin==='synthetic');
 let rotated=false;
 if(syntheticOnly){const result=await rpc('sessions.reset',{key:'agent:main:kurumi-qq:direct:365999865',reason:'new'});rotated=result.ok===true;}
 cfg.channels['kurumi-qq'].testIngress=false;

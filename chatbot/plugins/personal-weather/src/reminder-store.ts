@@ -55,7 +55,7 @@ export type ReminderProposalKind = "reminder_create" | "reminder_cancel" | "remi
 export type ReminderProposalStatus = "pending" | "committed" | "expired" | "cancelled";
 
 export interface ReminderDelivery {
-  channel: "qqbot";
+  channel: "qqbot" | "kurumi-qq";
   to: string;
   accountId: string | null;
 }
@@ -142,6 +142,7 @@ export class ReminderStore {
       this.#database.exec("PRAGMA temp_store = MEMORY");
       this.#database.exec(INITIAL_SCHEMA_SQL);
       migrateReminderProposalKinds(this.#database);
+      migrateReminderChannels(this.#database);
       this.#database.exec(RETRY_MIGRATION_SQL);
       ensureConfirmationGateSchema(this.#database);
       chmodSync(this.databasePath, 0o600);
@@ -1208,7 +1209,7 @@ const INITIAL_SCHEMA_SQL = String.raw`
     payload_json TEXT NOT NULL CHECK (json_valid(payload_json)),
     payload_hash TEXT NOT NULL CHECK (length(payload_hash) = 64),
     request_context_hash TEXT NOT NULL CHECK (length(request_context_hash) = 64),
-    delivery_channel TEXT NOT NULL CHECK (delivery_channel = 'qqbot'),
+    delivery_channel TEXT NOT NULL CHECK (delivery_channel IN ('qqbot', 'kurumi-qq')),
     delivery_to TEXT NOT NULL CHECK (length(delivery_to) BETWEEN 1 AND 500),
     delivery_account_id TEXT,
     expires_at_utc INTEGER NOT NULL CHECK (expires_at_utc >= 0),
@@ -1230,7 +1231,7 @@ const INITIAL_SCHEMA_SQL = String.raw`
     content TEXT NOT NULL CHECK (length(content) BETWEEN 1 AND 200),
     scheduled_at_utc INTEGER NOT NULL CHECK (scheduled_at_utc >= 0),
     timezone TEXT NOT NULL CHECK (timezone = 'Asia/Shanghai'),
-    delivery_channel TEXT NOT NULL CHECK (delivery_channel = 'qqbot'),
+    delivery_channel TEXT NOT NULL CHECK (delivery_channel IN ('qqbot', 'kurumi-qq')),
     delivery_to TEXT NOT NULL CHECK (length(delivery_to) BETWEEN 1 AND 500),
     delivery_account_id TEXT,
     cron_job_id TEXT,
@@ -1295,7 +1296,7 @@ function migrateReminderProposalKinds(database: DatabaseSync): void {
       payload_json TEXT NOT NULL CHECK (json_valid(payload_json)),
       payload_hash TEXT NOT NULL CHECK (length(payload_hash) = 64),
       request_context_hash TEXT NOT NULL CHECK (length(request_context_hash) = 64),
-      delivery_channel TEXT NOT NULL CHECK (delivery_channel = 'qqbot'),
+      delivery_channel TEXT NOT NULL CHECK (delivery_channel IN ('qqbot', 'kurumi-qq')),
       delivery_to TEXT NOT NULL CHECK (length(delivery_to) BETWEEN 1 AND 500),
       delivery_account_id TEXT,
       expires_at_utc INTEGER NOT NULL CHECK (expires_at_utc >= 0),
@@ -1357,4 +1358,29 @@ function retryDeclarationKey(base: string, attempt: number): string {
   const suffix = `:retry:${attempt}`;
   const prefix = base.length + suffix.length <= 200 ? base : base.slice(0, 200 - suffix.length);
   return `${prefix}${suffix}`;
+}
+
+/** Expand the transport enum in an existing copied database, retaining all rows,
+ * indexes, and retry references. Originals are never opened by the fusion runtime. */
+function migrateReminderChannels(database: DatabaseSync): void {
+  for (const table of ["reminder_proposals", "reminders"]) {
+    const row = database.prepare("SELECT sql FROM sqlite_master WHERE type='table' AND name=?").get(table) as { sql?: string } | undefined;
+    if (!row?.sql || row.sql.includes("'kurumi-qq'")) continue;
+    const indexes = database.prepare("SELECT sql FROM sqlite_master WHERE type='index' AND tbl_name=? AND sql IS NOT NULL").all(table) as Array<{sql: string}>;
+    const temporary = `${table}_channel_migration`;
+    const schema = row.sql.replace(new RegExp(`CREATE TABLE (?:IF NOT EXISTS )?["\x60]?${table}["\x60]?`, 'i'), `CREATE TABLE ${temporary}`)
+      .replace(/CHECK\s*\(delivery_channel\s*=\s*'qqbot'\)/gu, "CHECK (delivery_channel IN ('qqbot', 'kurumi-qq'))");
+    if (!schema.includes("'kurumi-qq'")) throw new Error('Unknown reminder channel schema');
+    database.exec('PRAGMA foreign_keys=OFF');
+    try {
+      database.exec('BEGIN IMMEDIATE');
+      database.exec(schema);
+      database.exec(`INSERT INTO ${temporary} SELECT * FROM ${table}`);
+      database.exec(`DROP TABLE ${table}; ALTER TABLE ${temporary} RENAME TO ${table}`);
+      for (const index of indexes) database.exec(index.sql);
+      if (database.prepare('PRAGMA foreign_key_check').all().length) throw new Error('Reminder migration foreign key failure');
+      database.exec('COMMIT');
+    } catch (error) { database.exec('ROLLBACK'); throw error; }
+    finally { database.exec('PRAGMA foreign_keys=ON'); }
+  }
 }

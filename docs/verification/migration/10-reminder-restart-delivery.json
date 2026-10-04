@@ -1,0 +1,151 @@
+{
+  "boundary": "Synthetic owner creates/confirms through real model. One actual owner QQ message. Restart before due then inspect native Cron/domain receipts and QQ readback.",
+  "started": 1791155693125,
+  "localTime": "2026-10-05T07:18",
+  "proposalReply": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "已生成个人提醒待确认提案，**尚未提交**：\n\n- 时间：**2026-10-05 07:18（Asia/Shanghai，一次）**\n- 内容：架构验证：确定性提醒跨重启，只发本人\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：**2026-10-06 07:14:59（Asia/Shanghai）**\n\n如需提交，请回复：\n\n`确认 proposalId=57129f88-3dc4-48a7-b4d1-1eea2fae3b88 payloadHash=35be189d9c2fc3e45eb18a5fb9c38bac983cf5dd5aede25a197714da3a7095ee`"
+      }
+    ]
+  },
+  "confirmationReply": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "提醒已创建并成功排程：\n\n- 时间：**2026-10-05 07:18（Asia/Shanghai，一次）**\n- 内容：架构验证：确定性提醒跨重启，只发本人\n- 投递：仅主人 QQ 私聊\n- 提醒 ID：`836f26c3-a2ba-4ba8-94b2-f016ffa3bef0`\n- 状态：`scheduled`"
+      }
+    ]
+  },
+  "committed": {
+    "ok": true,
+    "schemaVersion": 1,
+    "proposalId": "57129f88-3dc4-48a7-b4d1-1eea2fae3b88",
+    "kind": "reminder_create",
+    "status": "scheduled",
+    "idempotent": false,
+    "reminder": {
+      "reminderId": "836f26c3-a2ba-4ba8-94b2-f016ffa3bef0",
+      "content": "架构验证：确定性提醒跨重启，只发本人",
+      "scheduledAtUtc": 1791155880,
+      "localDateTime": "2026-10-05 07:18",
+      "timezone": "Asia/Shanghai",
+      "state": "scheduled"
+    },
+    "warnings": []
+  },
+  "reminderId": "836f26c3-a2ba-4ba8-94b2-f016ffa3bef0",
+  "job": {
+    "id": "3d1cd5ae-d491-4051-8a07-bd7c247c88d3",
+    "declarationKey": "personal-reminder:836f26c3-a2ba-4ba8-94b2-f016ffa3bef0:1791155880",
+    "name": "kurumi.personal-reminder.836f26c3-a2ba-4ba8-94b2-f016ffa3bef0",
+    "enabled": true,
+    "deleteAfterRun": true,
+    "createdAtMs": 1791155709423,
+    "updatedAtMs": 1791155709423,
+    "schedule": {
+      "kind": "at",
+      "at": "2026-10-04T23:18:00.000Z"
+    },
+    "sessionTarget": "isolated",
+    "wakeMode": "now",
+    "payload": {
+      "kind": "command",
+      "argv": [
+        "/usr/bin/node",
+        "dist/reminder-cli.js",
+        "deliver",
+        "--id",
+        "836f26c3-a2ba-4ba8-94b2-f016ffa3bef0"
+      ],
+      "cwd": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
+      "timeoutSeconds": 20,
+      "noOutputTimeoutSeconds": 10,
+      "outputMaxBytes": 4096
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "kurumi-qq",
+      "to": "user:365999865",
+      "accountId": "default"
+    },
+    "state": {
+      "nextRunAtMs": 1791155880000
+    },
+    "configRevision": "sha256:uU_zZTAc-1a1p_c-IgqVBHovhWHUYB5CdT6I1Ji5WXI",
+    "nextRunAtMs": 1791155880000,
+    "effectiveAgentId": "main"
+  },
+  "created": true,
+  "runs": {
+    "entries": [
+      {
+        "ts": 1791155880384,
+        "jobId": "3d1cd5ae-d491-4051-8a07-bd7c247c88d3",
+        "action": "finished",
+        "status": "ok",
+        "completionStatus": "succeeded",
+        "summary": "主人，提醒时间到了：架构验证：确定性提醒跨重启，只发本人",
+        "diagnostics": {
+          "summary": "主人，提醒时间到了：架构验证：确定性提醒跨重启，只发本人",
+          "entries": [
+            {
+              "ts": 1791155880079,
+              "source": "exec",
+              "severity": "info",
+              "message": "command ok: \"/usr/bin/node\" \"dist/reminder-cli.js\" \"deliver\" \"--id\" \"836f26c3-a2ba-4ba8-94b2-f016ffa3bef0\"",
+              "exitCode": 0
+            }
+          ]
+        },
+        "runAtMs": 1791155880019,
+        "durationMs": 365,
+        "nextRunAtMs": 1791155880000,
+        "delivered": true,
+        "deliveryStatus": "delivered",
+        "delivery": {
+          "intended": {
+            "channel": "kurumi-qq",
+            "to": "user:365999865",
+            "accountId": "default",
+            "source": "explicit"
+          },
+          "delivered": true
+        }
+      }
+    ],
+    "total": 1,
+    "offset": 0,
+    "limit": 10,
+    "hasMore": false,
+    "nextOffset": null
+  },
+  "domain": {
+    "reminder_id": "836f26c3-a2ba-4ba8-94b2-f016ffa3bef0",
+    "status": "delivered",
+    "cron_job_id": "3d1cd5ae-d491-4051-8a07-bd7c247c88d3"
+  },
+  "newReceipts": [
+    {
+      "status": "sent",
+      "message_id": "-712089731"
+    }
+  ],
+  "readback": [
+    {
+      "messageId": "-712089731",
+      "types": [
+        "text"
+      ],
+      "text": "主人，提醒时间到了：架构验证：确定性提醒跨重启，只发本人"
+    }
+  ],
+  "passed": true
+}

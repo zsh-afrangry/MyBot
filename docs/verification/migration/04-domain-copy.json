@@ -1,0 +1,12 @@
+[
+  {
+    "domain": "personal-weather",
+    "sqliteBackup": true,
+    "integrity": "ok"
+  },
+  {
+    "domain": "personal-reminders",
+    "sqliteBackup": true,
+    "integrity": "ok"
+  }
+]

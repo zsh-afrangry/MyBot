@@ -1,11 +1,12 @@
 import { Type, type Static } from "typebox";
 import {
   jsonResult,
-  type AnyAgentTool,
 } from "openclaw/plugin-sdk/agent-runtime";
+import type { AnyAgentTool } from "openclaw/plugin-sdk/plugin-entry";
 import { callGatewayTool } from "openclaw/plugin-sdk/agent-harness-runtime";
 import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
 
+import { createNativeReminderScheduler } from "./native-reminder-scheduler.js";
 import { resolvePersonalWeatherConfig } from "./config.js";
 import { registerControlledReplies } from "./controlled-replies.js";
 import { registerClarificationGate } from "./clarification-gate.js";
@@ -56,6 +57,8 @@ const secretRefSchema = Type.Object(
 
 const configSchema = Type.Object(
   {
+    reminderBackend: Type.Optional(Type.Literal("native-service")),
+    reminderRunnerRoot: Type.Optional(Type.String()),
     apiHost: Type.String({
       description: "QWeather dedicated API hostname without scheme or path.",
     }),
@@ -518,7 +521,8 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: ReminderStore | undefined;
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-            reconcileReminderState(store);
+            if (nativeReminderScheduler?.reconcile) await nativeReminderScheduler.reconcile(store);
+            else reconcileReminderState(store);
             return jsonResult(getReminderState(store));
           } catch (error) {
             return jsonResult({
@@ -762,6 +766,12 @@ personalWeatherPlugin.register = (api) => {
     },
     stop() { for (const unregister of unregisterBackends.splice(0)) unregister(); },
   });
+  if (api.pluginConfig?.reminderBackend === "native-service") {
+    const channel = api.config.channels?.["kurumi-qq"] as { ownerId?: string } | undefined;
+    const ownerId = channel?.ownerId;
+    if (!ownerId) throw new Error("Native reminder service requires configured QQ owner");
+    nativeReminderScheduler = createNativeReminderScheduler({stateDirectory:reminderStateDirectory(),ownerId,port:api.config.gateway?.port ?? 18890,pluginRoot:String(api.pluginConfig.reminderRunnerRoot ?? "")});
+  }
   api.registerService(createReminderReconcilerService({ scheduler: createGatewayReminderScheduler() }));
 };
 
@@ -772,11 +782,14 @@ export function isTrustedOwnerPrivateQq(toolContext: {
   messageChannel?: string;
   deliveryContext?: { channel?: string; to?: string; accountId?: string };
   senderIsOwner?: boolean;
+  requesterSenderId?: string;
+  sessionKey?: string;
 }): boolean {
   const channel = toolContext.messageChannel ?? toolContext.deliveryContext?.channel;
   const target = toolContext.deliveryContext?.to;
   if (typeof target !== "string" || target.trim().length === 0) return false;
   const isGroupTarget = typeof target === "string" && /(?:^|:)group:/iu.test(target);
+  if (channel === "kurumi-qq") return scopeFromToolContext(toolContext) !== undefined;
   return toolContext.senderIsOwner === true && channel === "qqbot" && !isGroupTarget;
 }
 
@@ -784,13 +797,15 @@ function trustedReminderContext(toolContext: {
   messageChannel?: string;
   deliveryContext?: { channel?: string; to?: string; accountId?: string };
   senderIsOwner?: boolean;
+  requesterSenderId?: string;
+  sessionKey?: string;
 }): TrustedReminderContext | undefined {
   if (!isTrustedOwnerPrivateQq(toolContext)) return undefined;
   const to = toolContext.deliveryContext?.to?.trim();
   if (!to || to.length > 500) return undefined;
   const accountId = toolContext.deliveryContext?.accountId?.trim();
   const delivery: ReminderDelivery = {
-    channel: "qqbot",
+    channel: (toolContext.messageChannel ?? toolContext.deliveryContext?.channel) as ReminderDelivery["channel"],
     to,
     accountId: accountId ? accountId : null,
   };
@@ -812,7 +827,10 @@ function publicReminderError(_error: unknown): string {
   return "提醒服务暂时不可用，未创建、取消或发送任何提醒。";
 }
 
+let nativeReminderScheduler: ReminderCronScheduler | undefined;
+
 function createGatewayReminderScheduler(): ReminderCronScheduler {
+  if (nativeReminderScheduler) return nativeReminderScheduler;
   return {
     async add(input: ReminderCronAddInput): Promise<{ jobId: string }> {
       const result = await callGatewayTool<unknown>(

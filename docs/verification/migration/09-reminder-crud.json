@@ -1,0 +1,248 @@
+{
+  "boundary": "Synthetic owner, real model and native domain confirmation. CRUD scheduled tomorrow, captured acknowledgements, no actual QQ send.",
+  "steps": [
+    {
+      "tool": "personal_reminder_propose",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "4afa8e8c-b871-441b-900d-d3197bb4a29a",
+        "payloadHash": "273ba4901fb1a83a9fc56639c2d9e74c17701c36129d2dc756862735dcec9c73",
+        "status": "pending",
+        "kind": "reminder_create",
+        "previewText": "主人，已生成一份待确认提醒提案：\n- 时间：2026-10-06T07:13（Asia/Shanghai，一次）\n- 内容：架构验证：确定性提醒CRUD\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：2026-10-06T07:13:44+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：\n确认 proposalId=4afa8e8c-b871-441b-900d-d3197bb4a29a payloadHash=273ba4901fb1a83a9fc56639c2d9e74c17701c36129d2dc756862735dcec9c73",
+        "confirmationInstruction": "确认 proposalId=4afa8e8c-b871-441b-900d-d3197bb4a29a payloadHash=273ba4901fb1a83a9fc56639c2d9e74c17701c36129d2dc756862735dcec9c73",
+        "canonicalFacts": {
+          "kind": "reminder.create",
+          "content": "架构验证：确定性提醒CRUD",
+          "schedule": {
+            "atUtc": 1791241980,
+            "localDateTime": "2026-10-06T07:13",
+            "timezone": "Asia/Shanghai",
+            "recurrence": "once"
+          }
+        },
+        "derivedEffects": [
+          {
+            "kind": "reminder.schedule",
+            "target": "owner_qq_private"
+          }
+        ],
+        "requiresConfirmation": true,
+        "expiresAtUtc": 1791242024,
+        "expiresAtDisplay": {
+          "utc": "2026-10-05T23:13:44.000Z",
+          "local": "2026-10-06T07:13:44+08:00",
+          "timezone": "Asia/Shanghai"
+        },
+        "persistedAs": "reminder_proposals"
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已生成提醒提案，**尚未提交**：\n\n- 时间：**2026-10-06 07:13（Asia/Shanghai，一次）**\n- 内容：架构验证：确定性提醒CRUD\n- 投递：仅主人 QQ 私聊\n- 提案确认截止：**2026-10-06 07:13:44（Asia/Shanghai）**\n\n如需提交，请回复：\n\n`确认 proposalId=4afa8e8c-b871-441b-900d-d3197bb4a29a payloadHash=273ba4901fb1a83a9fc56639c2d9e74c17701c36129d2dc756862735dcec9c73`"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "personal_reminder_commit",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "4afa8e8c-b871-441b-900d-d3197bb4a29a",
+        "kind": "reminder_create",
+        "status": "scheduled",
+        "idempotent": false,
+        "reminder": {
+          "reminderId": "3f4e9512-0ee3-46ea-9acd-6fa553112412",
+          "content": "架构验证：确定性提醒CRUD",
+          "scheduledAtUtc": 1791241980,
+          "localDateTime": "2026-10-06 07:13",
+          "timezone": "Asia/Shanghai",
+          "state": "scheduled"
+        },
+        "warnings": []
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "提醒已创建并成功排程：\n\n- 时间：**2026-10-06 07:13（Asia/Shanghai，一次）**\n- 内容：架构验证：确定性提醒CRUD\n- 提醒 ID：`3f4e9512-0ee3-46ea-9acd-6fa553112412`\n- 状态：`scheduled`"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "personal_reminder_change_propose",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "93fbed09-2bfd-4984-ad80-fc52ae88cd61",
+        "payloadHash": "92f8604ea72a899a4f0ddf7fff694ab432be2f5f1e8fc21afa9c21bd50a7010b",
+        "status": "pending",
+        "kind": "reminder_update",
+        "previewText": "主人，已生成一份待确认的提醒修改提案：\n- 原时间：2026-10-06 07:13（Asia/Shanghai）\n- 新时间：2026-10-06T08:13（Asia/Shanghai）\n- 原内容：架构验证：确定性提醒CRUD\n- 新内容：架构验证：已修改\n- 影响：在原有受限定时任务上原地更新，不会创建第二条提醒\n- 提案确认截止：2026-10-06T07:14:01+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会应用修改：\n确认 proposalId=93fbed09-2bfd-4984-ad80-fc52ae88cd61 payloadHash=92f8604ea72a899a4f0ddf7fff694ab432be2f5f1e8fc21afa9c21bd50a7010b",
+        "confirmationInstruction": "确认 proposalId=93fbed09-2bfd-4984-ad80-fc52ae88cd61 payloadHash=92f8604ea72a899a4f0ddf7fff694ab432be2f5f1e8fc21afa9c21bd50a7010b",
+        "canonicalFacts": {
+          "kind": "reminder.update",
+          "reminderId": "3f4e9512-0ee3-46ea-9acd-6fa553112412",
+          "content": "架构验证：已修改",
+          "schedule": {
+            "atUtc": 1791245580,
+            "localDateTime": "2026-10-06T08:13",
+            "timezone": "Asia/Shanghai",
+            "recurrence": "once"
+          },
+          "previousContent": "架构验证：确定性提醒CRUD",
+          "previousSchedule": {
+            "atUtc": 1791241980,
+            "localDateTime": "2026-10-06 07:13",
+            "timezone": "Asia/Shanghai",
+            "recurrence": "once"
+          }
+        },
+        "derivedEffects": [
+          {
+            "kind": "reminder.update",
+            "target": "owner_qq_private"
+          }
+        ],
+        "requiresConfirmation": true,
+        "expiresAtUtc": 1791242041,
+        "expiresAtDisplay": {
+          "utc": "2026-10-05T23:14:01.000Z",
+          "local": "2026-10-06T07:14:01+08:00",
+          "timezone": "Asia/Shanghai"
+        },
+        "persistedAs": "reminder_proposals"
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已生成提醒修改提案，**尚未提交**：\n\n- 提醒 ID：`3f4e9512-0ee3-46ea-9acd-6fa553112412`\n- 时间：2026-10-06 07:13 → **2026-10-06 08:13（Asia/Shanghai）**\n- 内容：架构验证：确定性提醒CRUD → **架构验证：已修改**\n- 将在原提醒上原地更新，不会创建第二条提醒\n- 提案确认截止：**2026-10-06 07:14:01（Asia/Shanghai）**\n\n如需提交，请回复：\n\n`确认 proposalId=93fbed09-2bfd-4984-ad80-fc52ae88cd61 payloadHash=92f8604ea72a899a4f0ddf7fff694ab432be2f5f1e8fc21afa9c21bd50a7010b`"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "personal_reminder_change_commit",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "93fbed09-2bfd-4984-ad80-fc52ae88cd61",
+        "kind": "reminder_update",
+        "status": "updated",
+        "idempotent": false,
+        "reminder": {
+          "reminderId": "3f4e9512-0ee3-46ea-9acd-6fa553112412",
+          "content": "架构验证：已修改",
+          "scheduledAtUtc": 1791245580,
+          "localDateTime": "2026-10-06 08:13",
+          "timezone": "Asia/Shanghai",
+          "state": "scheduled"
+        },
+        "warnings": []
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "提醒已修改成功：\n\n- 提醒 ID：`3f4e9512-0ee3-46ea-9acd-6fa553112412`\n- 新时间：**2026-10-06 08:13（Asia/Shanghai）**\n- 新内容：**架构验证：已修改**\n- 状态：`scheduled`"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "personal_reminder_cancel_propose",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "8f8993b1-abf9-4835-896c-3ba90e7ff8bc",
+        "payloadHash": "c290d5fdf7bc55db339b2515ff636b2b744decddc4506e51310cde063aecee40",
+        "status": "pending",
+        "kind": "reminder_cancel",
+        "previewText": "主人，已生成一份待确认的取消提醒提案：\n- 原时间：2026-10-06 08:13（Asia/Shanghai）\n- 原内容：架构验证：已修改\n- 影响：仅取消这条尚未投递的主人私聊提醒\n- 提案确认截止：2026-10-06T07:14:18+08:00（Asia/Shanghai）\n请在本次私聊回复下面这一行原文；确认后才会移除受限的定时任务：\n确认 proposalId=8f8993b1-abf9-4835-896c-3ba90e7ff8bc payloadHash=c290d5fdf7bc55db339b2515ff636b2b744decddc4506e51310cde063aecee40",
+        "confirmationInstruction": "确认 proposalId=8f8993b1-abf9-4835-896c-3ba90e7ff8bc payloadHash=c290d5fdf7bc55db339b2515ff636b2b744decddc4506e51310cde063aecee40",
+        "canonicalFacts": {
+          "kind": "reminder.cancel",
+          "reminderId": "3f4e9512-0ee3-46ea-9acd-6fa553112412"
+        },
+        "derivedEffects": [
+          {
+            "kind": "reminder.cancel",
+            "target": "owner_qq_private"
+          }
+        ],
+        "requiresConfirmation": true,
+        "expiresAtUtc": 1791242058,
+        "expiresAtDisplay": {
+          "utc": "2026-10-05T23:14:18.000Z",
+          "local": "2026-10-06T07:14:18+08:00",
+          "timezone": "Asia/Shanghai"
+        },
+        "persistedAs": "reminder_proposals"
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已生成取消提醒提案，**尚未提交**：\n\n- 提醒 ID：`3f4e9512-0ee3-46ea-9acd-6fa553112412`\n- 时间：2026-10-06 08:13（Asia/Shanghai）\n- 内容：架构验证：已修改\n- 影响：仅取消这条尚未投递的主人私聊提醒\n- 提案确认截止：**2026-10-06 07:14:18（Asia/Shanghai）**\n\n如需提交，请回复：\n\n`确认 proposalId=8f8993b1-abf9-4835-896c-3ba90e7ff8bc payloadHash=c290d5fdf7bc55db339b2515ff636b2b744decddc4506e51310cde063aecee40`"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "personal_reminder_cancel_commit",
+      "result": {
+        "ok": true,
+        "schemaVersion": 1,
+        "proposalId": "8f8993b1-abf9-4835-896c-3ba90e7ff8bc",
+        "kind": "reminder_cancel",
+        "status": "cancelled",
+        "idempotent": false,
+        "reminder": {
+          "reminderId": "3f4e9512-0ee3-46ea-9acd-6fa553112412",
+          "content": "架构验证：已修改",
+          "scheduledAtUtc": 1791245580,
+          "localDateTime": "2026-10-06 08:13",
+          "timezone": "Asia/Shanghai",
+          "state": "cancelled"
+        },
+        "warnings": []
+      },
+      "reply": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "提醒已取消成功：\n\n- 提醒 ID：`3f4e9512-0ee3-46ea-9acd-6fa553112412`\n- 原定时间：2026-10-06 08:13（Asia/Shanghai）\n- 内容：架构验证：已修改\n- 状态：`cancelled`"
+          }
+        ]
+      }
+    }
+  ],
+  "reminderId": "3f4e9512-0ee3-46ea-9acd-6fa553112412",
+  "jobId": "02fe3d95-96e2-4025-b85e-4de3b6eee1f7",
+  "sameJobId": true,
+  "passed": true
+}

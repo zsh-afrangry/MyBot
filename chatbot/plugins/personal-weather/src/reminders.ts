@@ -65,6 +65,8 @@ export interface ReminderCommitInput {
 }
 
 export interface ReminderCronScheduler {
+  /** Public Host snapshot adapter; avoids private scheduler schema coupling. */
+  reconcile?(store: ReminderStore, nowUtc?: number): Promise<import("./reminder-reconciler.js").ReminderReconcileResult>;
   add(input: ReminderCronAddInput): Promise<{ jobId: string }>;
   remove(input: { jobId: string }): Promise<void>;
   /** Update the existing managed Cron job in place. Optional for test or

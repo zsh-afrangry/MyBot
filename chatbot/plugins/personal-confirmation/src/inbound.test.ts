@@ -24,3 +24,9 @@ describe("QQ reply-dispatch adapter", () => {
     expect(confirmationFromDispatch({ ctx, sendPolicy: "deny" }, now)).toBeUndefined();
   });
 });
+
+it('new channel binds original text and refuses quote-only or wrong sender confirmations', () => {
+  const fusion={...ctx,OriginatingChannel:'kurumi-qq',OriginatingTo:'user:365999865',SenderId:'365999865',SessionKey:'agent:main:kurumi-qq:direct:365999865',CommandAuthorized:true,RawBody:'只是看看',Body:'<quoted_message_untrusted>确认 123</quoted_message_untrusted>'};
+  expect(confirmationFromDispatch({ctx:fusion},now)?.content).toBe('只是看看');
+  for(const patch of [{CommandAuthorized:false},{SenderId:'123456'},{OriginatingTo:'group:365999865'},{SessionKey:'agent:worker:task'}])expect(confirmationFromDispatch({ctx:{...fusion,...patch}},now)).toBeUndefined();
+});
