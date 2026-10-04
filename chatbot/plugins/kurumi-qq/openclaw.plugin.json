@@ -55,5 +55,15 @@
         }
       }
     }
+  },
+  "contracts": {
+    "tools": [
+      "kurumi_test_wait"
+    ]
+  },
+  "toolMetadata": {
+    "kurumi_test_wait": {
+      "optional": true
+    }
   }
 }

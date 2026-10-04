@@ -1,4 +1,5 @@
 import WebSocket from 'ws';
+import {registerAcceptanceTools} from './src/acceptance.js';
 import {account,CHANNEL,token,ownerTarget} from './src/config.js';
 import {onebot,sendPayload} from './src/transport.js';
 import {handleInbound} from './src/inbound.js';
@@ -22,7 +23,7 @@ export const plugin={
     socket.on('open',()=>{ctx.setStatus({...ctx.getStatus(),running:true,connected:true});ctx.log?.info('Kurumi QQ OneBot connected');});
     socket.on('message',data=>{
      let event;try{event=JSON.parse(data.toString());}catch{return;}
-     const task=handleInbound({cfg:ctx.cfg,runtime,event,selfId,log:ctx.log}).catch(()=>ctx.log?.error('Kurumi QQ inbound failed; see task state')).finally(()=>pending.delete(task));pending.add(task);
+     const task=handleInbound({cfg:ctx.cfg,runtime,event,selfId,log:ctx.log,signal:ctx.abortSignal}).catch(()=>ctx.log?.error('Kurumi QQ inbound failed; see task state')).finally(()=>pending.delete(task));pending.add(task);
     });
     socket.on('error',()=>ctx.log?.warn('Kurumi QQ socket error'));
     socket.on('close',()=>{ctx.setStatus({...ctx.getStatus(),connected:false});if(!stopped)timer=setTimeout(connect,3000);});
@@ -35,13 +36,15 @@ export const plugin={
 };
 export default {id:CHANNEL,name:'Kurumi QQ',description:'Isolated owner-only OneBot channel',register(api){runtime=api.runtime;api.registerChannel({plugin});
  if(api.config.channels?.[CHANNEL]?.testIngress===true){
+  registerAcceptanceTools(api);
   api.registerGatewayMethod('kurumi-qq.testInbound',async ({params,respond,hasCurrentClientAuthority})=>{
    try{
     if(hasCurrentClientAuthority&&!hasCurrentClientAuthority())throw Error('Expired test authority');
     const a=account(api.config);const login=await onebot(a,'get_login_info',{});
     if(hasCurrentClientAuthority&&!hasCurrentClientAuthority())throw Error('Expired test authority');
-    const result=await handleInbound({cfg:api.config,runtime,event:params.event,selfId:String(login.user_id),log:api.logger});
-    respond(true,result);
+    const captured=[];const deliverOverride=params.capture===true?async p=>{captured.push({text:p.text,mediaUrl:p.mediaUrl});}:undefined;
+    const result=await handleInbound({cfg:api.config,runtime,event:params.event,selfId:String(login.user_id),log:api.logger,deliverOverride});
+    respond(true,{...result,...(params.capture===true?{captured}:{} )});
    }catch(e){respond(false,undefined,{code:'UNAVAILABLE',message:String(e.message).slice(0,180)});}
   },{scope:'operator.admin'});
  }

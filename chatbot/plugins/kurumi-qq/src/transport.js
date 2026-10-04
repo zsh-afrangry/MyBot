@@ -4,8 +4,8 @@ import {randomUUID} from 'node:crypto';
 import {account,ownerTarget,token} from './config.js';
 import {Ledger} from './ledger.js';
 import {mdToPlain,splitForQQ} from './vendor/md-to-plain.js';
-export async function onebot(a,action,params){
- const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:AbortSignal.timeout(15000)});
+export async function onebot(a,action,params,signal){
+ const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000)});
  if(!r.ok)throw Error(`OneBot HTTP ${r.status}`);
  const data=await r.json();if(data.status!=='ok'||data.retcode!==0){const e=Error(`OneBot rejected action (${data.retcode})`);e.rejected=true;throw e;}return data.data;
 }
@@ -17,23 +17,27 @@ export function localImage(file,a){
  if(!(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||(bytes[0]===255&&bytes[1]===216)||bytes.subarray(0,3).toString()==='GIF'||(bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP')))throw Error('Unsupported image bytes');
  return {type:'image',data:{file:'base64://'+bytes.toString('base64')}};
 }
-export async function sendSegments(cfg,to,message,id=randomUUID()){
+export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
  const a=account(cfg);ownerTarget(to,a);
  if(!Array.isArray(message)||!message.length||message.some(x=>!['text','reply','image'].includes(x.type)))throw Error('Invalid message segments');
+ context.signal?.throwIfAborted();
  const l=new Ledger(a.stateDir);
  try{
   const prior=l.reserve(id,a.sendLimit);
   if(prior){if(prior.status==='sent')return {channel:'kurumi-qq',messageId:prior.message_id};throw Error('Previous QQ send unresolved/failed; manual reconciliation required');}
   try{
-   const r=await onebot(a,'send_private_msg',{user_id:Number(a.ownerId),message});
+   await context.onPlatformSendDispatch?.();
+   context.signal?.throwIfAborted();context.assertDirectAdapterHandoff?.();
+   const r=await onebot(a,'send_private_msg',{user_id:Number(a.ownerId),message},context.signal);
    if(!Number.isSafeInteger(r?.message_id)||r.message_id===0)throw Error('Missing message receipt');
    l.sent(id,r.message_id);return {channel:'kurumi-qq',messageId:String(r.message_id)};
   }catch(e){if(e.rejected)l.failed(id);throw e;}
  }finally{l.close();}
 }
-export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key=randomUUID()}){
+export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliveryQueueId,deliveryPartIndex,signal,onPlatformSendDispatch,assertDirectAdapterHandoff,onDeliveryResult}){
+ key??=deliveryQueueId?`delivery:${deliveryQueueId}:${deliveryPartIndex??0}`:randomUUID();
  const a=account(cfg);ownerTarget(to,a);
- if(replyToId!==undefined&&!/^-?[1-9]\d*$/.test(String(replyToId)))throw Error('Invalid reply id');
+ if(replyToId!=null&&!/^-?[1-9]\d*$/.test(String(replyToId)))throw Error('Invalid reply id');
  const media=mediaUrl?localImage(mediaUrl,a):null;
  const pieces=splitForQQ(mdToPlain(text),a.chunkLimit??1200);
  if(!pieces.length&&media)pieces.push('');
@@ -43,7 +47,8 @@ export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key=randomU
   if(i===0&&replyToId)message.push({type:'reply',data:{id:String(replyToId)}});
   if(pieces[i])message.push({type:'text',data:{text:pieces[i]}});
   if(i===pieces.length-1&&media)message.push(media);
-  last=await sendSegments(cfg,to,message,`${key}:${i}`);
+  last=await sendSegments(cfg,to,message,`${key}:${i}`,{signal,onPlatformSendDispatch,assertDirectAdapterHandoff});
+  await onDeliveryResult?.(last);
  }
  return last??{channel:'kurumi-qq',messageId:''};
 }

@@ -1,6 +1,6 @@
 {
   "limit": 10,
-  "reserved": 1,
+  "reserved": 5,
   "receipts": [
     {
       "id": "in:1794511189:365999865:-1900000001:0:0",
@@ -9,6 +9,60 @@
       "at": 1791149864347,
       "readback": {
         "messageId": -698488006,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "in:1794511189:365999865:-1900000002:0:0",
+      "status": "sent",
+      "message_id": "-1815066654",
+      "at": 1791149991589,
+      "readback": {
+        "messageId": -1815066654,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "live-media-20261005:0",
+      "status": "sent",
+      "message_id": "2057432681",
+      "at": 1791149991863,
+      "readback": {
+        "messageId": 2057432681,
+        "type": "private",
+        "segments": [
+          "reply",
+          "text",
+          "image"
+        ]
+      }
+    },
+    {
+      "id": "14a33d23-802b-4f6e-b2f1-c45f592b90cf:0",
+      "status": "sent",
+      "message_id": "-1707410205",
+      "at": 1791150190803,
+      "readback": {
+        "messageId": -1707410205,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "in:1794511189:365999865:-1900000003:0:0",
+      "status": "sent",
+      "message_id": "1368284852",
+      "at": 1791150391523,
+      "readback": {
+        "messageId": 1368284852,
         "type": "private",
         "segments": [
           "text"

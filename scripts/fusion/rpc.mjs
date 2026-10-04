@@ -5,3 +5,4 @@ process.env.OPENCLAW_CONFIG_PATH=`${state}/openclaw.json`;
 const env=JSON.parse(fs.readFileSync(`${state}/runtime-env.json`));Object.assign(process.env,env);
 const {callGatewayFromCli}=await import('openclaw/plugin-sdk/gateway-runtime');
 export const rpc=(method,params={},timeout=90000)=>callGatewayFromCli(method,{url:'ws://127.0.0.1:18890',token:env.OPENCLAW_GATEWAY_TOKEN,timeout:String(timeout),json:true},params);
+export async function ready(){for(let i=0;i<30;i++){try{await rpc('health',{},2000);return;}catch(e){if(i===29)throw e;await new Promise(r=>setTimeout(r,500));}}}

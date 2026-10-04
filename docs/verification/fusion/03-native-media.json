@@ -1,0 +1,14 @@
+{
+  "boundary": "Synthetic quoted/image input -> real model; staged local image. Real QQ output, not live human image upload.",
+  "startedAt": "2026-10-04T21:39:45.271Z",
+  "inbound": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 1,
+    "quoteLoaded": true
+  },
+  "imageSend": {
+    "channel": "kurumi-qq",
+    "messageId": "2057432681"
+  }
+}

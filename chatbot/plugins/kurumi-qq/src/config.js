@@ -22,3 +22,8 @@ export function token(a,kind){
  const stat=fs.statSync(file);if(stat.mode&0o077)throw Error('Token file must be owner-only');
  const value=fs.readFileSync(file,'utf8').trim();if(!value)throw Error('Missing OneBot credential');return value;
 }
+
+export function ownerAuthorized(ctx,cfg){
+ const owner=cfg.channels?.[CHANNEL]?.ownerId;
+ return ctx.senderIsOwner===true&&ctx.requesterSenderId===owner&&ctx.messageChannel===CHANNEL&&ctx.sessionKey===`agent:main:${CHANNEL}:direct:${owner}`;
+}

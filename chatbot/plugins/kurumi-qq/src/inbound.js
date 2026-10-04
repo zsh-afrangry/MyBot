@@ -12,7 +12,7 @@ export function parseInbound(event,a,selfId){
  if(!text.trim()&&!images.length)return null;
  return {id:`${selfId}:${event.user_id}:${event.message_id}`,messageId:String(event.message_id),text:text.slice(0,16000),images,replyId:reply?.data?.id};
 }
-export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverride}){
+export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverride,signal}){
  const a=account(cfg),msg=parseInbound(event,a,selfId);if(!msg)return {ignored:true};
  const ledger=new Ledger(a.stateDir);if(!ledger.admit(msg.id)){ledger.close();return {duplicate:true};}
  try{
@@ -36,7 +36,7 @@ export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverrid
    if(payload.text?.trim()==='NO_REPLY')return;
    const urls=payload.mediaUrls??(payload.mediaUrl?[payload.mediaUrl]:[]);
    if(urls.length>1)throw Error('Multiple media pending implementation');
-   const args={cfg,to,text:payload.text??'',mediaUrl:urls[0],replyToId:payload.replyToId,key:`in:${msg.id}:${index++}`};
+   const args={cfg,to,signal,text:payload.text??'',mediaUrl:urls[0],replyToId:payload.replyToId,key:`in:${msg.id}:${index++}`};
    await (deliverOverride??sendPayload)(args);
   },onError:e=>{deliveryError=e;log?.error?.('Kurumi QQ reply delivery failed');}},replyOptions:{disableBlockStreaming:true}});
   if(deliveryError)throw deliveryError;

@@ -1,0 +1,67 @@
+{
+  "boundary": "Real Host/model in two ordinary sessions, test-only wait tool, deliver=false; not yet QQ main-to-background delegation",
+  "startedAt": "2026-10-04T21:45:52.658Z",
+  "slow": {
+    "runId": "cc50d0db-9bdb-4298-9fbb-93ed1cd86e3d",
+    "sessionKey": "agent:main:fusion-slow-test",
+    "agentId": "main",
+    "status": "accepted",
+    "acceptedAt": 1791150352811
+  },
+  "slowStarted": {
+    "at": 1791150360002,
+    "sessionKey": "agent:main:fusion-slow-test"
+  },
+  "fast": {
+    "runId": "712ccc35-9e32-45ba-a101-dec6ab4d035c",
+    "sessionKey": "agent:main:fusion-fast-test",
+    "agentId": "main",
+    "status": "accepted",
+    "acceptedAt": 1791150360366
+  },
+  "fastFinished": {
+    "runId": "712ccc35-9e32-45ba-a101-dec6ab4d035c",
+    "status": "ok",
+    "startedAt": 1791150360413,
+    "endedAt": 1791150362393,
+    "stopReason": "stop",
+    "livenessState": "working",
+    "terminalReceipt": {
+      "runId": "712ccc35-9e32-45ba-a101-dec6ab4d035c",
+      "sessionId": "f4589115-731e-4ba5-ba3f-c5afe1719623",
+      "turnId": "712ccc35-9e32-45ba-a101-dec6ab4d035c",
+      "requested": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra"
+      },
+      "effective": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra",
+        "responseModel": "gpt-5.6-terra"
+      },
+      "successfulToolNames": [],
+      "rerouted": false,
+      "terminalDisposition": "visible"
+    },
+    "terminalReply": {
+      "disposition": "visible",
+      "text": "FAST_DONE"
+    }
+  },
+  "fastElapsedMs": 2070,
+  "cancel": {
+    "ok": true,
+    "aborted": true,
+    "runIds": [
+      "cc50d0db-9bdb-4298-9fbb-93ed1cd86e3d"
+    ]
+  },
+  "slowFinished": {
+    "runId": "cc50d0db-9bdb-4298-9fbb-93ed1cd86e3d",
+    "status": "error",
+    "startedAt": 1791150352800,
+    "endedAt": 1791150362435,
+    "stopReason": "rpc"
+  },
+  "passed": true
+}

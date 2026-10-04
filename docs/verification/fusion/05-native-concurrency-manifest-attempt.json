@@ -1,0 +1,13 @@
+{
+  "boundary": "Real Host/model in two ordinary sessions, test-only wait tool, deliver=false; not yet QQ main-to-background delegation",
+  "startedAt": "2026-10-04T21:44:21.181Z",
+  "slow": {
+    "runId": "ba29740b-4734-48cd-ab08-d1e01921573f",
+    "sessionKey": "agent:main:fusion-slow-test",
+    "agentId": "main",
+    "status": "accepted",
+    "acceptedAt": 1791150261357
+  },
+  "error": "Slow tool did not start",
+  "passed": false
+}

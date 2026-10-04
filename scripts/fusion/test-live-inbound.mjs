@@ -1,7 +1,8 @@
 // Authorized synthetic ingress -> actual Host/model -> actual owner-only QQ egress.
 // This is not evidence of a human-originated live QQ inbound message.
 import fs from 'node:fs';
-import {rpc} from './rpc.mjs';
+import {rpc,ready} from './rpc.mjs';
+await ready();
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
 import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
 const cfg=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/openclaw.json'));

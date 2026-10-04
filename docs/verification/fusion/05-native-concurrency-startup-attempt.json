@@ -1,0 +1,6 @@
+{
+  "boundary": "Real Host/model in two ordinary sessions, test-only wait tool, deliver=false; not yet QQ main-to-background delegation",
+  "startedAt": "2026-10-04T21:44:09.441Z",
+  "error": "Gateway not reachable at ws://127.0.0.1:18890 (ECONNREFUSED).\nStart it with `openclaw gateway run` or check `openclaw gateway status`.\nGateway target: ws://127.0.0.1:18890\nSource: cli --url\nConfig: /home/afrangry/.openclaw-fusion/openclaw.json",
+  "passed": false
+}

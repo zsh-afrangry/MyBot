@@ -79,19 +79,32 @@ flowchart TD
 
 尚无阻塞全部开发的事项。以下只限制相关动作，其他开发照常：
 
-1. 用户已明确授权夜间本人 QQ 测试，最多 10 条，仅 QQ 365999865，禁止群和其他联系人。本轮融合测试已发送 1/10 条（此前架构验证四条不计入本轮）。实现持久计数，失败且送达未知的尝试也占用额度，防止重启或重试绕过上限。
+1. 用户已明确授权夜间本人 QQ 测试，最多 10 条，仅 QQ 365999865，禁止群和其他联系人。本轮融合测试已发送 5/10 条（此前架构验证四条不计入本轮）。实现持久计数，失败且送达未知的尝试也占用额度，防止重启或重试绕过上限。
 2. 用户已明确授权必要时依次使用两张重置卡；条件为可见额度窗口剩余严格低于 5%，且仍有必要工作未完成。任务提前完成不兑换。本轮尚未使用。
 后续无法自主解决的事项记录：具体问题、证据、已尝试方法、影响范围、推荐选项及需要用户提供的信息。次日集中交接；不要为了等待一个模块而停下全部可继续的开发。
 
 ## 下一阶段
 
-已建立本会话持续目标，范围是可验收的融合原型与交接，不无限增加功能。源码在独立克隆开发，原 OpenClaw 工作区停留在 f8319c1。后续状态以本副本的文档9为准；下一步核查接口、实现及离线验证频道，未启动新 QQ 消费者。
+已建立本会话持续目标，范围是可验收的融合原型与交接，不无限增加功能。源码在独立克隆开发，原 OpenClaw 工作区停留在 f8319c1。后续状态以本副本的文档9为准；新 QQ 消费者已运行，旧 bridge 已停止；下一步验证原生任务并发与受限提醒工具。
 
 ## 阶段一当前实测
 
 - 源码：`/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-qq/`。状态：`/home/afrangry/.openclaw-fusion`。独立 Gateway 端口 18890；配置、凭证、会话和频道 SQLite 独立于旧方案。
 - 新频道已加载并连接真实 OneBot。旧 qq-bridge.service 已停止；SnowLuma/QQ 传输继续运行，配置未改。旧 OpenClaw、DSH 未停止。
 - 合成主人入站通过 operator.admin 测试 RPC 进入真实 Host 与模型，产生一条真实本人 QQ 回复；重复事件被拒绝，未重复发送。证据：`docs/verification/fusion/01-native-inbound.json` 和 `receipts.json`。尚非真实人类 QQ 新消息验收。
-- 八项离线契约测试通过，见 `docs/verification/fusion/02-channel-tests.txt`。媒体和引用增强刚实现，正在联调，不能计为已通过。
+- 八项离线契约测试通过，见 `docs/verification/fusion/02-channel-tests.txt`。媒体与引用的合成入站/真实模型/真实 QQ 输出已通过，见 03-native-media.json；尚未测试真实用户新上传图片。
 - 插件默认为最终回复投递，不外发推理和工具日志。当前工具受限，尚未开放代码与研究后台任务。
 - OpenClaw 会自动启用默认 memory-core；本副本已显式设置 memory slot 为 none，防止未验收的自动 dreaming 干扰原型。
+
+## 阶段二当前实测与修正
+
+- 原生 Cron 创建、同 ID 修改、取消测试通过；保留任务跨 Gateway 重启后，原生 command 执行 succeeded，经过新频道投递 delivered，QQ 回读成功。证据：`docs/verification/fusion/04-native-cron.json`。这是操作者创建的确定性任务，不等于自然语言管理工具已经通过。
+- 最终采用原生 automations 管理自然语言提醒：真模型创建、修改、取消、list 验证通过，见 09-native-agent-reminder.json。使用 agentTurn + toolsAllow=[]，因此到点仍依赖模型。原生工具明确禁止 command payload；自定义封装虽能创建 command，但缺少管理授权，不能读取/修改它，故已停用并移除未发布封装，保留失败证据。没有通过管理员 token 绕过这一边界。确定性 command 提醒目前仅通过已验证的操作者路径创建；自然语言确定性提醒的正式服务接口列为后续待办。旧提醒领域模块和旧任务未改。
+- 并发首次测试因 Gateway 未就绪失败；第二次暴露清单缺少 contracts.tools，等待工具未注册。模型输出完成标记不算完成，测试正确失败。补齐清单后复测通过：慢会话实际进入25秒等待工具，独立快会话约2.1秒完成；随后 chat.abort 成功取消慢会话，agent.wait 返回终止错误。仅验证原生普通会话隔离，不冒充已经实现 QQ 主会话的任务委派交互。失败证据保留为 05-native-concurrency-*attempt.json。
+- 额度检查：剩余30%，两张重置卡均未使用。
+
+## 阶段三实施中
+
+- 新增 `chatbot/plugins/kurumi-tasks/`，以受限工具启动 OpenClaw 普通后台任务会话，由 Host 管理运行与取消，不新增调度器。目标固定 worker、固定隔离代码工作区，出站固定本人。正在真模型联调，不计为已完成。
+- worker 工作区 `/home/afrangry/.openclaw-fusion/code-workspace`，文件工具限制在工作区；无通用 exec/网络/外发工具。固定测试能力只运行该目录的 Python unittest；测试脚本哈希须保持一致。
+- 本轮渠道增加 Host durable delivery ID 去重和发送前取消/权限撤销检查。九项离线测试通过，真实 Host 队列重试场景仍待验证，不能声称任何故障下都不丢不重。
