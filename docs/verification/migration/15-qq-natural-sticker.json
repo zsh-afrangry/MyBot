@@ -1,0 +1,62 @@
+{
+  "boundary": "Synthetic owner, real model. Two physical paragraph messages and one sticker to owner only; sticker final acknowledgement captured.",
+  "started": 1791156757980,
+  "stickerReply": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "晚安表情已成功发送。"
+      }
+    ]
+  },
+  "stickerResult": {
+    "ok": true,
+    "stickerId": "1794511189_0_0_0_1B2DF649AC50FEFB15A90D286E5BD838_0_0",
+    "channel": "kurumi-qq",
+    "messageId": "-1679894843"
+  },
+  "receipts": [
+    {
+      "status": "sent",
+      "message_id": "-777797383",
+      "at": 1791156763532
+    },
+    {
+      "status": "sent",
+      "message_id": "36955763",
+      "at": 1791156764225
+    },
+    {
+      "status": "sent",
+      "message_id": "-1679894843",
+      "at": 1791156779434
+    }
+  ],
+  "readback": [
+    {
+      "messageId": "-777797383",
+      "types": [
+        "text"
+      ],
+      "text": "【架构验证】Kurumi 的短段消息测试。"
+    },
+    {
+      "messageId": "36955763",
+      "types": [
+        "text"
+      ],
+      "text": "【架构验证】这一段应稍后独立送达。"
+    },
+    {
+      "messageId": "-1679894843",
+      "types": [
+        "image"
+      ],
+      "text": ""
+    }
+  ],
+  "passed": true
+}

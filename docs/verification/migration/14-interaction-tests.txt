@@ -1,0 +1,26 @@
+✔ Owner and endpoint validation fail closed (1.47032ms)
+✔ Reject group, stranger, self, wrong bot, malformed event (0.396002ms)
+✔ CQ text is literal, not metadata (0.257686ms)
+✔ Durable ingress and egress survive restart, unknown cannot be reserved again (64.014753ms)
+✔ Unicode chunking never breaks surrogate pairs (0.299524ms)
+✔ Media rejects arbitrary files and symlink escapes (0.853178ms)
+✔ Real HTTP adapter validates private target, sends literal segments, deduplicates (86.323005ms)
+✔ Inbound dispatch uses trusted sender, core route and only final delivery (41.991167ms)
+✔ Host durable delivery ID deduplicates and cancellation fences physical I/O (50.452037ms)
+✔ Accepted request with lost receipt stays unknown and never automatically resends (32.783496ms)
+✔ Receipt observer failure does not repeat physical delivery (37.04554ms)
+✔ Inbound dispatcher delivery failure is persisted rather than reported completed (32.961696ms)
+✔ Quoted confirmation remains outside original RawBody (36.800056ms)
+✔ Ingress provenance is explicit; negative QQ IDs are still real messages (32.64977ms)
+✔ short paragraphs separate naturally while reports and code remain grouped (1.620588ms)
+✔ rolling quota preserves old attempts, failed/unknown reservations and idempotent receipts across reopen (76.016721ms)
+✔ cancelling during natural pacing stops remaining physical sends (85.604786ms)
+✔ sticker labels stay data; other senders and arbitrary references are rejected before I/O (631.03919ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 721.806755

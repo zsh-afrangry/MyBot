@@ -12,12 +12,14 @@ export class Ledger {
  }
  admit(id,origin='unknown'){if(!['unknown','onebot','synthetic'].includes(origin))throw Error('Invalid ingress origin');return this.db.prepare("INSERT OR IGNORE INTO inbound(id,status,at,origin) VALUES(?,'admitted',?,?)").run(id,Date.now(),origin).changes===1;}
  finish(id,status){this.db.prepare('UPDATE inbound SET status=? WHERE id=?').run(status,id);}
- reserve(id,limit){
+ reserve(id,limit,dailyLimit=120){
   this.db.exec('BEGIN IMMEDIATE');try{
    const prior=this.db.prepare('SELECT * FROM outbound WHERE id=?').get(id);
    if(prior){this.db.exec('COMMIT');return prior;}
    const n=this.db.prepare('SELECT COUNT(*) n FROM outbound').get().n;
-   if(!Number.isInteger(limit)||limit<0||n>=limit)throw Error('QQ authorized send budget exhausted');
+   if(limit!==undefined&&(!Number.isInteger(limit)||limit<0||n>=limit))throw Error('QQ authorized send budget exhausted');
+   const recent=this.db.prepare('SELECT COUNT(*) n FROM outbound WHERE at>=?').get(Date.now()-86400000).n;
+   if(!Number.isInteger(dailyLimit)||dailyLimit<1||recent>=dailyLimit)throw Error('QQ rolling daily send budget exhausted');
    this.db.prepare("INSERT INTO outbound VALUES(?,'unknown',NULL,?)").run(id,Date.now());this.db.exec('COMMIT');return null;
   }catch(e){this.db.exec('ROLLBACK');throw e;}
  }

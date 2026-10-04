@@ -3,6 +3,7 @@ import {registerAcceptanceTools} from './src/acceptance.js';
 import {account,CHANNEL,token,ownerTarget} from './src/config.js';
 import {onebot,sendPayload} from './src/transport.js';
 import {handleInbound} from './src/inbound.js';
+import {registerStickerTool} from './src/stickers.js';
 let runtime;
 export const plugin={
  id:CHANNEL,meta:{id:CHANNEL,label:'Kurumi QQ',selectionLabel:'Kurumi QQ (OneBot)',docsPath:'/channels/kurumi-qq',blurb:'Owner-only QQ channel'},
@@ -35,6 +36,7 @@ export const plugin={
  }}
 };
 export default {id:CHANNEL,name:'Kurumi QQ',description:'Isolated owner-only OneBot channel',register(api){runtime=api.runtime;api.registerChannel({plugin});
+ registerStickerTool(api);
  if(api.config.channels?.[CHANNEL]?.testIngress===true){
   registerAcceptanceTools(api);
   api.registerGatewayMethod('kurumi-qq.testInbound',async ({params,respond,hasCurrentClientAuthority})=>{

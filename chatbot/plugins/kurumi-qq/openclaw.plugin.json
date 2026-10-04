@@ -42,7 +42,7 @@
           "sendLimit": {
             "type": "integer",
             "minimum": 0,
-            "maximum": 10
+            "maximum": 1000
           },
           "chunkLimit": {
             "type": "integer",
@@ -51,6 +51,19 @@
           },
           "testIngress": {
             "type": "boolean"
+          },
+          "dailySendLimit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000
+          },
+          "naturalSegments": {
+            "type": "boolean"
+          },
+          "segmentDelayMs": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2000
           }
         }
       }
@@ -58,11 +71,15 @@
   },
   "contracts": {
     "tools": [
-      "kurumi_test_wait"
+      "kurumi_test_wait",
+      "kurumi_sticker"
     ]
   },
   "toolMetadata": {
     "kurumi_test_wait": {
+      "optional": true
+    },
+    "kurumi_sticker": {
       "optional": true
     }
   }

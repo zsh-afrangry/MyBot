@@ -1,7 +1,7 @@
 // Current-turn images are staged through Host media storage, never arbitrary URL fetch.
 import fs from 'node:fs';
 import {localImage,onebot} from './transport.js';
-const CDN=new Set(['gchat.qpic.cn','c2cpicdw.qpic.cn','multimedia.nt.qq.com']);
+const CDN=new Set(['gchat.qpic.cn','c2cpicdw.qpic.cn','multimedia.nt.qq.com','p.qpic.cn']);
 export async function stageImage(segment,a){
  const {saveMediaBuffer,saveRemoteMedia}=await import('openclaw/plugin-sdk/media-runtime');
  const d=segment.data??{};

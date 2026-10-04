@@ -3,7 +3,8 @@ import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {account,ownerTarget,token} from './config.js';
 import {Ledger} from './ledger.js';
-import {mdToPlain,splitForQQ} from './vendor/md-to-plain.js';
+import {setTimeout as pause} from 'node:timers/promises';
+import {presentForQQ} from './presentation.js';
 export async function onebot(a,action,params,signal){
  const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000)});
  if(!r.ok)throw Error(`OneBot HTTP ${r.status}`);
@@ -23,7 +24,7 @@ export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
  context.signal?.throwIfAborted();
  const l=new Ledger(a.stateDir);
  try{
-  const prior=l.reserve(id,a.sendLimit);
+  const prior=l.reserve(id,a.sendLimit,a.dailySendLimit??120);
   if(prior){if(prior.status==='sent')return {channel:'kurumi-qq',messageId:prior.message_id};throw Error('Previous QQ send unresolved/failed; manual reconciliation required');}
   try{
    await context.onPlatformSendDispatch?.();
@@ -39,10 +40,11 @@ export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliver
  const a=account(cfg);ownerTarget(to,a);
  if(replyToId!=null&&!/^-?[1-9]\d*$/.test(String(replyToId)))throw Error('Invalid reply id');
  const media=mediaUrl?localImage(mediaUrl,a):null;
- const pieces=splitForQQ(mdToPlain(text),a.chunkLimit??1200);
+ const {pieces,paced}=presentForQQ(text,a.chunkLimit??1200,a.naturalSegments!==false);
  if(!pieces.length&&media)pieces.push('');
  let last;
  for(let i=0;i<pieces.length;i++){
+  if(i>0&&paced)await pause(a.segmentDelayMs??450,undefined,{signal});
   const message=[];
   if(i===0&&replyToId)message.push({type:'reply',data:{id:String(replyToId)}});
   if(pieces[i])message.push({type:'text',data:{text:pieces[i]}});
