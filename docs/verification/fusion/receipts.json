@@ -1,6 +1,6 @@
 {
   "limit": 10,
-  "reserved": 7,
+  "reserved": 13,
   "receipts": [
     {
       "id": "in:1794511189:365999865:-1900000001:0:0",
@@ -89,6 +89,84 @@
       "at": 1791151184382,
       "readback": {
         "messageId": -958352859,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "90bbbc03-9683-4972-8cbe-ef7a514ee002:0",
+      "status": "sent",
+      "message_id": "-712089731",
+      "at": 1791155880105,
+      "readback": {
+        "messageId": -712089731,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "in:1794511189:365999865:-1791156757980:0:0",
+      "status": "sent",
+      "message_id": "-777797383",
+      "at": 1791156763532,
+      "readback": {
+        "messageId": -777797383,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "in:1794511189:365999865:-1791156757980:0:1",
+      "status": "sent",
+      "message_id": "36955763",
+      "at": 1791156764225,
+      "readback": {
+        "messageId": 36955763,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "sticker:3bf745c3-b119-4015-9097-81931d0e7d7b:tool_call:call_RallnzMbAdb7PkLDPHON3qea:kurumi_sticker:2:0",
+      "status": "sent",
+      "message_id": "-1679894843",
+      "at": 1791156779434,
+      "readback": {
+        "messageId": -1679894843,
+        "type": "private",
+        "segments": [
+          "image"
+        ]
+      }
+    },
+    {
+      "id": "87639c2d-f8af-4a1d-aeff-9bebc36c6c2c:0",
+      "status": "sent",
+      "message_id": "1633832913",
+      "at": 1791157556753,
+      "readback": {
+        "messageId": 1633832913,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "faeb9c06-c999-41b5-83a4-91536eaad32c:0",
+      "status": "sent",
+      "message_id": "-1838518655",
+      "at": 1791157861782,
+      "readback": {
+        "messageId": -1838518655,
         "type": "private",
         "segments": [
           "text"

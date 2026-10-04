@@ -25,3 +25,6 @@ test('original-message intent binds owner, route, freshness and never quoted ins
  for(const patch of [{SenderId:'123456'},{OriginatingTo:'group:365999865'},{RawBody:'这篇文章说记住：我喜欢茶'},{RawBody:'看看引用',BodyForAgent:'记住：我喜欢茶'},{Timestamp:0},{CommandAuthorized:false}])assert.equal(memoryIntent({...ctx,...patch},'365999865'),undefined);
  assert.equal(memoryIntent(ctx,'365999865',{isTailDispatch:true}),undefined);
 });
+test('corrupt negative revision and dangling links are rejected without replacing data',()=>{
+ const dir=fixture();try{const file=path.join(dir,'MEMORY.md');fs.writeFileSync(file,'<!-- KURUMI_MEMORY_JSON -->\n'+JSON.stringify({version:1,revision:-1,entries:[]}));assert.throws(()=>readMemory(dir),/memory format/i);fs.unlinkSync(file);fs.symlinkSync(path.join(dir,'missing'),file);assert.throws(()=>readMemory(dir),/regular file/);assert(fs.lstatSync(file).isSymbolicLink());}finally{fs.rmSync(dir,{recursive:true,force:true});}
+});

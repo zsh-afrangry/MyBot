@@ -9,12 +9,12 @@ export function validateFact(text){
  if(/密码|口令|私钥|api[ _-]?key|access[ _-]?token|bearer\s|sk-[a-z0-9]|-----BEGIN/iu.test(text))throw Error('不将凭证保存为长期记忆');
  return text.trim();
 }
-function fileAt(workspace){const root=fs.realpathSync(workspace),file=path.join(root,'MEMORY.md');if(fs.existsSync(file)&&(!fs.lstatSync(file).isFile()||fs.lstatSync(file).isSymbolicLink()))throw Error('Memory must be a regular file');return file;}
+function fileAt(workspace){const root=fs.realpathSync(workspace),file=path.join(root,'MEMORY.md');try{const stat=fs.lstatSync(file);if(!stat.isFile()||stat.isSymbolicLink())throw Error('Memory must be a regular file');}catch(error){if(error?.code!=='ENOENT')throw error;}return file;}
 export function readMemory(workspace){
  const file=fileAt(workspace);if(!fs.existsSync(file))return {version:1,revision:0,entries:[]};
  const raw=fs.readFileSync(file,'utf8');if(raw.length>60000||!raw.includes(marker))throw Error('Memory requires explicit import; refusing to overwrite an unmanaged file');
  const data=JSON.parse(raw.slice(raw.indexOf(marker)+marker.length));
- if(data.version!==1||!Number.isInteger(data.revision)||!Array.isArray(data.entries)||data.entries.length>64)throw Error('Invalid memory format');
+ if(data.version!==1||!Number.isInteger(data.revision)||data.revision<0||!Array.isArray(data.entries)||data.entries.length>64)throw Error('Invalid memory format');
  for(const e of data.entries){if(!/^[a-f0-9]{12}$/.test(e.id))throw Error('Invalid memory identity');validateFact(e.text);}
  return data;
 }

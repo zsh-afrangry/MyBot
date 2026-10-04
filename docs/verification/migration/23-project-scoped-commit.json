@@ -1,0 +1,80 @@
+{
+  "boundary": "Real main and worker, explicit file-scoped local Git commit, OS-isolated independent regression, actual owner-only final delivery.",
+  "before": "c9e4c2a049d27c0e2fde4c6d36b3f903791f530e",
+  "start": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "【架构验证】已启动 fusion 项目后台任务，按要求在现有分支继续；仅修改 README_FUSION.md，运行检查并提交，不推送。完成后报告测试结果与提交号。"
+      }
+    ]
+  },
+  "task": {
+    "at": 1791157819476,
+    "action": "start",
+    "projectId": "fusion",
+    "result": {
+      "runId": "fd86abec80eb51d19f477c38",
+      "sessionKey": "agent:project-fusion:kurumi-task-fd86abec80eb51d19f477c38",
+      "agentId": "project-fusion",
+      "status": "accepted",
+      "acceptedAt": 1791157819474
+    }
+  },
+  "worker": {
+    "runId": "fd86abec80eb51d19f477c38",
+    "status": "ok",
+    "startedAt": 1791157819686,
+    "endedAt": 1791157862034,
+    "stopReason": "stop",
+    "livenessState": "working",
+    "terminalDelivery": {
+      "status": "sent",
+      "resultCount": 1
+    },
+    "terminalReceipt": {
+      "runId": "fd86abec80eb51d19f477c38",
+      "sessionId": "cfd74db7-9794-4d0b-8d10-93f3120d7b7f",
+      "turnId": "fd86abec80eb51d19f477c38",
+      "requested": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra"
+      },
+      "effective": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra",
+        "responseModel": "gpt-5.6-terra"
+      },
+      "successfulToolNames": [
+        "tool_search",
+        "kurumi_project_git",
+        "tool_call",
+        "read",
+        "kurumi_project_check",
+        "edit"
+      ],
+      "rerouted": false,
+      "terminalDisposition": "visible"
+    },
+    "terminalReply": {
+      "disposition": "visible",
+      "text": "已完成：\n\n- 检查并确认当前分支：`kurumi/memory-validation`\n- `kurumi_project_check`：通过\n  - 测试 5 项\n  - 通过 5 项，失败 0 项\n  - 覆盖负数 revision、持久化读写、所有者/意图校验、文件与符号链接保护、原始消息绑定\n- 仅在 `README_FUSION.md` 末尾补充“记忆格式回归”小节\n- 已审阅 diff，未包含 Host 自动生成的身份文件\n- 提交号：`c337875`\n- 提交文件严格为：`[\"README_FUSION.md\"]`\n- 提交后工作区干净\n- 未推送"
+    }
+  },
+  "after": "c337875ef38e634d89f6cca8dadd119c0b109c36",
+  "changed": [
+    "README_FUSION.md"
+  ],
+  "independent": {
+    "code": 0,
+    "signal": null,
+    "timedOut": false,
+    "aborted": false,
+    "truncated": false,
+    "output": "✔ memory rejects corrupt negative revisions while valid state remains readable (1.841703ms)\n✔ persistent create, idempotent replay, revision checked edit and complete deletion (21.76917ms)\n✔ requires exact current owner fact and rejects secrets, stale or consumed intent (0.746758ms)\n✔ unmanaged files and symlinks cannot be overwritten; private file mode persists (0.631895ms)\n✔ original-message intent binds owner, route, freshness and never quoted instructions (0.321538ms)\nℹ tests 5\nℹ suites 0\nℹ pass 5\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 100.145692\n"
+  },
+  "passed": true
+}

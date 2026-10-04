@@ -1,1 +1,27 @@
-{"id":"kurumi-tasks","name":"Kurumi native task sessions","configSchema":{"type":"object","properties":{},"additionalProperties":false},"contracts":{"tools":["kurumi_task","kurumi_project_check"]},"toolMetadata":{"kurumi_task":{"optional":true},"kurumi_project_check":{"optional":true}}}
+{
+  "id": "kurumi-tasks",
+  "name": "Kurumi native task sessions",
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "contracts": {
+    "tools": [
+      "kurumi_task",
+      "kurumi_project_check",
+      "kurumi_project_git"
+    ]
+  },
+  "toolMetadata": {
+    "kurumi_task": {
+      "optional": true
+    },
+    "kurumi_project_check": {
+      "optional": true
+    },
+    "kurumi_project_git": {
+      "optional": true
+    }
+  }
+}
