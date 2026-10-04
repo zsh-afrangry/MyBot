@@ -1,0 +1,108 @@
+# OpenClaw 联网故障：根因定位与修复
+
+日期：2026-09-30
+状态：根因已用真实 API 请求定位；修复已落地并通过真实链路验证。
+
+## 一、结论（根因）
+
+OpenClaw 里 agent 之所以“连不上网”，不是网络、不是 API Key、也不是模型不支持，
+而是**生产检索链路选错了 provider**：
+
+- 修复前 `tools.web.search.provider = "deepseek-search"`。
+- `deepseek-search` 由 `personal-search` 插件提供，它把搜索转成一次
+  `POST https://api.deepseek.com/responses`，并在请求体里声明
+  `tools: [{ "type": "web_search" }]`。
+- 但 DeepSeek 这条 Responses 调用**根本不执行服务端网页搜索**：工具被忽略。
+
+因此 agent 拿到的不是检索结果，而是 DeepSeek 凭自身记忆写的答案；
+`personal-search` 的解析器随后从这段文本里正则抽取 URL 当作“来源”，
+于是产生“看起来搜过了、其实没搜”的假引用。这正是“没法正常联网”的直接原因。
+
+## 二、真实请求证据
+
+使用 `gateway.systemd.env` 中的真实凭据直接请求（消费型测试）：
+
+| 请求 | HTTP | output 条目类型 | web_search_call | url_citation |
+| --- | --- | --- | --- | --- |
+| DeepSeek `/responses`，`tools=[{type:"web_search"}]`，`tool_choice=web_search` | 200 | reasoning, message | **无** | **0** |
+| DeepSeek `/responses`，`tools=[{type:"web_search_preview"}]` | 200 | reasoning, message | 无 | 0 |
+| DeepSeek `/responses`，无 tools（对照） | 200 | reasoning, message | 无 | 0 |
+| naiccc `/v1/responses`，模型 `gpt-5.6-terra`，`tools=[{type:"web_search"}]` | 200 | reasoning, message, **web_search_call**, reasoning, message | **有** | **1** |
+
+- DeepSeek 返回的 reasoning 原文包含：“I don't have a web search tool available in
+  this conversation — no tools listed.”，`status` 为 `completed`，即静默失败。
+- naiccc 的 `web_search_call.action.type` 为 `search`，queries 里是真实检索词
+  （`site:sqlite.org ...`），并带 `url_citation`。
+
+**即：同一把 Key 下，naiccc/gpt-5.6-terra 的原生联网搜索是真实可用的；
+被换掉的只是 OpenClaw 这一侧的搜索接线。**
+
+## 三、为什么不能直接照搬 Codex 的原生搜索
+
+Codex 桌面端能用原生搜索，是因为它走 Responses API 原生 `web_search`。
+OpenClaw 的 Host 版本 2026.7.1-2 把这条路写死了：
+
+- `dist/codex-native-web-search-core-DEpF95I7.js` 中
+  `isCodexNativeSearchEligibleModel()` 只在
+  `modelApi === "openai-chatgpt-responses"` 时返回 true。
+- 官方文档 `docs/tools/web.md` 也明确：原生 OpenAI Responses 搜索只适用于
+  `provider: openai`、无 baseUrl 或官方 baseUrl 的直连；**不适用于
+  OpenAI 兼容代理地址**。naiccc 属于兼容代理，因此不会注入原生工具。
+- `openai-chatgpt-responses` 是另一条 ChatGPT/Codex 认证与传输路径，需要
+  OpenAI 的 oauth/token 档案，普通第三方 API Key 不等价可用；
+  `tools.web.search.provider: "codex"` 也需要 Codex app-server 的 OpenAI 登录。
+  当前 `auth_profile_state` 为空，不可用。
+
+结论：在不改 Host（改 `node_modules` 会被 npm 升级覆盖）的前提下，
+原生搜索无法接入主模型。因此采用文档《8_检索功能重构.txt》已定的方案。
+
+## 四、已实施的修复
+
+改动文件：`/home/afrangry/.openclaw/openclaw.json`
+（改动前备份：`backups/manual-snapshots-20261004/openclaw.json.bak.before-search-fix-20260930T235404`，
+SHA-256 改动前 = `c2f24eb69c276f0546dca1f2ac73cad7f0abff72aba0d2194b4d8ee2cf9d2c9e`）
+
+1. `tools.web.search.provider`：`deepseek-search` → **`tavily`**
+2. 新增 `tools.web.fetch.enabled: true`（`web_fetch` 本默认启用，
+   此前只是未在 `messaging` profile 下放行）
+3. `tools.alsoAllow`：移除 `personal_web_search`，加入 **`web_fetch`**
+4. `plugins.entries / load.paths / allow`：停用 `personal-search`
+   （代码保留在 `chatbot/plugins/personal-search`，可回滚）
+5. 群聊 `tools.deny` 增加 `web_fetch`
+6. `systemPrompt` 检索段改为：使用 `web_search` 搜索、`web_fetch` 读原文，
+   时效性问题主动检索并附真实来源 URL；删除“不具备任意 HTTP”等矛盾表述
+
+Gateway 已重载（新进程 2337115，日志显示 4 个插件：
+`personal-confirmation, personal-weather, qqbot, tavily`，`personal-search` 已消失）。
+
+## 五、修复后真实链路验证
+
+隔离会话（不投递 QQ、不写业务库）跑真实 agent turn：
+
+- `toolSummary`：调用 2 次，工具 `web_search` + `web_fetch`，**failures: 0**
+- `web_search` 结果 `provider: "tavily"`，耗时 4327ms，返回真实结果列表
+- `web_fetch` 抓取 `https://sqlite.org/chronology.html` 返回 **HTTP 200**，含正文
+- 最终回答：SQLite 最新稳定版 **3.53.4**，发布日期 **2026-07-24**，
+  并附 `https://www.sqlite.org` 与 `https://sqlite.org/chronology.html`
+
+即“搜索 → 读原文 → 作答”的完整联网链路已打通。
+
+## 六、仍待处理 / 未做
+
+| 项 | 说明 |
+| --- | --- |
+| 直连受限站点 | 本机对 Google、DuckDuckGo 直连失败（需 Clash 代理，127.0.0.1:7897）；Gateway 无代理环境变量，而 Codex 的 `~/.codex/.env` 有。Tavily 搜索本身服务端执行、直连正常；但 `web_fetch` 抓取被墙站点会失败，需要时再给 Gateway 配 `HTTPS_PROXY` |
+| R5 主备重复 | `primary` 与 `fallbacks` 目前仍同为 `naiccc/gpt-5.6-terra`，等于无故障转移（文档 8 §6.1 计划改成 `deepseek-v4-flash`） |
+| qwen / bailian | `qwen` 插件与 `bailian-token-plan` provider 仍在配置中，文档 8 计划移除 |
+| 速度优化 | R8–R10（检索循环过多、整页灌上下文）未处理 |
+| 原生搜索 | 需改 Host 或等 Host 支持普通 `openai-responses` 的原生工具，本次不做 |
+
+## 七、回滚
+
+```bash
+cp -p /home/afrangry/.openclaw/backups/manual-snapshots-20261004/openclaw.json.bak.before-search-fix-20260930T235404 \
+      /home/afrangry/.openclaw/openclaw.json
+# 然后重启 openclaw-gateway.service
+```
+
+`personal-search` 源码未删除，恢复 `plugins.entries/load/allow` 即可回到旧链路。

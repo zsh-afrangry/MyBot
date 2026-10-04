@@ -1,0 +1,132 @@
+# Codex 与 OpenClaw 原生搜索对照
+
+日期：2026-09-30
+状态：接口能力与 Host 接入差异已验证；尚未将生产检索链路切换为原生搜索。
+
+## 结论
+
+1. 当前 naiccc 的 gpt-5.6-terra 可以通过 Responses API 执行原生网页搜索。旧记录中的“未走通”不能作为当前不支持的依据。
+2. API Key 不是本轮差异的原因：统一前，两边各自的 Key 均成功。按用户授权，已将 OpenClaw 的 OPENAI_API_KEY 更新为 Codex 桌面端当前 Key，重启 Gateway，并核对运行中进程确实使用新值。
+3. OpenClaw 当前使用 openai-completions，并把普通函数 web_search 交给 deepseek-search provider。该函数的名称不等于 Responses 原生工具类型 web_search。
+4. 当前 Host 的 Codex 原生搜索开关只接受 openai-chatgpt-responses；普通 openai-responses 不符合其启用条件。因此，仅换 Key、仅改 API 类型，或仅打开原生搜索开关，都不能把现有生产配置自动变成已验证的原生搜索链路。
+5. 2026-09-26 的原始请求体原样重放后成功。当前证据无法确定四天前失败的内部原因，不将其归因于某个未经证明的服务端改动。
+
+## 边界
+
+- 真实 API 请求仅包含公开 SQLite 查询；未发送 QQ 历史、业务数据库或生产 Agent 提示词。
+- 没有向 QQ 发送测试消息，没有修改业务数据库，没有更换生产主模型、接口协议、检索 provider 或工具策略。
+- 唯一生产改动是用户明确要求的凭据统一，以及使其生效的 Gateway 重启。
+- 请求/响应记录不包含认证头或明文凭据。原环境文件备份为私有文件，不能作为报告附件公开。
+- 本次没有运行 T4，没有开展检索速度优化，也没有验收原生搜索的完整生产业务链路。
+
+## 配置对照
+
+### OpenClaw
+
+来源：openclaw.json、Gateway systemd EnvironmentFiles、运行进程环境值等值核对。
+
+- Host / AI adapter 版本：2026.7.1-2。
+- 主模型：naiccc/gpt-5.6-terra。
+- API：openai-completions。
+- baseUrl：https://naiccc.com/v1。
+- 搜索：tools.web.search.enabled=true，provider=deepseek-search。
+- 原生开关：tools.web.search.openaiCodex 未配置。
+- 凭据引用：环境变量 OPENAI_API_KEY，来源 gateway.systemd.env。
+- 主备重复等原有配置保持不变，本次未处理。
+
+### Codex 桌面端
+
+来源：~/.codex/config.toml、项目 .codex/config.toml、当前任务元数据、桌面随附客户端隔离捕获。
+
+- 桌面随附客户端版本：0.155.0-alpha.16.3；没有使用 PATH 中另一个 0.147.0 客户端作替代。
+- provider：custom，显示名 zz.naoy。
+- 当前模型：gpt-6-astra；wire_api=responses。
+- base_url：https://naiccc.com。
+- 用户配置：requires_openai_auth=true。
+- 项目配置：web_search=live。
+- 凭据：~/.codex/auth.json 的 OPENAI_API_KEY；与 OpenClaw 统一前不同，统一后相同。
+
+桌面随附客户端在独立临时目录、合成提示词、本地假响应服务下的捕获确认：请求路径为 /responses，stream=true，使用 Responses Lite 形态，工具在 input 的 additional_tools 中传递。该捕获没有包含 web 搜索工具声明，不能据此声称已经抓到了当前桌面对话真实联网搜索的完整报文。它仅证明客户端请求格式与普通 SDK 不同；本轮对 naiccc 能力的结论依据下面的真实 Responses 测试。
+
+## 真实请求矩阵
+
+统一前的 A–D 使用相同公开英文问题与显式原生 web_search 工具声明，tool_choice 强制选择 web_search。URL 路径是实际请求路径。
+
+| 编号 | 凭据 | 模型 | 路径 / 变化 | HTTP | 搜索调用 | URL 引用 | 秒 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| A | OpenClaw 原 Key | gpt-5.6-terra | /v1/responses | 200 | 1 | 1 | 14.977 |
+| B | Codex Key | gpt-5.6-terra | /v1/responses | 200 | 1 | 1 | 37.990 |
+| C | Codex Key | gpt-5.6-terra | /responses | 200 | 1 | 1 | 29.429 |
+| D | Codex Key | gpt-6-astra | /responses | 200 | 1 | 1 | 25.865 |
+| E | 测试进程已载入的 OpenClaw 原 Key | gpt-5.6-terra | 9 月 26 日 b-native.json 请求体原样重放，auto | 200 | 3 | 2 | 68.605 |
+| F | 同上 | gpt-5.6-terra | /v1/responses，tools=[]，auto | 200 | 0 | 0 | 22.163 |
+| G | 统一后的 Key | gpt-5.6-terra | /v1/responses，stream=true，external_web_access=true | 200 | 1 | 1 | 30.046 |
+
+E、F 由同一个在凭据统一前启动的测试进程执行，使用启动时读入内存的旧值；G 在统一后另起进程，重新从 OpenClaw 环境文件读取凭据。
+
+成功判据：响应中有 completed 的 web_search_call 和 url_citation，不能仅凭 HTTP 200 或回答中手写 URL 判定搜索成功。F 是预期阴性对照：没有搜索工具时，模型明确表示不能联网核实。
+
+A/B 对照说明两把凭据都能执行原生搜索；B/C 对照说明本轮两个路径都可用；C/D 对照说明本轮两个模型都能执行原生搜索。它们是单次能力测试，不是速度或稳定性基准。
+
+答案返回 SQLite 3.53.4 / 2026-07-24，并引用官方页面。已另行直接读取官方发布说明和时间线核对版本、日期与变更原文。官网关于变化的措辞为“mostly coming from AIs”；部分英文答案将其解释成“AI-assisted testing/analysis”，语义有偏差，因此“搜索工具确实执行”不等于“所有答案措辞已经通过准确率验收”。
+
+## Host 实际构造请求与启用条件测试
+
+脚本 audit_host.mjs 直接调用已安装 Host 的模型适配器和原生搜索判定函数。提示词与普通搜索函数定义均为合成数据；onPayload 在发网前主动中止，只捕获生成的请求。报告中的 INTENTIONAL_STOP_BEFORE_NETWORK 是预期诊断行为，不是 API 故障。
+
+现有 openai-completions 适配器生成：
+
+    tools: [{ type: "function", function: { name: "web_search", ... } }]
+
+仅换 openai-responses 适配器仍生成：
+
+    tools: [{ type: "function", name: "web_search", ... }]
+
+真实直连测试启用服务端搜索所用的是：
+
+    tools: [{ type: "web_search" }]
+
+这三种声明不等价。前两种要求客户端执行一个普通函数；第三种要求服务端提供搜索能力。
+
+原生搜索启用函数实测：
+
+- openai-completions：eligible=false；即使在内存副本中启用 openaiCodex，仍为 managed_only / model_not_eligible。
+- openai-responses：同样 eligible=false，启用开关也不能改变该判定。
+- openai-chatgpt-responses：eligible=true，但它是另一条 ChatGPT/Codex 认证与传输路径。
+
+代码核对还发现，openai-chatgpt-responses 适配器会从 token 提取 accountId，并采用 Codex URL 构造逻辑。这不是把普通 API Key 的协议名称改掉即可等价替代的路径；本次没有尝试强行替换生产配置。
+
+依据位置：
+- Host dist/codex-native-web-search-core-DEpF95I7.js：isCodexNativeSearchEligibleModel、resolveCodexNativeSearchActivation。
+- @openclaw/ai/dist/openai-completions-B9QLIq2U.mjs：buildParams、convertTools。
+- @openclaw/ai/dist/openai-responses-shared-sj2YUPYc.mjs：applyCommonResponsesParams。
+- @openclaw/ai/dist/openai-chatgpt-responses-DVC4Bk_A.mjs：extractOpenAICodexAccountId、resolveCodexUrl。
+
+## 凭据变更验收
+
+- 2026-09-30T15:24:35Z 更新 gateway.systemd.env 中唯一的 OPENAI_API_KEY 行。
+- 已保存权限 0600 的原文件备份；备份位于私有证据目录，路径见 key-unification.json。
+- Gateway 重启成功，运行进程环境值与 Codex auth.json 中的值一致。
+- openclaw.json 的 SHA-256 与操作前相同。
+- 统一后真实流式请求 G 成功。
+
+## 对后续方案的影响
+
+应撤回“naiccc / gpt-5.6-terra 当前不能原生搜索”作为选用 Tavily 的前提。Tavily 仍是一条已经验证的独立搜索方案，但不能再说它是由于该模型无法原生搜索而被迫选择的唯一途径。
+
+如果后续选择原生搜索接入，仍需验证 Host 如何声明服务端工具、保留搜索事件和引用、与现有业务函数共存，以及图片、确认机制、异常与回滚路径。这属于下一项生产接入工作，本次没有直接修改 Host。
+
+旧失败的原因尚未完全还原：请求体相同而本次成功，说明旧结论不再能描述当前能力；缺少供应商侧日志及完整历史请求环境，不能确定是上游状态、账号路由、临时故障还是其他兼容性变化。
+
+## 证据与复现
+
+私有证据目录：state/acceptance/search-route-20260930/
+
+- probe.py：从既有配置读取凭据，输出脱敏请求/响应。
+- A-*.json 至 G-*.json：真实接口测试。
+- capture_codex.py、codex-client-request-shape.json：桌面随附客户端的本地合成请求捕获。
+- audit_host.mjs、host-adapter-audit.json：已安装 Host 适配器与启用条件测试。
+- sqlite-official-check.json、sqlite-chronology-check.json：官网核对。
+- key-unification.json：生产凭据变更与运行进程等值验证。
+
+官方接口依据：https://developers.openai.com/api/docs/guides/tools-web-search

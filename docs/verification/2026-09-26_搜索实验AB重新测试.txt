@@ -1,0 +1,79 @@
+搜索实验 B / A 重新测试
+
+时间：2026-09-26 02:04 至 02:08，Asia/Shanghai。
+状态：B 在本次测试路径中未走通；A 的调用链可用，但未完成实际查询，整体未通过。按主人要求停止，不写重构实施计划。
+
+一、清理与实验边界
+
+- 已删除 docs/8_搜索功能修改.txt 中依赖旧结论的计划文件，以及综合开发记录中的旧 A/B 结论和旧计划段落。
+- 历史原始会话、回滚备份和无关开发记录保留；它们不作为本次结论。
+- 本轮没有修改生产 openclaw.json、构建部署搜索插件、重启 Gateway 或向 QQ 发送消息。
+- 上一轮留下的未完成源码修改仍保留，未作为本次实验实现。
+- A 使用独立工作区、独立会话、合成主人身份和本地回复收集器；只允许 web_search，不加载天气、提醒等业务插件。
+- A 使用修改前备份中的搜索 dist，并逐文件校验与当前已部署 dist 完全一致。没有编译尚未完成的源码。
+- 模型固定为 naiccc/gpt-5.6-terra，实验 A 的 fallback 为空。模型名称是请求值和响应报告值，不表示已独立核验供应商内部路由。
+
+二、实验 B：naiccc 原生搜索
+
+直接请求 https://naiccc.com/v1/responses，仅使用 naiccc 凭证和原生工具声明；没有加载 OpenClaw 或 DeepSeek 客户端。
+公开问题：现在查询 SQLite 官方发布历史，给出最新稳定版本、发布日期、一项变化及实际官方来源。
+
+实际请求与结果：
+1. tools=[{type:"web_search"}]，tool_choice="auto"：HTTP 200，10.163 秒。
+2. tools=[{type:"web_search"}]，tool_choice={type:"web_search"}：HTTP 200，8.994 秒。
+3. tools=[{type:"web_search_preview"}]，tool_choice={type:"web_search_preview"}：HTTP 200，8.757 秒。
+4. web_search 强制调用并 stream=true：HTTP 200，10.767 秒，收到完整 response.completed 事件。
+
+四次共同结果：response.status=completed，但 output 只有普通 message，没有 web_search_call，没有 url_citation。流式事件也没有搜索执行记录。回答均表示无法实时联网，未给出查询结果。
+因此，HTTP 200 只说明模型响应成功，不能视为搜索成功；正文写出的官网链接也不能替代搜索记录。
+
+判定成功原本需要：原生 web_search_call 完成、实际引用与完整回答，并核对答案是否解决查询。本轮均不满足。
+结论范围：当前账号、当前模型标识、当前 naiccc /v1/responses 的上述标准及兼容请求没有走通原生搜索。不能据此断言 GPT 本身没有搜索能力、naiccc 永久不支持或其他未测试路由也必然失败。
+接口没有明确返回“不支持此工具”错误，因此不能确定是工具字段被忽略、权限、转发兼容性还是上游配置问题。此处不将模型的自述当成唯一证据。
+
+请求结构与成功证据字段参考：
+https://developers.openai.com/api/docs/guides/tools-web-search
+
+三、实验 A：GPT -> OpenClaw web_search -> DeepSeek -> GPT
+
+时间：02:07:35 至 02:08:17，总耗时 42.797 秒。
+运行预算：隔离 Agent 300 秒；未修改生产超时配置。本轮在预算内自然结束，无最终回复截断。
+输入与 B 相同；没有在用户问题中指定工具名或强制只调用一次。
+
+实际轨迹：
+1. GPT 首轮调用 web_search，未调用 personal_web_search。
+2. OpenClaw 请求 https://api.deepseek.com/responses，HTTP 200，Provider 返回两条来源；正文表示无法确认最新版本和发布日期。
+3. GPT 尝试并行发起两个后续 web_search。
+4. 一个请求实际访问 DeepSeek 并返回三条来源；正文明确表示没有完成实时读取，部分说明基于既有知识。
+5. 另一个请求在本地被 QUOTA_EXCEEDED 拒绝。该时刻 inFlight=1，默认 maxConcurrent=1；拒绝来自并发上限，并非已用完每日 50 次额度。
+6. GPT 收到结果后完整回答查询失败，保留三个官网 URL。最终 assistant.stopReason="stop"，没有模型错误或中断。
+
+统计：web_search 调用 3 次，实际 DeepSeek 网络请求 2 次，本地拒绝 1 次，naiccc 模型请求 3 次。没有 personal_web_search 调用。
+
+最终回答原文：
+“本次联网查询失败：搜索服务无法实际抓取并核验 SQLite 官方发布历史页面，因此我不能可靠给出截至查询时的最新稳定版本号、发布日期或版本变化，避免仅凭已有知识作答。
+
+官方核验来源：
+- SQLite Release History：https://sqlite.org/changes.html
+- SQLite Download Page：https://sqlite.org/download.html
+- SQLite Version Chronology：https://sqlite.org/chronology.html”
+
+判定：GPT 的工具调用、OpenClaw 的 Provider 分发、DeepSeek 接口返回和 GPT 的后续回答均已实际发生；但所需的版本号、发布日期和变化没有获得，因此不能标记“搜索端到端成功”。
+来源列表和 Provider 的 kind="answer" 只通过了现有格式解析，未证明搜索有效或事实已核验。现有解析器接受了带来源的无法查询声明，这是本轮直接观察到的问题。
+没有保存 DeepSeek 原始响应体，只有真实网络元数据及 Provider 正常化输出。因此本报告不声称已确定 DeepSeek 内部是否执行过搜索，或已查明没有有效结果的根因。
+
+四、证据位置与测试记录说明
+
+证据目录：state/acceptance/search-retest-20260926/
+- b-native.json、b-forced-native.json、b-forced-preview.json、b-stream-native.json：完整请求、响应、耗时；最后一项含原始 SSE。
+- b-runner.mjs、a-runner.mjs：本轮测试驱动。凭证从服务环境读取，不写入脚本或报告。
+- a/report.json：实际模型消息、工具结果、网络事件、本地完整交付、dist 哈希。
+- a/hooks.jsonl：实际 after_tool_call 事件。
+- a/agents/：隔离 Host 会话轨迹。
+- a/run.log：本轮 Host 与 Provider 日志。
+
+测试驱动的 cleanAgentEnd=false 表示未收到 agent_end 观察 hook，本轮也未收到 llm_output hook；不表示模型实际崩溃。最终会话消息 stopReason=stop 和完整交付已证实自然结束。整体不通过依据是未完成查询，不依赖该观察 hook。
+
+附带只读核对：本地读取 sqlite.org/changes.html 时取得页面顶部 3.53.4 / 2026-07-24 条目，但整页下载在 30 秒后超时，保存的是部分页面。该内容没有交给实验 Agent，也未据此把失败回答改判成功。
+
+后续状态：停止。未满足“B 失败、A 成功”这一写重构计划的条件，等待主人进一步指示。

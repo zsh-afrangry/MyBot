@@ -1,0 +1,389 @@
+# OpenClaw 升级、fallback 验证与 A3 删除记录（2026-10-01）
+
+主人指令：一次性完成四件事 —— ① 更新 OpenClaw 与 DSH；② 真实测试 fallback；
+③ 删除 personal-search 源码（A3）；④ 完成后归档文档 8。会话数据可全部清除。
+执行者：DSH。环境：afrangry@afrangry，本机时间 2026-10-01 凌晨。
+
+> 阅读提示：本文严格区分「最终结论」与「失败/返工」。失败项都在
+> §6「失败与返工」中单独列出并标注，不与结论混写。
+
+---
+
+## 1. 会话清理（已完成）
+
+`sessions.json` 中原有 3 条：2 条测试（`experiment-a/b-20260926`）+ 1 条**真实 QQ 私聊**
+（`agent:main:qqbot:direct:275e…`）。已向主人确认"全删"，遂全部清除。
+
+- 备份：`state/backups/sessions-purge-20261001T023615.tar.gz`（360K）
+- 清理后：旧版 `sessions.json` = `{}`，JSONL/trajectory 全删。
+- 升级后新版改用 SQLite 会话存储（`agents/main/agent/openclaw-agent.sqlite`）。
+  验证过程中产生的测试会话 `agent:main:upgrade-verify` 已用官方
+  `openclaw sessions archive` 归档（新版"删除"即软删除，`archived_at` 已置位）。
+- 注意：2026.9.7 **没有**硬删除命令，只有 `sessions archive` / `cleanup`。
+
+---
+
+## 2. OpenClaw 2026.7.1-2 → 2026.9.7（已完成）
+
+### 2.1 安装
+
+```
+systemctl --user stop openclaw-gateway.service
+npm install -g --prefix /home/afrangry/.npm-global openclaw@2026.9.7
+```
+
+**坑（见 §6-1）**：首次安装未执行任何 install script（npm 11 的 allow-scripts 策略），
+openclaw 自己的 `postinstall-bundled-plugins.mjs` 被跳过。按 npm 给出的官方方式补跑：
+
+```
+npm install -g --prefix /home/afrangry/.npm-global \
+  --allow-scripts=@google/genai,esbuild,koffi,protobufjs,openclaw openclaw@2026.9.7
+```
+
+补跑后 `.openclaw-lifecycle-pending` 标记不存在，`dist/postinstall-inventory.json` 生成，
+说明生命周期收尾完成。
+
+### 2.2 首次启动失败：状态库 schema 迁移
+
+新版要求 `audit-events-v2` 迁移，Gateway 以 status 78 退出。**这不是升级装坏了**，
+是官方定义的升级步骤。数据库已先备份：
+
+- `state/openclaw.sqlite.bak.before-upgrade-20261001T023839`（2.2M）
+- doctor 自己也留了 `*.pre-startup-migration-*.bak`（state 与 agent 各一份）
+
+### 2.3 doctor --fix 与配置自动迁移
+
+`doctor --fix` 先因 **systemd unit 文件组可写**（mode 664）拒绝刷新服务策略 →
+`chmod go-w` 后继续。随后 doctor **把 `openclaw.json` 判为对新版无效并自动改写**，
+被拒版本另存为 `openclaw.json.clobbered.*`。
+
+改写内容（与升级前 `openclaw.json.bak.before-C-*` 逐键比对）：
+
+| 变更 | 说明 |
+| --- | --- |
+| 删除 `meta.lastTouchedAt` | 新版不认 |
+| 删除 `agents.defaults.compaction.{reserveTokens,reserveTokensFloor,maxHistoryShare,customInstructions,truncateAfterCompaction}` | 新版不认 |
+| 删除 `channels.qqbot.execApprovals`、`groups.*.commandLevel` | 迁移到 QQBot 2.0 语义 |
+| `groups.*.tools.deny`: 34 项 → `["*"]` | 群聊全禁；`groupPolicy` 本就是 disabled，无实际影响 |
+| **`channels.qqbot.allowFrom`: 主人 QQ ID → `"openclaw:approval-disabled"`** | **有害迁移，见 2.4** |
+| `systemPrompt` 1627 → 1712 字符 | doctor 注入迁移说明 |
+
+**A/B/C 三组的关键改动全部保留**：`fetch.maxChars/maxCharsCap=15000`、
+`useTrustedEnvProxy`、`search.provider=tavily`、检索预算提示词、
+`fallback=deepseek-search/deepseek-v4-flash`、`plugins.allow`。
+
+### 2.4 修复 allowFrom（重要回归）
+
+旧版 qqbot 插件（`@openclaw/qqbot 2026.7.1`）把 `allowFrom` 同时用作
+**私聊白名单**与**审批人列表**（`getQQBotExecApprovalApprovers`）。
+doctor 按 2.0 语义写入哨兵值后，主人 QQ ID 从私聊白名单消失 →
+`dmPolicy: "allowlist"` 下**主人将无法与 Kurumi 私聊**。
+
+新版 schema 对 `allowFrom` 的要求是：每项要么是 `openclaw:approval-disabled`，
+要么匹配 `^[^a-z]*$`（全大写 ID）。主人 ID `275E81F98DE0DB44476B0FA1B97965EC`
+**本来就合规**，因此直接改回：
+
+```
+channels.qqbot.allowFrom = ["275E81F98DE0DB44476B0FA1B97965EC"]
+```
+
+改回后配置仍被新版接受（重启无 invalid/restored 记录），`groupAllowFrom` 未被动过。
+
+### 2.5 插件 SDK 破坏与移植（personal-weather）
+
+新版核心报告：
+
+```
+Plugin personal-weather cannot import openclaw/plugin-sdk/agent-runtime
+(built with OpenClaw unknown; running core 2026.9.7);
+does not provide an export named 'payloadTextResult'
+```
+
+影响：**天气与提醒功能整体不可用**（`personal-reminder`、`profile-planning`
+确认后端也变成空数组）。排查后确认：
+
+- 插件需要的其余 SDK 符号**全部仍在**（`AnyAgentTool`、`fetchWithSsrFGuard`、
+  `SsrFBlockedError`、`OpenClawPluginService(Context)`、`defineToolPlugin`、
+  `callGatewayTool`）。
+- 唯一缺失的 `payloadTextResult` 在新 SDK 中的对应物是 `jsonResult`
+  （实现：`textResult(JSON.stringify(payload, null, 2), payload)`）。
+
+移植动作（机械且可验证）：
+
+1. 备份 `src` / `dist` → `*.bak.before-sdk-port-20261001T024328`
+2. `src/index.ts` 内 36 处 `payloadTextResult` → `jsonResult`（含 import）
+3. `npm run build`（tsc）→ **零错误**
+4. `openclaw plugins validate --entry ./dist/index.js` → **Plugin personal-weather is valid**
+5. `npx vitest run` → **17 个文件 / 156 个测试全通过**
+
+其余两个插件无需改动：`tavily` 被新版**自动升级到 2026.9.7**；
+`personal-confirmation` 直接兼容（迁移后 `backends: ["personal-reminder","profile-planning"]`）。
+新版还自动补入 `@openclaw/deepseek-provider 2026.9.7` 与内置 `memory-core`。
+
+### 2.6 测试 harness 适配
+
+升级后两个验收脚本失效，均为**测试侧**问题：
+
+- `run-retrieval-smoke.mjs` / `run-retrieval-host.mjs` 的 `hostExport()` 只扫
+  `runtime-*.js` / `loader-*.js`。新版 dist 以内容哈希 `.mjs` 为主（6999 个）。
+  → 改为扫描全部 `.mjs`/`.js` 并按 export 表匹配。
+- `run-fallback-failover.mjs` 解析结果时，新版 `--json` 结构变为
+  `{ payloads: [...投递负载], meta: {...运行结果} }`，`executionTrace` 在 `meta` 下。
+  → 解析改为优先读 `meta`，兼容旧扁平结构。
+
+### 2.7 升级后的验证结果
+
+| 项 | 结果 |
+| --- | --- |
+| 版本 | `OpenClaw 2026.9.7 (c074824)` |
+| Gateway | active；`http server listening (5 plugins: memory-core, personal-confirmation, personal-weather, qqbot, tavily)` |
+| QQ | `WebSocket connected` + `Gateway ready` |
+| personal-weather | `reminder reconciler started (interval=60000ms)` |
+| personal-confirmation | `started backends: ["personal-reminder","profile-planning"]` |
+| 真实验证（`--local` agent 回合） | Q1 正确（3.53.4 / 2026-07-24 / 真实 sqlite.org 来源），6 次调用、0 失败、未触发 fallback |
+| 离线 smoke | exit 0；工具面正确；`personal_web_search` 不在列；两次**并行** tavily 搜索均成功（R1 复验） |
+| Host 集成 harness | 见 §5 |
+| 配置 | `fetch 15000`、`useTrustedEnvProxy`、`tavily`、检索预算、fallback 全部保留 |
+
+---
+
+## 3. fallback 真实故障切换验证（已完成）
+
+**这是此前唯一未验证的实质缺口**：B2 只证明了配置与 `models list` 显示 fallback#1，
+从未证明主模型失败时**真的会切换**。
+
+新增可复用脚本 `chatbot/tests/acceptance/run-fallback-failover.mjs`，做法：
+
+- 主模型指向 `http://127.0.0.1:9/v1`（立即 ECONNREFUSED/超时），
+- fallback 保留真实 `deepseek-search/deepseek-v4-flash`，
+- 全程写临时目录，**生产 `openclaw.json` 只读、不碰生产 key、不投递 QQ**，
+- 用 `agent --local` 在嵌入式模式跑一个无需工具的问题。
+
+结果：
+
+```json
+{
+  "winnerProvider": "deepseek-search",
+  "winnerModel": "deepseek-v4-flash",
+  "fallbackUsed": true,
+  "attempts": [
+    "fallback-probe-broken/unreachable-probe:timeout",
+    "deepseek-search/deepseek-v4-flash:success"
+  ],
+  "answer": "哈希表是一种通过哈希函数把键直接映射到存储位置、从而以平均 O(1) 时间完成插入、查找和删除的数据结构…"
+}
+```
+
+日志侧同证：`[model-fallback/decision] decision=candidate_succeeded
+requested=fallback-probe-broken/unreachable-probe candidate=deepseek-search/deepseek-v4-flash`。
+**结论：fallback 链真实可用。**
+
+---
+
+## 4. A3：删除 personal-search（已完成）
+
+- 备份（可回滚）：`state/backups/personal-search-src-20261001T030707.tar.gz`（80K，不含 node_modules）；
+  源码同时被 git 跟踪（27 个文件）。
+- 删除 `chatbot/plugins/personal-search`（**453MB**）。`chatbot/plugins/` 现只剩
+  `personal-confirmation`、`personal-weather`。
+- 引用清理：
+  - `retrieval-config.mjs`：移除 personal-search 兼容分支与旧提示词锚点，保留
+    "提示词必须含 web_search/web_fetch" 的守卫。
+  - `run-agent-errors.mjs`、`run-search-provider.mjs`：**专为该插件编写、删插件后无法运行**，
+    移入 `docs/archive/personal-search-tests/`（附 README 说明来由与恢复方法）。
+  - `chatbot/tests/acceptance/README.md`：加 A3 变更说明、修命令块、给两段历史描述加
+    `[已归档]` 标记。
+  - `run-retrieval-smoke.mjs` / `run-retrieval-host.mjs` 中"`personal_web_search`
+    不得出现"的断言**保留**——那是防止旧方案复活的回归守卫。
+- 清理后 `run-retrieval-smoke.mjs` 复跑通过（exit 0）。
+
+---
+
+## 5. 最终集成验收
+
+`node chatbot/tests/acceptance/run-retrieval-host.mjs` → 全绿：
+
+| 项 | 结果 |
+| --- | --- |
+| Q1（搜索 + 读原文） | 通过，调用 `web_search` + `web_fetch` |
+| Q5（基础概念，不应搜索） | 通过，0 工具调用 |
+| Q6（天气，不应搜索） | 通过，仅调用 `personal_weather_get_brief` |
+| 并行 `web_search` | 通过（两次并发均 `provider=tavily, count=5`） |
+| `web_fetch` 上限 | `length: 15000, truncated: true` |
+| 私网地址拦截 | 通过（`http://127.0.0.1:18789` 被拒） |
+| 群聊工具面 | 仅 `session_status`；`web_search`/`web_fetch` 被群聊 `tools.deny` 移除 |
+| 插件加载 | 无 error 插件 |
+
+报告：`/tmp/kurumi-retrieval-host-wEOe7n/report.json`（升级后首次全绿）
+
+---
+
+## 6. 失败与返工（明确标注，勿与结论混淆）
+
+| # | 失败/失误 | 性质 | 处理 |
+| --- | --- | --- | --- |
+| 1 | 首次 `npm install` **未执行任何 install script**（含 openclaw 的 postinstall） | npm 11 allow-scripts 策略；非产品问题 | 用 `--allow-scripts=…` 官方方式补跑，生命周期收尾完成 |
+| 2 | Gateway 首次启动失败 `status 78` | **新版要求的 DB schema 迁移**，非安装损坏 | 备份 DB → `doctor --fix` → 正常启动 |
+| 3 | `doctor --fix` 被 systemd unit 组可写拒绝 | 环境历史遗留（mode 664） | `chmod go-w`；`.service.bak` 也是 664，未处理（见 §8） |
+| 4 | doctor 自动迁移把 `allowFrom` 改成 `openclaw:approval-disabled` | **官方迁移在此场景有害**（丢主人私聊白名单） | 改回真实主人 ID；仍在 schema 允许范围内 |
+| 5 | `personal-weather` 插件加载失败（`payloadTextResult`） | 旧插件 SDK 断代 | 改名 `jsonResult` + 重编译 + validate + 156 测试 |
+| 6 | smoke / host harness `Host export not found: prepareSecretsRuntimeSnapshot` | **测试脚本**只扫 `.js`，新版为 `.mjs` | 改为全 dist 扫描 + export 表匹配 |
+| 7 | fallback 脚本断言失败（读到 null） | **测试脚本**按旧版扁平 JSON 解析 | 适配 `meta.executionTrace` |
+| 8 | fallback 脚本第二次失败：`--json` 需要 gateway 凭据 | 新版 `agent` 默认走 gateway websocket | 改用 `--local` 嵌入式模式 |
+| 9 | fallback 脚本第三次失败：清空 plugins 导致 config validate 失败 | 隔离配置过激（qqbot/tavily 变成 unknown） | 保留插件加载、只断开渠道 |
+
+以上 9 项**没有一项是产品缺陷**；其中 4 项是我自己的测试脚本问题，2 项是官方迁移的副作用，
+其余为环境/策略因素。
+
+---
+
+## 7. DSH 更新：0.1.5-rc.3 → 0.2.0-rc.2（已安装并验证，待重启）
+
+主人提供 sudo 密码后执行。**没有采用 `npm install` 直接改写**，原因：
+
+- `/opt/deepseek-harness` 下**没有 package.json / package-lock.json**，只有 `node_modules`（189 个包）。
+  在这种目录里跑 `npm install --prefix … <pkg>` 会新建 package.json，并把不在清单里的包
+  当作 extraneous **清掉**，有整棵树被削坏的风险。
+- 改用「隔离暂存 → 整体替换」：
+
+```
+# 1. 暂存安装（普通用户即可，不碰生产目录）
+cd /tmp/dsh-stage && npm install --no-audit --no-fund @deepseek-ai/dsh@0.2.0-rc.2
+#    首次同样被 npm 11 的 install-scripts 拦截（5 个包），补跑：
+npm install-scripts approve @deepseek-ai/dsh-subprocess-local koffi node-pty @google/genai protobufjs
+npm rebuild
+# 2. 验证暂存树
+/tmp/dsh-stage/node_modules/.bin/dsh --version          # → 0.2.0-rc.2
+#    并在 3099 端口隔离启动成功
+# 3. 放到最终位置、整体替换（旧树保留）
+sudo cp -a /tmp/dsh-stage/node_modules /opt/deepseek-harness/node_modules.new
+sudo chown -R dsh:dsh /opt/deepseek-harness/node_modules.new
+sudo mv /opt/deepseek-harness/node_modules     /opt/deepseek-harness/node_modules.0.1.5-rc.3.bak
+sudo mv /opt/deepseek-harness/node_modules.new /opt/deepseek-harness/node_modules
+```
+
+**三重验证（全部通过）**：
+
+1. 最终路径 `dsh --version` → `0.2.0-rc.2`。
+2. 从最终路径在 3098 端口隔离启动 → 正常监听、鉴权返回 401。
+3. **以真实状态的副本**（`cp -a /var/lib/dsh/.dsh`，4.6M）在 3097 端口启动 → 正常。
+   新版会做一次状态迁移：`settings.yaml` → `settings.yaml.imported`（**原文件保留**），
+   新增 `storages/session_projcache/` 投影缓存，会话目录与 `.credentials.yaml` 完整保留，
+   仅当前活动会话的转录被重写为 `session.v3.jsonl.zstd`。**未见丢数据。**
+
+**踩到的坑**：把新树放在 `node_modules.new` 时执行会报
+`does not provide an export named 'StartupError'` —— 这不是新树坏了，而是 Node 的解析规则：
+目录名不叫 `node_modules` 时，它向上找到隔壁**旧的** `node_modules`，加载了 0.1.5 的
+`@deepseek-ai/dsh-app-boot`。改名为 `node_modules` 后即正常。
+
+**待主人执行最后一步**（会中断当前 DSH 会话）：
+
+```sh
+sudo systemctl restart dsh-web.service
+```
+
+回滚：`sudo mv node_modules node_modules.0.2.0-rc.2.failed && sudo mv node_modules.0.1.5-rc.3.bak node_modules`。
+
+---
+
+## 7.1 qqbot 插件迁移：`@openclaw/qqbot 2026.7.1` → `@tencent-connect/openclaw-qqbot 2.0.3`（已完成）
+
+起因：主人先问「新版是 openclaw 新还是 qqbot 新」，随后指示「腾讯方有新版 qqbot，
+那 OpenClaw 的 qqbot 插件就应该更新」。事实是**只有核心升了级，qqbot 插件仍是旧版**——
+这正是 §2.4 那个 allowFrom 回归的根因：新核心按 QQBot 2.0 语义改写配置，插件却还是 1.0 的。
+
+| 组件 | 版本 | 状态 |
+| --- | --- | --- |
+| OpenClaw 核心 | `2026.9.7 (c074824)` | 已升级 |
+| `@openclaw/qqbot` | `2026.7.1` | **旧版，已退役** |
+| `@tencent-connect/openclaw-qqbot` | `2.0.3` | **新版，现役** |
+| `@openclaw/tavily-plugin` / `deepseek-provider` | `2026.9.7` | 自动升级 |
+
+新插件的官方定位（取自核心内置目录）：插件 id `openclaw-qqbot`，频道 id 仍是 `qqbot`，
+`legacyNpmPackageNames: ["@openclaw/qqbot"]`，`install.npmSpec` = `@tencent-connect/openclaw-qqbot@2.0.3`。
+**故版本取核心锁定的 2.0.3**（npm 上已有 2.0.4，但核心目录锁的是 2.0.3）。
+
+### 执行步骤
+
+1. 备份：`backups/manual-snapshots-20261004/openclaw.json.bak.before-qqbot-migration-20261001T143533`；
+   旧插件打包 `state/backups/qqbot-legacy-plugin-20261001T143533.tar.gz`（1.3M）；
+   状态库 `state/openclaw.sqlite.bak.before-qqbot-migration-cleanup`。
+2. 安装：`openclaw plugins install @tencent-connect/openclaw-qqbot@2.0.3 --accept-capabilities`
+   → 自动向 `plugins.entries` 与 `plugins.allow` 加入 `openclaw-qqbot`。
+3. 停用旧插件：`openclaw plugins disable qqbot`。
+4. 群组工具策略迁移：`groups."*".tools.deny:["*"]` → `groups."*".toolPolicy:"none"`。
+5. 移除旧插件：从 `plugins.allow` / `plugins.entries` 删除 `qqbot`，包目录移出
+   `npm/projects/`（备份在 `state/backups/removed-legacy-qqbot/`）。
+6. 清理孤儿迁移记录（见下）。
+
+### 重要发现：两条迁移互相矛盾（核心 2026.9.7 行为，非我方误操作）
+
+`channels.qqbot.groups.*` 的策略键在 doctor 里出现**方向相反的两条迁移**：
+
+- 核心内置迁移：「groups.*.tools 必须迁移到 Tencent QQBot 2.0 的 toolPolicy」
+  → `migrateGroupTools()` 写入 `toolPolicy` 并删除 `tools`。
+- **旧插件自己注册的迁移**：「groups.*.toolPolicy 是 legacy 且被 QQBot 组策略忽略，请改用 tools」。
+
+只要旧插件还留在磁盘上，两条就互相抵消：doctor 每次都说要迁移，`--fix` 执行后配置在两种
+形态间反复横跳，**永远收敛不了**。实证结论：移走旧插件包目录后，`toolPolicy` 那条投诉立即
+消失，doctor 变干净。最终保留核心 2.0 迁移的结果 `toolPolicy: "none"`。
+（`groupPolicy: "disabled"`，群聊本就永久禁用，该键实际不生效。）
+
+### 孤儿迁移记录
+
+`state/openclaw.sqlite` 的 `migration_runs` 中留下 `deferred-plugin-migration:qqbot`，状态永久
+`pending`，原因 `The installed plugin has not confirmed that its saved data and settings are
+ready for this version`——2026.7.1 的旧插件不认识新核心的数据版本协议，永远无法确认就绪
+（doctor 亦提示"若无法完成请报告插件维护者"）。既然插件已退役，该记录随包目录一并清除
+（停服 → 备份 → `DELETE FROM migration_runs WHERE id='deferred-plugin-migration:qqbot'` → 启服）。
+清理后其余 12 条**全部 completed**；`openclaw-qqbot` / `personal-confirmation` /
+`personal-weather` / `tavily` 四条同批迁移均已 completed，只有旧 qqbot 这条无法完成。
+
+### 迁移后验证
+
+| 项 | 结果 |
+| --- | --- |
+| Gateway | active，`http server listening (5 plugins: memory-core, openclaw-qqbot, personal-confirmation, personal-weather, tavily)` |
+| QQ 连接 | `Access token obtained` → `WebSocket connected` → `gateway RESUMED/READY` |
+| 插件清单 | 仅 `openclaw-qqbot 2.0.3` enabled；旧 `qqbot` 已不存在 |
+| doctor | **无** legacy config keys、无未完成迁移 |
+| 频道配置 | `dmPolicy=allowlist`、`allowFrom=["275E…65EC"]`、`groupPolicy=disabled`、`toolPolicy=none`、`systemPrompt` 1712 字符，全部保留 |
+| 主模型/检索 | primary `naiccc/gpt-5.6-terra` + fallback `deepseek-search/deepseek-v4-flash`；tavily + 15000 预算，全部保留 |
+
+### 遗留与提醒
+
+1. **需要主人实测**：从 QQ 私聊发一条消息确认端到端可用。我只能验证到连接与配置层面，
+   无法以主人身份发消息。重点看：身份是否判定为"主人"、天气/检索工具能否正常调用。
+2. 新插件自带更新检查，日志提示 `new version available: 2.0.4 (current: 2.0.3)`。
+   **暂不升级**——核心目录锁定 2.0.3，跟随核心更稳。
+3. **旧插件在状态库留下明文凭据**：`plugin_state_entries` 中 `plugin_id='qqbot'`、
+   `namespace='credential-backups'` 存有**明文 clientSecret**，另有 2 条 `known-users`
+   （主人 OpenID）。新插件不使用这些数据（其状态库条目为 0）。是否删除待主人决定。
+
+---
+
+## 8. 遗留（未做，非阻塞）
+
+1. **systemd 服务定义与新版本不一致**（doctor 报告）：`StartLimitBurst`、
+   `StartLimitIntervalSec`、`TimeoutStopSec`（30s，官方要求 ≥330s）、`KillMode`（要求 mixed）；
+   另有 `openclaw-gateway.service.bak` mode 664。
+   官方建议：`openclaw gateway install --force`。**未执行**——会替换现有 unit，需主人确认。
+2. **`tools.exec` / `tools.fs` 不再隐式放宽 profile**（新版 #47487）：仅在使用
+   `tools.profile: "messaging"` 时出现；生产未设该 profile，故**生产未触发**。
+   若以后显式设置 profile，需补 `alsoInclude`/`alsoAllow` 中的 `exec, process, read, write, edit`。
+3. 新版会话为 SQLite 软删除；如需彻底清空数据库中的历史会话，需要单独方案。
+4. `Delivery queue` 仍有 24 条 outbound 死信（最老 44 天），与本次无关。
+
+---
+
+## 9. 回滚手册
+
+| 目标 | 操作 |
+| --- | --- |
+| 回到旧核心 | `npm install -g --prefix /home/afrangry/.npm-global openclaw@2026.7.1-2` |
+| 恢复升级前配置 | `cp backups/manual-snapshots-20261004/openclaw.json.clobbered.2026-09-30T18-38-44-498Z openclaw.json`（含全部 A/B/C 改动） |
+| 恢复升级前状态库 | `cp state/openclaw.sqlite.bak.before-upgrade-20261001T023839 state/openclaw.sqlite` |
+| 恢复 agent 库 | 用 `agents/main/agent/openclaw-agent.sqlite.pre-startup-migration-*.bak` |
+| 回滚插件移植 | `mv src.bak.before-sdk-port-20261001T024328 src`（在 personal-weather 目录内），重编译 |
+| 恢复 personal-search | `tar xzf state/backups/personal-search-src-20261001T030707.tar.gz -C chatbot/plugins`，并 `npm install` |
+| 恢复会话数据 | `tar xzf state/backups/sessions-purge-20261001T023615.tar.gz -C agents/main` |

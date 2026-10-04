@@ -1,6 +1,6 @@
 import { Type, type Static } from "typebox";
 import {
-  payloadTextResult,
+  jsonResult,
   type AnyAgentTool,
 } from "openclaw/plugin-sdk/agent-runtime";
 import { callGatewayTool } from "openclaw/plugin-sdk/agent-harness-runtime";
@@ -256,7 +256,7 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: WeatherStore | undefined;
           try {
             if (params.location === undefined && params.administrative_area !== undefined) {
-              return payloadTextResult({
+              return jsonResult({
                 ok: false,
                 code: "INVALID_INPUT",
                 retryable: false,
@@ -278,7 +278,7 @@ const personalWeatherPlugin = defineToolPlugin({
                   : { administrativeArea: params.administrative_area }),
               }, signal);
               if (resolution.kind === "not_found") {
-                return payloadTextResult({
+                return jsonResult({
                   ok: false,
                   code: "LOCATION_NOT_FOUND",
                   retryable: false,
@@ -286,7 +286,7 @@ const personalWeatherPlugin = defineToolPlugin({
                 });
               }
               if (resolution.kind === "ambiguous") {
-                return payloadTextResult({
+                return jsonResult({
                   ok: false,
                   code: "LOCATION_AMBIGUOUS",
                   retryable: false,
@@ -296,13 +296,13 @@ const personalWeatherPlugin = defineToolPlugin({
               }
               brief = await service.getBriefForLocation(resolution.location, signal);
             }
-            return payloadTextResult({
+            return jsonResult({
               ok: true,
               brief,
               formattedText: formatWeatherBrief(brief),
             });
           } catch (error) {
-            return payloadTextResult(asWeatherError(error).toPublicResult());
+            return jsonResult(asWeatherError(error).toPublicResult());
           } finally {
             store?.close();
           }
@@ -326,9 +326,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: WeatherStore | undefined;
           try {
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-            return payloadTextResult(getProfileState(store));
+            return jsonResult(getProfileState(store));
           } catch (error) {
-            return payloadTextResult(asWeatherError(error).toPublicResult());
+            return jsonResult(asWeatherError(error).toPublicResult());
           } finally {
             store?.close();
           }
@@ -354,7 +354,7 @@ const personalWeatherPlugin = defineToolPlugin({
           try {
             const resolvedConfig = resolvePersonalWeatherConfig(config);
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-            return payloadTextResult(await proposeProfileChange(
+            return jsonResult(await proposeProfileChange(
               store,
               new QWeatherClient(resolvedConfig),
               params,
@@ -362,7 +362,7 @@ const personalWeatherPlugin = defineToolPlugin({
               scopeFromToolContext(toolContext),
             ));
           } catch (error) {
-            return payloadTextResult(profileProposalError(error));
+            return jsonResult(profileProposalError(error));
           } finally {
             store?.close();
           }
@@ -387,9 +387,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: WeatherStore | undefined;
           try {
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-            return payloadTextResult(commitProfileChange(store, params, scopeFromToolContext(toolContext)));
+            return jsonResult(commitProfileChange(store, params, scopeFromToolContext(toolContext)));
           } catch (error) {
-            return payloadTextResult(asWeatherError(error).toPublicResult());
+            return jsonResult(asWeatherError(error).toPublicResult());
           } finally {
             store?.close();
           }
@@ -411,7 +411,7 @@ const personalWeatherPlugin = defineToolPlugin({
         parameters: planningStateParameters,
         async execute() {
           if (!isTrustedOwnerPrivateQq(toolContext)) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: {
                 code: "forbidden_context",
@@ -422,9 +422,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: WeatherStore | undefined;
           try {
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-            return payloadTextResult(getPlanningState(store));
+            return jsonResult(getPlanningState(store));
           } catch (error) {
-            return payloadTextResult(asWeatherError(error).toPublicResult());
+            return jsonResult(asWeatherError(error).toPublicResult());
           } finally {
             store?.close();
           }
@@ -446,7 +446,7 @@ const personalWeatherPlugin = defineToolPlugin({
         parameters: planningChangeParameters,
         async execute(_toolCallId, params) {
           if (!isTrustedOwnerPrivateQq(toolContext)) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: {
                 code: "forbidden_context",
@@ -457,9 +457,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: WeatherStore | undefined;
           try {
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-            return payloadTextResult(proposePlanningChange(store, params, scopeFromToolContext(toolContext)));
+            return jsonResult(proposePlanningChange(store, params, scopeFromToolContext(toolContext)));
           } catch (error) {
-            return payloadTextResult(asWeatherError(error).toPublicResult());
+            return jsonResult(asWeatherError(error).toPublicResult());
           } finally {
             store?.close();
           }
@@ -481,7 +481,7 @@ const personalWeatherPlugin = defineToolPlugin({
         parameters: planningCommitParameters,
         async execute(_toolCallId, params) {
           if (!isTrustedOwnerPrivateQq(toolContext)) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: {
                 code: "forbidden_context",
@@ -492,9 +492,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: WeatherStore | undefined;
           try {
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-            return payloadTextResult(commitPlanningProposal(store, params, scopeFromToolContext(toolContext)));
+            return jsonResult(commitPlanningProposal(store, params, scopeFromToolContext(toolContext)));
           } catch (error) {
-            return payloadTextResult(asWeatherError(error).toPublicResult());
+            return jsonResult(asWeatherError(error).toPublicResult());
           } finally {
             store?.close();
           }
@@ -519,9 +519,9 @@ const personalWeatherPlugin = defineToolPlugin({
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
             reconcileReminderState(store);
-            return payloadTextResult(getReminderState(store));
+            return jsonResult(getReminderState(store));
           } catch (error) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: { code: "reminder_unavailable", message: publicReminderError(error) },
             });
@@ -550,9 +550,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: ReminderStore | undefined;
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-            return payloadTextResult(proposeReminderCreate(store, params, context));
+            return jsonResult(proposeReminderCreate(store, params, context));
           } catch (error) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: { code: "reminder_unavailable", message: publicReminderError(error) },
             });
@@ -581,14 +581,14 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: ReminderStore | undefined;
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-            return payloadTextResult(await commitReminderProposal(
+            return jsonResult(await commitReminderProposal(
               store,
               params,
               context,
               createGatewayReminderScheduler(),
             ));
           } catch (error) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: { code: "reminder_unavailable", message: publicReminderError(error) },
             });
@@ -617,9 +617,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: ReminderStore | undefined;
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-            return payloadTextResult(proposeReminderUpdate(store, params, context));
+            return jsonResult(proposeReminderUpdate(store, params, context));
           } catch (error) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: { code: "reminder_unavailable", message: publicReminderError(error) },
             });
@@ -648,14 +648,14 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: ReminderStore | undefined;
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-            return payloadTextResult(await commitReminderProposal(
+            return jsonResult(await commitReminderProposal(
               store,
               params,
               context,
               createGatewayReminderScheduler(),
             ));
           } catch (error) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: { code: "reminder_unavailable", message: publicReminderError(error) },
             });
@@ -683,9 +683,9 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: ReminderStore | undefined;
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-            return payloadTextResult(proposeReminderCancellation(store, params, context));
+            return jsonResult(proposeReminderCancellation(store, params, context));
           } catch (error) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: { code: "reminder_unavailable", message: publicReminderError(error) },
             });
@@ -713,14 +713,14 @@ const personalWeatherPlugin = defineToolPlugin({
           let store: ReminderStore | undefined;
           try {
             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-            return payloadTextResult(await commitReminderProposal(
+            return jsonResult(await commitReminderProposal(
               store,
               params,
               context,
               createGatewayReminderScheduler(),
             ));
           } catch (error) {
-            return payloadTextResult({
+            return jsonResult({
               ok: false,
               error: { code: "reminder_unavailable", message: publicReminderError(error) },
             });
@@ -799,7 +799,7 @@ function trustedReminderContext(toolContext: {
 }
 
 function forbiddenResult() {
-  return payloadTextResult({
+  return jsonResult({
     ok: false,
     error: {
       code: "forbidden_context",

@@ -3,28 +3,28 @@
 This directory is test infrastructure, not a production plugin. Its modules
 depend on production capabilities; production modules never import these tests.
 
+> **2026-10-01（A3）**：`personal-search` 插件源码已删除。依赖它的
+> `run-agent-errors.mjs` 与 `run-search-provider.mjs` 已移入
+> `docs/archive/personal-search-tests/`（附说明），因此下方命令块中不再包含它们。
+> 现行检索验收改用 `run-retrieval-smoke.mjs` / `run-retrieval-host.mjs` /
+> `run-retrieval-t3.mjs`；主模型回退验证用 `run-fallback-failover.mjs`。
+> 本文后面描述这两个已归档脚本的段落保留为历史记录，不再对应现存文件。
+
 Build `chatbot/packages/confirmation-core`, `chatbot/plugins/personal-confirmation`
 and `chatbot/plugins/personal-weather` first, in that order. On the deployment
 host, from the repository root, run:
-
-Build `chatbot/plugins/personal-search` as well for the search cases.
 
 ```sh
 node chatbot/tests/acceptance/run.mjs
 node chatbot/tests/acceptance/run.mjs --boundaries
 node chatbot/tests/acceptance/run-model.mjs
 node chatbot/tests/acceptance/run-reminder-expiry.mjs
-node chatbot/tests/acceptance/run-agent-errors.mjs profile-hash
-node chatbot/tests/acceptance/run-agent-errors.mjs expired
-node chatbot/tests/acceptance/run-agent-errors.mjs unapproved
-node chatbot/tests/acceptance/run-agent-errors.mjs confirm
-node chatbot/tests/acceptance/run-agent-errors.mjs confirm natural-a
-node chatbot/tests/acceptance/run-agent-errors.mjs reminder-proposal natural-b
 node --test chatbot/tests/acceptance/call-analysis.test.mjs
-node chatbot/tests/acceptance/run-agent-errors.mjs search
-node chatbot/tests/acceptance/run-agent-errors.mjs search-error
 node chatbot/tests/acceptance/run-real-cron.mjs
-node chatbot/tests/acceptance/run-search-provider.mjs
+# 现行检索链路（2026-10-01 起，替代旧的 personal-search 驱动）
+node chatbot/tests/acceptance/run-retrieval-smoke.mjs
+node chatbot/tests/acceptance/run-retrieval-host.mjs
+node chatbot/tests/acceptance/run-fallback-failover.mjs
 ```
 
 Each command starts a new process and allocates a new `kurumi-acceptance-*`
@@ -56,6 +56,7 @@ the existing configuration and `.env` under `KURUMI_SOURCE_ROOT` (default
 `/home/afrangry/.openclaw`); it currently supports `anthropic-messages` with an
 environment SecretRef and fails explicitly for other configurations.
 
+[已归档 2026-10-01（A3），以下描述对应 `docs/archive/personal-search-tests/run-agent-errors.mjs`]
 `run-agent-errors.mjs` separately exercises the default Host agent through the
 same public buffered dispatcher used by QQ, with real domain tools and isolated
 SQLite. It exposes only scenario-specific tools and collects delivery locally.
@@ -102,6 +103,7 @@ using production parameter builders, domain transactions and synthetic
 confirmation hooks. It schedules one day ahead and cancels before shutdown;
 it does not run the delivery CLI or send QQ messages. The child Gateway is
 stopped in `finally`; reports and databases are retained for inspection.
+[已归档 2026-10-01（A3），以下描述对应 `docs/archive/personal-search-tests/run-search-provider.mjs`]
 `run-search-provider.mjs` observes one public query through the actual provider,
 parser and quota, using the same trusted endpoint SDK without the main Agent.
 Its test transport observer replaces the default HTTP wrapper and saves shape
@@ -112,3 +114,18 @@ to make synthetic events pass. Stage outcomes and remaining boundaries are kept
 in `docs/verification/2026-09-10_文档与现状复核.txt`.
 
 Profile GeoAPI regression (D22): `probe-profile-geo.py` performs authorized read-only provider comparisons and decodes gzip; it never emits keys/raw response bodies. `run-profile-geo.mjs` uses the actual guarded client and an isolated domain database to verify request rejection, ambiguity and pending-only success. `run-agent-errors.mjs profile-geo` checks a single explicitly specified rejected request through the default Agent and buffered reply dispatcher; this is not a natural-language reliability test or QQ network delivery. All real-location runs require the owner's external-location authorization (granted in this session).
+
+
+### 2026-10-04 检索脚本适配
+
+`run-retrieval-smoke.mjs` 与 `run-retrieval-host.mjs` 使用当前腾讯插件
+`openclaw-qqbot`（频道仍为 `qqbot`），从安装 manifest 解析包路径。
+隔离配置启用频道以注册群工具策略，但不启动 Gateway/QQ 服务，且使用虚构 QQ 凭据。
+群工具策略使用 `toolPolicy=none`；不得通过删除群聊断言绕过迁移问题。
+
+- `node chatbot/tests/acceptance/run-retrieval-smoke.mjs`：插件加载与工具可见性，无模型调用。
+- `KURUMI_HOST_TOOLS_ONLY=1 node chatbot/tests/acceptance/run-retrieval-host.mjs`：真实并发搜索、抓取和内网拦截，无模型调用。
+- `node chatbot/tests/acceptance/run-retrieval-host.mjs`：另跑三题真实模型检查；不发送 QQ。
+
+最新版断言不再固定为 3.53.4；检查回答版本是否出现在当轮读取的官方正文中。
+该检查不等于完整“最新版本正确性”评审，天气只检查路由，不代表 QQ 身份门控端到端验收。

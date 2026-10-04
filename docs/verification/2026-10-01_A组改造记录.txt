@@ -1,0 +1,301 @@
+# 检索链路 A–D 组改造记录（2026-10-01）
+
+本文件记录 `8_检索功能重构.txt` 中 A、B、C、D 组待办的执行过程、证据与返工
+（文件名沿用 `A组`，实际覆盖全部四组）。
+原则：先看文档 → 定方案 → 改代码 → 测试 → 更新文档；失败方案保留并明确标注。
+
+---
+
+## A1 / T-A：为 Gateway 配置代理，让 web_fetch 能访问被墙站点
+
+状态：**已完成并通过真实验证**。
+
+### 背景与判据
+
+- 实测中国大陆直连 Google / DuckDuckGo 失败（HTTP `000`），Wikipedia 同样 `000`。
+- Clash Verge 混合端口 `127.0.0.1:7897` 可用（Google 200 / 0.65s，Wikipedia 200 / 0.95s）。
+- 当前 Clash profile 为 `R7DrwkpoR7Hs`（LanPangYun，套餐到期 2026-10-26）；
+  **未启用 fake-IP**（无 `enhanced-mode`，`/dns/query` 返回真实公网 IP）。
+
+### 方案
+
+Host 的 `tools.web.fetch.useTrustedEnvProxy` 打开后，`web_fetch` 会走
+`resolveProxyFetchFromEnv`（undici `EnvHttpProxyAgent`，尊重 `NO_PROXY`）。因此：
+
+1. 在 `gateway.systemd.env` 增加 `HTTP(S)_PROXY` 指向 `127.0.0.1:7897`；
+2. 用 `NO_PROXY` 把模型/搜索 API 与本地地址排除，避免本可直连的请求绕行；
+3. `openclaw.json` 打开 `tools.web.fetch.useTrustedEnvProxy`。
+
+因 Clash 未启用 fake-IP，**未**开启 `ssrfPolicy.allowRfc2544BenchmarkRange` /
+`allowIpv6UniqueLocalRange` —— 无必要，避免无谓削弱 SSRF 防护。
+
+### 改动
+
+- `gateway.systemd.env`（追加到末尾）：
+  ```
+  HTTP_PROXY=http://127.0.0.1:7897
+  HTTPS_PROXY=http://127.0.0.1:7897
+  http_proxy=http://127.0.0.1:7897
+  https_proxy=http://127.0.0.1:7897
+  NO_PROXY=naiccc.com,api.deepseek.com,api.tavily.com,qq.com,127.0.0.1,localhost,::1
+  no_proxy=naiccc.com,api.deepseek.com,api.tavily.com,qq.com,127.0.0.1,localhost,::1
+  ```
+- `openclaw.json`：`tools.web.fetch.useTrustedEnvProxy: true`
+- 备份：
+  - `backups/manual-snapshots-20261004/openclaw.json.bak.before-A1-20261001T004947`
+  - `state/acceptance/gateway.systemd.env.before-A1-20261001T004947`
+
+### 测试与证据
+
+- Gateway 重启：MainPID `2638845`；进程环境确认 6 个代理变量已注入；
+  journal 显示 tavily 插件加载、QQ WebSocket 正常连接、gateway ready。
+- 真实 agent turn（隔离会话 `a1verify01`，不投递 QQ、不写业务库）：
+  `web_fetch("https://en.wikipedia.org/wiki/SQLite")` → `"status": 200`；
+  `toolSummary: calls=1, failures=0`；模型仍为 `naiccc/gpt-5.6-terra`（证明 `NO_PROXY` 生效）。
+- 对照：wikipedia 直连 `000 / 6.2s`，走代理 `200 / 0.95s`。
+
+### 结果
+
+T-A 达成：`web_fetch` 可访问被墙站点，同时模型与搜索 API 保持直连。
+
+### 备注（非本次改动）
+
+Gateway 启动日志提示 OpenClaw 有可用更新：`v2026.9.7`（当前 `2026.7.1-2`）。
+本次未升级；若升级，需重新核对检索链路与本文所有结论。
+
+---
+
+## A2 / T-C：移除 qwen 插件与 bailian-token-plan provider
+
+状态：**已完成（功能层）**。插件、provider、凭据均已移除；DB 内历史 catalog 条目为惰性残留。
+
+### 方案与改动
+
+- `openclaw.json`：
+  - 删除 `plugins.entries.qwen`
+  - `plugins.allow` 移除 `"qwen"`
+  - 删除 `models.providers.bailian-token-plan`
+- `agents/main/agent/models.json`：删除 `bailian-token-plan` 与
+  `bailian-token-plan-fallback-probe`（历史实验遗留 provider，后者是故意无效 key 的探针）
+- `gateway.systemd.env` 与 `~/.openclaw/.env`：把 `QWEN_API_HOST/KEY`、
+  `QWEN_TOKEN_PLAN_BASE_URL/API_KEY` 注释为 `# [A2 removed] ...`（保留可回滚）
+- 备份：`openclaw.json.bak.before-A2-*`、`state/acceptance/gateway.systemd.env.before-A2-*`、
+  `state/acceptance/dotenv.before-A2-*`、`state/acceptance/models.json.before-A2-*`
+
+### 验证
+
+- 重启后插件列表：`personal-confirmation, personal-weather, qqbot, tavily`（**qwen 已消失**）
+- 运行进程环境无 `QWEN_*` 变量
+- `openclaw models list` 不再出现 `bailian-token-plan/qwen3.7-plus`；
+  `models status` 仅 `naiccc/gpt-5.6-terra`
+- `models.json` 重启后仍不含 bailian（清理生效，未被重新写回）
+- 真实 agent turn 通过：`winnerModel=gpt-5.6-terra`、`fallbackUsed=false`
+
+### 残留（惰性，不影响功能）
+
+`state/openclaw.sqlite` 的 `agent_model_catalogs.raw_json` 仍含 provider 字段为
+`bailian-token-plan` / `bailian-token-plan-fallback-probe` 的历史 catalog 条目。
+因 provider 定义已删除，`models list` 不展示、运行时不可用。如需彻底清库，另开小项。
+
+### 安全备注
+
+排查阶段对 `.env` 使用 grep 打印时，`QWEN_TOKEN_PLAN_API_KEY` 明文出现在工具输出里。
+**主人决定（2026-10-01）：不轮换，停用即可**（该会话记录不会被分享）。
+
+---
+
+## A4 / A5：文档归档与更新
+
+状态：**已完成**。
+
+- 归档：`docs/4_受控搜索模块设计.txt` → `docs/archive/4_受控搜索模块设计.txt`
+  （头部加入“已归档、现行契约以文档 8 为准”的说明）。
+- 更新：`docs/1_bot基础功能开发备忘录.txt`（模型链、联网能力、文档指针）、
+  `docs/5_主模型fallback处理.txt`（qwen 移除、主备重复、检索工具现状）、
+  `docs/2_天气模块的开发.txt`、`docs/3_个人提醒.txt`、`chatbot/TOOLS.md`（检索章节与指针）。
+- 文档 8 的 §6.1/§6.2/§七 复选框已与实际状态对齐，并新增第十节 Change Log。
+
+---
+
+## A6：隔离 harness 适配
+
+状态：**已完成**。
+
+- 问题：`chatbot/tests/acceptance/retrieval-config.mjs` 直接访问
+  `cfg.plugins.entries["personal-search"].enabled`，在生产配置移除该条目后抛
+  `Cannot set properties of undefined`；systemPrompt 迁移断言也假设旧文案。
+- 改动：
+  - 对 personal-search 条目存在性做保护；`load.paths`/`allow` 用可选链兜底；
+  - `web.fetch` 增加 `useTrustedEnvProxy: true`；
+  - systemPrompt 断言改为“含 web_search 与 web_fetch 即视为已迁移”；
+  - `run-retrieval-host.mjs` 把 `HTTP(S)_PROXY`/`NO_PROXY` 从 env 文件透传给隔离进程。
+- 验证：`chatbot/tests/acceptance/run-retrieval-smoke.mjs`（离线、无模型调用）通过 —— 隔离 Host 正常加载插件，
+  主人工具含 `web_search`/`web_fetch`/天气，群聊仅 `session_status`，`fetchConfig.useTrustedEnvProxy=true`。
+
+---
+
+## A7：`web_fetch` 是否传 `query` 的决策
+
+状态：**已决策，不新增参数**。
+
+- 事实：模型可用的 `web_fetch` schema 只有 `url`、`extractMode`、`maxChars`；
+  Host 调 Tavily extract 的 provider fallback 也只传 `{url, extractMode, maxChars}`。
+  带 `query` 的 `tavily_extract` 工具并未对模型开放（owner 工具列表中不存在）。
+- 因此 R6（传 `query` 片段化、可能造成“读到原文”的假象）在生产路径**不可达**。
+- 决策：不新增 `query` 参数；若将来要按 §九候选 2 做相关性裁剪，必须先做隔离实验证明
+  裁剪后仍能支撑事实核验，否则不采用。控制上下文仍以 `maxChars` 为准。
+
+---
+
+## B3 / B4：R1 并发误报与 R2 旧故障
+
+状态：**均已解决**（R1 实测；R2 结构性消失）。
+
+### R1：并发 `QUOTA_EXCEEDED`
+
+- 根因确认：`QUOTA_EXCEEDED` 来自 personal-search 的 `dist/quota.js` ——
+  `maxConcurrent` 默认 1，`inFlight >= maxConcurrent` 即抛 `QUOTA_EXCEEDED`（与每日额度无关）。
+  Host 原生 `web_search` 没有等价的单工具并发闸门。
+- 实测：隔离 Host 中并行执行两次 `web_search`（`Promise.all`），两次均成功返回
+  `provider=tavily, count=5, untrusted=true`，无任何拒绝。
+- 复现命令：`KURUMI_SMOKE_CONCURRENCY=1 node chatbot/tests/acceptance/run-retrieval-smoke.mjs`
+
+### R2：旧方案历史故障
+
+- `INVALID_RESPONSE` 与来源域名改写逻辑都位于 personal-search 的
+  `deepseek-client.js` / `parser.js`；插件已停用且未加载（隔离工具列表无 `personal_web_search`），
+  因此这些故障在新链路中**结构性不可达**，无需再逐条复现。
+
+---
+
+## B1 / T4：`deepseek-v4-flash` 对照
+
+状态：**已完成**。
+
+- 命令：`KURUMI_T3_MODEL=deepseek-search/deepseek-v4-flash node chatbot/tests/acceptance/run-retrieval-t3.mjs`
+- 条件与 T3 相同：同一套 6 题、同一 SYSTEM、`web_fetch` 上限 60,000 字符。
+- 结果：预期符合 6/6（按"是否触发搜索"）；中位数 68.3s；6 题合计 421.9s。
+  - Q1 55.4s / Q2 80.0s / Q3 68.3s / Q4 **210.9s（超 10 步工具预算，无最终答案）** / Q5 3.3s / Q6 3.9s。
+- 结论：`deepseek-v4-flash` 能正确调用工具并给出带来源的答案，可作 fallback；
+  但工具纪律明显弱于 terra（Q4 用 30 次调用仍不收敛），且 `input` 只有 text（R4），不适合当主模型。
+- 另注：2 次 `web_fetch` 失败（`sqlite.org/changes.html` 当时约 20s、axios 直连 000），
+  属站点慢/不可达；`sqlite.org/changes.html` 复测为 200（19.5s）。
+
+---
+
+## B2 / T-B：主备模型落地
+
+状态：**已完成并验证**。
+
+- `openclaw.json`：`agents.defaults.model` 由
+  `{primary: naiccc/gpt-5.6-terra, fallbacks: [naiccc/gpt-5.6-terra]}`（重复、无故障转移）
+  改为 `{primary: naiccc/gpt-5.6-terra, fallbacks: ["deepseek-search/deepseek-v4-flash"]}`。
+- 备份：`openclaw.json.bak.before-B2-*`。
+- 验证：重启后 `openclaw models list` 显示
+  `naiccc/gpt-5.6-terra` = default，`deepseek-search/deepseek-v4-flash` = fallback#1；Gateway active。
+
+---
+
+## D 组：条件项结论（2026-10-01）
+
+D 组均为"触发条件满足才做"的条目，本次逐条核对，**当前均无需实施**：
+
+| 条目 | 触发条件 | 现状 |
+| --- | --- | --- |
+| 浏览器重评（§5.1） | 出现 `web_fetch` 确实读不到、且无法从别处获得的真实场景 | 未出现；`browser.enabled` 维持 `false` |
+| 搜索服务备选（§4.3 备选路径） | T3 不通过 | T3 能力通过，未触发；Tavily 保持 |
+| Exa / Brave+代理 | Tavily 不可用 | Tavily 直连正常（0.7–4s） |
+| R3 DeepSeek/Terra 模型原生搜索 | 需改 Host | 本次不做，仅记录 |
+| §5.2 非目标 | —— | 不新增领域工具、不写长期记忆、不重建抓取器/任务引擎，维持不变 |
+
+---
+
+## C 组：速度优化
+
+状态：**已完成并通过同日对照**。
+
+### 方案
+
+1. `tools.web.fetch.maxChars` / `maxCharsCap`：60,000 → 15,000（R9）。
+2. `channels.qqbot.systemPrompt` 增加检索预算与权威页指引（R10）：
+   "检索要节约：先用一次搜索定位来源，优先打开最权威的一手页面（官方站点、发布说明）
+   核实关键事实；同一事实不要反复抓取多个页面，通常不超过 3 次搜索和 3 次抓取就应作答。"
+3. 未采用 §九候选 2（传 `query` 相关性裁剪，R6 风险）与候选 5（Host `web_search`
+   未透出 Tavily `answer` 字段，不可用）。
+
+### 测试
+
+`chatbot/tests/acceptance/run-retrieval-t3.mjs` 增加三个可选旋钮（默认值复现原 T3）：
+`KURUMI_T3_MAXCHARS`、`KURUMI_T3_PROMPT_EXTRA`、`KURUMI_T3_LABEL`。
+
+| 组 | 条件 | 中位数 | 合计 | 预期符合 | Q1 |
+| --- | --- | --- | --- | --- | --- |
+| control | 60k、无预算 | 149.7s | 764.8s | 6/6 | 171.6s / 5 调用 |
+| treatment | 15k、有预算 | **92.3s** | 415.0s | 6/6 | **58.9s / 3 调用** |
+
+- 正确性未降：Q1 两次都给出 3.53.4 / 2026-07-24 与真实 sqlite.org URL；Q5/Q6 保持沉默。
+- **重要说明**：历史 T3 中位数 65.8s 与今日不可直接比较 —— 同日同配置 control 测得 149.7s，
+  说明当天网络/模型侧整体变慢。因此采用"同日 control vs treatment"作为判据，而非直接对齐 65.8s。
+- **2026-10-01 定稿**：主人已与中转站确认当晚为**网络侧问题**，"能正常作答即可"。
+  故 C 组**判定通过**，同日对照为最终判据，65.8s 绝对值作废。
+- 生产验证：隔离会话真实链路 Q1 正确、5 次调用、0 失败；`web_fetch` 返回
+  `length:15000, truncated:true`（模型请求 20000/30000 被上限截断）。
+
+### 改动文件
+
+- `openclaw.json`：`tools.web.fetch.maxChars/maxCharsCap=15000`；systemPrompt 追加预算句。
+- `chatbot/tests/acceptance/retrieval-config.mjs`：隔离配置同步为 15,000。
+- `chatbot/tests/acceptance/run-retrieval-t3.mjs`：新增三个测试旋钮。
+- 备份：`openclaw.json.bak.before-C-*`。
+
+---
+
+## 返工与失败记录（明确区分"失败"与"最终结论"）
+
+| 时间 | 失败/失误 | 原因 | 处理 |
+| --- | --- | --- | --- |
+| 2026-10-01 | T4 首次启动即失败（`MODULE_NOT_FOUND`） | 命令误用相对路径 `/home/afrangry/chatbot/...`，实际在 `/home/afrangry/.openclaw/chatbot/...` | 改用绝对路径重启；该次**未产生任何 API 调用**，无副作用 |
+| 2026-10-01 | T4 报告 `label`/`maxChars` 为 `undefined` | 在 T4 进程启动**之后**才给脚本加这两个字段，Node 已加载旧代码 | 不影响条件一致性（旧代码即 60k / 无预算，与 T3 相同）；C 组运行已带全字段 |
+| 2026-10-01 | Host 集成 harness 首次 `passed:false`（Q1 日期断言） | **测试断言过严**：旧正则 `2026.{0,2}7.{0,2}24` 不容忍空格，实际答案是"2026 年 7 月 24 日"；**产品答案本身正确**（3.53.4 / 官方 URL） | 修正为 `/2026\s*[-/年]?\s*0?7\s*[-/月]?\s*24/` |
+| 2026-10-01 | Host 集成 harness 第二次 `passed:false`（Q6 天气 `result.ok===true`） | **harness 环境缺 QQ 会话投递元数据**：Host 用 `deliveryContextFromSession(sessionEntry)` 构造工具上下文，隔离 harness 直接调用工具、未 seed 会话条目，天气插件 owner 闸门返回 `forbidden_context` | 该断言与检索无关；改为只断言"调用过天气工具且未搜索"。天气 owner 闸门在生产的真实 QQ 链路中另行验证 |
+
+其余未成功的中间态：Host 集成 harness 的这两次失败**均非产品缺陷**，最终修正后全绿（见下）。
+
+### 最终集成验收（2026-10-01）
+
+`node chatbot/tests/acceptance/run-retrieval-host.mjs` → 全绿：
+
+| 项 | 结果 |
+| --- | --- |
+| Q1（搜索 + 读原文） | 通过，15.7s，调用 `web_search` + `web_fetch`，答案 3.53.4 / 2026-07-24 / 官方 URL |
+| Q5（基础概念，不应搜索） | 通过，7.5s，0 工具调用 |
+| Q6（天气，不应搜索） | 通过，10.4s，仅调用 `personal_weather_get_brief` |
+| 并行 `web_search` | 通过（2 次并发均成功，provider=tavily） |
+| `web_fetch` 上限 | `length: 15000, truncated: true`（生产配置 15k 生效） |
+| 私网地址拦截 | 通过（`http://127.0.0.1:18789` 被 SSRF 防护拒绝） |
+| 群聊工具面 | 仅 `session_status`；`web_search`/`web_fetch` 被群聊 `tools.deny` 移除 |
+| 插件加载 | 无 error 插件（4 个：qqbot、tavily、personal-weather、personal-confirmation） |
+
+报告：`/tmp/kurumi-retrieval-host-w7CjOy/report.json`
+
+---
+
+## 文档整理（2026-10-01，主人确认"只清孤儿"）
+
+`docs/verification/` 原为 44 个文件平铺。全仓库检索后确认 **5 个文件零引用**，已移入
+`docs/archive/verification/`（并附 README 说明来由与恢复方法）：
+
+- `planning-contract-a.json`、`planning-contract-b.json`
+- `natural-language-planning-a.json`、`natural-language-planning-b.json`
+- `natural-language-reminder-b.json`
+
+未清理的部分及原因：
+
+- 其余证据文件均被 `docs/verification/2026-09-10_文档与现状复核.txt` 引用，移走会产生死链，
+  收益低于风险，故保持原地。
+- `natural-language-reminder-a.json` 看似同类，但**仍被引用**，保留。
+- `2026-09-30_Codex与OpenClaw原生搜索对照.txt` 虽无引用，但它是**分析文档而非验收证据**，
+  且与本文档主题直接相关：已改为在 `8_检索功能重构.txt` 的"依据"中引用，**未归档**。
+
+结果：`docs/verification` 顶层 44 → 39；`docs/archive/verification` 5 + README。
+| 2026-10-01 | A2 排查时 `.env` 的 `QWEN_TOKEN_PLAN_API_KEY` 明文出现在工具输出 | 对 `.env` 直接 grep 打印 | 该 key 已随 A2 停用；**主人决定不轮换**（不分享会话记录） |

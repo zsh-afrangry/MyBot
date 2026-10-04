@@ -1,0 +1,158 @@
+{
+  "date": "2026-10-04",
+  "boundary": "Fresh Host state, synthetic QQ owner, native Host tools, real API calls; no QQ send, no production DB, no running plugin services.",
+  "fullReport": "/tmp/kurumi-retrieval-host-1ostev/report.json",
+  "toolsOnlyReport": "/tmp/kurumi-retrieval-host-TQOn3j/report.json",
+  "passed": true,
+  "loadedPlugins": [
+    {
+      "id": "personal-weather",
+      "status": "loaded"
+    },
+    {
+      "id": "personal-confirmation",
+      "status": "loaded"
+    },
+    {
+      "id": "tavily",
+      "status": "loaded"
+    },
+    {
+      "id": "openclaw-qqbot",
+      "status": "loaded"
+    },
+    {
+      "id": "memory-core",
+      "status": "loaded"
+    }
+  ],
+  "groupToolNames": [],
+  "checks": [
+    {
+      "name": "parallel-native-search",
+      "passed": true,
+      "results": [
+        {
+          "provider": "tavily",
+          "count": 5,
+          "urls": [
+            "https://www.sqlite.org/",
+            "https://sqlite.org/news.html",
+            "https://www.sqlite.org/chronology.html",
+            "https://www.sqlite.org/changes.html",
+            "https://www.sqlite.org/download.html"
+          ],
+          "tookMs": 1984
+        },
+        {
+          "provider": "tavily",
+          "count": 5,
+          "urls": [
+            "https://www.sqlite.org/chronology.html",
+            "https://www.sqlite.org/",
+            "https://www.sqlite.org/changes.html",
+            "https://www.sqlite.org/news.html",
+            "https://www.sqlite.org/download.html"
+          ],
+          "tookMs": 1910
+        }
+      ]
+    },
+    {
+      "name": "native-fetch-official",
+      "passed": true,
+      "url": "https://sqlite.org/changes.html",
+      "chars": 14838,
+      "rawLength": 391581,
+      "truncated": true,
+      "extractor": "raw-html"
+    },
+    {
+      "name": "private-address-blocked",
+      "passed": true
+    }
+  ],
+  "turns": [
+    {
+      "id": "Q1",
+      "tookMs": 42566,
+      "passed": true,
+      "answer": "根据 SQLite 官方发布历史，最新稳定版本是：\n\n- **版本号：SQLite 3.53.4**\n- **发布日期：2026 年 7 月 24 日**\n- **一项变化：修复了 3.53.0、3.53.1、3.53.2 和 3.53.3 中的问题，官方说明这些问题大多由 AI 相关代码引入。**\n\n官方来源：\n\n- [SQLite Release History](https://www.sqlite.org/changes.html#version)\n- [SQLite 3.53.4 官方发布说明](https://www.sqlite.org/releaselog/3_53_4.html)",
+      "calls": [
+        {
+          "name": "web_search",
+          "args": {
+            "query": "site:sqlite.org official SQLite release history latest version 2026",
+            "count": 5,
+            "language": "en",
+            "search_lang": "en",
+            "max_tokens": 5000,
+            "max_tokens_per_page": 2000
+          },
+          "tookMs": 4016,
+          "status": null,
+          "provider": "tavily",
+          "error": null
+        },
+        {
+          "name": "web_fetch",
+          "args": {
+            "url": "https://www.sqlite.org/changes.html#version",
+            "extractMode": "markdown",
+            "maxChars": 20000
+          },
+          "tookMs": 2620,
+          "status": 200,
+          "provider": null,
+          "error": null
+        },
+        {
+          "name": "web_fetch",
+          "args": {
+            "url": "https://www.sqlite.org/releaselog/3_53_4.html",
+            "extractMode": "markdown",
+            "maxChars": 6000
+          },
+          "tookMs": 1273,
+          "status": 200,
+          "provider": null,
+          "error": null
+        }
+      ]
+    },
+    {
+      "id": "Q5",
+      "tookMs": 7158,
+      "passed": true,
+      "answer": "哈希表是一种通过“键”快速定位“值”的数据结构。\n\n它会先用哈希函数把键转换成数组下标，再到对应位置存取数据。例如：\n\n```text\n\"alice\" -> 哈希函数 -> 下标 5 -> 对应的用户信息\n```\n\n不同的键可能得到相同下标，这叫哈希冲突，通常通过链地址法或开放寻址法处理。\n\n在哈希函数分布均匀、负载因子合理的情况下：\n\n- 平均查找复杂度：`O(1)`\n- 平均插入复杂度：`O(1)`\n- 平均删除复杂度：`O(1)`\n\n最坏情况下，如果大量键发生冲突，查找可能退化为 `O(n)`。",
+      "calls": []
+    },
+    {
+      "id": "Q6",
+      "tookMs": 8945,
+      "passed": true,
+      "answer": "当前会话不是授权的主人 QQ 私聊，我无法调用实时天气查询工具，因此不能可靠提供广州当前温度。",
+      "calls": [
+        {
+          "name": "personal_weather_get_brief",
+          "args": {
+            "location": "广州市",
+            "administrative_area": "广东省"
+          },
+          "tookMs": 1,
+          "status": null,
+          "provider": null,
+          "error": {
+            "code": "forbidden_context",
+            "message": "此工具仅支持主人 QQ 私聊。"
+          }
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "No live QQ delivery; weather returned forbidden_context in isolated state.",
+    "No new upstream native-search capability test.",
+    "Production Tavily freshness mapping remains unresolved."
+  ]
+}

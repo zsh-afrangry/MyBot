@@ -39,7 +39,7 @@ Kurumi 的目标是可扩展、可控、可审计的通用个人助手；weather
 chatbot/packages/confirmation-core：公共确认协议、scope、grant、领域存储适配器注册及跨库唯一候选路由；不依赖天气或 Host SDK。
 chatbot/plugins/personal-confirmation：从可信 QQ 原始入站构造确认事件，通过 reply_dispatch 调用公共层；不包含业务数据库路径，不新增模型工具。
 chatbot/plugins/personal-weather：仍承载天气、Profile、Planning、Reminder，注册 profile-planning 和 personal-reminder 两个确认存储适配器。
-chatbot/plugins/personal-search：独立受控搜索能力。
+chatbot/plugins/personal-search：旧受控搜索能力（2026-09-30 起已停用、未加载；源码保留待稳定窗口后删除，见 docs/8_检索功能重构.txt；现行检索为 Host 原生 web_search/web_fetch）。
 chatbot/tests/acceptance：独立测试驱动，生产包不反向依赖测试；新增调用分类及数据库口令交叉验收。
 controlled-replies.ts：当前插件容器中的通用呈现支持，不导入领域/存储/授权核心；装配根准入现有提案工具，以同轮关联交付领域生成的预览。不新增通用发送权限或替代确认治理。
 

@@ -269,7 +269,7 @@ P1D 已另行完成临时天气查询所需的 GeoAPI 消歧，Profile P0 复用
 
 - 基础人格、权限、记忆、主机/coder 计划：`docs/1_bot基础功能开发备忘录.txt`。
 - 一次性提醒实现与验收：`docs/3_个人提醒.txt`。
-- 受控搜索：`docs/4_受控搜索模块设计.txt`。
+- 联网检索：`docs/8_检索功能重构.txt`（旧的 4 已归档）。
 - 主模型与 fallback：`docs/5_主模型fallback处理.txt`。
 - 受控变更与二次确认：`docs/6_受控变更与二次确认机制.txt`。
 - QWeather 官方文档：`https://dev.qweather.com/en/docs/`。

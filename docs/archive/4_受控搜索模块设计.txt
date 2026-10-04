@@ -1,9 +1,14 @@
-kurumi 受控搜索模块设计（MVP）
+kurumi 受控搜索模块设计（MVP）【已归档 2026-10-01】
+
+> **本模块已于 2026-09-30 被《8_检索功能重构》取代，2026-10-01 归档。**
+> 新链路：Host 原生 `web_search`（provider=tavily）+ `web_fetch` 读原文；
+> personal-search 插件已停用（源码保留，可回滚）。
+> 现行契约、变更记录与遗留问题一律以 `docs/8_检索功能重构.txt` 为准；
+> 本文仅作为旧方案（`personal_web_search` → DeepSeek Search Worker）的历史记录保留，不再维护。
 
 首次立项：2026-08-12
-最后更新：2026-09-10（现状和历史验收范围校准）
-状态：受控搜索已实现且早期 QQ 成功样本存在；后续出现 INVALID_RESPONSE、重复调用与来源改写，尚未闭环。
-当前优先复现已有问题，质量、留存和多账号治理尚不足以完全归档。
+最后更新：2026-10-01（归档；正文内容停留在 2026-09-10）
+状态：**已归档**，不再维护。
 9 月 10 日 D6：实际 DeepSeek 单条公开查询 completed，现有 parser 返回 3 个有效来源；未复现 INVALID_RESPONSE。证据 docs/verification/search-provider-acceptance.json；单样本不代表长期可用率或完整 Host/QQ 结果保真。
 D7 补充：完整默认 Agent 经 QQ 同款缓冲分发，只调用一次搜索，回复保留全部 4 个来源 URL 且无替换/新增；证据 docs/verification/search-agent-acceptance.json。采用明确保真要求的单样本，QQ 网络未测。
 

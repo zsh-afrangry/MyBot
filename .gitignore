@@ -26,3 +26,19 @@ chatbot/SOUL.md
 **/dist/
 *.log
 .DS_Store
+
+# Host-generated state, credentials, caches and local recovery copies
+/.codex/
+/backups/
+/cache/
+/completions/
+/config-journal-fingerprint.key
+/exec-approvals.json
+/plugin-skills/
+/qqbot/
+/session-sqlite-migration-runs/
+/tmp/
+/chatbot/DREAMS.md
+/chatbot/openclaw-workspace-state.json.migrated.*
+/chatbot/plugins/personal-weather/dist.bak.*/
+/chatbot/plugins/personal-weather/src.bak.*/
