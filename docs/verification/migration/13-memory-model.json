@@ -1,0 +1,25 @@
+{
+  "boundary": "Synthetic owner, real model/tools, captured output. Only synthetic memory facts recorded in evidence.",
+  "originalCount": 6,
+  "beforeHash": "54b3f74d7997f61b7b11f204bd709ce4002903377e4ca06bce469f8f5bd77809",
+  "testId": "c480712d15d5",
+  "created": true,
+  "deniedReply": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "后端已拒绝，错误为：需要本次主人原文明确要求记住、更正或忘记。\n\n本次未写入任何记忆。"
+      }
+    ]
+  },
+  "noWebPromotion": true,
+  "updated": true,
+  "searched": true,
+  "deleted": true,
+  "afterHash": "54b3f74d7997f61b7b11f204bd709ce4002903377e4ca06bce469f8f5bd77809",
+  "passed": true,
+  "backendRejection": "需要本次主人原文明确要求记住、更正或忘记"
+}

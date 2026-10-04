@@ -1,0 +1,12 @@
+✔ persistent create, idempotent replay, revision checked edit and complete deletion (17.032744ms)
+✔ requires exact current owner fact and rejects secrets, stale or consumed intent (4.032504ms)
+✔ unmanaged files and symlinks cannot be overwritten; private file mode persists (3.74069ms)
+✔ original-message intent binds owner, route, freshness and never quoted instructions (0.488519ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 88.266625

@@ -1,0 +1,1 @@
+{"id":"kurumi-memory","name":"Kurumi explicit memory","configSchema":{"type":"object","properties":{},"additionalProperties":false},"contracts":{"tools":["kurumi_memory"]},"toolMetadata":{"kurumi_memory":{"optional":true}}}
