@@ -1,0 +1,16 @@
+✔ Owner and endpoint validation fail closed (1.558424ms)
+✔ Reject group, stranger, self, wrong bot, malformed event (1.112306ms)
+✔ CQ text is literal, not metadata (0.30148ms)
+✔ Durable ingress and egress survive restart, unknown cannot be reserved again (31.386661ms)
+✔ Unicode chunking never breaks surrogate pairs (0.35029ms)
+✔ Media rejects arbitrary files and symlink escapes (0.788724ms)
+✔ Real HTTP adapter validates private target, sends literal segments, deduplicates (61.246137ms)
+✔ Inbound dispatch uses trusted sender, core route and only final delivery (30.963856ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 202.075455

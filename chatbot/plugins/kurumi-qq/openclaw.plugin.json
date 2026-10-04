@@ -1,0 +1,59 @@
+{
+  "id": "kurumi-qq",
+  "channels": [
+    "kurumi-qq"
+  ],
+  "name": "Kurumi QQ",
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "channelConfigs": {
+    "kurumi-qq": {
+      "schema": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "ownerId": {
+            "type": "string"
+          },
+          "httpUrl": {
+            "type": "string"
+          },
+          "wsUrl": {
+            "type": "string"
+          },
+          "httpTokenFile": {
+            "type": "string"
+          },
+          "wsTokenFile": {
+            "type": "string"
+          },
+          "stateDir": {
+            "type": "string"
+          },
+          "mediaRoot": {
+            "type": "string"
+          },
+          "sendLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 10
+          },
+          "chunkLimit": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 4000
+          },
+          "testIngress": {
+            "type": "boolean"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "limit": 10,
+  "reserved": 1,
+  "receipts": [
+    {
+      "id": "in:1794511189:365999865:-1900000001:0:0",
+      "status": "sent",
+      "message_id": "-698488006",
+      "at": 1791149864347,
+      "readback": {
+        "messageId": -698488006,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    }
+  ]
+}

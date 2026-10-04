@@ -1,0 +1,11 @@
+{
+  "boundary": "Synthetic owner event via operator.admin test RPC; real installed Gateway, model and real QQ output; not live human inbound",
+  "startedAt": "2026-10-04T21:37:38.343Z",
+  "result": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865"
+  },
+  "repeat": {
+    "duplicate": true
+  }
+}
