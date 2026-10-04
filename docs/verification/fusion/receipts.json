@@ -1,6 +1,6 @@
 {
   "limit": 10,
-  "reserved": 5,
+  "reserved": 7,
   "receipts": [
     {
       "id": "in:1794511189:365999865:-1900000001:0:0",
@@ -63,6 +63,32 @@
       "at": 1791150391523,
       "readback": {
         "messageId": 1368284852,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "ab0f33a4-2af7-4321-a0a0-0c810c62fea4:0",
+      "status": "sent",
+      "message_id": "-2109160566",
+      "at": 1791150880284,
+      "readback": {
+        "messageId": -2109160566,
+        "type": "private",
+        "segments": [
+          "text"
+        ]
+      }
+    },
+    {
+      "id": "55d82aff-abbf-444a-8095-66c37ab1aee2:0",
+      "status": "sent",
+      "message_id": "-958352859",
+      "at": 1791151184382,
+      "readback": {
+        "messageId": -958352859,
         "type": "private",
         "segments": [
           "text"

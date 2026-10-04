@@ -16,7 +16,7 @@ export default {id:'kurumi-tasks',name:'Kurumi native task sessions',register(ap
    const key=createHash('sha256').update(ctx.sessionId+':'+callId).digest('hex').slice(0,24);
    result=await call('agent',{agentId:'worker',sessionKey:prefix+key,message:args.task,deliver:true,replyChannel:'kurumi-qq',replyTo:'user:'+cfg.channels['kurumi-qq'].ownerId,replyAccountId:'default',idempotencyKey:key,timeout:180});
   }else{
-   if(!new RegExp('^'+prefix+'[a-f0-9]{24}$').test(args.sessionKey??'')||!/^[a-f0-9-]{36}$/.test(args.runId??''))throw Error('Invalid task identity');
+   if(!new RegExp('^'+prefix+'[a-f0-9]{24}$').test(args.sessionKey??'')||!/^(?:[a-f0-9]{24}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.test(args.runId??''))throw Error('Invalid task identity');
    const saved=fs.existsSync(cfg.channels['kurumi-qq'].stateDir+'/task-receipts.jsonl')?fs.readFileSync(cfg.channels['kurumi-qq'].stateDir+'/task-receipts.jsonl','utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
    if(!saved.some(x=>x.action==='start'&&x.result?.runId===args.runId&&x.result?.sessionKey===args.sessionKey))throw Error('Task run/session binding mismatch');
    result=args.action==='status'?await call('agent.wait',{runId:args.runId,timeoutMs:0}):args.action==='cancel'?await call('chat.abort',{sessionKey:args.sessionKey,runId:args.runId}):(()=>{throw Error('Unknown task action');})();

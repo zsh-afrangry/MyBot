@@ -1,110 +1,160 @@
 # QQ 融合助手架构与开发计划
 
-现在应该从哪里继续：在 /home/afrangry/kurumi-fusion 实现薄 QQ 频道插件，完成离线契约测试后配置独立 Gateway。
+现在应该从哪里继续：在 `/home/afrangry/kurumi-fusion` 做主人真实 QQ 交互验收，再按下方产品化 TODO 逐项推进；今晚的隔离融合原型已经完成技术验收，不能当作全部功能迁移完毕。
 
 ## TODO 与当前状态
 
-- [x] 完成两套架构验证，明确 OpenClaw 主干、SnowLuma OneBot 通道的目标。
-- [x] 收尾原 OpenClaw 工作区，基线提交 `e903c09`，标签 `baseline/pre-integration-2026-10-05`。
-- [x] 阅读 `docs/tp2.txt`，建立本状态文档。
-- [x] 创建源码副本 `/home/afrangry/kurumi-fusion`，分支 `integration/onebot`；运行目录 `/home/afrangry/.openclaw-fusion` 已创建，配置隔离仍在实现。
-- [x] 核查并实测当前频道 SDK、Host 路由与发送接口；现有业务确认核心的频道迁移仍待后续验证。
-- [x] 复制 md-to-plain.js 与许可证，SHA-256 记录于插件 src/vendor/ORIGIN.md；原件未修改。
-- [ ] 打通真实 QQ 入站、Kurumi 会话、文本/引用/图片出站的纵向原型。
-- [ ] 验证聊天插话、后台任务、取消和结果归属，避免长任务堵塞主对话。
-- [ ] 接入统一提醒及投递状态，验证创建/修改/取消、重启、断线和重复发送边界。
-- [ ] 精简人格与能力注入，验证记忆边界、代码工作区和论文来源。
-- [ ] 分阶段提交，记录验收、可恢复点、剩余阻塞和次日交接。
+- [x] 保存旧 OpenClaw 基线、清理 Git；两套原件保留，独立源码与运行目录已建立。
+- [x] 写出并实测 OpenClaw 唯一宿主 + SnowLuma OneBot 频道的主路径。
+- [x] 合成可信入站经过真实 Host/模型，真实本人 QQ 文本、引用、图片出站；重复入站拒绝。
+- [x] 后台代码修复与主聊天并行、实际执行固定测试、查询/取消、QQ 结果回传。
+- [x] 原生提醒创建/修改/取消；确定性 command 提醒跨重启投递；聊天创建的 agentTurn 提醒到点投递。
+- [x] 公开论文搜索、读取 arXiv 原页面、给出来源并声明只读摘要。
+- [x] 15 项融合离线测试通过；关闭测试 RPC；轮换合成测试会话；核查无启用中定时任务。
+- [ ] 主人亲自发 QQ 文本、引用、新上传图片，检查自然对话手感与连发体验。
+- [ ] 从旧交互代码逐项迁入语义分段、表情选择与节奏控制；目前只有格式化、长度分段及图片传输。
+- [ ] 把代码样例工作区扩展为明确的项目注册表，增加每项目检查命令、任务状态入口及更强执行隔离。
+- [ ] 把长篇论文研究接入独立任务会话，验收 PDF 全文、引用位置和研究中插话；目前搜索在主会话完成。
+- [ ] 迁移天气/Profile/行程，适配新频道可信身份后回归原确认核心；当前融合实例尚未加载这些领域插件。
+- [ ] 接入主人可查看/更正/删除的长期偏好记忆，验证网页与临时聊天不会自动晋升；目前自动记忆关闭。
+- [ ] 补自然语言确定性提醒的正式服务接口、异常提示和运维界面，再制定常态外发配额与 systemd 上线方案。
 
-## 背景与目标
+以上未完成项是后续产品化工作，不是需要主人替我做技术选择的阻塞。唯一必须由主人参与的是实际 QQ 操作与陪伴风格的主观反馈。推荐先试用基本闭环，再逐项迁移，不一次搬入旧系统全部规则。
 
-用户需要一个统一的个人 AI 助手，覆盖 QQ 聊天、情感陪伴、维护代码、查论文、天气、行程与提醒。迁移成本权重低于长期体感、维护复杂度和二次开发难度。
+## 架构取舍与原因
 
-已完成架构验证：DSH 和 OpenClaw 均能完成同题小型代码修复；DSH 官方 schedule 支持跨重启唤醒，但投递回执只代表会话入队，模型故障可导致没有最终提醒。OpenClaw 的确认、调度和确定性提醒路径更适合本目标。真实 OneBot 文本、图片和隔离 OpenClaw 定时投递均成功，尚未证明正式频道双向集成与长期稳定性。
+**采用 OpenClaw 作为唯一助手宿主，Kurumi 作为人格与能力组织层，SnowLuma 作为 QQ 传输。暂不把 DSH 再嵌入 OpenClaw。**
 
-完整依据：`/home/afrangry/snowluma/architecture-evaluation/REPORT.md`；收尾依据：`/home/afrangry/.openclaw/docs/verification/2026-10-05_融合前基线收尾.md`。
-
-## 已确定的架构与保护边界
-
-1. OpenClaw 是唯一助手宿主，负责会话、工具循环及统一调度；Kurumi 承载人格和领域能力。第一阶段不增加 DSH 第二核心。
-2. SnowLuma/OneBot 负责 QQ 接入。融合频道负责身份映射、引用、分段、图片、表情及投递接口，不另建任务和记忆系统。
-3. 保留现有两套方案作为回退基础。`/home/afrangry/snowluma` 与 `/home/afrangry/桌面/qq-bridge` 原件不参与改造；复制必要配置和交互实现后在融合副本开发。
-4. 用户明确当前没有生产环境，旧服务可按需停止。停止不等于删除，不允许为方便开发覆盖旧配置或旧状态。启动新 QQ 消费者前先确定旧消费者状态，避免双回复。
-5. 原 OpenClaw 的源码通过基线标签保留，私有配置另有完整备份。开发优先使用独立副本及独立可写状态；具体路径在创建成功后更新，不能把计划路径写成已完成产物。
-6. 配置可复用其结构与必要凭证引用，但新旧实例不得共用可写数据库、会话、任务表或相互冲突的端口。
+判断依据不是迁移成本：新频道已经复现真实文本/引用/图片投递，OpenClaw 的原生会话和调度也实际承担了后台代码任务、取消和提醒，因此没有必要同时维护两套会话、任务、记忆与故障状态。DSH 的交互优点优先在频道层复用；若以后出现原生宿主确实不能满足的任务，再评估是否需要外部执行器。
 
 ```mermaid
 flowchart TD
-  QQ[QQ] <--> S[SnowLuma / OneBot]
-  S <--> C[Kurumi QQ 频道]
-  C <--> O[OpenClaw 唯一宿主]
-  O <--> P[人格 / 偏好 / 记忆]
-  O --> W[独立代码与研究任务会话]
-  O --> T[统一调度与任务状态]
-  O --> B[天气 / 论文 / 提醒等领域能力]
-  W --> D[统一结果投递]
-  T --> B
-  B --> D
+  Q[主人 QQ 私聊] <--> S[SnowLuma / OneBot]
+  S <--> C[Kurumi QQ 频道：身份、媒体、分段、回执]
+  C <--> O[OpenClaw：主会话 / 工具 / 原生调度]
+  O --> P[简短人格与行为提示]
+  O --> W[独立代码任务会话]
+  O --> R[原生 web_search / web_fetch]
+  O --> T[原生 Cron / automations]
+  W --> D[Host 结果投递]
+  T --> D
   D --> C
+  O -. 后续 .-> M[可管理的长期记忆]
+  O -. 后续 .-> B[天气 / Profile / 行程]
+  O -. 后续 .-> L[独立长篇研究会话]
 ```
 
-模块表示职责，不要求各自常驻一个服务。简单提醒按确认后的确定内容定时发送；需要实时资料的任务才调用专业数据和模型。权限按身份、上下文和已授权任务范围管理，不把每个常规可逆操作都变成重复确认。
+新代码只补频道与薄任务适配器；没有新建通用任务引擎、第二个调度器或人格记忆引擎。插件依赖当前已安装 OpenClaw 2026.9.7；升级前必须重跑契约验收，启动脚本会拒绝不匹配的 SDK 版本。
 
-## 当前产物与数据状态
+### 当前体验的实际边界
 
-- 原仓库：`/home/afrangry/.openclaw`，Git 根在这里，`chatbot/` 为其子目录。
-- 原源码基线：`e903c09`，基线前已有两个未推送提交；没有执行远端推送。
-- 完整私有备份：`/home/afrangry/kurumi-baselines/2026-10-05-before-integration/`，含 `history.bundle`、`working-tree.patch`、`status-before.z`、`openclaw-full.tar.gz`。备份在服务运行时采集，不宣称运行数据库具有跨库事务一致性。
-- 旧方案源码、配置、会话和领域数据库保留。本阶段未新建业务数据库或 SQL 表；融合数据清单、schema 与迁移策略须在实际探查后补齐。
-- 基线收尾验收：天气/规划/提醒离线测试 156 项通过；新增或修改 `.mjs` 语法检查通过。不能将此等同于融合后端到端验收。
+- 主聊天可快速接受代码任务后继续聊天；后台结果由 Host 直接回到同一主人。代码示例6项测试通过，取消确实终止运行。
+- 提醒支持自然语言管理，但 **agentTurn 提醒到点仍需模型可用**。不依赖模型的 command 提醒只验证了操作者创建路径，尚未完成自然语言管理接口。
+- 搜索是原生能力，论文样本验证的是元数据和摘要，不是 PDF 全文研究。搜索较慢时仍可能占用主会话。
+- 人格模板已精简，闲聊不强制任务化；陪伴质量尚无长周期或主人主观验收。不能据一次聊天声称已完成情感陪伴迁移。
+- worker 文件工具限制在样例工作区，没有通用 shell 工具；固定 Python 检查仍会执行项目代码，这不是完整的操作系统沙箱。
 
-## 自主开发与验收规则
+## 保护边界与精确路径
 
-用户授权自主探查、调研、实现、测试和技术取舍。实现选择优先采用可验证、依赖少、易回滚的方案。遇到局部阻塞先隔离，继续其他独立工作。
+| 用途 | 路径 / 状态 |
+| --- | --- |
+| 原 OpenClaw 源码 | `/home/afrangry/.openclaw`，Git 根在此；基线 `e903c09`，标签 `baseline/pre-integration-2026-10-05`；保留文档初稿后停在 `f8319c1` |
+| 原 SnowLuma | `/home/afrangry/snowluma`，源码/配置未参与改造，继续提供 QQ 传输 |
+| 原 qq-bridge | `/home/afrangry/桌面/qq-bridge`，源码/配置未修改；`qq-bridge.service` 已停止 |
+| 原完整备份 | `/home/afrangry/kurumi-baselines/2026-10-05-before-integration/`，含已验证 Git bundle、工作树差异、状态清单、完整运行目录 tar.gz |
+| 融合源码 | `/home/afrangry/kurumi-fusion`，独立 clone --no-hardlinks，分支 `integration/onebot`；不推送远端 |
+| 融合运行状态 | `/home/afrangry/.openclaw-fusion`，目录700、凭证600；Gateway `127.0.0.1:18890` |
+| 频道源码 | `/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-qq/` |
+| 任务适配器 | `/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-tasks/` |
+| 主人格模板 | `/home/afrangry/kurumi-fusion/scripts/fusion/templates/AGENTS.md`；运行副本在 `.openclaw-fusion/workspace/` |
+| 隔离代码样例 | `/home/afrangry/.openclaw-fusion/code-workspace`；固定测试原件在融合源码 `scripts/fusion/fixtures/test_stats.py` |
+| 验收证据 | `/home/afrangry/kurumi-fusion/docs/verification/fusion/` |
+| 早期架构对比 | `/home/afrangry/snowluma/architecture-evaluation/REPORT.md` |
 
-每个阶段开始前完整重读本文及对应模块文档。上下文压缩后先恢复用户需求、文档状态与 Git 状态。本文始终反映当前快照：已验证结果替换原计划；新结论替换旧结论。值得防止重犯的错误单列原因，不保留相互冲突的现状。
+**后续主要工作在 kurumi-fusion，不在原 `.openclaw` 中直接改造。本文是当前权威状态；原 `.openclaw/docs/9_...` 仅保留开始时的快照。**
 
-每个可验收阶段提交一次，提交说明写清行为、验证与限制；不得将未通过验收的功能描述为完成。不自动推送远端，不公开配置或私有状态。测试记录保存到明确、持久的位置，新增脚本/表注明用途，不创建随意命名的重复业务实现。
+运行时仍借用只读已安装 OpenClaw、ws 和 Tavily 插件包；这是同一台机器上的原型部署，还不是可搬机器的独立安装包。旧 OpenClaw 18789 与 DSH 仍可作为回退基础保留；新方案不调用 DSH。禁止同时启动旧 qq-bridge 和融合 QQ 消费者，启动脚本已检查旧 bridge 状态。
 
-核心验收场景：
+原始完整备份是在旧服务运行时采集，不能宣称跨数据库事务一致。融合副本已在停止18890进程后生成停机快照 `/home/afrangry/kurumi-baselines/2026-10-05-fusion-acceptance/runtime.tar.gz`，gzip完整性验证通过，SHA-256 `225eedd7cdd5186a1713b7766273b23ad30e3dd210b03aa67ee9d51cdacee34f`；不要混淆两种备份保证。
 
-- QQ 私聊准入、引用消息、连续输入、分段顺序、图片/表情，工具日志不泄漏到聊天。
-- 同一用户的主聊天与后台代码/论文任务相互隔离，取消和结果归属正确。
-- 提醒创建/原地修改/取消，重启后恢复；执行成功与发送成功分开；超时未知结果不盲目重发。
-- 不同身份/会话不能继承主人授权，现有确认核心的上下文绑定与防重放保持有效。
-- 论文输出有可核实来源；网页和任务资料不自动成为长期人格记忆。
-- 停止融合实例后，能恢复旧服务链路；固定版本并记录升级契约风险。
+## 数据与外发
 
-## 当前待确认与阻塞
+- `channel/channel.sqlite`：`inbound(id,status,at)` 存入站去重；`outbound(id,status,message_id,at)` 存投递预留和回执。不是业务记忆或第二套调度库。
+- Host 数据：`state/openclaw.sqlite` 与 `agents/{main,worker}/agent/openclaw-agent.sqlite`；不与旧目录共享可写数据库。
+- `channel/task-receipts.jsonl` 只保存任务工具的真实运行标识与结果，用于查询/取消时绑定 sessionKey/runId。Host 是运行状态事实来源。
+- `channel/native-tool-receipts.jsonl` 是验收记录，测试入口关闭后不再通过该 hook 写入。
+- 图片只允许已暂存文件或受限 QQ CDN 入站；正文中的 CQ 字符串不提升为可信控制段。引用只读取同一主人私聊的消息。
+- 发送仅允许 QQ 365999865，群与其他收件人均拒绝。**本轮真实外发7/10条，7条均有回执并回读。** 失败/未知尝试同样占用持久配额，重启不能绕过。
+- Host durable delivery ID 可用时作为幂等键；已成功的相同键复用回执。回执丢失则 unknown，不自动重发。没有 durable ID 的普通调用不能保证全局恰好一次。
+- 入站失败保留 failed，不自动重新运行可能已产生副作用的模型回合。下一阶段应补主人可见的诊断入口。
 
-尚无阻塞全部开发的事项。以下只限制相关动作，其他开发照常：
+## 验收证据与已修正的坑
 
-1. 用户已明确授权夜间本人 QQ 测试，最多 10 条，仅 QQ 365999865，禁止群和其他联系人。本轮融合测试已发送 5/10 条（此前架构验证四条不计入本轮）。实现持久计数，失败且送达未知的尝试也占用额度，防止重启或重试绕过上限。
-2. 用户已明确授权必要时依次使用两张重置卡；条件为可见额度窗口剩余严格低于 5%，且仍有必要工作未完成。任务提前完成不兑换。本轮尚未使用。
-后续无法自主解决的事项记录：具体问题、证据、已尝试方法、影响范围、推荐选项及需要用户提供的信息。次日集中交接；不要为了等待一个模块而停下全部可继续的开发。
+| 证据 | 已验证内容 / 限制 |
+| --- | --- |
+| `01-native-inbound.json` | 合成主人入站→真实Host/模型→本人QQ；重复事件拒绝 |
+| `02-channel-tests.txt` / `17-final-tests.txt` | 频道12项 + 任务3项；目标限制、去重、媒体边界、取消屏障、未知回执、防重复发送、错误状态、任务身份绑定 |
+| `03-native-media.json` | 暂存图片与引用进真实模型；真实QQ引用/文本/图片出站。尚非主人新上传图片 |
+| `04-native-cron.json` | 原生command任务创建、同ID修改、取消；跨重启后执行及投递成功 |
+| `05-native-concurrency.json` | 实际25秒慢工具启动，另一普通会话约2.1秒完成，慢会话取消成功 |
+| `06...` / `07...` / `08...` | 被放弃的自定义提醒封装与command管理失败证据，不是现行通过项 |
+| `09-native-agent-reminder.json` | 真模型通过automations创建、修改、取消、列表核对 |
+| `10-background-code.json` | QQ主会话启动后台代码修复；主聊天并行；后台结果本人QQ回传。首次未执行检查工具，报告如实披露 |
+| `11-worker-check.json` | 修正工具策略后，真实worker实际调用固定检查工具，6项通过；独立Python测试同样6项通过，测试文件哈希未变 |
+| `12-task-control.json` | 实际task工具status/cancel；aborted=true，终态error/stopReason=rpc，没有终态外发 |
+| `13-natural-reminder-delivery.json` | 聊天创建agentTurn提醒，实际到点succeeded/delivered，自动删除；并经QQ回读 |
+| `15-research.json` | 实际web_search + web_fetch读取arXiv，正确作者/年份/链接，明确只读摘要 |
+| `16-closeout.json` / `18-final-runtime.json` | 合成会话原生轮换、测试入口关闭且RPC不可调用、频道连接、无启用中任务、发送账本保留 |
+| `receipts.json` | 已发送7条的脱敏消息ID与实际回读段类型 |
 
-## 下一阶段
+需要保留的实现教训：
 
-已建立本会话持续目标，范围是可验收的融合原型与交接，不无限增加功能。源码在独立克隆开发，原 OpenClaw 工作区停留在 f8319c1。后续状态以本副本的文档9为准；新 QQ 消费者已运行，旧 bridge 已停止；下一步验证原生任务并发与受限提醒工具。
+1. 工具必须在 manifest 声明 `contracts.tools`；模型口头说“完成”不能代替实际调用。未注册慢工具时模型曾输出完成标记，测试按真实marker正确判失败。
+2. 每个工具作用域不能同时配置 allow 与 alsoAllow；多agent需 explicit ownership。coding profile 与 allow 求交会滤掉自定义检查工具；worker现用 full profile + 精确5项 allow，绝非全部开放。
+3. native agent 的 runId 可以是调用方24位幂等键，不能假定UUID。查询/取消同时校验已登记run/session配对。
+4. 原生 automations 禁止模型创建command；自定义封装缺少管理授权时不能伪装成功。未通过的封装已移除，没有向模型工具注入管理员凭证绕过边界。
+5. 一次性提醒自动删除后，不应再次无条件删除。首版验收清理脚本因此报错，后续按持久Cron记录核对，未重发。
+6. **关闭memory slot不自动删除以前登记的记忆整理Cron。** 收尾发现一条enabled的旧自动声明，已通过原生API移除并跨重启确认未再出现。三个disabled的heartbeat/skill review声明保留，无启用中任务。早先“列表为空”的说法已修正为“没有测试提醒/没有启用中任务”。
 
-## 阶段一当前实测
+## 启动、检查与回退
 
-- 源码：`/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-qq/`。状态：`/home/afrangry/.openclaw-fusion`。独立 Gateway 端口 18890；配置、凭证、会话和频道 SQLite 独立于旧方案。
-- 新频道已加载并连接真实 OneBot。旧 qq-bridge.service 已停止；SnowLuma/QQ 传输继续运行，配置未改。旧 OpenClaw、DSH 未停止。
-- 合成主人入站通过 operator.admin 测试 RPC 进入真实 Host 与模型，产生一条真实本人 QQ 回复；重复事件被拒绝，未重复发送。证据：`docs/verification/fusion/01-native-inbound.json` 和 `receipts.json`。尚非真实人类 QQ 新消息验收。
-- 八项离线契约测试通过，见 `docs/verification/fusion/02-channel-tests.txt`。媒体与引用的合成入站/真实模型/真实 QQ 输出已通过，见 03-native-media.json；尚未测试真实用户新上传图片。
-- 插件默认为最终回复投递，不外发推理和工具日志。当前工具受限，尚未开放代码与研究后台任务。
-- OpenClaw 会自动启用默认 memory-core；本副本已显式设置 memory slot 为 none，防止未验收的自动 dreaming 干扰原型。
+当前是手动启动的试运行，不安装新的开机服务。SnowLuma/QQ原服务继续运行；旧bridge仍有原自启设置，整机重启后先检查，不能直接再启动融合消费者。
 
-## 阶段二当前实测与修正
+```bash
+cd /home/afrangry/kurumi-fusion
+node scripts/fusion/link-dependencies.mjs
+systemctl --user stop qq-bridge.service
+node scripts/fusion/run-gateway.mjs
+```
 
-- 原生 Cron 创建、同 ID 修改、取消测试通过；保留任务跨 Gateway 重启后，原生 command 执行 succeeded，经过新频道投递 delivered，QQ 回读成功。证据：`docs/verification/fusion/04-native-cron.json`。这是操作者创建的确定性任务，不等于自然语言管理工具已经通过。
-- 最终采用原生 automations 管理自然语言提醒：真模型创建、修改、取消、list 验证通过，见 09-native-agent-reminder.json。使用 agentTurn + toolsAllow=[]，因此到点仍依赖模型。原生工具明确禁止 command payload；自定义封装虽能创建 command，但缺少管理授权，不能读取/修改它，故已停用并移除未发布封装，保留失败证据。没有通过管理员 token 绕过这一边界。确定性 command 提醒目前仅通过已验证的操作者路径创建；自然语言确定性提醒的正式服务接口列为后续待办。旧提醒领域模块和旧任务未改。
-- 并发首次测试因 Gateway 未就绪失败；第二次暴露清单缺少 contracts.tools，等待工具未注册。模型输出完成标记不算完成，测试正确失败。补齐清单后复测通过：慢会话实际进入25秒等待工具，独立快会话约2.1秒完成；随后 chat.abort 成功取消慢会话，agent.wait 返回终止错误。仅验证原生普通会话隔离，不冒充已经实现 QQ 主会话的任务委派交互。失败证据保留为 05-native-concurrency-*attempt.json。
-- 额度检查：剩余30%，两张重置卡均未使用。
+运行命令占用前台；不要同时重复启动。另一个终端只读检查：
 
-## 阶段三实施中
+```bash
+cd /home/afrangry/kurumi-fusion
+node scripts/fusion/probe-final.mjs
+node scripts/fusion/inspect-receipts.mjs
+```
 
-- 新增 `chatbot/plugins/kurumi-tasks/`，以受限工具启动 OpenClaw 普通后台任务会话，由 Host 管理运行与取消，不新增调度器。目标固定 worker、固定隔离代码工作区，出站固定本人。正在真模型联调，不计为已完成。
-- worker 工作区 `/home/afrangry/.openclaw-fusion/code-workspace`，文件工具限制在工作区；无通用 exec/网络/外发工具。固定测试能力只运行该目录的 Python unittest；测试脚本哈希须保持一致。
-- 本轮渠道增加 Host durable delivery ID 去重和发送前取消/权限撤销检查。九项离线测试通过，真实 Host 队列重试场景仍待验证，不能声称任何故障下都不丢不重。
+`probe-final` 的“无启用任务”断言仅适用于本轮空任务交接，日后用户真实创建提醒后应按业务状态查看，不能把存在合法提醒当故障。
+
+退回原 SnowLuma/DSH 链路：
+
+```bash
+cd /home/afrangry/kurumi-fusion
+node scripts/fusion/stop-gateway.mjs
+systemctl --user start qq-bridge.service
+```
+
+已实测融合停止后18890释放、再次启动连接正常。没有实际重启旧bridge做联网回滚验收，避免旧规则向未授权联系人或群发言。回退不需要删除融合目录或修改原件，也不需要 git reset --hard。
+
+新建运行目录时依次执行 `prepare.mjs`、`configure-worker.mjs`、`configure-research.mjs`；prepare拒绝覆盖既有文件。需要先由上述link脚本确认本机依赖版本。不要直接复制整套旧运行目录覆盖融合状态。
+
+## 自主开发规则与次日交接
+
+继续遵循 `docs/tp2.txt`：每阶段及压缩恢复后完整读本文；维护当前状态而不是堆叠相互矛盾的计划。独立阶段提交，验收结果有持久证据；不自动推送，不提交密钥、运行库或私人记忆。
+
+用户授权夜间本人QQ测试，禁止其他人/群。10条是本轮验收上限，当前尚余3条；长期使用前应另行制定常态策略，不擅自清空账本解除限制。
+
+两张重置卡仅在剩余额度严格低于5%、且仍有必要工作时依次使用；本轮在剩余4%、必要收尾尚未完成时使用了第一张，工具确认reset成功，第二张保留。任务结束后不继续消耗或兑换。
+
+明天无需先替我决定架构。推荐直接试三件事：发一张图片并引用它、闲聊中要求启动代码任务、创建一分钟后的简单提醒；具体发送次数仍受剩余配额限制。真正需要你反馈的是回复语气、分段节奏和主动程度。其他技术项按TODO和验收结果自主推进。

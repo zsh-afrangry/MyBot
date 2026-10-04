@@ -1,0 +1,29 @@
+{
+  "boundary": "Real model web_search + web_fetch, public paper metadata/abstract only, authenticated synthetic owner, captured reply. Does not test full PDF reading or systematic literature review.",
+  "reply": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "论文：**Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks**\n\n- **第一作者：** Patrick Lewis  \n- **首次提交年份：** 2020 年（v1 于 2020 年 5 月 22 日提交）  \n- **核心思路：** 将生成模型的参数化记忆与外部非参数化记忆结合：用神经检索器从 Wikipedia 的稠密向量索引中检索相关段落，再把这些段落提供给 Seq2Seq 生成器，从而提升知识密集型任务中的事实性、具体性和可更新性。论文比较了整段序列共享检索段落的 RAG-Sequence，以及每个 token 可使用不同检索段落的 RAG-Token。  \n- **原始链接：** https://arxiv.org/abs/2005.11401\n\n我实际读取的是 arXiv 原始页面的元数据和摘要，**没有读取完整论文正文**。"
+      }
+    ]
+  },
+  "receipts": [
+    {
+      "at": 1791151260576,
+      "tool": "web_search",
+      "query": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks arXiv original paper",
+      "error": null
+    },
+    {
+      "at": 1791151268797,
+      "tool": "web_fetch",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "error": null
+    }
+  ],
+  "passed": true
+}

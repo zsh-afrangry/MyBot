@@ -1,0 +1,102 @@
+{
+  "boundary": "Synthetic owner to real main model/task tool, ordinary worker session restricted to code fixture. Captured main acknowledgement, actual QQ terminal delivery requested.",
+  "startedAt": 1791150823945,
+  "testHash": "18475c232fd11df976fff6fe02bb8047ad9eb7cf030725027400ae295ddad478",
+  "start": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "【融合验收】后台任务已启动。"
+      }
+    ]
+  },
+  "task": {
+    "at": 1791150834505,
+    "action": "start",
+    "result": {
+      "runId": "9e25b25a32fe027b66bf31c4",
+      "sessionKey": "agent:worker:kurumi-task-9e25b25a32fe027b66bf31c4",
+      "agentId": "worker",
+      "status": "accepted",
+      "acceptedAt": 1791150834503
+    }
+  },
+  "chat": {
+    "runId": "fusion-chat-while-code",
+    "sessionKey": "agent:main:fusion-while-coding",
+    "agentId": "main",
+    "status": "accepted",
+    "acceptedAt": 1791150838445
+  },
+  "chatFinished": {
+    "runId": "fusion-chat-while-code",
+    "status": "ok",
+    "startedAt": 1791150839033,
+    "endedAt": 1791150841753,
+    "stopReason": "stop",
+    "livenessState": "working",
+    "terminalReceipt": {
+      "runId": "fusion-chat-while-code",
+      "sessionId": "1b0ddbc4-b53f-49c5-a1e6-d4ae55d9da4b",
+      "turnId": "fusion-chat-while-code",
+      "requested": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra"
+      },
+      "effective": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra",
+        "responseModel": "gpt-5.6-terra"
+      },
+      "successfulToolNames": [],
+      "rerouted": false,
+      "terminalDisposition": "visible"
+    },
+    "terminalReply": {
+      "disposition": "visible",
+      "text": "辛苦了一晚，终于可以好好休息了，晚安。"
+    }
+  },
+  "worker": {
+    "runId": "9e25b25a32fe027b66bf31c4",
+    "status": "ok",
+    "startedAt": 1791150834717,
+    "endedAt": 1791150880546,
+    "stopReason": "stop",
+    "livenessState": "working",
+    "terminalDelivery": {
+      "status": "sent",
+      "resultCount": 1
+    },
+    "terminalReceipt": {
+      "runId": "9e25b25a32fe027b66bf31c4",
+      "sessionId": "211250b9-7edd-4453-95a7-36bd6b23b7a5",
+      "turnId": "9e25b25a32fe027b66bf31c4",
+      "requested": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra"
+      },
+      "effective": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra",
+        "responseModel": "gpt-5.6-terra"
+      },
+      "successfulToolNames": [
+        "read",
+        "edit",
+        "tool_search"
+      ],
+      "rerouted": false,
+      "terminalDisposition": "visible"
+    },
+    "terminalReply": {
+      "disposition": "visible",
+      "text": "【融合验收】已修复 `stats.py`：\n\n- `mean` 支持生成器输入；\n- 空输入抛出 `ValueError`；\n- `moving_average` 修正完整窗口数量；\n- `window <= 0` 抛出 `ValueError`；\n- 短序列返回空列表。\n\n未修改 `test_stats.py`。当前工具环境没有可执行命令接口，无法实际运行 `kurumi_project_check`，因此不能虚报测试结果。"
+    }
+  },
+  "passed": false,
+  "acceptanceCorrection": "Original assertion only checked Host status and unchanged test hash. This initial attempt was partial: repair and QQ delivery succeeded but worker check tool was unavailable. Independent tests and real worker check succeeded afterward; see 11-worker-check.json. Future test requires actual check call and independent tests."
+}

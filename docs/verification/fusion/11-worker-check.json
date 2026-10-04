@@ -1,0 +1,33 @@
+{
+  "runId": "worker-fixed-check-2",
+  "status": "ok",
+  "startedAt": 1791151033081,
+  "endedAt": 1791151042612,
+  "stopReason": "stop",
+  "livenessState": "working",
+  "terminalReceipt": {
+    "runId": "worker-fixed-check-2",
+    "sessionId": "e3ce0d39-5649-4d33-8545-12c86aad1b34",
+    "turnId": "worker-fixed-check-2",
+    "requested": {
+      "provider": "naiccc",
+      "model": "gpt-5.6-terra"
+    },
+    "effective": {
+      "provider": "naiccc",
+      "model": "gpt-5.6-terra",
+      "responseModel": "gpt-5.6-terra"
+    },
+    "successfulToolNames": [
+      "tool_search",
+      "kurumi_project_check",
+      "tool_call"
+    ],
+    "rerouted": false,
+    "terminalDisposition": "visible"
+  },
+  "terminalReply": {
+    "disposition": "visible",
+    "text": "【融合验收】已通过 `tool_search` 搜索并实际调用 `kurumi_project_check`。\n\n- 返回码：0\n- 测试数量：6\n- 结果：全部通过（OK）\n- 用时：0.000 秒"
+  }
+}

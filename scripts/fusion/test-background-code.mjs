@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
 import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
@@ -18,6 +19,10 @@ try{
  report.chat=await rpc('agent',{sessionKey:'agent:main:fusion-while-coding',message:'用一句话回应：今天忙了一晚，终于可以休息了。不要使用工具。',deliver:false,idempotencyKey:'fusion-chat-while-code'});
  report.chatFinished=await rpc('agent.wait',{runId:report.chat.runId,timeoutMs:20000});
  report.worker=await rpc('agent.wait',{runId:report.task.result.runId,timeoutMs:90000},100000);
- assert.equal(hash(),report.testHash,'Tests changed');report.passed=report.worker.status==='ok';
+ assert.equal(hash(),report.testHash,'Tests changed');
+ const independent=spawnSync('/usr/bin/python3',['-m','unittest','-v'],{cwd:`${state}/code-workspace`,encoding:'utf8',timeout:30000});report.independentCheck={code:independent.status,output:independent.stdout+independent.stderr};
+ assert.equal(independent.status,0,'Independent project tests failed');
+ assert(report.worker.terminalReceipt?.successfulToolNames?.includes('kurumi_project_check'),'Worker did not actually call fixed check tool');
+ report.passed=report.worker.status==='ok';assert(report.passed);
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
 fs.writeFileSync('/home/afrangry/kurumi-fusion/docs/verification/fusion/10-background-code.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

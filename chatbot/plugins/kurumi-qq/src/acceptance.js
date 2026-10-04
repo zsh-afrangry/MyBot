@@ -3,8 +3,8 @@
 import fs from 'node:fs';
 export function registerAcceptanceTools(api){
  api.on('after_tool_call',event=>{
-  if(!['automations','cron','kurumi_task','kurumi_project_check'].includes(event.toolName))return;
-  fs.appendFileSync(api.config.channels['kurumi-qq'].stateDir+'/native-tool-receipts.jsonl',JSON.stringify({at:Date.now(),tool:event.toolName,action:event.params?.action,error:event.error??null})+'\n',{mode:0o600});
+  if(!['automations','cron','kurumi_task','kurumi_project_check','web_search','web_fetch'].includes(event.toolName))return;
+  fs.appendFileSync(api.config.channels['kurumi-qq'].stateDir+'/native-tool-receipts.jsonl',JSON.stringify({at:Date.now(),tool:event.toolName,action:event.params?.action,url:event.params?.url,query:event.params?.query,error:event.error??null})+'\n',{mode:0o600});
  });
  api.registerTool(ctx=>ctx.sessionKey==='agent:main:fusion-slow-test'?{
   name:'kurumi_test_wait',label:'Isolated wait test',description:'Wait 25 seconds for the authorized isolated cancellation/concurrency acceptance test. No network or business effect.',

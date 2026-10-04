@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-04T22:03:26.969Z",
+  "enabledJobs": 0,
+  "disabledDeclarations": [
+    {
+      "id": "2d61b8f2-744a-438d-be99-a2796f05d5fd",
+      "name": "skill-collection-review-main"
+    },
+    {
+      "id": "549be654-ed96-49ef-9196-d6a6d80af211",
+      "name": "skill-collection-review-worker"
+    },
+    {
+      "id": "86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3",
+      "name": "heartbeat-main"
+    }
+  ],
+  "syntheticOnly": true,
+  "rotated": true,
+  "testIngress": false,
+  "sendLedgerPreserved": true
+}

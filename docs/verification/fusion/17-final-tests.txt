@@ -1,0 +1,23 @@
+✔ Owner and endpoint validation fail closed (2.031882ms)
+✔ Reject group, stranger, self, wrong bot, malformed event (1.013711ms)
+✔ CQ text is literal, not metadata (0.246768ms)
+✔ Durable ingress and egress survive restart, unknown cannot be reserved again (32.246987ms)
+✔ Unicode chunking never breaks surrogate pairs (0.311628ms)
+✔ Media rejects arbitrary files and symlink escapes (0.769839ms)
+✔ Real HTTP adapter validates private target, sends literal segments, deduplicates (64.208335ms)
+✔ Inbound dispatch uses trusted sender, core route and only final delivery (33.386563ms)
+✔ Host durable delivery ID deduplicates and cancellation fences physical I/O (46.666513ms)
+✔ Accepted request with lost receipt stays unknown and never automatically resends (30.62668ms)
+✔ Receipt observer failure does not repeat physical delivery (33.768232ms)
+✔ Inbound dispatcher delivery failure is persisted rather than reported completed (28.639041ms)
+✔ Owner task tool refuses other users and sessions before effects (1.436527ms)
+✔ 24 hex Host run ID accepted but saved run/session binding required (0.551614ms)
+✔ Fixed check is absent from main and rejects a different workspace (0.401345ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1439.206261

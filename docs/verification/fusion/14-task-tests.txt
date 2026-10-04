@@ -1,0 +1,11 @@
+✔ Owner task tool refuses other users and sessions before effects (1.431865ms)
+✔ 24 hex Host run ID accepted but saved run/session binding required (0.608248ms)
+✔ Fixed check is absent from main and rejects a different workspace (0.416873ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1408.637966

@@ -19,14 +19,14 @@ write(`${state}/source-snapshots/qq-bridge-config.json`,JSON.stringify(bridge,nu
 const cfg={
  agents:{defaults:{workspace:`${state}/workspace`,model:{primary:'naiccc/gpt-5.6-terra'},heartbeat:{every:'0m'}}},
  models:{providers:{naiccc:original.models.providers.naiccc}},secrets:original.secrets,
- skills:{workshop:{autonomous:{mode:'off'}}},session:{dmScope:'per-channel-peer'},
+ skills:{workshop:{autonomous:{mode:'off'}}},session:{dmScope:'per-channel-peer'},commands:{ownerAllowFrom:['kurumi-qq:365999865']},
  gateway:{mode:'local',port:18890,bind:'loopback',auth:{mode:'token',token:'${OPENCLAW_GATEWAY_TOKEN}'},controlUi:{enabled:false}},discovery:{mdns:{mode:'off'}},
- plugins:{allow:['kurumi-qq'],load:{paths:[`${root}/chatbot/plugins/kurumi-qq`]},entries:{'kurumi-qq':{enabled:true}}},
+ plugins:{slots:{memory:'none'},allow:['kurumi-qq'],load:{paths:[`${root}/chatbot/plugins/kurumi-qq`]},entries:{'kurumi-qq':{enabled:true}}},
  channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:bridge.snowluma.httpUrl,wsUrl:bridge.snowluma.wsUrl,httpTokenFile:`${state}/http-token`,wsTokenFile:`${state}/ws-token`,stateDir:`${state}/channel`,mediaRoot:`${state}/media`,sendLimit:10,chunkLimit:1200}},
  tools:{profile:'messaging',deny:['message','sessions_spawn','cron','exec','process','write','edit','read']}
 };
 write(`${state}/openclaw.json`,JSON.stringify(cfg,null,2));
-write(`${state}/workspace/AGENTS.md`,'# Kurumi 融合验收工作区\n你是 Kurumi，用户的中文个人助手。当前是隔离频道验收，不能声称拥有未实际提供的工具能力。只回复用户要求的内容，不外发到其他人或群。不得披露凭证或内部日志；未收到图片内容时如实说明。用户不会因为本轮测试而授权其他副作用。\n');
+write(`${state}/workspace/AGENTS.md`,fs.readFileSync(`${root}/scripts/fusion/templates/AGENTS.md`));
 write(`${state}/workspace/SOUL.md`,'# Kurumi\n自然、亲近、简洁，可以轻轻调侃。闲聊不要机械列计划；做事依据实际工具结果。保持关心但不假装知道没有证据的事实。\n');
 fs.copyFileSync('/home/afrangry/snowluma/runtime/client/logo.png',`${state}/media/snowluma-logo.png`);
 const md=fs.readFileSync(`${root}/chatbot/plugins/kurumi-qq/src/vendor/md-to-plain.js`);

@@ -1,0 +1,54 @@
+{
+  "boundary": "Real main model invokes task adapter with trusted synthetic owner; captured acknowledgement, ordinary worker, real Host status and abort.",
+  "reply": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "【融合验收】任务已启动，status 返回为 timeout，随后已成功取消该任务（aborted=true）。"
+      }
+    ]
+  },
+  "receipts": [
+    {
+      "at": 1791151076089,
+      "action": "start",
+      "result": {
+        "runId": "647bf7b084d4ca5c076272bf",
+        "sessionKey": "agent:worker:kurumi-task-647bf7b084d4ca5c076272bf",
+        "agentId": "worker",
+        "status": "accepted",
+        "acceptedAt": 1791151076088
+      }
+    },
+    {
+      "at": 1791151079965,
+      "action": "status",
+      "result": {
+        "runId": "647bf7b084d4ca5c076272bf",
+        "status": "timeout"
+      }
+    },
+    {
+      "at": 1791151084296,
+      "action": "cancel",
+      "result": {
+        "ok": true,
+        "aborted": true,
+        "runIds": [
+          "647bf7b084d4ca5c076272bf"
+        ]
+      }
+    }
+  ],
+  "terminal": {
+    "runId": "647bf7b084d4ca5c076272bf",
+    "status": "error",
+    "startedAt": 1791151076085,
+    "endedAt": 1791151084289,
+    "stopReason": "rpc"
+  },
+  "passed": true
+}
