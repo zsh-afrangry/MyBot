@@ -246,11 +246,11 @@ export function listConfirmationProposalsForInbound(
   const confirmation = parseConfirmationText(input.content);
   if (!confirmation) return [];
   const proposals = listPendingConfirmationProposals(database, input);
-  // Both identifiers are mandatory, so this is an exact match rather than a
-  // set of optional narrowing filters.
-  return proposals.filter((proposal) =>
-    proposal.proposalId.toLowerCase() === confirmation.proposalId
-    && proposal.payloadHash.toLowerCase() === confirmation.payloadHash);
+  // Short codes bind BOTH complete identifiers; the registry rejects cross-domain ambiguity.
+  return proposals.filter((proposal) => "shortCode" in confirmation
+    ? confirmationCode(proposal.proposalId, proposal.payloadHash) === confirmation.shortCode
+    : proposal.proposalId.toLowerCase() === confirmation.proposalId
+      && proposal.payloadHash.toLowerCase() === confirmation.payloadHash);
 }
 
 export function issueApprovalGrant(
@@ -399,10 +399,10 @@ export function markConfirmationProposalExpired(
  * Both `proposalId` and `payloadHash` are required. A bare "确认" is therefore
  * never a valid confirmation: it cannot identify which proposal it approves,
  * and multiple pending proposals across domains is the normal case rather than
- * the exception. Requiring both fields is both the authorization rule and the
- * only sound disambiguation mechanism.
+ * the exception. Both identifiers remain bound, either in full or via the short code.
+ * Bare agreement never identifies a proposal; matching must be unique.
  */
-export function parseConfirmationText(content: string): { proposalId: string; payloadHash: string } | undefined {
+export function parseConfirmationText(content: string): { proposalId: string; payloadHash: string } | { shortCode: string } | undefined {
   const normalized = normalizedContent(content);
   if (!normalized || normalized.length > MAX_CONFIRMATION_CONTENT_LENGTH) return undefined;
   if (/(?:不确认|不要确认|取消确认|拒绝|不要提交)/u.test(normalized)) return undefined;
@@ -412,6 +412,8 @@ export function parseConfirmationText(content: string): { proposalId: string; pa
   if (!/^(?:我\s*)?(?:确认|同意|批准|可以|执行|提交|yes|ok|好的?)/iu.test(normalized)) {
     return undefined;
   }
+  const short = normalized.match(/^确认\s+([a-f0-9]{12})$/iu);
+  if (short?.[1]) return { shortCode: short[1].toLowerCase() };
   const ids = [...normalized.matchAll(new RegExp(UUID_IN_TEXT_PATTERN.source, "giu"))];
   const hashes = [...normalized.matchAll(new RegExp(HASH_IN_TEXT_PATTERN.source, "giu"))];
   if (ids.length !== 1 || hashes.length !== 1) return undefined;
@@ -430,7 +432,11 @@ export function parseConfirmationText(content: string): { proposalId: string; pa
  * failed because the model invented its own wording, which the parser rejected.
  */
 export function buildConfirmationInstruction(proposalId: string, payloadHash: string): string {
-  return `确认 proposalId=${proposalId} payloadHash=${payloadHash}`;
+  return `确认 ${confirmationCode(proposalId, payloadHash)}`;
+}
+
+function confirmationCode(proposalId: string, payloadHash: string): string {
+  return createHash("sha256").update(proposalId.toLowerCase() + ":" + payloadHash.toLowerCase()).digest("hex").slice(0, 12);
 }
 
 function scopesMatch(left: ConfirmationScope, right: ConfirmationScope): boolean {

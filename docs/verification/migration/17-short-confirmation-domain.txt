@@ -1,0 +1,31 @@
+
+> openclaw-plugin-personal-weather@0.1.0 test
+> vitest run --config ./vitest.config.ts
+
+
+ RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather
+
+ ✓ src/formatter.test.ts (4 tests) 21ms
+ ✓ src/parsers.test.ts (31 tests) 33ms
+ ✓ src/qweather-client.test.ts (17 tests) 48ms
+ ✓ src/clarification-gate.test.ts (3 tests) 7ms
+ ✓ src/weather-location.test.ts (6 tests) 12ms
+ ✓ src/weather-service.test.ts (5 tests) 18ms
+ ✓ src/planning.test.ts (8 tests) 409ms
+ ✓ src/reminder-reconciler-service.test.ts (8 tests) 399ms
+ ✓ src/reminder-reconciler.test.ts (3 tests) 405ms
+ ✓ src/controlled-replies.test.ts (6 tests) 18ms
+ ✓ src/reminder-gateway.test.ts (2 tests) 4ms
+ ✓ src/store.test.ts (9 tests) 716ms
+ ✓ src/profile.test.ts (10 tests) 494ms
+ ✓ src/confirmation-gate.test.ts (17 tests) 705ms
+ ✓ src/config.test.ts (12 tests) 8ms
+ ✓ src/reminders.test.ts (13 tests) 740ms
+ ✓ src/native-reminder-scheduler.test.ts (4 tests) 164ms
+ ✓ src/index.test.ts (3 tests) 4ms
+
+ Test Files  18 passed (18)
+      Tests  161 passed (161)
+   Start at  07:35:36
+   Duration  2.96s (transform 861ms, setup 0ms, collect 5.70s, tests 4.21s, environment 3ms, prepare 1.47s)
+

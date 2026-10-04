@@ -22,4 +22,4 @@ try{
  const cancelled=await invoke(d.confirmationInstruction,'personal_reminder_cancel_commit');assert.equal(cancelled.status,'cancelled');
  assert(!(await rpc('cron.list',{includeDisabled:true})).jobs.some(j=>j.id===before.id));report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
-fs.writeFileSync('docs/verification/migration/09-reminder-crud.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,reminderId:report.reminderId,jobId:report.jobId}));
+fs.writeFileSync(process.argv[2]??'docs/verification/migration/09-reminder-crud.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,reminderId:report.reminderId,jobId:report.jobId}));

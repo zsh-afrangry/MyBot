@@ -221,10 +221,8 @@ describe("parseConfirmationText", () => {
   });
 
   it("accepts the instruction string the proposal preview hands to the owner", () => {
-    expect(parseConfirmationText(buildConfirmationInstruction(ID, HASH))).toEqual({
-      proposalId: ID,
-      payloadHash: HASH,
-    });
+    expect(buildConfirmationInstruction(ID, HASH)).toMatch(/^确认 [a-f0-9]{12}$/u);
+    expect(parseConfirmationText(buildConfirmationInstruction(ID, HASH))).toEqual({shortCode: buildConfirmationInstruction(ID, HASH).split(" ")[1]});
   });
 
   it("requires both identifiers", () => {
@@ -290,10 +288,7 @@ describe("Confirmation Gate without a host-resolved owner bit", () => {
       if (!proposal.ok) return;
 
       expect(proposal.previewText).toContain(proposal.confirmationInstruction);
-      expect(parseConfirmationText(proposal.confirmationInstruction)).toEqual({
-        proposalId: proposal.proposalId.toLowerCase(),
-        payloadHash: proposal.payloadHash.toLowerCase(),
-      });
+      expect(parseConfirmationText(proposal.confirmationInstruction)).toEqual({shortCode: proposal.confirmationInstruction.split(" ")[1]});
       expect(store.recordInboundConfirmation({
         channel: "qqbot",
         conversationId: "qqbot:c2c:gate-owner",

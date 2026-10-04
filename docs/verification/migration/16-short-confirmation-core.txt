@@ -1,0 +1,15 @@
+
+> @kurumi/confirmation-core@0.1.0 test
+> vitest run --config ./vitest.config.ts
+
+
+ RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/packages/confirmation-core
+
+ ✓ src/public-id.test.ts (3 tests) 13ms
+ ✓ src/confirmation.test.ts (14 tests) 18ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  07:35:30
+   Duration  292ms (transform 70ms, setup 0ms, collect 84ms, tests 31ms, environment 0ms, prepare 122ms)
+

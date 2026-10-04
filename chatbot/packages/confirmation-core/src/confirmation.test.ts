@@ -37,6 +37,15 @@ function fixture(domain = "notes") {
 }
 
 describe("domain-independent confirmation governance", () => {
+  it("short confirmations bind full payloads, preserve legacy format and reject bare agreement", () => {
+    const f=fixture();try {
+      expect(event.content).toMatch(/^确认 [a-f0-9]{12}$/u);
+      expect(f.backend.listInboundConfirmationCandidates(event)).toHaveLength(1);
+      expect(f.backend.listInboundConfirmationCandidates({...event,content:buildConfirmationInstruction(id,"b".repeat(64))})).toHaveLength(0);
+      expect(f.backend.listInboundConfirmationCandidates({...event,content:`确认 proposalId=${id} payloadHash=${hash}`})).toHaveLength(1);
+      for(const content of ['确认','好的','确认 000000000000',`${event.content} 再确认另一个`])expect(f.backend.listInboundConfirmationCandidates({...event,content})).toHaveLength(0);
+    }finally{f.db.close();}
+  });
   it("rejects mixed proposal identifiers and completely unbound scopes", () => {
     expect(parseConfirmationText(`${event.content} ${"b".repeat(64)}`)).toBeUndefined();
     const f = fixture();
