@@ -45,6 +45,13 @@ if [[ $ready -ne 1 || $summary_ok -ne 1 ]]; then exit 1; fi
 auth_url=$(journalctl -u dsh-web.service -n 200 --no-pager -o cat 2>/dev/null | sed -n 's/.*dsh web: //p' | tail -n 1) || auth_url=''
 if [[ "$auth_url" == http://127.0.0.1:3080/* ]]; then
     printf 'DSH 本地入口：%s\n' "$auth_url"
+    service_exec=$(systemctl show dsh-web.service -p ExecStart --value 2>/dev/null) || service_exec=''
+    trusted_host=$(sed -n 's/.*--trusted-host \([^ ;]*\).*/\1/p' <<<"$service_exec")
+    if [[ "$trusted_host" =~ ^[A-Za-z0-9.-]+\.ts\.net$ ]]; then
+        printf 'DSH Tailscale 远端入口：https://%s%s\n' "$trusted_host" "${auth_url#http://127.0.0.1:3080}"
+    else
+        echo 'DSH Tailscale 远端入口：未配置有效的 *.ts.net trusted-host'
+    fi
 else
     echo 'DSH 认证入口见：journalctl -u dsh-web.service -n 50'
 fi
