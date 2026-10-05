@@ -1,0 +1,10 @@
+{
+  "at": "2026-10-05T00:17:14.103Z",
+  "boundary": "SIGKILL only verified fusion Gateway; systemd restarts it. Restart only SnowLuma transport, preserving its source/config and QQ client.",
+  "before": 382733,
+  "after": 383054,
+  "restartProperties": "NRestarts=1\nActiveState=active",
+  "disconnectObserved": true,
+  "reconnected": true,
+  "passed": true
+}

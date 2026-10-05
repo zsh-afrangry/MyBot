@@ -1,0 +1,22 @@
+[Unit]
+Description=Kurumi Fusion personal assistant
+Wants=snowluma.service snowluma-qq.service
+Conflicts=qq-bridge.service openclaw-gateway.service
+After=network-online.target snowluma.service snowluma-qq.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=/home/afrangry/kurumi-fusion
+ExecStart=/usr/bin/node /home/afrangry/kurumi-fusion/scripts/fusion/run-gateway.mjs
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=35
+KillMode=control-group
+UMask=0077
+Environment=NODE_ENV=production
+Environment=KURUMI_LOG_TARGET=journal
+
+[Install]
+WantedBy=default.target

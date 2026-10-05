@@ -1,0 +1,20 @@
+// Read-only operational health: valid scheduled jobs are not failures. No credentials or message contents.
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';import {DatabaseSync} from 'node:sqlite';import {rpc} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(state+'/openclaw.json')),acceptance=process.argv.includes('--acceptance'),r={at:new Date().toISOString(),ok:true,issues:[]};
+const issue=x=>{r.ok=false;r.issues.push(x);};
+try{await rpc('health',{},8000);r.gateway=true;}catch{issue('Gateway is unavailable');r.gateway=false;}
+try{const status=await onebot(account(cfg),'get_status',{});r.qq={online:status.online===true,good:status.good===true};if(!r.qq.online||!r.qq.good)issue('QQ client is offline or degraded');}catch{issue('OneBot status is unavailable');}
+r.testIngress=cfg.channels['kurumi-qq'].testIngress===true;if(r.testIngress&&!acceptance)issue('Acceptance ingress is still enabled');
+if(r.gateway){
+ try{const status=await rpc('channels.status',{probe:true},10000);r.channel=status.channelAccounts?.['kurumi-qq']?.map(x=>({running:x.running,connected:x.connected}));if(!r.channel?.some(x=>x.running&&x.connected))issue('QQ channel is disconnected');}catch{issue('QQ channel probe failed');}
+ try{const result=await rpc('cron.list',{includeDisabled:true,limit:100},10000);r.cron={total:result.total??result.jobs.length,hasMore:result.hasMore??false,jobs:result.jobs.map(j=>({id:j.id,enabled:j.enabled,lastStatus:j.state?.lastStatus??null,lastDeliveryStatus:j.state?.lastDeliveryStatus??null,nextRunAtMs:j.state?.nextRunAtMs??null}))};}catch{issue('Cron state is unavailable');}
+ if(!r.testIngress){try{await rpc('kurumi-qq.testInbound',{},3000);issue('Acceptance RPC remains available');}catch(e){r.testMethodDisabled=/unknown method|not found/i.test(e.message);if(!r.testMethodDisabled)issue('Acceptance RPC removal not verified');}}
+}
+for(const [name,file] of [['channel','channel/channel.sqlite'],['weather','state/personal-weather/weather.sqlite'],['reminders','state/personal-reminders/reminders.sqlite']]){
+ try{const db=new DatabaseSync(state+'/'+file,{readOnly:true});try{const check=db.prepare('PRAGMA quick_check').get();r[name+'Database']=Object.values(check)[0];if(r[name+'Database']!=='ok')issue(name+' database integrity error');if(name==='channel'){r.outbound=db.prepare('SELECT status,COUNT(*) count FROM outbound GROUP BY status').all();r.recentAttempts=db.prepare('SELECT COUNT(*) n FROM outbound WHERE at>=?').get(Date.now()-86400000).n;r.dailyLimit=cfg.channels['kurumi-qq'].dailySendLimit??120;if(r.recentAttempts>=r.dailyLimit)issue('QQ daily send quota exhausted');r.recentFailedInbound=db.prepare("SELECT COUNT(*) n FROM inbound WHERE status='failed' AND at>=?").get(Date.now()-86400000).n;}}finally{db.close();}}catch{issue(name+' database could not be checked');}
+}
+r.services={};for(const name of ['kurumi-fusion','qq-bridge','openclaw-gateway','snowluma','snowluma-qq']){const p=spawnSync('systemctl',['--user','show',name+'.service','-p','ActiveState','-p','UnitFileState'],{encoding:'utf8',timeout:3000});r.services[name]=Object.fromEntries((p.stdout??'').trim().split('\n').filter(x=>x.includes('=')).map(x=>x.split('=')));}
+if(r.services['qq-bridge'].ActiveState==='active')issue('Old bridge is active: duplicate consumer risk');
+const legacy=spawnSync('systemctl',['show','dsh-web.service','-p','ActiveState','-p','UnitFileState'],{encoding:'utf8',timeout:3000});r.services['dsh-web']=Object.fromEntries((legacy.stdout??'').trim().split('\n').filter(x=>x.includes('=')).map(x=>x.split('=')));
+if(!acceptance){if(r.services['kurumi-fusion'].ActiveState!=='active'||r.services['kurumi-fusion'].UnitFileState!=='enabled')issue('Fusion default service is not active and enabled');for(const name of ['openclaw-gateway','dsh-web'])if(r.services[name].ActiveState==='active')issue('Legacy assistant still active: '+name);}
+console.log(JSON.stringify(r,null,2));if(!r.ok)process.exitCode=1;

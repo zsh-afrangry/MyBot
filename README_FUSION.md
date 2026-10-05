@@ -1,14 +1,16 @@
-# Kurumi 融合原型
+# Kurumi 融合助手
 
-这是从旧 OpenClaw 独立克隆的试验分支，旧 SnowLuma/qq-bridge 原件未改造。
+OpenClaw统一会话、后台任务与提醒；Kurumi保留人格及个人领域能力；SnowLuma提供QQ传输。旧OpenClaw、SnowLuma/qq-bridge原件保留，后续开发在`/home/afrangry/kurumi-fusion`。
 
-当前架构、验收、未完成项、启动与回退，以 [文档9](docs/9_QQ融合助手架构与开发计划.md) 为准。源码根是 `/home/afrangry/kurumi-fusion`，私有运行状态是 `/home/afrangry/.openclaw-fusion`；不要在原 `.openclaw` 目录直接继续本分支开发。
+- [当前架构、验收和边界](docs/9_QQ融合助手架构与开发计划.md)
+- [运行维护、开发、项目接入与回退](docs/10_融合助手运行维护.md)
 
-离线回归：
+日常检查：
 
 ```bash
-node scripts/fusion/link-dependencies.mjs
-node --test chatbot/plugins/kurumi-qq/test/channel.test.js chatbot/plugins/kurumi-tasks/test/task.test.js
+cd /home/afrangry/kurumi-fusion
+node scripts/fusion/health.mjs
+systemctl --user status kurumi-fusion.service
 ```
 
-`scripts/fusion/test-*.mjs` 是授权验收脚本，部分会真实发送QQ或创建定时任务，不是可以随意重复运行的离线测试。当前验收入口已关闭。
+融合已作为默认用户服务自启；私有状态在`/home/afrangry/.openclaw-fusion`。只向本人QQ私聊外发，测试入口关闭。`scripts/fusion/test-*.mjs`可能真实发消息或重启服务，不能当普通离线测试随意运行。
