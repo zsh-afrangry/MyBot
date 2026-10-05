@@ -35,44 +35,13 @@ for (const d of ['git', 'patches', 'config', 'state', 'meta', 'tools']) {
   fs.mkdirSync(path.join(dest, d), { recursive: true, mode: 0o700 });
 }
 
-// --- cross-database consistency -------------------------------------------------------
-// VACUUM INTO makes each database internally consistent, but the reminder store, the scheduler
-// state and the outbound delivery ledger are separate files snapshotted one after another — so
-// they can represent slightly different moments. For a rollback point that reminders will be
-// reconciled against, quiescing the writer first removes that skew.
-//
-//   --quiesce : stop kurumi-fusion for the duration of the snapshot, then start it again.
-//               The restart is guaranteed even if the backup fails.
-const QUIESCE = argv.includes('--quiesce');
-const SERVICE = 'kurumi-fusion.service';
-let serviceStopped = false;
-const restoreService = () => {
-  if (!serviceStopped) return;
-  const r = spawnSync('systemctl', ['--user', 'start', SERVICE], { encoding: 'utf8' });
-  serviceStopped = false;
-  if (r.status !== 0) console.error(`  FAIL could not restart ${SERVICE}: ${r.stderr?.trim()}`);
-  else console.log(`  restarted ${SERVICE} after quiesced snapshot`);
-};
-if (QUIESCE) {
-  const stop = spawnSync('systemctl', ['--user', 'stop', SERVICE], { encoding: 'utf8' });
-  if (stop.status !== 0) fail('quiesce', `could not stop ${SERVICE}: ${stop.stderr?.trim()}`);
-  else {
-    serviceStopped = true;
-    // Wait until the gateway is really gone so no writer is mid-transaction.
-    for (let i = 0; i < 40; i++) {
-      const active = spawnSync('systemctl', ['--user', 'is-active', SERVICE], { encoding: 'utf8' }).stdout?.trim();
-      if (active !== 'active') break;
-      spawnSync('sleep', ['0.5']);
-    }
-    console.log(`  quiesced: ${SERVICE} stopped for a consistent cross-database snapshot`);
-  }
-}
 const log = (m) => console.log(`  ${m}`);
 const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', ...opts });
 
 // Every failure is recorded and turns into a non-zero exit at the end. A backup that silently
 // skipped a database or a repository used to still finish "successfully", which is worse than
 // failing loudly: the recovery point would look valid while missing material.
+// Declared BEFORE the quiesce block below, which needs to report a failed stop.
 const failures = [];
 const fail = (what, detail) => {
   failures.push(`${what}: ${detail}`);
@@ -80,6 +49,71 @@ const fail = (what, detail) => {
 };
 // Recorded in EXPECTED.json so a restore can tell what non-git working-tree state was captured.
 const binaryCaptured = [];
+
+// --- cross-database consistency -------------------------------------------------------
+// VACUUM INTO makes each database internally consistent, but the reminder store, the scheduler
+// state and the outbound delivery ledger are separate files snapshotted one after another — so
+// they can represent slightly different moments. For a rollback point that reminders will be
+// reconciled against, quiescing the writer first removes that skew.
+//
+//   --quiesce : stop kurumi-fusion for the duration of the snapshot, then start it again.
+//
+// Failure handling, which the first version got wrong:
+//   * the pre-existing service state is remembered, and ONLY a service that was running is
+//     restarted (a service that was already stopped must stay stopped);
+//   * the restart is guaranteed by a finally block, so an unexpected throw cannot leave the
+//     assistant down;
+//   * a failed restart is a hard failure (non-zero exit), not just a printed line;
+//   * quiescing only counts as successful if the stop actually took effect.
+const QUIESCE = argv.includes('--quiesce');
+const SERVICE = 'kurumi-fusion.service';
+const isActive = () => spawnSync('systemctl', ['--user', 'is-active', SERVICE], { encoding: 'utf8' }).stdout?.trim() === 'active';
+const wasRunning = QUIESCE ? isActive() : false;
+let serviceStopped = false;
+
+const restoreService = () => {
+  if (!serviceStopped) return;
+  if (!wasRunning) {
+    log(`${SERVICE} was already stopped before this run; leaving it stopped`);
+    serviceStopped = false;
+    return;
+  }
+  const r = spawnSync('systemctl', ['--user', 'start', SERVICE], { encoding: 'utf8' });
+  serviceStopped = false;
+  if (r.status !== 0) fail('quiesce restore', `could not restart ${SERVICE}: ${r.stderr?.trim() || r.status}`);
+  else log(`restarted ${SERVICE} after quiesced snapshot`);
+};
+
+// Guarantee the restart even on an unexpected throw. spawnSync is synchronous, so the 'exit'
+// handler can still complete the start before the process dies. restoreService() is idempotent.
+process.on('exit', () => restoreService());
+for (const ev of ['uncaughtException', 'unhandledRejection']) {
+  process.on(ev, (err) => {
+    restoreService();
+    console.error(`  FAIL unexpected ${ev}: ${err?.stack || err}`);
+    process.exit(1);
+  });
+}
+
+if (QUIESCE) {
+  if (!wasRunning) {
+    log(`${SERVICE} was not running; nothing to quiesce (snapshot will be taken as-is)`);
+  } else {
+    const stop = spawnSync('systemctl', ['--user', 'stop', SERVICE], { encoding: 'utf8' });
+    if (stop.status !== 0) {
+      fail('quiesce', `could not stop ${SERVICE}: ${stop.stderr?.trim() || stop.status}`);
+    } else {
+      serviceStopped = true;
+      // Wait until the gateway is really gone so no writer is mid-transaction.
+      for (let i = 0; i < 40 && isActive(); i++) spawnSync('sleep', ['0.5']);
+      if (isActive()) {
+        fail('quiesce', `${SERVICE} still active after stop; snapshot would NOT be quiesced`);
+      } else {
+        log(`quiesced: ${SERVICE} stopped for a consistent cross-database snapshot`);
+      }
+    }
+  }
+}
 const untrackedCaptured = [];
 
 // ---------------------------------------------------------------- git bundles
@@ -110,8 +144,16 @@ for (const [name, dir] of REPOS) {
     fs.writeFileSync(path.join(dest, 'patches', `${name}-uncommitted.patch`), d.stdout, { mode: 0o600 });
     log(`patch  ${name}: ${d.stdout.split('\n').length} lines uncommitted (tracked, text)`);
   }
-  const numstat = sh('git', ['-C', dir, 'diff', 'HEAD', '--numstat']).stdout ?? '';
-  const binary = numstat.split('\n').filter((l) => /^-\t-\t/.test(l)).map((l) => l.split('\t')[2]).filter(Boolean);
+  // NUL-separated output is required: without -z git QUOTES non-ASCII paths (e.g. Chinese
+  // filenames become "\346\265\213..."), and tar then fails to stat a path that never existed.
+  const numstat = sh('git', ['-C', dir, 'diff', 'HEAD', '--numstat', '-z']).stdout ?? '';
+  const binary = numstat
+    .split('\0')
+    .filter(Boolean)
+    .map((rec) => rec.split('\t'))
+    .filter((f) => f.length >= 3 && f[0] === '-' && f[1] === '-')
+    .map((f) => f[2])
+    .filter(Boolean);
   if (binary.length) {
     // A text patch cannot carry these; tar the actual files so content is preserved.
     const tarOut = path.join(dest, 'patches', `${name}-binary-modified.tar`);
@@ -123,7 +165,9 @@ for (const [name, dir] of REPOS) {
       log(`binary ${name}: ${binary.length} modified file(s) archived (text patch cannot carry them)`);
     }
   }
-  const untracked = (sh('git', ['-C', dir, 'ls-files', '--others', '--exclude-standard']).stdout ?? '').trim().split('\n').filter(Boolean);
+  const untracked = (sh('git', ['-C', dir, 'ls-files', '-z', '--others', '--exclude-standard']).stdout ?? '')
+    .split('\0')
+    .filter(Boolean);
   if (untracked.length) {
     const tarOut = path.join(dest, 'patches', `${name}-untracked.tar`);
     const t = sh('tar', ['-C', dir, '-cf', tarOut, '--null', '-T', '-'], { input: untracked.join('\0') + '\0' });

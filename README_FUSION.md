@@ -22,6 +22,9 @@ OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领�
 | `main` | 当前融合项目（本仓库） |
 | `archive/legacy-openclaw` | 旧 `.openclaw` 的源码历史终点（`f8319c1`，与 `main` 共享历史） |
 
+> 验收与测试的**单一权威入口**是 [`docs/16_验收与测试总表.md`](docs/16_验收与测试总表.md)：
+> 它记录每项检查证明了什么、**没有**证明什么，以及复现命令。日常只信这一份。
+
 ## 日常检查
 
 ```bash
@@ -82,7 +85,8 @@ node scripts/fusion/restore-verify.mjs --backup <备份目录>                # 
 - 只向本人 QQ 私聊外发；群聊入口永久关闭；合成验收入口（`testIngress`）按设计关闭。
 - `scripts/fusion/test-*.mjs` 是**验收脚本**，会真实发本人 QQ、创建任务或重启服务，
   不能当普通离线测试随意运行。它们现在使用 `lib/fresh-id.mjs` 生成新的 message id，
-  可重复执行；但会在任务账本留下记录，必要时先清理。
+  可重复执行；但会在任务账本留下记录。**不要删账本** —— 账本是运行任务的追踪依据。
+  应先查真实终态、正常 cancel 仍在跑的任务，并使用独立工作区（详见验收总表 §4.7）。
 - 统一启停脚本 `scripts/fusion/launchers/{Start,Stop}-DSH.sh` 需要 sudo 密码，
   且会停 `dsh-web.service`（DSH 网页本身），请在合适时机手动执行。
 
@@ -95,4 +99,5 @@ node scripts/fusion/restore-verify.mjs --backup <备份目录>                # 
 - [配置来源、同步与备份恢复](docs/13_配置来源与同步.md)
 - [整理收尾与最终布局](docs/14_整理收尾与最终布局.md)
 - [第六步独立运行验收记录](docs/verification/step6-2026-10-05/README.md)
+- [**验收与测试总表（权威入口）**](docs/16_验收与测试总表.md)
 - [旧系统回退：归档保留 + 原路径复制恢复 + 显式切换](docs/15_旧系统回退.md)

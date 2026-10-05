@@ -148,7 +148,11 @@ for (const b of bundles) {
   check(`clone ${name} matches expected refs`, problems.length === 0, problems.length ? problems.join('; ') : `HEAD ${head?.slice(0, 8)}, ${branches.length} branch(es), ${tags.length} tag(s)`);
 }
 
-// --- 4. uncommitted patch -------------------------------------------------------------
+// --- 4. uncommitted working-tree state -------------------------------------------------
+// Three separate forms, because `git diff HEAD` alone covers only tracked text changes:
+//   *.patch              tracked text modifications
+//   *-binary-modified.tar binary modifications (a text patch cannot carry the content)
+//   *-untracked.tar      untracked files (git diff HEAD does not include them at all)
 const patchDir = path.join(backup, 'patches');
 if (fs.existsSync(patchDir)) {
   for (const p of fs.readdirSync(patchDir).filter((f) => f.endsWith('.patch'))) {
@@ -159,6 +163,25 @@ if (fs.existsSync(patchDir)) {
     }
     const r = sh('git', ['-C', repo, 'apply', path.join(patchDir, p)]);
     check(`patch ${p} applies`, r.status === 0, r.status === 0 ? '' : r.stderr?.split('\n')[0]);
+  }
+
+  for (const t of fs.readdirSync(patchDir).filter((f) => f.endsWith('.tar'))) {
+    const repoName = t.replace(/-(untracked|binary-modified)\.tar$/, '');
+    const repo = clones.get(repoName);
+    if (!repo) {
+      check(`archive ${t}`, false, 'no cloned repo');
+      continue;
+    }
+    // `git apply` cannot restore these, so they were archived as files; extract them back.
+    const listing = (sh('tar', ['-tf', path.join(patchDir, t)]).stdout ?? '').trim().split('\n').filter(Boolean);
+    const x = sh('tar', ['-C', repo, '-xf', path.join(patchDir, t)]);
+    const restored = listing.filter((rel) => fs.existsSync(path.join(repo, rel)));
+    const missing = listing.filter((rel) => !fs.existsSync(path.join(repo, rel)));
+    check(
+      `archive ${t} restores ${listing.length} file(s)`,
+      x.status === 0 && missing.length === 0,
+      x.status !== 0 ? (x.stderr ?? '').split('\n')[0] : missing.length ? `missing after extract: ${missing.slice(0, 3).join(', ')}` : `${restored.length} restored`
+    );
   }
 }
 
