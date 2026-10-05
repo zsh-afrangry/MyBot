@@ -1,0 +1,34 @@
+restoring /home/afrangry/kurumi-backups/2026-10-05-18-23-14-recovery-final
+     into /tmp/kurumi-restore-SnYBJu
+
+  PASS  manifest (3686 files)  (all match)
+  PASS  required content (14 entries)  (all present)
+  PASS  expected databases (9)  (all present)
+  PASS  bundle kurumi-fusion valid
+  PASS  clone kurumi-fusion matches expected refs  (HEAD 466b5074, 3 branch(es), 2 tag(s))
+  PASS  bundle legacy-openclaw valid
+  PASS  clone legacy-openclaw matches expected refs  (HEAD f8319c11, 1 branch(es), 1 tag(s))
+  PASS  bundle qq-bridge valid
+  PASS  clone qq-bridge matches expected refs  (HEAD d64a4d22, 2 branch(es), 7 tag(s))
+  PASS  patch kurumi-fusion-uncommitted.patch applies
+  PASS  database snapshots (9)  (9 healthy)
+  PASS  assemble: all runtime directories copied  (21 entr(ies): agents channel code-workspace media migration openclaw.json.bak.2026-10-05T14-00-49-088Z openclaw.json.bak.2026-10-05T15-39-48-133Z openclaw.json.bak.2026-10-05T15-39-48-185Z openclaw.json.bak.2026-10-05T15-53-37-995Z openclaw.json.bak.2026-10-05T15-53-38-047Z openclaw.json.bak.before-tavily-repoint-20261005T215523 openclaw.json.last-good plugin-skills project-checks projects projects.json research-cache research-workspace source-snapshots state workspace)
+  PASS  assemble: databases placed at runtime paths  (9 database(s))
+  PASS  assemble: runtime config loads  (13 top-level keys)
+  PASS  assemble: token/credential files present  (runtime-env.json, http-token, ws-token)
+  PASS  immutable SDK artifact restored
+  PASS  assemble: plugin prefix rebuilt from lockfile  (1 package(s) via npm ci)
+  PASS  load: restored repo dependencies installed  (3/3 package(s) via npm ci from restored lockfiles)
+  PASS  all active configuration roots remapped; delivery disabled
+  PASS  sandbox build chatbot/packages/confirmation-core  (compiled)
+  PASS  sandbox build chatbot/plugins/personal-confirmation  (compiled)
+  PASS  sandbox build chatbot/plugins/personal-weather  (compiled)
+  PASS  isolated Gateway startup, plugin imports and production exclusion  (Isolated Gateway health and all plugin imports passed; production paths and network inaccessible)
+  PASS  load: restored memory readable via restored source  (revision 4, 6 entr(ies), source repos/kurumi-fusion/chatbot/plugins/kurumi-memory/store.js)
+  PASS  load: assembled databases open in place  (9 opened)
+
+25/25 checks passed
+assembled runtime at: /tmp/kurumi-restore-SnYBJu/runtime
+restored repo at    : /tmp/kurumi-restore-SnYBJu/repos/kurumi-fusion
+No host service was changed; only an isolated Gateway probe may have run. No real QQ delivery.
+Recovery inputs: backup, verifier harness and hash-pinned SDK archive; isolated execution cannot see production.

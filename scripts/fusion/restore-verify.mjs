@@ -1,8 +1,7 @@
-// Verify that a backup can be restored into an isolated directory — and that the restored copy is
-// Complete verification includes an isolated Gateway, using a hash-pinned archived SDK.
+// Verify restoration into an isolated directory, including a Gateway boot with a hash-pinned SDK.
 //
 // Safety: this script is deliberately inert with respect to the live system.
-//   - it never starts the gateway, never touches SnowLuma, and never sends QQ messages;
+//   - it starts only an isolated Gateway; it never touches host services or sends real QQ messages;
 //   - it never starts the reminder scheduler, so no reminder can be delivered twice;
 //   - it only reads the backup and writes inside --target.
 //
@@ -25,7 +24,8 @@
 //   9. memory is read using the RESTORED source, and every assembled database opens in place.
 //
 // Material checks alone do not prove startup. The sandbox probe boots the restored Gateway
-// with inert credentials, QQ disabled and cron disabled; live delivery is a separate acceptance.
+// with inert credentials and cron disabled; QQ connects only to an in-namespace simulated OneBot.
+// Live delivery is a separate acceptance.
 //
 // Usage:
 //   node scripts/fusion/restore-verify.mjs --backup <dir> [--target <dir>] [--skip-deps]

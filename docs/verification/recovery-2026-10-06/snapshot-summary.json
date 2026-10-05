@@ -1,0 +1,11 @@
+{
+  "backup": "/home/afrangry/kurumi-backups/2026-10-05-18-23-14-recovery-final",
+  "sourceCommit": "466b5074",
+  "quiesced": true,
+  "failures": [],
+  "databases": 9,
+  "incomplete": false,
+  "restorePassed": 25,
+  "restoreTotal": 25,
+  "projectChecks": 1
+}
