@@ -1,0 +1,291 @@
+{
+  "agents": {
+    "defaults": {
+      "workspace": "/home/afrangry/.openclaw-fusion/workspace",
+      "model": {
+        "primary": "deepseek/deepseek-flash"
+      },
+      "heartbeat": {
+        "every": "0m",
+        "agentId": "main"
+      },
+      "systemAgent": {
+        "agentId": "main"
+      }
+    },
+    "entries": {
+      "main": {
+        "workspace": "/home/afrangry/.openclaw-fusion/workspace",
+        "tools": {
+          "profile": "messaging",
+          "alsoAllow": [
+            "automations",
+            "kurumi_task",
+            "web_search",
+            "web_fetch",
+            "personal_weather_get_brief",
+            "personal_profile_state_get",
+            "personal_profile_change_propose",
+            "personal_profile_change_commit",
+            "personal_planning_state_get",
+            "personal_planning_change_propose",
+            "personal_planning_change_commit",
+            "personal_reminder_state_get",
+            "personal_reminder_propose",
+            "personal_reminder_commit",
+            "personal_reminder_change_propose",
+            "personal_reminder_change_commit",
+            "personal_reminder_cancel_propose",
+            "personal_reminder_cancel_commit",
+            "kurumi_memory",
+            "kurumi_sticker"
+          ],
+          "deny": [
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "process",
+            "message",
+            "sessions_spawn"
+          ]
+        },
+        "model": {
+          "primary": "deepseek/deepseek-flash"
+        }
+      },
+      "project-fusion": {
+        "workspace": "/home/afrangry/.openclaw-fusion/projects/fusion",
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "ls",
+            "read",
+            "write",
+            "edit",
+            "apply_patch",
+            "kurumi_project_check",
+            "kurumi_project_git"
+          ],
+          "fs": {
+            "workspaceOnly": true
+          },
+          "deny": [
+            "exec",
+            "process",
+            "message",
+            "sessions_spawn",
+            "web_search",
+            "web_fetch"
+          ]
+        }
+      },
+      "researcher": {
+        "workspace": "/home/afrangry/.openclaw-fusion/research-workspace",
+        "tools": {
+          "profile": "full",
+          "allow": [
+            "ls",
+            "read",
+            "write",
+            "edit",
+            "web_search",
+            "web_fetch",
+            "kurumi_paper"
+          ],
+          "fs": {
+            "workspaceOnly": true
+          },
+          "deny": [
+            "exec",
+            "process",
+            "message",
+            "sessions_spawn",
+            "kurumi_memory",
+            "kurumi_project_git"
+          ]
+        }
+      }
+    },
+    "ownership": "explicit"
+  },
+  "models": {
+    "providers": {
+      "deepseek": {
+        "baseUrl": "https://api.deepseek.com",
+        "api": "openai-completions",
+        "apiKey": {
+          "source": "env",
+          "provider": "default",
+          "id": "DEEPSEEK_API_KEY"
+        },
+        "models": [
+          {
+            "id": "deepseek-flash",
+            "name": "DeepSeek Flash",
+            "reasoning": true,
+            "input": [
+              "text",
+              "image"
+            ],
+            "contextWindow": 1048576,
+            "maxTokens": 32768
+          }
+        ]
+      }
+    }
+  },
+  "secrets": {
+    "providers": {
+      "default": {
+        "source": "env"
+      }
+    }
+  },
+  "skills": {
+    "workshop": {
+      "autonomous": {
+        "mode": "off"
+      }
+    }
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "gateway": {
+    "mode": "local",
+    "port": 18890,
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "${OPENCLAW_GATEWAY_TOKEN}"
+    },
+    "controlUi": {
+      "enabled": false
+    }
+  },
+  "discovery": {
+    "mdns": {
+      "mode": "off"
+    }
+  },
+  "plugins": {
+    "allow": [
+      "kurumi-qq",
+      "kurumi-tasks",
+      "tavily",
+      "personal-confirmation",
+      "personal-weather",
+      "kurumi-memory",
+      "kurumi-research"
+    ],
+    "load": {
+      "paths": [
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-qq",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-tasks",
+        "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research"
+      ]
+    },
+    "entries": {
+      "kurumi-qq": {
+        "enabled": true
+      },
+      "kurumi-tasks": {
+        "enabled": true
+      },
+      "tavily": {
+        "enabled": true
+      },
+      "personal-confirmation": {
+        "enabled": true
+      },
+      "personal-weather": {
+        "enabled": true,
+        "config": {
+          "apiHost": "${QWEATHER_API_HOST}",
+          "apiKey": {
+            "source": "env",
+            "provider": "default",
+            "id": "QWEATHER_API_KEY"
+          },
+          "reminderBackend": "native-service",
+          "reminderRunnerRoot": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
+          "scheduledOwnerId": "365999865"
+        }
+      },
+      "kurumi-memory": {
+        "enabled": true
+      },
+      "kurumi-research": {
+        "enabled": true
+      }
+    },
+    "slots": {
+      "memory": "none"
+    }
+  },
+  "channels": {
+    "kurumi-qq": {
+      "enabled": true,
+      "ownerId": "365999865",
+      "httpUrl": "http://127.0.0.1:3083",
+      "wsUrl": "ws://127.0.0.1:3084",
+      "httpTokenFile": "/home/afrangry/.openclaw-fusion/http-token",
+      "wsTokenFile": "/home/afrangry/.openclaw-fusion/ws-token",
+      "stateDir": "/home/afrangry/.openclaw-fusion/channel",
+      "mediaRoot": "/home/afrangry/.openclaw-fusion/media",
+      "chunkLimit": 1200,
+      "testIngress": false,
+      "dailySendLimit": 500,
+      "naturalSegments": true,
+      "segmentDelayMs": 450
+    }
+  },
+  "tools": {
+    "fs": {
+      "workspaceOnly": true
+    },
+    "deny": [
+      "message",
+      "exec",
+      "process",
+      "gateway",
+      "browser",
+      "sessions_spawn"
+    ],
+    "web": {
+      "search": {
+        "enabled": true,
+        "provider": "tavily"
+      },
+      "fetch": {
+        "enabled": true,
+        "useTrustedEnvProxy": true,
+        "maxChars": 15000,
+        "maxCharsCap": 15000
+      }
+    }
+  },
+  "logging": {
+    "file": "/home/afrangry/.openclaw-fusion/runtime.log"
+  },
+  "commands": {
+    "ownerAllowFrom": [
+      "kurumi-qq:365999865"
+    ]
+  },
+  "bindings": [
+    {
+      "agentId": "main",
+      "match": {
+        "channel": "kurumi-qq",
+        "accountId": "default"
+      }
+    }
+  ]
+}
