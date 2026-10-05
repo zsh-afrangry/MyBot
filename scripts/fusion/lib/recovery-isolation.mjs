@@ -30,9 +30,12 @@ export function remapLinks(root,runtime,repo){
 }
 export function sandboxArgs(target){
  if(!target.startsWith('/tmp/')||fs.realpathSync(target)!==target)throw Error('Noncanonical sandbox target');
+ // Preserve the worker SDK allowlist path using only the recovered archive, never host SDK files.
+ const sdk=path.join(target,'sdk/openclaw');
+ const sdkAlias=fs.existsSync(sdk)?['--ro-bind',sdk,'/home/afrangry/.npm-global/lib/node_modules/openclaw']:[];
  return ['--unshare-all','--die-with-parent','--new-session','--cap-drop','ALL',
   '--ro-bind','/usr','/usr','--symlink','usr/bin','/bin','--symlink','usr/lib','/lib','--symlink','usr/lib64','/lib64',
   '--proc','/proc','--dev','/dev','--tmpfs','/tmp','--bind',target,target,
-  '--clearenv','--setenv','PATH','/usr/bin:/bin','--setenv','HOME',target+'/home',
+  ...sdkAlias,'--clearenv','--setenv','PATH','/usr/bin:/bin','--setenv','HOME',target+'/home',
   '--setenv','LANG','C.UTF-8','--setenv','TMPDIR','/tmp'];
 }

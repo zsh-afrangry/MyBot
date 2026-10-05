@@ -65,7 +65,15 @@ try{
  await sendPayload({cfg,to:'user:'+cfg.channels['kurumi-qq'].ownerId,text:'',mediaUrl:image,key:'recovery-image-'+Date.now()});assert.equal(sends.length,2);
  const status=await callGatewayFromCli('channels.status',{url:'ws://127.0.0.1:18891',token:process.env.OPENCLAW_GATEWAY_TOKEN,timeout:'3000',json:true},{});
  assert(status.channelAccounts['kurumi-qq'][0].connected,'Restored channel must connect to isolated OneBot');
- fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,realDelivery:false,cronEnabled:false},null,2));
+ const {projectCatalog}=await import('file://'+repo+'/chatbot/plugins/kurumi-tasks/projects.js');
+ const {runSandbox}=await import('file://'+repo+'/chatbot/plugins/kurumi-tasks/sandbox.js');
+ let projectChecks=0;
+ for(const project of projectCatalog(cfg))for(const check of project.checks){
+  const result=await runSandbox(project,check.argv,{timeoutMs:check.timeoutMs});
+  assert.equal(result.code,0,'Restored project check failed: '+result.output.slice(-1500));projectChecks++;
+ }
+
+ fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,realDelivery:false,cronEnabled:false},null,2));
  console.log('Isolated Gateway health and all plugin imports passed; production paths and network inaccessible');
 }finally{
  if(!exited)child.kill('SIGTERM');

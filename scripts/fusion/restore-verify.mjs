@@ -355,6 +355,18 @@ if(cfg&&restoredRepo){
  if(!skipDeps){
   fs.mkdirSync(restoredRepo+'/node_modules',{recursive:true});
   fs.symlinkSync(sdk,pluginPrefix+'/node_modules/openclaw');
+  // Worker checks allow this immutable package prefix. Inside the namespace it is the archived
+  // SDK bind mount, never the host installation. Rebuild only disposable dependency links.
+  for(const project of registry.projects){
+   if(!project.root.startsWith(runtime+'/projects/'))throw Error('Restored project outside recovery projects');
+   if((project.readOnlyDependencies??[]).some(p=>p!=='/home/afrangry/.npm-global/lib/node_modules/openclaw'))throw Error('Unrecognized recovery dependency mount');
+   fs.mkdirSync(project.root+'/node_modules',{recursive:true});
+   for(const [name,to] of [['openclaw','/home/afrangry/.npm-global/lib/node_modules/openclaw'],['ws','/home/afrangry/.npm-global/lib/node_modules/openclaw/node_modules/ws']]){
+    const link=project.root+'/node_modules/'+name;
+    if(!fs.lstatSync(link,{throwIfNoEntry:false}))fs.symlinkSync(to,link);
+   }
+  }
+
   for(const [name,to] of [['openclaw',sdk],['ws',sdk+'/node_modules/ws']])fs.symlinkSync(to,restoredRepo+'/node_modules/'+name);
   for(const rel of depPackages){
    const build=sh('bwrap',[...sandboxArgs(target),'--chdir',restoredRepo+'/'+rel,'/usr/bin/npm','run','build']);
