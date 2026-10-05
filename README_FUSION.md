@@ -59,19 +59,23 @@ systemctl --user restart kurumi-fusion.service
 ## 备份与恢复
 
 ```bash
-node scripts/fusion/backup-state.mjs --label before-<变更名>          # 一致性备份（不停服）
-node scripts/fusion/restore-verify.mjs --backup <备份目录>            # 恢复演练（不接 QQ、不跑提醒）
+node scripts/fusion/backup-state.mjs --label before-<变更名>              # 在线快照
+node scripts/fusion/backup-state.mjs --label rollback --quiesce          # 停写快照（跨库一致）
+node scripts/fusion/restore-verify.mjs --backup <备份目录>                # 恢复演练
 ```
 
 - 备份采用**反向白名单**：除明确跳过项外，运行目录下所有内容都会收录（含
-  `workspace/` 记忆与人格、`code-workspace/`、`project-checks/`、`research-*`、`media/`），
-  数据库用 `VACUUM INTO` 取一致快照。
-- 备份会写入 `EXPECTED.json` 预期清单并**硬校验必需内容**：任一必需文件、仓库或数据库失败
-  即**非零退出**，不会把不完整的备份当成有效恢复点。
-- 恢复演练会**组装出可运行目录并实际加载**：校验全量哈希、逐仓库断言 HEAD/分支/标签、
-  重放未提交补丁、用生产 memory store 读取恢复后的记忆、在组装位置打开每个数据库。
-- 注意：`VACUUM INTO` 保证的是**单库**一致，多个数据库与投递账本之间可能存在时间差；
-  涉及提醒恢复时需要停写快照或明确的恢复对账。
+  `workspace/` 记忆与人格、`code-workspace/`、`project-checks/`、`research-*`、`media/`）。
+- 数据库用 `VACUUM INTO` 取一致快照。**单库一致 ≠ 跨库一致**：提醒库、调度状态与投递账本
+  可能来自不同时刻。作为提醒对账用的回退点请加 `--quiesce`（短暂停服后快照，
+  结束后自动恢复服务），`EXPECTED.json` 会记录 `quiesced` 是否为真。
+- 未提交改动分三种形式保全：文本补丁、**二进制修改打包**（文本补丁带不了内容）、
+  **未跟踪文件打包**（`git diff HEAD` 不含它们）。
+- 备份会写 `EXPECTED.json` 预期清单并**硬校验必需内容**：任一必需项失败即**非零退出**。
+- 恢复演练是**组装并加载**级别，且**不借用生产**：完整组装运行目录、
+  按锁文件在**恢复出的仓库**里 `npm ci`、重建第三方插件前缀、
+  把配置里的插件路径**改写进恢复副本**后校验解析、用**恢复出的源码**读取记忆、
+  9 个库在组装位置打开。当前 **20/20 通过**。
 
 ## 注意
 

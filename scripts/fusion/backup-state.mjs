@@ -34,6 +34,39 @@ if (fs.existsSync(dest)) throw new Error(`Backup already exists, refusing to ove
 for (const d of ['git', 'patches', 'config', 'state', 'meta', 'tools']) {
   fs.mkdirSync(path.join(dest, d), { recursive: true, mode: 0o700 });
 }
+
+// --- cross-database consistency -------------------------------------------------------
+// VACUUM INTO makes each database internally consistent, but the reminder store, the scheduler
+// state and the outbound delivery ledger are separate files snapshotted one after another — so
+// they can represent slightly different moments. For a rollback point that reminders will be
+// reconciled against, quiescing the writer first removes that skew.
+//
+//   --quiesce : stop kurumi-fusion for the duration of the snapshot, then start it again.
+//               The restart is guaranteed even if the backup fails.
+const QUIESCE = argv.includes('--quiesce');
+const SERVICE = 'kurumi-fusion.service';
+let serviceStopped = false;
+const restoreService = () => {
+  if (!serviceStopped) return;
+  const r = spawnSync('systemctl', ['--user', 'start', SERVICE], { encoding: 'utf8' });
+  serviceStopped = false;
+  if (r.status !== 0) console.error(`  FAIL could not restart ${SERVICE}: ${r.stderr?.trim()}`);
+  else console.log(`  restarted ${SERVICE} after quiesced snapshot`);
+};
+if (QUIESCE) {
+  const stop = spawnSync('systemctl', ['--user', 'stop', SERVICE], { encoding: 'utf8' });
+  if (stop.status !== 0) fail('quiesce', `could not stop ${SERVICE}: ${stop.stderr?.trim()}`);
+  else {
+    serviceStopped = true;
+    // Wait until the gateway is really gone so no writer is mid-transaction.
+    for (let i = 0; i < 40; i++) {
+      const active = spawnSync('systemctl', ['--user', 'is-active', SERVICE], { encoding: 'utf8' }).stdout?.trim();
+      if (active !== 'active') break;
+      spawnSync('sleep', ['0.5']);
+    }
+    console.log(`  quiesced: ${SERVICE} stopped for a consistent cross-database snapshot`);
+  }
+}
 const log = (m) => console.log(`  ${m}`);
 const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', ...opts });
 
@@ -45,6 +78,9 @@ const fail = (what, detail) => {
   failures.push(`${what}: ${detail}`);
   console.error(`  FAIL ${what}: ${detail}`);
 };
+// Recorded in EXPECTED.json so a restore can tell what non-git working-tree state was captured.
+const binaryCaptured = [];
+const untrackedCaptured = [];
 
 // ---------------------------------------------------------------- git bundles
 // The legacy trees were moved out of their active locations in step 7; look in the archive first
@@ -65,11 +101,38 @@ for (const [name, dir] of REPOS) {
   }
   fs.chmodSync(out, 0o600);
   log(`bundle ${name}: ${(fs.statSync(out).size / 1048576).toFixed(1)} MiB  (${dir})`);
-  // Uncommitted tracked work is part of "the state", so record it as a patch.
+
+  // Uncommitted work is part of "the state". `git diff HEAD` alone only covers TRACKED changes:
+  // it silently omits untracked files and reduces binary modifications to "Binary files differ".
+  // Capture all three forms separately so nothing is quietly dropped.
   const d = sh('git', ['-C', dir, 'diff', 'HEAD']);
   if (d.status === 0 && d.stdout.trim()) {
     fs.writeFileSync(path.join(dest, 'patches', `${name}-uncommitted.patch`), d.stdout, { mode: 0o600 });
-    log(`patch  ${name}: ${d.stdout.split('\n').length} lines uncommitted`);
+    log(`patch  ${name}: ${d.stdout.split('\n').length} lines uncommitted (tracked, text)`);
+  }
+  const numstat = sh('git', ['-C', dir, 'diff', 'HEAD', '--numstat']).stdout ?? '';
+  const binary = numstat.split('\n').filter((l) => /^-\t-\t/.test(l)).map((l) => l.split('\t')[2]).filter(Boolean);
+  if (binary.length) {
+    // A text patch cannot carry these; tar the actual files so content is preserved.
+    const tarOut = path.join(dest, 'patches', `${name}-binary-modified.tar`);
+    const t = sh('tar', ['-C', dir, '-cf', tarOut, '--null', '-T', '-'], { input: binary.join('\0') + '\0' });
+    if (t.status !== 0) fail(`binary capture ${name}`, t.stderr?.trim() || `tar exit ${t.status}`);
+    else {
+      fs.chmodSync(tarOut, 0o600);
+      binaryCaptured.push(...binary.map((f) => `${name}:${f}`));
+      log(`binary ${name}: ${binary.length} modified file(s) archived (text patch cannot carry them)`);
+    }
+  }
+  const untracked = (sh('git', ['-C', dir, 'ls-files', '--others', '--exclude-standard']).stdout ?? '').trim().split('\n').filter(Boolean);
+  if (untracked.length) {
+    const tarOut = path.join(dest, 'patches', `${name}-untracked.tar`);
+    const t = sh('tar', ['-C', dir, '-cf', tarOut, '--null', '-T', '-'], { input: untracked.join('\0') + '\0' });
+    if (t.status !== 0) fail(`untracked capture ${name}`, t.stderr?.trim() || `tar exit ${t.status}`);
+    else {
+      fs.chmodSync(tarOut, 0o600);
+      untrackedCaptured.push(...untracked.map((f) => `${name}:${f}`));
+      log(`untracked ${name}: ${untracked.length} file(s) archived (git diff HEAD does not include these)`);
+    }
   }
 }
 for (const [name, dir] of [['legacy-openclaw', `${ARCHIVE}/legacy-openclaw`], ['qq-bridge', `${ARCHIVE}/qq-bridge`]]) {
@@ -268,6 +331,15 @@ const expected = {
   collectedTopLevel: copied.sort(),
   skippedByDesign: [...SKIP_TOP_LEVEL],
   sqliteSnapshots: { ok, total: dbs.length },
+  // Cross-database consistency: per-database snapshots are each internally consistent, but
+  // successive VACUUM INTO calls do not share one instant. `quiesced` records whether the writer
+  // WAS ACTUALLY stopped for this backup, which is what a reminder-reconciliation rollback point
+  // needs. (`serviceStopped` is still true here: restoreService() runs after EXPECTED.json.)
+  quiesced: QUIESCE && serviceStopped === true,
+  quiescedRequested: QUIESCE,
+  // Non-git working-tree state that `git diff HEAD` alone would have dropped.
+  untrackedCaptured,
+  binaryCaptured,
   failures
 };
 fs.writeFileSync(path.join(dest, 'EXPECTED.json'), JSON.stringify(expected, null, 2) + '\n', { mode: 0o600 });
@@ -275,13 +347,14 @@ fs.writeFileSync(path.join(dest, 'EXPECTED.json'), JSON.stringify(expected, null
 const expectedHash = createHash('sha256').update(fs.readFileSync(path.join(dest, 'EXPECTED.json'))).digest('hex');
 fs.appendFileSync(path.join(dest, 'MANIFEST.sha256'), `${expectedHash}  EXPECTED.json\n`);
 
-console.log(JSON.stringify({ backup: dest, files: lines.length + 1, databases: `${ok}/${dbs.length}`, manifest: true, expected: true }, null, 2));
+restoreService();
 
 if (failures.length) {
   console.error(`\nbackup FAILED: ${failures.length} problem(s); this backup is NOT a valid recovery point`);
   for (const f of failures) console.error(`  - ${f}`);
   process.exit(1);
 }
-console.log('backup ok: every required item present');
-
-console.log(JSON.stringify({ backup: dest, files: files.length, databases: `${ok}/${dbs.length}`, manifest: true }, null, 2));
+console.log(
+  `backup ok: every required item present (cross-database consistency: ${QUIESCE ? 'quiesced' : 'concurrent — snapshots are per-database consistent only'})`
+);
+process.exit(0);
