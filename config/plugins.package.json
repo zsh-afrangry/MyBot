@@ -1,0 +1,9 @@
+{
+  "name": "kurumi-fusion-plugins",
+  "version": "0.0.0",
+  "private": true,
+  "description": "受控的第三方 OpenClaw 插件清单（权威来源）。运行态副本由 scripts/fusion/install-plugins.mjs 用 config/plugins.package-lock.json 经 npm ci 生成。",
+  "dependencies": {
+    "@openclaw/tavily-plugin": "2026.9.7"
+  }
+}

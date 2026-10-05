@@ -37,6 +37,15 @@ for (const d of ['git', 'patches', 'config', 'state', 'meta', 'tools']) {
 const log = (m) => console.log(`  ${m}`);
 const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', ...opts });
 
+// Every failure is recorded and turns into a non-zero exit at the end. A backup that silently
+// skipped a database or a repository used to still finish "successfully", which is worse than
+// failing loudly: the recovery point would look valid while missing material.
+const failures = [];
+const fail = (what, detail) => {
+  failures.push(`${what}: ${detail}`);
+  console.error(`  FAIL ${what}: ${detail}`);
+};
+
 // ---------------------------------------------------------------- git bundles
 // The legacy trees were moved out of their active locations in step 7; look in the archive first
 // and fall back to the old paths so this script keeps working on either layout.
@@ -51,7 +60,7 @@ for (const [name, dir] of REPOS) {
   const out = path.join(dest, 'git', `${name}.bundle`);
   const r = sh('git', ['-C', dir, 'bundle', 'create', out, '--all']);
   if (r.status !== 0) {
-    log(`FAILED bundle ${name}: ${r.stderr?.trim()}`);
+    fail(`git bundle ${name}`, r.stderr?.trim() || `git exit ${r.status}`);
     continue;
   }
   fs.chmodSync(out, 0o600);
@@ -121,18 +130,80 @@ for (const src of dbs) {
     db.close();
     ok++;
   } catch (e) {
-    log(`FAILED snapshot ${src}: ${e.message}`);
+    // A failed snapshot is a hard failure: the backup would silently lack a database.
+    fail(`sqlite snapshot ${src}`, e.message);
   }
 }
+if (!dbs.length) fail('sqlite snapshot', 'no databases found under the runtime directory');
 log(`databases: ${ok}/${dbs.length} consistent snapshots`);
 
-// Small non-database runtime state (channel ledger, stickers, receipts, agent sessions).
-for (const sub of ['channel', 'agents', 'migration', 'projects']) {
-  const src = path.join(STATE_DIR, sub);
-  if (!fs.existsSync(src)) continue;
-  sh('rsync', ['-a', '--exclude=*.sqlite*', '--exclude=*.log', `${src}/`, path.join(STATE_OUT.replace(/\/runtime$/, ''), sub) + '/']);
+// ------------------------------------------------- non-database runtime state
+//
+// This used to be an allowlist of four directories (channel, agents, migration, projects), which
+// silently dropped live material: workspace/ (MEMORY.md, SOUL.md, USER.md, IDENTITY.md, AGENTS.md),
+// project-checks/, research-workspace/, research-cache/, source-snapshots/, code-workspace/,
+// media/ and plugin-skills/. An allowlist fails open — anything new is omitted without a word.
+//
+// It is now the inverse: copy EVERY top-level entry except an explicit, justified skip list, so a
+// newly added runtime directory is captured by default. Databases are excluded here because they
+// are snapshotted consistently above.
+const SKIP_TOP_LEVEL = new Set([
+  'tmp', // transient work area
+  'plugins', // node_modules tree; its package.json + lockfile are captured under config/
+  'gateway.log', 'runtime.log', // logs; regenerated
+  'gateway-pid.json' // stale pid, meaningless after restore
+]);
+const stateCopyRoot = STATE_OUT.replace(/\/runtime$/, '');
+const copied = [];
+for (const e of fs.readdirSync(STATE_DIR, { withFileTypes: true })) {
+  if (SKIP_TOP_LEVEL.has(e.name)) continue;
+  // Host-specific credential material lives under config/ instead.
+  if (['openclaw.json', 'runtime-env.json', 'http-token', 'ws-token', 'config-journal-fingerprint.key'].includes(e.name)) continue;
+  const src = path.join(STATE_DIR, e.name);
+  const rel = e.name;
+  const out = path.join(stateCopyRoot, rel) + (e.isDirectory() ? '/' : '');
+  if (e.isDirectory()) {
+    const r = sh('rsync', ['-a', '--exclude=*.sqlite*', '--exclude=*.log', '--exclude=node_modules', `${src}/`, out]);
+    if (r.status !== 0) fail(`state copy ${rel}`, r.stderr?.trim() || `rsync exit ${r.status}`);
+    else copied.push(rel);
+  } else if (e.name.endsWith('.sqlite')) {
+    continue; // already snapshotted
+  } else {
+    try {
+      fs.copyFileSync(src, path.join(stateCopyRoot, rel));
+      fs.chmodSync(path.join(stateCopyRoot, rel), 0o600);
+      copied.push(rel);
+    } catch (err) {
+      fail(`state copy ${rel}`, err.message);
+    }
+  }
 }
-log('channel/agent JSON state copied (databases excluded, snapshotted above)');
+log(`runtime state copied (fail-safe, everything except skips): ${copied.sort().join(' ')}`);
+for (const skipped of SKIP_TOP_LEVEL) if (fs.existsSync(path.join(STATE_DIR, skipped))) log(`  skipped by design: ${skipped}`);
+
+// Material that must exist for a restore to be usable. Missing entries are hard failures.
+// Paths are relative to the backup root: database snapshots keep their absolute layout under
+// state/runtime/, while copied runtime directories sit directly under state/.
+const REQUIRED = [
+  ['state/runtime/home/afrangry/.openclaw-fusion/state/openclaw.sqlite', 'core state database'],
+  ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminders/reminders.sqlite', 'reminders database'],
+  ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-weather/weather.sqlite', 'weather/Profile database'],
+  ['state/runtime/home/afrangry/.openclaw-fusion/channel/channel.sqlite', 'channel ledger'],
+  ['state/runtime/home/afrangry/.openclaw-fusion/agents/main/agent/openclaw-agent.sqlite', 'main agent database'],
+  ['state/workspace/MEMORY.md', 'long-term memory'],
+  ['state/workspace/SOUL.md', 'persona'],
+  ['state/workspace/AGENTS.md', 'behaviour rules'],
+  ['state/workspace/IDENTITY.md', 'role identity'],
+  ['state/workspace/USER.md', 'owner profile'],
+  ['state/project-checks/fusion-memory-revision.mjs', 'project check fixture required by projects.json'],
+  ['state/channel/stickers.json', 'sticker catalogue'],
+  ['config/openclaw.json', 'runtime config'],
+  ['config/runtime-env.json', 'credential plane']
+];
+for (const [rel, why] of REQUIRED) {
+  if (!fs.existsSync(path.join(dest, rel))) fail(`required ${rel}`, `${why} missing from backup`);
+}
+log(`required-content check: ${REQUIRED.length} entries`);
 
 // ---------------------------------------------------------------- metadata + manifest
 const meta = [];
@@ -178,5 +249,39 @@ const lines = files.map((rel) => {
   return `${h}  ${rel}`;
 });
 fs.writeFileSync(path.join(dest, 'MANIFEST.sha256'), lines.join('\n') + '\n', { mode: 0o600 });
+
+// Expected-content record: what this backup is REQUIRED to contain, written independently of what
+// was actually collected. The verifier compares against this instead of just hashing whatever
+// happens to be present, so a missing required item cannot pass as "all files verified".
+const expected = {
+  label,
+  stamp,
+  createdAt: new Date().toISOString(),
+  repositories: REPOS.map(([name, dir]) => {
+    const head = sh('git', ['-C', dir, 'rev-parse', 'HEAD']).stdout?.trim();
+    const branches = (sh('git', ['-C', dir, 'branch', '--format=%(refname:short)']).stdout ?? '').trim().split('\n').filter(Boolean);
+    const tags = (sh('git', ['-C', dir, 'tag']).stdout ?? '').trim().split('\n').filter(Boolean);
+    return { name, dir, head, branches, tags };
+  }),
+  databases: dbs.map((p) => p.replace(/^\//, '')),
+  requiredFiles: REQUIRED.map(([rel, why]) => ({ path: rel, why })),
+  collectedTopLevel: copied.sort(),
+  skippedByDesign: [...SKIP_TOP_LEVEL],
+  sqliteSnapshots: { ok, total: dbs.length },
+  failures
+};
+fs.writeFileSync(path.join(dest, 'EXPECTED.json'), JSON.stringify(expected, null, 2) + '\n', { mode: 0o600 });
+// EXPECTED.json is written after the manifest; add it so the manifest stays complete.
+const expectedHash = createHash('sha256').update(fs.readFileSync(path.join(dest, 'EXPECTED.json'))).digest('hex');
+fs.appendFileSync(path.join(dest, 'MANIFEST.sha256'), `${expectedHash}  EXPECTED.json\n`);
+
+console.log(JSON.stringify({ backup: dest, files: lines.length + 1, databases: `${ok}/${dbs.length}`, manifest: true, expected: true }, null, 2));
+
+if (failures.length) {
+  console.error(`\nbackup FAILED: ${failures.length} problem(s); this backup is NOT a valid recovery point`);
+  for (const f of failures) console.error(`  - ${f}`);
+  process.exit(1);
+}
+console.log('backup ok: every required item present');
 
 console.log(JSON.stringify({ backup: dest, files: files.length, databases: `${ok}/${dbs.length}`, manifest: true }, null, 2));

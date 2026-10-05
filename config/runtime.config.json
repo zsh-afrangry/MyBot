@@ -1,4 +1,19 @@
 {
+  "_managed": [
+    "agents",
+    "bindings",
+    "channels",
+    "commands",
+    "discovery",
+    "gateway",
+    "logging",
+    "models",
+    "plugins",
+    "secrets",
+    "session",
+    "skills",
+    "tools"
+  ],
   "agents": {
     "defaults": {
       "workspace": "/home/afrangry/.openclaw-fusion/workspace",

@@ -27,8 +27,9 @@ OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领�
 ```bash
 cd /home/afrangry/kurumi-fusion
 node scripts/fusion/health.mjs              # 服务、QQ、频道、数据库
-node scripts/fusion/verify-dependencies.mjs # 依赖自持、无归档树逃逸、SDK/插件版本
-node scripts/fusion/sync-config.mjs         # 运行配置是否与仓库一致
+node scripts/fusion/verify-dependencies.mjs # 依赖自持、无归档树逃逸、版本与锁文件一致
+node scripts/fusion/sync-config.mjs         # 运行配置是否与仓库一致（含删除项）
+node scripts/fusion/sync-persona.mjs        # 角色卡是否与运行工作区一致
 systemctl --user status kurumi-fusion.service
 ```
 
@@ -37,14 +38,23 @@ systemctl --user status kurumi-fusion.service
 仓库是**意图**，运行目录是**事实与私密状态**。改行为改仓库再同步，改密钥只改运行目录。
 
 ```bash
-$EDITOR config/runtime.config.json          # 工具策略、插件、频道、模型
-node scripts/fusion/sync-config.mjs --diff  # 看会改什么
+# 行为 / 工具 / 插件 / 频道 / 模型
+$EDITOR config/runtime.config.json
+node scripts/fusion/sync-config.mjs --diff  # 看会改什么（含被删除的键）
 node scripts/fusion/sync-config.mjs --apply # 合并写入（只写 openclaw.json）
+
+# 人格
+$EDITOR config/persona.json                 # 指向 roles/ 下的角色卡
+node scripts/fusion/sync-persona.mjs --apply
+
 systemctl --user restart kurumi-fusion.service
 ```
 
-`--apply` 只写 `openclaw.json`，不会打开或删除 `state/`、`channel/`、`agents/`、`workspace/`、
-`media/`，因此**不可能覆盖记忆、提醒或聊天历史**。详见 `config/README.md`。
+`sync-config.mjs` 只写 `openclaw.json`，`sync-persona.mjs` 只写 `workspace/` 下四份文件，
+两者都不打开 `state/`、`channel/`、`agents/`、`media/` 或任何数据库，因此
+**不可能覆盖记忆、提醒或聊天历史**。详见 `config/README.md`。
+
+> 长期记忆是 `workspace/MEMORY.md`，**不在** `state/` 里。
 
 ## 备份与恢复
 
@@ -53,8 +63,15 @@ node scripts/fusion/backup-state.mjs --label before-<变更名>          # 一�
 node scripts/fusion/restore-verify.mjs --backup <备份目录>            # 恢复演练（不接 QQ、不跑提醒）
 ```
 
-数据库用 `VACUUM INTO` 取一致快照；恢复演练校验全量哈希、bundle 可克隆、补丁可重放、每个库
-`integrity_check` 与 `foreign_key_check`。当前最新备份演练 9/9 通过。
+- 备份采用**反向白名单**：除明确跳过项外，运行目录下所有内容都会收录（含
+  `workspace/` 记忆与人格、`code-workspace/`、`project-checks/`、`research-*`、`media/`），
+  数据库用 `VACUUM INTO` 取一致快照。
+- 备份会写入 `EXPECTED.json` 预期清单并**硬校验必需内容**：任一必需文件、仓库或数据库失败
+  即**非零退出**，不会把不完整的备份当成有效恢复点。
+- 恢复演练会**组装出可运行目录并实际加载**：校验全量哈希、逐仓库断言 HEAD/分支/标签、
+  重放未提交补丁、用生产 memory store 读取恢复后的记忆、在组装位置打开每个数据库。
+- 注意：`VACUUM INTO` 保证的是**单库**一致，多个数据库与投递账本之间可能存在时间差；
+  涉及提醒恢复时需要停写快照或明确的恢复对账。
 
 ## 注意
 

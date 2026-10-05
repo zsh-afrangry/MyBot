@@ -11,15 +11,17 @@
 |---|---|---|
 | 启动与重启 | ✅ | 多次 `systemctl --user restart kurumi-fusion`，服务 active、health `ok=true` |
 | 脱离旧 `.openclaw` 运行 | ✅ | 见下"独立性实测" |
-| 本人 QQ 文字收发 | ✅ | 两段文本分别成条送达（间隔 671ms ≥ 400ms 下限），`get_msg` 回读内容一致 |
-| 本人 QQ 图片/表情收发 | ✅ | 收藏表情以 `image` 类型送达，回读 `types:["image"]` |
+| 本人 QQ 文字收发 | ✅ 出站 | 两段文本分别成条送达（间隔 671ms ≥ 400ms 下限），`get_msg` 回读内容一致 |
+| 本人 QQ 图片发送 | ✅ 出站 | 收藏表情以 `image` 类型送达，回读 `types:["image"]` |
+| 本人 QQ **图片识别（入站）** | ❌ 未验证 | 需跑 `test-live-media.mjs`（合成入站图片），本次**没有**执行。出站能发图 ≠ 能从入站图片里读内容 |
 | 联网搜索 | ✅ | `web_search` 真实返回 URL（Tavily / DeepSeek 服务端检索） |
 | 天气 | ✅ | `personal_weather_get_brief` 返回真实和风天气数据；只读校验偏好/行程哈希未变 |
-| 提醒创建与送达 | ✅ | 自然语言 → 原生 automations → 到点 agentTurn → `deliveryStatus: "delivered"` |
+| 提醒投递（automations → agentTurn 链） | ✅ | 自然语言 → 原生 automations → 到点 agentTurn → `deliveryStatus: "delivered"` |
+| 提醒（`personal_reminder_*` 确定性链） | ❌ 未验证 | 该链走 `reminderBackend: "native-service"` 与固定 command runner，需跑 `test-domain-reminder.mjs` / `test-domain-due.mjs`，本次**没有**执行。上面那条是另一条链，**不能**互相替代 |
 | 研究任务 | ✅ | `web_search` + `web_fetch` 取 arXiv 元数据，作者/年份/链接正确，且如实声明只读了摘要页 |
 | 后台代码任务 | ⚠️ 部分 | 机制已验证（受理、worker 会话、沙箱、独立测试通过），但严格断言未复现，见下 |
 | 统一启停脚本 | ⚠️ 未执行 | 见下"未能执行的部分" |
-| 从备份恢复到隔离目录 | ✅ | `restore-verify.mjs` 9/9 项通过，3633 文件哈希一致、9 个库全部健康 |
+| 从备份恢复到隔离目录 | ⚠️ 当时仅材料级 | 当时 `restore-verify.mjs` 只做材料校验（9/9）。现已重写为**组装并加载**运行目录的 18 项校验，见文末"后续修正" |
 
 ## 独立性实测（第四步完成标准）
 
@@ -70,8 +72,10 @@
 `stats.py`、会互相覆盖，并列出真实 `runId` 请求主人确认。这是护栏按预期工作，不是故障；但它意味着
 该脚本在任务账本非空时无法重复验收。
 
-**结论**：机制可用，稳定复现需要先清理"accepted"任务记录或放宽 90 秒预算。未修改脚本断言，
-以免削弱验收标准。
+**结论**：机制可用，稳定复现需要先查真实终态、正常取消仍在跑的任务，并为该次验收使用
+**独立的项目工作区**，而不是删掉账本里的 "accepted" 记录——账本是运行任务的追踪依据，
+删记录等于丢掉"哪些任务被受理过"的事实。90 秒预算本身也偏紧：实测两个 worker 最终都返回
+`status=ok`，只是晚于该窗口。未修改脚本断言，以免削弱验收标准。
 
 ### 2. 统一启停脚本（Start-DSH.sh / Stop-DSH.sh）
 
@@ -98,3 +102,32 @@
   `health ok=true`、`issues=[]`、`testIngress=false`
 - `kurumi-qq.testInbound` 合成入口已移除（`unknown method`）
 - `sync-config.mjs` 报告运行配置与 `config/runtime.config.json` 一致
+
+## 后续修正（2026-10-05 复核后）
+
+本文档初版有几处结论过强，复核指出后已修正，记录如下：
+
+1. **"恢复到隔离目录 9/9"当时只是材料级校验。** 原 `restore-verify.mjs` 只验证备份目录内
+   文件哈希、bundle 可克隆、数据库可打开，**没有**把配置、工作区、数据库组装成一个可运行目录，
+   也没有验证恢复后能否加载。现已重写：新增 `EXPECTED.json` 预期清单、逐仓库断言
+   HEAD/分支/标签、把运行目录组装到目标并实际加载（配置解析、插件路径解析、
+   **用生产 memory store 读取恢复后的 MEMORY.md**、9 个数据库在组装位置打开）。
+   当前为 **18/18**。原先的 9/9 应称为"备份材料校验通过"。
+
+2. **备份漏掉了记忆与任务工作区。** 初版 `backup-state.mjs` 用白名单只复制
+   `channel`/`agents`/`migration`/`projects`，**漏掉** `workspace/`（含长期记忆 `MEMORY.md`）、
+   `project-checks/`、`research-workspace/`、`research-cache/`、`source-snapshots/`、
+   `code-workspace/`、`media/`、`plugin-skills/`。所以"9 个数据库全部健康"**不代表**能恢复
+   记忆、研究报告与代码检查环境。现已改为反向白名单（除明确跳过项外全部复制）并加入
+   必需内容硬校验，缺失即非零退出。
+
+3. **备份失败会静默成功。** 初版对数据库快照失败只记日志、rsync 返回码未检查、bundle 失败
+   继续执行，最后仍正常结束并生成 manifest。现已改为任何必需项失败都累积并以非零码退出。
+
+4. **提醒与图片的验证范围被混淆。** 见上表：本次跑的是 automations → agentTurn 链，
+   不是 `personal_reminder_*` 确定性链；验证的是**出站**发图，不是**入站**图片识别。
+   两者都需要另外的脚本（`test-domain-reminder.mjs` / `test-live-media.mjs`），本次未执行。
+
+5. **`VACUUM INTO` 只保证单库一致。** 它对每个数据库各自取一致快照，但**不保证**多个数据库
+   与投递账本处于同一时刻。涉及提醒恢复时，需要停写快照或明确的恢复对账机制；
+   当前备份在三者间可能存在时间差。

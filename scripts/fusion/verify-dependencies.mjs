@@ -23,7 +23,15 @@ const PACKAGES = [
   'chatbot/plugins/personal-weather'
 ];
 // Anything under these roots is archived/foreign and must never satisfy a runtime import.
-const FORBIDDEN = ['/home/afrangry/.openclaw/', '/home/afrangry/kurumi-baselines/', '/home/afrangry/kurumi-backups/'];
+// kurumi-archive is where the legacy trees now live after step 7, so it MUST be listed here —
+// omitting it meant the check silently stopped covering the archived tree it was written for.
+const FORBIDDEN = [
+  '/home/afrangry/.openclaw/',
+  '/home/afrangry/kurumi-archive/',
+  '/home/afrangry/kurumi-baselines/',
+  '/home/afrangry/kurumi-backups/',
+  '/home/afrangry/桌面/qq-bridge/'
+];
 
 const problems = [];
 const notes = [];
@@ -126,9 +134,12 @@ for (const rel of PACKAGES) {
     problems.push(`${rel}: package-lock.json is missing (dependency versions are not pinned)`);
     continue;
   }
-  // Direct deps from the lockfile must actually be present, except entries npm skips on this host.
+  // Every platform-applicable lockfile dependency must be present AND at the locked version.
+  // Presence alone would accept a stale or manually swapped package, which is exactly the failure
+  // mode this project already hit once (declared openclaw 2026.7.1-2 vs running 2026.9.7).
   const lock = JSON.parse(fs.readFileSync(path.join(dir, 'package-lock.json'), 'utf8'));
   const missing = [];
+  const versionMismatch = [];
   let expected = 0;
   let skipped = 0;
   for (const [key, meta] of Object.entries(lock.packages ?? {})) {
@@ -140,10 +151,23 @@ for (const rel of PACKAGES) {
       continue;
     }
     expected++;
-    if (!fs.existsSync(path.join(nm, name))) missing.push(name);
+    const installed = path.join(nm, name);
+    if (!fs.existsSync(installed)) {
+      missing.push(name);
+      continue;
+    }
+    if (!meta.version) continue;
+    try {
+      const actual = JSON.parse(fs.readFileSync(path.join(installed, 'package.json'), 'utf8')).version;
+      if (actual !== meta.version) versionMismatch.push(`${name}: installed ${actual}, lockfile ${meta.version}`);
+    } catch {
+      // A file: dependency (the local confirmation core) is a symlink to a workspace package and
+      // may legitimately lack a plain package.json read path; presence is enough for those.
+    }
   }
   if (missing.length) problems.push(`${rel}: ${missing.length} lockfile package(s) not installed, e.g. ${missing.slice(0, 3).join(', ')}`);
-  notes.push(`${rel}: ${expected} platform packages installed from lockfile (${skipped} skipped as other-platform)`);
+  if (versionMismatch.length) problems.push(`${rel}: ${versionMismatch.length} version mismatch(es): ${versionMismatch.slice(0, 3).join('; ')}`);
+  notes.push(`${rel}: ${expected} platform packages present at locked versions (${skipped} skipped as other-platform)`);
 }
 
 // --- 3. SDK pin ------------------------------------------------------------------------

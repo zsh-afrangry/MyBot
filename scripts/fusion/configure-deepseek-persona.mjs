@@ -1,4 +1,14 @@
-// Explicit operator switch; originals, conversation history and confirmation policy are preserved.
+// ONE-SHOT MIGRATION SCRIPT — do NOT use this to change the persona day to day.
+//
+// It is kept because it records how the runtime was switched to the DeepSeek/小鲸鱼 configuration,
+// but it does far more than set a role. Running it rewrites:
+//   - models.providers (replacing every provider with a single DeepSeek entry)
+//   - agents.defaults.model and agents.entries.main.model
+//   - runtime-env.json, and DELETES OPENAI_API_KEY from it
+//   - openclaw.json, plus workspace SOUL.md / IDENTITY.md / AGENTS.md / USER.md
+//
+// For a routine persona change use `sync-persona.mjs` (persona only). For models and providers
+// edit config/runtime.config.json and apply it with `sync-config.mjs`.
 import fs from 'node:fs';
 import {credential} from './lib/legacy-source.mjs';
 const root='/home/afrangry/kurumi-fusion',state='/home/afrangry/.openclaw-fusion',backup=state+'/migration/before-deepseek-whale-2026-10-05';
