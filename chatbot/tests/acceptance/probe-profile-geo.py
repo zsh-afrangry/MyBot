@@ -1,5 +1,6 @@
 """Authorized read-only provider comparison; emits no credentials or raw bodies."""
 import json
+import os
 import gzip
 import re
 import urllib.error
@@ -7,7 +8,13 @@ import urllib.parse
 import urllib.request
 from pathlib import Path
 
-root = Path('/home/afrangry/.openclaw')
+_legacy = os.environ.get('KURUMI_SOURCE_ROOT')
+if not _legacy:
+    raise SystemExit(
+        'This acceptance probe reads a legacy tree. Set KURUMI_SOURCE_ROOT to an extracted legacy\n'
+        'source (see /home/afrangry/kurumi-backups); it no longer defaults to /home/afrangry/.openclaw.'
+    )
+root = Path(_legacy)
 env = {}
 for path in [root / '.env', root / 'gateway.systemd.env']:
     for line in path.read_text().splitlines():

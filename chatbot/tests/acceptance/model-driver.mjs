@@ -5,7 +5,7 @@ import { parseEnv } from "node:util";
 
 /** Test-only bounded tool loop for the configured primary model. No QQ delivery. */
 export async function createModelDriver(fixture, options = {}) {
-  const root = resolve(process.env.KURUMI_SOURCE_ROOT || "/home/afrangry/.openclaw");
+  const root = resolve(process.env.KURUMI_SOURCE_ROOT || (()=>{throw new Error('This acceptance harness reads a legacy tree. Set KURUMI_SOURCE_ROOT to an extracted legacy source (see kurumi-backups); it no longer defaults to /home/afrangry/.openclaw')})());
   const cfg = JSON.parse(readFileSync(join(root, "openclaw.json"), "utf8"));
   const primary = cfg.agents.defaults.model.primary;
   const slash = primary.indexOf("/"), provider = cfg.models.providers[primary.slice(0, slash)];

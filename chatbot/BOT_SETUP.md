@@ -1,6 +1,11 @@
 # QQ Bot 当前状态与启用说明
 
-当前工作区：`/home/afrangry/.openclaw/chatbot`
+当前工作区：`/home/afrangry/kurumi-fusion/chatbot`（融合项目的源码工作区）
+
+> 历史说明：本文档早期描述的是旧 `/home/afrangry/.openclaw/chatbot` 工作区与其
+> `/openclaw 18789` 端口方案。当前融合运行时是 `/home/afrangry/.openclaw-fusion`，
+> 由 `scripts/fusion/run-gateway.mjs` 在 `127.0.0.1:18890` 启动，QQ 传输走 SnowLuma
+> （3083 发送 / 3084 事件）。旧目录已归档，不再是运行依赖。
 
 已完成：
 
@@ -13,20 +18,23 @@
 
 ## 凭证文件
 
-实际运行凭证文件是 `~/.openclaw/.env`（权限 600），而不是本工作区的 `.env`。
-OpenClaw 会刻意忽略工作区 `.env` 内的模型 API Key，避免附件或工作区内容注入凭证；因此不要在此目录复制真实密钥。
+运行凭证**不在**本工作区，也不在旧 `.openclaw` 目录。融合运行时的凭证平面是
+`/home/afrangry/.openclaw-fusion/runtime-env.json`（JSON，权限 `600`），由
+`scripts/fusion/prepare.mjs` 与 `scripts/fusion/configure-*.mjs` 写入、由 `run-gateway.mjs`
+作为子进程环境加载。OpenClaw 会刻意忽略工作区 `.env` 内的模型 API Key，避免附件或工作区
+内容注入凭证；因此不要在此目录复制真实密钥。
 
-模板在项目根目录的 `gateway.systemd.env.example`。当需要重新配置或轮换凭证时，根据模板更新实际的
-`/home/afrangry/.openclaw/gateway.systemd.env`（权限 `600`）：
+变量清单模板在项目根目录的 `gateway.systemd.env.example`。当需要重新配置或轮换凭证时：
 
-- `QQBOT_APP_ID`
-- `QQBOT_APP_SECRET`
-- 当前 Terra/Qwen/备用模型提供商对应的 API Key（按实际 provider 契约启用）
-- 天气服务的 API Key 和专属 Host（插件已链接安装；Key 通过 SecretRef 从环境读取）
+- `OPENCLAW_GATEWAY_TOKEN`
+- 当前模型提供商对应的 API Key（DeepSeek 为主模型；按实际 provider 契约启用）
+- `TAVILY_API_KEY`（联网搜索 provider）
+- 天气服务的 `QWEATHER_API_KEY` 与专属 `QWEATHER_API_HOST`（Key 通过 SecretRef 从环境读取）
 
-`chatbot/openclaw.env.template` 仅为旧文档保留的兼容指针，不再单独维护变量清单。Qwen 插件安装后，
-只按插件实际报告的环境变量启用 `gateway.systemd.env` 中对应的一项 Qwen Key；不要同时填写多个 Qwen
-变量，也不要把 Key 写入 `openclaw.json`。
+旧 `/home/afrangry/.openclaw/gateway.systemd.env` 已归档，仅存在于恢复备份中，新系统不再读取它。
+
+`chatbot/openclaw.env.template` 仅为旧文档保留的兼容指针，不再单独维护变量清单。不要把 Key
+写入 `openclaw.json`，也不要提交到 Git。
 
 QQ 的 `clientSecret` 已配置为从 `QQBOT_APP_SECRET` 环境变量读取，不会写入 `openclaw.json`。QQ AppID 不是密钥，但需要同步写入配置。
 

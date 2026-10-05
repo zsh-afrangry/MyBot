@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 import { parseEnv } from "node:util";
 import { retrievalConfig, installRetrievalPlugins } from "./retrieval-config.mjs";
 
-const root = resolve(process.env.KURUMI_SOURCE_ROOT || "/home/afrangry/.openclaw");
+const root = resolve(process.env.KURUMI_SOURCE_ROOT || (()=>{throw new Error('This acceptance harness reads a legacy tree. Set KURUMI_SOURCE_ROOT to an extracted legacy source (see kurumi-backups); it no longer defaults to /home/afrangry/.openclaw')})());
 const host = process.env.OPENCLAW_HOST_ROOT || "/home/afrangry/.npm-global/lib/node_modules/openclaw";
 const directory = mkdtempSync(join(tmpdir(), "kurumi-a6-smoke-"));
 const env = parseEnv(readFileSync(join(root, "gateway.systemd.env"), "utf8"));

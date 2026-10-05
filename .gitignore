@@ -42,3 +42,7 @@ chatbot/SOUL.md
 /chatbot/openclaw-workspace-state.json.migrated.*
 /chatbot/plugins/personal-weather/dist.bak.*/
 /chatbot/plugins/personal-weather/src.bak.*/
+
+# Python bytecode from acceptance probes
+__pycache__/
+*.pyc

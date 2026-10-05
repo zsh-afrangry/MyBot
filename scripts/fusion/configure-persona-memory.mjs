@@ -2,7 +2,10 @@
 import fs from 'node:fs';
 import {randomBytes} from 'node:crypto';
 import {readMemory,writeMemory} from '../../chatbot/plugins/kurumi-memory/store.js';
-const root='/home/afrangry/kurumi-fusion',state='/home/afrangry/.openclaw-fusion',workspace=state+'/workspace',old='/home/afrangry/.openclaw/chatbot';
+import {legacySource} from './lib/legacy-source.mjs';
+const root='/home/afrangry/kurumi-fusion',state='/home/afrangry/.openclaw-fusion',workspace=state+'/workspace';
+// Persona source is the archived legacy tree, never the live /home/afrangry/.openclaw.
+const old=legacySource()+'/chatbot';
 const backup=state+'/migration/persona-before';fs.mkdirSync(backup,{recursive:true,mode:0o700});
 for(const name of ['SOUL.md','IDENTITY.md','USER.md'])if(!fs.existsSync(backup+'/'+name)&&fs.existsSync(workspace+'/'+name))fs.copyFileSync(workspace+'/'+name,backup+'/'+name);
 const fields=Object.fromEntries([...fs.readFileSync(old+'/USER.md','utf8').matchAll(/^- \*\*([^:]+):\*\* (.+)$/gm)].map(m=>[m[1],m[2]]));

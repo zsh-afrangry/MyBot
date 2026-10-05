@@ -15,7 +15,7 @@ import { join, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseEnv } from "node:util";
 
-const root = resolve(process.env.KURUMI_SOURCE_ROOT || "/home/afrangry/.openclaw");
+const root = resolve(process.env.KURUMI_SOURCE_ROOT || (()=>{throw new Error('This acceptance harness reads a legacy tree. Set KURUMI_SOURCE_ROOT to an extracted legacy source (see kurumi-backups); it no longer defaults to /home/afrangry/.openclaw')})());
 const HOST = process.env.OPENCLAW_HOST_ROOT || "/home/afrangry/.npm-global/lib/node_modules/openclaw";
 const env = { ...parseEnv(readFileSync(join(root, "gateway.systemd.env"), "utf8")), ...process.env };
 process.env.TAVILY_API_KEY = env.TAVILY_API_KEY;

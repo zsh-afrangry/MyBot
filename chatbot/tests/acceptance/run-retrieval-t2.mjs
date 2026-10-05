@@ -13,7 +13,7 @@ import { pathToFileURL } from "node:url";
 import { parseEnv } from "node:util";
 import assert from "node:assert/strict";
 
-const root = resolve(process.env.KURUMI_SOURCE_ROOT || "/home/afrangry/.openclaw");
+const root = resolve(process.env.KURUMI_SOURCE_ROOT || (()=>{throw new Error('This acceptance harness reads a legacy tree. Set KURUMI_SOURCE_ROOT to an extracted legacy source (see kurumi-backups); it no longer defaults to /home/afrangry/.openclaw')})());
 const env = { ...parseEnv(readFileSync(join(root, "gateway.systemd.env"), "utf8")), ...process.env };
 if (!env.TAVILY_API_KEY) throw Error("TAVILY_API_KEY unavailable in gateway.systemd.env");
 // The plugin resolves credentials from process.env or plugins.entries.tavily.config.

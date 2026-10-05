@@ -52,9 +52,25 @@ Gateway restart is necessary to load new code into these fresh test processes.
   tool; no commit, Cron call, or QQ delivery. Evidence omits raw provider responses.
 
 `OPENCLAW_HOST_ROOT` overrides the installed Host path. The model driver reads
-the existing configuration and `.env` under `KURUMI_SOURCE_ROOT` (default
-`/home/afrangry/.openclaw`); it currently supports `anthropic-messages` with an
-environment SecretRef and fails explicitly for other configurations.
+the existing configuration and `.env` under `KURUMI_SOURCE_ROOT`; it currently
+supports `anthropic-messages` with an environment SecretRef and fails explicitly
+for other configurations.
+
+> `KURUMI_SOURCE_ROOT` has **no default**. These harnesses read a pre-fusion
+> (legacy) tree containing `openclaw.json`, `.env` and `gateway.systemd.env`, and
+> the migration is complete, so the new system no longer depends on
+> `/home/afrangry/.openclaw` existing. Extract the archived tree and point at it:
+>
+> ```bash
+> mkdir -p /tmp/legacy
+> zstd -dc /home/afrangry/kurumi-backups/2026-10-05-pre-consolidation/state/legacy-openclaw-full.tar.zst \
+>   | tar -C /tmp/legacy -xf -
+> KURUMI_SOURCE_ROOT=/tmp/legacy node chatbot/tests/acceptance/run-retrieval-smoke.mjs
+> ```
+>
+> Also note these scripts **write** their reports under `$KURUMI_SOURCE_ROOT`, so
+> point it at a scratch copy rather than the archive itself if you care about
+> keeping the extracted tree pristine.
 
 [已归档 2026-10-01（A3），以下描述对应 `docs/archive/personal-search-tests/run-agent-errors.mjs`]
 `run-agent-errors.mjs` separately exercises the default Host agent through the

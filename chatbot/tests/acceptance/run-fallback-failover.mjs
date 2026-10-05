@@ -17,7 +17,7 @@ import { join, resolve } from "node:path";
 import { spawnSync } from "node:child_process";
 import { parseEnv } from "node:util";
 
-const root = resolve(process.env.KURUMI_SOURCE_ROOT || "/home/afrangry/.openclaw");
+const root = resolve(process.env.KURUMI_SOURCE_ROOT || (()=>{throw new Error('This acceptance harness reads a legacy tree. Set KURUMI_SOURCE_ROOT to an extracted legacy source (see kurumi-backups); it no longer defaults to /home/afrangry/.openclaw')})());
 const host = process.env.OPENCLAW_HOST_ROOT || "/home/afrangry/.npm-global/lib/node_modules/openclaw";
 
 // 只读取需要的凭据，不打印任何值。
