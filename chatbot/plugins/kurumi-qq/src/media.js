@@ -1,7 +1,12 @@
 // Current-turn images are staged through Host media storage, never arbitrary URL fetch.
 import fs from 'node:fs';
 import {localImage,onebot} from './transport.js';
-const CDN=new Set(['gchat.qpic.cn','c2cpicdw.qpic.cn','multimedia.nt.qq.com','p.qpic.cn']);
+const CDN=new Set(['gchat.qpic.cn','c2cpicdw.qpic.cn','multimedia.nt.qq.com','multimedia.nt.qq.com.cn','p.qpic.cn']);
+export function qqImageUrl(value){
+ const url=new URL(value);
+ if(url.protocol!=='https:'||url.username||url.password||url.port||!CDN.has(url.hostname))throw Error('Unsupported QQ media source');
+ return url.href;
+}
 export async function stageImage(segment,a){
  const {saveMediaBuffer,saveRemoteMedia}=await import('openclaw/plugin-sdk/media-runtime');
  const d=segment.data??{};
@@ -10,9 +15,8 @@ export async function stageImage(segment,a){
   const saved=await saveMediaBuffer(bytes,undefined,'inbound',8*1024*1024);
   if(!saved.contentType?.startsWith('image/'))throw Error('Not image media');return saved;
  }
- const url=new URL(d.url);
- if(url.protocol!=='https:'||url.username||url.password||!CDN.has(url.hostname))throw Error('Unsupported QQ media source');
- const saved=await saveRemoteMedia({url:url.href,requireHttps:true,maxRedirects:0,maxBytes:8*1024*1024,timeoutMs:15000,subdir:'inbound'});
+ const url=qqImageUrl(d.url);
+ const saved=await saveRemoteMedia({url,requireHttps:true,maxRedirects:0,maxBytes:8*1024*1024,timeoutMs:15000,subdir:'inbound'});
  if(!saved.contentType?.startsWith('image/'))throw Error('Not image media');return saved;
 }
 export async function quoteText(id,a,selfId){

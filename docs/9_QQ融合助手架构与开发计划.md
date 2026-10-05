@@ -1,12 +1,12 @@
 # QQ 融合助手架构与开发计划
 
-现在应该从哪里继续：完整迁移技术验收与默认服务切换已完成。直接在本人QQ试用并反馈语气、分段及图片体验；后续开发从融合源码的当前干净提交继续。
+现在应该从哪里继续：已按最新反馈临时切换完整小鲸鱼角色卡与官方DeepSeek Flash，修复真实QQ图片入口。确认、私聊引用仅完成调查，会话管理暂不处理；详细状态与验证边界见docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md。
 
 ## TODO 与现状
 
 - [x] 两套旧方案保留，旧OpenClaw Git基线干净，融合源码/状态独立。
 - [x] QQ本人私聊、引用、图片、短段节奏、表情库；真实投递和回读。
-- [x] Kurumi人格、6条稳定资料、可列出/检索/更正/删除的显式记忆。
+- [x] 临时小鲸鱼人格、官方DeepSeek Flash；6条稳定资料和显式记忆能力保留。
 - [x] 天气、所在地、行程与确定性提醒迁移；短确认码、真实CRUD与跨重启送达对账。
 - [x] 独立代码项目、隔离检查、本地Git、后台任务并发/查询/取消。
 - [x] 独立全文研究、19页PDF文本、图表视觉核对、带来源/哈希/页码报告。
@@ -16,11 +16,11 @@
 - [x] 最终停机快照已恢复验证：9个SQLite完整性通过、项目Git有效、私有配置权限正确；最终源码与回滚包已归档。
 - [ ] 主人亲自发QQ文本/引用/新图片，反馈陪伴语气与分段节奏；属于使用体验验收，不阻塞已授权的技术上线。
 
-用户已选择Kurumi人格为主、代码先接入融合项目独立副本、验收后融合方案默认自启。可选技术分支自主采用推荐方案；真正不能决定的事项记录，不阻塞其他工作。当前无等待主人决策的技术阻塞。
+用户最新选择临时使用旧bridge完整小鲸鱼角色卡、主模型改为DeepSeek；代码先接入融合项目独立副本、融合方案默认自启保持不变。可选技术分支自主采用推荐方案；真正不能决定的事项记录，不阻塞其他工作。当前无等待主人决策的技术阻塞。
 
 ## 已确定的架构
 
-**OpenClaw是唯一助手宿主；Kurumi是人格与能力层；SnowLuma保留为QQ传输。DSH不嵌入主链路。**
+**OpenClaw是唯一助手宿主；Kurumi是能力项目，当前临时使用小鲸鱼人格与DeepSeek Flash；SnowLuma保留为QQ传输。DSH不嵌入主链路。**
 
 原因以长期运行体验和维护成本为主：原生会话、取消、Cron和结果投递已经实测承担代码/研究/提醒；QQ自然交互可以在薄频道内复用。再接DSH会增加另一套会话、任务状态和升级契约，当前没有已验证的收益。以后确有专业执行器优势时可单独接入，不让第二宿主管理提醒、记忆或QQ投递。
 
@@ -29,7 +29,7 @@ flowchart TD
   Q[本人QQ私聊] <--> S[SnowLuma / OneBot]
   S <--> C[Kurumi频道：身份 / 引用图片 / 分段表情 / 回执]
   C <--> O[OpenClaw：主会话 / 原生任务 / Cron]
-  O --> P[Kurumi人格 + 单一MEMORY.md]
+  O --> P[小鲸鱼人格 + 单一MEMORY.md]
   O --> B[天气 / Profile / 行程 / 确定性提醒]
   O --> W[独立代码会话：项目副本 / 隔离检查 / 本地Git]
   O --> R[独立研究会话：搜索 / PDF全文页图 / 报告]
@@ -71,7 +71,7 @@ flowchart TD
 
 **QQ交互。** 仅本人365999865，群和其他收件人均拒绝。短闲聊2至3段，450ms间隔；代码、列表、长报告保留结构。复用qq-bridge格式化/表情索引副本，许可证及原始SHA在vendor目录；原表情库不写入。21条表情中仅3条已有标签，不能宣称全部自动理解。引用正文不变成授权原文，CQ文本不变成控制段，图片需暂存或通过限定QQ CDN校验。
 
-**人格与记忆。** 保留Kurumi身份，精简行为提示。6条稳定资料从原USER迁入单一原生MEMORY.md，旧人格保存在私有migration/persona-before。记忆写入必须是本次本人原文明确“记住/修改记忆/忘记”，事实取原文子串；网页、引用、后台任务不授权。修订CAS、原子写入、凭证拒存；删除当前记忆不删除旧聊天/备份。自动记忆整理关闭。陪伴语气需要长期使用反馈，不能用一次闲聊替代主观验收。
+**人格与记忆。** 当前完整小鲸鱼卡来自源码roles/，运行时SOUL原样加载，IDENTITY与行为入口同步。此前Kurumi人格及模型配置保存在私有migration/before-deepseek-whale-2026-10-05。6条稳定资料从原USER迁入单一原生MEMORY.md，旧人格保存在私有migration/persona-before。记忆写入必须是本次本人原文明确“记住/修改记忆/忘记”，事实取原文子串；网页、引用、后台任务不授权。修订CAS、原子写入、凭证拒存；删除当前记忆不删除旧聊天/备份。自动记忆整理关闭。陪伴语气需要长期使用反馈，不能用一次闲聊替代主观验收。
 
 **领域状态。** 通过SQLite backup复制天气/Profile/行程与提醒；9条旧提醒均终态，无旧活动提醒遗漏。新频道兼容旧qqbot领域协议，旧库未写。所在地原值在测试后恢复；测试行程标记取消且保留审计。行程目前支持新增/查询，沿用旧能力范围，不虚称支持修改/删除。
 
@@ -85,10 +85,10 @@ flowchart TD
 
 - `kurumi-fusion.service`：已enabled/active；用户Linger=yes，配置支持开机运行，未做整机断电/重启验收。
 - `snowluma.service`、`snowluma-qq.service`：保留enabled/active，提供传输和QQ客户端。
-- 旧用户`openclaw-gateway.service`、`qq-bridge.service`及系统`dsh-web.service`：inactive/disabled。单元文件保留；融合单元与前两个服务冲突，避免误开双助手。
+- 旧用户`openclaw-gateway.service`、`qq-bridge.service`：inactive/disabled。系统`dsh-web.service`由用户启动后保留active，单独Web不消费QQ。Start-DSH.sh会拉起旧bridge并通过互斥停掉融合服务；本轮已恢复融合链路，旧脚本原样保留，详见文档11。
 - `testIngress=false`，测试RPC不可调用；临时慢工具已移除，原型worker配置退休，历史目录保留。
 - 删除迁移累计40次限制，常态滚动24小时500次；分段每个物理发送都计数，失败/未知也占用，账本未清空。验收目前本人实际发送15条，全部sent且已回读。
-- Gateway日志进入用户journal，旧gateway.log保留。健康检查核对Gateway、QQ online/good、频道、数据库、配额、服务及测试入口；合法启用提醒不会被判故障。
+- Gateway日志进入用户journal，旧gateway.log保留。健康检查核对Gateway、QQ online/good、频道、数据库、配额、服务及测试入口；合法启用提醒不会被判故障。现有health脚本也将单独运行的DSH Web列为冲突，需结合QQ消费者状态判断，不能直接等同双回复。
 - 当前无启用测试任务；4条停用的Host心跳/审阅声明保留，不等同“Cron表为空”。不自动删除未来用户合法任务。
 
 数据职责：Host的`state/openclaw.sqlite`与各`agents/*/agent/openclaw-agent.sqlite`是会话/调度事实来源；`channel/channel.sqlite`记录入站去重及出站预留/回执；`channel/task-receipts.jsonl`只保存任务run/session绑定；领域SQLite只负责对应业务状态；`MEMORY.md`是长期事实唯一来源。验收用native-tool-receipts记录在测试入口关闭后停止写入。

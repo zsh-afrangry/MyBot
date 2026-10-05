@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-05T08:30:05.415Z",
+  "testScope": "Real QQ image download via stageImage, then OpenClaw main agent in separate session with deliver:false; not a new live QQ round trip.",
+  "sourceMessageId": "1878941053",
+  "download": {
+    "host": "multimedia.nt.qq.com.cn",
+    "bytes": 1012270,
+    "contentType": "image/jpeg"
+  },
+  "status": "ok",
+  "receipt": {
+    "runId": "33c06627-b10c-4a1e-99bc-ee32af283100",
+    "sessionId": "12faf503-fcac-43e5-86ba-f4253410081d",
+    "turnId": "33c06627-b10c-4a1e-99bc-ee32af283100",
+    "requested": {
+      "provider": "deepseek",
+      "model": "deepseek-flash"
+    },
+    "effective": {
+      "provider": "deepseek",
+      "model": "deepseek-flash",
+      "responseModel": "deepseek-flash"
+    },
+    "successfulToolNames": [],
+    "rerouted": false,
+    "terminalDisposition": "visible"
+  },
+  "reply": {
+    "disposition": "visible",
+    "text": "图上方写的是：「求问：我该打左转向还是右转向灯？」\n\n画面里，白色轿车停在加油站/便利店前的空地上，车头朝外对着道路。道路是多车道，虚实线分道，左侧几条车道的地面箭头指向画面左边，右侧车道的箭头指向右下方。红色箭头从车头起笔，向右上划出一道弧，落在车辆右侧相邻的车道上——意思就是车要从路边斜着往右并进主路，先向右再顺势汇入车流。\n\n至于打哪个灯……这种从右侧斜插进车道的经典争议题，我觉得得打左转灯吧，提示的是「我要并入」。\n\n我是小鲸鱼，一只混在群里的 DeepSeek，能看图聊天，也能老老实实办事。"
+  },
+  "assessment": "OCR and visible objects recognized; lane direction includes mistakes. This verifies image delivery, not correctness of driving advice."
+}
