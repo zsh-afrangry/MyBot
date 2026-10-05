@@ -1,6 +1,6 @@
 # QQ 融合助手架构与开发计划
 
-现在应该从哪里继续：核心迁移及默认服务切换已完成，故障恢复通过；正在制作最终停机快照与恢复检查。之后从本人QQ日常体验反馈继续迭代，不重新选择运行底座。
+现在应该从哪里继续：完整迁移技术验收与默认服务切换已完成。直接在本人QQ试用并反馈语气、分段及图片体验；后续开发从融合源码的当前干净提交继续。
 
 ## TODO 与现状
 
@@ -13,7 +13,7 @@
 - [x] 周期天气真实创建、同ID修改、实际执行送达、取消。
 - [x] 默认融合服务自启；旧助手停止/禁用；测试入口关闭；健康诊断。
 - [x] Gateway崩溃后自动恢复、SnowLuma断线后自动重连。
-- [ ] 最终源码提交、停机快照、备份恢复检查、工作区干净。
+- [x] 最终停机快照已恢复验证：9个SQLite完整性通过、项目Git有效、私有配置权限正确；最终源码与回滚包已归档。
 - [ ] 主人亲自发QQ文本/引用/新图片，反馈陪伴语气与分段节奏；属于使用体验验收，不阻塞已授权的技术上线。
 
 用户已选择Kurumi人格为主、代码先接入融合项目独立副本、验收后融合方案默认自启。可选技术分支自主采用推荐方案；真正不能决定的事项记录，不阻塞其他工作。当前无等待主人决策的技术阻塞。
@@ -61,7 +61,7 @@ flowchart TD
 | 旧qq-bridge | `/home/afrangry/桌面/qq-bridge`，源码/配置不改造，服务停止/禁用 |
 | 原方案完整备份 | `/home/afrangry/kurumi-baselines/2026-10-05-before-integration/` |
 | 原型验收快照 | `/home/afrangry/kurumi-baselines/2026-10-05-fusion-acceptance/`，仅为原型检查点，不代表最终迁移 |
-| 最终迁移快照 | 待本阶段收尾写入，不能以原型快照冒充 |
+| 最终迁移快照 | `/home/afrangry/kurumi-baselines/2026-10-05-full-migration/`，runtime.tar.gz、固定SDK包、source.bundle、SHA256SUMS、checkpoint.json |
 
 **今后的开发主要在kurumi-fusion；不要直接在原.openclaw上改造。** 原`.openclaw/docs/9_...`只是初始快照，本文为当前权威状态。早期比较依据保留在`/home/afrangry/snowluma/architecture-evaluation/REPORT.md`。
 
@@ -77,7 +77,7 @@ flowchart TD
 
 **确认与提醒。** 原始RawBody授权，可信本人/私聊/会话绑定。短码`确认 <12位>`由完整proposal ID/hash派生，歧义、过期、引用与裸“好的”拒绝；兼容原长确认格式。固定command Cron只由受限服务从已确认领域行构建，收件人/命令/工作目录固定，不把通用管理凭证交给模型。简单提醒执行不依赖模型；通过公开cron.list/cron.runs对账，不依赖已消失的内部cron_run_logs表。未知投递不自动重发。周期天气用原生automations，main的本人投递Cron仅开放天气只读权限，仍不能改领域状态；周期天气和复杂任务依赖模型/API可用。
 
-**项目代码。** 主会话只提交项目ID和任务文字；Host拥有执行/状态/取消。固定检查和Git在Bubblewrap内运行，无主机私有目录、无网络，项目可写、外部检查只读。Git仅status/diff/branch/本地commit，commit显式paths并使用--only，不带入无关暂存文件。无任意主机shell、依赖安装和push；新增项目/检查由操作者配置。真实模型修复负revision与悬空符号链接问题，检查文件未改，修复审阅后已纳入部署源码。
+**项目代码。** 主会话只提交项目ID和任务文字；Host拥有执行/状态/取消。固定检查和Git在Bubblewrap内运行，无主机私有目录、无网络，项目可写、外部检查只读。Git仅status/diff/branch/本地commit，commit显式paths并使用--only，不带入无关暂存文件。无任意主机shell、依赖安装和push；新增项目/检查由操作者配置。真实模型修复负revision与悬空符号链接问题，检查文件未改，修复审阅后已纳入部署源码。独立副本随后合入已验收主分支，HEAD为b955abe，检查范围扩大到全部融合离线测试及只读外部回归，隔离环境32项通过（36-project-synchronized.json）；副本工作区干净。
 
 **全文研究。** 主聊天可在后台研究时继续回复。PDF来源限定arXiv/ACL/OpenReview/PMLR/NeurIPS，下载限25MiB；Poppler在Bubblewrap中有CPU/内存/时间上限。原始PDF有哈希与获取日期，text按offset读至EOF；图表公式用页图核对，报告明确PDF页码、范围与未做事项。样本为RAG v4，19页、87,001字符，实际核对PDF第2/6页；没有声称视觉看遍每页或复现实验。报告在`reports/rag-fulltext-acceptance.md`。
 
@@ -122,6 +122,12 @@ flowchart TD
 4. plugin可能在临时capture目录加载，持久Cron cwd必须使用稳定部署目录。cron.add返回job.id；固定RPC端点仍需服务显式凭证。
 5. 一次性Cron可能已自删除，不能无条件再删；未知送达不自动重试。禁用memory slot不会自动删除旧启用整理任务。
 6. Git add-all会混入Host自动模板；已改显式文件提交并保留失败证据。不要因模型报告“仅改一个文件”免除Git复核。
+
+## 最终备份与检查点
+
+停机采集运行快照后已重新启动服务。runtime.tar.gz的SHA-256为`50910eb68f82ccd863ded7e01090452213c286a8b1b70d1e671fa77a0405b1d0`；固定SDK包为`202348542668ba28f7dbff49017e443f3b6ce21dce0ecc82d14926cf88ecbd75`，两包gzip完整性通过。运行快照已实际解压到独立目录，9个SQLite integrity_check通过、项目git fsck通过，未启动恢复副本或重复发送QQ；证据37-backup-restore.json。源码回滚点标签为`migration/full-2026-10-05`，具体HEAD与source.bundle校验记录在备份目录checkpoint.json。
+
+旧方案完整快照是运行中采集，不能声称跨数据库事务一致；本次融合快照在服务停止时采集。固定SDK另存以防全局版本升级后难以回退；原领域/Tavily依赖仍可从旧方案备份恢复。
 
 ## 运维、回退与交接
 

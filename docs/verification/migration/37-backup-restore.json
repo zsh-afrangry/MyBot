@@ -1,0 +1,46 @@
+{
+  "boundary": "Stopped fusion runtime snapshot extracted to separate private directory; no restored service started, no QQ sent.",
+  "databases": [
+    {
+      "path": "agents/main/agent/openclaw-agent.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "agents/project-fusion/agent/openclaw-agent.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "agents/researcher/agent/openclaw-agent.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "agents/worker/agent/openclaw-agent.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "channel/channel.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "state/openclaw-quarantine.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "state/openclaw.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "state/personal-reminders/reminders.sqlite",
+      "integrity": "ok"
+    },
+    {
+      "path": "state/personal-weather/weather.sqlite",
+      "integrity": "ok"
+    }
+  ],
+  "projectGitValid": true,
+  "testIngress": false,
+  "privateConfigMode": "0o600",
+  "runtimeSha256": "50910eb68f82ccd863ded7e01090452213c286a8b1b70d1e671fa77a0405b1d0",
+  "passed": true
+}
