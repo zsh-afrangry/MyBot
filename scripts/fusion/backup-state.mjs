@@ -38,16 +38,16 @@ const log = (m) => console.log(`  ${m}`);
 const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', ...opts });
 
 // ---------------------------------------------------------------- git bundles
+// The legacy trees were moved out of their active locations in step 7; look in the archive first
+// and fall back to the old paths so this script keeps working on either layout.
+const ARCHIVE = '/home/afrangry/kurumi-archive';
+const firstExisting = (...candidates) => candidates.find((p) => fs.existsSync(path.join(p, '.git'))) ?? null;
 const REPOS = [
   ['kurumi-fusion', REPO_ROOT],
-  ['legacy-openclaw', '/home/afrangry/.openclaw'],
-  ['qq-bridge', '/home/afrangry/桌面/qq-bridge']
-];
+  ['legacy-openclaw', firstExisting(`${ARCHIVE}/legacy-openclaw`, '/home/afrangry/.openclaw')],
+  ['qq-bridge', firstExisting(`${ARCHIVE}/qq-bridge`, '/home/afrangry/桌面/qq-bridge')]
+].filter(([, dir]) => dir);
 for (const [name, dir] of REPOS) {
-  if (!fs.existsSync(path.join(dir, '.git'))) {
-    log(`skip ${name}: no git directory`);
-    continue;
-  }
   const out = path.join(dest, 'git', `${name}.bundle`);
   const r = sh('git', ['-C', dir, 'bundle', 'create', out, '--all']);
   if (r.status !== 0) {
@@ -55,13 +55,16 @@ for (const [name, dir] of REPOS) {
     continue;
   }
   fs.chmodSync(out, 0o600);
-  log(`bundle ${name}: ${(fs.statSync(out).size / 1048576).toFixed(1)} MiB`);
+  log(`bundle ${name}: ${(fs.statSync(out).size / 1048576).toFixed(1)} MiB  (${dir})`);
   // Uncommitted tracked work is part of "the state", so record it as a patch.
   const d = sh('git', ['-C', dir, 'diff', 'HEAD']);
   if (d.status === 0 && d.stdout.trim()) {
     fs.writeFileSync(path.join(dest, 'patches', `${name}-uncommitted.patch`), d.stdout, { mode: 0o600 });
     log(`patch  ${name}: ${d.stdout.split('\n').length} lines uncommitted`);
   }
+}
+for (const [name, dir] of [['legacy-openclaw', `${ARCHIVE}/legacy-openclaw`], ['qq-bridge', `${ARCHIVE}/qq-bridge`]]) {
+  if (fs.existsSync(dir)) log(`archive ${name}: present at ${dir}`);
 }
 
 // ---------------------------------------------------------------- config plane
