@@ -85,10 +85,10 @@ flowchart TD
 
 - `kurumi-fusion.service`：已enabled/active；用户Linger=yes，配置支持开机运行，未做整机断电/重启验收。
 - `snowluma.service`、`snowluma-qq.service`：保留enabled/active，提供传输和QQ客户端。
-- 旧用户`openclaw-gateway.service`、`qq-bridge.service`：inactive/disabled。系统`dsh-web.service`由用户启动后保留active，单独Web不消费QQ。Start-DSH.sh会拉起旧bridge并通过互斥停掉融合服务；本轮已恢复融合链路，旧脚本原样保留，详见文档11。
+- 旧用户`openclaw-gateway.service`、`qq-bridge.service`：inactive/disabled。系统`dsh-web.service`由用户启动后保留active，单独Web不消费QQ。Start/Stop-DSH.sh已按用户要求改为统一启停DSH与融合QQ栈，旧脚本备份保留，详见文档11。
 - `testIngress=false`，测试RPC不可调用；临时慢工具已移除，原型worker配置退休，历史目录保留。
 - 删除迁移累计40次限制，常态滚动24小时500次；分段每个物理发送都计数，失败/未知也占用，账本未清空。验收目前本人实际发送15条，全部sent且已回读。
-- Gateway日志进入用户journal，旧gateway.log保留。健康检查核对Gateway、QQ online/good、频道、数据库、配额、服务及测试入口；合法启用提醒不会被判故障。现有health脚本也将单独运行的DSH Web列为冲突，需结合QQ消费者状态判断，不能直接等同双回复。
+- Gateway日志进入用户journal，旧gateway.log保留。健康检查核对Gateway、QQ online/good、频道、数据库、配额、服务及测试入口；合法启用提醒不会被判故障。health允许单独DSH Web运行，仍检查旧QQ消费者冲突。
 - 当前无启用测试任务；4条停用的Host心跳/审阅声明保留，不等同“Cron表为空”。不自动删除未来用户合法任务。
 
 数据职责：Host的`state/openclaw.sqlite`与各`agents/*/agent/openclaw-agent.sqlite`是会话/调度事实来源；`channel/channel.sqlite`记录入站去重及出站预留/回执；`channel/task-receipts.jsonl`只保存任务run/session绑定；领域SQLite只负责对应业务状态；`MEMORY.md`是长期事实唯一来源。验收用native-tool-receipts记录在测试入口关闭后停止写入。
