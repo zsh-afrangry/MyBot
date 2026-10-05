@@ -1,5 +1,5 @@
 // Verify that a backup can be restored into an isolated directory — and that the restored copy is
-// COMPLETE and can be LOADED WITHOUT BORROWING ANYTHING FROM THE LIVE SYSTEM.
+// Complete verification includes an isolated Gateway, using a hash-pinned archived SDK.
 //
 // Safety: this script is deliberately inert with respect to the live system.
 //   - it never starts the gateway, never touches SnowLuma, and never sends QQ messages;
@@ -24,8 +24,8 @@
 //   8. config plugin paths are rewritten to the restored locations and must resolve there;
 //   9. memory is read using the RESTORED source, and every assembled database opens in place.
 //
-// Checks 1-5 alone mean "the backup materials are valid". Only 6-9 justify "this backup can be
-// restored to a working runtime".
+// Material checks alone do not prove startup. The sandbox probe boots the restored Gateway
+// with inert credentials, QQ disabled and cron disabled; live delivery is a separate acceptance.
 //
 // Usage:
 //   node scripts/fusion/restore-verify.mjs --backup <dir> [--target <dir>] [--skip-deps]
@@ -35,6 +35,8 @@ import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
+import {fileURLToPath} from 'node:url';
+import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs} from './lib/recovery-isolation.mjs';
 
 const argv = process.argv.slice(2);
 const arg = (name, fallback = null) => {
@@ -44,15 +46,16 @@ const arg = (name, fallback = null) => {
 const backup = arg('--backup');
 if (!backup) throw new Error('usage: restore-verify.mjs --backup <backup-dir> [--target <dir>] [--skip-deps]');
 if (!fs.existsSync(backup)) throw new Error(`backup not found: ${backup}`);
-const target = arg('--target') ?? fs.mkdtempSync(path.join(os.tmpdir(), 'restore-verify-'));
-const skipDeps = argv.includes('--skip-deps');
+if(fs.existsSync(path.join(backup,'INCOMPLETE.json')))throw Error('Backup is incomplete or interrupted');
+const target = newRecoveryTarget(arg('--target'));
+const skipDeps = argv.includes('--skip-deps'); // material-only, never a runnable recovery pass
 
 const results = [];
 const check = (name, ok, detail = '') => {
   results.push({ name, ok, detail });
   console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `  (${detail})` : ''}`);
 };
-const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', ...opts });
+const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', maxBuffer:128*1024*1024, timeout:180000, ...opts });
 /** rsync whose failure is reported rather than ignored. */
 const rsync = (from, to) => {
   fs.mkdirSync(to, { recursive: true, mode: 0o700 });
@@ -65,11 +68,7 @@ fs.mkdirSync(target, { recursive: true, mode: 0o700 });
 
 const expectedPath = path.join(backup, 'EXPECTED.json');
 const expected = fs.existsSync(expectedPath) ? JSON.parse(fs.readFileSync(expectedPath, 'utf8')) : null;
-if (!expected) {
-  console.log('  WARN  EXPECTED.json missing: falling back to hashing whatever is present,');
-  console.log('        which cannot detect required material that was never collected.\n');
-}
-
+if(!expected)throw Error('EXPECTED.json required; historical material needs a separately documented recovery procedure');
 // --- 1. manifest ----------------------------------------------------------------------
 const manifestPath = path.join(backup, 'MANIFEST.sha256');
 if (fs.existsSync(manifestPath)) {
@@ -77,8 +76,9 @@ if (fs.existsSync(manifestPath)) {
   let bad = 0;
   for (const line of entries) {
     const [want, rel] = line.split(/\s{2,}/);
+    if(!rel||path.isAbsolute(rel)||rel.split('/').includes('..'))throw Error('Invalid manifest path');
     const full = path.join(backup, rel);
-    if (!fs.existsSync(full)) {
+    if (!fs.existsSync(full) && !fs.lstatSync(full,{throwIfNoEntry:false})?.isSymbolicLink()) {
       bad++;
       continue;
     }
@@ -104,6 +104,8 @@ if (expected?.databases?.length) {
   check(`expected databases (${expected.databases.length})`, missingDbs.length === 0, missingDbs.length ? `${missingDbs.length} absent` : 'all present');
 }
 
+if(results.some(r=>!r.ok))throw Error('Backup material validation failed');
+for(const rec of expected.repositories??[])if(!fs.existsSync(path.join(backup,'git',rec.name+'.bundle')))throw Error('Required repository bundle absent');
 // --- 3. git bundles -------------------------------------------------------------------
 const gitDir = path.join(backup, 'git');
 const bundles = fs.existsSync(gitDir) ? fs.readdirSync(gitDir).filter((f) => f.endsWith('.bundle')) : [];
@@ -174,6 +176,7 @@ if (fs.existsSync(patchDir)) {
     }
     // `git apply` cannot restore these, so they were archived as files; extract them back.
     const listing = (sh('tar', ['-tf', path.join(patchDir, t)]).stdout ?? '').trim().split('\n').filter(Boolean);
+    if(listing.some(p=>p.startsWith('/')||p.split('/').includes('..')))throw Error('Unsafe working-tree archive member');
     const x = sh('tar', ['-C', repo, '-xf', path.join(patchDir, t)]);
     const restored = listing.filter((rel) => fs.existsSync(path.join(repo, rel)));
     const missing = listing.filter((rel) => !fs.existsSync(path.join(repo, rel)));
@@ -274,17 +277,28 @@ for (const f of ['runtime-env.json', 'http-token', 'ws-token', 'config-journal-f
 const credFiles = ['runtime-env.json', 'http-token', 'ws-token'].filter((f) => fs.existsSync(path.join(runtime, f)));
 check('assemble: token/credential files present', credFiles.length === 3, credFiles.join(', ') || 'none');
 
+
+const sdkArchive=arg('--sdk-archive','/home/afrangry/kurumi-backups/legacy-baselines-2026-10-05/2026-10-05-full-migration_openclaw-sdk-2026.9.7.tar.gz');
+const sdk=path.join(target,'sdk/openclaw');
+if(!skipDeps){
+ const hash=createHash('sha256').update(fs.readFileSync(sdkArchive)).digest('hex');
+ if(hash!=='202348542668ba28f7dbff49017e443f3b6ce21dce0ecc82d14926cf88ecbd75')throw Error('SDK recovery artifact hash mismatch');
+ fs.mkdirSync(path.dirname(sdk),{recursive:true});
+ const x=sh('tar',['-xzf',sdkArchive,'-C',path.dirname(sdk)]);if(x.status!==0)throw Error('SDK extraction failed');
+ check('immutable SDK artifact restored',JSON.parse(fs.readFileSync(sdk+'/package.json')).version==='2026.9.7');
+}
+
 // 6d. Third-party plugin prefix rebuilt from the versioned lockfile (not copied from production).
 const pluginPrefix = path.join(runtime, 'plugins');
 const manifestSrc = path.join(backup, 'config/plugins.package.json');
 const lockSrc = path.join(backup, 'config/plugins.package-lock.json');
 if (skipDeps) {
-  check('assemble: plugin prefix rebuilt', true, 'SKIPPED (--skip-deps)');
+  console.log('SKIP plugin installation: materials-only mode');
 } else if (fs.existsSync(manifestSrc) && fs.existsSync(lockSrc)) {
   fs.mkdirSync(pluginPrefix, { recursive: true, mode: 0o700 });
   fs.copyFileSync(manifestSrc, path.join(pluginPrefix, 'package.json'));
   fs.copyFileSync(lockSrc, path.join(pluginPrefix, 'package-lock.json'));
-  const r = sh('npm', ['ci', '--no-audit', '--no-fund'], { cwd: pluginPrefix });
+  const r = sh('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: pluginPrefix });
   if (r.status === 0) {
     const declared = Object.keys(JSON.parse(fs.readFileSync(lockSrc, 'utf8')).packages ?? {}).filter((k) => k.startsWith('node_modules/') && !k.slice(13).includes('/node_modules/'));
     const missing = declared.filter((d) => !fs.existsSync(path.join(pluginPrefix, d)));
@@ -300,7 +314,7 @@ if (skipDeps) {
 const restoredRepo = clones.get('kurumi-fusion');
 const depPackages = ['chatbot/packages/confirmation-core', 'chatbot/plugins/personal-confirmation', 'chatbot/plugins/personal-weather'];
 if (skipDeps) {
-  check('load: restored repo dependencies installed', true, 'SKIPPED (--skip-deps)');
+  console.log('SKIP dependencies/build/Gateway: materials-only mode');
 } else if (!restoredRepo) {
   check('load: restored repo dependencies installed', false, 'kurumi-fusion was not cloned');
 } else {
@@ -312,36 +326,46 @@ if (skipDeps) {
       depProblems.push(`${rel}: no committed lockfile`);
       continue;
     }
-    const r = sh('npm', ['ci', '--no-audit', '--no-fund'], { cwd: dir });
+    const r = sh('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], { cwd: dir });
     if (r.status !== 0) depProblems.push(`${rel}: ${(r.stderr ?? '').split('\n')[0]}`);
     else installed.push(rel);
   }
   check('load: restored repo dependencies installed', depProblems.length === 0, depProblems.length ? depProblems.join('; ') : `${installed.length}/${depPackages.length} package(s) via npm ci from restored lockfiles`);
 }
 
-// 8. Rewrite config plugin paths to the RESTORED locations, then resolve them there.
-if (cfg?.plugins?.load?.paths) {
-  const productionState = '/home/afrangry/.openclaw-fusion';
-  const productionRepo = '/home/afrangry/kurumi-fusion';
-  const rewritten = [];
-  let unresolvedCounter = 0;
-  const newPaths = cfg.plugins.load.paths.map((p) => {
-    if (p.startsWith(productionRepo)) return p.replace(productionRepo, restoredRepo ?? path.join(target, 'repos/kurumi-fusion'));
-    if (p.startsWith(productionState)) return p.replace(productionState, runtime);
-    // Anything outside the two known roots stays as declared and is reported as external.
-    rewritten.push(p);
-    return p;
-  });
-  cfg.plugins.load.paths = newPaths;
-  fs.writeFileSync(path.join(runtime, 'openclaw.json'), JSON.stringify(cfg, null, 2) + '\n', { mode: 0o600 });
-  const unresolved = newPaths.filter((p) => !fs.existsSync(p));
-  unresolvedCounter = unresolved.length;
-  check(
-    'load: rewritten plugin paths resolve inside the restored tree',
-    unresolvedCounter === 0,
-    unresolvedCounter ? `unresolved: ${unresolved.join(', ')}` : `${newPaths.length} path(s), ${rewritten.length} left external`
-  );
-  if (rewritten.length) console.log(`        external (not restored here): ${rewritten.join(', ')}`);
+// Rewrite every active config tree and link; historical transcripts stay unchanged.
+if(cfg&&restoredRepo){
+ cfg=remap(cfg,runtime,restoredRepo);
+ const registry=remap(JSON.parse(fs.readFileSync(runtime+'/projects.json')),runtime,restoredRepo);
+ assertNoProduction(cfg);assertNoProduction(registry);
+ fs.writeFileSync(runtime+'/projects.json',JSON.stringify(registry,null,2),{mode:0o600});
+ remapLinks(runtime,runtime,restoredRepo);remapLinks(restoredRepo,runtime,restoredRepo);
+ // A recovery verification copy cannot act as a live assistant, even outside the sandbox.
+ cfg.cron={...cfg.cron,enabled:false};
+ cfg.channels['kurumi-qq'].enabled=false;
+ cfg.channels['kurumi-qq'].httpUrl='http://127.0.0.1:9';cfg.channels['kurumi-qq'].wsUrl='ws://127.0.0.1:9';
+ cfg.gateway.port=18891;
+ cfg.gateway.auth={mode:'token',token:'recovery-verification-only'};
+ const inertEnv=Object.fromEntries(Object.keys(JSON.parse(fs.readFileSync(runtime+'/runtime-env.json'))).filter(k=>!k.toLowerCase().includes('proxy')).map(k=>[k,'recovery-disabled']));
+ inertEnv.OPENCLAW_GATEWAY_TOKEN='recovery-verification-only';inertEnv.QWEATHER_API_HOST='example.invalid';
+ fs.writeFileSync(runtime+'/runtime-env.json',JSON.stringify(inertEnv),{mode:0o600});
+ for(const f of ['http-token','ws-token'])fs.writeFileSync(runtime+'/'+f,'recovery-disabled',{mode:0o600});
+ fs.writeFileSync(runtime+'/openclaw.json',JSON.stringify(cfg,null,2),{mode:0o600});
+ check('all active configuration roots remapped; delivery disabled',true);
+ if(!skipDeps){
+  fs.mkdirSync(restoredRepo+'/node_modules',{recursive:true});
+  fs.symlinkSync(sdk,pluginPrefix+'/node_modules/openclaw');
+  for(const [name,to] of [['openclaw',sdk],['ws',sdk+'/node_modules/ws']])fs.symlinkSync(to,restoredRepo+'/node_modules/'+name);
+  for(const rel of depPackages){
+   const build=sh('bwrap',[...sandboxArgs(target),'--chdir',restoredRepo+'/'+rel,'/usr/bin/npm','run','build']);
+   check('sandbox build '+rel,build.status===0,build.status===0?'compiled':(build.stdout+build.stderr).slice(-1800));
+  }
+  if(results.some(r=>!r.ok))throw Error('Cannot start recovery probe: earlier check failed');
+  const probe=path.join(target,'recovery-probe.mjs');
+  fs.copyFileSync(fileURLToPath(new URL('./recovery-probe.mjs',import.meta.url)),probe);
+  const result=sh('bwrap',[...sandboxArgs(target),'/usr/bin/node',probe,target],{timeout:120000});
+  check('isolated Gateway startup, plugin imports and production exclusion',result.status===0,result.status===0?result.stdout.trim():(result.stderr+result.stdout).slice(-1800));
+ }
 }
 
 // 9a. Memory read through the RESTORED source, not the live deployment.
@@ -393,8 +417,9 @@ const failed = results.filter((r) => !r.ok);
 console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
 console.log(`assembled runtime at: ${runtime}`);
 console.log(`restored repo at    : ${restoredRepo ?? '(none)'}`);
-console.log('no service was started, no QQ message was sent, no reminder was scheduled');
-console.log('nothing under /home/afrangry was read except the backup itself');
+console.log('No host service was changed; only an isolated Gateway probe may have run. No real QQ delivery.');
+console.log('Recovery inputs: backup, verifier harness and hash-pinned SDK archive; isolated execution cannot see production.');
+fs.writeFileSync(path.join(target,'verification.json'),JSON.stringify({backup,target,level:skipDeps?'materials-only':'isolated-gateway',ok:!failed.length,results},null,2),{mode:0o600});
 if (failed.length) {
   console.error('\nRESULT: restore verification FAILED');
   for (const f of failed) console.error(`  - ${f.name}: ${f.detail}`);

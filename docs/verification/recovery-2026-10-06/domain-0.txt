@@ -1,0 +1,11 @@
+
+ RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/packages/confirmation-core
+
+ ✓ src/public-id.test.ts (3 tests) 27ms
+ ✓ src/confirmation.test.ts (14 tests) 26ms
+
+ Test Files  2 passed (2)
+      Tests  17 passed (17)
+   Start at  02:14:09
+   Duration  728ms (transform 159ms, setup 0ms, collect 219ms, tests 53ms, environment 2ms, prepare 294ms)
+

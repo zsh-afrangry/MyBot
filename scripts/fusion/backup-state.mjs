@@ -21,12 +21,15 @@ import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
+import {serviceLease,installBackupExitHandlers} from './lib/backup-service.mjs';
+import {captureWorkingTree} from './lib/working-tree-backup.mjs';
 import { REPO_ROOT, STATE_DIR } from './lib/legacy-source.mjs';
 
 const BACKUP_ROOT = '/home/afrangry/kurumi-backups';
 const argv = process.argv.slice(2);
 const labelIdx = argv.indexOf('--label');
 const label = (labelIdx >= 0 ? argv[labelIdx + 1] : 'manual') || 'manual';
+if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,80}$/.test(label))throw Error('Invalid backup label');
 const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
 const dest = path.join(BACKUP_ROOT, `${stamp}-${label}`);
 
@@ -35,8 +38,9 @@ for (const d of ['git', 'patches', 'config', 'state', 'meta', 'tools']) {
   fs.mkdirSync(path.join(dest, d), { recursive: true, mode: 0o700 });
 }
 
+// Flush signal callbacks between bounded collection steps; an interrupted run keeps INCOMPLETE.json.
 const log = (m) => console.log(`  ${m}`);
-const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', ...opts });
+const sh = (cmd, args, opts = {}) => spawnSync(cmd, args, { encoding: 'utf8', maxBuffer:128*1024*1024, ...opts });
 
 // Every failure is recorded and turns into a non-zero exit at the end. A backup that silently
 // skipped a database or a repository used to still finish "successfully", which is worse than
@@ -48,72 +52,23 @@ const fail = (what, detail) => {
   console.error(`  FAIL ${what}: ${detail}`);
 };
 // Recorded in EXPECTED.json so a restore can tell what non-git working-tree state was captured.
-const binaryCaptured = [];
+const binaryCaptured = []; // Legacy metadata field; v2 tracked binaries live in the Git patch.
 
-// --- cross-database consistency -------------------------------------------------------
-// VACUUM INTO makes each database internally consistent, but the reminder store, the scheduler
-// state and the outbound delivery ledger are separate files snapshotted one after another — so
-// they can represent slightly different moments. For a rollback point that reminders will be
-// reconciled against, quiescing the writer first removes that skew.
-//
-//   --quiesce : stop kurumi-fusion for the duration of the snapshot, then start it again.
-//
-// Failure handling, which the first version got wrong:
-//   * the pre-existing service state is remembered, and ONLY a service that was running is
-//     restarted (a service that was already stopped must stay stopped);
-//   * the restart is guaranteed by a finally block, so an unexpected throw cannot leave the
-//     assistant down;
-//   * a failed restart is a hard failure (non-zero exit), not just a printed line;
-//   * quiescing only counts as successful if the stop actually took effect.
-const QUIESCE = argv.includes('--quiesce');
-const SERVICE = 'kurumi-fusion.service';
-const isActive = () => spawnSync('systemctl', ['--user', 'is-active', SERVICE], { encoding: 'utf8' }).stdout?.trim() === 'active';
-const wasRunning = QUIESCE ? isActive() : false;
-let serviceStopped = false;
-
-const restoreService = () => {
-  if (!serviceStopped) return;
-  if (!wasRunning) {
-    log(`${SERVICE} was already stopped before this run; leaving it stopped`);
-    serviceStopped = false;
-    return;
-  }
-  const r = spawnSync('systemctl', ['--user', 'start', SERVICE], { encoding: 'utf8' });
-  serviceStopped = false;
-  if (r.status !== 0) fail('quiesce restore', `could not restart ${SERVICE}: ${r.stderr?.trim() || r.status}`);
-  else log(`restarted ${SERVICE} after quiesced snapshot`);
-};
-
-// Guarantee the restart even on an unexpected throw. spawnSync is synchronous, so the 'exit'
-// handler can still complete the start before the process dies. restoreService() is idempotent.
-process.on('exit', () => restoreService());
-for (const ev of ['uncaughtException', 'unhandledRejection']) {
-  process.on(ev, (err) => {
-    restoreService();
-    console.error(`  FAIL unexpected ${ev}: ${err?.stack || err}`);
-    process.exit(1);
-  });
-}
-
-if (QUIESCE) {
-  if (!wasRunning) {
-    log(`${SERVICE} was not running; nothing to quiesce (snapshot will be taken as-is)`);
-  } else {
-    const stop = spawnSync('systemctl', ['--user', 'stop', SERVICE], { encoding: 'utf8' });
-    if (stop.status !== 0) {
-      fail('quiesce', `could not stop ${SERVICE}: ${stop.stderr?.trim() || stop.status}`);
-    } else {
-      serviceStopped = true;
-      // Wait until the gateway is really gone so no writer is mid-transaction.
-      for (let i = 0; i < 40 && isActive(); i++) spawnSync('sleep', ['0.5']);
-      if (isActive()) {
-        fail('quiesce', `${SERVICE} still active after stop; snapshot would NOT be quiesced`);
-      } else {
-        log(`quiesced: ${SERVICE} stopped for a consistent cross-database snapshot`);
-      }
-    }
-  }
-}
+// A durable marker survives SIGKILL/power loss. Such a directory is never a valid restore point.
+const incomplete=path.join(dest,'INCOMPLETE.json');
+const record=data=>fs.writeFileSync(incomplete,JSON.stringify({createdAt:new Date().toISOString(),...data},null,2),{mode:0o600});
+record({phase:'collecting'});
+const QUIESCE=argv.includes('--quiesce');
+const lease=serviceLease({record});
+const removeHandlers=installBackupExitHandlers(lease,{onFailure:e=>console.error('Backup interrupted:',e.message)});
+const lock=path.join(BACKUP_ROOT,'.backup.lock');
+fs.mkdirSync(lock,{mode:0o700});
+fs.writeFileSync(path.join(lock,'owner.json'),JSON.stringify({pid:process.pid,dest}),{mode:0o600});
+const releaseLock=()=>{try{const owner=JSON.parse(fs.readFileSync(path.join(lock,'owner.json')));if(owner.pid===process.pid&&owner.dest===dest)fs.rmSync(lock,{recursive:true});}catch{}};
+process.once('exit',releaseLock);
+try {
+if(QUIESCE)lease.stop();
+await new Promise(setImmediate);
 const untrackedCaptured = [];
 
 // ---------------------------------------------------------------- git bundles
@@ -136,48 +91,8 @@ for (const [name, dir] of REPOS) {
   fs.chmodSync(out, 0o600);
   log(`bundle ${name}: ${(fs.statSync(out).size / 1048576).toFixed(1)} MiB  (${dir})`);
 
-  // Uncommitted work is part of "the state". `git diff HEAD` alone only covers TRACKED changes:
-  // it silently omits untracked files and reduces binary modifications to "Binary files differ".
-  // Capture all three forms separately so nothing is quietly dropped.
-  const d = sh('git', ['-C', dir, 'diff', 'HEAD']);
-  if (d.status === 0 && d.stdout.trim()) {
-    fs.writeFileSync(path.join(dest, 'patches', `${name}-uncommitted.patch`), d.stdout, { mode: 0o600 });
-    log(`patch  ${name}: ${d.stdout.split('\n').length} lines uncommitted (tracked, text)`);
-  }
-  // NUL-separated output is required: without -z git QUOTES non-ASCII paths (e.g. Chinese
-  // filenames become "\346\265\213..."), and tar then fails to stat a path that never existed.
-  const numstat = sh('git', ['-C', dir, 'diff', 'HEAD', '--numstat', '-z']).stdout ?? '';
-  const binary = numstat
-    .split('\0')
-    .filter(Boolean)
-    .map((rec) => rec.split('\t'))
-    .filter((f) => f.length >= 3 && f[0] === '-' && f[1] === '-')
-    .map((f) => f[2])
-    .filter(Boolean);
-  if (binary.length) {
-    // A text patch cannot carry these; tar the actual files so content is preserved.
-    const tarOut = path.join(dest, 'patches', `${name}-binary-modified.tar`);
-    const t = sh('tar', ['-C', dir, '-cf', tarOut, '--null', '-T', '-'], { input: binary.join('\0') + '\0' });
-    if (t.status !== 0) fail(`binary capture ${name}`, t.stderr?.trim() || `tar exit ${t.status}`);
-    else {
-      fs.chmodSync(tarOut, 0o600);
-      binaryCaptured.push(...binary.map((f) => `${name}:${f}`));
-      log(`binary ${name}: ${binary.length} modified file(s) archived (text patch cannot carry them)`);
-    }
-  }
-  const untracked = (sh('git', ['-C', dir, 'ls-files', '-z', '--others', '--exclude-standard']).stdout ?? '')
-    .split('\0')
-    .filter(Boolean);
-  if (untracked.length) {
-    const tarOut = path.join(dest, 'patches', `${name}-untracked.tar`);
-    const t = sh('tar', ['-C', dir, '-cf', tarOut, '--null', '-T', '-'], { input: untracked.join('\0') + '\0' });
-    if (t.status !== 0) fail(`untracked capture ${name}`, t.stderr?.trim() || `tar exit ${t.status}`);
-    else {
-      fs.chmodSync(tarOut, 0o600);
-      untrackedCaptured.push(...untracked.map((f) => `${name}:${f}`));
-      log(`untracked ${name}: ${untracked.length} file(s) archived (git diff HEAD does not include these)`);
-    }
-  }
+  untrackedCaptured.push(...captureWorkingTree(dir,path.join(dest,'patches'),name));
+  await new Promise(setImmediate);
 }
 for (const [name, dir] of [['legacy-openclaw', `${ARCHIVE}/legacy-openclaw`], ['qq-bridge', `${ARCHIVE}/qq-bridge`]]) {
   if (fs.existsSync(dir)) log(`archive ${name}: present at ${dir}`);
@@ -236,6 +151,7 @@ for (const src of dbs) {
     db.exec(`VACUUM INTO '${out.replace(/'/g, "''")}'`);
     db.close();
     ok++;
+    await new Promise(setImmediate);
   } catch (e) {
     // A failed snapshot is a hard failure: the backup would silently lack a database.
     fail(`sqlite snapshot ${src}`, e.message);
@@ -266,6 +182,7 @@ for (const e of fs.readdirSync(STATE_DIR, { withFileTypes: true })) {
   if (SKIP_TOP_LEVEL.has(e.name)) continue;
   // Host-specific credential material lives under config/ instead.
   if (['openclaw.json', 'runtime-env.json', 'http-token', 'ws-token', 'config-journal-fingerprint.key'].includes(e.name)) continue;
+  await new Promise(setImmediate);
   const src = path.join(STATE_DIR, e.name);
   const rel = e.name;
   const out = path.join(stateCopyRoot, rel) + (e.isDirectory() ? '/' : '');
@@ -343,7 +260,7 @@ const collect = (dir, base = '') => {
       continue;
     }
     if (e.isDirectory()) collect(p, rel);
-    else if (e.name !== 'MANIFEST.sha256') files.push(rel);
+    else if (!['MANIFEST.sha256','INCOMPLETE.json'].includes(e.name)) files.push(rel);
   }
 };
 collect(dest);
@@ -378,8 +295,9 @@ const expected = {
   // Cross-database consistency: per-database snapshots are each internally consistent, but
   // successive VACUUM INTO calls do not share one instant. `quiesced` records whether the writer
   // WAS ACTUALLY stopped for this backup, which is what a reminder-reconciliation rollback point
-  // needs. (`serviceStopped` is still true here: restoreService() runs after EXPECTED.json.)
-  quiesced: QUIESCE && serviceStopped === true,
+  // needs. The service lease retains this fact after normal restart.
+  quiesced: QUIESCE && lease.quiesced,
+  workingTreeFormat: "git-binary-patch",
   quiescedRequested: QUIESCE,
   // Non-git working-tree state that `git diff HEAD` alone would have dropped.
   untrackedCaptured,
@@ -391,7 +309,8 @@ fs.writeFileSync(path.join(dest, 'EXPECTED.json'), JSON.stringify(expected, null
 const expectedHash = createHash('sha256').update(fs.readFileSync(path.join(dest, 'EXPECTED.json'))).digest('hex');
 fs.appendFileSync(path.join(dest, 'MANIFEST.sha256'), `${expectedHash}  EXPECTED.json\n`);
 
-restoreService();
+lease.restore();
+await new Promise(setImmediate);
 
 if (failures.length) {
   console.error(`\nbackup FAILED: ${failures.length} problem(s); this backup is NOT a valid recovery point`);
@@ -401,4 +320,10 @@ if (failures.length) {
 console.log(
   `backup ok: every required item present (cross-database consistency: ${QUIESCE ? 'quiesced' : 'concurrent — snapshots are per-database consistent only'})`
 );
-process.exit(0);
+fs.unlinkSync(incomplete);
+} finally {
+ lease.restore();
+ removeHandlers();
+ releaseLock();
+ process.removeListener('exit',releaseLock);
+}

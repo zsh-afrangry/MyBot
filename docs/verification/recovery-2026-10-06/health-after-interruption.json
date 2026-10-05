@@ -1,0 +1,90 @@
+{
+  "at": "2026-10-05T18:14:09.149Z",
+  "ok": true,
+  "issues": [],
+  "gateway": true,
+  "qq": {
+    "online": true,
+    "good": true
+  },
+  "testIngress": false,
+  "channel": [
+    {
+      "running": true,
+      "connected": true
+    }
+  ],
+  "cron": {
+    "total": 4,
+    "hasMore": false,
+    "jobs": [
+      {
+        "id": "2d61b8f2-744a-438d-be99-a2796f05d5fd",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "428bf628-20d2-4c99-a889-38782ece05a7",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "53286346-7fed-4e0e-a381-9ee815014f01",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      }
+    ]
+  },
+  "testMethodDisabled": true,
+  "channelDatabase": "ok",
+  "outbound": [
+    {
+      "status": "sent",
+      "count": 34
+    }
+  ],
+  "recentAttempts": 34,
+  "dailyLimit": 500,
+  "recentFailedInbound": 1,
+  "weatherDatabase": "ok",
+  "remindersDatabase": "ok",
+  "services": {
+    "kurumi-fusion": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "qq-bridge": {
+      "ActiveState": "inactive",
+      "UnitFileState": "disabled"
+    },
+    "openclaw-gateway": {
+      "ActiveState": "inactive",
+      "UnitFileState": "disabled"
+    },
+    "snowluma": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "snowluma-qq": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "dsh-web": {
+      "ActiveState": "active",
+      "UnitFileState": "disabled"
+    }
+  }
+}

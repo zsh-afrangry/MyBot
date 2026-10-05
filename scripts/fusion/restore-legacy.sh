@@ -12,8 +12,8 @@
 # 用法：
 #   ./restore-legacy.sh                 # 只检查（默认）
 #   ./restore-legacy.sh --check         # 同上
-#   ./restore-legacy.sh --restore       # 预演：显示将要做什么，仍需 --confirm
-#   ./restore-legacy.sh --restore --confirm   # 真正执行复制还原
+#   ./restore-legacy.sh --restore --system A       # 预演：显示将要做什么，仍需 --confirm
+#   ./restore-legacy.sh --restore --system A --confirm   # 真正执行复制还原
 set -uo pipefail
 
 ARCHIVE=/home/afrangry/kurumi-archive
@@ -30,15 +30,25 @@ LEGACY_UNITS=(openclaw-gateway qq-bridge)
 
 MODE=check
 CONFIRM=0
-for arg in "$@"; do
-    case "$arg" in
+SYSTEM=both
+while [ "$#" -gt 0 ]; do
+    case "$1" in
         --check) MODE=check ;;
         --restore) MODE=restore ;;
         --confirm) CONFIRM=1 ;;
-        -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
-        *) echo "未知参数：$arg（可用：--check --restore --confirm）" >&2; exit 2 ;;
+        --system) shift; SYSTEM=${1:-}; case "$SYSTEM" in A|B) ;; *) echo "--system 必须是 A 或 B" >&2; exit 2;; esac ;;
+        -h|--help) echo "用法：$0 [--check] | --restore --system A|B [--confirm]"; exit 0 ;;
+        *) echo "未知参数：$1" >&2; exit 2 ;;
     esac
+    shift
 done
+if [ "$MODE" = restore ] && [ "$SYSTEM" = both ]; then
+    echo "还原必须明确选择 --system A 或 --system B，不能同时还原并启动两个旧助手。" >&2
+    exit 2
+fi
+PAIRS=()
+[ "$SYSTEM" = B ] || PAIRS+=("$LEGACY_SRC:$LEGACY_DST:旧OpenClaw")
+[ "$SYSTEM" = A ] || PAIRS+=("$BRIDGE_SRC:$BRIDGE_DST:旧bridge")
 
 problems=0
 warnings=0
@@ -54,11 +64,23 @@ have() { [ -e "$1" ] || [ -L "$1" ]; }   # -L matters: [ -e ] is false for a DAN
 # 内容清单（路径 + 普通文件内容哈希 + 符号链接目标）。用于证明"复制逐文件一致"，
 # 而不是只比条目数——条目数相同不代表内容相同。
 manifest_of() {
-    local dir="$1"
-    {
-        find "$dir" -type f -exec sha256sum {} + 2>/dev/null | sed "s#$dir/##" | sort
-        find "$dir" -type l -printf 'LINK %P -> %l\n' 2>/dev/null | sort
-    }
+    python3 - "$1" <<'PYMANIFEST'
+import os,sys,json,hashlib,stat
+root=sys.argv[1]
+for base,dirs,files in os.walk(root,followlinks=False):
+    dirs.sort(); files.sort()
+    for name in sorted(dirs+files):
+        p=os.path.join(base,name);s=os.lstat(p);rel=os.path.relpath(p,root)
+        if stat.S_ISLNK(s.st_mode): value=['link',os.readlink(p)]
+        elif stat.S_ISREG(s.st_mode):
+            h=hashlib.sha256()
+            with open(p,'rb') as f:
+                for b in iter(lambda:f.read(1024*1024),b''):h.update(b)
+            value=['file',h.hexdigest()]
+        elif stat.S_ISDIR(s.st_mode): value=['dir']
+        else: raise RuntimeError('Unsupported file type: '+rel)
+        print(json.dumps([rel,stat.S_IMODE(s.st_mode),value],ensure_ascii=True))
+PYMANIFEST
 }
 
 # 逐服务检查屏蔽状态：旧写法用一条正则匹配任意一行，只要有一个被 mask 就报"都已屏蔽"。
@@ -72,8 +94,8 @@ mask_state() {
 
 check_archive() {
     echo "【1】归档原件"
-    for pair in "$LEGACY_SRC:旧 OpenClaw" "$BRIDGE_SRC:旧 qq-bridge"; do
-        src=${pair%%:*}; label=${pair#*:}
+    for pair in "${PAIRS[@]}"; do
+        src=${pair%%:*}; label=${pair##*:}
         if have "$src"; then
             ok "$label 在归档：$(du -sh "$src" 2>/dev/null | cut -f1)"
         else
@@ -104,7 +126,7 @@ for p in glob.glob(os.path.join(sys.argv[1], '*', 'EXPECTED.json')):
         d = json.load(open(p))
     except Exception:
         continue
-    if d.get('quiesced'):
+    if d.get('quiesced') is True and not d.get('failures') and not os.path.exists(os.path.join(os.path.dirname(p),'INCOMPLETE.json')):
         t = os.path.getmtime(p)
         if best is None or t > best[0]:
             best = (t, os.path.basename(os.path.dirname(p)))
@@ -128,8 +150,8 @@ PY
 
 check_targets() {
     echo "【3】目标原路径（必须为空，否则不覆盖不合并）"
-    for pair in "$LEGACY_DST:$LEGACY_SRC" "$BRIDGE_DST:$BRIDGE_SRC"; do
-        dst=${pair%%:*}; src=${pair#*:}
+    for pair in "${PAIRS[@]}"; do
+        src=${pair%%:*}; rest=${pair#*:}; dst=${rest%%:*}
         if have "$dst"; then
             bad "目标已存在，还原会中止：$dst"
             info "请先确认它是否是要保留的现有数据；本脚本不会覆盖或合并。"
@@ -217,7 +239,7 @@ check_links_and_deps() {
         info "归档中符号链接：$total 个，其中当前失效 $dangling 个"
         if [ "$dangling" -gt 0 ]; then
             info "失效原因：它们写死指向原路径，而原路径当前不存在 ——"
-            info "还原到原路径后这些链接会**自动恢复有效**，不需要改写。"
+            info "4 个技能链接可恢复；历史 personal-search 链接仍可能失效，须核对。"
         fi
     fi
     local pkg
@@ -348,9 +370,8 @@ do_restore() {
     if [ "$CONFIRM" -ne 1 ]; then
         echo "  这是预演。加 --confirm 才会真正执行。将要做的："
         echo "    1. 停止融合侧消费者：${FUSION_CONSUMERS[*]}"
-        echo "    2. cp -a $LEGACY_SRC  →  $LEGACY_DST"
-        echo "    3. cp -a $BRIDGE_SRC  →  $BRIDGE_DST"
-        echo "    4. 校验复制结果（条目数、符号链接、git 状态）"
+        echo "    2. 只复制所选方案 $SYSTEM：${PAIRS[*]}"
+        echo "    4. 校验复制结果（逐文件哈希、权限、符号链接）"
         echo "    5. **不启动任何服务**；启动是独立的显式步骤"
         return 0
     fi
@@ -361,12 +382,15 @@ do_restore() {
 
     echo "  1) 停止融合侧消费者（保留新系统配置与数据，不触碰 .openclaw-fusion）"
     local u stop_ok=1
-    for u in "${FUSION_CONSUMERS[@]}"; do
+    for u in "${FUSION_CONSUMERS[@]}" "${LEGACY_UNITS[@]}"; do
         if ! systemctl --user stop "$u.service"; then
             echo "     ✗ 停止 $u 失败；中止还原以免出现两个 QQ 消费者" >&2
             stop_ok=0
         fi
-        printf '     %-14s -> %s\n' "$u" "$(systemctl --user is-active "$u.service" 2>/dev/null)"
+        local stopped
+        stopped=$(systemctl --user show "$u.service" -p ActiveState --value 2>/dev/null)
+        case "$stopped" in inactive|failed) ;; *) stop_ok=0; echo "服务 $u 未确认停止：$stopped" >&2;; esac
+        printf '     %-14s -> %s\n' "$u" "$stopped"
     done
     if [ "$stop_ok" -ne 1 ]; then
         echo "  还原已中止（未复制任何内容）。请先人工处理上面的服务。" >&2
@@ -374,18 +398,19 @@ do_restore() {
     fi
 
     echo "  2) 复制还原（归档只读，不移动）"
-    cp -a "$LEGACY_SRC" "$LEGACY_DST" || { echo "     复制失败：$LEGACY_DST" >&2; return 1; }
-    cp -a "$BRIDGE_SRC" "$BRIDGE_DST" || { echo "     复制失败：$BRIDGE_DST" >&2; return 1; }
-    echo "     $LEGACY_DST  $(du -sh "$LEGACY_DST" | cut -f1)"
-    echo "     $BRIDGE_DST  $(du -sh "$BRIDGE_DST" | cut -f1)"
-
+    for pair in "${PAIRS[@]}"; do
+        local src rest dst
+        src=${pair%%:*}; rest=${pair#*:}; dst=${rest%%:*}
+        mkdir -m 700 "$dst" || { echo "目标已存在或无法创建：$dst" >&2; return 1; }
+        cp -a "$src/." "$dst/" || { echo "复制失败，保留未完成目录供检查：$dst" >&2; return 1; }
+    done
     echo "  3) 校验复制结果（逐文件内容哈希 + 符号链接目标，两个目录都比）"
     local verify_failed=0
-    for pair in "$LEGACY_SRC:$LEGACY_DST:旧 OpenClaw" "$BRIDGE_SRC:$BRIDGE_DST:旧 qq-bridge"; do
+    for pair in "${PAIRS[@]}"; do
         local src=${pair%%:*}; rest=${pair#*:}; dst=${rest%%:*}; label=${rest#*:}
         local ms md
-        ms=$(manifest_of "$src" | sha256sum | cut -c1-16)
-        md=$(manifest_of "$dst" | sha256sum | cut -c1-16)
+        ms=$(manifest_of "$src" | sha256sum) || return 1
+        md=$(manifest_of "$dst" | sha256sum) || return 1
         printf '     %-14s 源清单=%s  目标清单=%s  %s\n' "$label" "$ms" "$md" \
             "$([ "$ms" = "$md" ] && echo '一致 ✓' || echo '不一致 ✗')"
         [ "$ms" = "$md" ] || { echo "     ✗ $label 复制后内容清单不一致（缺失或损坏），请人工核对" >&2; verify_failed=1; }
@@ -399,35 +424,23 @@ do_restore() {
 }
 
 print_next_steps() {
-    cat <<'EOF'
-
-────────────────────────────────────────────────────────────────────
-启动是**独立的显式步骤**，本脚本不会代做。启动前请先完成：
-
-  1. 处理【6】中列出的风险项（旧 Cron、旧提醒、旧外发白名单、bridge 暂停状态）。
-     旧系统有自己的调度，启动后会按它自己的计划执行并可能真实外发。
-  2. 确认**同一时刻只有一个 QQ 消费者**：融合侧 ${FUSION_CONSUMERS[*]}
-     必须保持停止，否则两个消费者会抢同一个 QQ 连接并重复回复。
-  3. 验收只针对本人，不要向群或其他人群发。
-
-确认无误后再手动执行（自行决定顺序与是否需要）：
-
-  systemctl --user start openclaw-gateway.service     # 旧 OpenClaw 网关
-  systemctl --user start qq-bridge.service            # 旧 QQ 桥接
-  # 观察日志：journalctl --user -u openclaw-gateway -u qq-bridge -f
-
-返回融合系统：
-
-  systemctl --user stop openclaw-gateway.service qq-bridge.service
-  systemctl --user start kurumi-fusion.service snowluma-qq.service snowluma.service
-
-⚠ 回退恢复的是**封存时的旧系统**。它**不会**带回你在新系统里新增的记忆、提醒、
-  会话或配置 —— 那些在 /home/afrangry/.openclaw-fusion，两套数据互不同步。
-  若只想找回某条旧记忆或旧提醒，应单独从归档里读，而不是整机回退。
-
-离线还原检查与真实启动验收是两件事，应分别记录。
-────────────────────────────────────────────────────────────────────
-EOF
+    echo
+    echo "只还原所选方案；启动前先离线处理旧 Cron、外发白名单与暂停状态。"
+    echo "旧 A、旧 B 只能选一个。新系统数据不会同步进旧系统。"
+    echo "若旧单元已 mask，须在完成风险检查后显式 unmask 所选单元。"
+    if [ "$SYSTEM" = A ]; then
+        echo "A：确认融合及 qq-bridge 均停止后，才可执行："
+        echo "  systemctl --user start openclaw-gateway.service"
+    elif [ "$SYSTEM" = B ]; then
+        echo "B：确认融合及 openclaw-gateway 均停止后，才可执行："
+        echo "  sudo systemctl start dsh-web.service"
+        echo "  systemctl --user start snowluma.service snowluma-qq.service"
+        echo "  systemctl --user start qq-bridge.service"
+    else
+        echo "本次只检查；使用 --restore --system A 或 --system B 选择一种回退。"
+    fi
+    echo "返回融合：先停止所选旧消费者，再启动 kurumi-fusion、snowluma、snowluma-qq。"
+    echo "离线复制校验不等于旧系统真实启动验收。本工具从不自动启动服务。"
 }
 
 # ---------------------------------------------------------------- main

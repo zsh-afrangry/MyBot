@@ -1,0 +1,11 @@
+
+ RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation
+
+ ✓ src/inbound.test.ts (14 tests) 7ms
+ ✓ src/index.test.ts (1 test) 6ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  02:14:09
+   Duration  872ms (transform 132ms, setup 0ms, collect 273ms, tests 13ms, environment 0ms, prepare 335ms)
+

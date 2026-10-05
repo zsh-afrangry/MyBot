@@ -1,0 +1,27 @@
+
+ RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather
+
+ ✓ src/parsers.test.ts (31 tests) 28ms
+ ✓ src/qweather-client.test.ts (17 tests) 51ms
+ ✓ src/weather-service.test.ts (5 tests) 21ms
+ ✓ src/formatter.test.ts (4 tests) 21ms
+ ✓ src/clarification-gate.test.ts (3 tests) 7ms
+ ✓ src/controlled-replies.test.ts (6 tests) 11ms
+ ✓ src/planning.test.ts (8 tests) 399ms
+ ✓ src/reminder-reconciler.test.ts (3 tests) 413ms
+ ✓ src/reminder-reconciler-service.test.ts (8 tests) 433ms
+ ✓ src/reminder-gateway.test.ts (2 tests) 5ms
+ ✓ src/weather-location.test.ts (6 tests) 15ms
+ ✓ src/config.test.ts (12 tests) 9ms
+ ✓ src/store.test.ts (9 tests) 719ms
+ ✓ src/profile.test.ts (10 tests) 498ms
+ ✓ src/confirmation-gate.test.ts (17 tests) 731ms
+ ✓ src/reminders.test.ts (13 tests) 735ms
+ ✓ src/native-reminder-scheduler.test.ts (4 tests) 174ms
+ ✓ src/index.test.ts (4 tests) 4ms
+
+ Test Files  18 passed (18)
+      Tests  162 passed (162)
+   Start at  02:14:09
+   Duration  3.47s (transform 1.53s, setup 0ms, collect 7.04s, tests 4.27s, environment 3ms, prepare 2.22s)
+

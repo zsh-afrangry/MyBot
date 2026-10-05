@@ -1,0 +1,11 @@
+{
+  "observedInactive": true,
+  "exitCode": 143,
+  "serviceAfter": "active",
+  "interruptedBackups": [
+    {
+      "path": "/home/afrangry/kurumi-backups/2026-10-05-18-12-41-signal-acceptance",
+      "incomplete": true
+    }
+  ]
+}

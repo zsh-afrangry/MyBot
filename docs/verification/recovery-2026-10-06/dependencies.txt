@@ -1,0 +1,7 @@
+  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)
+  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)
+  ok   chatbot/plugins/personal-weather: 56 platform packages present at locked versions (50 skipped as other-platform)
+  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw
+  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin
+
+dependency verification passed: project owns its dependencies

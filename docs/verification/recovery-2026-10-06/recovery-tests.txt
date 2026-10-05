@@ -1,0 +1,18 @@
+✔ backup restores only the service it stopped; cleanup is idempotent (1.371122ms)
+✔ ambiguous service transition and failed restart do not pass (0.354513ms)
+✔ backup SIGINT restores service and exits nonzero (28.605558ms)
+✔ backup SIGTERM restores service and exits nonzero (25.259033ms)
+✔ backup SIGHUP restores service and exits nonzero (29.545014ms)
+✔ working tree survives mixed text/binary edits, deletions, renames and Chinese untracked paths (64.732114ms)
+✔ recovery target cannot reuse a populated directory or a symlink (0.759399ms)
+✔ all config branches and project registry roots remap, unknown production references fail (0.404586ms)
+✔ sandbox cannot see host canary or production and has a different network namespace (33.356599ms)
+✔ legacy rollback requires one explicit choice and prints only its startup path (1232.977234ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1467.592096

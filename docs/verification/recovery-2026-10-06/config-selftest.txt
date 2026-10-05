@@ -1,0 +1,7 @@
+  PASS  whole managed block deleted from repo  (changed=0 want=0, deleted=[tools] want=[tools])
+  PASS  subkey deleted inside a managed block  (changed=0 want=0, deleted=[tools.web] want=[tools.web])
+  PASS  managed block differs  (changed=1 want=1, deleted=[] want=[])
+  PASS  in sync  (changed=0 want=0, deleted=[] want=[])
+  PASS  host-maintained key preserved
+
+selftest passed
