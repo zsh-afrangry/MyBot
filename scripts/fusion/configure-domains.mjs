@@ -9,7 +9,7 @@ for(const id of ['personal-confirmation','personal-weather']){
  cfg.plugins.allow=[...new Set([...cfg.plugins.allow,id])];cfg.plugins.load.paths=[...new Set([...cfg.plugins.load.paths,`${root}/chatbot/plugins/${id}`])];
  cfg.plugins.entries[id]={...(old.plugins.entries[id]??{}),enabled:true};
 }
-cfg.plugins.entries['personal-weather'].config={...cfg.plugins.entries['personal-weather'].config,reminderBackend:'native-service',reminderRunnerRoot:`${root}/chatbot/plugins/personal-weather`};
+cfg.plugins.entries['personal-weather'].config={...cfg.plugins.entries['personal-weather'].config,scheduledOwnerId:cfg.channels['kurumi-qq'].ownerId,reminderBackend:'native-service',reminderRunnerRoot:`${root}/chatbot/plugins/personal-weather`};
 const domainTools=['personal_weather_get_brief','personal_profile_state_get','personal_profile_change_propose','personal_profile_change_commit','personal_planning_state_get','personal_planning_change_propose','personal_planning_change_commit','personal_reminder_state_get','personal_reminder_propose','personal_reminder_commit','personal_reminder_change_propose','personal_reminder_change_commit','personal_reminder_cancel_propose','personal_reminder_cancel_commit'];
 cfg.agents.entries.main.tools.alsoAllow=[...new Set([...cfg.agents.entries.main.tools.alsoAllow,...domainTools])];
 cfg.channels['kurumi-qq'].testIngress=true;

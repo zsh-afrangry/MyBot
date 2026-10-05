@@ -1,0 +1,14 @@
+✔ scoped Git commit excludes unrelated staged and untracked files (61.086833ms)
+✔ project code cannot read host-private files, write fixtures or reach host loopback (41.631927ms)
+✔ abort terminates the isolated process tree (152.365862ms)
+✔ Owner task tool refuses other users and sessions before effects (1.452364ms)
+✔ 24 hex Host run ID accepted but saved run/session binding required (0.558363ms)
+✔ Fixed check is absent from main and rejects a different workspace (0.448514ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1496.1833

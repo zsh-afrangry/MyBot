@@ -59,6 +59,7 @@ const configSchema = Type.Object(
   {
     reminderBackend: Type.Optional(Type.Literal("native-service")),
     reminderRunnerRoot: Type.Optional(Type.String()),
+    scheduledOwnerId: Type.Optional(Type.String()),
     apiHost: Type.String({
       description: "QWeather dedicated API hostname without scheme or path.",
     }),
@@ -255,7 +256,7 @@ const personalWeatherPlugin = defineToolPlugin({
         parameters: weatherBriefParameters,
         async execute(_toolCallId, rawParams, signal) {
           const params = rawParams as Static<typeof weatherBriefParameters>;
-          if (!isTrustedOwnerPrivateQq(toolContext)) return forbiddenResult();
+          if (!isTrustedWeatherRead(toolContext, config.scheduledOwnerId)) return forbiddenResult();
           let store: WeatherStore | undefined;
           try {
             if (params.location === undefined && params.administrative_area !== undefined) {
@@ -776,6 +777,17 @@ personalWeatherPlugin.register = (api) => {
 };
 
 export default personalWeatherPlugin;
+
+/** Read-only scheduled weather is restricted to the configured owner's native main Cron lane.
+ * This grants no Profile, planning, reminder or memory write authority. */
+export function isTrustedWeatherRead(ctx: Parameters<typeof isTrustedOwnerPrivateQq>[0], ownerId: unknown): boolean {
+  if (isTrustedOwnerPrivateQq(ctx)) return true;
+  return typeof ownerId === "string" && /^[0-9]{5,12}$/u.test(ownerId)
+    && /^agent:main:cron:[0-9a-f-]{36}(?::run:[0-9a-f-]{36})?$/u.test(ctx.sessionKey ?? "")
+    && ctx.deliveryContext?.channel === "kurumi-qq"
+    && ctx.deliveryContext?.to === `user:${ownerId}`
+    && (ctx.deliveryContext?.accountId === undefined || ctx.deliveryContext.accountId === "default");
+}
 
 /** Internal authorization predicate shared by every owner-only tool factory. */
 export function isTrustedOwnerPrivateQq(toolContext: {

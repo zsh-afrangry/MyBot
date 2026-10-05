@@ -1,0 +1,39 @@
+✔ persistent create, idempotent replay, revision checked edit and complete deletion (21.88148ms)
+✔ requires exact current owner fact and rejects secrets, stale or consumed intent (4.499525ms)
+✔ unmanaged files and symlinks cannot be overwritten; private file mode persists (4.792303ms)
+✔ original-message intent binds owner, route, freshness and never quoted instructions (0.540249ms)
+✔ corrupt negative revision and dangling links are rejected without replacing data (1.097511ms)
+✔ Owner and endpoint validation fail closed (2.770059ms)
+✔ Reject group, stranger, self, wrong bot, malformed event (1.54792ms)
+✔ CQ text is literal, not metadata (0.756311ms)
+✔ Durable ingress and egress survive restart, unknown cannot be reserved again (69.340555ms)
+✔ Unicode chunking never breaks surrogate pairs (0.490745ms)
+✔ Media rejects arbitrary files and symlink escapes (1.385861ms)
+✔ Real HTTP adapter validates private target, sends literal segments, deduplicates (96.979027ms)
+✔ Inbound dispatch uses trusted sender, core route and only final delivery (54.043283ms)
+✔ Host durable delivery ID deduplicates and cancellation fences physical I/O (80.393309ms)
+✔ Accepted request with lost receipt stays unknown and never automatically resends (50.333193ms)
+✔ Receipt observer failure does not repeat physical delivery (68.593011ms)
+✔ Inbound dispatcher delivery failure is persisted rather than reported completed (48.125856ms)
+✔ Quoted confirmation remains outside original RawBody (71.806051ms)
+✔ Ingress provenance is explicit; negative QQ IDs are still real messages (38.168918ms)
+✔ short paragraphs separate naturally while reports and code remain grouped (3.655957ms)
+✔ rolling quota preserves old attempts, failed/unknown reservations and idempotent receipts across reopen (84.684958ms)
+✔ cancelling during natural pacing stops remaining physical sends (100.148938ms)
+✔ sticker labels stay data; other senders and arbitrary references are rejected before I/O (1095.815598ms)
+✔ paper sources forbid local destinations, credentials, redirects and unsupported query parameters (3.556858ms)
+✔ failed, redirected, oversized and non-PDF responses cannot become paper artifacts (45.446389ms)
+✔ scoped Git commit excludes unrelated staged and untracked files (71.639306ms)
+✔ project code cannot read host-private files, write fixtures or reach host loopback (55.12225ms)
+✔ abort terminates the isolated process tree (152.679559ms)
+✔ Owner task tool refuses other users and sessions before effects (1.862208ms)
+✔ 24 hex Host run ID accepted but saved run/session binding required (0.657443ms)
+✔ Fixed check is absent from main and rejects a different workspace (0.544497ms)
+ℹ tests 31
+ℹ suites 0
+ℹ pass 31
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2548.335322

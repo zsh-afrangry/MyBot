@@ -1,0 +1,60 @@
+{
+  "boundary": "Real main model invokes task adapter with trusted synthetic owner; captured acknowledgement, ordinary worker, real Host status and abort.",
+  "reply": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "已按要求仅启动了 1 个研究任务：\n\n- runId：`b0e683d03ad80354462ca8d4`\n- sessionKey：`agent:researcher:kurumi-task-b0e683d03ad80354462ca8d4`\n- 立即查询状态：`timeout`\n- 随后取消：成功，`aborted: true`\n\n未创建第二个任务。"
+      }
+    ]
+  },
+  "receipts": [
+    {
+      "at": 1791159138454,
+      "action": "start",
+      "kind": "research",
+      "projectId": null,
+      "result": {
+        "runId": "b0e683d03ad80354462ca8d4",
+        "sessionKey": "agent:researcher:kurumi-task-b0e683d03ad80354462ca8d4",
+        "agentId": "researcher",
+        "status": "accepted",
+        "acceptedAt": 1791159138452
+      }
+    },
+    {
+      "at": 1791159142601,
+      "action": "status",
+      "kind": "code",
+      "projectId": "fusion",
+      "result": {
+        "runId": "b0e683d03ad80354462ca8d4",
+        "status": "timeout"
+      }
+    },
+    {
+      "at": 1791159146989,
+      "action": "cancel",
+      "kind": "code",
+      "projectId": "fusion",
+      "result": {
+        "ok": true,
+        "aborted": true,
+        "runIds": [
+          "b0e683d03ad80354462ca8d4"
+        ]
+      }
+    }
+  ],
+  "terminal": {
+    "runId": "b0e683d03ad80354462ca8d4",
+    "status": "error",
+    "startedAt": 1791159138447,
+    "endedAt": 1791159146981,
+    "stopReason": "rpc"
+  },
+  "passed": true
+}

@@ -1,0 +1,301 @@
+{
+  "started": 1791158964934,
+  "boundary": "Real main model creates/updates/removes a native recurring weather job; operator triggers one actual run for owner-only delivery.",
+  "created": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "已创建定期天气任务：\n\n- 名称：`kurumi.fusion.recurring-weather-test`\n- 实际 ID：`bee207de-3f98-4ae1-8d48-ec6724f42e0d`\n- 时间：每天 23:53（Asia/Shanghai）\n- 会话：main / isolated\n- 工具权限：仅 `personal_weather_get_brief`\n- 投递：`kurumi-qq` → 本人 `user:365999865` / `default`\n- 未立即运行。"
+      }
+    ]
+  },
+  "job": {
+    "id": "bee207de-3f98-4ae1-8d48-ec6724f42e0d",
+    "owner": {
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "accountId": "default"
+    },
+    "agentId": "main",
+    "name": "kurumi.fusion.recurring-weather-test",
+    "enabled": true,
+    "createdAtMs": 1791158984367,
+    "updatedAtMs": 1791158984367,
+    "schedule": {
+      "kind": "cron",
+      "expr": "53 23 * * *",
+      "tz": "Asia/Shanghai"
+    },
+    "sessionTarget": "isolated",
+    "wakeMode": "now",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "请实际调用personal_weather_get_brief查询当前所在地天气，然后仅用一段150字以内、以【架构验证】开头的中文播报来源和真实天气；工具失败就明确失败，不编造。",
+      "toolsAllow": [
+        "personal_weather_get_brief"
+      ]
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "kurumi-qq",
+      "to": "user:365999865",
+      "accountId": "default"
+    },
+    "state": {
+      "nextRunAtMs": 1791215580000
+    },
+    "scheduledToolPolicy": {
+      "version": 1,
+      "mode": "account",
+      "ownerSessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "ownerAccountId": "default"
+    },
+    "configRevision": "sha256:E15b_O1ekmWowbow8nIyEnZ38gto-QGMHeK_M8J80-s",
+    "nextRunAtMs": 1791215580000,
+    "effectiveAgentId": "main"
+  },
+  "changed": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "已实际修改原任务，未新建：\n\n- 任务 ID：`bee207de-3f98-4ae1-8d48-ec6724f42e0d`\n- 时间：每天 **23:54（Asia/Shanghai）**\n- 其余配置保持不变。"
+      }
+    ]
+  },
+  "updated": {
+    "id": "bee207de-3f98-4ae1-8d48-ec6724f42e0d",
+    "owner": {
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "accountId": "default"
+    },
+    "agentId": "main",
+    "name": "kurumi.fusion.recurring-weather-test",
+    "enabled": true,
+    "createdAtMs": 1791158984367,
+    "updatedAtMs": 1791158994968,
+    "schedule": {
+      "kind": "cron",
+      "expr": "54 23 * * *",
+      "tz": "Asia/Shanghai"
+    },
+    "sessionTarget": "isolated",
+    "wakeMode": "now",
+    "payload": {
+      "kind": "agentTurn",
+      "message": "请实际调用personal_weather_get_brief查询当前所在地天气，然后仅用一段150字以内、以【架构验证】开头的中文播报来源和真实天气；工具失败就明确失败，不编造。",
+      "toolsAllow": [
+        "personal_weather_get_brief"
+      ]
+    },
+    "delivery": {
+      "mode": "announce",
+      "channel": "kurumi-qq",
+      "to": "user:365999865",
+      "accountId": "default"
+    },
+    "state": {
+      "nextRunAtMs": 1791215640000,
+      "scheduleActivatedAtMs": 1791158994968
+    },
+    "scheduledToolPolicy": {
+      "version": 1,
+      "mode": "account",
+      "ownerSessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "ownerAccountId": "default"
+    },
+    "configRevision": "sha256:wZZW092PHBK_JQy-Fw_5gHcKC02AZRSQ5LgEaU3943k",
+    "nextRunAtMs": 1791215640000,
+    "effectiveAgentId": "main"
+  },
+  "trigger": {
+    "ok": true,
+    "enqueued": true,
+    "runId": "manual:bee207de-3f98-4ae1-8d48-ec6724f42e0d:1791158999078:1",
+    "processInstanceId": "c81078c8-a66e-4b7a-88a4-a2cb17dbdbad"
+  },
+  "run": {
+    "ts": 1791159009684,
+    "jobId": "bee207de-3f98-4ae1-8d48-ec6724f42e0d",
+    "action": "finished",
+    "status": "ok",
+    "completionStatus": "succeeded",
+    "summary": "【架构验证】镇江扬中当前晴，16.9℃，体感14.3℃，湿度68%，北西北风3级；今天15～19.9℃，少云转晴，未来24小时降雨概率0%，无官方预警。来源：和风天气（https://developer.qweather.com/attribution.html）。",
+    "runId": "manual:bee207de-3f98-4ae1-8d48-ec6724f42e0d:1791158999078:1",
+    "runAtMs": 1791158999101,
+    "durationMs": 10583,
+    "nextRunAtMs": 1791215640000,
+    "model": "gpt-5.6-terra",
+    "provider": "naiccc",
+    "usage": {
+      "input_tokens": 6863,
+      "output_tokens": 163,
+      "total_tokens": 14194,
+      "cache_read_tokens": 7168
+    },
+    "delivered": true,
+    "deliveryStatus": "delivered",
+    "delivery": {
+      "intended": {
+        "channel": "kurumi-qq",
+        "to": "user:365999865",
+        "accountId": "default",
+        "source": "explicit"
+      },
+      "resolved": {
+        "ok": true,
+        "channel": "kurumi-qq",
+        "to": "user:365999865",
+        "accountId": "default",
+        "source": "explicit"
+      },
+      "fallbackUsed": true,
+      "delivered": true
+    },
+    "sessionId": "2c4d4e4c-2682-4aef-b83b-d690c4e75867",
+    "sessionKey": "agent:main:cron:bee207de-3f98-4ae1-8d48-ec6724f42e0d:run:2c4d4e4c-2682-4aef-b83b-d690c4e75867",
+    "jobName": "kurumi.fusion.recurring-weather-test"
+  },
+  "removed": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "【架构验证】定期天气任务已成功送达本人 QQ 私聊。"
+      }
+    ]
+  },
+  "tools": [
+    {
+      "at": 1791159006159,
+      "tool": "personal_weather_get_brief",
+      "error": null,
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true,\n  \"brief\": {\n    \"schemaVersion\": 1,\n    \"location\": {\n      \"displayName\": \"江苏省镇江扬中\",\n      \"shortName\": \"镇江扬中\",\n      \"latitude\": 32.23727,\n      \"longitude\": 119.82806,\n      \"timezone\": \"Asia/Shanghai\",\n      \"qweatherLocationId\": \"101190303\"\n    },\n    \"generatedAt\": \"2026-10-05T00:10:05.868Z\",\n    \"current\": {\n      \"condition\": {\n        \"text\": \"晴\",\n        \"code\": \"100\"\n      },\n      \"temperature\": {\n        \"value\": 16.93,\n        \"unit\": \"°C\"\n      },\n      \"feelsLike\": {\n        \"value\": 14.32,\n        \"unit\": \"°C\"\n      },\n      \"humidity\": 0.68,\n      \"wind\": {\n        \"direction\": {\n          \"degree\": 343,\n          \"compass\": \"nnw\"\n        },\n        \"speed\": {\n          \"value\": 4.91,\n          \"unit\": \"m/s\"\n        },\n        \"scale\": 3\n      },\n      \"precipitation\": {\n        \"amount\": {\n          \"value\": 0,\n          \"unit\": \"mm\"\n        },\n        \"intensity\": {\n          \"value\": 0,\n          \"unit\": \"mm/h\"\n        },\n        \"type\": \"none\"\n      },\n      \"uvIndex\": 2\n    },\n    \"today\": {\n      \"forecastStartTime\": \"2026-10-05T00:00+08:00\",\n      \"forecastEndTime\": \"2026-10-06T00:00+08:00\",\n      \"temperatureMax\": {\n        \"value\": 19.88,\n        \"unit\": \"°C\"\n      },\n      \"temperatureMin\": {\n        \"value\": 15,\n        \"unit\": \"°C\"\n      },\n      \"daytimeCondition\": {\n        \"text\": \"少云\",\n        \"code\": \"102\"\n      },\n      \"nighttimeCondition\": {\n        \"text\": \"晴\",\n        \"code\": \"100\"\n      },\n      \"uvIndexMax\": 7\n    },\n    \"next24Hours\": {\n      \"availableHours\": 24,\n      \"maxPrecipitationProbability\": 0,\n      \"rainWindows\": []\n    },\n    \"alerts\": {\n      \"availability\": \"available\",\n      \"state\": \"none\",\n      \"items\": []\n    },\n    \"attributions\": [\n      \"https://developer.qweather.com/attribution.html\"\n    ],\n    \"quality\": {\n      \"current\": {\n        \"state\": \"fresh\",\n        \"fetchedAt\": \"2026-10-05T00:10:05.000Z\"\n      },\n      \"daily\": {\n        \"state\": \"fresh\",\n        \"fetchedAt\": \"2026-10-05T00:10:05.000Z\"\n      },\n      \"hourly\": {\n        \"state\": \"fresh\",\n        \"fetchedAt\": \"2026-10-05T00:10:05.000Z\"\n      },\n      \"alerts\": {\n        \"state\": \"fresh\",\n        \"fetchedAt\": \"2026-10-05T00:10:05.000Z\"\n      }\n    },\n    \"warnings\": [\n      \"alerts:$.metadata.attributions:missing_field\"\n    ]\n  },\n  \"formattedText\": \"镇江扬中：现在晴，16.9°C，体感14.3°C，湿度68%，北西北风3级。\\n今天15°C～19.9°C，少云转晴，最高紫外线指数7。\\n未来24小时最高降雨概率0%。\\n当前无官方气象预警。\\n数据：和风天气、https://developer.qweather.com/attribution.html；查询于10/05 08:10（Asia/Shanghai）。\"\n}"
+          }
+        ],
+        "details": {
+          "ok": true,
+          "brief": {
+            "schemaVersion": 1,
+            "location": {
+              "displayName": "江苏省镇江扬中",
+              "shortName": "镇江扬中",
+              "latitude": 32.23727,
+              "longitude": 119.82806,
+              "timezone": "Asia/Shanghai",
+              "qweatherLocationId": "101190303"
+            },
+            "generatedAt": "2026-10-05T00:10:05.868Z",
+            "current": {
+              "condition": {
+                "text": "晴",
+                "code": "***"
+              },
+              "temperature": {
+                "value": 16.93,
+                "unit": "°C"
+              },
+              "feelsLike": {
+                "value": 14.32,
+                "unit": "°C"
+              },
+              "humidity": 0.68,
+              "wind": {
+                "direction": {
+                  "degree": 343,
+                  "compass": "nnw"
+                },
+                "speed": {
+                  "value": 4.91,
+                  "unit": "m/s"
+                },
+                "scale": 3
+              },
+              "precipitation": {
+                "amount": {
+                  "value": 0,
+                  "unit": "mm"
+                },
+                "intensity": {
+                  "value": 0,
+                  "unit": "mm/h"
+                },
+                "type": "none"
+              },
+              "uvIndex": 2
+            },
+            "today": {
+              "forecastStartTime": "2026-10-05T00:00+08:00",
+              "forecastEndTime": "2026-10-06T00:00+08:00",
+              "temperatureMax": {
+                "value": 19.88,
+                "unit": "°C"
+              },
+              "temperatureMin": {
+                "value": 15,
+                "unit": "°C"
+              },
+              "daytimeCondition": {
+                "text": "少云",
+                "code": "***"
+              },
+              "nighttimeCondition": {
+                "text": "晴",
+                "code": "***"
+              },
+              "uvIndexMax": 7
+            },
+            "next24Hours": {
+              "availableHours": 24,
+              "maxPrecipitationProbability": 0,
+              "rainWindows": []
+            },
+            "alerts": {
+              "availability": "available",
+              "state": "none",
+              "items": []
+            },
+            "attributions": [
+              "https://developer.qweather.com/attribution.html"
+            ],
+            "quality": {
+              "current": {
+                "state": "fresh",
+                "fetchedAt": "2026-10-05T00:10:05.000Z"
+              },
+              "daily": {
+                "state": "fresh",
+                "fetchedAt": "2026-10-05T00:10:05.000Z"
+              },
+              "hourly": {
+                "state": "fresh",
+                "fetchedAt": "2026-10-05T00:10:05.000Z"
+              },
+              "alerts": {
+                "state": "fresh",
+                "fetchedAt": "2026-10-05T00:10:05.000Z"
+              }
+            },
+            "warnings": [
+              "alerts:$.metadata.attributions:missing_field"
+            ]
+          },
+          "formattedText": "镇江扬中：现在晴，16.9°C，体感14.3°C，湿度68%，北西北风3级。\n今天15°C～19.9°C，少云转晴，最高紫外线指数7。\n未来24小时最高降雨概率0%。\n当前无官方气象预警。\n数据：和风天气、https://developer.qweather.com/attribution.html；查询于10/05 08:10（Asia/Shanghai）。"
+        }
+      }
+    }
+  ],
+  "passed": true
+}

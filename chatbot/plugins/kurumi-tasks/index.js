@@ -12,8 +12,8 @@ export default {id:'kurumi-tasks',name:'Kurumi native task sessions',register(ap
   const receiptFile=cfg.channels['kurumi-qq'].stateDir+'/task-receipts.jsonl';
   const saved=fs.existsSync(receiptFile)?fs.readFileSync(receiptFile,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
   const call=(m,p)=>{ctx.assertInvocationCurrent();return callGatewayTool(m,{timeoutMs:15000},p,{signal,dispatchAuthority:{version:2,kind:'run',assertCurrent:ctx.assertInvocationCurrent}});};
-  let result;
-  if(args.action==='list')return json({researchAvailable:!!cfg.agents.entries.researcher,projects:projectCatalog(cfg).map(({id,name})=>({id,name})),recent:saved.filter(x=>x.action==='start').slice(-10).map(x=>({projectId:x.projectId,at:x.at,...x.result}))});
+  let result,kind=args.kind??'code',projectId=args.kind==='research'?null:args.projectId??'fusion';
+  if(args.action==='list')return json({researchAvailable:!!cfg.agents.entries.researcher,projects:projectCatalog(cfg).map(({id,name})=>({id,name})),recent:saved.filter(x=>x.action==='start').slice(-10).map(x=>({kind:x.kind??'code',projectId:x.projectId,at:x.at,...x.result}))});
   if(args.action==='start'){
    if(typeof args.task!=='string'||!args.task.trim()||args.task.length>8000)throw Error('Task must be 1–8000 characters');
    const project=args.kind==='research'&&cfg.agents.entries.researcher?{agentId:'researcher'}:args.kind==='research'?undefined:projectCatalog(cfg).find(p=>p.id===(args.projectId??'fusion'));if(!project)throw Error('Unknown registered project or researcher');
@@ -21,10 +21,11 @@ export default {id:'kurumi-tasks',name:'Kurumi native task sessions',register(ap
    result=await call('agent',{agentId:project.agentId,sessionKey:`agent:${project.agentId}:kurumi-task-${key}`,message:args.task,deliver:true,replyChannel:'kurumi-qq',replyTo:'user:'+cfg.channels['kurumi-qq'].ownerId,replyAccountId:'default',idempotencyKey:key,timeout:600});
   }else{
    if(!/^agent:(?:worker|researcher|project-[a-z0-9-]+):kurumi-task-[a-f0-9]{24}$/.test(args.sessionKey??'')||!/^(?:[a-f0-9]{24}|[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$/.test(args.runId??''))throw Error('Invalid task identity');
-   if(!saved.some(x=>x.action==='start'&&x.result?.runId===args.runId&&x.result?.sessionKey===args.sessionKey))throw Error('Task run/session binding mismatch');
+   const original=saved.find(x=>x.action==='start'&&x.result?.runId===args.runId&&x.result?.sessionKey===args.sessionKey);if(!original)throw Error('Task run/session binding mismatch');
+   kind=original.kind??'code';projectId=original.projectId??null;
    result=args.action==='status'?await call('agent.wait',{runId:args.runId,timeoutMs:0}):args.action==='cancel'?await call('chat.abort',{sessionKey:args.sessionKey,runId:args.runId}):(()=>{throw Error('Unknown task action');})();
   }
-  fs.appendFileSync(receiptFile,JSON.stringify({at:Date.now(),action:args.action,kind:args.kind??'code',projectId:args.kind==='research'?null:args.projectId??'fusion',result})+'\n',{mode:0o600});return json(result);
+  fs.appendFileSync(receiptFile,JSON.stringify({at:Date.now(),action:args.action,kind,projectId,result})+'\n',{mode:0o600});return json(result);
  }})},{name:'kurumi_task',optional:true});
  api.registerTool({contextVersion:2,create:ctx=>ctx.agentId?.startsWith('project-')?{name:'kurumi_project_check',label:'Run registered project checks',description:'在Bubblewrap隔离环境运行本项目已登记检查，无任意命令参数。外网和助手私有目录不可访问，固定验收文件只读。实际返回退出码与输出。',parameters:{type:'object',properties:{},additionalProperties:false},async execute(id,args,signal){
   ctx.assertInvocationCurrent();const project=workerProject(ctx,ctx.getRuntimeConfig?.()??api.config),results=[];

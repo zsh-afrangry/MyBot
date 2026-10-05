@@ -1,7 +1,7 @@
 import { getToolPluginMetadata } from "openclaw/plugin-sdk/tool-plugin";
 import { describe, expect, it } from "vitest";
 
-import entry, { isTrustedOwnerPrivateQq } from "./index.js";
+import entry, { isTrustedOwnerPrivateQq, isTrustedWeatherRead } from "./index.js";
 
 describe("personal-weather plugin metadata", () => {
   it("declares only the reviewed weather, Profile, planning, and owner-reminder tools", () => {
@@ -58,4 +58,14 @@ it('accepts the fusion owner route and refuses a mismatched sender or worker ses
  expect(isTrustedOwnerPrivateQq(ctx)).toBe(true);
  expect(isTrustedOwnerPrivateQq({...ctx,requesterSenderId:'123456'})).toBe(false);
  expect(isTrustedOwnerPrivateQq({...ctx,sessionKey:'agent:worker:task'})).toBe(false);
+});
+
+it("allows only configured owner main Cron to read weather without granting owner writes", () => {
+ const ctx={sessionKey:'agent:main:cron:12345678-1234-1234-1234-123456789abc',deliveryContext:{channel:'kurumi-qq',to:'user:365999865',accountId:'default'}};
+ expect(isTrustedWeatherRead(ctx,'365999865')).toBe(true);
+ expect(isTrustedOwnerPrivateQq(ctx)).toBe(false);
+ expect(isTrustedWeatherRead({...ctx,sessionKey:'agent:researcher:cron:12345678-1234-1234-1234-123456789abc'},'365999865')).toBe(false);
+ expect(isTrustedWeatherRead({...ctx,deliveryContext:{...ctx.deliveryContext,to:'user:123456'}},'365999865')).toBe(false);
+ expect(isTrustedWeatherRead({...ctx,deliveryContext:{...ctx.deliveryContext,to:'group:365999865'}},'365999865')).toBe(false);
+ expect(isTrustedWeatherRead(ctx,undefined)).toBe(false);
 });
