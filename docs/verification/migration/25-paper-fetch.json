@@ -1,0 +1,14 @@
+{
+  "passed": true,
+  "id": "fc8d32f196e0f0c2",
+  "url": "https://arxiv.org/pdf/2005.11401",
+  "sha256": "23e3249e9a1e75418d82efecab0ea8c4d033b89c93742f63208d47ce01f21233",
+  "bytes": 885323,
+  "pages": 19,
+  "textPath": "/home/afrangry/.openclaw-fusion/research-cache/papers/fc8d32f196e0f0c2.txt",
+  "pdfPath": "/home/afrangry/.openclaw-fusion/research-cache/papers/fc8d32f196e0f0c2.pdf",
+  "downloadedAt": "2026-10-04T23:57:48.330Z",
+  "textCharacters": 86593,
+  "limitation": "Text extraction may lose formula/table layout. Use page view for visual evidence; page numbers refer to PDF file pages.",
+  "firstPageImage": "/home/afrangry/.openclaw-fusion/research-cache/papers/fc8d32f196e0f0c2-page-1.png"
+}

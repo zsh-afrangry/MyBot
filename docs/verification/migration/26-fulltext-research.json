@@ -1,0 +1,162 @@
+{
+  "started": 1791158608447,
+  "boundary": "Real owner main starts native researcher, cached real-source PDF full text and selected visual pages, concurrent main chat, saved report and owner-only completion.",
+  "start": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "【架构验证】研究任务已接受并启动，正在核对论文元数据、读取全文及视觉检查 PDF 页面；完成后写入 `reports/rag-fulltext-acceptance.md`。"
+      }
+    ]
+  },
+  "task": {
+    "at": 1791158617909,
+    "action": "start",
+    "kind": "research",
+    "projectId": null,
+    "result": {
+      "runId": "aaaeac6986c31fe989bebc45",
+      "sessionKey": "agent:researcher:kurumi-task-aaaeac6986c31fe989bebc45",
+      "agentId": "researcher",
+      "status": "accepted",
+      "acceptedAt": 1791158617907
+    }
+  },
+  "beforeChat": {
+    "runId": "aaaeac6986c31fe989bebc45",
+    "status": "timeout"
+  },
+  "chat": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "醒来喝杯热茶很舒服，主人，先好好睡一会儿，茶等醒了再慢慢泡。"
+      }
+    ]
+  },
+  "chatMs": 6365,
+  "worker": {
+    "runId": "aaaeac6986c31fe989bebc45",
+    "status": "ok",
+    "startedAt": 1791158618224,
+    "endedAt": 1791158681591,
+    "stopReason": "stop",
+    "livenessState": "working",
+    "terminalDelivery": {
+      "status": "sent",
+      "resultCount": 1
+    },
+    "terminalReceipt": {
+      "runId": "aaaeac6986c31fe989bebc45",
+      "sessionId": "608efb1d-81b8-4dc1-9d35-322b972ddc8b",
+      "turnId": "aaaeac6986c31fe989bebc45",
+      "requested": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra"
+      },
+      "effective": {
+        "provider": "naiccc",
+        "model": "gpt-5.6-terra",
+        "responseModel": "gpt-5.6-terra"
+      },
+      "successfulToolNames": [
+        "tool_search",
+        "kurumi_paper",
+        "tool_call",
+        "web_fetch",
+        "web_search",
+        "write"
+      ],
+      "rerouted": false,
+      "terminalDisposition": "visible"
+    },
+    "terminalReply": {
+      "disposition": "visible",
+      "text": "【架构验证】已完成全文验收：官网核对作者、2020提交年份及NeurIPS 2020接收信息；PDF为v4（2021-04-12），SHA-256已记录。全文offset已读至nextOffset=null，并视觉核对第2页Figure 1及第6页实验表。报告含方法区别、实验结果、局限、已读范围与未做事项。论文：https://arxiv.org/abs/2005.11401；报告：`reports/rag-fulltext-acceptance.md`"
+    }
+  },
+  "reportPath": "/home/afrangry/.openclaw-fusion/research-workspace/reports/rag-fulltext-acceptance.md",
+  "calls": [
+    {
+      "at": 1791158626584,
+      "tool": "kurumi_paper",
+      "action": "fetch",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "error": null,
+      "paper": {}
+    },
+    {
+      "at": 1791158629696,
+      "tool": "web_fetch",
+      "url": "https://arxiv.org/abs/2005.11401",
+      "error": null
+    },
+    {
+      "at": 1791158633674,
+      "tool": "web_search",
+      "query": "site:arxiv.org/abs/2005.11401 Retrieval-Augmented Generation authors year",
+      "error": null
+    },
+    {
+      "at": 1791158638812,
+      "tool": "kurumi_paper",
+      "action": "text",
+      "error": null,
+      "paper": {
+        "id": "fc8d32f196e0f0c2",
+        "offset": 0,
+        "limit": 30000
+      }
+    },
+    {
+      "at": 1791158638812,
+      "tool": "kurumi_paper",
+      "action": "page",
+      "error": null,
+      "paper": {
+        "id": "fc8d32f196e0f0c2",
+        "page": 2
+      }
+    },
+    {
+      "at": 1791158646813,
+      "tool": "kurumi_paper",
+      "action": "text",
+      "error": null,
+      "paper": {
+        "id": "fc8d32f196e0f0c2",
+        "offset": 30000,
+        "limit": 30000
+      }
+    },
+    {
+      "at": 1791158647181,
+      "tool": "kurumi_paper",
+      "action": "page",
+      "error": null,
+      "paper": {
+        "id": "fc8d32f196e0f0c2",
+        "page": 6
+      }
+    },
+    {
+      "at": 1791158651278,
+      "tool": "kurumi_paper",
+      "action": "text",
+      "error": null,
+      "paper": {
+        "id": "fc8d32f196e0f0c2",
+        "offset": 60000,
+        "limit": 30000
+      }
+    }
+  ],
+  "textCharacters": 87001,
+  "passed": true
+}

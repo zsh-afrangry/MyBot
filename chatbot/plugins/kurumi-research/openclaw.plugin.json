@@ -1,0 +1,1 @@
+{"id":"kurumi-research","name":"Kurumi scholarly PDF reader","configSchema":{"type":"object","properties":{},"additionalProperties":false},"contracts":{"tools":["kurumi_paper"]},"toolMetadata":{"kurumi_paper":{"optional":true}}}
