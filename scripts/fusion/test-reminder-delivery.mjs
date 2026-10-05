@@ -4,10 +4,11 @@ import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
 import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {freshMessageId} from './lib/fresh-id.mjs';
 await ready();
 const cfg=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/openclaw.json')),a=account(cfg),login=await onebot(a,'get_login_info',{});
 const report={boundary:'Synthetic trusted owner, actual native automations creation and due agentTurn. Main acknowledgement captured; one actual owner QQ reminder intended.',at:new Date(Date.now()+65000).toISOString()};
-const event={post_type:'message',message_type:'private',self_id:login.user_id,user_id:Number(a.ownerId),message_id:-1900000009,message:[{type:'text',data:{text:`已授权一次真实提醒投递测试。用原生automations创建且只创建一次：name="kurumi.fusion.natural-due"，时间=${report.at}，sessionTarget="isolated"，payload={kind:"agentTurn",message:"只输出这一句：【融合验收】这是通过聊天创建、由 OpenClaw 到点唤醒并投递的提醒。",toolsAllow:[]}，delivery={mode:"announce",channel:"kurumi-qq",to:"user:365999865",accountId:"default"}，deleteAfterRun=true。不要立即执行，不要再建其他任务。按真实工具结果报告创建状态。`}}]};
+const event={post_type:'message',message_type:'private',self_id:login.user_id,user_id:Number(a.ownerId),message_id:freshMessageId(),message:[{type:'text',data:{text:`已授权一次真实提醒投递测试。用原生automations创建且只创建一次：name="kurumi.fusion.natural-due"，时间=${report.at}，sessionTarget="isolated"，payload={kind:"agentTurn",message:"只输出这一句：【融合验收】这是通过聊天创建、由 OpenClaw 到点唤醒并投递的提醒。",toolsAllow:[]}，delivery={mode:"announce",channel:"kurumi-qq",to:"user:365999865",accountId:"default"}，deleteAfterRun=true。不要立即执行，不要再建其他任务。按真实工具结果报告创建状态。`}}]};
 try{
  report.reply=await rpc('kurumi-qq.testInbound',{event,capture:true},120000);
  const jobs=await rpc('cron.list',{includeDisabled:true});const job=jobs.jobs.find(j=>j.name==='kurumi.fusion.natural-due');assert(job,'Native task not found');report.job=job;
