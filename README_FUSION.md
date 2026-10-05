@@ -95,3 +95,4 @@ node scripts/fusion/restore-verify.mjs --backup <备份目录>                # 
 - [配置来源、同步与备份恢复](docs/13_配置来源与同步.md)
 - [整理收尾与最终布局](docs/14_整理收尾与最终布局.md)
 - [第六步独立运行验收记录](docs/verification/step6-2026-10-05/README.md)
+- [旧系统回退：归档保留 + 原路径复制恢复 + 显式切换](docs/15_旧系统回退.md)
