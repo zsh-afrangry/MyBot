@@ -1,15 +1,15 @@
 # 小鲸鱼与DeepSeek切换及确认策略研究
 
-现在应该从哪里继续：本次授权的角色、模型、图片入口修复已生效；等待用户日常体验反馈。确认策略、私聊引用与会话管理暂不实施。
+当前状态：角色、模型和图片入口修复已生效。确认策略、私聊引用与会话管理仍未实施，日常体验复验由后续变更单独记录。
 
 ## 当前状态与范围
 
-- [x] 原样复制旧bridge的3份角色目录Markdown，临时启用小鲸鱼。
+- [x] 原样复制旧 bridge 的 3 份角色目录 Markdown，当前启用小鲸鱼角色卡。
 - [x] 默认及main模型切为官方DeepSeek，运行配置移除NAICCC，无NAICCC回退。
 - [x] 修复真实QQ图片CDN入口；真实下载及独立模型看图验证通过，频道19项回归通过。
 - [x] 查明Start-DSH.sh拉起旧bridge造成服务接管，恢复融合服务。
 - [x] 调查确认与引用；只记录建议，没有修改策略。
-- [ ] 用户日常QQ体验复验；本轮没有重发原消息或向QQ发送验收消息。
+- [ ] 用户日常 QQ 体验复验；当前证据集没有重发原消息或向 QQ 发送验收消息。
 
 ## 角色、模型与回退
 
@@ -17,9 +17,9 @@
 
 配置脚本：`scripts/fusion/configure-deepseek-persona.mjs`。运行时文件位于`/home/afrangry/.openclaw-fusion/`，旧配置和四份人格文件保存在`migration/before-deepseek-whale-2026-10-05/`，只对私有备份读写，密钥不进Git。脚本复用旧OpenClaw的DeepSeek凭证，原件不修改。需要回退时先停融合服务，再从此备份恢复对应文件并启动；不要删除整个运行状态目录。旧聊天、记忆和业务数据库没有清空。
 
-当前主模型为`deepseek/deepseek-flash`，直连`https://api.deepseek.com`，使用OpenAI兼容Chat Completions，声明text/image输入。实际/models返回该模型支持图片；实际agent终态回执的requested/effective/responseModel均为DeepSeek Flash，无reroute。它不经过DSH或NAICCC。默认设置也被未单独指定模型的后台agent继承，但本轮没有重做全部后台任务验收。
+当前主模型为 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com`，使用 OpenAI 兼容 Chat Completions，声明 text/image 输入。实际 `/models` 返回该模型支持图片；实际 agent 终态回执的 requested/effective/responseModel 均为 DeepSeek Flash，无 reroute。它不经过 DSH 或 NAICCC。默认设置也被未单独指定模型的后台 agent 继承；全部后台任务未单独重复验收。
 
-SOUL使用完整旧角色卡，IDENTITY切为小鲸鱼；AGENTS明确Kurumi是项目名，角色的群友语气用于本人私聊，业务结果必须准确。沿用仅本人私聊限制，角色卡不授予群聊权限。日常旧会话未重置，旧历史可能继续影响语气；本轮不解决会话管理。
+SOUL使用完整角色卡，IDENTITY为小鲸鱼；AGENTS明确 Kurumi 是项目名，角色的群友语气用于本人私聊，业务结果必须准确。沿用仅本人私聊限制，角色卡不授予群聊权限。日常旧会话未重置，旧历史可能继续影响语气；会话管理属于后续独立工作。
 
 ## 图片故障与验证边界
 
@@ -27,7 +27,7 @@ SOUL使用完整旧角色卡，IDENTITY切为小鲸鱼；AGENTS明确Kurumi是�
 
 修复位于`chatbot/plugins/kurumi-qq/src/media.js`：补充确切主机，抽取URL校验供回归测试。保留HTTPS、无用户凭证、无非默认端口、禁止重定向、8MiB及图片类型检查。未开放任意URL。
 
-同一真实消息的图片已通过实际stageImage下载，JPEG为1,012,270字节；随后送入OpenClaw main的独立测试会话，deliver=false。模型识别了顶部问题、白车、加油站和红色弧形箭头，说明图片成功进入视觉输入。它对车道方向有误读，并额外给出未经验证的驾驶判断；不能把此验收解释成交通建议正确。没有重新走一次用户QQ发送至QQ回包的完整回路，后续真实新图片体验仍由用户复验。
+同一真实消息的图片已通过实际 stageImage 下载，JPEG 为 1,012,270 字节；随后送入 OpenClaw main 的独立测试会话，`deliver=false`。模型识别了顶部问题、白车、加油站和红色弧形箭头，说明图片成功进入视觉输入。它对车道方向有误读，并额外给出未经验证的驾驶判断；该验收不代表交通建议正确。没有重新走一次用户 QQ 发送至 QQ 回包的完整回路，后续真实新图片体验仍由用户复验。
 
 证据：`docs/verification/deepseek-whale/model-image.json`与`channel-tests.txt`。模型测试session为`agent:main:acceptance-whale-image-20261005`，与日常主会话分开。证据不含签名图片URL、凭证或模型思考正文。
 
@@ -35,7 +35,7 @@ SOUL使用完整旧角色卡，IDENTITY切为小鲸鱼；AGENTS明确Kurumi是�
 
 `/opt/deepseek-harness/Start-DSH.sh`第109行开始依次启动snowluma、snowluma-qq、qq-bridge，不是仅启动DSH Web。调查时旧qq-bridge active，融合服务inactive。融合systemd单元与qq-bridge/openclaw-gateway互斥，所以这次是旧bridge接管，不是这两个受管服务同时回复。OneBot登录QQ确认为1794511189，两套方案复用同一QQ传输账号，账号本身不能区分后台宿主。
 
-用户后续明确要求统一启停，新版`/opt/deepseek-harness/Start-DSH.sh`已改为启动DSH Web、kurumi-fusion、snowluma与snowluma-qq，并停止旧bridge/旧OpenClaw。Stop按消费者优先的顺序停止整套服务，保留状态和开机启动设置。没有额外的新qq-bridge进程或新SnowLuma目录：新方案的桥接在融合插件内，QQ传输复用原SnowLuma服务。
+统一启停脚本 `/opt/deepseek-harness/Start-DSH.sh` 当前启动 DSH Web、kurumi-fusion、SnowLuma 与 snowluma-qq，并停止旧 bridge/旧 OpenClaw。Stop 按消费者优先顺序停止整套服务，保留状态和开机启动设置。没有额外的新 qq-bridge 进程或新 SnowLuma 目录：新方案的桥接在融合插件内，QQ 传输复用原 SnowLuma 服务。
 
 脚本受版本控制的源文件位于`/home/afrangry/kurumi-fusion/scripts/fusion/launchers/`，部署位置仍为`/opt/deepseek-harness/`。旧脚本备份于`/opt/deepseek-harness/launcher-backup-before-fusion/`，旧bridge源码和配置未改。Start使用融合health检查实际Gateway、QQ状态及连接，不再读取旧bridge控制台；health已允许独立DSH Web与融合服务并存，仍禁止旧QQ消费者运行。DSH只是同步启停，模型请求仍直连DeepSeek。
 
@@ -69,6 +69,6 @@ SOUL使用完整旧角色卡，IDENTITY切为小鲸鱼；AGENTS明确Kurumi是�
 
 现有OpenClaw未指定频道replyToMode时默认all；`transport.js`只在分段的第一条添加reply段，所以表现为每次第一条必引用。建议后续关闭隐式默认引用，保留模型/频道在回应较早消息、跨话题消歧时显式引用的能力。本次未改频道或SDK引用策略。
 
-既有验收历史留在原日常会话，按用户要求本轮不清理、不重置、不实现会话管理。
+既有验收历史留在原日常会话；当前不清理、不重置，也不实现会话管理。
 
 模型能力资料：[DeepSeek视觉输入](https://api-docs.deepseek.com/guides/vision/)、[模型元数据](https://api-docs.deepseek.com/api/list-models/)。以上为2026-10-05查阅及本机实测状态。

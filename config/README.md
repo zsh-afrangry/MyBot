@@ -24,7 +24,7 @@
 
 > **记忆不在 `state/` 里。** 长期记忆是 `workspace/MEMORY.md`（由 `kurumi-memory` 插件读写），
 > `state/personal-weather/weather.sqlite` 存的是 Profile/行程，`state/personal-reminders/` 存提醒。
-> 早期文档把记忆笼统归入 `state/` 是错的，会导致按 `state/` 备份时漏掉记忆。
+> 备份应包含整个运行目录的必需内容，仅备份 `state/` 会遗漏记忆。
 
 `runtime.config.json` **不含任何真实凭据**。它引用凭据的方式只有两种，二者都指向运行目录：
 
@@ -56,9 +56,6 @@ node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配�
 - **不在 `_managed` 里的键：宿主自行维护，原样保留**，并在 `--diff` 里列为
   `RUNTIME-ONLY` 提示。
 
-> 早期版本"保留所有运行态独有键"，导致删除永远无法表达：仓库删掉的配置在运行态里永生，
-> `--check` 还报成功。保留只对宿主自己维护的字段才是对的。
-
 ### 保证
 
 1. **只写 `openclaw.json`**。脚本不会打开、移动或删除 `state/`、`channel/`、`agents/`、
@@ -78,7 +75,7 @@ node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配�
 | 发送限额 / 分段 | 同上，`channels.kurumi-qq` | `sync-config.mjs --apply` |
 | 搜索 provider | 同上，`tools.web` | `sync-config.mjs --apply` |
 | 轮换 API Key | **只改** `.openclaw-fusion/runtime-env.json` | 重启服务 |
-| 升级第三方插件 | `lib/plugins.mjs` 的版本表 + `config/plugins.package-lock.json` | `install-plugins.mjs` 后跑验收 |
+| 升级第三方插件 | `scripts/fusion/lib/plugins.mjs`、`config/plugins.package.json` 和锁文件 | `install-plugins.mjs` 后跑验收 |
 
 > **不要用 `configure-deepseek-persona.mjs` 改人格。** 它是一次性迁移脚本，除了角色卡还会重写
 > `models.providers`、默认模型、`runtime-env.json`（并删掉 `OPENAI_API_KEY`）以及四份工作区文件。
@@ -97,4 +94,6 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 
 ## 恢复副本
 
-生产配置包含本机路径，不能原样用于隔离启动。恢复工具会重映射配置、项目注册表和符号链接，换成测试凭据，并只在Bubblewrap中执行构建与Gateway探针。详见docs/16；不要直接运行恢复仓库中的生产启动脚本。
+生产配置包含本机路径，不能原样用于隔离启动。恢复工具会重映射配置、项目注册表和符号链接，换成测试凭据，并只在Bubblewrap中执行构建与Gateway探针。详见[验收总表](../docs/16_验收与测试总表.md)；不要直接运行恢复仓库中的生产启动脚本。
+
+返回[文档入口](../docs/README.md)。

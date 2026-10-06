@@ -89,6 +89,7 @@ node scripts/fusion/restore-verify.mjs --backup <备份目录>                # 
 
 ## 文档
 
+- [文档入口（唯一阅读入口）](docs/README.md)
 - [架构、验收和边界](docs/9_QQ融合助手架构与开发计划.md)
 - [运行维护、开发、项目接入与回退](docs/10_融合助手运行维护.md)
 - [小鲸鱼与 DeepSeek 切换及确认策略](docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md)
