@@ -9,7 +9,7 @@
 - [x] 融合依赖已自包含并通过隔离恢复验证；旧目录已移入归档。
 - [x] qq-bridge本地修改已保存到 `personal/main`、封存标签和本地归档，保留上游来源。
 - [ ] 旧B的程序版本、配置、会话、登录数据、服务单元形成一致回退清单。
-- [x] 新源码已设置用户自己的 `MyBot` 远端；当前 `main` 比 `origin/main` 超前 3 个提交。
+- [x] 新源码已设置用户自己的 `MyBot` 远端；当前 `main` 比 `origin/main` 超前 5 个提交（截至本文件最后更新）。
 - [ ] 替代备份验证通过后，按保留策略清理重复备份。
 
 ## 实际资产
@@ -17,7 +17,7 @@
 | 资产 | 位置 | Git与建议 |
 | --- | --- | --- |
 | 旧A源码及私有状态 | `/home/afrangry/kurumi-archive/legacy-openclaw` | 旧原路径 `/home/afrangry/.openclaw` 已不存在；归档 Git HEAD `f8319c1`，对应 MyBot 的 `archive/legacy-openclaw` 分支。凭据、数据库和依赖仍以归档/备份为准 |
-| 新源码 | `/home/afrangry/kurumi-fusion` | Git 远端为 `git@github.com:zsh-afrangry/MyBot.git`；当前 `main` 比 `origin/main` 超前 3 个提交。用户 `docs/example.md` 的未提交修改保持独立 |
+| 新源码 | `/home/afrangry/kurumi-fusion` | Git 远端为 `git@github.com:zsh-afrangry/MyBot.git`；当前 `main` 比 `origin/main` 超前 5 个提交。用户 `docs/example.md` 的未提交修改保持独立 |
 | 新运行状态 | /home/afrangry/.openclaw-fusion，约109M | 根目录无Git，合理：凭据、SQLite、会话走私有备份；其中projects/fusion是独立代码Git，不等于根目录需要Git |
 | 旧bridge源码与状态 | `/home/afrangry/kurumi-archive/qq-bridge` | Git HEAD `d64a4d2`，分支 `personal/main`，标签 `seal/qq-bridge-personal-2026-10-05`；`upstream` 保留原作者，`origin` 指向个人远端但当前 `git ls-remote` 返回 `Repository not found`。原桌面路径不再是权威工作树 |
 | SnowLuma安装与运维文件 | /home/afrangry/snowluma，约210M | 无Git，包含发布压缩包、runtime及运维文档；它仍是新系统传输组件。仅自编启动/配置模板/文档需要版本管理，二进制、登录状态和日志不适合全部git add |
