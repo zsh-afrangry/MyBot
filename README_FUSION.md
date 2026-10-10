@@ -3,15 +3,18 @@
 OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领域能力；SnowLuma 提供 QQ 传输。
 **开发在 `/home/afrangry/kurumi-fusion`，运行数据在 `/home/afrangry/.openclaw-fusion`。**
 
+> **本文件是给人和工具的项目总览，不是规则正文。** 规则与操作细节只在 [`docs/`](docs/README.md) 维护，
+> 避免两处各写一份、随后互相漂移。改了命令、路径或契约时，改 `docs/` 对应文档，这里只保留指针。
+
 ## 只需要记住这五条
 
-| 用途 | 位置 |
-|---|---|
-| 开发新系统 | `/home/afrangry/kurumi-fusion` → 远端 `MyBot`（`git@github.com:zsh-afrangry/MyBot.git`） |
-| 新系统运行数据 | `/home/afrangry/.openclaw-fusion`（配置、凭据、会话、记忆、数据库、提醒、任务） |
-| 旧 bridge 二次开发 | 封存分支 `personal/main` + 标签 `seal/qq-bridge-personal-2026-10-05`（见下"待处理"） |
-| 恢复资料 | `/home/afrangry/kurumi-backups` |
-| 官方组件 | SnowLuma、DSH、OpenClaw 按固定版本与升级流程管理，不手工改动安装目录 |
+| 用途 | 位置 | 规则在哪 |
+|---|---|---|
+| 开发新系统 | `/home/afrangry/kurumi-fusion` → 远端 `MyBot`（`git@github.com:zsh-afrangry/MyBot.git`） | [文档 12](docs/12_目录资产与Git备份整理.md) |
+| 新系统运行数据 | `/home/afrangry/.openclaw-fusion`（配置、凭据、会话、记忆、数据库、提醒、任务） | [config/README.md](config/README.md) |
+| 旧 bridge 二次开发 | 封存分支 `personal/main` + 标签 `seal/qq-bridge-personal-2026-10-05` | [文档 15](docs/15_旧系统回退.md) |
+| 恢复资料 | `/home/afrangry/kurumi-backups` | [文档 16](docs/16_验收与测试总表.md) |
+| 官方组件 | SnowLuma、DSH、OpenClaw 按固定版本与升级流程管理，不手工改动安装目录 | [文档 10](docs/10_融合助手运行维护.md) |
 
 旧目录已移出活动位置的统一放在 `/home/afrangry/kurumi-archive`（详见其 `README.md`）。
 
@@ -22,80 +25,25 @@ OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领�
 | `main` | 当前融合项目（本仓库） |
 | `archive/legacy-openclaw` | 旧 `.openclaw` 的源码历史终点（`f8319c1`，与 `main` 共享历史） |
 
-> 验收与测试的**单一权威入口**是 [`docs/16_验收与测试总表.md`](docs/16_验收与测试总表.md)：
-> 它记录每项检查证明了什么、**没有**证明什么，以及复现命令。日常只信这一份。
+## 四条边界（细节全在文档里）
 
-## 日常检查
-
-```bash
-cd /home/afrangry/kurumi-fusion
-node scripts/fusion/health.mjs              # 服务、QQ、频道、数据库
-node scripts/fusion/verify-dependencies.mjs # 依赖自持、无归档树逃逸、版本与锁文件一致
-node scripts/fusion/sync-config.mjs         # 运行配置是否与仓库一致（含删除项）
-node scripts/fusion/sync-persona.mjs        # 角色卡是否与运行工作区一致
-systemctl --user status kurumi-fusion.service
-```
-
-## 改配置
-
-仓库是**意图**，运行目录是**事实与私密状态**。改行为改仓库再同步，改密钥只改运行目录。
-
-```bash
-# 行为 / 工具 / 插件 / 频道 / 模型
-$EDITOR config/runtime.config.json
-node scripts/fusion/sync-config.mjs --diff  # 看会改什么（含被删除的键）
-node scripts/fusion/sync-config.mjs --apply # 合并写入（只写 openclaw.json）
-
-# 人格
-$EDITOR config/persona.json                 # 指向 roles/ 下的角色卡
-node scripts/fusion/sync-persona.mjs --apply
-
-systemctl --user restart kurumi-fusion.service
-```
-
-`sync-config.mjs` 只写 `openclaw.json`，`sync-persona.mjs` 只写 `workspace/` 下四份文件，
-两者都不打开 `state/`、`channel/`、`agents/`、`media/` 或任何数据库，因此
-**不可能覆盖记忆、提醒或聊天历史**。详见 `config/README.md`。
-
-> 长期记忆是 `workspace/MEMORY.md`，**不在** `state/` 里。
-
-## 备份与恢复
-
-```bash
-node scripts/fusion/backup-state.mjs --label before-<变更名>              # 在线快照
-node scripts/fusion/backup-state.mjs --label rollback --quiesce          # 停写快照（跨库一致）
-node scripts/fusion/restore-verify.mjs --backup <备份目录>                # 恢复演练
-```
-
-- 备份采用**反向白名单**：除明确跳过项外，运行目录下所有内容都会收录（含
-  `workspace/` 记忆与人格、`code-workspace/`、`project-checks/`、`research-*`、`media/`）。
-- 数据库用 `VACUUM INTO` 取一致快照。**单库一致 ≠ 跨库一致**：提醒库、调度状态与投递账本
-  可能来自不同时刻。作为提醒对账用的回退点请加 `--quiesce`（短暂停服后快照，
-  结束后自动恢复服务），`EXPECTED.json` 会记录 `quiesced` 是否为真。
-- 已跟踪修改使用Git binary/full-index补丁，未跟踪文件单独归档；Git暂存区分类不恢复。
-- 失败或中断备份保留INCOMPLETE标记，恢复工具拒绝使用。服务恢复和强制终止的处理见docs/16。
-- 默认恢复验收重建依赖、构建插件，并在不能访问生产目录/真实网络的Bubblewrap中启动Gateway与模拟OneBot；原始备份不变，测试副本凭据无效、真实外发禁用。
-- 它证明隔离Gateway与模拟传输可运行，不等于真实模型、QQ登录、旧提醒重放均已验收。不要在主机直接启动恢复副本。完整说明及当前证据见docs/16。
-
-## 注意
-
-- 只向本人 QQ 私聊外发；群聊入口永久关闭；合成验收入口（`testIngress`）按设计关闭。
-- `scripts/fusion/test-*.mjs` 是**验收脚本**，会真实发本人 QQ、创建任务或重启服务，
-  不能当普通离线测试随意运行。它们现在使用 `lib/fresh-id.mjs` 生成新的 message id，
-  可重复执行；但会在任务账本留下记录。**不要删账本** —— 账本是运行任务的追踪依据。
-  应先查真实终态、正常 cancel 仍在跑的任务，并使用独立工作区（详见验收总表 §4.7）。
-- 统一启停脚本 `scripts/fusion/launchers/{Start,Stop}-DSH.sh` 需要 sudo 密码，
-  且会停 `dsh-web.service`（DSH 网页本身），请在合适时机手动执行。
+1. **仓库是意图，运行目录是事实。** 改行为改仓库再同步；密钥只改运行目录。命令与保证见
+   [配置契约](config/README.md)，不要按记忆里的旧命令操作。
+2. **本文件不重复自检、备份与恢复命令。** 四项自检与它们的证明范围见
+   [文档 16「日常自检」](docs/16_验收与测试总表.md#日常自检)，
+   备份、`--quiesce` 与隔离恢复的边界见[文档 16](docs/16_验收与测试总表.md)。
+3. **只向本人 QQ 私聊外发**；群聊入口永久关闭；合成验收入口（`testIngress`）按设计关闭。
+4. **`scripts/fusion/test-*.mjs` 是验收脚本**，会真实发本人 QQ、创建任务或重启服务，不能当离线测试批量运行；
+   运行前取得授权、结束后正常取消任务并检查真实终态。**不要删任务账本**——它是投递对账依据。
+   脚本清单、副作用与授权要求见 [`docs/verification/SCRIPTS.md`](docs/verification/SCRIPTS.md)。
+   统一启停脚本 `scripts/fusion/launchers/{Start,Stop}-DSH.sh` 需要 sudo 密码且会停 `dsh-web.service`，
+   请在合适时机手动执行。
 
 ## 文档
 
-- [文档入口（唯一阅读入口）](docs/README.md)
-- [架构、验收和边界](docs/9_QQ融合助手架构与开发计划.md)
-- [运行维护、开发、项目接入与回退](docs/10_融合助手运行维护.md)
-- [小鲸鱼与 DeepSeek 切换及确认策略](docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md)
-- [目录资产与 Git 备份整理](docs/12_目录资产与Git备份整理.md)
-- [配置来源、同步与备份恢复](docs/13_配置来源与同步.md)
-- [整理收尾与最终布局](docs/14_整理收尾与最终布局.md)
-- [第六步独立运行验收记录](docs/verification/step6-2026-10-05/README.md)
+- [**文档入口（唯一阅读入口）**](docs/README.md)
+- [docs 目录文件清单](docs/FILES.md)：每个文件的用途、是否为当前规则
 - [**验收与测试总表（权威入口）**](docs/16_验收与测试总表.md)
-- [旧系统回退：归档保留 + 原路径复制恢复 + 显式切换](docs/15_旧系统回退.md)
+- [脚本与证据索引](docs/verification/SCRIPTS.md)
+- [后台开发副本维护契约](docs/17_后台开发副本维护契约.md)
+- [新需求前收尾与验收清单](docs/临时_新需求前收尾与验收清单_2026-10-10.md)：当前正在处理的收尾事项
