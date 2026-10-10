@@ -117,6 +117,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/fixtures/test_stats.py` | 离线 | 固定验收 fixture：后台代码任务的 mean/moving_average 断言 | 只读 | 否 | code | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
+| `scripts/fusion/test/log-query.test.mjs` | 离线 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
 | `chatbot/tests/acceptance/call-analysis.mjs` | 库 | 旧验收调用观察工具（只观察，不证明写入） | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/domain-fixture.mjs` | 库 | 旧验收领域夹具与工具定义 | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/host-driver.mjs` | 库 | 旧 harness Host 驱动，只开测试状态目录 | 写临时测试目录、只读 | 否 | code | — |
@@ -124,6 +125,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/retrieval-config.mjs` | 库 | 旧验收检索输出预算配置 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/backup-service.mjs` | 库 | 备份期间停写并恢复服务 | 重启或停服务 | 否 | header | — |
 | `scripts/fusion/lib/fresh-id.mjs` | 库 | 生成不重复的 message id | 只读 | 否 | header | — |
+| `scripts/fusion/lib/trace-events.mjs` | 库 | 统一链路事件契约、脱敏与可选 JSONL sink | 只读 | 否 | code | — |
 | `scripts/fusion/lib/legacy-source.mjs` | 库 | 解析旧 OpenClaw 源树路径（仅迁移脚本用） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/plugins.mjs` | 库 | 第三方插件声明（纯数据，导入无 I/O） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/recovery-isolation.mjs` | 库 | 隔离恢复的路径与凭据改写 | 只读 | 否 | header | — |
@@ -166,6 +168,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/evidence-coverage.mjs` | 只读运维 | 校验证据目录分类覆盖，未分类即非零退出 | 只读 | 否 | header | `docs/verification/` |
 | `scripts/fusion/evidence-index.mjs` | 只读运维 | 生成本脚本与证据索引 | 只读 | 否 | header | `docs/verification/SCRIPTS.md` |
 | `scripts/fusion/health.mjs` | 只读运维 | 服务、QQ、频道、Cron、数据库健康 | 只读 | 否 | header | — |
+| `scripts/fusion/log-query.mjs` | 只读运维 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询 | 只读 | 否 | header | — |
 | `scripts/fusion/inspect-receipts.mjs` | 只读运维 | 查看验收回执 | 只读 | 否 | code | `docs/verification/fusion/receipts.json` |
 | `scripts/fusion/probe-final.mjs` | 只读运维 | health.mjs 的兼容入口 | 只读 | 否 | header | — |
 | `scripts/fusion/stack-summary.mjs` | 只读运维 | 启停输出压缩显示 | 只读 | 否 | header | — |

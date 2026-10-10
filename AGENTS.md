@@ -1,7 +1,7 @@
 # 开发指引（本仓库）
 
 本文件是 `/home/afrangry/kurumi-fusion` 开发侧的指令入口。它只说明开发路径、保护范围和验证方式，不复制运行规则。
-按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则文档（文档 9、10、11、12、15、16 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。
+按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则文档（文档 9、10、11、12、15、16、18 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。
 **文档冲突时以上面这些规则文档和代码为准**，不读 `docs/1–8` 的“现在应该从哪里继续”当作待办。
 
 ## 两处目录，不要混用
