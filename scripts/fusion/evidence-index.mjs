@@ -125,7 +125,7 @@ const TABLE = {
   'scripts/fusion/configure-research.mjs': ['迁移工具', '配置检索 provider 与抓取路径', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/configure-worker.mjs': ['迁移工具', '显式配置隔离代码 worker', {auth: 1, writesState: 1}, 'header'],
 
-  // ---- 整套启停 ----
+  // ---- DSH/Fusion 启停（QQ/SnowLuma 只检查，不由脚本启停） ----
   'scripts/fusion/launchers/Start-DSH.sh': ['启停脚本', '启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉', {auth: 1, restart: 1}, 'header'],
   'scripts/fusion/launchers/Stop-DSH.sh': ['启停脚本', '停止融合助手与 DSH Web；不停止 QQ 传输', {auth: 1, restart: 1}, 'header'],
 
