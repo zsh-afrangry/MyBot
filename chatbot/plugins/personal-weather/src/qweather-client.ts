@@ -1,4 +1,5 @@
 import { fetchWithSsrFGuard } from "openclaw/plugin-sdk/ssrf-runtime";
+import { ssrfPolicyFromHttpBaseUrlFakeIpHostnameAllowlist } from "openclaw/plugin-sdk/infra-runtime";
 
 import {
   buildAuthHeaders,
@@ -226,6 +227,13 @@ export class QWeatherClient {
       url.searchParams.set(key, value);
     }
 
+    const fakeIpPolicy = ssrfPolicyFromHttpBaseUrlFakeIpHostnameAllowlist(
+      this.#baseUrl,
+    );
+    if (!fakeIpPolicy) {
+      throw new WeatherError("CONFIG_INVALID");
+    }
+
     let guarded:
       | Awaited<ReturnType<typeof fetchWithSsrFGuard>>
       | undefined;
@@ -242,6 +250,15 @@ export class QWeatherClient {
         },
         requireHttps: true,
         maxRedirects: 0,
+        // The host is operator-configured and validated as a dedicated
+        // QWeather endpoint.  On installations using Clash/sing-box fake-IP
+        // DNS, that hostname resolves to RFC 2544 (198.18.0.0/15) and the
+        // default strict guard rejects it before the configured proxy gets a
+        // chance to route the request.  Keep the guard host-scoped and use
+        // the trusted environment proxy path; this does not allow arbitrary
+        // private hosts or redirects.
+        mode: "trusted_env_proxy",
+        policy: fakeIpPolicy,
         timeoutMs,
         ...(signal ? { signal } : {}),
         capture: false,

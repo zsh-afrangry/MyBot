@@ -59,7 +59,12 @@ describe("QWeatherClient", () => {
     expect(call?.init?.method).toBe("GET");
     expect(call?.maxRedirects).toBe(0);
     expect(call?.capture).toBe(false);
-    expect(call?.policy).toBeUndefined();
+    expect(call?.mode).toBe("trusted_env_proxy");
+    expect(call?.policy).toEqual({
+      allowRfc2544BenchmarkRange: true,
+      allowIpv6UniqueLocalRange: true,
+      hostnameAllowlist: ["example123.re.qweatherapi.com"],
+    });
     expect(new Headers(call?.init?.headers).get("X-QW-Api-Key")).toBe(TEST_SECRET);
   });
 
