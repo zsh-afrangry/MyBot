@@ -3,7 +3,7 @@
 > **本文件不是当前系统的规则来源。** 它是融合前（旧 NAICCC/`qqbot` 部署）的能力登记，
 > 现在只作为 `chatbot/tests/acceptance/` 下离线验收脚本的基础提示词保留；脚本会在末尾追加本轮隔离说明。
 >
-> - 当前运行规则、工具与权限：[根目录开发指引](../AGENTS.md) → [文档入口](../docs/README.md) → [文档 9–17](../docs/README.md#当前规则)。
+> - 当前运行规则、工具与权限：[根目录开发指引](../AGENTS.md) → [文档入口](../docs/README.md) → [当前规则文档](../docs/README.md#当前规则)。
 > - 当前运行期 agent 提示词：`scripts/fusion/templates/AGENTS.md`，经 `sync-persona.mjs` 同步到运行 workspace。
 > - 下面正文中与当前配置冲突的表述（频道 id、模型链、能力开关）已按 2026-10-10 的实际情况修正，
 >   其余内容作为历史契约保留；**引用前先核对代码和配置。**
@@ -214,6 +214,6 @@
   仓库侧来源是 `roles/`、`config/persona.json` 与 `scripts/fusion/templates/AGENTS.md`。
 - 长期记忆/知识库：运行目录 `workspace/MEMORY.md`（不在 `state/` 下）。
 - 天气与行程、提醒：`docs/2_天气模块的开发.txt`、`docs/3_个人提醒.txt`（历史领域记录），
-  当前契约以[文档 9–17](../docs/README.md#当前规则)和代码为准。
+  当前契约以[当前规则文档](../docs/README.md#当前规则)和代码为准。
 - 联网检索与模型能力：`docs/8_检索功能重构.txt`；主模型：`config/runtime.config.json` 的 `models` 与 `agents.*.model`。
 - 主配置和工具权限：仓库 `config/runtime.config.json`（意图）→ 运行目录 `openclaw.json`（事实）；见 [config/README.md](../config/README.md)。
