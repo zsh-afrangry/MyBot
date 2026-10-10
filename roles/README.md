@@ -1,5 +1,22 @@
 # 角色扮演文件（人格卡）
 
+> **来源与适用范围（2026-10-10 补充）**
+>
+> 本文件是**旧 qq-bridge 的角色目录说明原件**，随 `小鲸鱼.md`、`傲娇助手.md` 一起从
+> `/home/afrangry/桌面/qq-bridge/roles/` 原样复制而来（原件路径现已不存在，归档在
+> `/home/afrangry/kurumi-archive/qq-bridge`）。下文提到的“对 QQ agent 说 `进入角色扮演：<角色名>`”、
+> “控制台【人格与角色】页”、“`dsh/agent-presets/qq-chat{,-v2}/agent.cordis.yml`”、“每条消息注入 6000 字符上限”、
+> “保存后下一条消息即生效”都属于**旧 bridge 机制，不是融合系统的当前行为**。
+>
+> 融合系统的角色切换只有一条路径：改 [`config/persona.json`](../config/persona.json) 的 `roleFile`，
+> 再运行 `node scripts/fusion/sync-persona.mjs --apply` 并重启 `kurumi-fusion.service`；
+> 契约见 [`config/README.md`](../config/README.md) 与[文档 10](../docs/10_融合助手运行维护.md)。
+>
+> 下面两节「人格卡只写人设」和「推荐结构」仍然是有效写作指导；涉及控制台、群聊命令和热生效的段落按旧机制阅读。
+> 两份额角色卡 `小鲸鱼.md`、`傲娇助手.md` 仍与归档原件逐字一致（SHA256 分别以 `237dce15…`、`12d09202…` 开头，小鲸鱼完整值见[文档 11](../docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md)）；
+> 本 `README.md` 自 2026-10-10 起增加了本说明块，因此与原件不再逐字一致，原件保留在
+> `/home/afrangry/kurumi-archive/qq-bridge/roles/README.md`。改动只加说明，不改旧机制正文。
+
 每个角色一个 Markdown 文件，**文件名 = 角色名**（不含扩展名，中英文均可）。例：`roles/傲娇助手.md`。
 
 在群里对 QQ agent 说 `进入角色扮演：<角色名>`，或在控制台「人格与角色」页点选启用；说 `退出角色扮演` 恢复正常。

@@ -2,6 +2,9 @@
 
 当前状态：角色、模型和图片入口修复已生效。确认策略、私聊引用与会话管理仍未实施，日常体验复验由后续变更单独记录。
 
+> 本文的“角色、模型与回退”一节区分两件事：**一次性迁移的历史记录**（`configure-deepseek-persona.mjs`，已完成，不再作为日常入口）与**当前人格切换契约**（`config/persona.json` + `sync-persona.mjs`）。
+> 日常改人格不要运行迁移脚本；契约见 [`config/README.md`](../config/README.md)，运行命令见[文档 10](10_融合助手运行维护.md)。
+
 ## 当前状态与范围
 
 - [x] 原样复制旧 bridge 的 3 份角色目录 Markdown，当前启用小鲸鱼角色卡。
@@ -13,9 +16,11 @@
 
 ## 角色、模型与回退
 
-`/home/afrangry/桌面/qq-bridge/roles/`下的README.md、小鲸鱼.md、傲娇助手.md原样复制到`/home/afrangry/kurumi-fusion/roles/`。README是原bridge说明，里面的旧命令不代表融合项目启动方式。三份文件与原件SHA256均一致。小鲸鱼卡SHA256为`237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386`，与运行时SOUL.md一致。
+`/home/afrangry/桌面/qq-bridge/roles/`下的README.md、小鲸鱼.md、傲娇助手.md原样复制到`/home/afrangry/kurumi-fusion/roles/`（该桌面路径现已不存在，原件归档在`/home/afrangry/kurumi-archive/qq-bridge/roles/`）。README是原bridge说明，里面的旧命令、控制台操作和“保存即生效”都不代表融合项目启动或切换方式；自2026-10-10起该README顶部增加了来源说明块，因此只有两份角色卡仍与归档原件逐字一致。小鲸鱼卡SHA256为`237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386`，与运行时SOUL.md一致。
 
-配置脚本：`scripts/fusion/configure-deepseek-persona.mjs`。运行时文件位于`/home/afrangry/.openclaw-fusion/`，旧配置和四份人格文件保存在`migration/before-deepseek-whale-2026-10-05/`，只对私有备份读写，密钥不进Git。脚本复用旧OpenClaw的DeepSeek凭证，原件不修改。需要回退时先停融合服务，再从此备份恢复对应文件并启动；不要删除整个运行状态目录。旧聊天、记忆和业务数据库没有清空。
+**日常人格切换不使用 `configure-deepseek-persona.mjs`。** 该脚本是一次性迁移工具（2026-10-05 把旧 bridge 切换到 DeepSeek+小鲸鱼时执行），除了角色卡还会重写 `models.providers`、默认模型、`runtime-env.json`（并删除 `OPENAI_API_KEY`）和四份工作区文件；它的历史作用与备份位置记录如下，脚本开头也已加警告。当前入口是 `config/persona.json` + `sync-persona.mjs`，配置契约见 [`config/README.md`](../config/README.md)。
+
+一次性迁移的历史记录：运行时文件位于`/home/afrangry/.openclaw-fusion/`，旧配置和四份人格文件保存在`migration/before-deepseek-whale-2026-10-05/`，只对私有备份读写，密钥不进Git。脚本复用旧OpenClaw的DeepSeek凭证，原件不修改。需要回退时先停融合服务，再从此备份恢复对应文件并启动；不要删除整个运行状态目录。旧聊天、记忆和业务数据库没有清空。
 
 当前主模型为 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com`，使用 OpenAI 兼容 Chat Completions，声明 text/image 输入。实际 `/models` 返回该模型支持图片；实际 agent 终态回执的 requested/effective/responseModel 均为 DeepSeek Flash，无 reroute。它不经过 DSH 或 NAICCC。默认设置也被未单独指定模型的后台 agent 继承；全部后台任务未单独重复验收。
 
