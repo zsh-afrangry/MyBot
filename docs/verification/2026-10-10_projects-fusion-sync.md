@@ -54,8 +54,20 @@ git merge -X theirs main-sync                      # 0 冲突
 git commit -m "Sync development copy to main dacfac4 (kurumi/main-sync-2026-10-10)"   # e157529
 ```
 
-合并后副本工作树与主仓库 `dacfac4` 的差异只剩 4 个文件：3 个 Host 生成的
-`IDENTITY.md`/`SOUL.md`/`USER.md`（未跟踪）与保留的 `scripts/fusion/fixtures/stats.py`。
+合并后的**实际**差异（2026-10-10 复验时用 `git diff --name-status dacfac4 HEAD` 在副本内实测）：
+
+```text
+M	.gitignore                      # 副本本地 ignore 规则（后续提交 1363282）
+A	AGENTS.md                       # 副本专用开发指令
+M	chatbot/AGENTS.md               # 同上
+A	scripts/fusion/fixtures/stats.py # 固定验收 fixture
+```
+
+初版报告把这里写成“只剩 4 个文件：3 个 Host 文件 + stats.py”，**不准确**：Host 生成的
+`IDENTITY.md`/`SOUL.md`/`USER.md` 被 `.gitignore` 忽略，不出现在 Git 树差异里（用 `--ignored` 才看得到），
+而 `.gitignore` 与两个 `AGENTS.md` 才是树差异的一部分。三类内容要分清：**树差异**（上表 4 项）、
+**被忽略但存在的文件**（3 个 Host 文件、`node_modules/`）、**来自 `dacfac4` 且被跟踪的普通内容**（含 `config/`）。
+
 主仓库工作区当时未提交的 `AGENTS.md`、`docs/README.md`、`docs/example.md` 与本次临时清单**没有**被带进副本，
 即副本取的是主仓库已提交内容，不复制未提交改动。
 
@@ -66,7 +78,7 @@ git commit -m "Sync development copy to main dacfac4 (kurumi/main-sync-2026-10-1
 | `git reset --hard dacfac4` 或重新 clone | **未采用**：会丢掉副本独有提交与旧分支引用，违反清单“不要直接覆盖或强制 reset”。 |
 | 保留旧线继续开发 | **未采用**：副本的作用是承载新任务，长期停在 `ed7aca8` 会让固定检查与主仓库持续分叉。 |
 | `git switch -c` 新分支 + `fetch` + `merge` | **采用**：两个父提交都留在历史里，旧线可随时用标签取回；工作树因此同时拿到主仓库的 99 个变更文件。 |
-| `-X theirs` | **采用，但仅在已确认差异范围之后**：99 个差异文件逐个看过，唯一“两边都改”的路径影响有限，且需刻意保留的 4 个文件（3 个 Host 上下文 + `stats.py`）在合并后逐个复核。它不是“拿来消冲突”的手段；合并后仍逐文件比对过差异清单。 |
+| `-X theirs` | **采用，但仅在已确认差异范围之后**：合并前先看清 99 个待合入文件的差异范围，合并后再用 `git diff --name-status dacfac4 HEAD` 逐项复核实际保留的差异（`.gitignore`、两个 `AGENTS.md`、`stats.py`），并单独确认 3 个被忽略的 Host 文件仍在。它不是“拿来消冲突”的手段。 |
 
 合并后**没有**只凭“0 冲突”就宣告完成：又用文件清单逐一比对副本与主仓库
 （只多出上述 4 个文件），并用 `git rev-list` 确认旧线仍可达，才认为基线切换成功。

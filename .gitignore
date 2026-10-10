@@ -25,6 +25,10 @@ chatbot/SOUL.md
 **/node_modules/
 **/dist/
 *.log
+# Exception (R04): recovery evidence logs are small, credential-free startup transcripts. Keeping
+# them versioned is deliberate — otherwise a clone has fewer files than the working tree and a
+# reader cannot reproduce what the isolation probe printed.
+!docs/verification/recovery-*/gateway-probe.log
 .DS_Store
 
 # Host-generated state, credentials, caches and local recovery copies

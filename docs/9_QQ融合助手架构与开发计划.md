@@ -51,7 +51,7 @@ OpenClaw SDK 和 `ws` 使用已验收的固定版本。源码依赖由仓库 loc
 
 - `kurumi-fusion.service`：默认助手，`active/enabled`。
 - `snowluma.service`、`snowluma-qq.service`：QQ 传输，`active/enabled`。
-- `openclaw-gateway.service`、`qq-bridge.service`：旧消费者，`inactive/disabled`。
+- `openclaw-gateway.service`、`qq-bridge.service`：旧消费者，`inactive` 且**已 mask**（2026-10-10 起，单元原件归档在 `/home/afrangry/kurumi-archive/legacy-units/`；手动 `start` 被拒绝）。恢复旧系统前须按[文档 15](15_旧系统回退.md)只解除所选单元的屏蔽。
 - `dsh-web.service`：可独立运行，但不消费 QQ。
 - `testIngress=false`；验收入口关闭，日常不执行真实外发测试脚本。
 

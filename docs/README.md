@@ -21,7 +21,8 @@
 - [docs 目录文件清单](FILES.md)：每个文件的用途、属于当前规则还是历史资料、用户内容与归档去向。
 - [验证索引](verification/INDEX.md)：所有 `docs/verification/` 下的测试、验收和报告文件按用途分类。
 - [脚本与证据索引](verification/SCRIPTS.md)：每个脚本的用途、副作用、授权要求和会写哪份证据；含旧 harness 与当前融合验收的边界。
-- [最终恢复验收](verification/recovery-2026-10-06/README.md)：最新停写备份、隔离恢复和生产状态证据。
+- [当前恢复点与隔离验证](verification/recovery-2026-10-10/README.md)：最新停写备份（`2026-10-10-09-05-41-rollback`，quiesced）与 25/25 隔离恢复验证。
+- [上一恢复点](verification/recovery-2026-10-06/README.md)：`466b5074` 时点的恢复与隔离报告，保留作为历史对照。
 - `docs/archive/`：已完成方案、失败实验和阶段记录，只用于追溯，不是当前规则。
 - `docs/1–8`、`tp.txt`、`tp2.txt`：早期设计和领域开发记录。它们保留历史依据，文件顶部已加"历史文档"标记并说明过期指针；发生冲突时以本页列出的 9–17 和代码为准。
 

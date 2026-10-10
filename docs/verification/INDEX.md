@@ -14,14 +14,14 @@
 | [`2026-10-10_projects-fusion-sync.md`](2026-10-10_projects-fusion-sync.md) | 后台开发副本同步到主仓库 `dacfac4` 的前后状态、归档、沙箱检查复验与未覆盖范围（规则见[文档 17](../17_后台开发副本维护契约.md)） |
 | `fusion/*` | 融合系统阶段验收和最终运行回执；以 recovery 报告和 16 为当前恢复结论 |
 | `deepseek-whale/*` | DeepSeek、角色卡和图片链路验收 |
-| `migration/29–37*` | 迁移后回归、生产配置、服务恢复、项目同步和备份恢复证据 |
+
 
 ## 历史领域验收
 
 | 文件组 | 内容 |
 | --- | --- |
 | 顶层 `*-acceptance.json`、`*-deployment.json`、`*-tests.txt` | 确认、提醒、天气、搜索和规划的历史领域验收 |
-| `migration/01–28*` | 迁移阶段的领域测试和中间结果 |
+| `migration/*`（含 29–37） | 迁移阶段的领域测试、阶段回归与中间结果。其中 `29-fusion-regression`、`33-production-config`、`34-service-health`、`35-service-recovery`、`36-project-synchronized`、`37-backup-restore` 是 2026-10-05 在副本提交 `b955abe` 上产生的结算证据；作为**证据**已被 `recovery-2026-10-06/`、`recovery-2026-10-10/` 取代，但其中两条结论仍然有效并在文档 16 重申：`testIngress=false`、每日发送上限 500 且保留历史 |
 | `2026-09-*`、`2026-10-01_*`、`2026-10-04_*`、`step6-2026-10-05/*` | 阶段复核、实验、升级和第六步记录 |
 
 这些文件用于追溯，不覆盖当前运行事实；冲突时以代码、当前规则文档和最新恢复报告为准。

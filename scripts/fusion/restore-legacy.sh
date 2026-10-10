@@ -427,11 +427,33 @@ print_next_steps() {
     echo
     echo "只还原所选方案；启动前先离线处理旧 Cron、外发白名单与暂停状态。"
     echo "旧 A、旧 B 只能选一个。新系统数据不会同步进旧系统。"
-    echo "若旧单元已 mask，须在完成风险检查后显式 unmask 所选单元。"
+    # 2026-10-10：两个旧单元已 mask，且单元原件被移到归档。unmask 只删除 /dev/null 链接，
+    # 不会把原件放回来，所以这里必须给出完整步骤，并且只处理所选方案对应的单元
+    # （两套旧方案互斥，同时解除屏蔽会违背最小切换）。
     if [ "$SYSTEM" = A ]; then
+        echo
+        echo "解除所选单元屏蔽（A 方案只需 openclaw-gateway；不要同时解除 qq-bridge）："
+        echo '  U=~/.config/systemd/user; A=/home/afrangry/kurumi-archive/legacy-units'
+        echo "  systemctl --user unmask openclaw-gateway.service"
+        echo '  cp --remove-destination "$A/openclaw-gateway.service" "$U/openclaw-gateway.service"'
+        echo "  systemctl --user daemon-reload"
+    elif [ "$SYSTEM" = B ]; then
+        echo
+        echo "解除所选单元屏蔽（B 方案只需 qq-bridge；不要同时解除 openclaw-gateway）："
+        echo '  U=~/.config/systemd/user; A=/home/afrangry/kurumi-archive/legacy-units'
+        echo "  systemctl --user unmask qq-bridge.service"
+        echo '  cp --remove-destination "$A/qq-bridge.service" "$U/qq-bridge.service"'
+        echo "  systemctl --user daemon-reload"
+    fi
+    if [ "$SYSTEM" = A ] || [ "$SYSTEM" = B ]; then
+        echo "  注意：systemctl --user unmask 不恢复单元原件；cp -p 会跟随链接写进 /dev/null，必须用 --remove-destination。"
+    fi
+    if [ "$SYSTEM" = A ]; then
+        echo
         echo "A：确认融合及 qq-bridge 均停止后，才可执行："
         echo "  systemctl --user start openclaw-gateway.service"
     elif [ "$SYSTEM" = B ]; then
+        echo
         echo "B：确认融合及 openclaw-gateway 均停止后，才可执行："
         echo "  sudo systemctl start dsh-web.service"
         echo "  systemctl --user start snowluma.service snowluma-qq.service"
@@ -439,6 +461,10 @@ print_next_steps() {
     else
         echo "本次只检查；使用 --restore --system A 或 --system B 选择一种回退。"
     fi
+    echo
+    echo "⚠ 启动任一旧单元都会先停掉融合服务：kurumi-fusion.service 声明了"
+    echo "  Conflicts=qq-bridge.service openclaw-gateway.service，systemd 的 Conflicts 是双向的。"
+    echo "  这不是故障；恢复融合时重新 start kurumi-fusion.service 即可（详见 docs/15）。"
     echo "返回融合：先停止所选旧消费者，再启动 kurumi-fusion、snowluma、snowluma-qq。"
     echo "离线复制校验不等于旧系统真实启动验收。本工具从不自动启动服务。"
 }

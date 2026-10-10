@@ -1,3 +1,14 @@
+// ONE-SHOT FIRST-RUN BOOTSTRAP — do NOT use this to add or change a project day to day.
+//
+// It only appends the "fusion" entry when that id is absent; an existing entry is never updated, so
+// editing this file does NOT change a registered project. It also rewrites the copy's AGENTS.md and
+// the live openclaw.json agent definition, which bypasses the repository's managed config.
+//
+// Routine maintenance instead:
+//   - registry (projects.json): scripts/fusion/register-project.mjs
+//   - agent definition (agents.entries.<id>): config/runtime.config.json + sync-config.mjs
+// See docs/10_融合助手运行维护.md.
+//
 // Register an independent fusion checkout. Existing checkouts and fixture state are never silently replaced.
 import fs from 'node:fs';
 import {spawnSync} from 'node:child_process';
