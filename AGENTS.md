@@ -40,7 +40,7 @@
 
 - 任何远端写入：`git push`、改远端分支或标签。
 - 停写快照与备份恢复：`backup-state.mjs --quiesce`、`restore-verify.mjs`、`restore-legacy.sh`。
-- 整套启停：`Start-DSH.sh` / `Stop-DSH.sh`（会停 `dsh-web.service`，需要 sudo 密码）。
+- DSH/Fusion 启停：`Start-DSH.sh` / `Stop-DSH.sh`（会停 `dsh-web.service`，只检查并保留 SnowLuma/QQ，需要 sudo 密码）。
 - 真实外发：`scripts/fusion/test-*.mjs` 会真实发本人 QQ、创建任务或重启服务，**不能当离线测试批量运行**；`testIngress` 保持关闭。
 - 清理或删除：运行目录的数据库与账本是投递对账证据，不删除、不重建。
 

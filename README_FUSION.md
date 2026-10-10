@@ -36,8 +36,8 @@ OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领�
 4. **`scripts/fusion/test-*.mjs` 是验收脚本**，会真实发本人 QQ、创建任务或重启服务，不能当离线测试批量运行；
    运行前取得授权、结束后正常取消任务并检查真实终态。**不要删任务账本**——它是投递对账依据。
    脚本清单、副作用与授权要求见 [`docs/verification/SCRIPTS.md`](docs/verification/SCRIPTS.md)。
-   统一启停脚本 `scripts/fusion/launchers/{Start,Stop}-DSH.sh` 需要 sudo 密码且会停 `dsh-web.service`，
-   请在合适时机手动执行。
+   统一启停脚本 `scripts/fusion/launchers/{Start,Stop}-DSH.sh` 需要 sudo 密码，只启停 DSH 与 Fusion，
+   只检查并保留 SnowLuma/QQ 传输；请在合适时机手动执行。
 
 ## 文档
 
