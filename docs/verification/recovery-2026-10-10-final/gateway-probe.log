@@ -1,0 +1,37 @@
+2026-10-10T12:37:18.333+00:00 [gateway] loading configuration…
+2026-10-10T12:37:18.359+00:00 [gateway] resolving authentication…
+2026-10-10T12:37:18.362+00:00 [gateway] starting...
+2026-10-10T12:37:18.629+00:00 [gateway] shutdown budget at startup: drain=315000ms shutdown=325000ms reserve=10000ms exitMargin=5000ms; source=Gateway stop policy=330000ms
+2026-10-10T12:37:18.723+00:00 [gateway] spawn broker ready pid=103
+[state/agent-db] agent database integrity gate
+2026-10-10T12:37:22.343+00:00 [session-sqlite] reclamation worker retired reason=exclusive-handoff kind=canonical-validation ageMs=702 opsServed=2
+[state/agent-db] agent database integrity gate
+[state/agent-db] agent database integrity gate
+2026-10-10T12:37:22.881+00:00 [session-sqlite] reclamation worker retired reason=exclusive-handoff kind=canonical-validation ageMs=678 opsServed=1
+2026-10-10T12:37:22.963+00:00 [session-sqlite] reclamation worker retired reason=exclusive-handoff kind=canonical-validation ageMs=178 opsServed=1
+[state/agent-db] agent database integrity gate
+2026-10-10T12:37:23.073+00:00 [session-sqlite] reclamation worker retired reason=exclusive-handoff kind=canonical-validation ageMs=176 opsServed=1
+2026-10-10T12:37:23.335+00:00 [gateway] starting HTTP server...
+2026-10-10T12:37:23.473+00:00 [health-monitor] started (interval: 300s, startup-grace: 60s, channel-connect-grace: 120s)
+2026-10-10T12:37:28.156+00:00 [gateway] agent model: deepseek/deepseek-flash (thinking=medium, fast=off)
+2026-10-10T12:37:28.156+00:00 [gateway] http server listening (7 plugins: kurumi-memory, kurumi-qq, kurumi-research, kurumi-tasks, personal-confirmation, personal-weather, tavily; 9.5s)
+2026-10-10T12:37:28.157+00:00 [gateway] log file: /tmp/kurumi-restore-jjTHib/runtime/runtime.log
+2026-10-10T12:37:28.157+00:00 [gateway] native runtime: {"pid":10,"platform":"linux","arch":"x64","node":"26.10.0","v8":"14.6.202.34-node.34","uv":"1.52.1","openssl":"3.5.8","sqlite":"3.53.4"}
+2026-10-10T12:37:28.158+00:00 [gateway] worker startup state: {"workerCount":6,"workerLifecycle":[{"script":"other","started":1,"retired":[{"reason":"exit","count":1}]},{"script":"sqlite-store.worker.js","started":1,"retired":[]},{"script":"openclaw-state-lease-heartbeat.worker.js","started":1,"retired":[]},{"script":"openclaw-state-read.worker.js","started":2,"retired":[]},{"script":"session-accessor.sqlite-archive.worker.js","started":2,"retired":[{"reason":"closed","count":2}]},{"script":"session-transcript.worker.js","started":2,"retired":[]}],"compute":{"limit":11,"active":0,"waitingPools":0,"pendingTasks":0,"pendingBytes":0}}
+2026-10-10T12:37:28.209+00:00 [ws] closed before connect conn=384a9467-c8c0-45da-9d4a-fef2e5bbb799 peer=127.0.0.1:56566->127.0.0.1:18891 remote=127.0.0.1 fwd=n/a origin=n/a host=127.0.0.1:18891 ua=n/a code=1006 reason=n/a phase=ws_upgrade_started durationMs=19 handshake=pending phase=ws_upgrade_started host=127.0.0.1:18891 remoteAddr=127.0.0.1 remotePort=56566 localAddr=127.0.0.1 localPort=18891 endpoint=127.0.0.1:56566->127.0.0.1:18891
+2026-10-10T12:37:28.223+00:00 [gateway] starting channels and sidecars...
+2026-10-10T12:37:28.569+00:00 [plugins] {"component":"personal-confirmation","event":"started","backends":[]}
+2026-10-10T12:37:28.587+00:00 [plugins] personal-weather reminder reconciler started (interval=60000ms)
+2026-10-10T12:37:28.590+00:00 [gateway] startup outcomes: internal-hooks=skipped (not-configured); internal-startup-hook=skipped (no-handlers-loaded); gateway-start-hooks=skipped (no-handlers-loaded); gmail-watcher=skipped (hooks-disabled); gmail-model=skipped (not-configured)
+2026-10-10T12:37:28.596+00:00 [gateway] ready
+2026-10-10T12:37:28.643+00:00 [heartbeat] disabled
+2026-10-10T12:37:28.706+00:00 [kurumi-qq] Kurumi QQ OneBot connected
+2026-10-10T12:37:31.349+00:00 [admission] closed: stop (SIGTERM)
+2026-10-10T12:37:31.350+00:00 [gateway] received SIGTERM; shutting down
+2026-10-10T12:37:31.351+00:00 [gateway] shutdown budget at shutdown: drain=315000ms shutdown=325000ms reserve=10000ms exitMargin=5000ms; source=Gateway stop policy=330000ms
+2026-10-10T12:37:31.363+00:00 [gateway] draining active work before stop with timeout 315000ms: rootRequests=1
+2026-10-10T12:37:31.615+00:00 [gateway] active-work drain settled; beginning server close
+2026-10-10T12:37:31.630+00:00 [plugins] personal-weather reminder reconciler stopped
+2026-10-10T12:37:31.633+00:00 [gmail-watcher] gmail watcher stopped
+2026-10-10T12:37:31.667+00:00 [agents/prepared-model-runtime] provider catalog refresh failed: prepared model runtime process lifetime closed
+2026-10-10T12:37:31.993+00:00 [shutdown] completed cleanly in 376ms

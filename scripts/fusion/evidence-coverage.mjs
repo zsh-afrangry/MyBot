@@ -22,7 +22,7 @@ const CURRENT_NOTES = new Set(['2026-10-10_projects-fusion-sync.md']);
 const CURRENT_FILES = new Set(['INDEX.md', 'SCRIPTS.md']);
 
 // Directories holding current evidence (whole subtree), by explicit name.
-const CURRENT_DIRS = ['recovery-2026-10-06/', 'recovery-2026-10-10/', 'fusion/', 'deepseek-whale/'];
+const CURRENT_DIRS = ['recovery-2026-10-06/', 'recovery-2026-10-10/', 'recovery-2026-10-10-final/', 'fusion/', 'deepseek-whale/'];
 // Directories holding historical material (whole subtree), by explicit name.
 const HISTORICAL_DIRS = ['migration/', 'step6-2026-10-05/'];
 // Named patterns for top-level historical receipts — deliberate conventions, not a catch-all.
