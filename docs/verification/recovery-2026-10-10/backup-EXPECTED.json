@@ -1,0 +1,159 @@
+{
+  "label": "rollback",
+  "stamp": "2026-10-10-09-05-41",
+  "createdAt": "2026-10-10T09:05:46.360Z",
+  "repositories": [
+    {
+      "name": "kurumi-fusion",
+      "dir": "/home/afrangry/kurumi-fusion",
+      "head": "584b3a06d5c52c7173b2b89f6c5102b195c5b947",
+      "branches": [
+        "archive/legacy-openclaw",
+        "integration/onebot",
+        "main"
+      ],
+      "tags": [
+        "baseline/pre-integration-2026-10-05",
+        "migration/full-2026-10-05"
+      ]
+    },
+    {
+      "name": "legacy-openclaw",
+      "dir": "/home/afrangry/kurumi-archive/legacy-openclaw",
+      "head": "f8319c11646c157b21f92d09a1ae3d3862d6c4ed",
+      "branches": [
+        "main"
+      ],
+      "tags": [
+        "baseline/pre-integration-2026-10-05"
+      ]
+    },
+    {
+      "name": "qq-bridge",
+      "dir": "/home/afrangry/kurumi-archive/qq-bridge",
+      "head": "d64a4d224826393d18caa745b1c9470f40516ae4",
+      "branches": [
+        "main",
+        "personal/main"
+      ],
+      "tags": [
+        "seal/qq-bridge-personal-2026-10-05",
+        "v0.1.0",
+        "v0.1.2-alpha.1",
+        "v0.1.5",
+        "v0.1.7",
+        "v0.2.0",
+        "v0.2.0-r3"
+      ]
+    }
+  ],
+  "databases": [
+    "home/afrangry/.openclaw-fusion/agents/main/agent/openclaw-agent.sqlite",
+    "home/afrangry/.openclaw-fusion/agents/project-fusion/agent/openclaw-agent.sqlite",
+    "home/afrangry/.openclaw-fusion/agents/researcher/agent/openclaw-agent.sqlite",
+    "home/afrangry/.openclaw-fusion/agents/worker/agent/openclaw-agent.sqlite",
+    "home/afrangry/.openclaw-fusion/channel/channel.sqlite",
+    "home/afrangry/.openclaw-fusion/state/openclaw-quarantine.sqlite",
+    "home/afrangry/.openclaw-fusion/state/openclaw.sqlite",
+    "home/afrangry/.openclaw-fusion/state/personal-reminders/reminders.sqlite",
+    "home/afrangry/.openclaw-fusion/state/personal-weather/weather.sqlite"
+  ],
+  "requiredFiles": [
+    {
+      "path": "state/runtime/home/afrangry/.openclaw-fusion/state/openclaw.sqlite",
+      "why": "core state database"
+    },
+    {
+      "path": "state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminders/reminders.sqlite",
+      "why": "reminders database"
+    },
+    {
+      "path": "state/runtime/home/afrangry/.openclaw-fusion/state/personal-weather/weather.sqlite",
+      "why": "weather/Profile database"
+    },
+    {
+      "path": "state/runtime/home/afrangry/.openclaw-fusion/channel/channel.sqlite",
+      "why": "channel ledger"
+    },
+    {
+      "path": "state/runtime/home/afrangry/.openclaw-fusion/agents/main/agent/openclaw-agent.sqlite",
+      "why": "main agent database"
+    },
+    {
+      "path": "state/workspace/MEMORY.md",
+      "why": "long-term memory"
+    },
+    {
+      "path": "state/workspace/SOUL.md",
+      "why": "persona"
+    },
+    {
+      "path": "state/workspace/AGENTS.md",
+      "why": "behaviour rules"
+    },
+    {
+      "path": "state/workspace/IDENTITY.md",
+      "why": "role identity"
+    },
+    {
+      "path": "state/workspace/USER.md",
+      "why": "owner profile"
+    },
+    {
+      "path": "state/project-checks/fusion-memory-revision.mjs",
+      "why": "project check fixture required by projects.json"
+    },
+    {
+      "path": "state/channel/stickers.json",
+      "why": "sticker catalogue"
+    },
+    {
+      "path": "config/openclaw.json",
+      "why": "runtime config"
+    },
+    {
+      "path": "config/runtime-env.json",
+      "why": "credential plane"
+    }
+  ],
+  "collectedTopLevel": [
+    "agents",
+    "channel",
+    "code-workspace",
+    "media",
+    "migration",
+    "openclaw.json.bak.2026-10-05T14-00-49-088Z",
+    "openclaw.json.bak.2026-10-05T15-39-48-133Z",
+    "openclaw.json.bak.2026-10-05T15-39-48-185Z",
+    "openclaw.json.bak.2026-10-05T15-53-37-995Z",
+    "openclaw.json.bak.2026-10-05T15-53-38-047Z",
+    "openclaw.json.bak.before-tavily-repoint-20261005T215523",
+    "openclaw.json.last-good",
+    "plugin-skills",
+    "project-checks",
+    "projects",
+    "projects.json",
+    "research-cache",
+    "research-workspace",
+    "source-snapshots",
+    "state",
+    "workspace"
+  ],
+  "skippedByDesign": [
+    "tmp",
+    "plugins",
+    "gateway.log",
+    "runtime.log",
+    "gateway-pid.json"
+  ],
+  "sqliteSnapshots": {
+    "ok": 9,
+    "total": 9
+  },
+  "quiesced": true,
+  "workingTreeFormat": "git-binary-patch",
+  "quiescedRequested": true,
+  "untrackedCaptured": [],
+  "binaryCaptured": [],
+  "failures": []
+}

@@ -7,7 +7,9 @@
 | 路径 | 用途 |
 | --- | --- |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
-| [`recovery-2026-10-06/README.md`](recovery-2026-10-06/README.md) | 最新恢复点、隔离 Gateway、模拟 OneBot、备份中断和生产健康状态的总报告 |
+| [`recovery-2026-10-10/README.md`](recovery-2026-10-10/README.md) | **当前恢复点**（`2026-10-10-09-05-41-rollback`，quiesced）与 25/25 隔离恢复验证 |
+| `recovery-2026-10-10/*` | 上述报告的原始证据：`verification.json`、`isolation-result.json`、`gateway-probe.log`、备份 `EXPECTED.json` 与 `meta` |
+| [`recovery-2026-10-06/README.md`](recovery-2026-10-06/README.md) | 上一恢复点（`466b5074`）的恢复与隔离报告，保留作为历史对照 |
 | `recovery-2026-10-06/*` | 上述报告引用的逐项 JSON、日志和测试输出 |
 | [`2026-10-10_projects-fusion-sync.md`](2026-10-10_projects-fusion-sync.md) | 后台开发副本同步到主仓库 `dacfac4` 的前后状态、归档、沙箱检查复验与未覆盖范围（规则见[文档 17](../17_后台开发副本维护契约.md)） |
 | `fusion/*` | 融合系统阶段验收和最终运行回执；以 recovery 报告和 16 为当前恢复结论 |
@@ -30,7 +32,7 @@
 
 ## 索引完整性
 
-当前清单覆盖 `docs/verification/` 下的 126 个文件：顶层文件和各子目录均已按用途列出，带有 `*` 的条目表示该目录下的全部文件，不能据此推断任何文件未归类。**本页的分类已由可执行检查取代人工声明**：
+当前清单覆盖 `docs/verification/` 下的 132 个文件：顶层文件和各子目录均已按用途列出，带有 `*` 的条目表示该目录下的全部文件，不能据此推断任何文件未归类。**本页的分类已由可执行检查取代人工声明**：
 
 ```bash
 cd /home/afrangry/kurumi-fusion

@@ -1,0 +1,21 @@
+{
+  "ok": true,
+  "loaded": [
+    "@kurumi/qq-channel",
+    "@kurumi/tasks",
+    "@openclaw/tavily-plugin",
+    "openclaw-plugin-personal-confirmation",
+    "openclaw-plugin-personal-weather",
+    "kurumi-memory",
+    "kurumi-research"
+  ],
+  "productionInvisible": true,
+  "hostBusInvisible": true,
+  "networkNamespace": true,
+  "gatewayHealth": true,
+  "mockOneBotDelivery": 2,
+  "imageStaging": true,
+  "projectChecks": 1,
+  "realDelivery": false,
+  "cronEnabled": false
+}

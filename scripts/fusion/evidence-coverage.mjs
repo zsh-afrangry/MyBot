@@ -22,6 +22,7 @@ const STRONG = [
   ['当前有效', (r) => r === 'SCRIPTS.md'],
   ['当前有效', (r) => r === 'recovery-2026-10-06/README.md'],
   ['当前有效', (r) => r.startsWith('recovery-2026-10-06/')],
+  ['当前有效', (r) => r.startsWith('recovery-2026-10-10/')],
   ['当前有效', (r) => r === '2026-10-10_projects-fusion-sync.md'],
   ['当前有效', (r) => r.startsWith('fusion/')],
   ['当前有效', (r) => r.startsWith('deepseek-whale/')],

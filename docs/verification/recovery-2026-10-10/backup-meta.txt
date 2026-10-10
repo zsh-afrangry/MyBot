@@ -1,0 +1,30 @@
+# Fusion backup 2026-10-10-09-05-41-rollback
+# host afrangry  node v26.10.0
+
+## kurumi-fusion (/home/afrangry/kurumi-fusion)
+HEAD      584b3a06d5c52c7173b2b89f6c5102b195c5b947
+branch    main
+branches  archive/legacy-openclaw integration/onebot main
+remotes   origin	git@github.com:zsh-afrangry/MyBot.git (fetch) | origin	git@github.com:zsh-afrangry/MyBot.git (push)
+status    M "docs/\344\270\264\346\227\266_\346\226\260\351\234\200\346\261\202\345\211\215\346\224\266\345\260\276\344\270\216\351\252\214\346\224\266\346\270\205\345\215\225_2026-10-10.md"
+
+## legacy-openclaw (/home/afrangry/kurumi-archive/legacy-openclaw)
+HEAD      f8319c11646c157b21f92d09a1ae3d3862d6c4ed
+branch    main
+branches  main
+remotes   origin	https://github.com/zsh-afrangry/MyBot.git (fetch) | origin	https://github.com/zsh-afrangry/MyBot.git (push)
+status    (clean)
+
+## qq-bridge (/home/afrangry/kurumi-archive/qq-bridge)
+HEAD      d64a4d224826393d18caa745b1c9470f40516ae4
+branch    personal/main
+branches  main personal/main
+remotes   origin	git@github.com:zsh-afrangry/qq-bridge-personal.git (fetch) | origin	git@github.com:zsh-afrangry/qq-bridge-personal.git (push) | upstream	https://github.com/Derpyu520/qq-bridge.git (fetch) | upstream	https://github.com/Derpyu520/qq-bridge.git (push)
+status    (clean)
+service kurumi-fusion: active=inactive enabled=enabled
+service snowluma: active=active enabled=enabled
+service snowluma-qq: active=active enabled=enabled
+service qq-bridge: active=inactive enabled=disabled
+service openclaw-gateway: active=inactive enabled=disabled
+
+sqlite snapshots: 9/9
