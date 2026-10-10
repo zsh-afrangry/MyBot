@@ -209,6 +209,8 @@ for (const skipped of SKIP_TOP_LEVEL) if (fs.existsSync(path.join(STATE_DIR, ski
 // Paths are relative to the backup root: database snapshots keep their absolute layout under
 // state/runtime/, while copied runtime directories sit directly under state/.
 const REQUIRED = [
+  ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['personal-reminder-list']?.enabled
+    ? [['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminder-list/list.sqlite', 'reminder-list database']] : []),
   ['state/runtime/home/afrangry/.openclaw-fusion/state/openclaw.sqlite', 'core state database'],
   ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminders/reminders.sqlite', 'reminders database'],
   ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-weather/weather.sqlite', 'weather/Profile database'],

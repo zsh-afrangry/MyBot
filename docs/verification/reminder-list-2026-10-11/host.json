@@ -1,0 +1,214 @@
+{
+  "at": "2026-10-10T20:34:43.201Z",
+  "boundary": "Real configured model and real OpenClaw inbound dispatch/v2 tool/deferred catalog/native scheduler; isolated runtime/process and mock OneBot. No QQ send or production domain/Cron changes.",
+  "cases": [
+    {
+      "label": "actual-host-add",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了，标题「验收汇报」，备注写的是越快越好，没设 DDL。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "f7521b0e4b42",
+            "title": "验收汇报",
+            "note": "越快越好",
+            "ddl": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791664489915
+        }
+      }
+    },
+    {
+      "label": "actual-host-update",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "改好了，「验收汇报」的备注现在是提前熟悉PPT。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "f7521b0e4b42",
+            "title": "验收汇报",
+            "note": "提前熟悉PPT",
+            "ddl": null,
+            "status": "active",
+            "version": 2
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791664489915
+        }
+      }
+    },
+    {
+      "label": "actual-host-complete",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "「验收汇报」已标记为完成。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "f7521b0e4b42",
+            "title": "验收汇报",
+            "note": "提前熟悉PPT",
+            "ddl": null,
+            "status": "completed",
+            "version": 3
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791664489915
+        }
+      }
+    },
+    {
+      "label": "actual-host-schedule",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "改好了，每天播报时间现在是 09:30、20:45、00:00（你说的 24:00），已同步生效。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "f7521b0e4b42",
+            "title": "验收汇报",
+            "note": "提前熟悉PPT",
+            "ddl": null,
+            "status": "completed",
+            "version": 3
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"00:00\",\"09:30\",\"20:45\"]",
+          "enabled": 1,
+          "version": 2,
+          "updated_ms": 1791664504115
+        }
+      }
+    },
+    {
+      "label": "actual-host-pause",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "提醒列表播报已暂停。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "f7521b0e4b42",
+            "title": "验收汇报",
+            "note": "提前熟悉PPT",
+            "ddl": null,
+            "status": "completed",
+            "version": 3
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"00:00\",\"09:30\",\"20:45\"]",
+          "enabled": 0,
+          "version": 3,
+          "updated_ms": 1791664506930
+        }
+      }
+    },
+    {
+      "label": "actual-host-resume",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "提醒列表播报已恢复，时间仍是 09:30、20:45、00:00。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "f7521b0e4b42",
+            "title": "验收汇报",
+            "note": "提前熟悉PPT",
+            "ddl": null,
+            "status": "completed",
+            "version": 3
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"00:00\",\"09:30\",\"20:45\"]",
+          "enabled": 1,
+          "version": 4,
+          "updated_ms": 1791664509304
+        }
+      }
+    }
+  ],
+  "activeJobTimes": [
+    "00:00",
+    "09:30",
+    "20:45"
+  ],
+  "unrelatedJobs": 2,
+  "persistentRunnerPaths": true,
+  "configuredRunnerExecution": {
+    "status": "ok",
+    "deliveryStatus": "not-delivered",
+    "delivered": false
+  },
+  "productionUnchanged": true,
+  "passed": true,
+  "childStopped": true,
+  "mockSends": 0
+}

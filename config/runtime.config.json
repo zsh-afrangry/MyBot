@@ -52,6 +52,8 @@
             "personal_reminder_change_commit",
             "personal_reminder_cancel_propose",
             "personal_reminder_cancel_commit",
+            "personal_reminder_list_get",
+            "personal_reminder_list_manage",
             "kurumi_memory",
             "kurumi_sticker"
           ],
@@ -192,6 +194,7 @@
       "tavily",
       "personal-confirmation",
       "personal-weather",
+      "personal-reminder-list",
       "kurumi-memory",
       "kurumi-research"
     ],
@@ -202,6 +205,7 @@
         "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research"
       ]
@@ -235,6 +239,13 @@
       },
       "kurumi-memory": {
         "enabled": true
+      },
+      "personal-reminder-list": {
+        "enabled": true,
+        "config": {
+          "backendRoot": "/home/afrangry/kurumi-fusion/chatbot",
+          "defaultTimes": ["00:00", "08:00", "12:00", "18:00"]
+        }
       },
       "kurumi-research": {
         "enabled": true

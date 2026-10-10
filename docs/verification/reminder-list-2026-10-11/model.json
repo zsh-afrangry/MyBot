@@ -1,0 +1,663 @@
+{
+  "at": "2026-10-10T19:44:28.501Z",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.",
+  "cases": [
+    {
+      "label": "add-with-ddl",
+      "input": "帮我在提醒列表里加一条：验收汇报，内容写提前熟悉PPT，备注写越快越好，DDL为明天19:30。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T03:44:30",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "验收汇报",
+            "content": "提前熟悉PPT",
+            "note": "越快越好",
+            "ddl": "2026-10-12T19:30"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "b079ae85fdb7",
+              "title": "验收汇报",
+              "content": "提前熟悉PPT",
+              "note": "越快越好",
+              "ddl": "2026-10-12T19:30",
+              "deadlineMs": 1791804600000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-10T19:44:31.186Z",
+              "updatedAt": "2026-10-10T19:44:31.186Z"
+            }
+          }
+        }
+      ],
+      "reply": "已经加好了：\n\n- **验收汇报**（ID `b079ae85fdb7`）\n- 内容：提前熟悉PPT\n- 备注：越快越好\n- DDL：2026-10-12 19:30（Asia/Shanghai）\n\n有一点要说明：列表的每日播报调度目前显示为 pending，也就是后台还在重试同步，所以我只能说这条已确实存进列表，播报生效的状态暂时不能打包票。",
+      "passed": true
+    },
+    {
+      "label": "add-without-ddl",
+      "input": "提醒列表添加验收材料，备注写越快越好，没有DDL。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "content": "null",
+            "ddl": "null",
+            "note": "越快越好",
+            "title": "验收材料"
+          },
+          "result": {
+            "ok": false,
+            "error": {
+              "code": "list_operation_rejected",
+              "message": "标题、内容和备注需取自本次原文，不能添加推测事实"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "验收材料",
+            "note": "越快越好",
+            "content": "null"
+          },
+          "result": {
+            "ok": false,
+            "error": {
+              "code": "list_operation_rejected",
+              "message": "标题、内容和备注需取自本次原文，不能添加推测事实"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "验收材料",
+            "note": "越快越好"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "b11851454b01",
+              "title": "验收材料",
+              "content": null,
+              "note": "越快越好",
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-10T19:44:35.028Z",
+              "updatedAt": "2026-10-10T19:44:35.028Z"
+            }
+          }
+        }
+      ],
+      "reply": "添加成功：\n\n- **验收材料**（ID `b11851454b01`）\n- 备注：越快越好\n- 内容、DDL 均为空（原文里没有，就没有替你补）\n\n前两次提交因字段格式问题被系统拒绝了，这次是真实保存成功。播报调度仍显示 pending，后台还在重试同步。",
+      "passed": true
+    },
+    {
+      "label": "update-note",
+      "input": "把提醒列表里的验收汇报备注改成带打印稿。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "query": "验收汇报"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T03:44:37",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b079ae85fdb7",
+                "title": "验收汇报",
+                "content": "提前熟悉PPT",
+                "note": "越快越好",
+                "ddl": "2026-10-12T19:30",
+                "deadlineMs": 1791804600000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:31.186Z",
+                "updatedAt": "2026-10-10T19:44:31.186Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "update",
+            "id": "b079ae85fdb7",
+            "expectedVersion": 1,
+            "title": "验收汇报",
+            "content": "提前熟悉PPT",
+            "note": "带打印稿",
+            "ddl": "2026-10-12T19:30"
+          },
+          "result": {
+            "ok": false,
+            "error": {
+              "code": "list_operation_rejected",
+              "message": "标题、内容和备注需取自本次原文，不能添加推测事实"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "update",
+            "expectedVersion": 1,
+            "id": "b079ae85fdb7",
+            "note": "带打印稿"
+          },
+          "result": {
+            "ok": true,
+            "action": "update",
+            "item": {
+              "id": "b079ae85fdb7",
+              "title": "验收汇报",
+              "content": "提前熟悉PPT",
+              "note": "带打印稿",
+              "ddl": "2026-10-12T19:30",
+              "deadlineMs": 1791804600000,
+              "status": "active",
+              "version": 2,
+              "createdAt": "2026-10-10T19:44:31.186Z",
+              "updatedAt": "2026-10-10T19:44:40.771Z"
+            }
+          }
+        }
+      ],
+      "reply": "改好了：\n\n- **验收汇报**（ID `b079ae85fdb7`，version 2）\n- 备注：带打印稿\n- 内容仍是「提前熟悉PPT」，DDL 仍是 2026-10-12 19:30，都没动\n\n顺带说一句：第一次提交我把内容和标题一起带上，被系统按「不能添加原文之外的推测内容」拒了——那次规则认得比较严，只允许改本次消息里出现过的字段。这次是真实保存成功。播报调度还是 pending 状态。",
+      "passed": true
+    },
+    {
+      "label": "complete",
+      "input": "我在提醒列表中验收汇报事项做好了。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "query": "验收汇报"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T03:44:42",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b079ae85fdb7",
+                "title": "验收汇报",
+                "content": "提前熟悉PPT",
+                "note": "带打印稿",
+                "ddl": "2026-10-12T19:30",
+                "deadlineMs": 1791804600000,
+                "status": "active",
+                "version": 2,
+                "createdAt": "2026-10-10T19:44:31.186Z",
+                "updatedAt": "2026-10-10T19:44:40.771Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "complete",
+            "expectedVersion": 2,
+            "id": "b079ae85fdb7"
+          },
+          "result": {
+            "ok": true,
+            "action": "complete",
+            "item": {
+              "id": "b079ae85fdb7",
+              "title": "验收汇报",
+              "content": "提前熟悉PPT",
+              "note": "带打印稿",
+              "ddl": "2026-10-12T19:30",
+              "deadlineMs": 1791804600000,
+              "status": "completed",
+              "version": 3,
+              "createdAt": "2026-10-10T19:44:31.186Z",
+              "updatedAt": "2026-10-10T19:44:43.038Z"
+            }
+          }
+        }
+      ],
+      "reply": "「验收汇报」已标记完成：\n\n- ID `b079ae85fdb7`，状态 completed，version 3\n- 内容「提前熟悉PPT」、备注「带打印稿」、DDL 2026-10-12 19:30 都保留在记录里，默认列表里不再显示（要看的话得查历史）\n\n目前列表里还剩「验收材料」这条有效项。另外播报调度依旧是 pending，还没同步成功。",
+      "passed": true
+    },
+    {
+      "label": "void",
+      "input": "提醒列表里的验收材料作废。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "query": "验收材料"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T03:44:44",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b11851454b01",
+                "title": "验收材料",
+                "content": null,
+                "note": "越快越好",
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:35.028Z",
+                "updatedAt": "2026-10-10T19:44:35.028Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "void",
+            "expectedVersion": 1,
+            "id": "b11851454b01"
+          },
+          "result": {
+            "ok": true,
+            "action": "void",
+            "item": {
+              "id": "b11851454b01",
+              "title": "验收材料",
+              "content": null,
+              "note": "越快越好",
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "void",
+              "version": 2,
+              "createdAt": "2026-10-10T19:44:35.028Z",
+              "updatedAt": "2026-10-10T19:44:44.992Z"
+            }
+          }
+        }
+      ],
+      "reply": "「验收材料」已作废：\n\n- ID `b11851454b01`，状态 void，version 2\n- 备注「越快越好」仍在记录里，可查历史\n\n现在有效列表是空的（已完成/作废的两条要带 history 才能看到）。如果之后想恢复，说一声就行——恢复要明确 reopen，我这边不会自动帮你翻回来。播报调度还是 pending 状态。",
+      "passed": true
+    },
+    {
+      "label": "schedule-count-and-midnight",
+      "input": "把提醒列表每天播报改为09:30、20:45和24:00，每天三次。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "schedule",
+            "times": [
+              "09:30",
+              "20:45",
+              "24:00"
+            ]
+          },
+          "result": {
+            "ok": true,
+            "action": "schedule",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 2,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "每日播报已改成三次：\n\n- 保存结果：00:00、09:30、20:45（version 2，Asia/Shanghai）\n- 你写的 24:00 按规则等同 00:00，后台存成了 00:00，次数正好是 3 次，符合你要的三次\n\n需要提醒的是：设置本身已保存，但原生调度同步仍是 pending——后台还在自动重试对齐，所以现在还不能说播报已实际按这个时间生效。等同步成功才算落地。",
+      "passed": true
+    },
+    {
+      "label": "pause",
+      "input": "暂停提醒列表播报。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "pause"
+          },
+          "result": {
+            "ok": true,
+            "action": "pause",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": false,
+              "version": 3,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "播报已暂停：\n\n- settings 里 enabled 变为 false，version 3\n- 时刻集合（00:00、09:30、20:45）保留着，没被清掉，之后说「恢复播报」就能接着用\n\n要说明的是：暂停状态已保存，但原生调度同步依然是 pending，后台还在重试对齐——所以在真正同步成功之前，我没法保证播报已经实际停住；调度这一层目前还没对齐。",
+      "passed": true
+    },
+    {
+      "label": "resume",
+      "input": "恢复提醒列表播报。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "resume"
+          },
+          "result": {
+            "ok": true,
+            "action": "resume",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 4,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "播报已恢复：\n\n- enabled 回到 true，version 4，播报时刻仍是 00:00、09:30、20:45\n\n不过同步状态还是 pending，原生调度尚未对齐，后台会继续重试。所以设置层面已完成，实际生效还要等对齐成功才能确认。目前有效列表为空，恢复播报后也会是空内容播报。",
+      "passed": true
+    },
+    {
+      "label": "date-only",
+      "input": "提醒列表添加验收日结，DDL为明天，只规定日期没有具体钟点。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "ddl": "2026-10-12",
+            "title": "验收日结"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "afe31dfae74b",
+              "title": "验收日结",
+              "content": null,
+              "note": null,
+              "ddl": "2026-10-12",
+              "deadlineMs": 1791820800000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-10T19:44:52.983Z",
+              "updatedAt": "2026-10-10T19:44:52.983Z"
+            }
+          }
+        }
+      ],
+      "reply": "加好了：\n\n- **验收日结**（ID `afe31dfae74b`）\n- DDL：2026-10-12，日期型，按当天结束算（2026-10-12 24:00）\n- 内容和备注留空，因为原文里没有提\n\n现在有效列表里就这一条。播报调度依旧 pending，还没同步成功。",
+      "passed": true
+    },
+    {
+      "label": "unknown-ddl-clarification",
+      "input": "帮我在提醒列表添加验收作业，DDL为下次课前。",
+      "calls": [],
+      "reply": "这条我先不写进去——「下次课前」是个相对时间，我不知道你下节课是哪天、什么时间，猜一个日期很容易变成错的提醒。\n\n麻烦补一句具体日期（比如「10月14日」）或者日期加时刻（比如「10月14日 08:00」），我再按你给的来加。",
+      "passed": true
+    },
+    {
+      "label": "ambiguous-target",
+      "input": "我在提醒列表里的验收候选事项做好了。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "query": "验收"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T03:44:56",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 4,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "afe31dfae74b",
+                "title": "验收日结",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-12",
+                "deadlineMs": 1791820800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:52.983Z",
+                "updatedAt": "2026-10-10T19:44:52.983Z"
+              },
+              {
+                "id": "0e2a208a9b4f",
+                "title": "验收候选A",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:54.653Z",
+                "updatedAt": "2026-10-10T19:44:54.653Z"
+              },
+              {
+                "id": "d21f44104e86",
+                "title": "验收候选B",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:54.662Z",
+                "updatedAt": "2026-10-10T19:44:54.662Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "列表里确实有两条候选，不是一条：\n\n- **验收候选A**（ID `0e2a208a9b4f`）\n- **验收候选B**（ID `d21f44104e86`）\n\n（另外还有一条「验收日结」，DDL 明天。）\n\n「验收候选事项」对上的是哪一条？你说 A 还是 B，我再标记完成。两条都完成的话也请明说「两个都做了」，我一次处理一条。",
+      "passed": true
+    },
+    {
+      "label": "active-list-only",
+      "input": "查看有效提醒列表。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T03:44:58",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 4,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "afe31dfae74b",
+                "title": "验收日结",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-12",
+                "deadlineMs": 1791820800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:52.983Z",
+                "updatedAt": "2026-10-10T19:44:52.983Z"
+              },
+              {
+                "id": "0e2a208a9b4f",
+                "title": "验收候选A",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:54.653Z",
+                "updatedAt": "2026-10-10T19:44:54.653Z"
+              },
+              {
+                "id": "d21f44104e86",
+                "title": "验收候选B",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-10T19:44:54.662Z",
+                "updatedAt": "2026-10-10T19:44:54.662Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "有效提醒列表（3 条，Asia/Shanghai）：\n\n| 标题 | ID | DDL | 内容/备注 |\n|---|---|---|---|\n| 验收日结 | `afe31dfae74b` | 2026-10-12（当天结束） | 空 |\n| 验收候选A | `0e2a208a9b4f` | 无 | 空 |\n| 验收候选B | `d21f44104e86` | 无 | 空 |\n\n已完成/作废的「验收汇报」（completed）和「验收材料」（void）不在默认列表里，要看历史得另外查。\n\n播报设置：每日 00:00、09:30、20:45，已启用（version 4）；调度同步仍是 pending，还在重试对齐。",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "productionUnchanged": true
+}

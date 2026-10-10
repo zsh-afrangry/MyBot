@@ -1,0 +1,51 @@
+{
+  "at": "2026-10-10T19:49:47.070Z",
+  "scheduledAt": "2026-10-10T19:51:00.000Z",
+  "time": "03:51",
+  "boundary": "Native deterministic command through OpenClaw Cron and real owner kurumi-qq delivery across a service restart; synthetic domain rows in /tmp, no model; one owner digest only.",
+  "owner": "365999865",
+  "jobId": "0dd5f392-d95b-4bfa-ad01-b27185a79d62",
+  "restarted": true,
+  "runs": [
+    {
+      "status": "ok",
+      "runAtMs": 1791661860025,
+      "delivered": true,
+      "deliveryStatus": "delivered"
+    }
+  ],
+  "domain": {
+    "status": "delivered",
+    "slot": "2026-10-11T03:51",
+    "count": 2,
+    "states": [
+      {
+        "status": "active",
+        "n": 2
+      },
+      {
+        "status": "completed",
+        "n": 1
+      },
+      {
+        "status": "expired",
+        "n": 1
+      },
+      {
+        "status": "void",
+        "n": 1
+      }
+    ]
+  },
+  "duplicateSilent": true,
+  "qqReceipts": [
+    {
+      "messageId": "1071591804",
+      "containsActive": true,
+      "excludesTerminal": true
+    }
+  ],
+  "passed": true,
+  "testJobRemoved": true,
+  "productionUnchanged": true
+}

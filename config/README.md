@@ -16,7 +16,7 @@
 | `.openclaw-fusion/runtime-env.json` | **凭据平面**：API Key、网关 token、代理 | ❌ 仅私有备份 |
 | `.openclaw-fusion/{http,ws}-token` | SnowLuma 会话令牌 | ❌ 仅私有备份 |
 | `.openclaw-fusion/workspace/` | **长期记忆 `MEMORY.md`**、`SOUL.md`、`IDENTITY.md`、`AGENTS.md`、`USER.md` | ❌ 仅私有备份 |
-| `.openclaw-fusion/state/` | 提醒、天气、Profile、行程（SQLite） | ❌ 仅私有备份 |
+| `.openclaw-fusion/state/` | 一次性提醒、提醒列表、天气、Profile、行程（SQLite） | ❌ 仅私有备份 |
 | `.openclaw-fusion/channel/` | 频道账本、贴纸目录、发送回执 | ❌ 仅私有备份 |
 | `.openclaw-fusion/agents/` | 会话记录（JSONL）与 agent 库 | ❌ 仅私有备份 |
 | `.openclaw-fusion/{code,research}-workspace/`、`project-checks/`、`research-cache/` | 后台任务与研究的隔离工作区、检查夹具、缓存 | ❌ 仅私有备份 |
@@ -35,6 +35,8 @@
 因此改配置时的规则很简单：**要改行为改仓库，要改密钥只改运行目录，两者都不要互相复制。**
 
 ## 同步契约
+
+提醒列表状态在 `state/personal-reminder-list/list.sqlite`。`plugins.entries.personal-reminder-list.config.defaultTimes` 仅用于首次建库；主人通过工具修改的时刻/暂停状态由领域库持有，配置同步不覆盖它。`backendRoot` 明确指向持久后端目录 `/home/afrangry/kurumi-fusion/chatbot`，用于固定 Cron runner；不能从 OpenClaw 的插件捕获临时目录推导。具体契约见[文档 19](../docs/19_提醒列表与定时汇总.md)。
 
 `sync-config.mjs` 是唯一的运行配置同步入口。
 

@@ -38,6 +38,14 @@ const ROOT = REPO_ROOT;
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/scripts/reminder-list.mjs': ['领域运行', '固定提醒列表 Cron 程序：到期判定、slot 防重和汇总输出，OpenClaw 投递本人', {auth: 1, writesState: 1}, 'header'],
+  'chatbot/tests/reminder-list/store.test.mjs': ['离线', '提醒列表领域状态、时间、授权、幂等、防重与固定 runner', {testDir: 1}, 'header'],
+  'chatbot/tests/reminder-list/scheduler.test.mjs': ['离线', '提醒列表原生 Cron 固定声明、对账、并发和失败重试', {testDir: 1}, 'header'],
+  'chatbot/tests/reminder-list/plugin.test.mjs': ['离线', '提醒列表 v2 工具、可信原文钩子和过期上下文拒绝', {testDir: 1}, 'header'],
+  'chatbot/tests/reminder-list/log-query.test.mjs': ['离线', '提醒列表审计接入日志查询，精确消息/slot 关联', {testDir: 1}, 'header'],
+  'chatbot/tests/reminder-list/acceptance-model.mjs': ['验收', '真实 DeepSeek 调用实际提醒列表工具，临时 SQLite、无生产 Cron 变更', {auth: 1, model: 1, testDir: 1, writesRepo: 1}, 'header'],
+  'chatbot/tests/reminder-list/acceptance-native.mjs': ['验收', '真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务', {auth: 1, qq: 1, task: 1, restart: 1, writesState: 1, testDir: 1, writesRepo: 1}, 'header'],
+  'chatbot/tests/reminder-list/acceptance-host.mjs': ['验收', '隔离 OpenClaw 进程与真实模型入站/工具集成；模拟 OneBot，无生产写入', {auth: 1, model: 1, restart: 1, testDir: 1, writesRepo: 1}, 'header'],
   // ---- 离线单元测试：进程内，无外发、无真实模型 ----
   'chatbot/plugins/kurumi-qq/test/channel.test.js': ['离线', 'QQ 频道分段、配额、账本与幂等', {readonly: 1}, 'offline'],
   'chatbot/plugins/kurumi-qq/test/presentation.test.js': ['离线', 'QQ 呈现与分段节奏', {readonly: 1}, 'offline'],
@@ -90,7 +98,7 @@ const TABLE = {
   'scripts/fusion/inspect-receipts.mjs': ['只读运维', '查看验收回执', {readonly: 1}, 'code'],
   'scripts/fusion/rpc.mjs': ['库', 'Gateway RPC 客户端库（被其他脚本导入）', {readonly: 1}, 'code'],
   'scripts/fusion/lib/fresh-id.mjs': ['库', '生成不重复的 message id', {readonly: 1}, 'header'],
-  'scripts/fusion/lib/trace-events.mjs': ['库', '统一链路事件契约、脱敏与可选 JSONL sink', {readonly: 1}, 'code'],
+  'scripts/fusion/lib/trace-events.mjs': ['库', '统一链路事件契约、脱敏与可选私有 JSONL sink（调用 emit 时写文件）', {writesState: 1}, 'code'],
   'scripts/fusion/lib/plugins.mjs': ['库', '第三方插件声明（纯数据，导入无 I/O）', {readonly: 1}, 'header'],
   'scripts/fusion/lib/recovery-isolation.mjs': ['库', '隔离恢复的路径与凭据改写', {readonly: 1}, 'header'],
   'scripts/fusion/lib/working-tree-backup.mjs': ['库', '已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar', {writesState: 1}, 'code'],
@@ -186,8 +194,9 @@ function discover() {
   };
   // Whole scripts/fusion tree (including lib/, launchers/, test/, fixtures/).
   walk(path.join(ROOT, 'scripts/fusion'), (n) => /\.(mjs|sh|py)$/.test(n));
-  // Legacy acceptance harness.
-  walk(path.join(ROOT, 'chatbot/tests/acceptance'), (n) => /\.(mjs|py)$/.test(n));
+  // Backend scripts and tests (including legacy acceptance and new domains).
+  walk(path.join(ROOT, 'chatbot/scripts'), (n) => /\.(mjs|sh|py)$/.test(n));
+  walk(path.join(ROOT, 'chatbot/tests'), (n) => /\.(mjs|py)$/.test(n));
   // Plugin and package tests, both the JS test dirs and the TypeScript sources.
   for (const parent of ['chatbot/plugins', 'chatbot/packages']) {
     for (const dir of fs.readdirSync(path.join(ROOT, parent))) {

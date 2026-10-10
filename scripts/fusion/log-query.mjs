@@ -373,6 +373,25 @@ function readReminderDatabase(file, from, to) {
   return output.filter((item) => item.epochMs >= from && item.epochMs <= to);
 }
 
+/** Reminder-list audit is already bound to the trusted message at write time.
+ * Scheduled digest events have a slot/cron identity and no inferred QQ turn. */
+export function readReminderListDatabase(file, from, to) {
+  if (!fs.existsSync(file)) return [];
+  const db = new DatabaseSync(file, {readOnly: true});
+  try {
+    return db.prepare(`SELECT id,at_ms,action,item_id,qq_message_id,session_key,run_id,details_json
+      FROM audit WHERE at_ms BETWEEN ? AND ? ORDER BY at_ms,id`).all(from, to).map(row => {
+      const details = JSON.parse(row.details_json);
+      return event({at: row.at_ms, source: 'personal-reminder-list', kind: `reminder-list.${row.action}`,
+        correlation: correlationFrom({qqMessageId: row.qq_message_id, sessionKey: row.session_key,
+          runId: row.run_id, reminderId: row.item_id, eventKey: details.slotKey, cronJobId: details.cronJobId}),
+        data: {action: row.action, status: details.after?.status, previousStatus: details.before?.status,
+          count: details.count, settings: details.settings, reason: details.reason},
+        sourceRef: sourceRef(file, 0, {table: 'audit', id: row.id})});
+    });
+  } finally { db.close(); }
+}
+
 function readTraceFile(file, from, to) {
   if (!fs.existsSync(file)) return [];
   return linesOf(file).flatMap((line, index) => {
@@ -473,6 +492,7 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
     windows.push(...result.windows);
   }
   if (include('personal-reminders')) events.push(...readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to));
+  if (include('personal-reminder-list')) events.push(...readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to));
   if (include('trace-events')) events.push(...readTraceFile(path.join(runtimeRoot, 'channel', 'trace-events.jsonl'), from, to));
   attachSessionCorrelation(events, windows);
   attachTurnCorrelation(events);

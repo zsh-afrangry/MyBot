@@ -1,0 +1,363 @@
+{
+  "at": "2026-10-10T20:36:04.259Z",
+  "boundary": "Production deployment checks only: no reminder item creation and no QQ send. Runtime preference/count summaries contain no user task text or credentials.",
+  "workingDirectory": "/home/afrangry/kurumi-fusion",
+  "selfchecks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "output": "{\n  \"at\": \"2026-10-10T20:34:43.223Z\",\n  \"ok\": true,\n  \"issues\": [],\n  \"gateway\": true,\n  \"qq\": {\n    \"online\": true,\n    \"good\": true\n  },\n  \"testIngress\": false,\n  \"channel\": [\n    {\n      \"running\": true,\n      \"connected\": true\n    }\n  ],\n  \"cron\": {\n    \"total\": 9,\n    \"hasMore\": false,\n    \"jobs\": [\n      {\n        \"id\": \"17a026c2-0a57-4176-985d-8f474294f37f\",\n        \"enabled\": true,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": 1791676800000\n      },\n      {\n        \"id\": \"2bd8e62c-2bf0-4a45-b231-34e39d2ee400\",\n        \"enabled\": true,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": 1791685800000\n      },\n      {\n        \"id\": \"23c06aa8-96f2-47c7-9adf-9a6f1291bb28\",\n        \"enabled\": true,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": 1791691200000\n      },\n      {\n        \"id\": \"12df2be6-a477-4369-9b08-f76c4e3623a5\",\n        \"enabled\": true,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": 1791712800000\n      },\n      {\n        \"id\": \"1ad1bb0e-e393-4fe1-874a-f659b9187721\",\n        \"enabled\": true,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": 1791734400000\n      },\n      {\n        \"id\": \"2d61b8f2-744a-438d-be99-a2796f05d5fd\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"428bf628-20d2-4c99-a889-38782ece05a7\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"53286346-7fed-4e0e-a381-9ee815014f01\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      }\n    ]\n  },\n  \"testMethodDisabled\": true,\n  \"channelDatabase\": \"ok\",\n  \"outbound\": [\n    {\n      \"status\": \"sent\",\n      \"count\": 84\n    }\n  ],\n  \"recentAttempts\": 17,\n  \"dailyLimit\": 500,\n  \"recentFailedInbound\": 0,\n  \"weatherDatabase\": \"ok\",\n  \"remindersDatabase\": \"ok\",\n  \"reminderListDatabase\": \"ok\",\n  \"services\": {\n    \"kurumi-fusion\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"qq-bridge\": {\n      \"ActiveState\": \"inactive\",\n      \"UnitFileState\": \"masked\"\n    },\n    \"openclaw-gateway\": {\n      \"ActiveState\": \"inactive\",\n      \"UnitFileState\": \"masked\"\n    },\n    \"snowluma\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"snowluma-qq\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"dsh-web\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"disabled\"\n    }\n  }\n}\n"
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "output": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs --diff",
+      "exitCode": 0,
+      "output": "\n  repo-managed top-level keys : agents, bindings, channels, commands, discovery, gateway, logging, models, plugins, secrets, session, skills, tools\n  host-maintained keys kept   : (none)\nconfig in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exitCode": 0,
+      "output": "persona in sync with roles/小鲸鱼.md (4 workspace file(s) match)\n"
+    }
+  ],
+  "metadata": {
+    "command": "OPENCLAW_STATE_DIR=/home/afrangry/.openclaw-fusion node /home/afrangry/kurumi-fusion/node_modules/openclaw/openclaw.mjs plugins validate --entry ./index.js",
+    "cwd": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list",
+    "exitCode": 0,
+    "output": "Plugin personal-reminder-list is valid."
+  },
+  "serviceRestarted": true,
+  "runnerPathCorrection": {
+    "at": "2026-10-10T20:33:32.004Z",
+    "reason": "Plugin capture URL had persisted a missing runner path; explicit backendRoot now owns the deployment root.",
+    "validation": "All four exact job IDs, declaration slots, previous payload, owner routing and schedules verified before updating payload only.",
+    "updates": [
+      {
+        "id": "17a026c2-0a57-4176-985d-8f474294f37f",
+        "time": "08:00",
+        "oldRunnerExists": false,
+        "nextPayload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+            "run",
+            "--slot",
+            "08:00"
+          ],
+          "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+          "env": {
+            "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+            "KURUMI_LIST_OWNER_ID": "365999865"
+          },
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 524288
+        }
+      },
+      {
+        "id": "23c06aa8-96f2-47c7-9adf-9a6f1291bb28",
+        "time": "12:00",
+        "oldRunnerExists": false,
+        "nextPayload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+            "run",
+            "--slot",
+            "12:00"
+          ],
+          "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+          "env": {
+            "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+            "KURUMI_LIST_OWNER_ID": "365999865"
+          },
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 524288
+        }
+      },
+      {
+        "id": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+        "time": "18:00",
+        "oldRunnerExists": false,
+        "nextPayload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+            "run",
+            "--slot",
+            "18:00"
+          ],
+          "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+          "env": {
+            "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+            "KURUMI_LIST_OWNER_ID": "365999865"
+          },
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 524288
+        }
+      },
+      {
+        "id": "1ad1bb0e-e393-4fe1-874a-f659b9187721",
+        "time": "00:00",
+        "oldRunnerExists": false,
+        "nextPayload": {
+          "kind": "command",
+          "argv": [
+            "/usr/bin/node",
+            "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+            "run",
+            "--slot",
+            "00:00"
+          ],
+          "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+          "env": {
+            "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+            "KURUMI_LIST_OWNER_ID": "365999865"
+          },
+          "timeoutSeconds": 20,
+          "noOutputTimeoutSeconds": 10,
+          "outputMaxBytes": 524288
+        }
+      }
+    ]
+  },
+  "database": {
+    "integrity": "ok",
+    "schemaVersion": 1,
+    "settings": {
+      "ownerId": "365999865",
+      "times": [
+        "00:00",
+        "08:00",
+        "12:00",
+        "18:00"
+      ],
+      "enabled": true,
+      "version": 1,
+      "timezone": "Asia/Shanghai"
+    },
+    "items": [],
+    "totalItems": 0
+  },
+  "managedCron": [
+    {
+      "id": "1ad1bb0e-e393-4fe1-874a-f659b9187721",
+      "declarationKey": "kurumi.reminder-list.daily:00:00",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 0 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "payload": {
+        "kind": "command",
+        "argv": [
+          "/usr/bin/node",
+          "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+          "run",
+          "--slot",
+          "00:00"
+        ],
+        "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+        "env": {
+          "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+          "KURUMI_LIST_OWNER_ID": "365999865"
+        },
+        "timeoutSeconds": 20,
+        "noOutputTimeoutSeconds": 10,
+        "outputMaxBytes": 524288
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "kurumi-qq",
+        "to": "user:365999865",
+        "accountId": "default"
+      }
+    },
+    {
+      "id": "17a026c2-0a57-4176-985d-8f474294f37f",
+      "declarationKey": "kurumi.reminder-list.daily:08:00",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 8 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "payload": {
+        "kind": "command",
+        "argv": [
+          "/usr/bin/node",
+          "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+          "run",
+          "--slot",
+          "08:00"
+        ],
+        "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+        "env": {
+          "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+          "KURUMI_LIST_OWNER_ID": "365999865"
+        },
+        "timeoutSeconds": 20,
+        "noOutputTimeoutSeconds": 10,
+        "outputMaxBytes": 524288
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "kurumi-qq",
+        "to": "user:365999865",
+        "accountId": "default"
+      }
+    },
+    {
+      "id": "23c06aa8-96f2-47c7-9adf-9a6f1291bb28",
+      "declarationKey": "kurumi.reminder-list.daily:12:00",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 12 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "payload": {
+        "kind": "command",
+        "argv": [
+          "/usr/bin/node",
+          "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+          "run",
+          "--slot",
+          "12:00"
+        ],
+        "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+        "env": {
+          "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+          "KURUMI_LIST_OWNER_ID": "365999865"
+        },
+        "timeoutSeconds": 20,
+        "noOutputTimeoutSeconds": 10,
+        "outputMaxBytes": 524288
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "kurumi-qq",
+        "to": "user:365999865",
+        "accountId": "default"
+      }
+    },
+    {
+      "id": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+      "declarationKey": "kurumi.reminder-list.daily:18:00",
+      "enabled": true,
+      "schedule": {
+        "kind": "cron",
+        "expr": "0 18 * * *",
+        "tz": "Asia/Shanghai",
+        "staggerMs": 0
+      },
+      "payload": {
+        "kind": "command",
+        "argv": [
+          "/usr/bin/node",
+          "/home/afrangry/kurumi-fusion/chatbot/scripts/reminder-list.mjs",
+          "run",
+          "--slot",
+          "18:00"
+        ],
+        "cwd": "/home/afrangry/kurumi-fusion/chatbot",
+        "env": {
+          "OPENCLAW_STATE_DIR": "/home/afrangry/.openclaw-fusion",
+          "KURUMI_LIST_OWNER_ID": "365999865"
+        },
+        "timeoutSeconds": 20,
+        "noOutputTimeoutSeconds": 10,
+        "outputMaxBytes": 524288
+      },
+      "delivery": {
+        "mode": "announce",
+        "channel": "kurumi-qq",
+        "to": "user:365999865",
+        "accountId": "default"
+      }
+    }
+  ],
+  "unrelatedCronCount": 5,
+  "nativeTestJobRemoved": true,
+  "testIngress": false,
+  "pluginEnabled": true,
+  "sourceSha256": {
+    "chatbot/plugins/personal-reminder-list/formatter.js": "436aa8139296fbbcfe5313a78eba6b0817a8aab5b451437979ad02936b23d4bd",
+    "chatbot/plugins/personal-reminder-list/index.js": "777693d3ab17075f7b41d5d85ab8b360c6176a456c33452d0d871e8ab5b2240f",
+    "chatbot/plugins/personal-reminder-list/intent.js": "a181839c9582a27175ad3dfbc4755b5279f93b2c2f065145f6f33b828e50a578",
+    "chatbot/plugins/personal-reminder-list/openclaw.plugin.json": "a06764c531aa190f1ad09f0c717eae6295cc82135c5ae507e208344ab7e3e280",
+    "chatbot/plugins/personal-reminder-list/package.json": "366096c2eadc9c7022ed70a370d311509939bc1386c533f4532e8eaa8f93972d",
+    "chatbot/plugins/personal-reminder-list/scheduler.js": "7d54ded5edd8408023fd79c66d65b25296f6b4ba2cfc4d4c54a884327e811bdb",
+    "chatbot/plugins/personal-reminder-list/sql/001_init.sql": "d0a8ec9e5c4adc7986956e2c24c0c949cd69f2992271865ba8cfa16a6e690645",
+    "chatbot/plugins/personal-reminder-list/store.js": "69712bde812e51650297ea8f9263cc4c5aa8660c9ebc04b14abd8ddba87ed787",
+    "chatbot/plugins/personal-reminder-list/time.js": "8e2eb0ea99c210e351005a5095891bf7d135649b346915a066b23c8cadfd4a13",
+    "chatbot/scripts/reminder-list.mjs": "d7c70bcbcf87eb96028a09e601e5e132482839082ce3e925c32136a4bfbaf7ba",
+    "chatbot/tests/reminder-list/acceptance-host.mjs": "7a026d41e7ece7048707816ec439f28bbdcef8a07cb86ddbf891e2633ad52b43",
+    "chatbot/tests/reminder-list/acceptance-model.mjs": "0b9fe227382fc193165d0a24a71b4fea43ef5bd53145de465d9d3d0a062822ef",
+    "chatbot/tests/reminder-list/acceptance-native.mjs": "c8788379015ac0f6813b8d5759a4c5117220fc38542a08795f43a321e7d36f63",
+    "chatbot/tests/reminder-list/log-query.test.mjs": "496fc1a2162ddff15250e8aa64afe6047c281dff7ddb1193d4052be5b1a4c4f7",
+    "chatbot/tests/reminder-list/plugin.test.mjs": "500d7f22c3f5f4d33cf560d710530df6cbe7d7ad1f792ae776b714c311b64cd5",
+    "chatbot/tests/reminder-list/scheduler.test.mjs": "ac993f65b554e34024c6fb4e03255f82a5dfc6861fe7c58c8ebc58edf45ce18a",
+    "chatbot/tests/reminder-list/store.test.mjs": "f3a90478d2619b83fa8f6987ff4358f6d622f2a86affd1e276e1251fccad075a",
+    "config/persona.json": "f1d94ce7a8b2c8bed19bff943b72b1d323d426980b572131d32793c4fc74cb88",
+    "config/runtime.config.json": "0621c27e5b3fdfdc63409d81def196ac2bb12df07c590bbb6868107f72ad9459",
+    "scripts/fusion/backup-state.mjs": "7e2b69791c827f3d7ed35725e4ce9fd3e41e6ac55b121101a8bf96b2ae9736c5",
+    "scripts/fusion/health.mjs": "6b072ce1edc7c2fff44efb54cabdcf9af2a7d174ed799d6fabe41d8eb409726f",
+    "scripts/fusion/log-query.mjs": "9cf90ab36f047f083e1b8f89754b9d78030d3eae90c035a4fa3efe3da2ca1474",
+    "scripts/fusion/templates/AGENTS.md": "e2bbb139c657b3c31f2463116401074c1a1dcc1f4826d85297aee44ea3aa6e1e"
+  },
+  "workspaceAgentsSha256": "bfe09b73a2d883d398e5dbe392d228038c0be49e88383966938cb186ca57238e",
+  "configuredRunnerHostEvidence": {
+    "passed": true,
+    "persistentPaths": true,
+    "execution": {
+      "status": "ok",
+      "deliveryStatus": "not-delivered",
+      "delivered": false
+    }
+  },
+  "note": "Hashes bind final code/config/test source without a self-referencing commit ID. Final Node regression, metadata validation and actual Host/Cron execution cover backendRoot. Earlier model/native evidence covers the unchanged tool contract and fixed runner, respectively. Production DB summaries are read-only deployment facts, not fixtures.",
+  "diagnosticDirectoriesCleaned": true,
+  "passed": true,
+  "closeout": {
+    "at": "2026-10-10T20:38:23.478Z",
+    "evidence": {
+      "total": 145,
+      "unclassified": 0
+    },
+    "scriptIndex": {
+      "scripts": 124,
+      "boundaryDeclarations": 33,
+      "contradictions": 0,
+      "generatedTableMatches": true
+    },
+    "localLinkCheck": {
+      "scope": [
+        "AGENTS.md",
+        "README_FUSION.md",
+        "config/README.md",
+        "scripts/fusion/templates/AGENTS.md",
+        "docs/**/*.md"
+      ],
+      "markdownFiles": 25,
+      "localLinks": 169,
+      "missing": 0
+    },
+    "gitDiffCheckExitCode": 0,
+    "archiveFilesAdded": 0,
+    "gitDelivery": "Local feature commit only; no remote write. Identify the commit containing this record with git log -- docs/19_提醒列表与定时汇总.md."
+  }
+}

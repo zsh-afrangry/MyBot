@@ -15,7 +15,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 
 | 类别 | 位置 | 说明 |
 | --- | --- | --- |
-| 当前有效 | `recovery-2026-10-06/*`、`fusion/*`、`deepseek-whale/*`、`2026-10-10_projects-fusion-sync.md` | 当前版本的验收与状态证据；冲突时以 recovery 报告和文档 16 为准 |
+| 当前有效 | 最新 `recovery-*` 报告、`fusion/*`、`deepseek-whale/*`、`reminder-list-*/*`、项目副本同步记录 | 各自版本与范围的验收和状态证据；恢复结论以最新 recovery 报告和文档 16 为准 |
 | 历史领域验收 | `migration/*`、`step6-2026-10-05/*`、顶层 `2026-*` 与 `*-acceptance.json` 等 | 旧阶段或旧频道的验收结论，只能按版本和范围追溯，不能证明当前版本 |
 | 归档证据 | `../archive/verification/`、`../archive/personal-search-tests/`、`../archive/2026-*` | 已退役实现与失败实验；要复用须在新日期目录重新产生证据 |
 
@@ -26,8 +26,8 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 
 - `chatbot/tests/acceptance/`（`run.mjs`、`run-model.mjs`、`model-driver.mjs`、`run-retrieval-*` 等）是**融合前**的离线验收 harness。
   它的系统提示词来自遗留的 [`chatbot/AGENTS.md`](../../chatbot/AGENTS.md)，测的是旧 NAICCC/`qqbot` 频道的检索与确认路径。
-- `scripts/fusion/test-*.mjs` 是**当前融合系统**的验收脚本，走今天的 `kurumi-qq` 频道、`deepseek/deepseek-flash` 与领域插件。
-- 因此：**旧 harness 的输出不能当作新频道的验收**；新频道的验收结论只能来自 `scripts/fusion/test-*.mjs`、插件 `test/` 与隔离恢复探针的组合。
+- `scripts/fusion/test-*.mjs` 与 `chatbot/tests/<领域>/acceptance-*.mjs` 是**当前融合系统**的验收脚本；按各脚本边界分别验证真实模型、隔离 Host、`kurumi-qq` 或原生定时投递。
+- **旧 harness 的输出不能当作新频道的验收**。当前结论须引用当前融合脚本、领域测试与恢复探针，并分别说明模型、宿主和 QQ 是否真实；模拟入站不能证明真人 QQ 往返。
 - 大量 `*-acceptance.json`、`retrieval-review-*.json` 与 `call-analysis.test.mjs` 的断言属于旧 harness 时代，读取时应连同 `2026-09-10_文档与现状复核.txt`、`2026-10-04_检索与QQ插件现状复核.md` 一起看。
 
 ## 固定输出路径与归档
@@ -60,8 +60,8 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | **漏标**（声明有、表里没有） | `test-research.mjs` 声明 `Real model`，表里漏了真实模型；`test-domain-read.mjs` 声明 `real model and QWeather tools`，表里漏了外部 API；`test-qq-interaction.mjs` 声明 `real model`，表里漏了真实模型 |
 
 **能力边界（不要据此认为副作用已被自动证明）**：自动校验只能比对脚本**自己写下的** `boundary` 声明；
-没有声明、或声明本身写得不全的脚本，仍依赖 `header`/`code` 人工判读。当前 113 个脚本中
-`boundary` 10 个、`header` 59 个、`code` 11 个、`offline` 33 个。
+没有声明、或声明本身写得不全的脚本，仍依赖 `header`/`code` 人工判读。实际脚本数量与各依据的分布以
+`node scripts/fusion/evidence-index.mjs` 的本次输出为准，不用旧数量推断新增文件已经覆盖。
 
 副作用词汇区分：真实模型、真实外部 API、真实 QQ 外发、建改任务、重启停服、写运行状态、
 写仓库内文件、**写临时测试目录**、只读。
@@ -72,7 +72,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 ## 需要授权的脚本
 
 索引表中「需要授权」为“是”的脚本，运行前须取得用户明确同意，并在对应任务的验收记录中注明授权范围、执行结果与未覆盖范围（记录规则见[文档 16](../16_验收与测试总表.md#验收记录规则)）：真实 QQ 外发、创建或取消任务、重启服务、
-写运行状态、恢复旧系统。共 57 个；其余 56 个是离线插件测试、只读运维脚本和库文件。
+写运行状态、恢复旧系统。授权与可离线执行的数量以生成器输出为准；库的分类说明被调用时的行为，不能据「库」分组认定可直接运行。
 
 `testIngress` 保持 `false`：合成入站入口默认关闭，验收脚本需要时自行开启并在结束后用
 `scripts/fusion/close-acceptance.mjs` 关闭，且**从不重置发送账本**。
@@ -114,10 +114,15 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/plugins/personal-weather/src/weather-location.test.ts` | 离线 | 天气地点解析与叶子名保留 | 只读 | 否 | offline | — |
 | `chatbot/plugins/personal-weather/src/weather-service.test.ts` | 离线 | 天气服务聚合与失败语义 | 只读 | 否 | offline | — |
 | `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | `docs/verification/` |
+| `chatbot/tests/reminder-list/log-query.test.mjs` | 离线 | 提醒列表审计接入日志查询，精确消息/slot 关联 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/reminder-list/plugin.test.mjs` | 离线 | 提醒列表 v2 工具、可信原文钩子和过期上下文拒绝 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/reminder-list/scheduler.test.mjs` | 离线 | 提醒列表原生 Cron 固定声明、对账、并发和失败重试 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/reminder-list/store.test.mjs` | 离线 | 提醒列表领域状态、时间、授权、幂等、防重与固定 runner | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/fixtures/test_stats.py` | 离线 | 固定验收 fixture：后台代码任务的 mean/moving_average 断言 | 只读 | 否 | code | — |
+| `scripts/fusion/test/log-query.test.mjs` | 离线 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
-| `scripts/fusion/test/log-query.test.mjs` | 离线 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
+| `chatbot/scripts/reminder-list.mjs` | 领域运行 | 固定提醒列表 Cron 程序：到期判定、slot 防重和汇总输出，OpenClaw 投递本人 | 写运行状态 | 是 | header | — |
 | `chatbot/tests/acceptance/call-analysis.mjs` | 库 | 旧验收调用观察工具（只观察，不证明写入） | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/domain-fixture.mjs` | 库 | 旧验收领域夹具与工具定义 | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/host-driver.mjs` | 库 | 旧 harness Host 驱动，只开测试状态目录 | 写临时测试目录、只读 | 否 | code | — |
@@ -125,10 +130,10 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/retrieval-config.mjs` | 库 | 旧验收检索输出预算配置 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/backup-service.mjs` | 库 | 备份期间停写并恢复服务 | 重启或停服务 | 否 | header | — |
 | `scripts/fusion/lib/fresh-id.mjs` | 库 | 生成不重复的 message id | 只读 | 否 | header | — |
-| `scripts/fusion/lib/trace-events.mjs` | 库 | 统一链路事件契约、脱敏与可选 JSONL sink | 只读 | 否 | code | — |
 | `scripts/fusion/lib/legacy-source.mjs` | 库 | 解析旧 OpenClaw 源树路径（仅迁移脚本用） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/plugins.mjs` | 库 | 第三方插件声明（纯数据，导入无 I/O） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/recovery-isolation.mjs` | 库 | 隔离恢复的路径与凭据改写 | 只读 | 否 | header | — |
+| `scripts/fusion/lib/trace-events.mjs` | 库 | 统一链路事件契约、脱敏与可选私有 JSONL sink（调用 emit 时写文件） | 写运行状态 | 否 | code | — |
 | `scripts/fusion/lib/working-tree-backup.mjs` | 库 | 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar | 写运行状态 | 否 | code | — |
 | `scripts/fusion/rpc.mjs` | 库 | Gateway RPC 客户端库（被其他脚本导入） | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/probe-profile-geo.py` | 遗留验收 | GeoAPI provider 探测 | 真实外部API、写仓库内文件 | 是 | code | `docs/verification/profile-geo-provider-probe.json` |
@@ -143,6 +148,31 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/run-retrieval-t3.mjs` | 遗留验收 | 真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置 | 真实模型、真实外部API | 是 | boundary | — |
 | `chatbot/tests/acceptance/run.mjs` | 遗留验收 | 旧 harness 总入口：真实 Host 调度 + 合成 QQ 输入 + 确定性认知 + 假调度 | 写仓库内文件、写临时测试目录 | 是 | boundary | — |
 | `chatbot/tests/acceptance/verify-restart.mjs` | 遗留验收 | 在新进程里重开测试目录并验证幂等；不重启任何服务 | 写临时测试目录、只读 | 否 | header | — |
+| `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | 隔离 OpenClaw 进程与真实模型入站/工具集成；模拟 OneBot，无生产写入 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
+| `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用实际提醒列表工具，临时 SQLite、无生产 Cron 变更 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
+| `chatbot/tests/reminder-list/acceptance-native.mjs` | 验收 | 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务 | 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/native.json` |
+| `scripts/fusion/test-background-code.mjs` | 验收 | 后台代码任务登记检查与终态 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/10-background-code.json` |
+| `scripts/fusion/test-domain-due.mjs` | 验收 | 提醒到点投递（跨重启） | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/10-reminder-restart-delivery.json` |
+| `scripts/fusion/test-domain-planning.mjs` | 验收 | 行程提案与确认写入（隔离库） | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/11-planning-confirmation.json` |
+| `scripts/fusion/test-domain-read.mjs` | 验收 | 领域只读自然语言验收：真实模型 + QWeather 工具；不发 QQ、不写偏好 | 真实模型、真实外部API、写仓库内文件 | 是 | boundary | `docs/verification/migration/06-domain-read.json` |
+| `scripts/fusion/test-domain-reminder.mjs` | 验收 | 提醒 CRUD 与确认口令，回复本地捕获 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/09-reminder-crud.json` |
+| `scripts/fusion/test-fulltext-research.mjs` | 验收 | 论文全文研究任务 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/26-fulltext-research.json` |
+| `scripts/fusion/test-live-inbound.mjs` | 验收 | 合成入站 → 真实模型 → 本人 QQ 外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/01-native-inbound.json` |
+| `scripts/fusion/test-live-media.mjs` | 验收 | 合成图片入站与真实外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/03-native-media.json` |
+| `scripts/fusion/test-memory.mjs` | 验收 | 真实模型记忆 CRUD（合成事实） | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/13-memory-model.json` |
+| `scripts/fusion/test-native-concurrency.mjs` | 验收 | 两个原生会话并发；不发 QQ | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/05-native-concurrency.json` |
+| `scripts/fusion/test-native-cron.mjs` | 验收 | 原生 Cron CRUD 与频道投递 | 真实QQ外发、建/改任务或提醒、重启或停服务、写仓库内文件 | 是 | header | `docs/verification/fusion/04-native-cron.json` |
+| `scripts/fusion/test-profile-confirmation.mjs` | 验收 | Profile 变更确认后恢复原值 | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/08-profile-confirmation.json` |
+| `scripts/fusion/test-project-maintenance.mjs` | 验收 | 真实 QQ → 项目 worker → 隔离检查 → 本地提交 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/22-project-maintenance.json` |
+| `scripts/fusion/test-project-scoped-commit.mjs` | 验收 | 提交范围只含指定文件 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/23-project-scoped-commit.json` |
+| `scripts/fusion/test-qq-interaction.mjs` | 验收 | 合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/migration/15-qq-natural-sticker.json` |
+| `scripts/fusion/test-recurring-weather.mjs` | 验收 | 周期天气 automations | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/27-recurring-weather.json` |
+| `scripts/fusion/test-reminder-delivery.mjs` | 验收 | 自然语言 → automations → 到点外发 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/13-natural-reminder-delivery.json` |
+| `scripts/fusion/test-reminder-tool.mjs` | 验收 | 提醒工具 CRUD（须先取消未来任务） | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/09-native-agent-reminder.json` |
+| `scripts/fusion/test-research-cancel.mjs` | 验收 | 研究任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/28-research-cancel.json` |
+| `scripts/fusion/test-research.mjs` | 验收 | 公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入 | 真实模型、真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/fusion/15-research.json` |
+| `scripts/fusion/test-service-recovery.mjs` | 验收 | 服务故障注入与恢复；不发 QQ、不调模型 | 重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/35-service-recovery.json` |
+| `scripts/fusion/test-task-control.mjs` | 验收 | 任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/12-task-control.json` |
 | `scripts/fusion/backup-state.mjs` | 运维写状态 | 制作备份；--quiesce 会短暂停写并恢复服务 | 重启或停服务、写运行状态 | 是 | header | — |
 | `scripts/fusion/close-acceptance.mjs` | 运维写状态 | 验收结束后关闭 testIngress，不重置发送账本 | 写运行状态 | 是 | header | `docs/verification/fusion/16-closeout.json` |
 | `scripts/fusion/copy-domain-state.py` | 运维写状态 | 迁移领域状态库（迁移工具，不是日常命令） | 写运行状态 | 是 | code | `docs/verification/migration/04-domain-copy.json` |
@@ -168,8 +198,8 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/evidence-coverage.mjs` | 只读运维 | 校验证据目录分类覆盖，未分类即非零退出 | 只读 | 否 | header | `docs/verification/` |
 | `scripts/fusion/evidence-index.mjs` | 只读运维 | 生成本脚本与证据索引 | 只读 | 否 | header | `docs/verification/SCRIPTS.md` |
 | `scripts/fusion/health.mjs` | 只读运维 | 服务、QQ、频道、Cron、数据库健康 | 只读 | 否 | header | — |
-| `scripts/fusion/log-query.mjs` | 只读运维 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询 | 只读 | 否 | header | — |
 | `scripts/fusion/inspect-receipts.mjs` | 只读运维 | 查看验收回执 | 只读 | 否 | code | `docs/verification/fusion/receipts.json` |
+| `scripts/fusion/log-query.mjs` | 只读运维 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询 | 只读 | 否 | header | — |
 | `scripts/fusion/probe-final.mjs` | 只读运维 | health.mjs 的兼容入口 | 只读 | 否 | header | — |
 | `scripts/fusion/stack-summary.mjs` | 只读运维 | 启停输出压缩显示 | 只读 | 否 | header | — |
 | `scripts/fusion/sync-config.mjs` | 只读运维 | 默认只报告配置漂移；--apply 才写 openclaw.json | 写运行状态、只读 | 否 | header | — |
@@ -177,45 +207,3 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/verify-dependencies.mjs` | 只读运维 | 依赖自持、无归档树逃逸、锁文件一致 | 只读 | 否 | header | — |
 | `scripts/fusion/launchers/Start-DSH.sh` | 启停脚本 | 启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
-| `scripts/fusion/test-background-code.mjs` | 验收 | 后台代码任务登记检查与终态 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/10-background-code.json` |
-| `scripts/fusion/test-domain-due.mjs` | 验收 | 提醒到点投递（跨重启） | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/10-reminder-restart-delivery.json` |
-| `scripts/fusion/test-domain-planning.mjs` | 验收 | 行程提案与确认写入（隔离库） | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/11-planning-confirmation.json` |
-| `scripts/fusion/test-domain-read.mjs` | 验收 | 领域只读自然语言验收：真实模型 + QWeather 工具；不发 QQ、不写偏好 | 真实模型、真实外部API、写仓库内文件 | 是 | boundary | `docs/verification/migration/06-domain-read.json` |
-| `scripts/fusion/test-domain-reminder.mjs` | 验收 | 提醒 CRUD 与确认口令，回复本地捕获 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/09-reminder-crud.json` |
-| `scripts/fusion/test-fulltext-research.mjs` | 验收 | 论文全文研究任务 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/26-fulltext-research.json` |
-| `scripts/fusion/test-live-inbound.mjs` | 验收 | 合成入站 → 真实模型 → 本人 QQ 外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/01-native-inbound.json` |
-| `scripts/fusion/test-live-media.mjs` | 验收 | 合成图片入站与真实外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/03-native-media.json` |
-| `scripts/fusion/test-memory.mjs` | 验收 | 真实模型记忆 CRUD（合成事实） | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/13-memory-model.json` |
-| `scripts/fusion/test-native-concurrency.mjs` | 验收 | 两个原生会话并发；不发 QQ | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/05-native-concurrency.json` |
-| `scripts/fusion/test-native-cron.mjs` | 验收 | 原生 Cron CRUD 与频道投递 | 真实QQ外发、建/改任务或提醒、重启或停服务、写仓库内文件 | 是 | header | `docs/verification/fusion/04-native-cron.json` |
-| `scripts/fusion/test-profile-confirmation.mjs` | 验收 | Profile 变更确认后恢复原值 | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/08-profile-confirmation.json` |
-| `scripts/fusion/test-project-maintenance.mjs` | 验收 | 真实 QQ → 项目 worker → 隔离检查 → 本地提交 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/22-project-maintenance.json` |
-| `scripts/fusion/test-project-scoped-commit.mjs` | 验收 | 提交范围只含指定文件 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/23-project-scoped-commit.json` |
-| `scripts/fusion/test-qq-interaction.mjs` | 验收 | 合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/migration/15-qq-natural-sticker.json` |
-| `scripts/fusion/test-recurring-weather.mjs` | 验收 | 周期天气 automations | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/27-recurring-weather.json` |
-| `scripts/fusion/test-reminder-delivery.mjs` | 验收 | 自然语言 → automations → 到点外发 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/13-natural-reminder-delivery.json` |
-| `scripts/fusion/test-reminder-tool.mjs` | 验收 | 提醒工具 CRUD（须先取消未来任务） | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/09-native-agent-reminder.json` |
-| `scripts/fusion/test-research-cancel.mjs` | 验收 | 研究任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/28-research-cancel.json` |
-| `scripts/fusion/test-research.mjs` | 验收 | 公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入 | 真实模型、真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/fusion/15-research.json` |
-| `scripts/fusion/test-service-recovery.mjs` | 验收 | 服务故障注入与恢复；不发 QQ、不调模型 | 重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/35-service-recovery.json` |
-| `scripts/fusion/test-task-control.mjs` | 验收 | 任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/12-task-control.json` |
-
-## 游离证据文件的来源
-
-前一版索引声称覆盖全部文件，但有 9 个顶层文件不在任何已列分类中。逐项来源如下：
-
-| 文件 | 来源 | 类别 |
-| --- | --- | --- |
-| `2026-10-05_融合前基线收尾.md` | 融合前基线的收尾记录（阶段笔记） | 历史阶段记录 |
-| `confirmation-instruction-reminder-initial.json` | **输入样本**：被 `chatbot/tests/acceptance/call-analysis.test.mjs` 的断言读取 | 旧 harness 输入 |
-| `planning-capability-initial.json` | **输入样本**：同上（`call-analysis.test.mjs`） | 旧 harness 输入 |
-| `controlled-reply-reminder-fixed.json` | 旧 harness 的受控回复复验回执（`2026-09-10_文档与现状复核.txt` 第 144 行） | 历史领域验收 |
-| `natural-language-reminder-a.json` | 旧 harness 的自然语言样本回执（`2026-09-10_文档与现状复核.txt` 第 129 行） | 历史领域验收 |
-| `profile-geo-natural-initial.json` | Profile 地理路径首次失败记录（同复核第 163 行） | 历史失败实验 |
-| `profile-geo-natural-fixed.json` | 同一路径修正后复验（同复核第 165 行） | 历史领域验收 |
-| `profile-geo-provider-probe.json` | 由 `chatbot/tests/acceptance/probe-profile-geo.py` 第 59 行固定写入 | 旧 harness 输出 |
-| `retrieval-review-20261004.json` | `2026-10-04_检索与QQ插件现状复核.md` 的汇总证据（同文件第 195 行引用） | 历史领域验收 |
-
-结论：不存在“无来源的游离文件”，但它们的职责确实不同——两个是**测试输入**，一个是**旧 harness 输出**，
-其余是历史阶段记录与失败/修正对照。`evidence-coverage.mjs` 现在会把它们归入“历史领域验收”，
-新增文件若不属于任何分类会直接让检查失败。

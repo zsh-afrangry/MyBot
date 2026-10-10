@@ -1,0 +1,14 @@
+{
+  "name": "@kurumi/personal-reminder-list",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ]
+  },
+  "scripts": {
+    "test": "node --test ../../tests/reminder-list/*.test.mjs"
+  }
+}

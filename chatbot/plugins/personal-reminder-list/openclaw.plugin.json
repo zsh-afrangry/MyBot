@@ -1,0 +1,45 @@
+{
+  "id": "personal-reminder-list",
+  "name": "Personal reminder list",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["backendRoot"],
+    "properties": {
+      "backendRoot": {
+        "type": "string",
+        "pattern": "^/",
+        "description": "Operator-managed persistent backend directory containing scripts/reminder-list.mjs; never the plugin capture directory"
+      },
+      "defaultTimes": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 24,
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "pattern": "^(?:24:00|(?:[01]\\d|2[0-3]):[0-5]\\d)$"
+        }
+      }
+    }
+  },
+  "description": "Owner reminder-list domain and deterministic native daily digest",
+  "version": "0.1.0",
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "personal_reminder_list_get",
+      "personal_reminder_list_manage"
+    ]
+  },
+  "toolMetadata": {
+    "personal_reminder_list_get": {
+      "optional": true
+    },
+    "personal_reminder_list_manage": {
+      "optional": true
+    }
+  }
+}
