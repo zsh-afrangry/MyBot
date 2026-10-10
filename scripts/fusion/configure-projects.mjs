@@ -1,8 +1,8 @@
 // ONE-SHOT FIRST-RUN BOOTSTRAP — do NOT use this to add or change a project day to day.
 //
 // It only appends the "fusion" entry when that id is absent; an existing entry is never updated, so
-// editing this file does NOT change a registered project. It also rewrites the copy's AGENTS.md and
-// the live openclaw.json agent definition, which bypasses the repository's managed config.
+// editing this file does NOT change a registered project. It also rewrites the copy's root AGENTS.md
+// and the live openclaw.json agent definition, which bypasses the repository's managed config.
 //
 // Routine maintenance instead:
 //   - registry (projects.json): scripts/fusion/register-project.mjs
@@ -18,7 +18,10 @@ fs.mkdirSync(state+'/projects',{recursive:true,mode:0o700});fs.mkdirSync(checks,
 if(!fs.existsSync(root)){
  git(['clone','--no-hardlinks',source,root],source);git(['remote','remove','origin'],root);git(['switch','-c','kurumi/project-base'],root);
  const instructions='# 独立融合开发副本\n\n此处是授权的项目开发副本，只在本仓库内工作。原助手与QQ bridge原件不能访问或修改。可以维护源码、添加测试、使用受限Git工具创建分支和本地提交；不推送。\n\n任务先检查Git状态，再复现问题和修复，调用kurumi_project_check得到真实结果，审阅diff后提交。检查在隔离命名空间运行，固定外部验收只读；不得删除/改弱现有测试以伪造通过。无通用shell/外网，禁止创建子会话。简洁报告修改、实际检查、提交号和限制。\n';
-  fs.writeFileSync(root+'/AGENTS.md',instructions);fs.writeFileSync(root+'/chatbot/AGENTS.md',instructions+'\n原部署助手人格与工具规则留在主融合源码及原件；此副本是代码开发目录。\n');
+  // chatbot/AGENTS.md is an acceptance-test input owned by the source checkout. Keep the
+  // cloned source version instead of replacing it with workspace instructions; otherwise a
+  // fresh bootstrap would silently change the test prompt and diverge from the current copy.
+  fs.writeFileSync(root+'/AGENTS.md',instructions);
  fs.appendFileSync(root+'/.gitignore','\n# Host context stays outside project source.\n/IDENTITY.md\n/SOUL.md\n/USER.md\n/MEMORY.md\n');
  git(['add','AGENTS.md','chatbot/AGENTS.md','.gitignore'],root);git(['-c','user.name=Kurumi Setup','-c','user.email=kurumi@localhost','commit','-m','Prepare isolated development workspace instructions'],root);
 }
