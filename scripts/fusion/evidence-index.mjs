@@ -126,8 +126,8 @@ const TABLE = {
   'scripts/fusion/configure-worker.mjs': ['迁移工具', '显式配置隔离代码 worker', {auth: 1, writesState: 1}, 'header'],
 
   // ---- 整套启停 ----
-  'scripts/fusion/launchers/Start-DSH.sh': ['启停脚本', '启动 DSH Web + 融合栈，停旧消费者', {auth: 1, restart: 1}, 'header'],
-  'scripts/fusion/launchers/Stop-DSH.sh': ['启停脚本', '按消费者优先顺序停止整套栈', {auth: 1, restart: 1}, 'header'],
+  'scripts/fusion/launchers/Start-DSH.sh': ['启停脚本', '启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉', {auth: 1, restart: 1}, 'header'],
+  'scripts/fusion/launchers/Stop-DSH.sh': ['启停脚本', '停止融合助手与 DSH Web；不停止 QQ 传输', {auth: 1, restart: 1}, 'header'],
 
   // ---- 当前融合验收：副作用按各脚本自己的 boundary 声明标注 ----
   'scripts/fusion/test-background-code.mjs': ['验收', '后台代码任务登记检查与终态', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],

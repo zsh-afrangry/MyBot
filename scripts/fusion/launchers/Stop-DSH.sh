@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Stop the same stack as Start-DSH.sh, without deleting state or disabling autostart.
+# Stop only DSH and Fusion; leave QQ and SnowLuma running.
 set -uo pipefail
 verbose=0
 case "${1:-}" in
@@ -24,23 +24,21 @@ show_state() {
         *) printf '✗ %-24s 未停止（%s）\n' "$unit" "$state"; failed=1 ;;
     esac
 }
-# Stop consumers before transports. Also stop any accidentally revived old consumer.
-for unit in kurumi-fusion qq-bridge openclaw-gateway snowluma-qq snowluma; do
+# Stop Fusion before DSH; do not change the independently managed transports.
+for unit in kurumi-fusion; do
     systemctl --user stop "$unit.service" || failed=1
 done
 sudo systemctl stop dsh-web.service || failed=1
-for unit in kurumi-fusion qq-bridge openclaw-gateway snowluma-qq snowluma; do
+for unit in kurumi-fusion; do
     state=$(systemctl --user show "$unit.service" -p ActiveState --value) || { failed=1; continue; }
-    if [[ "$unit" != qq-bridge && "$unit" != openclaw-gateway ]] || [[ "$state" != inactive || $verbose -eq 1 ]]; then
-        show_state "$unit" "$state"
-    fi
+    show_state "$unit" "$state"
     if [[ $verbose -eq 1 ]]; then systemctl --user show "$unit.service" -p ActiveState -p Result; fi
 done
 state=$(systemctl show dsh-web.service -p ActiveState --value) || failed=1
 show_state 'DSH Web' "$state"
 if [[ $verbose -eq 1 ]]; then systemctl show dsh-web.service -p ActiveState -p Result; fi
 if [[ $failed -eq 0 ]]; then
-    echo '整套服务已停止，配置与数据保留。'
-    if [[ $warnings -eq 1 ]]; then echo '退出异常日志：journalctl --user -u snowluma -u snowluma-qq -n 50'; fi
+    echo 'DSH 与融合助手已停止；QQ 与 SnowLuma 保持原状态，配置与数据保留。'
+    if [[ $warnings -eq 1 ]]; then echo '退出异常日志：journalctl --user -u kurumi-fusion -n 50；journalctl -u dsh-web -n 50'; fi
 fi
 exit "$failed"

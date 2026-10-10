@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DSH Web + fusion assistant. QQ transport is shared; never start legacy qq-bridge.
+# Start DSH and Fusion; QQ and SnowLuma are independently managed.
 set -euo pipefail
 verbose=0
 case "${1:-}" in
@@ -16,9 +16,9 @@ FUSION_DIR=/home/afrangry/kurumi-fusion
 # Authenticate before any service changes. No password is stored in this script.
 sudo -v
 echo "正在启动 DSH 与融合助手…"
-systemctl --user stop qq-bridge.service openclaw-gateway.service
 sudo systemctl start dsh-web.service
-systemctl --user start snowluma.service snowluma-qq.service kurumi-fusion.service
+systemctl --user start kurumi-fusion.service
+echo "QQ 与 SnowLuma 仅检查状态，不执行启动。"
 # Separate diagnostics from JSON so a warning never breaks the compact summary.
 health_dir=$(mktemp -d)
 trap 'rm -rf "$health_dir"' EXIT
@@ -27,6 +27,10 @@ for attempt in {1..8}; do
     if [[ -t 1 ]]; then printf '\r\033[K等待融合链路就绪（%s/8）…' "$attempt"; fi
     if node --disable-warning=ExperimentalWarning "$FUSION_DIR/scripts/fusion/health.mjs" >"$health_dir/health.json" 2>"$health_dir/errors.log"; then
         ready=1
+        break
+    fi
+    # Offline external services need operator attention, not an automatic start.
+    if ! systemctl --user is-active --quiet snowluma.service || ! systemctl --user is-active --quiet snowluma-qq.service; then
         break
     fi
     sleep 2
@@ -40,10 +44,9 @@ if [[ $verbose -eq 1 ]]; then
 elif [[ -s "$health_dir/errors.log" ]]; then
     echo '诊断有附加信息，可运行 ./Start-DSH.sh --verbose 查看。'
 fi
-if [[ $ready -ne 1 || $summary_ok -ne 1 ]]; then exit 1; fi
 # The login URL may contain authentication material; display only to the operator.
 auth_url=$(journalctl -u dsh-web.service -n 200 --no-pager -o cat 2>/dev/null | sed -n 's/.*dsh web: //p' | tail -n 1) || auth_url=''
-if [[ "$auth_url" == http://127.0.0.1:3080/* ]]; then
+if systemctl is-active --quiet dsh-web.service && [[ "$auth_url" == http://127.0.0.1:3080/* ]]; then
     printf 'DSH 本地入口：%s\n' "$auth_url"
     service_exec=$(systemctl show dsh-web.service -p ExecStart --value 2>/dev/null) || service_exec=''
     trusted_host=$(sed -n 's/.*--trusted-host \([^ ;]*\).*/\1/p' <<<"$service_exec")
@@ -54,4 +57,9 @@ if [[ "$auth_url" == http://127.0.0.1:3080/* ]]; then
     fi
 else
     echo 'DSH 认证入口见：journalctl -u dsh-web.service -n 50'
+fi
+
+if [[ $ready -ne 1 || $summary_ok -ne 1 ]]; then
+    echo "QQ 通道或融合链路未完全就绪；请检查已有 QQ 登录与 SnowLuma 状态。"
+    exit 1
 fi

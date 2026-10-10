@@ -36,15 +36,22 @@ SOUL使用完整角色卡，IDENTITY为小鲸鱼；AGENTS明确 Kurumi 是项目
 
 证据：`docs/verification/deepseek-whale/model-image.json`与`channel-tests.txt`。模型测试session为`agent:main:acceptance-whale-image-20261005`，与日常主会话分开。证据不含签名图片URL、凭证或模型思考正文。
 
-## 双链路调查
+## 启停脚本与旧 bridge 的关系
 
-`/opt/deepseek-harness/Start-DSH.sh`第109行开始依次启动snowluma、snowluma-qq、qq-bridge，不是仅启动DSH Web。调查时旧qq-bridge active，融合服务inactive。融合systemd单元与qq-bridge/openclaw-gateway互斥，所以这次是旧bridge接管，不是这两个受管服务同时回复。OneBot登录QQ确认为1794511189，两套方案复用同一QQ传输账号，账号本身不能区分后台宿主。
+**当前规则**：`/opt/deepseek-harness/Start-DSH.sh` 与 `Stop-DSH.sh` 只启停 `dsh-web.service` 与
+`kurumi-fusion.service`，**不启动也不停止** `snowluma`/`snowluma-qq`（QQ 传输独立管理，只检查状态）；
+旧 `qq-bridge`/`openclaw-gateway` 由 `kurumi-fusion` 的 `Conflicts=` 自动停掉，脚本不显式操作。
+完整契约与理由见[文档 10](10_融合助手运行维护.md)的「DSH与融合栈统一启停」。
 
-统一启停脚本 `/opt/deepseek-harness/Start-DSH.sh` 当前启动 DSH Web、kurumi-fusion、SnowLuma 与 snowluma-qq，并停止旧 bridge/旧 OpenClaw。Stop 按消费者优先顺序停止整套服务，保留状态和开机启动设置。没有额外的新 qq-bridge 进程或新 SnowLuma 目录：新方案的桥接在融合插件内，QQ 传输复用原 SnowLuma 服务。
+**历史教训（保留）**：早期版本的 `Start-DSH.sh` 会依次拉起 `snowluma`、`snowluma-qq`、`qq-bridge`，
+而 `qq-bridge` 与融合单元互斥，因此一次启动就让旧 bridge 接管了 QQ，融合服务被停。
+这说明**启停脚本的行为本身就是安全边界**：改动它必须同时核对互斥关系与 QQ 消费者归属，
+不能只看脚本是否“启动成功”。账号层面无法区分宿主（两套方案复用同一 QQ 登录），
+所以只能靠“同一时刻只有一个消费者”来保证。
 
-脚本受版本控制的源文件位于`/home/afrangry/kurumi-fusion/scripts/fusion/launchers/`，部署位置仍为`/opt/deepseek-harness/`。旧脚本备份于`/opt/deepseek-harness/launcher-backup-before-fusion/`，旧bridge源码和配置未改。Start使用融合health检查实际Gateway、QQ状态及连接，不再读取旧bridge控制台；health已允许独立DSH Web与融合服务并存，仍禁止旧QQ消费者运行。DSH只是同步启停，模型请求仍直连DeepSeek。
-
-启停回归状态见文档10末尾。停机期间助手及提醒投递不可用；Stop不删除任务或会话，也不取消enabled开机启动设置。
+脚本源文件在 `scripts/fusion/launchers/`，部署位置 `/opt/deepseek-harness/`，
+旧入口备份在 `/opt/deepseek-harness/launcher-backup-before-fusion/`；
+两者当前逐字节一致，修改后必须同步部署。旧 bridge 源码与配置未改。
 
 ## 确认机制研究：尚未实施
 
