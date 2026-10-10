@@ -10,21 +10,40 @@
 // Scope: this script writes ONLY ${STATE_DIR}/projects.json. It never touches openclaw.json,
 // config/runtime.config.json, project workspaces, or any database.
 //
+// Accepted input shapes for --check/--add (all three, so a draft can be lifted straight out of the
+// live file or written as a bare entry):
+//   * a bare project entry object            { id, agentId, root, checks, ... }
+//   * an array of entries                    [ {...}, {...} ]
+//   * a whole registry object                { version: 1, projects: [ {...} ] }
+//
+// Validation mirrors the runtime (projects.js + protected-roots.js) AND the sandbox
+// (sandbox.js), so "passes maintenance validation" means "will not be rejected at load or at run":
+//   * id / agentId / duplicate / canonical root / own .git / checks / fixture target
+//   * protected roots (shared module, includes kurumi-archive)
+//   * readOnlyDependencies must sit inside the installed package tree, which is the only path
+//     sandboxArguments will mount read-only
+//
 // Usage:
 //   node scripts/fusion/register-project.mjs --list
-//   node scripts/fusion/register-project.mjs --check <registry.json>     # validate a draft file
-//   node scripts/fusion/register-project.mjs --add <entry.json> [--apply]
+//   node scripts/fusion/register-project.mjs --check <file>
+//   node scripts/fusion/register-project.mjs --add <file> [--apply]
 //   node scripts/fusion/register-project.mjs --remove <id> [--apply]
 //
-// Without --apply, --add/--remove only print what would change. The agent entry that pairs with a
-// project lives in the repository (config/runtime.config.json -> agents.entries) and is applied by
-// sync-config.mjs; see docs/10.
+// --state-dir <dir> overrides where projects.json lives. It exists so the offline regression can
+// run against a temp directory; STATE_DIR itself is a compile-time constant. Use it only in tests:
+// maintaining the real registry is the default on purpose.
 import fs from 'node:fs';
 import path from 'node:path';
 import { STATE_DIR } from './lib/legacy-source.mjs';
+import { assertNotProtectedRoot, RUNTIME_STATE } from '../../chatbot/plugins/kurumi-tasks/protected-roots.js';
 
 const STATE = STATE_DIR;
-const REGISTRY = path.join(STATE, 'projects.json');
+
+// The sandbox only mounts read-only dependencies from inside the installed package tree; anything
+// else makes sandboxArguments throw at run time. Mirrored here so the CLI cannot bless a registry
+// entry the sandbox would reject.
+const ALLOWED_DEPENDENCY_PREFIX = '/home/afrangry/.npm-global/lib/node_modules/';
+const SUPPORTED_REGISTRY_VERSION = 1;
 
 const argv = process.argv.slice(2);
 const arg = (name) => {
@@ -32,50 +51,65 @@ const arg = (name) => {
   return i >= 0 ? argv[i + 1] : undefined;
 };
 const APPLY = argv.includes('--apply');
-
-// Mirrors chatbot/plugins/kurumi-tasks/projects.js: a bad entry must not be able to point a worker
-// at runtime state, the recovery backups, a retained original component, or the live source tree.
-const PROTECTED_ROOTS = [
-  '/home/afrangry/.openclaw',
-  '/home/afrangry/kurumi-backups',
-  '/home/afrangry/kurumi-baselines',
-  '/home/afrangry/snowluma',
-  '/home/afrangry/桌面/qq-bridge',
-  '/home/afrangry/.npm-global',
-  '/home/afrangry/kurumi-fusion',
-];
+const STATE_OVERRIDE = arg('--state-dir');
+if (STATE_OVERRIDE !== undefined) {
+  if (!path.isAbsolute(STATE_OVERRIDE)) fail(`--state-dir must be an absolute path, got ${STATE_OVERRIDE}`);
+  if (!fs.existsSync(STATE_OVERRIDE)) fail(`--state-dir does not exist: ${STATE_OVERRIDE}`);
+}
+const REGISTRY_DIR = STATE_OVERRIDE ?? STATE;
 
 function fail(message) {
   console.error(`error: ${message}`);
   process.exit(1);
 }
 
+const REGISTRY = path.join(REGISTRY_DIR, 'projects.json');
+
 function readRegistry() {
-  if (!fs.existsSync(REGISTRY)) return { version: 1, projects: [] };
+  if (!fs.existsSync(REGISTRY)) return { version: SUPPORTED_REGISTRY_VERSION, projects: [] };
   const stat = fs.lstatSync(REGISTRY);
   if (!stat.isFile() || stat.isSymbolicLink()) fail(`${REGISTRY} is not a regular file`);
   const parsed = JSON.parse(fs.readFileSync(REGISTRY, 'utf8'));
-  if (parsed.version !== 1 || !Array.isArray(parsed.projects)) fail('unsupported project registry shape');
+  if (parsed.version !== SUPPORTED_REGISTRY_VERSION || !Array.isArray(parsed.projects)) {
+    fail(`unsupported project registry shape (expected version ${SUPPORTED_REGISTRY_VERSION} with a projects array)`);
+  }
   return parsed;
+}
+
+/**
+ * Normalise any accepted input shape into { version, projects, source }.
+ * `kind` is used in messages so a caller knows what was read.
+ */
+function readDraft(file) {
+  const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+  if (Array.isArray(parsed)) return { version: SUPPORTED_REGISTRY_VERSION, projects: parsed, kind: 'entry array' };
+  if (parsed && typeof parsed === 'object' && Array.isArray(parsed.projects)) {
+    if (parsed.version !== SUPPORTED_REGISTRY_VERSION) {
+      fail(`draft registry declares version ${JSON.stringify(parsed.version)}; only version ${SUPPORTED_REGISTRY_VERSION} is supported`);
+    }
+    return { version: parsed.version, projects: parsed.projects, kind: 'registry object' };
+  }
+  if (parsed && typeof parsed === 'object' && typeof parsed.id === 'string') {
+    return { version: SUPPORTED_REGISTRY_VERSION, projects: [parsed], kind: 'single entry' };
+  }
+  fail('draft must be a single project entry, an array of entries, or a registry object with a projects array');
 }
 
 /** Same rules the plugin applies at load time, so a saved entry cannot fail later. */
 function validateEntry(project, { all }) {
   const where = `project "${project?.id ?? '(missing id)'}"`;
-  if (!project || typeof project !== 'object') fail(`${where}: entry must be an object`);
+  if (!project || typeof project !== 'object' || Array.isArray(project)) fail(`${where}: entry must be an object`);
   if (!/^[a-z][a-z0-9-]{0,39}$/.test(project.id ?? '')) fail(`${where}: id must match ^[a-z][a-z0-9-]{0,39}$`);
   if (project.agentId !== `project-${project.id}`) fail(`${where}: agentId must be project-${project.id}`);
-  const others = all.filter((p) => p.id === project.id).length;
-  if (others > 1) fail(`${where}: duplicate id in registry`);
+  if (all.filter((p) => p.id === project.id).length > 1) fail(`${where}: duplicate id in registry`);
   if (typeof project.root !== 'string' || !path.isAbsolute(project.root)) fail(`${where}: root must be an absolute path`);
   if (!fs.existsSync(project.root)) fail(`${where}: root does not exist: ${project.root}`);
   const real = fs.realpathSync(project.root);
   if (real !== project.root) fail(`${where}: root must be canonical (realpath is ${real})`);
-  for (const original of PROTECTED_ROOTS) {
-    if (real === original || real.startsWith(`${original}/`)) fail(`${where}: preserved original cannot be a worker root`);
-  }
-  if ((real === STATE || real.startsWith(`${STATE}/`)) && !real.startsWith(`${STATE}/projects/`)) {
-    fail(`${where}: fusion runtime state cannot be a worker root`);
+  try {
+    assertNotProtectedRoot(real);
+  } catch (error) {
+    fail(`${where}: ${error.message}`);
   }
   if (!fs.lstatSync(path.join(real, '.git')).isDirectory()) fail(`${where}: root needs its own .git directory`);
   if (!Array.isArray(project.checks) || !project.checks.length) fail(`${where}: at least one check is required`);
@@ -86,6 +120,14 @@ function validateEntry(project, { all }) {
     }
     if (check.timeoutMs !== undefined && !(Number.isInteger(check.timeoutMs) && check.timeoutMs > 0)) {
       fail(`${where}: check "${check.name}" timeoutMs must be a positive integer`);
+    }
+  }
+  for (const dep of project.readOnlyDependencies ?? []) {
+    if (typeof dep !== 'string' || !path.isAbsolute(dep)) fail(`${where}: readOnlyDependencies must be absolute paths`);
+    if (!fs.existsSync(dep)) fail(`${where}: readOnlyDependency does not exist: ${dep}`);
+    const canonical = fs.realpathSync(dep);
+    if (!canonical.startsWith(ALLOWED_DEPENDENCY_PREFIX)) {
+      fail(`${where}: readOnlyDependency must live under ${ALLOWED_DEPENDENCY_PREFIX} (the sandbox refuses other mounts): ${dep}`);
     }
   }
   for (const fixture of project.fixtures ?? []) {
@@ -102,18 +144,22 @@ if (argv.includes('--list') || argv.length === 0) {
   console.log(`registry: ${REGISTRY}`);
   if (!registry.projects.length) console.log('  (no projects registered)');
   for (const project of registry.projects) console.log(`  - ${label(project)}`);
-  if (!argv.length) console.log('\nusage: --list | --check <file> | --add <entry.json> [--apply] | --remove <id> [--apply]');
+  if (!argv.length) {
+    console.log('\nusage: --list | --check <file> | --add <file> [--apply] | --remove <id> [--apply]');
+    console.log('input may be a single entry, an entry array, or a registry object');
+  }
 } else if (arg('--check')) {
-  const draft = JSON.parse(fs.readFileSync(arg('--check'), 'utf8'));
-  const projects = Array.isArray(draft) ? draft : draft.projects;
-  if (!Array.isArray(projects)) fail('draft must be a registry object or a project array');
-  projects.forEach((p) => validateEntry(p, { all: projects }));
-  console.log(`ok: ${projects.length} project entr(ies) satisfy the runtime registry rules`);
+  const draft = readDraft(arg('--check'));
+  draft.projects.forEach((p) => validateEntry(p, { all: draft.projects }));
+  console.log(`ok: ${draft.projects.length} project entr(ies) from a ${draft.kind} satisfy the runtime registry rules`);
+  console.log(`note: this covers registry shape, roots, protected paths, checks and sandbox-allowed dependencies (runtime state dir ${RUNTIME_STATE}).`);
 } else if (arg('--add')) {
-  const entry = validateEntry(JSON.parse(fs.readFileSync(arg('--add'), 'utf8')), { all: [] });
+  const draft = readDraft(arg('--add'));
+  if (draft.projects.length !== 1) fail(`--add expects exactly one entry, got ${draft.projects.length}`);
+  const entry = draft.projects[0];
   const registry = readRegistry();
-  const clash = registry.projects.find((p) => p.id === entry.id);
   validateEntry(entry, { all: [...registry.projects.filter((p) => p.id !== entry.id), entry] });
+  const clash = registry.projects.find((p) => p.id === entry.id);
   if (clash && JSON.stringify(clash) === JSON.stringify(entry)) {
     console.log(`no change: ${entry.id} is already registered with identical content`);
     process.exit(0);

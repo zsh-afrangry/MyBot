@@ -20,7 +20,10 @@
 //   writesState 写运行目录（.openclaw-fusion）状态
 //   writesRepo  写仓库内文件（docs/verification 等）
 //   testDir     只写临时隔离测试目录
-//   readonly    无写入
+//   readonly    无写入（仅导入时无副作用、且自身不写文件）
+//
+// Library semantics: a module under lib/ is labelled by what IT does when called, not by whether
+// importing it is side-effect free. working-tree-backup.mjs is therefore writesState, not readonly.
 //   auth        需操作者授权后运行
 //
 // Usage:
@@ -45,6 +48,7 @@ const TABLE = {
   'chatbot/plugins/kurumi-tasks/test/sandbox.test.js': ['离线', 'Bubblewrap 隔离边界与进程树终止', {readonly: 1}, 'offline'],
   'chatbot/plugins/kurumi-research/test/papers.test.js': ['离线', '论文来源校验与拒绝规则', {readonly: 1}, 'offline'],
   'scripts/fusion/test/recovery.test.mjs': ['离线', '备份/恢复工具单元与集成回归', {readonly: 1}, 'offline'],
+  'scripts/fusion/test/register-project.test.mjs': ['离线', '项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝）', {readonly: 1}, 'offline'],
   'scripts/fusion/fixtures/test_stats.py': ['离线', '固定验收 fixture：后台代码任务的 mean/moving_average 断言', {readonly: 1}, 'code'],
   'chatbot/tests/acceptance/call-analysis.test.mjs': ['离线', '旧调用分析离线断言（读取两份输入样本）', {readonly: 1}, 'offline'],
 
@@ -86,7 +90,7 @@ const TABLE = {
   'scripts/fusion/lib/fresh-id.mjs': ['库', '生成不重复的 message id', {readonly: 1}, 'header'],
   'scripts/fusion/lib/plugins.mjs': ['库', '第三方插件声明（纯数据，导入无 I/O）', {readonly: 1}, 'header'],
   'scripts/fusion/lib/recovery-isolation.mjs': ['库', '隔离恢复的路径与凭据改写', {readonly: 1}, 'header'],
-  'scripts/fusion/lib/working-tree-backup.mjs': ['库', '已跟踪修改的 Git 补丁归档', {readonly: 1}, 'header'],
+  'scripts/fusion/lib/working-tree-backup.mjs': ['库', '已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar', {writesState: 1}, 'code'],
   'scripts/fusion/lib/backup-service.mjs': ['库', '备份期间停写并恢复服务', {restart: 1}, 'header'],
   'scripts/fusion/lib/legacy-source.mjs': ['库', '解析旧 OpenClaw 源树路径（仅迁移脚本用）', {readonly: 1}, 'header'],
   'chatbot/tests/acceptance/call-analysis.mjs': ['库', '旧验收调用观察工具（只观察，不证明写入）', {readonly: 1}, 'header'],
@@ -127,7 +131,7 @@ const TABLE = {
 
   // ---- 当前融合验收：副作用按各脚本自己的 boundary 声明标注 ----
   'scripts/fusion/test-background-code.mjs': ['验收', '后台代码任务登记检查与终态', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
-  'scripts/fusion/test-domain-read.mjs': ['验收', '领域只读自然语言验收，不发 QQ、不写偏好', {auth: 1, model: 1, writesRepo: 1}, 'header'],
+  'scripts/fusion/test-domain-read.mjs': ['验收', '领域只读自然语言验收：真实模型 + QWeather 工具；不发 QQ、不写偏好', {auth: 1, model: 1, externalApi: 1, writesRepo: 1}, 'boundary'],
   'scripts/fusion/test-domain-due.mjs': ['验收', '提醒到点投递（跨重启）', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-domain-planning.mjs': ['验收', '行程提案与确认写入（隔离库）', {auth: 1, model: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-domain-reminder.mjs': ['验收', '提醒 CRUD 与确认口令，回复本地捕获', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
@@ -140,12 +144,12 @@ const TABLE = {
   'scripts/fusion/test-profile-confirmation.mjs': ['验收', 'Profile 变更确认后恢复原值', {auth: 1, model: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-project-maintenance.mjs': ['验收', '真实 QQ → 项目 worker → 隔离检查 → 本地提交', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-project-scoped-commit.mjs': ['验收', '提交范围只含指定文件', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
-  'scripts/fusion/test-qq-interaction.mjs': ['验收', '仅本人 QQ 的分段与表情外发', {auth: 1, qq: 1, writesState: 1, writesRepo: 1}, 'header'],
+  'scripts/fusion/test-qq-interaction.mjs': ['验收', '合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发', {auth: 1, model: 1, qq: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'scripts/fusion/test-recurring-weather.mjs': ['验收', '周期天气 automations', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'code'],
   'scripts/fusion/test-reminder-delivery.mjs': ['验收', '自然语言 → automations → 到点外发', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-reminder-tool.mjs': ['验收', '提醒工具 CRUD（须先取消未来任务）', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-research-cancel.mjs': ['验收', '研究任务查询与取消', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
-  'scripts/fusion/test-research.mjs': ['验收', '公开论文检索，无 QQ 输出、无记忆写入', {auth: 1, externalApi: 1, writesState: 1, writesRepo: 1}, 'header'],
+  'scripts/fusion/test-research.mjs': ['验收', '公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入', {auth: 1, model: 1, externalApi: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'scripts/fusion/test-service-recovery.mjs': ['验收', '服务故障注入与恢复；不发 QQ、不调模型', {auth: 1, restart: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-task-control.mjs': ['验收', '任务查询与取消', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
 
@@ -226,17 +230,26 @@ function evidence(text) {
 }
 
 /**
- * Fail when a row contradicts the script's own boundary declaration. This is the check that would
- * have caught the R02 mislabels (run.mjs claimed model+QQ+restart while declaring none of them).
+ * Fail when a row contradicts the script's own boundary declaration, in EITHER direction.
+ *
+ * Over-labelling (R02): run.mjs declared "deterministic cognition … no QQ network or model provider"
+ * yet was labelled as real model + QQ + restart.
+ * Under-labelling (V03): test-research.mjs declared "Real model" yet the table omitted the model;
+ * test-domain-read.mjs declared "real model and QWeather tools" yet the table omitted the external API.
+ * Both directions are errors, so both are checked.
  */
 function contradictions(rel, flags, boundary) {
   if (!boundary) return [];
   const bad = [];
   const says = (re) => re.test(boundary);
-  const noModel = says(/no model|no model provider|model provider\.|deterministic cognition/i) && !says(/real (configured )?model|real-model/i);
-  const noQQ = says(/no QQ network|no QQ send|no QQ delivery|no QQ output|not.*QQ transport/i);
-  if (noModel && flags.model) bad.push('声明无模型，但表中标了真实模型');
-  if (noQQ && flags.qq) bad.push('声明无 QQ 网络/发送，但表中标了真实 QQ 外发');
+  const declaresNoModel = says(/no model|no model provider|model provider\.|deterministic cognition/i) && !says(/real (configured )?model|real-model/i);
+  const declaresNoQQ = says(/no QQ network|no QQ send|no QQ delivery|no QQ output|not.*QQ transport/i);
+  const declaresModel = says(/real (configured )?model|real-model|real model/i);
+  const declaresExternalApi = says(/tavily|qweather|geoapi|real api|real http|external api|web_search|web_fetch|paper/i);
+  if (declaresNoModel && flags.model) bad.push('声明无模型，但表中标了真实模型');
+  if (declaresNoQQ && flags.qq) bad.push('声明无 QQ 网络/发送，但表中标了真实 QQ 外发');
+  if (declaresModel && !flags.model) bad.push('声明有真实模型，但表中漏标（V03 类）');
+  if (declaresExternalApi && !flags.externalApi) bad.push('声明使用真实外部 API/联网，但表中漏标（V03 类）');
   return bad;
 }
 

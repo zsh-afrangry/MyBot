@@ -52,11 +52,22 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `code` | 读源码判定（无现成声明，例如库、fixture、探测脚本） |
 | `offline` | 进程内单元测试，无外发、无真实模型 |
 
-`evidence-index.mjs` 会把 `boundary` 声明与表格做**交叉校验**：声明“无模型/无 QQ 网络”的脚本若被标成
-真实模型或真实 QQ 外发，生成器直接非零退出。这条检查正是为了防住 2026-10-10 复验发现的误标
-（`run.mjs` 声明“deterministic cognition … no QQ network or model provider”，`verify-restart.mjs` 只是在新进程里
-重开测试目录，两者当时都被错标）。副作用词汇区分：真实模型、真实外部 API、真实 QQ 外发、
-建改任务、重启停服、写运行状态、写仓库内文件、**写临时测试目录**、只读。
+`evidence-index.mjs` 会把 `boundary` 声明与表格做**双向交叉校验**，任一方向不符都非零退出：
+
+| 方向 | 例子（均为复验实证） |
+| --- | --- |
+| **多标**（声明没有、表里有） | `run.mjs` 声明“deterministic cognition … no QQ network or model provider”，却被标成真实模型 + QQ + 停服务；`verify-restart.mjs` 只是在新进程里重开测试目录，却被标成“重启服务” |
+| **漏标**（声明有、表里没有） | `test-research.mjs` 声明 `Real model`，表里漏了真实模型；`test-domain-read.mjs` 声明 `real model and QWeather tools`，表里漏了外部 API；`test-qq-interaction.mjs` 声明 `real model`，表里漏了真实模型 |
+
+**能力边界（不要据此认为副作用已被自动证明）**：自动校验只能比对脚本**自己写下的** `boundary` 声明；
+没有声明、或声明本身写得不全的脚本，仍依赖 `header`/`code` 人工判读。当前 113 个脚本中
+`boundary` 10 个、`header` 59 个、`code` 11 个、`offline` 33 个。
+
+副作用词汇区分：真实模型、真实外部 API、真实 QQ 外发、建改任务、重启停服、写运行状态、
+写仓库内文件、**写临时测试目录**、只读。
+
+**库（`lib/`）的标注语义**：按“**被调用时做什么**”标注，而不是“导入时是否无副作用”。
+例如 `working-tree-backup.mjs` 导入时无副作用，但 `captureWorkingTree` 会写补丁与 tar，因此标 `写运行状态` 而非只读。
 
 ## 需要授权的脚本
 
@@ -105,6 +116,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | `docs/verification/` |
 | `scripts/fusion/fixtures/test_stats.py` | 离线 | 固定验收 fixture：后台代码任务的 mean/moving_average 断言 | 只读 | 否 | code | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
+| `scripts/fusion/test/register-project.test.mjs` | 离线 | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
 | `chatbot/tests/acceptance/call-analysis.mjs` | 库 | 旧验收调用观察工具（只观察，不证明写入） | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/domain-fixture.mjs` | 库 | 旧验收领域夹具与工具定义 | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/host-driver.mjs` | 库 | 旧 harness Host 驱动，只开测试状态目录 | 写临时测试目录、只读 | 否 | code | — |
@@ -115,7 +127,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/lib/legacy-source.mjs` | 库 | 解析旧 OpenClaw 源树路径（仅迁移脚本用） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/plugins.mjs` | 库 | 第三方插件声明（纯数据，导入无 I/O） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/recovery-isolation.mjs` | 库 | 隔离恢复的路径与凭据改写 | 只读 | 否 | header | — |
-| `scripts/fusion/lib/working-tree-backup.mjs` | 库 | 已跟踪修改的 Git 补丁归档 | 只读 | 否 | header | — |
+| `scripts/fusion/lib/working-tree-backup.mjs` | 库 | 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar | 写运行状态 | 否 | code | — |
 | `scripts/fusion/rpc.mjs` | 库 | Gateway RPC 客户端库（被其他脚本导入） | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/probe-profile-geo.py` | 遗留验收 | GeoAPI provider 探测 | 真实外部API、写仓库内文件 | 是 | code | `docs/verification/profile-geo-provider-probe.json` |
 | `chatbot/tests/acceptance/run-fallback-failover.mjs` | 遗留验收 | 主模型指向必然失败地址、fallback 用真实 deepseek | 真实模型、写临时测试目录 | 是 | header | — |
@@ -165,7 +177,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/test-background-code.mjs` | 验收 | 后台代码任务登记检查与终态 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/10-background-code.json` |
 | `scripts/fusion/test-domain-due.mjs` | 验收 | 提醒到点投递（跨重启） | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/10-reminder-restart-delivery.json` |
 | `scripts/fusion/test-domain-planning.mjs` | 验收 | 行程提案与确认写入（隔离库） | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/11-planning-confirmation.json` |
-| `scripts/fusion/test-domain-read.mjs` | 验收 | 领域只读自然语言验收，不发 QQ、不写偏好 | 真实模型、写仓库内文件 | 是 | header | `docs/verification/migration/06-domain-read.json` |
+| `scripts/fusion/test-domain-read.mjs` | 验收 | 领域只读自然语言验收：真实模型 + QWeather 工具；不发 QQ、不写偏好 | 真实模型、真实外部API、写仓库内文件 | 是 | boundary | `docs/verification/migration/06-domain-read.json` |
 | `scripts/fusion/test-domain-reminder.mjs` | 验收 | 提醒 CRUD 与确认口令，回复本地捕获 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/09-reminder-crud.json` |
 | `scripts/fusion/test-fulltext-research.mjs` | 验收 | 论文全文研究任务 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/26-fulltext-research.json` |
 | `scripts/fusion/test-live-inbound.mjs` | 验收 | 合成入站 → 真实模型 → 本人 QQ 外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/01-native-inbound.json` |
@@ -176,12 +188,12 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/test-profile-confirmation.mjs` | 验收 | Profile 变更确认后恢复原值 | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/08-profile-confirmation.json` |
 | `scripts/fusion/test-project-maintenance.mjs` | 验收 | 真实 QQ → 项目 worker → 隔离检查 → 本地提交 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/22-project-maintenance.json` |
 | `scripts/fusion/test-project-scoped-commit.mjs` | 验收 | 提交范围只含指定文件 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/23-project-scoped-commit.json` |
-| `scripts/fusion/test-qq-interaction.mjs` | 验收 | 仅本人 QQ 的分段与表情外发 | 真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/15-qq-natural-sticker.json` |
+| `scripts/fusion/test-qq-interaction.mjs` | 验收 | 合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/migration/15-qq-natural-sticker.json` |
 | `scripts/fusion/test-recurring-weather.mjs` | 验收 | 周期天气 automations | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/27-recurring-weather.json` |
 | `scripts/fusion/test-reminder-delivery.mjs` | 验收 | 自然语言 → automations → 到点外发 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/13-natural-reminder-delivery.json` |
 | `scripts/fusion/test-reminder-tool.mjs` | 验收 | 提醒工具 CRUD（须先取消未来任务） | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/09-native-agent-reminder.json` |
 | `scripts/fusion/test-research-cancel.mjs` | 验收 | 研究任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/28-research-cancel.json` |
-| `scripts/fusion/test-research.mjs` | 验收 | 公开论文检索，无 QQ 输出、无记忆写入 | 真实外部API、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/15-research.json` |
+| `scripts/fusion/test-research.mjs` | 验收 | 公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入 | 真实模型、真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/fusion/15-research.json` |
 | `scripts/fusion/test-service-recovery.mjs` | 验收 | 服务故障注入与恢复；不发 QQ、不调模型 | 重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/35-service-recovery.json` |
 | `scripts/fusion/test-task-control.mjs` | 验收 | 任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/12-task-control.json` |
 
