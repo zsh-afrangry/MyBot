@@ -1,0 +1,956 @@
+{
+  "at": "2026-10-11T06:37:13.722Z",
+  "boundary": "Real configured model and real OpenClaw inbound dispatch/v2 tool/deferred catalog/native scheduler; isolated runtime/process and mock OneBot. No QQ send or production domain/Cron changes.",
+  "cases": [
+    {
+      "label": "user-1-capability",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "能，这个我一直在管着。\n\n刚查了下你现在的列表：里面还是空的，只有每天 23:58 一次汇总播报在跑。你要加就直接把事项发我，一条一个，我照你的原话记；一次发好几条也行。有 Deadline 的就说具体到哪天或哪个点，没定就直说\"不设\"。\n\n顺便，那个 23:58 的播报时间要不要挪？想改到早上或者中午吃饭前，说一声就行。\n\n（还有，是小鲸鱼。）"
+          }
+        ]
+      },
+      "state": {
+        "items": [],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "user-2-add",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了：**党支部换届选举**，10月13日（周二）上午10:00，地点B806。\n\n之后每天的 23:58 汇总会带上它。还有别的就继续发，一条一个。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "user-3-add",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了：**开组会汇报工作**，10月12日（周一）晚上19:30。\n\n现在列表里两条了。继续发就行。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "user-4-add",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了：**跟本科党支部联系，查一下党员材料去哪了**，没设 Deadline，备注里记了\"越快越好\"。\n\n这条会一直挂在有效列表里，跟着每天的汇总一起提。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "user-5-add",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了：**上课的时候要交数学分析的作业**，10月12日（周一）早上10:30。\n\n到这儿你列表里四条了：数学分析作业（12号10:30）、组会汇报（12号19:30）、党支部换届选举（13号10:00 · B806），还有那条查党员材料（无期限，越快越好）。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "user-6-add",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了：**Web程序设计作业**，截止10月16日（按当天结束算），备注里记了\"命名格式为 学号-姓名-作业1，发压缩包到钉钉\"。\n\n发钉钉那条我只当作事项资料记着，不会替你动手发。要提醒的就继续发。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "user-7-add",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了：**党支部换届选举后需要整理党费缴纳情况**，没设 Deadline，\"选举后\"这个条件我按原话记在标题里了。\n\n说明一下：它不会自动盯着选举结束，只是作为一条无期限待办一直留在有效列表里，每天汇总时提醒你；等选举完了、事情办好了，你说一声我把它划掉。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "eeeac7ea1205",
+            "title": "党支部换届选举后需要整理党费缴纳情况",
+            "content": null,
+            "note": null,
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "implicit-event-condition",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "加好了：**会议结束后整理会议材料**，无 Deadline，备注记了\"只要知道有这回事就行\"。\n\n现在列表一共七条：12号有数学分析作业（10:30）和组会汇报（19:30），13号党支部换届选举（10:00 · B806），16号截止的Web程序设计作业，另外三条没期限的——查党员材料（越快越好）、选举后整理党费、会后整理材料。就这些，还要补就发。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "eeeac7ea1205",
+            "title": "党支部换届选举后需要整理党费缴纳情况",
+            "content": null,
+            "note": null,
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "b57605171cc2",
+            "title": "会议结束后整理会议材料",
+            "content": null,
+            "note": "只要知道有这回事就行",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "failed-list-stays-list",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "这条先卡一下：**\"下次课前\"我不知道是哪天**，不能瞎猜日期填进去。\n\n下次课是哪天、几点？你说清楚我就写进列表，把截止时刻定在课前那个点。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "eeeac7ea1205",
+            "title": "党支部换届选举后需要整理党费缴纳情况",
+            "content": null,
+            "note": null,
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "b57605171cc2",
+            "title": "会议结束后整理会议材料",
+            "content": null,
+            "note": "只要知道有这回事就行",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "topic-change",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "行，收工。\n\n列表就那七条了；验收作业那条还没进去，等你哪天把下次课的时间想起来了再跟我说一声。\n\n要改播报时间也随时喊我。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "eeeac7ea1205",
+            "title": "党支部换届选举后需要整理党费缴纳情况",
+            "content": null,
+            "note": null,
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "b57605171cc2",
+            "title": "会议结束后整理会议材料",
+            "content": null,
+            "note": "只要知道有这回事就行",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "implicit-after-end-denied",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "刚说结束录入，这一条我不确定还算不算往列表里加。\n\n要加的话你明确说一声，我按明天（10月12日）当天结束记进去。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "eeeac7ea1205",
+            "title": "党支部换届选举后需要整理党费缴纳情况",
+            "content": null,
+            "note": null,
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "b57605171cc2",
+            "title": "会议结束后整理会议材料",
+            "content": null,
+            "note": "只要知道有这回事就行",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "reopen-intake-before-reset",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "能，一直在管着。刚看了下你现在的列表，七条都是有效的：\n\n12号：数学分析作业（10:30）、组会汇报（19:30）；13号：党支部换届选举（10:00 · B806）；16号截止的Web程序设计作业；另外三条没期限的——查党员材料（越快越好）、选举后整理党费、会后整理材料。\n\n每天 23:58 有一次汇总播报。要加要改直接说。对了，之前那条\"验收作业\"还差你一句下次课的时间，没进去。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "eeeac7ea1205",
+            "title": "党支部换届选举后需要整理党费缴纳情况",
+            "content": null,
+            "note": null,
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "b57605171cc2",
+            "title": "会议结束后整理会议材料",
+            "content": null,
+            "note": "只要知道有这回事就行",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    },
+    {
+      "label": "implicit-after-reset-denied",
+      "passed": true,
+      "result": {
+        "ok": true,
+        "captured": [
+          {
+            "text": "这条要加进提醒列表的话，得你明确说一声～我理解成「提交补充材料」，截止到明天（10月12日，当天结束）。是这个意思的话回我一句“加进提醒列表”就行。"
+          }
+        ]
+      },
+      "state": {
+        "items": [
+          {
+            "id": "72bb5927fec4",
+            "title": "党支部换届选举",
+            "content": "地点是B806",
+            "note": null,
+            "ddl": "2026-10-13T10:00",
+            "deadline_ms": 1791856800000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "5c2a21cddd36",
+            "title": "开组会汇报工作",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T19:30",
+            "deadline_ms": 1791804600000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "1e7bc8b0c4c0",
+            "title": "跟本科党支部联系，查一下党员材料去哪了",
+            "content": null,
+            "note": "越快越好",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "0dc4acec3423",
+            "title": "上课的时候要交数学分析的作业",
+            "content": null,
+            "note": null,
+            "ddl": "2026-10-12T10:30",
+            "deadline_ms": 1791772200000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "ea43706f52c9",
+            "title": "Web程序设计作业",
+            "content": "命名格式为 学号-姓名-作业1，发压缩包到钉钉",
+            "note": null,
+            "ddl": "2026-10-16",
+            "deadline_ms": 1792166400000,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "eeeac7ea1205",
+            "title": "党支部换届选举后需要整理党费缴纳情况",
+            "content": null,
+            "note": null,
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          },
+          {
+            "id": "b57605171cc2",
+            "title": "会议结束后整理会议材料",
+            "content": null,
+            "note": "只要知道有这回事就行",
+            "ddl": null,
+            "deadline_ms": null,
+            "status": "active",
+            "version": 1
+          }
+        ],
+        "settings": {
+          "singleton": 1,
+          "owner_id": "365999865",
+          "times_json": "[\"23:58\"]",
+          "enabled": 1,
+          "version": 1,
+          "updated_ms": 1791700642818
+        }
+      }
+    }
+  ],
+  "suite": "natural-input",
+  "reset": {
+    "ok": true
+  },
+  "oneoffProposals": 0,
+  "productionUnchanged": true,
+  "passed": true,
+  "childStopped": true,
+  "mockSends": 0
+}

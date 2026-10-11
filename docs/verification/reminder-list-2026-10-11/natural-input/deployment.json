@@ -1,0 +1,91 @@
+{
+  "at": "2026-10-11T06:44:04.064Z",
+  "boundary": "Sync only managed workspace persona instructions, restart Fusion, and read-only deployment checks; no QQ test sends or domain mutations. Guard compares list items/settings/requests and one-off proposals/reminders, not background audit/delivery rows.",
+  "checks": [
+    {
+      "command": "/usr/bin/node scripts/fusion/sync-config.mjs --diff",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "output": "\n  repo-managed top-level keys : agents, bindings, channels, commands, discovery, gateway, logging, models, plugins, secrets, session, skills, tools\n  host-maintained keys kept   : (none)\nconfig in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n"
+    },
+    {
+      "command": "/usr/bin/node /home/afrangry/kurumi-fusion/node_modules/openclaw/openclaw.mjs plugins validate --entry ./index.js",
+      "cwd": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list",
+      "exitCode": 0,
+      "output": "Plugin personal-reminder-list is valid.\n"
+    },
+    {
+      "command": "/usr/bin/node scripts/fusion/sync-persona.mjs --apply",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "output": "  DIFFERS  AGENTS.md\n  role card: roles/小鲸鱼.md\n  NOT touched: openclaw.json, runtime-env.json, memory, reminders, state\n  wrote AGENTS.md\npersona applied from roles/小鲸鱼.md; model and credential configuration untouched\n"
+    },
+    {
+      "command": "systemctl --user restart kurumi-fusion.service",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": "/usr/bin/node scripts/fusion/health.mjs",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "output": "{\n  \"at\": \"2026-10-11T06:44:21.803Z\",\n  \"ok\": true,\n  \"issues\": [],\n  \"gateway\": true,\n  \"qq\": {\n    \"online\": true,\n    \"good\": true\n  },\n  \"testIngress\": false,\n  \"channel\": [\n    {\n      \"running\": true,\n      \"connected\": true\n    }\n  ],\n  \"cron\": {\n    \"total\": 9,\n    \"hasMore\": false,\n    \"jobs\": [\n      {\n        \"id\": \"12df2be6-a477-4369-9b08-f76c4e3623a5\",\n        \"enabled\": true,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": 1791712800000\n      },\n      {\n        \"id\": \"1ad1bb0e-e393-4fe1-874a-f659b9187721\",\n        \"enabled\": true,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": 1791734400000\n      },\n      {\n        \"id\": \"17a026c2-0a57-4176-985d-8f474294f37f\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"not-delivered\",\n        \"nextRunAtMs\": 1791763200000\n      },\n      {\n        \"id\": \"2bd8e62c-2bf0-4a45-b231-34e39d2ee400\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"delivered\",\n        \"nextRunAtMs\": 1791772200000\n      },\n      {\n        \"id\": \"23c06aa8-96f2-47c7-9adf-9a6f1291bb28\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"not-delivered\",\n        \"nextRunAtMs\": 1791777600000\n      },\n      {\n        \"id\": \"2d61b8f2-744a-438d-be99-a2796f05d5fd\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"428bf628-20d2-4c99-a889-38782ece05a7\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"53286346-7fed-4e0e-a381-9ee815014f01\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      }\n    ]\n  },\n  \"testMethodDisabled\": true,\n  \"channelDatabase\": \"ok\",\n  \"outbound\": [\n    {\n      \"status\": \"sent\",\n      \"count\": 98\n    }\n  ],\n  \"recentAttempts\": 31,\n  \"dailyLimit\": 500,\n  \"recentFailedInbound\": 0,\n  \"weatherDatabase\": \"ok\",\n  \"remindersDatabase\": \"ok\",\n  \"reminderListDatabase\": \"ok\",\n  \"services\": {\n    \"kurumi-fusion\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"qq-bridge\": {\n      \"ActiveState\": \"inactive\",\n      \"UnitFileState\": \"masked\"\n    },\n    \"openclaw-gateway\": {\n      \"ActiveState\": \"inactive\",\n      \"UnitFileState\": \"masked\"\n    },\n    \"snowluma\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"snowluma-qq\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"dsh-web\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"disabled\"\n    }\n  }\n}\n"
+    },
+    {
+      "command": "/usr/bin/node scripts/fusion/verify-dependencies.mjs",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "output": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n"
+    },
+    {
+      "command": "/usr/bin/node scripts/fusion/sync-config.mjs",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "output": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n"
+    },
+    {
+      "command": "/usr/bin/node scripts/fusion/sync-persona.mjs",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "output": "persona in sync with roles/小鲸鱼.md (4 workspace file(s) match)\n"
+    }
+  ],
+  "beforeHashes": {
+    "list": "5f49ce8c8933a33a8a27b2e304aaec04c705616e95f5b49a3b075d14577664b8",
+    "oneoff": "250dd87ebbb727a04f7aaa92dd2f9d29f07ee01a7c5e1ae887fb4b9025d297a2"
+  },
+  "restarted": true,
+  "dailyDeclarationsPreserved": [
+    {
+      "id": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+      "slot": "kurumi.reminder-list.daily:18:00"
+    },
+    {
+      "id": "17a026c2-0a57-4176-985d-8f474294f37f",
+      "slot": "kurumi.reminder-list.daily:08:00"
+    },
+    {
+      "id": "1ad1bb0e-e393-4fe1-874a-f659b9187721",
+      "slot": "kurumi.reminder-list.daily:00:00"
+    },
+    {
+      "id": "23c06aa8-96f2-47c7-9adf-9a6f1291bb28",
+      "slot": "kurumi.reminder-list.daily:12:00"
+    }
+  ],
+  "testIngress": false,
+  "sourceHashes": {
+    "chatbot/plugins/personal-reminder-list/index.js": "0928e3c36a3a3796d2cefddc783533088cbdb316345f185a7d25f5d0fd0dada6",
+    "chatbot/plugins/personal-reminder-list/intent.js": "385f94ab95fdb7350875d2a23c46b88a715365af44f63ff69a1f9421700cf3a5",
+    "chatbot/plugins/personal-reminder-list/intake.js": "0d30b93dc87c20f5ce8762647efc8a5c0a17065d66ea5fbb71ba4705424232f6",
+    "chatbot/plugins/personal-reminder-list/store.js": "dd287a95734764c98d05a074861db280d01c62eb20629e30b41bc800bbe4b395",
+    "scripts/fusion/templates/AGENTS.md": "7f65047513fefe0a00e585095d84ebab958687da12d8ce5946d3e61d22d6981f"
+  },
+  "passed": true,
+  "afterHashes": {
+    "list": "5f49ce8c8933a33a8a27b2e304aaec04c705616e95f5b49a3b075d14577664b8",
+    "oneoff": "250dd87ebbb727a04f7aaa92dd2f9d29f07ee01a7c5e1ae887fb4b9025d297a2"
+  },
+  "productionUnchanged": true
+}

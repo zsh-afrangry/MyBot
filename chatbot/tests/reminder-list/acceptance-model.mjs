@@ -1,19 +1,27 @@
 // Authorized live primary-model acceptance with actual plugin tool factories.
 // Only /tmp domain state. Service callbacks are not started; Gateway token is
 // removed, so schedule sync cannot mutate production Cron. No QQ delivery.
+// --natural runs the user dialogue suite; --out selects a separate evidence directory.
 // Evidence: docs/verification/reminder-list-2026-10-11/model.json
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';
 import {tmpdir} from 'node:os';
 import assert from 'node:assert/strict';
-import {DatabaseSync} from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
 import {ListStore} from '../../plugins/personal-reminder-list/store.js';
 import {localTime} from '../../plugins/personal-reminder-list/time.js';
 import plugin from '../../plugins/personal-reminder-list/index.js';
+import {dialogue} from './dialogue-cases.mjs';
+import {productionSnapshot as guardedSnapshot} from './production-guard.mjs';
+import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
+import weather from '../../plugins/personal-weather/dist/index.js';
 
 const repo = resolve(fileURLToPath(new URL('../../../', import.meta.url)));
-const outDir = resolve(repo, 'docs/verification/reminder-list-2026-10-11');
+const natural = process.argv.includes('--natural');
+const outArg = process.argv.indexOf('--out');
+const explicitOut = outArg < 0 ? undefined : process.argv[outArg + 1];
+if (outArg >= 0 && !explicitOut) throw Error('--out requires an output directory');
+const outDir = explicitOut ? resolve(explicitOut) : resolve(repo, 'docs/verification/reminder-list-2026-10-11', natural ? 'natural-input' : '');
 const runtime = '/home/afrangry/.openclaw-fusion';
 const cfg = JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json')));
 const primary = cfg.agents.entries.main.model.primary, [providerId, model] = primary.split('/');
@@ -26,20 +34,16 @@ const root = fs.mkdtempSync(join(tmpdir(), 'kurumi-list-model-'));
 const oldRoot = process.env.OPENCLAW_STATE_DIR, oldGatewayToken = process.env.OPENCLAW_GATEWAY_TOKEN;
 process.env.OPENCLAW_STATE_DIR = root;
 delete process.env.OPENCLAW_GATEWAY_TOKEN;
-const hooks = {}, factories = {}, ctx = {senderIsOwner: true, requesterSenderId: owner, messageChannel: 'kurumi-qq', sessionKey: session, runId: 'reminder-list-model-acceptance', getRuntimeConfig: () => cfg, assertInvocationCurrent() {}};
+const hooks = {}, factories = {}, ctx = {senderIsOwner: true, requesterSenderId: owner, messageChannel: 'kurumi-qq', sessionKey: session, sessionId: 'model-acceptance-session', runId: 'reminder-list-model-acceptance', getRuntimeConfig: () => cfg, assertInvocationCurrent() {}};
 plugin.register({config: cfg, registrationMode: 'full', pluginConfig: {backendRoot: join(repo, 'chatbot')}, logger: {warn() {}}, on: (name, fn) => hooks[name] = fn, registerTool: (f, meta) => factories[meta.name] = f, registerService() {}});
 const definitions = Object.keys(factories).map(name => {const t = factories[name].create(ctx); return {type: 'function', function: {name, description: t.description, parameters: t.parameters}};});
-const messages = [{role: 'system', content: fs.readFileSync(join(repo, 'scripts/fusion/templates/AGENTS.md'), 'utf8') + `\n当前实际本地时间 ${localTime(Date.now())} Asia/Shanghai。此次只提供提醒列表工具，身份已经由可信本人QQ入站提供；读写独立验收库。自然澄清缺失字段，真实工具结果才是完成依据。`}];
-const report = {at: new Date().toISOString(), model: primary, boundary: 'Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.', cases: []};
-const productionFile = join(runtime, 'state/personal-reminder-list/list.sqlite');
-function productionSnapshot() {
-  if (!fs.existsSync(productionFile)) return 'absent';
-  // Compare logical user data rather than WAL bytes, which the running service
-  // may checkpoint. Delivery observations are independent background activity.
-  const db = new DatabaseSync(productionFile, {readOnly: true});
-  try {return JSON.stringify({items: db.prepare('SELECT * FROM items ORDER BY id').all(), settings: db.prepare('SELECT * FROM settings').all(), requests: db.prepare('SELECT * FROM requests ORDER BY message_key').all()});}
-  finally {db.close();}
+if (natural) {
+  const declaration = weather[toolPluginMetadataSymbol].tools.find(t => t.name === 'personal_reminder_propose');
+  definitions.push({type: 'function', function: {name: declaration.name, description: declaration.description, parameters: declaration.parameters}});
 }
+const messages = [{role: 'system', content: fs.readFileSync(join(repo, 'scripts/fusion/templates/AGENTS.md'), 'utf8') + `\n当前实际本地时间 ${localTime(Date.now())} Asia/Shanghai。本人QQ身份已由可信入站提供；所有工具结果指向独立验收库。自然澄清缺失字段，真实工具结果才是完成依据。`}];
+const report = {at: new Date().toISOString(), model: primary, boundary: 'Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only; competing one-off declaration is a non-writing routing fixture. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.', cases: [], suite: natural ? 'natural-input' : 'baseline', competingProposalAttempts: 0};
+function productionSnapshot() {return guardedSnapshot(runtime);}
 const before = productionSnapshot();
 let seq = 0;
 const inspect = () => {
@@ -65,9 +69,17 @@ async function turn(label, text, verify) {
       console.log(JSON.stringify({case: label, passed: true, toolCalls: row.calls.length})); return;
     }
     for (const call of answer.tool_calls) {
-      const tool = tools[call.function.name]; if (!tool) throw Error('Unknown requested tool');
+      const tool = tools[call.function.name];
       const args = JSON.parse(call.function.arguments);
-      const value = JSON.parse((await tool.execute(call.id, args)).content[0].text);
+      const blocked = hooks.before_tool_call?.({toolName: call.function.name, params: args}, ctx);
+      let value;
+      if (call.function.name === 'personal_reminder_propose') {
+        report.competingProposalAttempts++;
+        value = {ok: false, error: {code: blocked?.block ? 'tool_blocked' : 'fixture_competing_proposal', message: blocked?.blockReason ?? '竞争工具仅作模型路由观察，不存提案'}};
+      } else {
+        if (!tool) throw Error('Unknown requested tool');
+        value = blocked?.block ? {ok: false, error: {code: 'tool_blocked', message: blocked.blockReason}} : JSON.parse((await tool.execute(call.id, args)).content[0].text);
+      }
       row.calls.push({name: call.function.name, args, result: value});
       messages.push({role: 'tool', tool_call_id: call.id, content: JSON.stringify(value)});
     }
@@ -75,6 +87,38 @@ async function turn(label, text, verify) {
   throw Error('Exceeded bounded tool rounds');
 }
 try {
+  if (natural) {
+    await turn('user-1-capability', dialogue[0], (data, row) => {
+      assert.equal(data.items.length, 0); assert.ok(row.calls.some(c => c.name === 'personal_reminder_list_get'));
+      assert.equal(data.settings.version, 1);
+    });
+    const needles = ['党支部换届选举', '组会', '党员材料', '数学分析', 'Web程序设计作业', '党费'];
+    const ddls = ['2026-10-13T10:00', '2026-10-12T19:30', null, '2026-10-12T10:30', '2026-10-16', null];
+    for (let i = 0; i < 6; i++) await turn('user-' + (i + 2) + '-add', dialogue[i + 1], (data, row) => {
+      assert.equal(data.items.length, i + 1);
+      const found = data.items.filter(item => [item.title, item.content, item.note].join(' ').includes(needles[i]));
+      assert.equal(found.length, 1); const item = found[0]; assert.equal(item.ddl, ddls[i]); assert.equal(item.status, 'active');
+      const body = [item.title, item.content, item.note].join(' ');
+      if (i === 0) assert.match(body, /B806/);
+      if (i === 2) {assert.equal(item.deadlineMs, null); assert.match(body, /越快越好/);}
+      if (i === 4) {assert.match(body, /学号-姓名-作业1/); assert.match(body, /钉钉/); assert.equal(item.deadlineMs, Date.parse('2026-10-17T00:00:00+08:00'));}
+      if (i === 5) {assert.equal(item.deadlineMs, null); assert.match(body, /选举后/);}
+      assert.ok(!row.calls.some(c => c.name === 'personal_reminder_propose'));
+    });
+    await turn('implicit-event-condition', '还有一条：会议结束后整理会议材料，无DDL，只要知道有这回事就行。', data => {
+      assert.equal(data.items.length, 7); const i = data.items.find(i => i.title.includes('会议材料'));
+      assert.equal(i?.ddl, null); assert.equal(i?.deadlineMs, null); assert.match([i.title,i.content,i.note].join(' '), /会议结束后/);
+    });
+    await turn('failed-list-stays-list', '提醒列表添加验收作业，DDL为下次课前。', (data, row) => {
+      assert.equal(data.items.length, 7); assert.ok(!row.calls.some(c => c.name === 'personal_reminder_propose'));
+      assert.match(row.reply ?? '', /哪天|日期|什么时候|时间|下次.*课/);
+    });
+    await turn('topic-change', '谢谢，先结束录入。', data => assert.equal(data.items.length, 7));
+    await turn('implicit-after-end-denied', '还有一个：明天需要提交补充材料。', (data,row) => {
+      assert.equal(data.items.length, 7); assert.ok(!row.calls.some(c => c.result.ok));
+    });
+    assert.equal(report.competingProposalAttempts, 0);
+  } else {
   const tomorrow = localTime(Date.now() + 86400000).slice(0, 10);
   await turn('add-with-ddl', '帮我在提醒列表里加一条：验收汇报，内容写提前熟悉PPT，备注写越快越好，DDL为明天19:30。', data => {
     const i = data.items.find(i => i.title === '验收汇报'); assert.equal(i?.ddl, tomorrow + 'T19:30'); assert.equal(i?.note, '越快越好');
@@ -100,6 +144,7 @@ try {
   await turn('active-list-only', '查看有效提醒列表。', (_data, row) => {
     const calls = row.calls.filter(c => c.name === 'personal_reminder_list_get'); assert.ok(calls.length); assert.ok(calls.every(c => c.result.items.every(i => i.status === 'active')));
   });
+  }
   report.passed = true;
 } catch (error) {report.passed = false; report.error = error.message; process.exitCode = 1;}
 finally {

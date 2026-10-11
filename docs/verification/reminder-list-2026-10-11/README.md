@@ -1,6 +1,6 @@
 # 提醒列表验收（2026-10-11）
 
-需求、方案、决策和开发闭环见[文档 19](../../19_提醒列表与定时汇总.md)。本目录仅保存证据，统一索引见[INDEX](../INDEX.md)。
+需求、方案、决策和开发闭环见[文档 19](../../19_提醒列表与定时汇总.md)。本目录仅保存证据，统一索引见[INDEX](../INDEX.md)。最新自然录入补正、可空 DDL、多轮与会话重置见 [natural-input 验收](natural-input/README.md)；下表是初版证据，不替代该补正。
 
 | 文件 | 证明范围 |
 | --- | --- |
@@ -16,6 +16,6 @@
 node --test chatbot/tests/reminder-list/*.test.mjs
 ```
 
-三份 `chatbot/tests/reminder-list/acceptance-{model,host,native}.mjs` 需按[脚本索引](../SCRIPTS.md)单独审阅和授权。native 会真实重启 Fusion 并发本人 QQ；model/host 真实调用模型；host 的 QQ 仅接本地模拟端。全部待办写入 `/tmp/`，测试未删除生产账本；证据路径固定，重跑前应保留需要的旧证据。
+三份 `chatbot/tests/reminder-list/acceptance-{model,host,native}.mjs` 需按[脚本索引](../SCRIPTS.md)单独审阅和授权。native 会真实重启 Fusion 并发本人 QQ；model/host 真实调用模型；host 的 QQ 仅接本地模拟端。全部待办写入 `/tmp/`，测试未删除生产账本；model/host 支持 `--out` 指定独立目录；未指定时仍覆盖固定路径。native 的固定证据重跑前保留旧版本。
 
 未覆盖：真人 QQ 入站维护、完整一天四时段持续运行、长期数据量压力和本功能的全量备份恢复演练。原生任务真实送达和 Host 模拟入站分别证明，不能合称为真人全链路往返。需求样例没有自动创建。

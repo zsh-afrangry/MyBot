@@ -1,0 +1,316 @@
+{
+  "at": "2026-10-11T06:37:14.358Z",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only; competing one-off declaration is a non-writing routing fixture. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.",
+  "cases": [
+    {
+      "label": "user-1-capability",
+      "input": "大肥鱼，你能维护一个提醒列表吗？我这里事情有点多，需要你定期提醒我。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T14:37:15",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        }
+      ],
+      "reply": "可以，我这边有个持久提醒列表，现在还是空的，正好从头记。\n\n当前设置：每天 `00:00 / 08:00 / 12:00 / 18:00` 各汇总播报一次，处于启用状态（次数和时刻都能改）。另外后台的播报调度还在重试对齐，不影响先把事项存进去。\n\n你把事情说给我就行，一条一项地丢过来也可以，我会按原文记下标题、内容和备注；有明确日期或时刻的期限一并说明，没有期限或者\"越快越好\"\"活动结束后\"这种条件我就原样保留，不替你编日期。要注意的是：列表管的是\"定期提醒列表\"这类长期待办，和那种单次到点的提醒是两套，别混了。",
+      "passed": true
+    },
+    {
+      "label": "user-2-add",
+      "input": "提醒列表里加一个：10月13日，下周二，上午10.00，党支部换届选举，地点是B806。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "党支部换届选举",
+            "content": "10月13日，下周二，上午10.00，地点是B806",
+            "ddl": "2026-10-13T10:00"
+          },
+          "result": {
+            "ok": false,
+            "error": {
+              "code": "list_operation_rejected",
+              "message": "标题、内容和备注需取自本次原文，不能添加推测事实"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "党支部换届选举",
+            "content": "10月13日，下周二，上午10.00，党支部换届选举，地点是B806",
+            "ddl": "2026-10-13T10:00"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "c9beea709fe4",
+              "title": "党支部换届选举",
+              "content": "10月13日，下周二，上午10.00，党支部换届选举，地点是B806",
+              "note": null,
+              "ddl": "2026-10-13T10:00",
+              "deadlineMs": 1791856800000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:37:27.091Z",
+              "updatedAt": "2026-10-11T06:37:27.091Z"
+            }
+          }
+        }
+      ],
+      "reply": "记好了 ✅\n\n**党支部换届选举**\n- 期限：2026-10-13（周二）上午 10:00，按该分钟算\n- 地点：B806\n- 状态：有效，版本 1，ID `c9beea709fe4`\n\n日期对得上，10 月 13 日确实是下周二，没有冲突。后面还有事就接着丢给我，一条一句都行。\n\n改时间、标记完成或作废的时候，跟我说一声我就按最新状态处理。",
+      "passed": true
+    },
+    {
+      "label": "user-3-add",
+      "input": "提醒列表里加一个，10月12日，下周一，晚上19.30，开组会汇报工作。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "content": "10月12日，下周一，晚上19.30，开组会汇报工作",
+            "ddl": "2026-10-12T19:30",
+            "title": "开组会汇报工作"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "fe7bc56e9cbd",
+              "title": "开组会汇报工作",
+              "content": "10月12日，下周一，晚上19.30，开组会汇报工作",
+              "note": null,
+              "ddl": "2026-10-12T19:30",
+              "deadlineMs": 1791804600000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:37:30.454Z",
+              "updatedAt": "2026-10-11T06:37:30.454Z"
+            }
+          }
+        }
+      ],
+      "reply": "加好了 ✅\n\n**开组会汇报工作**\n- 期限：2026-10-12（周一）晚上 19:30\n- 状态：有效，版本 1，ID `fe7bc56e9cbd`\n\n这个是最近的一件，明天晚上就到。列表现在两条：明天 19:30 组会、周二 10:00 换届选举（B806）。继续加就说，我接着记。",
+      "passed": true
+    },
+    {
+      "label": "user-4-add",
+      "input": "提醒列表里加一个，跟本科党支部联系，查一下党员材料去哪了，没有DDL,时间越快越好。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "content": "跟本科党支部联系，查一下党员材料去哪了",
+            "ddl": null,
+            "note": "没有DDL，时间越快越好",
+            "title": "跟本科党支部联系，查一下党员材料去哪了"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "4d1f1f938154",
+              "title": "跟本科党支部联系，查一下党员材料去哪了",
+              "content": "跟本科党支部联系，查一下党员材料去哪了",
+              "note": "没有DDL，时间越快越好",
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:37:33.552Z",
+              "updatedAt": "2026-10-11T06:37:33.552Z"
+            }
+          }
+        }
+      ],
+      "reply": "记下了 ✅\n\n**跟本科党支部联系，查一下党员材料去哪了**\n- 期限：无（没有 DDL）\n- 备注：没有DDL，时间越快越好\n- 状态：有效，版本 1，ID `4d1f1f938154`\n\n这条不会因为过期掉出列表，会一直挂在有效项里，直到你说完成或作废。它没有具体到点，所以只跟着每日播报一起提醒。\n\n列表现在三条：明天 19:30 组会、周二 10:00 换届选举、这条无期限的党员材料。继续。",
+      "passed": true
+    },
+    {
+      "label": "user-5-add",
+      "input": "提醒列表里加一个，10月12日，下周一，早上10：30上课的时候要交数学分析的作业。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "content": "10月12日，下周一，早上10：30上课的时候要交数学分析的作业",
+            "ddl": "2026-10-12T10:30",
+            "title": "数学分析的作业"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "8b761de76228",
+              "title": "数学分析的作业",
+              "content": "10月12日，下周一，早上10：30上课的时候要交数学分析的作业",
+              "note": null,
+              "ddl": "2026-10-12T10:30",
+              "deadlineMs": 1791772200000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:37:37.184Z",
+              "updatedAt": "2026-10-11T06:37:37.184Z"
+            }
+          }
+        }
+      ],
+      "reply": "加好了 ✅\n\n**数学分析的作业**\n- 期限：2026-10-12（周一）早上 10:30，按该分钟算\n- 状态：有效，版本 1，ID `8b761de76228`\n\n明天有两件了：上午 10:30 交数学分析作业，晚上 19:30 组会汇报。列表一共四条，另外两条是周二 10:00 换届选举、无期限的联系本科党支部查党员材料。",
+      "passed": true
+    },
+    {
+      "label": "user-6-add",
+      "input": "Web程序设计作业，这次作业命名格式为 学号-姓名-作业1，发压缩包到钉钉，截止时间为10月16日，需要加到提醒列表里",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "content": "Web程序设计作业，这次作业命名格式为 学号-姓名-作业1，发压缩包到钉钉，截止时间为10月16日",
+            "ddl": "2026-10-16",
+            "title": "Web程序设计作业"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "8973cc33c809",
+              "title": "Web程序设计作业",
+              "content": "Web程序设计作业，这次作业命名格式为 学号-姓名-作业1，发压缩包到钉钉，截止时间为10月16日",
+              "note": null,
+              "ddl": "2026-10-16",
+              "deadlineMs": 1792166400000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:37:40.202Z",
+              "updatedAt": "2026-10-11T06:37:40.202Z"
+            }
+          }
+        }
+      ],
+      "reply": "记好了 ✅\n\n**Web程序设计作业**\n- 期限：2026-10-16（日期型，按当日结束算）\n- 资料：命名格式 学号-姓名-作业1，发压缩包到钉钉\n- 状态：有效，版本 1，ID `8973cc33c809`\n\n提醒里我会按原文保留这些要求，但\"发压缩包到钉钉\"这类只是事项资料，我不会替你去发文件——到点提醒你自己动手。\n\n现在列表五条：明天 10:30 交数分作业、明天 19:30 组会、周二 10:00 换届选举、联系本科党支部查材料（无期限）、10-16 Web 作业。",
+      "passed": true
+    },
+    {
+      "label": "user-7-add",
+      "input": "党支部换届选举后需要整理党费缴纳情况，无DDL,到时候别忘了这件事，帮我加紧提醒列表。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "content": "党支部换届选举后需要整理党费缴纳情况，无DDL，到时候别忘了这件事",
+            "ddl": null,
+            "note": "党支部换届选举后",
+            "title": "整理党费缴纳情况"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "1b55a1ff4778",
+              "title": "整理党费缴纳情况",
+              "content": "党支部换届选举后需要整理党费缴纳情况，无DDL，到时候别忘了这件事",
+              "note": "党支部换届选举后",
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:37:45.717Z",
+              "updatedAt": "2026-10-11T06:37:45.717Z"
+            }
+          }
+        }
+      ],
+      "reply": "加进去了 ✅\n\n**整理党费缴纳情况**\n- 期限：无（无 DDL，没有替你编日期）\n- 备注：党支部换届选举后\n- 状态：有效，版本 1，ID `1b55a1ff4778`\n\n那句\"加紧提醒列表\"我按\"加进提醒列表\"理解了，播报时间没动。另外说清楚一点：目前只有固定的每日时段汇总，我不会自动识别\"换届选举结束\"这个事件来触发——它会一直挂在有效项里，跟着每天 00:00 / 08:00 / 12:00 / 18:00 的播报提醒你，选举之后你记得去办就行。\n\n列表六条了：明天 10:30 数分作业、明天 19:30 组会、周二 10:00 换届选举、联系本科党支部查材料、10-16 Web 作业、这条选举后整理党费。",
+      "passed": true
+    },
+    {
+      "label": "implicit-event-condition",
+      "input": "还有一条：会议结束后整理会议材料，无DDL，只要知道有这回事就行。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "content": "会议结束后整理会议材料，无DDL，只要知道有这回事就行",
+            "ddl": null,
+            "note": "会议结束后",
+            "title": "整理会议材料"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "8366a50c6d2d",
+              "title": "整理会议材料",
+              "content": "会议结束后整理会议材料，无DDL，只要知道有这回事就行",
+              "note": "会议结束后",
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:37:48.762Z",
+              "updatedAt": "2026-10-11T06:37:48.762Z"
+            }
+          }
+        }
+      ],
+      "reply": "记上了 ✅\n\n**整理会议材料**\n- 期限：无（无 DDL）\n- 备注：会议结束后\n- 状态：有效，版本 1，ID `8366a50c6d2d`\n\n\"会议结束后\"这个条件我原样留着，没补日期——到点提醒你去收尾就行。\n\n现在列表七条，按时间排一下：\n\n| 时间 | 事项 |\n|---|---|\n| 10-12 周一 10:30 | 交数学分析作业 |\n| 10-12 周一 19:30 | 开组会汇报工作 |\n| 10-13 周二 10:00 | 党支部换届选举（B806） |\n| 10-16 | Web程序设计作业（学号-姓名-作业1，发钉钉） |\n| 无期限 | 联系本科党支部查党员材料（越快越好） |\n| 无期限 | 选举后整理党费缴纳情况 |\n| 无期限 | 会议结束后整理会议材料 |\n\n要改时间、标完成或者删掉哪条，说一声就行。",
+      "passed": true
+    },
+    {
+      "label": "failed-list-stays-list",
+      "input": "提醒列表添加验收作业，DDL为下次课前。",
+      "calls": [],
+      "reply": "这条我想先跟你确认一下——\"下次课前\"不是个能落地的日期，我不好替你猜。\n\n想确认两点：\n1. 是哪门课的下次课？\n2. 具体哪天、几点上课？（比如周三 08:00 这种）\n\n知道日期时刻，我就按**该分钟**存成明确期限，比\"课前\"这种说法可靠得多，到点提醒也更准。\n\n如果你现在确实说不准哪天上课，那我可以先把\"验收作业\"存进列表，期限留空、备注原样写\"下次课前\"，等你确定了再告诉我补上具体时间——但这样一来它就只能跟着每日播报泛泛提醒，不会在课前精准提醒你。你要哪种？",
+      "passed": true
+    },
+    {
+      "label": "topic-change",
+      "input": "谢谢，先结束录入。",
+      "calls": [],
+      "reply": "好，录入结束 👌\n\n本次一共存了 **7 条**：明天 10:30 数分作业、明天 19:30 组会、周二 10:00 换届选举（B806）、10-16 Web 作业、以及三条无期限的（查党员材料、选举后整理党费、会议后整理会议材料）。\n\n**\"验收作业\"没有存进去**——因为\"下次课前\"没法落成具体日期，我不替你编。等你确定下次课的时间，再说一句\"提醒列表里加验收作业，几月几号几点前\"，我立刻补上。\n\n另外，刚才那种连续录入的便利到这儿就收了，之后再动列表麻烦带上\"提醒列表\"四个字，我好确认是对列表操作，而不是一次性提醒。",
+      "passed": true
+    },
+    {
+      "label": "implicit-after-end-denied",
+      "input": "还有一个：明天需要提交补充材料。",
+      "calls": [],
+      "reply": "刚才你说结束录入了，所以这条我不猜着直接存——想确认一下：\n\n1. 这条是**加进提醒列表**，还是设一个**明天到点的一次性提醒**？\n2. 如果加列表，\"明天\"的期限我按 **10 月 12 日当日结束**记，可以吗？还是你有具体时刻（比如明天下午 16:00 前）？\n\n你回一句我就办：\n\n- 说\"提醒列表里加\" → 我按列表存；\n- 说\"明天几点提醒我\" → 我走一次性提醒，先给你确认预览。",
+      "passed": true
+    }
+  ],
+  "suite": "natural-input",
+  "competingProposalAttempts": 0,
+  "passed": true,
+  "productionUnchanged": true
+}

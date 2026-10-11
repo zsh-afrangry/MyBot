@@ -15,7 +15,7 @@ function fixture(t, at = '2026-10-11T08:00:05+08:00') {
   const store = new ListStore({root, ownerId: OWNER, now: () => now});
   t.after(() => {store.close(); rmSync(root, {recursive: true, force: true});});
   const permit = (raw, action) => ({raw, actions: new Set([action]), at: now, messageId: String(++seq), sessionKey: `agent:main:kurumi-qq:direct:${OWNER}`});
-  const add = (title, args = {}) => store.manage({action: 'add', title, ...args}, permit(`在提醒列表添加 ${title} ${args.content ?? ''} ${args.note ?? ''}`, 'add')).item;
+  const add = (title, args = {}) => store.manage({action: 'add', title, ...args}, permit(`在提醒列表添加 ${title} ${args.content ?? ''} ${args.note ?? ''} DDL ${args.ddl ?? ''}`, 'add')).item;
   return {root, store, permit, add, clock: value => now = typeof value === 'number' ? value : Date.parse(value), now: () => now};
 }
 test('DDL date-only, leap date, minute, empty, invalid calendar and timezone', () => {
@@ -41,6 +41,29 @@ test('add optional fields and source validation; do not invent facts or accept p
   assert.throws(() => store.manage({action: 'add', title: '编造的任务'}, permit('提醒列表添加 查党员材料', 'add')));
   assert.throws(() => add('过期作业', {ddl: '2026-10-10'}));
   assert.equal(store.get().items.length, 1);
+});
+test('explicit no DDL never becomes a timestamp; urgency and activity relation cannot be dropped', t => {
+  const {store, permit} = fixture(t);
+  const urgent = '提醒列表加一个：查党员材料，没有DDL，时间越快越好';
+  for (const args of [{ddl: '2026-10-13', note: '越快越好'}, {ddl: null}]) {
+    assert.throws(() => store.manage({action: 'add', title: '查党员材料', ...args}, permit(urgent, 'add')));
+  }
+  const a = store.manage({action: 'add', title: '查党员材料', note: '越快越好', ddl: null}, permit(urgent, 'add')).item;
+  const condition = '提醒列表添加：10月13日的选举结束后整理党费缴纳情况';
+  assert.throws(() => store.manage({action: 'add', title: '整理党费缴纳情况', ddl: '2026-10-13', note: '选举结束后'}, permit(condition, 'add')), /不能.*补造/);
+  assert.throws(() => store.manage({action: 'add', title: '整理党费缴纳情况', ddl: null}, permit(condition, 'add')), /条件必须/);
+  const b = store.manage({action: 'add', title: '整理党费缴纳情况', ddl: null, note: '选举结束后'}, permit(condition, 'add')).item;
+  const c = store.manage({action: 'add', title: '材料归档', ddl: null, note: '只要知道有这回事'}, permit('提醒列表添加材料归档，无DDL，只要知道有这回事', 'add')).item;
+  for (const i of [a,b,c]) {assert.equal(i.ddl, null); assert.equal(i.deadlineMs, null);}
+  const digest = store.claimDigest('08:00');
+  assert.match(digest.text, /越快越好/); assert.match(digest.text, /选举结束后/); assert.match(digest.text, /只要知道有这回事/);
+});
+test('event relation can have a separately stated deadline; item update cannot contradict an explicit clearing request', t => {
+  const {store, permit} = fixture(t);
+  const a = store.manage({action: 'add', title: '整理党费', ddl: '2026-10-16', note: '选举后'}, permit('提醒列表添加选举后整理党费，DDL为10月16日', 'add')).item;
+  assert.throws(() => store.manage({action: 'update', id: a.id, expectedVersion: a.version, note: '越快越好'}, permit('提醒列表修改整理党费，无DDL，越快越好', 'update')), /必须留空/);
+  const b = store.manage({action: 'update', id: a.id, expectedVersion: a.version, ddl: null, note: '越快越好'}, permit('提醒列表修改整理党费，无DDL，越快越好', 'update')).item;
+  assert.equal(b.ddl, null); assert.equal(b.deadlineMs, null);
 });
 test('one trusted message is durable idempotent, changed arguments cannot run another write', t => {
   const {store, permit, root, now} = fixture(t), p = permit('提醒列表添加 带身份证', 'add');

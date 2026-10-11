@@ -1,0 +1,630 @@
+{
+  "at": "2026-10-11T06:40:09.176Z",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only; competing one-off declaration is a non-writing routing fixture. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.",
+  "cases": [
+    {
+      "label": "add-with-ddl",
+      "input": "帮我在提醒列表里加一条：验收汇报，内容写提前熟悉PPT，备注写越快越好，DDL为明天19:30。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "验收汇报",
+            "content": "提前熟悉PPT",
+            "note": "越快越好",
+            "ddl": "2026-10-12T19:30"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "cf4e8a6d3725",
+              "title": "验收汇报",
+              "content": "提前熟悉PPT",
+              "note": "越快越好",
+              "ddl": "2026-10-12T19:30",
+              "deadlineMs": 1791804600000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:40:11.591Z",
+              "updatedAt": "2026-10-11T06:40:11.591Z"
+            }
+          }
+        }
+      ],
+      "reply": "已经加进提醒列表了：\n\n- 事项：验收汇报\n- 内容：提前熟悉PPT\n- 备注：越快越好\n- 截止：2026-10-12 19:30（明天这个时间点）\n- 状态：进行中（编号 cf4e8a6d3725）\n\n需要再追加别的事项，直接说就行。",
+      "passed": true
+    },
+    {
+      "label": "add-without-ddl",
+      "input": "提醒列表添加验收材料，备注写越快越好，没有DDL。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "验收材料",
+            "content": null,
+            "note": "越快越好",
+            "ddl": "null"
+          },
+          "result": {
+            "ok": false,
+            "error": {
+              "code": "list_operation_rejected",
+              "message": "DDL 需要 YYYY-MM-DD 或 YYYY-MM-DDTHH:mm，Asia/Shanghai"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "ddl": null,
+            "note": "越快越好",
+            "title": "验收材料"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "f557853aedc6",
+              "title": "验收材料",
+              "content": null,
+              "note": "越快越好",
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:40:14.909Z",
+              "updatedAt": "2026-10-11T06:40:14.909Z"
+            }
+          }
+        }
+      ],
+      "reply": "已保存：\n\n- 事项：验收材料\n- 备注：越快越好\n- 截止：不设DDL\n- 状态：进行中（编号 f557853aedc6）\n\n还有要加的吗？",
+      "passed": true
+    },
+    {
+      "label": "update-note",
+      "input": "把提醒列表里的验收汇报备注改成带打印稿。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "query": "验收汇报"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T14:40:17",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "cf4e8a6d3725",
+                "title": "验收汇报",
+                "content": "提前熟悉PPT",
+                "note": "越快越好",
+                "ddl": "2026-10-12T19:30",
+                "deadlineMs": 1791804600000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:11.591Z",
+                "updatedAt": "2026-10-11T06:40:11.591Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "update",
+            "id": "cf4e8a6d3725",
+            "expectedVersion": 1,
+            "note": "带打印稿"
+          },
+          "result": {
+            "ok": true,
+            "action": "update",
+            "item": {
+              "id": "cf4e8a6d3725",
+              "title": "验收汇报",
+              "content": "提前熟悉PPT",
+              "note": "带打印稿",
+              "ddl": "2026-10-12T19:30",
+              "deadlineMs": 1791804600000,
+              "status": "active",
+              "version": 2,
+              "createdAt": "2026-10-11T06:40:11.591Z",
+              "updatedAt": "2026-10-11T06:40:19.595Z"
+            }
+          }
+        }
+      ],
+      "reply": "改好了：\n\n- 事项：验收汇报\n- 内容：提前熟悉PPT\n- 备注：带打印稿（原“越快越好”已替换）\n- 截止：2026-10-12 19:30\n\n另外提一句：每日播报的调度目前还在重试对齐，我会继续跟进。",
+      "passed": true
+    },
+    {
+      "label": "complete",
+      "input": "我在提醒列表中验收汇报事项做好了。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "query": "验收汇报"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T14:40:21",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "cf4e8a6d3725",
+                "title": "验收汇报",
+                "content": "提前熟悉PPT",
+                "note": "带打印稿",
+                "ddl": "2026-10-12T19:30",
+                "deadlineMs": 1791804600000,
+                "status": "active",
+                "version": 2,
+                "createdAt": "2026-10-11T06:40:11.591Z",
+                "updatedAt": "2026-10-11T06:40:19.595Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "complete",
+            "expectedVersion": 2,
+            "id": "cf4e8a6d3725"
+          },
+          "result": {
+            "ok": true,
+            "action": "complete",
+            "item": {
+              "id": "cf4e8a6d3725",
+              "title": "验收汇报",
+              "content": "提前熟悉PPT",
+              "note": "带打印稿",
+              "ddl": "2026-10-12T19:30",
+              "deadlineMs": 1791804600000,
+              "status": "completed",
+              "version": 3,
+              "createdAt": "2026-10-11T06:40:11.591Z",
+              "updatedAt": "2026-10-11T06:40:22.392Z"
+            }
+          }
+        }
+      ],
+      "reply": "“验收汇报”已标记为完成，默认有效列表里就不再显示了。\n\n现在有效项还剩一条：验收材料（备注：越快越好，不设DDL）。每日播报的调度仍在重试对齐中。",
+      "passed": true
+    },
+    {
+      "label": "void",
+      "input": "提醒列表里的验收材料作废。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "query": "验收材料"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T14:40:23",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "f557853aedc6",
+                "title": "验收材料",
+                "content": null,
+                "note": "越快越好",
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:14.909Z",
+                "updatedAt": "2026-10-11T06:40:14.909Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "void",
+            "expectedVersion": 1,
+            "id": "f557853aedc6"
+          },
+          "result": {
+            "ok": true,
+            "action": "void",
+            "item": {
+              "id": "f557853aedc6",
+              "title": "验收材料",
+              "content": null,
+              "note": "越快越好",
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "void",
+              "version": 2,
+              "createdAt": "2026-10-11T06:40:14.909Z",
+              "updatedAt": "2026-10-11T06:40:24.738Z"
+            }
+          }
+        }
+      ],
+      "reply": "“验收材料”已作废，默认列表里不再显示（编号 f557853aedc6）。\n\n现在有效待办为空，“验收汇报”是已完成、“验收材料”是已作废，需要看历史可以告诉我。每日播报的调度仍在重试对齐中。",
+      "passed": true
+    },
+    {
+      "label": "schedule-count-and-midnight",
+      "input": "把提醒列表每天播报改为09:30、20:45和24:00，每天三次。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "schedule",
+            "times": [
+              "09:30",
+              "20:45",
+              "24:00"
+            ]
+          },
+          "result": {
+            "ok": true,
+            "action": "schedule",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 2,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "播报时间已改成每天三次：09:30、20:45、24:00（24:00 按 00:00 处理，所以系统里显示为 00:00、09:30、20:45），时区是 Asia/Shanghai。\n\n设置已保存，但底层调度还在重试对齐，稍后会自动生效。",
+      "passed": true
+    },
+    {
+      "label": "pause",
+      "input": "暂停提醒列表播报。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "pause"
+          },
+          "result": {
+            "ok": true,
+            "action": "pause",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": false,
+              "version": 3,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "已暂停每日播报（时间设置保留为 00:00、09:30、20:45，没有丢）。需要恢复时说一声就行。\n\n调度同步仍在自动重试中。",
+      "passed": true
+    },
+    {
+      "label": "resume",
+      "input": "恢复提醒列表播报。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "resume"
+          },
+          "result": {
+            "ok": true,
+            "action": "resume",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 4,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "每日播报已恢复，时间仍为 00:00、09:30、20:45（Asia/Shanghai）。\n\n调度还在自动重试对齐，生效可能有延迟；等它对上之后就会按这三个点播报。",
+      "passed": true
+    },
+    {
+      "label": "date-only",
+      "input": "提醒列表添加验收日结，DDL为明天，只规定日期没有具体钟点。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "ddl": "2026-10-12",
+            "title": "验收日结"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "70fb455ae8dc",
+              "title": "验收日结",
+              "content": null,
+              "note": null,
+              "ddl": "2026-10-12",
+              "deadlineMs": 1791820800000,
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-11T06:40:32.984Z",
+              "updatedAt": "2026-10-11T06:40:32.984Z"
+            }
+          }
+        }
+      ],
+      "reply": "已添加：\n\n- 事项：验收日结\n- 截止：2026-10-12（明天，按当天结束算，无具体钟点）\n- 状态：进行中（编号 70fb455ae8dc）\n\n还有其他要加的吗？",
+      "passed": true
+    },
+    {
+      "label": "unknown-ddl-clarification",
+      "input": "帮我在提醒列表添加验收作业，DDL为下次课前。",
+      "calls": [],
+      "reply": "“下次课前”这个时间我还不能确定，得先问清楚：\n\n- 下次课是哪一天、什么时间？（告诉我具体日期和钟点，比如 10-14 上课，10-14 之前；或者周三上午 10:00）\n- 如果只是想记个大致条件、不设具体截止，也可以说“不要DDL”，我就按“下次课前”存进备注。\n\n你确认一下，我再保存。",
+      "passed": true
+    },
+    {
+      "label": "ambiguous-target",
+      "input": "我在提醒列表里的验收候选事项做好了。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "history": true,
+            "query": "验收"
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T14:40:37",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 4,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "cf4e8a6d3725",
+                "title": "验收汇报",
+                "content": "提前熟悉PPT",
+                "note": "带打印稿",
+                "ddl": "2026-10-12T19:30",
+                "deadlineMs": 1791804600000,
+                "status": "completed",
+                "version": 3,
+                "createdAt": "2026-10-11T06:40:11.591Z",
+                "updatedAt": "2026-10-11T06:40:22.392Z"
+              },
+              {
+                "id": "70fb455ae8dc",
+                "title": "验收日结",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-12",
+                "deadlineMs": 1791820800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:32.984Z",
+                "updatedAt": "2026-10-11T06:40:32.984Z"
+              },
+              {
+                "id": "f557853aedc6",
+                "title": "验收材料",
+                "content": null,
+                "note": "越快越好",
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "void",
+                "version": 2,
+                "createdAt": "2026-10-11T06:40:14.909Z",
+                "updatedAt": "2026-10-11T06:40:24.738Z"
+              },
+              {
+                "id": "e0c736a74584",
+                "title": "验收候选A",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:35.576Z",
+                "updatedAt": "2026-10-11T06:40:35.576Z"
+              },
+              {
+                "id": "9997f7ecad61",
+                "title": "验收候选B",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:35.586Z",
+                "updatedAt": "2026-10-11T06:40:35.586Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "列表里同名的候选有两条，都还是进行中，我不能替你猜是哪一条：\n\n- 验收候选A（编号 e0c736a74584，无DDL）\n- 验收候选B（编号 9997f7ecad61，无DDL）\n\n你说是 A 还是 B？或者把完整标题发我。",
+      "passed": true
+    },
+    {
+      "label": "active-list-only",
+      "input": "查看有效提醒列表。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-11T14:40:39",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "09:30",
+                "20:45"
+              ],
+              "enabled": true,
+              "version": 4,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "70fb455ae8dc",
+                "title": "验收日结",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-12",
+                "deadlineMs": 1791820800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:32.984Z",
+                "updatedAt": "2026-10-11T06:40:32.984Z"
+              },
+              {
+                "id": "e0c736a74584",
+                "title": "验收候选A",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:35.576Z",
+                "updatedAt": "2026-10-11T06:40:35.576Z"
+              },
+              {
+                "id": "9997f7ecad61",
+                "title": "验收候选B",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-11T06:40:35.586Z",
+                "updatedAt": "2026-10-11T06:40:35.586Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending",
+              "error": "原生调度尚未对齐，会自动重试；当前设置已经保存"
+            }
+          }
+        }
+      ],
+      "reply": "当前有效提醒列表（Asia/Shanghai，共 3 条）：\n\n1. 验收日结 — 截止 2026-10-12（当天结束）\n2. 验收候选A — 无DDL\n3. 验收候选B — 无DDL\n\n每日播报：09:30、20:45、00:00（已开启）。另外你要的“验收作业”因为有“下次课前”这个时间我还没确认，尚未保存。",
+      "passed": true
+    }
+  ],
+  "suite": "baseline",
+  "competingProposalAttempts": 0,
+  "passed": true,
+  "productionUnchanged": true
+}

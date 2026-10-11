@@ -1,0 +1,104 @@
+{
+  "at": "2026-10-11T06:55:11.874Z",
+  "status": "passed",
+  "boundary": "Read-only documentation, evidence-index, diff and deployed-source consistency checks. No model call, QQ delivery, database mutation or remote Git write.",
+  "versionBoundary": {
+    "baseCommit": "b2c182c",
+    "finalCommit": "Resolve the local commit containing this file in Git history; the commit cannot embed its own SHA.",
+    "nativeQqEvidence": "../native.json records the initial version; it was not rerun for this natural-input correction.",
+    "samplesImportedIntoProduction": false,
+    "sqlMigrationRequired": false,
+    "remotePushed": false,
+    "finalWorkspace": "Verified clean after the local commit; final commit identity and included files are recorded by Git."
+  },
+  "checks": {
+    "markdownLinks": {
+      "exitCode": 0,
+      "passed": true,
+      "method": "Markdown inline local filesystem link targets outside fenced code; fragments and remote URLs are not checked. Historical docs/archive and docs 1-8 excluded.",
+      "markdownFiles": 22,
+      "localLinks": 179,
+      "scannedFiles": [
+        "AGENTS.md",
+        "README_FUSION.md",
+        "config/README.md",
+        "docs/10_融合助手运行维护.md",
+        "docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md",
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/15_旧系统回退.md",
+        "docs/16_验收与测试总表.md",
+        "docs/18_跨模块链路日志查询.md",
+        "docs/19_提醒列表与定时汇总.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/README.md",
+        "docs/verification/2026-10-10_projects-fusion-sync.md",
+        "docs/verification/2026-10-11_projects-fusion-sync.md",
+        "docs/verification/INDEX.md",
+        "docs/verification/SCRIPTS.md",
+        "docs/verification/recovery-2026-10-06/README.md",
+        "docs/verification/recovery-2026-10-10/README.md",
+        "docs/verification/recovery-2026-10-10-final/README.md",
+        "docs/verification/reminder-list-2026-10-11/README.md",
+        "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+        "scripts/fusion/templates/AGENTS.md"
+      ],
+      "brokenLinks": []
+    },
+    "evidenceCoverage": {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exitCode": 0,
+      "output": "evidence coverage\n  历史领域验收: 84\n  当前有效: 69\n  total: 153\nOK: every file is classified by a named rule.",
+      "files": 153
+    },
+    "scriptIndex": {
+      "command": "node scripts/fusion/evidence-index.mjs --json and --markdown",
+      "passed": true,
+      "exitCode": 0,
+      "scripts": 127,
+      "boundaryDeclarations": 33,
+      "basisCounts": {
+        "offline": 34,
+        "header": 71,
+        "code": 12,
+        "boundary": 10
+      },
+      "contradictions": 0,
+      "generatedTableMatches": true,
+      "markdownExitCode": 0
+    },
+    "deploymentConsistency": {
+      "passed": true,
+      "diffCheck": {
+        "exitCode": 0,
+        "output": ""
+      },
+      "sourceHashes": {
+        "chatbot/plugins/personal-reminder-list/index.js": "0928e3c36a3a3796d2cefddc783533088cbdb316345f185a7d25f5d0fd0dada6",
+        "chatbot/plugins/personal-reminder-list/intent.js": "385f94ab95fdb7350875d2a23c46b88a715365af44f63ff69a1f9421700cf3a5",
+        "chatbot/plugins/personal-reminder-list/intake.js": "0d30b93dc87c20f5ce8762647efc8a5c0a17065d66ea5fbb71ba4705424232f6",
+        "chatbot/plugins/personal-reminder-list/store.js": "dd287a95734764c98d05a074861db280d01c62eb20629e30b41bc800bbe4b395",
+        "scripts/fusion/templates/AGENTS.md": "7f65047513fefe0a00e585095d84ebab958687da12d8ce5946d3e61d22d6981f"
+      },
+      "matchesDeployment": true,
+      "service": "active",
+      "productionGuardExitCode": 0,
+      "productionLogicalDataMatchesDeployment": true
+    }
+  },
+  "acceptedEvidence": {
+    "offline": "offline.json: Node 92/92, including 43 reminder-list tests; related earlier package results and their exit-code limits are recorded there.",
+    "model": "model.json: natural dialogue 11/11. First dated item required one rejected argument correction before storage; no competing proposal attempt.",
+    "host": "host.json: natural dialogue 13/13, actual sessions.reset, mock OneBot, real list and one-off domain plugins; zero one-off proposals and child stopped.",
+    "regression": "regression/model.json: 12/12; regression/host.json: 6/6 and child stopped.",
+    "deployment": "deployment.json: original Cron declarations preserved, four self-checks and metadata passed, production list and one-off logical data unchanged.",
+    "provenance": "Examples are user-supplied fixtures. Production logical data is compared by SHA256 and not copied into these reports."
+  },
+  "remainingEvidenceLimits": [
+    "Corrected flow has not yet been exercised by a human QQ inbound maintenance round trip.",
+    "No full day of all four time slots or long-term pressure test.",
+    "No full backup/restore rehearsal of this new domain; the October 10 recovery point predates it.",
+    "Activity-after conditions are stored facts, not automatic event-completion detection or delayed activation.",
+    "Generated index agreement verifies declared boundary flags; header/code rows still require human interpretation."
+  ],
+  "passed": true
+}

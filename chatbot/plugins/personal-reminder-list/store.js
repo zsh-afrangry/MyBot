@@ -3,7 +3,7 @@ import {mkdirSync, readFileSync, chmodSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {createHash, randomBytes} from 'node:crypto';
 import {TIMEZONE, DEFAULT_TIMES, localTime, parseDeadline, normalizeTimes, dueSlot} from './time.js';
-import {checkPermit, checkTextSource, checkScheduleSource, normalize} from './intent.js';
+import {checkPermit, checkTextSource, checkScheduleSource, checkItemFacts, normalize} from './intent.js';
 import {formatDigest} from './formatter.js';
 
 export function stateRoot(env = process.env) {
@@ -117,8 +117,7 @@ export class ListStore {
         const title = text(args.title, '标题', 120, true), content = text(args.content, '内容', 800), note = text(args.note, '备注', 400);
         for (const value of [title, content, note]) checkTextSource(value, permit);
         const deadline = parseDeadline(args.ddl);
-        if (deadline.ddl && /下次课前|下次上课前|下节课前/u.test(permit.raw)
-          && !/\d{1,2}月\d{1,2}|\d{4}[-/]\d{1,2}[-/]\d{1,2}|今天|明天|后天|周[一二三四五六日天]|星期[一二三四五六日天]/u.test(permit.raw)) throw Error('下次课的日期未确定，请先澄清DDL');
+        checkItemFacts({title, content, note, ddl: deadline.ddl}, permit);
         if (deadline.deadlineMs !== null && deadline.deadlineMs <= this.now()) throw Error('DDL 已经过期；请澄清日期或留空');
         const count = this.db.prepare("SELECT COUNT(*) n FROM items WHERE status='active'").get().n;
         if (count >= 100) throw Error('有效事项上限为 100，请先完成或作废已有事项');
@@ -145,6 +144,7 @@ export class ListStore {
             if (this.db.prepare("SELECT COUNT(*) n FROM items WHERE status='active'").get().n >= 100 && status !== 'active') throw Error('有效事项上限为 100');
             status = 'active';
           }
+          checkItemFacts({title, content, note, ddl}, permit, 'ddl' in args);
           if (status === 'active' && this.db.prepare("SELECT id FROM items WHERE status='active' AND title=? AND id<>?").get(title, row.id)) throw Error('已有相同标题的有效事项');
         } else {
           if (['title', 'content', 'note', 'ddl'].some(k => k in args)) throw Error('状态操作不能同时改动内容');
