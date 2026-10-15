@@ -1,4 +1,8 @@
-import {trustedText, listIntent, wantsContinuousEntry, isContinuationCandidate, isStandaloneReminder, SESSION_TTL_MS, SESSION_MAX_MS} from './intent.js';
+import {trustedText} from './inbound.js';
+import {listIntent, wantsContinuousEntry, isContinuationCandidate, isStandaloneReminder} from './policy.js';
+
+export const SESSION_TTL_MS = 600000;
+export const SESSION_MAX_MS = 1800000;
 
 // reply_dispatch precedes session initialization. Bind its trusted text to the
 // actual ephemeral UUID at tool execution, never to a UUID guessed from text.

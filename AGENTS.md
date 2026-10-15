@@ -1,7 +1,7 @@
 # 开发指引（本仓库）
 
 本文件是 `/home/afrangry/kurumi-fusion` 开发侧的指令入口。它只说明开发路径、保护范围和验证方式，不复制运行规则。
-按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则文档（文档 9、10、11、12、15、16、18、19、20 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。
+按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则文档（文档 9、10、11、12、15、16、18、19、20、21 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。
 **文档冲突时以上面这些规则文档和代码为准**，不读 `docs/1–8` 的“现在应该从哪里继续”当作待办。
 
 ## 两处目录，不要混用
@@ -63,12 +63,17 @@
 
 验收标准与边界见[文档 16](docs/16_验收与测试总表.md)：沙箱模拟通过不等于真实模型或 QQ 往返通过。
 
+## 后端代码边界
+
+- 原文动作/字段规则放领域 `policy.js`，可信入站放 `inbound.js`，写入编排放 `service.js`；`store.js` 不读取聊天原文。提醒列表与记忆的写工具必须经过服务入口，不直接调用存储变更方法。
+- 带码确认只通过 `@kurumi/confirmation-core`；业务插件提供自己的适配器，在业务事务内消费 grant。交互钩子不签发授权。结构与删减入口见[文档 21](docs/21_后端职责分层与代码整理.md)。
+
 ## 记录方式
 
 - 新增领域后端脚本放 `chatbot/scripts/`，测试放 `chatbot/tests/<领域>/`；SQL 迁移随对应插件留在仓库。登记脚本与证据索引，不向 `archive/` 放未说明归属的文件。现有部署/运维脚本仍由 `scripts/fusion/` 管理。
 
 - 新需求前的收尾清单已于 2026-10-10 归档（过程记录见 Git 历史），不再接收新任务。当前结论和批准延期项见文档 16，资产与恢复点见文档 12。后续任务记录使用 `待处理 / 处理中 / 待复验 / 已验收 / 阻塞 / 经用户确认延期`，有证据才写“已验收”。
-- 行为变化先更新对应的规则文档（9、10、11、12、15、16、18、19、20 或 `config/README.md`），再在 `docs/verification/` 落证据并登记 `INDEX.md`；不把长日志复制进规范文档。
+- 行为变化先更新对应的规则文档（9、10、11、12、15、16、18、19、20、21 或 `config/README.md`），再在 `docs/verification/` 落证据并登记 `INDEX.md`；不把长日志复制进规范文档。
 - 需要用户判断的事项写进对应任务记录，不自行豁免或标记通过。
 
 ## 其他 agent 指令入口

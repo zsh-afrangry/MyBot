@@ -35,5 +35,20 @@ tables or domain names to the weather plugin by default.
 The confirmation grammar is bounded, not a natural-language authorization
 classifier. Always show the text from `buildConfirmationInstruction`. Account
 and conversation binding are required by the live ingress; legacy unbound
-proposals must be recreated. Deployment evidence and remaining architecture
-work are recorded in `docs/7_架构偏离分析与当前卡点.txt` at the repository root.
+proposals must be recreated.
+
+## Source boundaries
+
+- `src/protocol.ts`: confirmation wording, parsing and short-code binding.
+- `src/scope.ts`: conversation/identity scope construction and comparison.
+- `src/types.ts`: shared contracts.
+- `src/schema.ts` and `src/store.ts`: shared proposal/grant tables and operations;
+  callers retain ownership of their business transaction.
+- `src/registry.ts`: process-local backend registration and unique routing.
+- `src/validation.ts`: internal scalar checks, not a domain language policy.
+
+Consumers import the package root; internal helper exports are not package API.
+`personal-confirmation` owns the QQ inbound adapter. Business intent word lists,
+clarification hooks and reply replacement do not belong in this package. Current
+integration and verification are documented in
+[`docs/21`](../../../docs/21_后端职责分层与代码整理.md).

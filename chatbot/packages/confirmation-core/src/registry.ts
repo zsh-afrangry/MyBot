@@ -1,4 +1,6 @@
-import { parseConfirmationText, scopeFromInboundEvent, type ConfirmationInboundEvent, type ConfirmationProposalRow } from "./gate.js";
+import { parseConfirmationText } from "./protocol.js";
+import { scopeFromInboundEvent } from "./scope.js";
+import type { ConfirmationInboundEvent, ConfirmationProposalRow } from "./types.js";
 
 /** Business storage stays with its domain, including grant/commit transactions. */
 export interface ConfirmationBackend {

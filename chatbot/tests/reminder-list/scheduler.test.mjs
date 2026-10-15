@@ -1,4 +1,5 @@
 // Offline native scheduler with fake RPC. Only temporary databases, no QQ/model.
+import {manageList} from '../../plugins/personal-reminder-list/service.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync, rmSync, existsSync} from 'node:fs';
@@ -44,11 +45,11 @@ test('changing times removes obsolete declarations; pause removes only owned job
   const {scheduler, store, jobs, options} = setup(t); await scheduler.sync();
   jobs.push({id: 'unrelated', declarationKey: 'weather', payload: {kind: 'agentTurn'}});
   const p = action => ({raw: '修改提醒列表播报为09:30和20:45', actions: new Set([action]), at: Date.now(), messageId: action, sessionKey: 'owner'});
-  store.manage({action: 'schedule', times: ['09:30', '20:45']}, p('schedule'));
+  manageList(store, {action: 'schedule', times: ['09:30', '20:45']}, p('schedule'));
   assert.equal((await scheduler.sync()).ok, true); assert.equal(jobs.length, 3);
   assert.deepEqual(jobs.filter(j => j.id !== 'unrelated').map(j => j.schedule.expr).sort(), ['30 9 * * *', '45 20 * * *']);
-  store.manage({action: 'pause'}, p('pause')); await scheduler.sync(); assert.equal(jobs.length, 1);
-  store.manage({action: 'resume'}, p('resume')); await scheduler.sync(); assert.equal(jobs.length, 3);
+  manageList(store, {action: 'pause'}, p('pause')); await scheduler.sync(); assert.equal(jobs.length, 1);
+  manageList(store, {action: 'resume'}, p('resume')); await scheduler.sync(); assert.equal(jobs.length, 3);
   assert.deepEqual(jobs.find(j => j.id !== 'unrelated').delivery, buildJob('09:30', options).delivery);
 });
 test('RPC failure is pending, does not overwrite settings; retry repairs a partial reconciliation', async t => {

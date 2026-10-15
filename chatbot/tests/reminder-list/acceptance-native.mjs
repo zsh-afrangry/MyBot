@@ -3,6 +3,7 @@
 // retains normal channel/Cron receipts, restores service readiness, sends no
 // groups/other peers and never deletes production state. No model call.
 // Evidence: docs/verification/reminder-list-2026-10-11/native.json
+import {manageList} from '../../plugins/personal-reminder-list/service.js';
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -29,7 +30,7 @@ const report = {at: new Date().toISOString(), scheduledAt: new Date(scheduledAt)
   boundary: 'Native deterministic command through OpenClaw Cron and real owner kurumi-qq delivery across a service restart; synthetic domain rows in /tmp, no model; one owner digest only.', owner};
 let sequence = 0, jobId;
 function change(args) {
-  return store.manage(args, {raw: '提醒列表 架构验证 ' + (args.title ?? '') + ' ' + (args.note ?? '') + ' ' + (args.content ?? '') + ' ' + (args.id ?? '') + ' DDL ' + (args.ddl ?? ''),
+  return manageList(store, args, {raw: '提醒列表 架构验证 ' + (args.title ?? '') + ' ' + (args.note ?? '') + ' ' + (args.content ?? '') + ' ' + (args.id ?? '') + ' DDL ' + (args.ddl ?? ''),
     actions: new Set([args.action]), at: seedNow, messageId: 'native-' + ++sequence, sessionKey: 'native-acceptance'});
 }
 function productionSnapshot() {

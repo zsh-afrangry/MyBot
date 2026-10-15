@@ -9,6 +9,9 @@ import plugin from '../../plugins/personal-reminder-list/index.js';
 import {dialogue, items} from './dialogue-cases.mjs';
 const owner = '365999865', session = `agent:main:kurumi-qq:direct:${owner}`;
 function setup(t) {
+  // The dialogue deliberately contains October 2026 dates. Keep its clock fixed
+  // so a later test run exercises tool behavior rather than expired fixtures.
+  t.mock.timers.enable({apis: ['Date'], now: Date.parse('2026-10-11T08:00:05+08:00')});
   const root = mkdtempSync(join(tmpdir(), 'kurumi-list-plugin-')), previous = process.env.OPENCLAW_STATE_DIR;
   process.env.OPENCLAW_STATE_DIR = root;
   t.after(() => {if (previous === undefined) delete process.env.OPENCLAW_STATE_DIR; else process.env.OPENCLAW_STATE_DIR = previous; rmSync(root, {recursive: true, force: true});});

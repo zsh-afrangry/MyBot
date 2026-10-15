@@ -1,8 +1,8 @@
-// Admission uses trusted current owner text; quoted/web/cron content never grants it.
-export const normalize = value => String(value ?? '').normalize('NFKC').replace(/[\s\p{P}]/gu, '').toLowerCase();
-export const PERMIT_TTL_MS = 300000;
-export const SESSION_TTL_MS = 600000;
-export const SESSION_MAX_MS = 1800000;
+// Existing language admission rules. Only service/intake call this module;
+// persistence never reads chat text or imports this policy.
+import {normalize} from './model.js';
+import {trustedText, PERMIT_TTL_MS} from './inbound.js';
+
 const ADD = /加一(?:条|个|项)|添加|追加|新建|新增|加入|加(?:到|进|上)|记录|加紧(?:到|进)?提醒列表/u;
 const NON_ADD = /修改|更改|改成|改为|改到|改一下|更新|调整|清除|清空|做好了|做完了|已完成|完成了|作废|取消|删除|不做了|恢复|重开|暂停|停止|关闭/u;
 const NO_WRITE = /假如|假设|举例|示例|测试提示词|如果|是什么意思|(?:解释|翻译|分析)(?:一下)?(?:这段|这句话|下面)|(?:不要|别|不用|不需要)(?:再|替我|帮我|给我|去|继续|往提醒列表里)?\s*(?:加|添|追|记|新建|作废|修改|取消|播报|播放)/u;
@@ -11,14 +11,6 @@ const END = /换(?:个)?话题|聊(?:点|点儿|个)?别的|先不(?:录|加|记
 const ONE_OFF = /一次性|单独.{0,8}提醒|(?:\d+|[一二三四五六七八九十两半]+)(?:分钟|小时|秒钟|秒)后.{0,8}提醒|到点.{0,8}提醒/u;
 export function isStandaloneReminder(raw) {
   return ONE_OFF.test(raw) && (!/提醒列表/u.test(raw) || /(?:不用|不要用|不放|不加|不记录|别用|别放|别加).{0,8}提醒列表/u.test(raw));
-}
-export function trustedText(ctx, owner, event = {}, now = Date.now()) {
-  if (event.isTailDispatch || event.sendPolicy === 'deny' || ctx?.CommandAuthorized !== true
-    || ctx.ChatType !== 'direct' || ctx.SenderId !== owner || ctx.OriginatingChannel !== 'kurumi-qq'
-    || ctx.OriginatingTo !== 'user:' + owner || ctx.SessionKey !== 'agent:main:kurumi-qq:direct:' + owner
-    || typeof ctx.RawBody !== 'string' || ctx.RawBody.length > 6000 || !ctx.MessageSid
-    || !Number.isFinite(ctx.Timestamp) || Math.abs(now - ctx.Timestamp) >= PERMIT_TTL_MS) return;
-  return ctx.RawBody.trim() || undefined;
 }
 export function wantsContinuousEntry(raw) {
   return !NO_WRITE.test(raw) && !END.test(raw) && /提醒列表/u.test(raw)
@@ -71,4 +63,18 @@ export function checkItemFacts(fields, permit, checkDeadline = true) {
 }
 export function checkScheduleSource(permit) {
   if (!/(?:\d{1,2}[:：.]\d{2}|\d{1,2}[点时]|[零一二三四五六七八九十两]{1,3}点|午夜|零点)/u.test(permit.raw)) throw Error('仅指定次数还不能确定播报时刻，请补充每日具体时间');
+}
+
+export function checkTargetSource(args, row, permit) {
+  const raw = normalize(permit.raw);
+  if (!raw.includes(row.id) && !raw.includes(normalize(row.title)) && !(args.query && raw.includes(normalize(args.query)))) throw Error('本次原文没有指出要维护的事项');
+}
+
+// One mutation per incoming message is a product policy, separate from exact
+// replay detection/storage. A later policy change must also change this key.
+export function listRequestKey(permit) {
+  return `${permit.sessionKey}:${permit.messageId}`;
+}
+export function checkRequestReplay(previousHash, nextHash) {
+  if (previousHash !== nextHash) throw Error('本次消息已经执行过一项维护，请用新消息提出下一项');
 }

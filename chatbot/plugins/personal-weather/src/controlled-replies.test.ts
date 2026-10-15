@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createControlledReplies } from "./controlled-replies.js";
+import { createControlledReplies } from "./interaction/controlled-replies.js";
 
 const instruction = "确认 proposalId=test payloadHash=test";
 const local = "2026-09-11T05:00:00+08:00";

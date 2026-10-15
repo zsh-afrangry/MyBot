@@ -3,6 +3,7 @@
 // removed, so schedule sync cannot mutate production Cron. No QQ delivery.
 // --natural runs the user dialogue suite; --out selects a separate evidence directory.
 // Evidence: docs/verification/reminder-list-2026-10-11/model.json
+import {manageList} from '../../plugins/personal-reminder-list/service.js';
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -136,7 +137,7 @@ try {
   });
   const store = new ListStore({root, ownerId: owner});
   try {
-    for (const title of ['验收候选A', '验收候选B']) store.manage({action: 'add', title}, {raw: '提醒列表添加 ' + title, at: Date.now(), actions: new Set(['add']), messageId: title, sessionKey: session});
+    for (const title of ['验收候选A', '验收候选B']) manageList(store, {action: 'add', title}, {raw: '提醒列表添加 ' + title, at: Date.now(), actions: new Set(['add']), messageId: title, sessionKey: session});
   } finally {store.close();}
   await turn('ambiguous-target', '我在提醒列表里的验收候选事项做好了。', (data, row) => {
     assert.ok(data.items.filter(i => i.title.startsWith('验收候选')).every(i => i.status === 'active')); assert.match(row.reply ?? '', /哪|具体|ID|编号|一条|A.*B/);

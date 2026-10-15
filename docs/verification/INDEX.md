@@ -18,7 +18,7 @@
 | `fusion/*` | 融合系统阶段验收和最终运行回执；以 recovery 报告和 16 为当前恢复结论 |
 | `deepseek-whale/*` | DeepSeek、角色卡和图片链路验收 |
 | [`reminder-list-2026-10-11/README.md`](reminder-list-2026-10-11/README.md) 及同目录全部文件 | 提醒列表初版证据及 `natural-input/` 自然多轮录入、空 DDL、实际会话重置、原功能回归与部署复验；原生本人 QQ 投递仍单独引用初版记录 |
-
+| [`backend-refactor-2026-10-16/README.md`](backend-refactor-2026-10-16/README.md) 及同目录全部文件 | 后端职责分层的离线回归、构建、运行对齐和未覆盖边界 |
 
 ## 历史领域验收
 

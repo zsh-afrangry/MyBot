@@ -38,6 +38,8 @@ const ROOT = REPO_ROOT;
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/backend-boundaries/domain.test.mjs': ['离线', '领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚', {testDir: 1}, 'header'],
+  'chatbot/tests/backend-boundaries/confirmation.test.mjs': ['离线', '确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合', {readonly: 1}, 'header'],
   'chatbot/scripts/reminder-list.mjs': ['领域运行', '固定提醒列表 Cron 程序：到期判定、slot 防重和汇总输出，OpenClaw 投递本人', {auth: 1, writesState: 1}, 'header'],
   'chatbot/tests/reminder-list/store.test.mjs': ['离线', '提醒列表领域状态、时间、授权、幂等、防重与固定 runner', {testDir: 1}, 'header'],
   'chatbot/tests/reminder-list/scheduler.test.mjs': ['离线', '提醒列表原生 Cron 固定声明、对账、并发和失败重试', {testDir: 1}, 'header'],

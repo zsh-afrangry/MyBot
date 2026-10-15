@@ -59,7 +59,7 @@ SOUL使用完整角色卡，IDENTITY为小鲸鱼；AGENTS明确 Kurumi 是项目
 
 一次性提醒固定 runner `chatbot/plugins/personal-weather/src/reminder-cli.ts` 仍含“主人”称呼，后续单独调整；新增提醒列表采用中性正文，当前人格不会被该正文写死。
 
-实际确认失败发生在`chatbot/packages/confirmation-core/src/gate.ts`：只解析“确认 <12位码>”或旧完整ID/hash格式。15:31的模型理解了用户“确认”并尝试提交，但后端拒绝。提案24小时有效期也与几分钟后的提醒时间是两回事，展示时容易让用户误会。
+实际确认失败发生在`chatbot/packages/confirmation-core/src/protocol.ts`：只解析“确认 <12位码>”或旧完整ID/hash格式。15:31的模型理解了用户“确认”并尝试提交，但后端拒绝。提案24小时有效期也与几分钟后的提醒时间是两回事，展示时容易让用户误会。
 
 官方资料的共同点是区分“理解任务”与“授予权限”：
 

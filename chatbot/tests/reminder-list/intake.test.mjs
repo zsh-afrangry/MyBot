@@ -2,7 +2,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createListIntake} from '../../plugins/personal-reminder-list/intake.js';
-import {listIntent, SESSION_TTL_MS, SESSION_MAX_MS} from '../../plugins/personal-reminder-list/intent.js';
+import {listIntent} from '../../plugins/personal-reminder-list/policy.js';
+import {SESSION_TTL_MS, SESSION_MAX_MS} from '../../plugins/personal-reminder-list/intake.js';
 import {dialogue} from './dialogue-cases.mjs';
 const owner = '365999865', sessionKey = 'agent:main:kurumi-qq:direct:' + owner;
 function fixture() {

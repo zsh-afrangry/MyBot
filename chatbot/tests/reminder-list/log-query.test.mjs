@@ -1,4 +1,5 @@
 // Offline query integration: audit adapter reads only a temporary list DB.
+import {manageList} from '../../plugins/personal-reminder-list/service.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -10,7 +11,7 @@ test('list audit joins exact message/item/slot and does not copy task text or in
   const root = fs.mkdtempSync(join(tmpdir(), 'kurumi-list-query-')), now = Date.parse('2026-10-11T08:00:10+08:00');
   const store = new ListStore({root, ownerId: '365999865', now: () => now});
   t.after(() => {store.close(); fs.rmSync(root, {recursive: true, force: true});});
-  const created = store.manage({action: 'add', title: '私有测试标题'}, {raw: '提醒列表添加 私有测试标题', actions: new Set(['add']), at: now, messageId: 'm1', sessionKey: 'agent:main:kurumi-qq:direct:365999865'}, {runId: 'run1'});
+  const created = manageList(store, {action: 'add', title: '私有测试标题'}, {raw: '提醒列表添加 私有测试标题', actions: new Set(['add']), at: now, messageId: 'm1', sessionKey: 'agent:main:kurumi-qq:direct:365999865'}, {runId: 'run1'});
   store.claimDigest('08:00');
   store.observeDeliveries({id: 'cron1', time: '08:00'}, [{runAtMs: now, delivered: true}]);
   const events = readReminderListDatabase(store.file, now - 1, now + 1);

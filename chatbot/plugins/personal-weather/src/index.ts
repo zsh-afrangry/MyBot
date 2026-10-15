@@ -8,9 +8,9 @@ import { defineToolPlugin } from "openclaw/plugin-sdk/tool-plugin";
 
 import { createNativeReminderScheduler } from "./native-reminder-scheduler.js";
 import { resolvePersonalWeatherConfig } from "./config.js";
-import { registerControlledReplies } from "./controlled-replies.js";
-import { registerClarificationGate } from "./clarification-gate.js";
-import { scopeFromToolContext, registerConfirmationBackend } from "@kurumi/confirmation-core";
+import { registerInteractionHooks } from "./interaction/index.js";
+import { registerDomainConfirmationBackends } from "./confirmation-backends.js";
+import { scopeFromToolContext } from "@kurumi/confirmation-core";
 import { asWeatherError } from "./errors.js";
 import { formatWeatherBrief } from "./formatter.js";
 import { reminderStateDirectory, weatherStateDirectory } from "./paths.js";
@@ -742,31 +742,8 @@ const registerPersonalWeatherTools = personalWeatherPlugin.register;
 personalWeatherPlugin.register = (api) => {
   registerPersonalWeatherTools(api);
   if (api.registrationMode !== "full") return;
-  registerClarificationGate(api, new Set(["personal_profile_change_propose"]));
-  registerControlledReplies(api, new Set([
-    "personal_profile_change_propose", "personal_planning_change_propose",
-    "personal_reminder_propose", "personal_reminder_change_propose", "personal_reminder_cancel_propose",
-  ]));
-  let unregisterBackends: Array<() => void> = [];
-  api.registerService({
-    id: "personal-domain-confirmation-backends",
-    start() {
-      try {
-        unregisterBackends.push(registerConfirmationBackend({
-          id: "profile-planning",
-          open: () => new WeatherStore({ stateDirectory: weatherStateDirectory() }),
-        }));
-        unregisterBackends.push(registerConfirmationBackend({
-          id: "personal-reminder",
-          open: () => new ReminderStore({ stateDirectory: reminderStateDirectory() }),
-        }));
-      } catch (error) {
-        for (const unregister of unregisterBackends.splice(0)) unregister();
-        throw error;
-      }
-    },
-    stop() { for (const unregister of unregisterBackends.splice(0)) unregister(); },
-  });
+  registerInteractionHooks(api);
+  registerDomainConfirmationBackends(api);
   if (api.pluginConfig?.reminderBackend === "native-service") {
     const channel = api.config.channels?.["kurumi-qq"] as { ownerId?: string } | undefined;
     const ownerId = channel?.ownerId;

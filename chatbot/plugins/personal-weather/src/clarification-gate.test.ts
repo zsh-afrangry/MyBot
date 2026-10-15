@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createClarificationGate } from './clarification-gate.js';
+import { createClarificationGate } from './interaction/clarification-gate.js';
 const event = { toolName: 'proposal', runId: 'run', result: { content: [{ type: 'text', text: JSON.stringify({ ok: false, requiresUserInput: true }) }] } };
 const context = { runId: 'run', sessionKey: 'session' };
 describe('clarification gate', () => {

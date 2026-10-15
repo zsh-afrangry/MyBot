@@ -1,3 +1,4 @@
+import {manageList} from './service.js';
 import {ownerAuthorized} from '../kurumi-qq/src/config.js';
 import {ListStore, stateRoot} from './store.js';
 import {createListIntake} from './intake.js';
@@ -54,7 +55,7 @@ const plugin = {id: 'personal-reminder-list', name: 'Personal reminder list', re
             store = new ListStore(options);
             if (name === 'personal_reminder_list_get') return json({...store.get(args), scheduleSync: scheduler.status()});
             if (intake.current() !== request) throw Error('本次请求已被后续消息替代');
-            const result = store.manage(args, permit, {runId: ctx.runId});
+            const result = manageList(store, args, permit, {runId: ctx.runId});
             store.close(); store = undefined;
             if (result.ok && args.action === 'add') intake.added(request, ctx, permit);
             if (result.ok && ['schedule', 'pause', 'resume'].includes(args.action)) result.scheduleSync = await scheduler.sync();

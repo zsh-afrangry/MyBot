@@ -1,0 +1,134 @@
+{
+  "at": "2026-10-16T01:23:34.489601+08:00",
+  "baseCommit": "d717965f99c08c922d5d92be4ad4cb69d21dc807",
+  "scope": "Behavior-preserving backend responsibility refactor; no tool/permission/schema/confirmation-protocol changes.",
+  "tests": {
+    "node": 142,
+    "confirmationCore": 17,
+    "confirmationInbound": 15,
+    "weather": 162,
+    "total": 336,
+    "newBoundaryCases": 13,
+    "failed": 0
+  },
+  "baseline": {
+    "nodeBeforeFixtureFix": {
+      "passed": 47,
+      "failed": 1
+    },
+    "cause": "Fixed 2026-10-12/13 deadlines with a live test clock. Offline fixture clock fixed to 2026-10-11; production past-DDL rejection unchanged.",
+    "nodeAfterFixtureFix": {
+      "passed": 48,
+      "failed": 0
+    }
+  },
+  "builds": {
+    "confirmationCore": true,
+    "personalConfirmation": true,
+    "personalWeather": true
+  },
+  "checks": {
+    "dependencies": {
+      "passed": true,
+      "summary": "ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies"
+    },
+    "config": {
+      "passed": true,
+      "summary": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+    },
+    "persona": {
+      "passed": true,
+      "summary": "persona in sync with roles/小鲸鱼.md (4 workspace file(s) match)"
+    },
+    "health": {
+      "passed": true,
+      "gateway": true,
+      "qq": {
+        "online": true,
+        "good": true
+      },
+      "channel": [
+        {
+          "running": true,
+          "connected": true
+        }
+      ],
+      "testIngress": false,
+      "databases": {
+        "channelDatabase": "ok",
+        "weatherDatabase": "ok",
+        "remindersDatabase": "ok",
+        "reminderListDatabase": "ok"
+      },
+      "services": {
+        "kurumi-fusion": {
+          "ActiveState": "active",
+          "UnitFileState": "enabled"
+        },
+        "qq-bridge": {
+          "ActiveState": "inactive",
+          "UnitFileState": "masked"
+        },
+        "openclaw-gateway": {
+          "ActiveState": "inactive",
+          "UnitFileState": "masked"
+        },
+        "snowluma": {
+          "ActiveState": "active",
+          "UnitFileState": "enabled"
+        },
+        "snowluma-qq": {
+          "ActiveState": "active",
+          "UnitFileState": "enabled"
+        },
+        "dsh-web": {
+          "ActiveState": "active",
+          "UnitFileState": "disabled"
+        }
+      }
+    },
+    "startup": {
+      "passed": true,
+      "plugins": "http server listening (9 plugins: kurumi-mail, kurumi-memory, kurumi-qq, kurumi-research, kurumi-tasks, personal-confirmation, personal-reminder-list, personal-weather, tavily; 8.4s)",
+      "confirmationBackends": [
+        "kurumi-mail",
+        "personal-reminder",
+        "profile-planning"
+      ],
+      "existingCatalogWarning": true
+    },
+    "markdownLinks": {
+      "passed": true,
+      "markdownFiles": 13,
+      "localTargets": 145,
+      "broken": []
+    },
+    "evidenceCoverage": {
+      "passed": true,
+      "summary": "evidence coverage\n  历史领域验收: 84\n  当前有效: 75\n  total: 159\nOK: every file is classified by a named rule."
+    },
+    "scriptIndex": {
+      "passed": true,
+      "summary": "total 134: 需授权 62，可离线/只读 72\n依据分布: offline=38, header=73, code=12, boundary=11\nboundary 声明交叉校验: 34 个脚本有声明，全部与分类一致"
+    },
+    "gitWhitespace": {
+      "passed": true
+    }
+  },
+  "actions": {
+    "fusionRestart": true,
+    "configurationApply": false,
+    "directProductionBusinessWrites": false,
+    "testIngressEnabled": false,
+    "qqTestSends": 0,
+    "mailTestSends": 0,
+    "schemaMigration": false
+  },
+  "notCovered": [
+    "Real-model natural-language behavior",
+    "Human QQ inbound/return flow",
+    "Real mail delivery in this refactor",
+    "Full backup/restore after refactor",
+    "Removal of existing language admission rules"
+  ]
+}
