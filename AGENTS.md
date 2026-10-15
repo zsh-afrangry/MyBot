@@ -1,7 +1,7 @@
 # 开发指引（本仓库）
 
 本文件是 `/home/afrangry/kurumi-fusion` 开发侧的指令入口。它只说明开发路径、保护范围和验证方式，不复制运行规则。
-按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则文档（文档 9、10、11、12、15、16、18、19 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。
+按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则文档（文档 9、10、11、12、15、16、18、19、20 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。
 **文档冲突时以上面这些规则文档和代码为准**，不读 `docs/1–8` 的“现在应该从哪里继续”当作待办。
 
 ## 两处目录，不要混用
@@ -44,6 +44,23 @@
 - 真实外发：`scripts/fusion/test-*.mjs` 会真实发本人 QQ、创建任务或重启服务，**不能当离线测试批量运行**；`testIngress` 保持关闭。
 - 清理或删除：运行目录的数据库与账本是投递对账证据，不删除、不重建。
 
+## 触及禁用限制时必须先告知
+
+运行期 agent 的能力由 `config/runtime.config.json` 的 `agents.entries.<id>.tools` 决定，**不是由提示词决定**。
+当前 `main`（QQ 私聊里的助手）禁用：`read`、`write`、`edit`、`apply_patch`、`exec`、`process`、`message`、
+`sessions_spawn`；它能用的只有聊天与 `tools.alsoAllow` 明列的业务工具。群聊入口永久关闭，
+`channels.kurumi-qq` 只服务主人私聊（四重校验含 `direct:` 会话）。
+
+**当某个需求需要某项被禁用的能力时**（例如"让 QQ 里的助手读文件/跑命令"）：
+
+1. **先明确告知主人**：需要放宽哪一项、为什么需要、放开后的风险是什么，由主人决定是否开放；
+2. **不要默默绕道**：不得改用沙箱、改用其它工具拼凑，或把需求改小后声称完成；
+3. **不要自行放宽**：`tools.deny`、`tools.alsoAllow`、`agents.entries` 属受管键，改动须经主人同意并走
+   `sync-config.mjs --apply`；
+4. **记录决定**：开放或拒绝都写进对应任务的记录里（记录规则见[文档 16](docs/16_验收与测试总表.md)）。
+
+判断依据与分级建议见[文档 20](docs/20_邮件能力与横切扩展.md)的「权限现状与"触及禁用限制"的处理」。
+
 验收标准与边界见[文档 16](docs/16_验收与测试总表.md)：沙箱模拟通过不等于真实模型或 QQ 往返通过。
 
 ## 记录方式
@@ -51,7 +68,7 @@
 - 新增领域后端脚本放 `chatbot/scripts/`，测试放 `chatbot/tests/<领域>/`；SQL 迁移随对应插件留在仓库。登记脚本与证据索引，不向 `archive/` 放未说明归属的文件。现有部署/运维脚本仍由 `scripts/fusion/` 管理。
 
 - 新需求前的收尾清单已于 2026-10-10 归档（过程记录见 Git 历史），不再接收新任务。当前结论和批准延期项见文档 16，资产与恢复点见文档 12。后续任务记录使用 `待处理 / 处理中 / 待复验 / 已验收 / 阻塞 / 经用户确认延期`，有证据才写“已验收”。
-- 行为变化先更新对应的规则文档（9、10、11、12、15、16、18、19 或 `config/README.md`），再在 `docs/verification/` 落证据并登记 `INDEX.md`；不把长日志复制进规范文档。
+- 行为变化先更新对应的规则文档（9、10、11、12、15、16、18、19、20 或 `config/README.md`），再在 `docs/verification/` 落证据并登记 `INDEX.md`；不把长日志复制进规范文档。
 - 需要用户判断的事项写进对应任务记录，不自行豁免或标记通过。
 
 ## 其他 agent 指令入口
