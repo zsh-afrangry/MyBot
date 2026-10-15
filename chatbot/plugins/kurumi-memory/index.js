@@ -1,7 +1,6 @@
 import {ownerAuthorized} from '../kurumi-qq/src/config.js';
-import {readMemory} from './store.js';
-import {changeMemory} from './service.js';
-import {memoryIntent} from './policy.js';
+import {createMemoryApplication} from './application.js';
+import {trustedMemoryText} from './inbound.js';
 import {normalize} from './model.js';
 
 const declaration = {
@@ -19,16 +18,20 @@ const declaration = {
   },
 };
 
-export default {
+export function createMemoryPlugin({registry} = {}) {return {
   id: 'kurumi-memory', name: 'Kurumi explicit memory',
   register(api) {
+    const application = createMemoryApplication({registry, policyAdapter: api.pluginConfig?.policyAdapter, storeAdapter: api.pluginConfig?.storeAdapter});
     const permits = new Map();
     api.on('reply_dispatch', event => {
       const owner = api.config.channels?.['kurumi-qq']?.ownerId, ctx = event.ctx;
-      if (ctx.SessionKey !== `agent:main:kurumi-qq:direct:${owner}`) return;
+      if (ctx?.SessionKey !== `agent:main:kurumi-qq:direct:${owner}`) return;
       permits.delete(ctx.SessionKey);
-      const permit = memoryIntent(ctx, owner, event);
-      if (permit) permits.set(ctx.SessionKey, permit);
+      const raw = trustedMemoryText(ctx, owner, event);
+      if (raw === undefined) return;
+      const hints = application.policy.intent(ctx, owner, event);
+      if (hints) permits.set(ctx.SessionKey, {...hints, raw, at: Date.now(), messageId: String(ctx.MessageSid),
+        used: false, key: undefined, result: undefined});
     });
     api.registerTool({contextVersion: 2, create: ctx => {
       const permit = permits.get(ctx.sessionKey);
@@ -41,16 +44,17 @@ export default {
           const workspace = cfg.agents.entries.main.workspace;
           let result;
           if (args.action === 'list' || args.action === 'search') {
-            const data = readMemory(workspace);
+            const data = application.read(workspace);
             result = {ok: true, revision: data.revision, entries: args.action === 'search'
               ? data.entries.filter(entry => normalize(entry.text).includes(normalize(args.query))) : data.entries};
           } else {
             if (permits.get(ctx.sessionKey) !== permit) throw Error('记忆请求已经过期');
-            result = changeMemory(workspace, args, permit);
+            result = application.changeMemory(workspace, args, permit);
           }
           return {content: [{type: 'text', text: JSON.stringify(result)}]};
         },
       };
     }}, {name: 'kurumi_memory', optional: true});
   },
-};
+};}
+export default createMemoryPlugin();

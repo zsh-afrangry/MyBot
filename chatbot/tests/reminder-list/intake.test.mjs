@@ -2,13 +2,13 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {createListIntake} from '../../plugins/personal-reminder-list/intake.js';
-import {listIntent} from '../../plugins/personal-reminder-list/policy.js';
+import {listIntent, defaultListPolicy} from '../../plugins/personal-reminder-list/policy.js';
 import {SESSION_TTL_MS, SESSION_MAX_MS} from '../../plugins/personal-reminder-list/intake.js';
 import {dialogue} from './dialogue-cases.mjs';
 const owner = '365999865', sessionKey = 'agent:main:kurumi-qq:direct:' + owner;
 function fixture() {
   let at = Date.parse('2026-10-11T13:12:17+08:00'), seq = 0;
-  const intake = createListIntake(owner, () => at), ctx = {sessionKey, sessionId: 'session-one'};
+  const intake = createListIntake(owner, () => at, defaultListPolicy), ctx = {sessionKey, sessionId: 'session-one'};
   const event = raw => ({ctx: {RawBody: raw, MessageSid: String(++seq), Timestamp: at, ChatType: 'direct',
     CommandAuthorized: true, SenderId: owner, OriginatingChannel: 'kurumi-qq', OriginatingTo: 'user:' + owner, SessionKey: sessionKey}});
   const turn = raw => {const request = intake.receive(event(raw)); return {request, permit: intake.bind(request, ctx)};};

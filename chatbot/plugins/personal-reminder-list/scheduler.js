@@ -1,10 +1,10 @@
 import {resolve, isAbsolute} from 'node:path';
 import {existsSync} from 'node:fs';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
-import {ListStore} from './store.js';
+import {createListApplication} from './application.js';
 
 export const DECLARATION_PREFIX = 'kurumi.reminder-list.daily:';
-export function buildJob(time, {root, ownerId, repo}) {
+export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite'}) {
   // OpenClaw can import this module from a disposable plugin capture. Never
   // derive a persisted Cron executable from import.meta.url: deployment config
   // owns the backend root and the executable suffix is fixed by this domain.
@@ -15,7 +15,8 @@ export function buildJob(time, {root, ownerId, repo}) {
     enabled: true, schedule: {kind: 'cron', expr: `${minute} ${hour} * * *`, tz: 'Asia/Shanghai', staggerMs: 0},
     sessionTarget: 'isolated', wakeMode: 'now',
     payload: {kind: 'command', argv: [process.execPath, resolve(repo, 'scripts/reminder-list.mjs'), 'run', '--slot', time],
-      cwd: repo, env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: ownerId},
+      cwd: repo, env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: ownerId,
+        ...(storeAdapter !== 'sqlite' ? {KURUMI_LIST_STORE_ADAPTER: storeAdapter} : {})},
       timeoutSeconds: 20, noOutputTimeoutSeconds: 10, outputMaxBytes: 524288},
     delivery: {mode: 'announce', channel: 'kurumi-qq', to: `user:${ownerId}`, accountId: 'default'},
     deleteAfterRun: false,
@@ -29,6 +30,7 @@ function isOwned(job, options) {
     && JSON.stringify(job.payload.argv) === JSON.stringify(expected.payload.argv)
     && job.payload.cwd === expected.payload.cwd
     && job.payload.env?.OPENCLAW_STATE_DIR === options.root && job.payload.env?.KURUMI_LIST_OWNER_ID === options.ownerId
+    && (job.payload.env?.KURUMI_LIST_STORE_ADAPTER ?? 'sqlite') === (options.storeAdapter ?? 'sqlite')
     && job.delivery?.channel === 'kurumi-qq' && job.delivery?.to === `user:${options.ownerId}`
     && job.delivery?.accountId === 'default';
 }
@@ -40,6 +42,7 @@ function canonical(value) {
 const equal = (a, b) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
 export function createScheduler(options) {
   buildJob('00:00', options); // Fail registration instead of persisting a missing runner.
+  const openStore = options.openStore ?? createListApplication({storeAdapter: options.storeAdapter}).openStore;
   const request = options.request ?? ((method, params) => {
     if (!process.env.OPENCLAW_GATEWAY_TOKEN) throw Error('Native scheduler credentials unavailable');
     return callGatewayFromCli(method, {url: `ws://127.0.0.1:${options.port}`, token: process.env.OPENCLAW_GATEWAY_TOKEN, timeout: '15000', json: true}, params);
@@ -47,7 +50,7 @@ export function createScheduler(options) {
   let chain = Promise.resolve();
   let timer, stopped = true, last = {ok: false, status: 'pending'};
   async function reconcile() {
-    const store = new ListStore(options);
+    const store = openStore(options);
     try {
       store.expire();
       const settings = store.settings(), desired = settings.enabled ? settings.times : [], all = [];

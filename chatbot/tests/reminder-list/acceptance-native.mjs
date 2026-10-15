@@ -3,7 +3,7 @@
 // retains normal channel/Cron receipts, restores service readiness, sends no
 // groups/other peers and never deletes production state. No model call.
 // Evidence: docs/verification/reminder-list-2026-10-11/native.json
-import {manageList} from '../../plugins/personal-reminder-list/service.js';
+import {manageList} from '../../plugins/personal-reminder-list/application.js';
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';
 import {tmpdir} from 'node:os';

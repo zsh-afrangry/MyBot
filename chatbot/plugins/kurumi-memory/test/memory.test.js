@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {readMemory,writeMemory} from '../store.js';
-import {changeMemory} from '../service.js';
+import {changeMemory} from '../application.js';
 import {memoryIntent} from '../policy.js';
 const fixture=()=>fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-memory-'));
 const permit=(raw,verb='记住')=>({raw,verb,at:Date.now()});

@@ -1,5 +1,4 @@
 import {trustedText} from './inbound.js';
-import {listIntent, wantsContinuousEntry, isContinuationCandidate, isStandaloneReminder} from './policy.js';
 
 export const SESSION_TTL_MS = 600000;
 export const SESSION_MAX_MS = 1800000;
@@ -7,19 +6,20 @@ export const SESSION_MAX_MS = 1800000;
 // reply_dispatch precedes session initialization. Bind its trusted text to the
 // actual ephemeral UUID at tool execution, never to a UUID guessed from text.
 // Only the owner's single direct route is supported; no persistent chat state.
-export function createListIntake(owner, now = Date.now) {
+export function createListIntake(owner, now, policy) {
   const sessionKey = 'agent:main:kurumi-qq:direct:' + owner;
   let current, continuous;
   const fresh = c => c && now() >= c.startedAt && now() - c.lastAt < SESSION_TTL_MS && now() - c.startedAt < SESSION_MAX_MS;
   function receive(event) {
     if (event.isTailDispatch || event.ctx?.SessionKey !== sessionKey) return;
+    current = undefined; // Revoke the old generation even if a policy throws.
     const at = now(), raw = trustedText(event.ctx, owner, event, at);
-    const explicit = raw && listIntent(event.ctx, owner, event, at);
-    const activation = !!raw && !isStandaloneReminder(raw) && wantsContinuousEntry(raw);
-    const candidate = !!raw && !/提醒列表/u.test(raw) && fresh(continuous) && isContinuationCandidate(raw);
+    const explicit = raw && policy.intent(event.ctx, owner, event, at);
+    const activation = !!raw && !policy.isStandaloneReminder(raw) && policy.wantsContinuousEntry(raw);
+    const candidate = !!raw && !policy.hasListName(raw) && fresh(continuous) && policy.isContinuationCandidate(raw);
     if (!activation && !candidate && !explicit?.actions.has('add')) continuous = undefined;
     current = {raw, at, messageId: String(event.ctx.MessageSid), sessionKey,
-      explicit, activation, candidate, listTarget: !!raw && !isStandaloneReminder(raw) && (/提醒列表/u.test(raw) || candidate)};
+      explicit, activation, candidate, listTarget: !!raw && !policy.isStandaloneReminder(raw) && (policy.hasListName(raw) || candidate)};
     return current;
   }
   function bind(request, ctx, {structured = false} = {}) {
@@ -33,7 +33,8 @@ export function createListIntake(owner, now = Date.now) {
       continuous = {sessionId: id, startedAt: request.at, lastAt: request.at};
       request.activated = true;
     }
-    if (request.explicit) return {...request.explicit, sessionId: id};
+    if (request.explicit) return {raw: request.raw, at: request.at, messageId: request.messageId,
+      sessionKey, sessionId: id, actions: new Set(request.explicit.actions)};
     if (request.candidate && continuous?.sessionId === id && fresh(continuous)) {
       return {raw: request.raw, at: request.at, messageId: request.messageId, sessionKey,
         sessionId: id, actions: new Set(['add']), continuation: true};

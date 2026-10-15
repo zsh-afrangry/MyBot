@@ -1,16 +1,12 @@
 // SQLite facts, invariants and delivery ledger. No chat admission rules.
 import {DatabaseSync} from 'node:sqlite';
 import {mkdirSync, readFileSync, chmodSync} from 'node:fs';
-import {join, resolve} from 'node:path';
+import {join} from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {TIMEZONE, DEFAULT_TIMES, localTime, normalizeTimes, dueSlot} from './time.js';
 import {normalize, item} from './model.js';
 import {formatDigest} from './formatter.js';
 
-export function stateRoot(env = process.env) {
-  if (!env.OPENCLAW_STATE_DIR?.trim()) throw Error('OPENCLAW_STATE_DIR 必须显式配置');
-  return resolve(env.OPENCLAW_STATE_DIR);
-}
 export class ListStore {
   constructor({root, ownerId, defaultTimes = DEFAULT_TIMES, now = Date.now}) {
     if (!/^\d{5,12}$/.test(ownerId)) throw Error('Invalid owner');

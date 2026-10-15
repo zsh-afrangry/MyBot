@@ -4,7 +4,7 @@
 // --natural runs the user dialogue suite; --ordinal verifies contextual item operations.
 // --out selects a separate evidence directory.
 // Evidence: docs/verification/reminder-list-2026-10-11/model.json
-import {manageList} from '../../plugins/personal-reminder-list/service.js';
+import {manageList} from '../../plugins/personal-reminder-list/application.js';
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';
 import {tmpdir} from 'node:os';

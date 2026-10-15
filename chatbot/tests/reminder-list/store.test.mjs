@@ -1,11 +1,12 @@
 // Offline domain tests. Only /tmp fixtures; no model, QQ or production writes.
-import {manageList} from '../../plugins/personal-reminder-list/service.js';
+import {manageList} from '../../plugins/personal-reminder-list/application.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {ListStore, stateRoot} from '../../plugins/personal-reminder-list/store.js';
+import {ListStore} from '../../plugins/personal-reminder-list/store.js';
+import {stateRoot} from '../../plugins/personal-reminder-list/application.js';
 import {parseDeadline, normalizeTimes, dueSlot} from '../../plugins/personal-reminder-list/time.js';
 import {listIntent} from '../../plugins/personal-reminder-list/policy.js';
 import {main} from '../../scripts/reminder-list.mjs';

@@ -40,6 +40,8 @@
 
 `sync-config.mjs` 是唯一的运行配置同步入口。
 
+提醒列表和长期记忆可在 `plugins.entries.<id>.config` 指定 `policyAdapter` / `storeAdapter`，值是领域 `adapters.js` 注册的实现 ID，启动时固定。默认分别为 `default` / `sqlite` 和 `explicit` / `memory-file`；未指定仍用上述默认，未知 ID 明确失败，不回退。替换实现、迁移数据与旧 Cron 绑定的处理见[文档 21](../docs/21_后端职责分层与代码整理.md)，配置选择不自动迁移业务数据。
+
 ```bash
 node scripts/fusion/sync-config.mjs            # --check（默认）：只报告漂移，不写入
 node scripts/fusion/sync-config.mjs --diff     # 逐项差异 + 删除项 + 运行态独有键

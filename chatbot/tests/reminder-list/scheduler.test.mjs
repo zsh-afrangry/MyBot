@@ -1,5 +1,5 @@
 // Offline native scheduler with fake RPC. Only temporary databases, no QQ/model.
-import {manageList} from '../../plugins/personal-reminder-list/service.js';
+import {manageList} from '../../plugins/personal-reminder-list/application.js';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtempSync, rmSync, existsSync} from 'node:fs';

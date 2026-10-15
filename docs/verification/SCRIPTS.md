@@ -122,6 +122,8 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | `docs/verification/` |
 | `chatbot/tests/backend-boundaries/confirmation.test.mjs` | 离线 | 确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合 | 只读 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/domain.test.mjs` | 离线 | 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/domain-adapters/integration.test.mjs` | 离线 | 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/domain-adapters/registry.test.mjs` | 离线 | 领域适配器注册/注销、启动选择、同步契约和失败拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/intake.test.mjs` | 离线 | 自然录入授权、实际会话 UUID、超时/重置/换题与跨提醒领域拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/log-query.test.mjs` | 离线 | 提醒列表审计接入日志查询，精确消息/slot 关联 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/reminder-list/plugin.test.mjs` | 离线 | 提醒列表 v2 工具、可信原文钩子和过期上下文拒绝 | 写临时测试目录 | 否 | header | — |
@@ -160,7 +162,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/run.mjs` | 遗留验收 | 旧 harness 总入口：真实 Host 调度 + 合成 QQ 输入 + 确定性认知 + 假调度 | 写仓库内文件、写临时测试目录 | 是 | boundary | — |
 | `chatbot/tests/acceptance/verify-restart.mjs` | 遗留验收 | 在新进程里重开测试目录并验证幂等；不重启任何服务 | 写临时测试目录、只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
-| `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用列表工具；--natural 七句与连续录入，竞争提案仅模型路由夹具；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
+| `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
 | `chatbot/tests/reminder-list/acceptance-native.mjs` | 验收 | 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务 | 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/native.json` |
 | `scripts/fusion/test-background-code.mjs` | 验收 | 后台代码任务登记检查与终态 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/10-background-code.json` |
 | `scripts/fusion/test-domain-due.mjs` | 验收 | 提醒到点投递（跨重启） | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/10-reminder-restart-delivery.json` |

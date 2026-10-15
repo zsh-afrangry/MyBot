@@ -1,0 +1,1084 @@
+TAP version 13
+# Subtest: nothing is delivered before the owner approves
+ok 1 - nothing is delivered before the owner approves
+  ---
+  duration_ms: 130.745583
+  type: 'test'
+  ...
+# Subtest: repeated unapproved attempts still deliver nothing
+ok 2 - repeated unapproved attempts still deliver nothing
+  ---
+  duration_ms: 111.141689
+  type: 'test'
+  ...
+# Subtest: after the owner confirms, exactly one message is delivered
+ok 3 - after the owner confirms, exactly one message is delivered
+  ---
+  duration_ms: 326.425276
+  type: 'test'
+  ...
+# Subtest: a forged confirmation code approves nothing
+ok 4 - a forged confirmation code approves nothing
+  ---
+  duration_ms: 166.578899
+  type: 'test'
+  ...
+# Subtest: a confirmation arriving in a group chat approves nothing
+ok 5 - a confirmation arriving in a group chat approves nothing
+  ---
+  duration_ms: 113.374332
+  type: 'test'
+  ...
+# Subtest: one approval cannot send two drafts
+ok 6 - one approval cannot send two drafts
+  ---
+  duration_ms: 291.03704
+  type: 'test'
+  ...
+# Subtest: a delivered draft cannot be sent a second time
+ok 7 - a delivered draft cannot be sent a second time
+  ---
+  duration_ms: 209.748254
+  type: 'test'
+  ...
+# Subtest: a delivery failure consumes the approval and marks the draft failed
+ok 8 - a delivery failure consumes the approval and marks the draft failed
+  ---
+  duration_ms: 220.957311
+  type: 'test'
+  ...
+# Subtest: cc recipients are delivered to but never appear on the To: header
+ok 9 - cc recipients are delivered to but never appear on the To: header
+  ---
+  duration_ms: 209.647595
+  type: 'test'
+  ...
+# Subtest: the audit trail for a full round trip contains no credentials
+ok 10 - the audit trail for a full round trip contains no credentials
+  ---
+  duration_ms: 208.528958
+  type: 'test'
+  ...
+# Subtest: a recipient removed from the allowlist after drafting cannot be delivered to
+ok 11 - a recipient removed from the allowlist after drafting cannot be delivered to
+  ---
+  duration_ms: 227.857182
+  type: 'test'
+  ...
+# Subtest: a recipient outside the allowlist cannot even be drafted
+ok 12 - a recipient outside the allowlist cannot even be drafted
+  ---
+  duration_ms: 113.094263
+  type: 'test'
+  ...
+# Subtest: a confirmation carrying a MILLISECOND timestamp is accepted (regression)
+ok 13 - a confirmation carrying a MILLISECOND timestamp is accepted (regression)
+  ---
+  duration_ms: 225.008876
+  type: 'test'
+  ...
+# Subtest: a confirmation carrying a SECOND timestamp still works
+ok 14 - a confirmation carrying a SECOND timestamp still works
+  ---
+  duration_ms: 229.93277
+  type: 'test'
+  ...
+# Subtest: an event without a timestamp falls back to the store clock
+ok 15 - an event without a timestamp falls back to the store clock
+  ---
+  duration_ms: 213.800598
+  type: 'test'
+  ...
+# Subtest: plain ASCII headers stay readable
+ok 16 - plain ASCII headers stay readable
+  ---
+  duration_ms: 4.880312
+  type: 'test'
+  ...
+# Subtest: non-ASCII subjects use RFC 2047 and never exceed 75 characters per encoded word
+ok 17 - non-ASCII subjects use RFC 2047 and never exceed 75 characters per encoded word
+  ---
+  duration_ms: 0.658283
+  type: 'test'
+  ...
+# Subtest: header values containing CR, LF or NUL are rejected outright
+ok 18 - header values containing CR, LF or NUL are rejected outright
+  ---
+  duration_ms: 0.756717
+  type: 'test'
+  ...
+# Subtest: non-ASCII attachment filenames carry an RFC 2231 extended parameter plus an ASCII fallback
+ok 19 - non-ASCII attachment filenames carry an RFC 2231 extended parameter plus an ASCII fallback
+  ---
+  duration_ms: 0.751538
+  type: 'test'
+  ...
+# Subtest: the envelope sender is never empty (regression: MAIL FROM:<> bug)
+ok 20 - the envelope sender is never empty (regression: MAIL FROM:<> bug)
+  ---
+  duration_ms: 0.933318
+  type: 'test'
+  ...
+# Subtest: envelope recipients are bare addresses even when display names are used
+ok 21 - envelope recipients are bare addresses even when display names are used
+  ---
+  duration_ms: 0.390411
+  type: 'test'
+  ...
+# Subtest: base64 bodies are wrapped at 76 characters
+ok 22 - base64 bodies are wrapped at 76 characters
+  ---
+  duration_ms: 0.59802
+  type: 'test'
+  ...
+# Subtest: dot-stuffing protects a body line that is a single dot
+ok 23 - dot-stuffing protects a body line that is a single dot
+  ---
+  duration_ms: 0.201517
+  type: 'test'
+  ...
+# Subtest: attachments produce a well-formed multipart/mixed with both parts
+ok 24 - attachments produce a well-formed multipart/mixed with both parts
+  ---
+  duration_ms: 1.11593
+  type: 'test'
+  ...
+# Subtest: addresses are validated and HTML bodies are refused for now
+ok 25 - addresses are validated and HTML bodies are refused for now
+  ---
+  duration_ms: 0.488595
+  type: 'test'
+  ...
+# Subtest: the built message separates envelope fields from visible headers
+ok 26 - the built message separates envelope fields from visible headers
+  ---
+  duration_ms: 0.519694
+  type: 'test'
+  ...
+# Subtest: a single recipient as a plain string is accepted (regression)
+ok 27 - a single recipient as a plain string is accepted (regression)
+  ---
+  duration_ms: 2.231239
+  type: 'test'
+  ...
+# Subtest: the body may be named body or text (regression)
+ok 28 - the body may be named body or text (regression)
+  ---
+  duration_ms: 0.292768
+  type: 'test'
+  ...
+# Subtest: recipients accept arrays, strings and common separators
+ok 29 - recipients accept arrays, strings and common separators
+  ---
+  duration_ms: 0.366928
+  type: 'test'
+  ...
+# Subtest: missing draft fields come back as fixable problems, not schema rejections
+ok 30 - missing draft fields come back as fixable problems, not schema rejections
+  ---
+  duration_ms: 0.464951
+  type: 'test'
+  ...
+# Subtest: numbers, nulls and odd input never throw out of the normaliser
+ok 31 - numbers, nulls and odd input never throw out of the normaliser
+  ---
+  duration_ms: 0.326893
+  type: 'test'
+  ...
+# Subtest: email_outbox defaults to listing (regression)
+ok 32 - email_outbox defaults to listing (regression)
+  ---
+  duration_ms: 0.22418
+  type: 'test'
+  ...
+# Subtest: email_outbox rejects an unknown action and a cancel without a draft id
+ok 33 - email_outbox rejects an unknown action and a cancel without a draft id
+  ---
+  duration_ms: 0.701685
+  type: 'test'
+  ...
+# Subtest: allowlist helpers normalise and compare as documented
+ok 34 - allowlist helpers normalise and compare as documented
+  ---
+  duration_ms: 0.612557
+  type: 'test'
+  ...
+# Subtest: one address rule is shared by the policy layer and the MIME builder
+ok 35 - one address rule is shared by the policy layer and the MIME builder
+  ---
+  duration_ms: 1.230094
+  type: 'test'
+  ...
+# Subtest: email_send tolerates an echoed confirmation line but never trusts it
+ok 36 - email_send tolerates an echoed confirmation line but never trusts it
+  ---
+  duration_ms: 0.618228
+  type: 'test'
+  ...
+# Subtest: email_send explains a missing draft id instead of failing schema validation
+ok 37 - email_send explains a missing draft id instead of failing schema validation
+  ---
+  duration_ms: 0.315541
+  type: 'test'
+  ...
+# Subtest: delivers a message over implicit TLS and the server receives exactly one
+ok 38 - delivers a message over implicit TLS and the server receives exactly one
+  ---
+  duration_ms: 90.851941
+  type: 'test'
+  ...
+# Subtest: the authorization code reaches the server as a credential, and only there
+ok 39 - the authorization code reaches the server as a credential, and only there
+  ---
+  duration_ms: 64.983883
+  type: 'test'
+  ...
+# Subtest: authentication failure raises auth_failed without leaking credentials
+ok 40 - authentication failure raises auth_failed without leaking credentials
+  ---
+  duration_ms: 50.249722
+  type: 'test'
+  ...
+# Subtest: empty credentials are refused at AUTH and nothing is delivered
+ok 41 - empty credentials are refused at AUTH and nothing is delivered
+  ---
+  duration_ms: 53.097417
+  type: 'test'
+  ...
+# Subtest: a refused recipient is reported, and all-refused aborts before DATA
+ok 42 - a refused recipient is reported, and all-refused aborts before DATA
+  ---
+  duration_ms: 49.566452
+  type: 'test'
+  ...
+# Subtest: partial refusal delivers to the accepted recipient and lists the rejected one
+ok 43 - partial refusal delivers to the accepted recipient and lists the rejected one
+  ---
+  duration_ms: 52.349305
+  type: 'test'
+  ...
+# Subtest: a rejected sender is reported as sender_rejected
+ok 44 - a rejected sender is reported as sender_rejected
+  ---
+  duration_ms: 61.230873
+  type: 'test'
+  ...
+# Subtest: a DATA-phase rejection is reported and the draft is not recorded as sent
+ok 45 - a DATA-phase rejection is reported and the draft is not recorded as sent
+  ---
+  duration_ms: 74.079672
+  type: 'test'
+  ...
+# Subtest: a silent server produces a timeout instead of hanging forever
+ok 46 - a silent server produces a timeout instead of hanging forever
+  ---
+  duration_ms: 440.003339
+  type: 'test'
+  ...
+# Subtest: an unreachable port fails as connection_error
+ok 47 - an unreachable port fails as connection_error
+  ---
+  duration_ms: 5.756013
+  type: 'test'
+  ...
+# Subtest: a body line that is a single dot survives delivery intact
+ok 48 - a body line that is a single dot survives delivery intact
+  ---
+  duration_ms: 68.76243
+  type: 'test'
+  ...
+# Subtest: a draft registers a pending proposal and returns the confirmation instruction
+ok 49 - a draft registers a pending proposal and returns the confirmation instruction
+  ---
+  duration_ms: 121.559434
+  type: 'test'
+  ...
+# Subtest: payload hashes are deterministic per content and change with any field
+ok 50 - payload hashes are deterministic per content and change with any field
+  ---
+  duration_ms: 0.849371
+  type: 'test'
+  ...
+# Subtest: without the owner's approval, sending is refused
+ok 51 - without the owner's approval, sending is refused
+  ---
+  duration_ms: 110.874609
+  type: 'test'
+  ...
+# Subtest: the owner's confirmation reply issues exactly one usable grant
+ok 52 - the owner's confirmation reply issues exactly one usable grant
+  ---
+  duration_ms: 152.132497
+  type: 'test'
+  ...
+# Subtest: repeating the same confirmation message is idempotent and does not duplicate grants
+ok 53 - repeating the same confirmation message is idempotent and does not duplicate grants
+  ---
+  duration_ms: 157.190301
+  type: 'test'
+  ...
+# Subtest: a confirmation for another proposal does not approve this one
+ok 54 - a confirmation for another proposal does not approve this one
+  ---
+  duration_ms: 181.590951
+  type: 'test'
+  ...
+# Subtest: a bare 确认 with no code approves nothing
+ok 55 - a bare 确认 with no code approves nothing
+  ---
+  duration_ms: 176.872612
+  type: 'test'
+  ...
+# Subtest: a group-chat or non-owner inbound event cannot approve
+ok 56 - a group-chat or non-owner inbound event cannot approve
+  ---
+  duration_ms: 133.589298
+  type: 'test'
+  ...
+# Subtest: an approval obtained in another conversation cannot be used here
+ok 57 - an approval obtained in another conversation cannot be used here
+  ---
+  duration_ms: 107.766726
+  type: 'test'
+  ...
+# Subtest: an expired draft cannot be approved into a send
+ok 58 - an expired draft cannot be approved into a send
+  ---
+  duration_ms: 89.665868
+  type: 'test'
+  ...
+# Subtest: a sent draft cannot be approved or sent again
+ok 59 - a sent draft cannot be approved or sent again
+  ---
+  duration_ms: 153.120916
+  type: 'test'
+  ...
+# Subtest: draft input is validated: recipients, subject, body, attachments
+ok 60 - draft input is validated: recipients, subject, body, attachments
+  ---
+  duration_ms: 92.942276
+  type: 'test'
+  ...
+# Subtest: the audit trail records actions and never contains credentials or body text
+ok 61 - the audit trail records actions and never contains credentials or body text
+  ---
+  duration_ms: 117.623901
+  type: 'test'
+  ...
+# Subtest: cancelling a pending draft is recorded and stops approval
+ok 62 - cancelling a pending draft is recorded and stops approval
+  ---
+  duration_ms: 112.292322
+  type: 'test'
+  ...
+# Subtest: an unknown draft id is refused without touching other state
+ok 63 - an unknown draft id is refused without touching other state
+  ---
+  duration_ms: 78.502225
+  type: 'test'
+  ...
+# Subtest: the allowlist admits listed recipients and refuses everyone else
+ok 64 - the allowlist admits listed recipients and refuses everyone else
+  ---
+  duration_ms: 104.049362
+  type: 'test'
+  ...
+# Subtest: a refused draft leaves nothing behind to approve
+ok 65 - a refused draft leaves nothing behind to approve
+  ---
+  duration_ms: 111.716153
+  type: 'test'
+  ...
+# Subtest: cc recipients are subject to the same allowlist
+ok 66 - cc recipients are subject to the same allowlist
+  ---
+  duration_ms: 115.800863
+  type: 'test'
+  ...
+# Subtest: an empty allowlist closes the capability instead of silently allowing everything
+ok 67 - an empty allowlist closes the capability instead of silently allowing everything
+  ---
+  duration_ms: 116.776782
+  type: 'test'
+  ...
+# Subtest: allowlist matching ignores case and surrounding whitespace
+ok 68 - allowlist matching ignores case and surrounding whitespace
+  ---
+  duration_ms: 127.906029
+  type: 'test'
+  ...
+# Subtest: eventSeconds converts milliseconds and leaves seconds alone
+ok 69 - eventSeconds converts milliseconds and leaves seconds alone
+  ---
+  duration_ms: 0.201608
+  type: 'test'
+  ...
+# Subtest: email_draft accepts the exact arguments that failed in production
+ok 70 - email_draft accepts the exact arguments that failed in production
+  ---
+  duration_ms: 122.446066
+  type: 'test'
+  ...
+# Subtest: email_draft answers a missing field with a fixable message instead of a schema error
+ok 71 - email_draft answers a missing field with a fixable message instead of a schema error
+  ---
+  duration_ms: 94.306653
+  type: 'test'
+  ...
+# Subtest: email_draft still refuses a recipient outside the allowlist
+ok 72 - email_draft still refuses a recipient outside the allowlist
+  ---
+  duration_ms: 103.947483
+  type: 'test'
+  ...
+# Subtest: email_outbox lists drafts when called with no arguments
+ok 73 - email_outbox lists drafts when called with no arguments
+  ---
+  duration_ms: 109.688227
+  type: 'test'
+  ...
+# Subtest: email_outbox reports an unknown action without throwing
+ok 74 - email_outbox reports an unknown action without throwing
+  ---
+  duration_ms: 128.338515
+  type: 'test'
+  ...
+# Subtest: a non-owner context cannot use any mail tool
+ok 75 - a non-owner context cannot use any mail tool
+  ---
+  duration_ms: 2.290681
+  type: 'test'
+  ...
+# Subtest: email_status reports the allowlist and the confirmation backend registration
+ok 76 - email_status reports the allowlist and the confirmation backend registration
+  ---
+  duration_ms: 1.403149
+  type: 'test'
+  ...
+# Subtest: email_status explains what to configure when mail is not set up yet
+ok 77 - email_status explains what to configure when mail is not set up yet
+  ---
+  duration_ms: 6.109865
+  type: 'test'
+  ...
+# Subtest: email_send accepts the exact arguments that failed in production
+ok 78 - email_send accepts the exact arguments that failed in production
+  ---
+  duration_ms: 167.781482
+  type: 'test'
+  ...
+# Subtest: email_send explains a missing draft id instead of failing schema validation
+ok 79 - email_send explains a missing draft id instead of failing schema validation
+  ---
+  duration_ms: 2.380419
+  type: 'test'
+  ...
+# Subtest: persistent create, idempotent replay, revision checked edit and complete deletion
+ok 80 - persistent create, idempotent replay, revision checked edit and complete deletion
+  ---
+  duration_ms: 29.928104
+  type: 'test'
+  ...
+# Subtest: requires exact current owner fact and rejects secrets, stale or consumed intent
+ok 81 - requires exact current owner fact and rejects secrets, stale or consumed intent
+  ---
+  duration_ms: 6.842728
+  type: 'test'
+  ...
+# Subtest: unmanaged files and symlinks cannot be overwritten; private file mode persists
+ok 82 - unmanaged files and symlinks cannot be overwritten; private file mode persists
+  ---
+  duration_ms: 9.004118
+  type: 'test'
+  ...
+# Subtest: original-message intent binds owner, route, freshness and never quoted instructions
+ok 83 - original-message intent binds owner, route, freshness and never quoted instructions
+  ---
+  duration_ms: 0.570979
+  type: 'test'
+  ...
+# Subtest: corrupt negative revision and dangling links are rejected without replacing data
+ok 84 - corrupt negative revision and dangling links are rejected without replacing data
+  ---
+  duration_ms: 0.852888
+  type: 'test'
+  ...
+# Subtest: Owner and endpoint validation fail closed
+ok 85 - Owner and endpoint validation fail closed
+  ---
+  duration_ms: 2.080578
+  type: 'test'
+  ...
+# Subtest: Reject group, stranger, self, wrong bot, malformed event
+ok 86 - Reject group, stranger, self, wrong bot, malformed event
+  ---
+  duration_ms: 0.61388
+  type: 'test'
+  ...
+# Subtest: CQ text is literal, not metadata
+ok 87 - CQ text is literal, not metadata
+  ---
+  duration_ms: 0.316072
+  type: 'test'
+  ...
+# Subtest: Durable ingress and egress survive restart, unknown cannot be reserved again
+ok 88 - Durable ingress and egress survive restart, unknown cannot be reserved again
+  ---
+  duration_ms: 88.466062
+  type: 'test'
+  ...
+# Subtest: Unicode chunking never breaks surrogate pairs
+ok 89 - Unicode chunking never breaks surrogate pairs
+  ---
+  duration_ms: 0.703357
+  type: 'test'
+  ...
+# Subtest: Media rejects arbitrary files and symlink escapes
+ok 90 - Media rejects arbitrary files and symlink escapes
+  ---
+  duration_ms: 1.952127
+  type: 'test'
+  ...
+# Subtest: Real HTTP adapter validates private target, sends literal segments, deduplicates
+ok 91 - Real HTTP adapter validates private target, sends literal segments, deduplicates
+  ---
+  duration_ms: 156.868188
+  type: 'test'
+  ...
+# Subtest: Inbound dispatch uses trusted sender, core route and only final delivery
+ok 92 - Inbound dispatch uses trusted sender, core route and only final delivery
+  ---
+  duration_ms: 90.523857
+  type: 'test'
+  ...
+# Subtest: Host durable delivery ID deduplicates and cancellation fences physical I/O
+ok 93 - Host durable delivery ID deduplicates and cancellation fences physical I/O
+  ---
+  duration_ms: 178.23807
+  type: 'test'
+  ...
+# Subtest: Accepted request with lost receipt stays unknown and never automatically resends
+ok 94 - Accepted request with lost receipt stays unknown and never automatically resends
+  ---
+  duration_ms: 121.580214
+  type: 'test'
+  ...
+# Subtest: Receipt observer failure does not repeat physical delivery
+ok 95 - Receipt observer failure does not repeat physical delivery
+  ---
+  duration_ms: 107.960981
+  type: 'test'
+  ...
+# Subtest: Inbound dispatcher delivery failure is persisted rather than reported completed
+ok 96 - Inbound dispatcher delivery failure is persisted rather than reported completed
+  ---
+  duration_ms: 81.700117
+  type: 'test'
+  ...
+# Subtest: Quoted confirmation remains outside original RawBody
+ok 97 - Quoted confirmation remains outside original RawBody
+  ---
+  duration_ms: 122.482692
+  type: 'test'
+  ...
+# Subtest: Ingress provenance is explicit; negative QQ IDs are still real messages
+ok 98 - Ingress provenance is explicit; negative QQ IDs are still real messages
+  ---
+  duration_ms: 80.870862
+  type: 'test'
+  ...
+# Subtest: real NT QQ image domain is accepted without widening arbitrary media access
+ok 99 - real NT QQ image domain is accepted without widening arbitrary media access
+  ---
+  duration_ms: 0.35748
+  type: 'test'
+  ...
+# Subtest: short paragraphs separate naturally while reports and code remain grouped
+ok 100 - short paragraphs separate naturally while reports and code remain grouped
+  ---
+  duration_ms: 2.721137
+  type: 'test'
+  ...
+# Subtest: rolling quota preserves old attempts, failed/unknown reservations and idempotent receipts across reopen
+ok 101 - rolling quota preserves old attempts, failed/unknown reservations and idempotent receipts across reopen
+  ---
+  duration_ms: 112.884224
+  type: 'test'
+  ...
+# Subtest: cancelling during natural pacing stops remaining physical sends
+ok 102 - cancelling during natural pacing stops remaining physical sends
+  ---
+  duration_ms: 118.172901
+  type: 'test'
+  ...
+# Subtest: sticker labels stay data; other senders and arbitrary references are rejected before I/O
+ok 103 - sticker labels stay data; other senders and arbitrary references are rejected before I/O
+  ---
+  duration_ms: 1796.975963
+  type: 'test'
+  ...
+# Subtest: paper sources forbid local destinations, credentials, redirects and unsupported query parameters
+ok 104 - paper sources forbid local destinations, credentials, redirects and unsupported query parameters
+  ---
+  duration_ms: 1.46266
+  type: 'test'
+  ...
+# Subtest: failed, redirected, oversized and non-PDF responses cannot become paper artifacts
+ok 105 - failed, redirected, oversized and non-PDF responses cannot become paper artifacts
+  ---
+  duration_ms: 47.882568
+  type: 'test'
+  ...
+# Subtest: scoped Git commit excludes unrelated staged and untracked files
+ok 106 - scoped Git commit excludes unrelated staged and untracked files
+  ---
+  duration_ms: 67.621761
+  type: 'test'
+  ...
+# Subtest: project code cannot read host-private files, write fixtures or reach host loopback
+ok 107 - project code cannot read host-private files, write fixtures or reach host loopback
+  ---
+  duration_ms: 68.431261
+  type: 'test'
+  ...
+# Subtest: abort terminates the isolated process tree
+ok 108 - abort terminates the isolated process tree
+  ---
+  duration_ms: 158.511837
+  type: 'test'
+  ...
+# Subtest: Owner task tool refuses other users and sessions before effects
+ok 109 - Owner task tool refuses other users and sessions before effects
+  ---
+  duration_ms: 1.748164
+  type: 'test'
+  ...
+# Subtest: 24 hex Host run ID accepted but saved run/session binding required
+ok 110 - 24 hex Host run ID accepted but saved run/session binding required
+  ---
+  duration_ms: 0.858478
+  type: 'test'
+  ...
+# Subtest: Fixed check is absent from main and rejects a different workspace
+ok 111 - Fixed check is absent from main and rejects a different workspace
+  ---
+  duration_ms: 0.531075
+  type: 'test'
+  ...
+# Subtest: shared package preserves its complete runtime public API without leaking split helpers
+ok 112 - shared package preserves its complete runtime public API without leaking split helpers
+  ---
+  duration_ms: 1.672423
+  type: 'test'
+  ...
+# Subtest: grant consumption can roll back with a business transaction and then commit exactly once
+ok 113 - grant consumption can roll back with a business transaction and then commit exactly once
+  ---
+  duration_ms: 3.634619
+  type: 'test'
+  ...
+# Subtest: weather deployment container registers independent backends and cleans them up on stop
+ok 114 - weather deployment container registers independent backends and cleans them up on stop
+  ---
+  duration_ms: 0.336811
+  type: 'test'
+  ...
+# Subtest: a partial backend-registration failure removes only the registrations it owns
+ok 115 - a partial backend-registration failure removes only the registrations it owns
+  ---
+  duration_ms: 0.40021
+  type: 'test'
+  ...
+# Subtest: composed interaction hooks block only the intended tool/run and never register confirmation backends
+ok 116 - composed interaction hooks block only the intended tool/run and never register confirmation backends
+  ---
+  duration_ms: 0.658093
+  type: 'test'
+  ...
+# Subtest: internal storage takes structured facts; the tool service separately enforces source rules
+ok 117 - internal storage takes structured facts; the tool service separately enforces source rules
+  ---
+  duration_ms: 87.964563
+  type: 'test'
+  ...
+# Subtest: a structured current request may target an existing item without title or action keywords
+ok 118 - a structured current request may target an existing item without title or action keywords
+  ---
+  duration_ms: 90.001608
+  type: 'test'
+  ...
+# Subtest: item, audit and replay ledger roll back together if recording the request fails
+ok 119 - item, audit and replay ledger roll back together if recording the request fails
+  ---
+  duration_ms: 69.814953
+  type: 'test'
+  ...
+# Subtest: schedule version, audit and replay ledger share the same transaction
+ok 120 - schedule version, audit and replay ledger share the same transaction
+  ---
+  duration_ms: 84.808871
+  type: 'test'
+  ...
+# Subtest: memory storage remains reusable without chat text; revision guards remain enforced
+ok 121 - memory storage remains reusable without chat text; revision guards remain enforced
+  ---
+  duration_ms: 27.999291
+  type: 'test'
+  ...
+# Subtest: actual memory tool rejects inferred/quoted facts and preserves a captured current request through reads
+ok 122 - actual memory tool rejects inferred/quoted facts and preserves a captured current request through reads
+  ---
+  duration_ms: 23.544335
+  type: 'test'
+  ...
+# Subtest: memory owner authorization still precedes any storage access
+ok 123 - memory owner authorization still precedes any storage access
+  ---
+  duration_ms: 2.304106
+  type: 'test'
+  ...
+# Subtest: alternate reminder policy changes admission while mandatory freshness and SQL invariants survive
+ok 124 - alternate reminder policy changes admission while mandatory freshness and SQL invariants survive
+  ---
+  duration_ms: 89.005298
+  type: 'test'
+  ...
+# Subtest: reminder tools, scheduler and fixed runner all consume a registered alternate store
+ok 125 - reminder tools, scheduler and fixed runner all consume a registered alternate store
+  ---
+  duration_ms: 11.737888
+  type: 'test'
+  ...
+# Subtest: a replacement list policy cannot mint transport identity or overwrite trusted request metadata
+ok 126 - a replacement list policy cannot mint transport identity or overwrite trusted request metadata
+  ---
+  duration_ms: 100.705666
+  type: 'test'
+  ...
+# Subtest: unknown store disables registration; runner and scheduler refuse a mismatched store binding
+ok 127 - unknown store disables registration; runner and scheduler refuse a mismatched store binding
+  ---
+  duration_ms: 2.691572
+  type: 'test'
+  ...
+# Subtest: memory tool uses independent policy and store; untrusted inbound cannot be granted by replacement policy
+ok 128 - memory tool uses independent policy and store; untrusted inbound cannot be granted by replacement policy
+  ---
+  duration_ms: 2.804563
+  type: 'test'
+  ...
+# Subtest: registration validates contracts and identities; duplicate IDs are rejected separately per kind
+ok 129 - registration validates contracts and identities; duplicate IDs are rejected separately per kind
+  ---
+  duration_ms: 3.735648
+  type: 'test'
+  ...
+# Subtest: resolved selections remain fixed; old unregister handles cannot remove a later replacement
+ok 130 - resolved selections remain fixed; old unregister handles cannot remove a later replacement
+  ---
+  duration_ms: 0.629629
+  type: 'test'
+  ...
+# Subtest: missing, failing and malformed stores never fall back; malformed resources close
+ok 131 - missing, failing and malformed stores never fall back; malformed resources close
+  ---
+  duration_ms: 7.733678
+  type: 'test'
+  ...
+# Subtest: registries do not share selections between applications or plugin captures
+ok 132 - registries do not share selections between applications or plugin captures
+  ---
+  duration_ms: 3.446447
+  type: 'test'
+  ...
+# Subtest: all six original add phrases authorize only add; capability inquiry does not authorize any mutation
+ok 133 - all six original add phrases authorize only add; capability inquiry does not authorize any mutation
+  ---
+  duration_ms: 4.552829
+  type: 'test'
+  ...
+# Subtest: trusted opening activates only append; reads bind the actual host UUID after dispatch
+ok 134 - trusted opening activates only append; reads bind the actual host UUID after dispatch
+  ---
+  duration_ms: 3.119043
+  type: 'test'
+  ...
+# Subtest: plain capability question alone, missing UUID, different UUID and different route cannot activate implicit add
+ok 135 - plain capability question alone, missing UUID, different UUID and different route cannot activate implicit add
+  ---
+  duration_ms: 1.326665
+  type: 'test'
+  ...
+# Subtest: successful explicit add opens continuation even without a prior announcement
+ok 136 - successful explicit add opens continuation even without a prior announcement
+  ---
+  duration_ms: 0.353843
+  type: 'test'
+  ...
+# Subtest: idle limit and total limit expire, even when successful additions refresh idle time
+ok 137 - idle limit and total limit expire, even when successful additions refresh idle time
+  ---
+  duration_ms: 2.065309
+  type: 'test'
+  ...
+# Subtest: conversation end, topic change, inquiries, one-off reminder and list maintenance close implicit intake
+ok 138 - conversation end, topic change, inquiries, one-off reminder and list maintenance close implicit intake
+  ---
+  duration_ms: 9.102872
+  type: 'test'
+  ...
+# Subtest: negative/hypothetical/untrusted current text and quoted material never authorize or keep an intake
+ok 139 - negative/hypothetical/untrusted current text and quoted material never authorize or keep an intake
+  ---
+  duration_ms: 0.49617
+  type: 'test'
+  ...
+# Subtest: reset/end lifecycle clears exact old generation; delayed old end cannot revoke a new generation
+ok 140 - reset/end lifecycle clears exact old generation; delayed old end cannot revoke a new generation
+  ---
+  duration_ms: 0.478236
+  type: 'test'
+  ...
+# Subtest: new trusted message revokes retained request; list failures cannot transfer to one-off or automations writes
+ok 141 - new trusted message revokes retained request; list failures cannot transfer to one-off or automations writes
+  ---
+  duration_ms: 0.529101
+  type: 'test'
+  ...
+# Subtest: explicit opt-out of list permits one-off flow and closes prior continuation
+ok 142 - explicit opt-out of list permits one-off flow and closes prior continuation
+  ---
+  duration_ms: 7.423566
+  type: 'test'
+  ...
+# Subtest: list audit joins exact message/item/slot and does not copy task text or invent scheduled turn
+ok 143 - list audit joins exact message/item/slot and does not copy task text or invent scheduled turn
+  ---
+  duration_ms: 131.227303
+  type: 'test'
+  ...
+# Subtest: missing DB is absent, corrupt DB is an explicit failure
+ok 144 - missing DB is absent, corrupt DB is an explicit failure
+  ---
+  duration_ms: 2.161289
+  type: 'test'
+  ...
+# Subtest: two optional tools and a scheduler register; untrusted get cannot touch state
+ok 145 - two optional tools and a scheduler register; untrusted get cannot touch state
+  ---
+  duration_ms: 4.134816
+  type: 'test'
+  ...
+# Subtest: actual plugin requires current inbound authorization and preserves it through list reads
+ok 146 - actual plugin requires current inbound authorization and preserves it through list reads
+  ---
+  duration_ms: 112.759405
+  type: 'test'
+  ...
+# Subtest: quoted BodyForAgent and stale context do not grant mutation
+ok 147 - quoted BodyForAgent and stale context do not grant mutation
+  ---
+  duration_ms: 66.837863
+  type: 'test'
+  ...
+# Subtest: original seven messages save six distinct list items without proposals; null DDL and conditions survive digest
+ok 148 - original seven messages save six distinct list items without proposals; null DDL and conditions survive digest
+  ---
+  duration_ms: 253.066755
+  type: 'test'
+  ...
+# Subtest: actual plugin accepts bounded continuation and reset clears it
+ok 149 - actual plugin accepts bounded continuation and reset clears it
+  ---
+  duration_ms: 83.069789
+  type: 'test'
+  ...
+# Subtest: failure and success both keep list route; read-only one-off queries still allowed; subsequent one-off request allowed
+ok 150 - failure and success both keep list route; read-only one-off queries still allowed; subsequent one-off request allowed
+  ---
+  duration_ms: 73.504169
+  type: 'test'
+  ...
+# Subtest: structured deletion succeeds without requiring a prescribed phrase: 大肥鱼，第六条可以删了
+ok 151 - structured deletion succeeds without requiring a prescribed phrase: 大肥鱼，第六条可以删了
+  ---
+  duration_ms: 114.402682
+  type: 'test'
+  ...
+# Subtest: structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"删掉。
+ok 152 - structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"删掉。
+  ---
+  duration_ms: 110.24313
+  type: 'test'
+  ...
+# Subtest: structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"作废。
+ok 153 - structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"作废。
+  ---
+  duration_ms: 101.787521
+  type: 'test'
+  ...
+# Subtest: structured semantics retain current-message, host-session, freshness and record version checks
+ok 154 - structured semantics retain current-message, host-session, freshness and record version checks
+  ---
+  duration_ms: 31.58156
+  type: 'test'
+  ...
+# Subtest: fixed command payload and owner route; defaults create four jobs once
+ok 155 - fixed command payload and owner route; defaults create four jobs once
+  ---
+  duration_ms: 75.134094
+  type: 'test'
+  ...
+# Subtest: persisted runner requires an explicit deployed backend root, never a capture fallback
+ok 156 - persisted runner requires an explicit deployed backend root, never a capture fallback
+  ---
+  duration_ms: 66.505971
+  type: 'test'
+  ...
+# Subtest: changing times removes obsolete declarations; pause removes only owned jobs and resume recreates
+ok 157 - changing times removes obsolete declarations; pause removes only owned jobs and resume recreates
+  ---
+  duration_ms: 96.186059
+  type: 'test'
+  ...
+# Subtest: RPC failure is pending, does not overwrite settings; retry repairs a partial reconciliation
+ok 158 - RPC failure is pending, does not overwrite settings; retry repairs a partial reconciliation
+  ---
+  duration_ms: 82.373586
+  type: 'test'
+  ...
+# Subtest: prefix collision cannot adopt or remove an unowned command/recipient
+ok 159 - prefix collision cannot adopt or remove an unowned command/recipient
+  ---
+  duration_ms: 82.218455
+  type: 'test'
+  ...
+# Subtest: concurrent syncs serialize and do not create duplicate declarations
+ok 160 - concurrent syncs serialize and do not create duplicate declarations
+  ---
+  duration_ms: 71.738423
+  type: 'test'
+  ...
+# Subtest: DDL date-only, leap date, minute, empty, invalid calendar and timezone
+ok 161 - DDL date-only, leap date, minute, empty, invalid calendar and timezone
+  ---
+  duration_ms: 14.545988
+  type: 'test'
+  ...
+# Subtest: times normalize 24:00 and reject duplicates, malformed, empty and excess
+ok 162 - times normalize 24:00 and reject duplicates, malformed, empty and excess
+  ---
+  duration_ms: 1.273205
+  type: 'test'
+  ...
+# Subtest: explicit state root is mandatory; no legacy fallback
+ok 163 - explicit state root is mandatory; no legacy fallback
+  ---
+  duration_ms: 1.977204
+  type: 'test'
+  ...
+# Subtest: add optional fields and source validation; do not invent facts or accept past DDL
+ok 164 - add optional fields and source validation; do not invent facts or accept past DDL
+  ---
+  duration_ms: 80.928821
+  type: 'test'
+  ...
+# Subtest: explicit no DDL never becomes a timestamp; urgency and activity relation cannot be dropped
+ok 165 - explicit no DDL never becomes a timestamp; urgency and activity relation cannot be dropped
+  ---
+  duration_ms: 83.67239
+  type: 'test'
+  ...
+# Subtest: event relation can have a separately stated deadline; item update cannot contradict an explicit clearing request
+ok 166 - event relation can have a separately stated deadline; item update cannot contradict an explicit clearing request
+  ---
+  duration_ms: 79.529509
+  type: 'test'
+  ...
+# Subtest: one trusted message is durable idempotent, changed arguments cannot run another write
+ok 167 - one trusted message is durable idempotent, changed arguments cannot run another write
+  ---
+  duration_ms: 75.476517
+  type: 'test'
+  ...
+# Subtest: completion, void, modification and explicit reopening preserve history
+ok 168 - completion, void, modification and explicit reopening preserve history
+  ---
+  duration_ms: 120.627717
+  type: 'test'
+  ...
+# Subtest: DDL exact boundary expires once; no DDL survives; midnight belongs to next day
+ok 169 - DDL exact boundary expires once; no DDL survives; midnight belongs to next day
+  ---
+  duration_ms: 81.514929
+  type: 'test'
+  ...
+# Subtest: ambiguous title, unknown target and missing/stale version never mutate
+ok 170 - ambiguous title, unknown target and missing/stale version never mutate
+  ---
+  duration_ms: 79.677837
+  type: 'test'
+  ...
+# Subtest: duplicate active titles, invalid inputs and partial transactions are rejected
+ok 171 - duplicate active titles, invalid inputs and partial transactions are rejected
+  ---
+  duration_ms: 82.071942
+  type: 'test'
+  ...
+# Subtest: TTL, malformed target and different owner cannot write
+ok 172 - TTL, malformed target and different owner cannot write
+  ---
+  duration_ms: 71.19753
+  type: 'test'
+  ...
+# Subtest: frequency alone and unknown class deadline cannot be silently invented
+ok 173 - frequency alone and unknown class deadline cannot be silently invented
+  ---
+  duration_ms: 70.095165
+  type: 'test'
+  ...
+# Subtest: settings complete replacement changes count; pause/resume and saved preference survives restart
+ok 174 - settings complete replacement changes count; pause/resume and saved preference survives restart
+  ---
+  duration_ms: 94.988146
+  type: 'test'
+  ...
+# Subtest: digest sorts all active records, omits terminal, outputs fields without persona or command execution
+ok 175 - digest sorts all active records, omits terminal, outputs fields without persona or command execution
+  ---
+  duration_ms: 125.49426
+  type: 'test'
+  ...
+# Subtest: digest claim survives restart, settings edits cannot redeliver same slot; missed slots skip
+ok 176 - digest claim survives restart, settings edits cannot redeliver same slot; missed slots skip
+  ---
+  duration_ms: 113.923106
+  type: 'test'
+  ...
+# Subtest: empty, paused and removed times are silent; arbitrary CLI args rejected
+ok 177 - empty, paused and removed times are silent; arbitrary CLI args rejected
+  ---
+  duration_ms: 85.15715
+  type: 'test'
+  ...
+# Subtest: delivery observation matches time/day; unknown or failed never automatically retry
+ok 178 - delivery observation matches time/day; unknown or failed never automatically retry
+  ---
+  duration_ms: 125.516994
+  type: 'test'
+  ...
+# Subtest: trusted original text only: deny strangers/groups/cron/tails/stale/instruction samples
+ok 179 - trusted original text only: deny strangers/groups/cron/tails/stale/instruction samples
+  ---
+  duration_ms: 1.631105
+  type: 'test'
+  ...
+1..179
+# tests 179
+# suites 0
+# pass 179
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3557.492434

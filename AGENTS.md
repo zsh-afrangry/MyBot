@@ -65,7 +65,8 @@
 
 ## 后端代码边界
 
-- 原文动作/字段规则放领域 `policy.js`，可信入站放 `inbound.js`，写入编排放 `service.js`；`store.js` 不读取聊天原文。提醒列表与记忆的写工具必须经过服务入口，不直接调用存储变更方法。
+- 领域默认策略放 `policy.js`，可信入站放 `inbound.js`，写入编排放 `service.js`；`store.js` 不读取聊天原文。提醒列表与记忆通过 `application.js` 组合入口、`adapters.js` 注册表和 `contracts.d.ts` 消费 Policy/Store 接口，服务不导入具体实现。共享注册/选择机制在 `chatbot/packages/domain-adapters/`；不可热切换或静默回退。
+- 提醒列表已有项的动作和对话指代由模型转换成 ID/版本，后端不重判原文动词/标题。可信当前请求、事务、版本和幂等是执行契约；单消息一项还受账本唯一键约束。替换列表存储必须同时覆盖工具、调度器和独立固定 runner，参见文档 21。
 - 带码确认只通过 `@kurumi/confirmation-core`；业务插件提供自己的适配器，在业务事务内消费 grant。交互钩子不签发授权。结构与删减入口见[文档 21](docs/21_后端职责分层与代码整理.md)。
 
 ## 记录方式

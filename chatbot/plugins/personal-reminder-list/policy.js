@@ -1,7 +1,7 @@
 // Existing language admission rules. Only service/intake call this module;
 // persistence never reads chat text or imports this policy.
 import {normalize} from './model.js';
-import {trustedText, PERMIT_TTL_MS} from './inbound.js';
+import {trustedText} from './inbound.js';
 
 const ADD = /加一(?:条|个|项)|添加|追加|新建|新增|加入|加(?:到|进|上)|记录|加紧(?:到|进)?提醒列表/u;
 const NON_ADD = /修改|更改|改成|改为|改到|改一下|更新|调整|清除|清空|做好了|做完了|已完成|完成了|作废|取消|删除|不做了|恢复|重开|暂停|停止|关闭/u;
@@ -42,8 +42,7 @@ export function listIntent(ctx, owner, event = {}, now = Date.now()) {
   if (!actions.size) return;
   return {raw, actions, at: now, messageId: String(ctx.MessageSid), sessionKey: ctx.SessionKey};
 }
-export function checkPermit(permit, action, now) {
-  if (!permit || !Number.isFinite(permit.at) || now < permit.at || now - permit.at >= PERMIT_TTL_MS) throw Error('需要有效的本人当前请求');
+export function checkPermit(permit, action) {
   // Existing-item semantics belong to the model. Transport freshness is still
   // enforced, but an exact title/list name/verb in this message is not a grant.
   if (!['update', 'complete', 'void', 'reopen'].includes(action) && !permit.actions?.has(action)) throw Error('需要本人本次原文明确要求此提醒列表操作；连续录入仅追加，一个请求只维护一项');
@@ -68,11 +67,8 @@ export function checkScheduleSource(permit) {
   if (!/(?:\d{1,2}[:：.]\d{2}|\d{1,2}[点时]|[零一二三四五六七八九十两]{1,3}点|午夜|零点)/u.test(permit.raw)) throw Error('仅指定次数还不能确定播报时刻，请补充每日具体时间');
 }
 
-// One mutation per incoming message is a product policy, separate from exact
-// replay detection/storage. A later policy change must also change this key.
-export function listRequestKey(permit) {
-  return `${permit.sessionKey}:${permit.messageId}`;
-}
-export function checkRequestReplay(previousHash, nextHash) {
-  if (previousHash !== nextHash) throw Error('本次消息已经执行过一项维护，请用新消息提出下一项');
-}
+export const defaultListPolicy = Object.freeze({
+  intent: listIntent, hasListName: raw => /提醒列表/u.test(raw),
+  wantsContinuousEntry, isContinuationCandidate, isStandaloneReminder,
+  authorize: checkPermit, checkText: checkTextSource, checkFacts: checkItemFacts, checkSchedule: checkScheduleSource,
+});

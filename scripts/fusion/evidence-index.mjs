@@ -38,6 +38,8 @@ const ROOT = REPO_ROOT;
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/domain-adapters/registry.test.mjs': ['离线', '领域适配器注册/注销、启动选择、同步契约和失败拒绝', {readonly: 1}, 'header'],
+  'chatbot/tests/domain-adapters/integration.test.mjs': ['离线', '真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退', {testDir: 1}, 'header'],
   'chatbot/tests/backend-boundaries/domain.test.mjs': ['离线', '领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚', {testDir: 1}, 'header'],
   'chatbot/tests/backend-boundaries/confirmation.test.mjs': ['离线', '确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合', {readonly: 1}, 'header'],
   'chatbot/scripts/reminder-list.mjs': ['领域运行', '固定提醒列表 Cron 程序：到期判定、slot 防重和汇总输出，OpenClaw 投递本人', {auth: 1, writesState: 1}, 'header'],
@@ -48,7 +50,7 @@ const TABLE = {
   'chatbot/tests/reminder-list/intake.test.mjs': ['离线', '自然录入授权、实际会话 UUID、超时/重置/换题与跨提醒领域拒绝', {readonly: 1}, 'header'],
   'chatbot/tests/reminder-list/dialogue-cases.mjs': ['库', '用户七句验收样例与字段期望（纯数据，无生产导入）', {readonly: 1}, 'header'],
   'chatbot/tests/reminder-list/production-guard.mjs': ['库', '只读比较生产列表与一次性提案/提醒逻辑数据，不输出私有记录', {readonly: 1}, 'header'],
-  'chatbot/tests/reminder-list/acceptance-model.mjs': ['验收', '真实 DeepSeek 调用列表工具；--natural 七句与连续录入，竞争提案仅模型路由夹具；--out 独立证据目录', {auth: 1, model: 1, testDir: 1, writesRepo: 1}, 'header'],
+  'chatbot/tests/reminder-list/acceptance-model.mjs': ['验收', '真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录', {auth: 1, model: 1, testDir: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/reminder-list/acceptance-native.mjs': ['验收', '真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务', {auth: 1, qq: 1, task: 1, restart: 1, writesState: 1, testDir: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/reminder-list/acceptance-host.mjs': ['验收', '隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录', {auth: 1, model: 1, restart: 1, testDir: 1, writesRepo: 1}, 'header'],
   // ---- 离线单元测试：进程内，无外发、无真实模型 ----

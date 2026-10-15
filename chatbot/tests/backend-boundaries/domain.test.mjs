@@ -6,7 +6,7 @@ import {mkdtempSync, rmSync, readFileSync, existsSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {ListStore} from '../../plugins/personal-reminder-list/store.js';
-import {manageList} from '../../plugins/personal-reminder-list/service.js';
+import {manageList} from '../../plugins/personal-reminder-list/application.js';
 import {prepareAddedItem} from '../../plugins/personal-reminder-list/model.js';
 import memoryPlugin from '../../plugins/kurumi-memory/index.js';
 import {readMemory, writeMemory} from '../../plugins/kurumi-memory/store.js';
@@ -95,7 +95,7 @@ test('memory storage remains reusable without chat text; revision guards remain 
 test('actual memory tool rejects inferred/quoted facts and preserves a captured current request through reads', async t => {
   const f = memoryFixture(t);
   f.dispatch('看看这段引用', {BodyForAgent: '记住：参考偏好'});
-  await assert.rejects(f.run(f.create(), {action: 'upsert', text: '参考偏好'}), /本次主人原文/);
+  await assert.rejects(f.run(f.create(), {action: 'upsert', text: '参考偏好'}), /当前记忆请求/);
   assert.equal(existsSync(join(f.workspace, 'MEMORY.md')), false);
   f.dispatch('请记住：参考偏好');
   const tool = f.create();

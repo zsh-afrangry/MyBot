@@ -1,0 +1,60 @@
+{
+  "status": "passed",
+  "date": "2026-10-16",
+  "baselineCommit": "091e1f4",
+  "tests": {
+    "node": 179,
+    "confirmationCore": 17,
+    "confirmationInbound": 15,
+    "weather": 162,
+    "total": 373
+  },
+  "builds": [
+    "confirmation-core",
+    "personal-confirmation",
+    "personal-weather"
+  ],
+  "modelCases": 7,
+  "isolatedHostCases": 6,
+  "productionDatabaseUnchanged": true,
+  "realQQSend": false,
+  "realMailSend": false,
+  "productionStoreMigration": false,
+  "remotePush": false,
+  "snapshotOrWorkerSync": false,
+  "at": "2026-10-15T18:52:51.260005+00:00",
+  "selfchecks": {
+    "dependencies": "passed",
+    "configuration": "13 managed keys; zero drift",
+    "persona": "4 files match; only managed AGENTS.md changed by apply",
+    "health": "ok; QQ online; testIngress=false"
+  },
+  "runtime": {
+    "active": "active",
+    "substate": "running",
+    "started": "Fri 2026-10-16 02:49:10 CST",
+    "catalogRefreshWarning": true,
+    "catalogWarningPreexisting": true
+  },
+  "documentation": {
+    "markdownFiles": 13,
+    "localLinks": 161,
+    "broken": [],
+    "scripts": 138,
+    "boundaries": 34,
+    "excludedIndependentMailDocument": true
+  },
+  "evidenceCoverage": {
+    "files": 170,
+    "unclassified": 0
+  },
+  "typeDeclarations": "strict tsc --noEmit passed for registry and both domain contracts",
+  "gitScope": "Only this task; independent mail work preserved. No remote write.",
+  "remainingBoundaries": [
+    "No real QQ round trip or mail delivery in this task",
+    "No production alternate-store migration; non-default operational log/backup support must be separately verified",
+    "No backup restore or worker copy synchronization",
+    "One-message-one-item remains; batch changes need a separate replay/schema design",
+    "One-off fixed reminder title still has the known persona address"
+  ]
+}
