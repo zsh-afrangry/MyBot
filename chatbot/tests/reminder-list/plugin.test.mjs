@@ -85,3 +85,45 @@ test('failure and success both keep list route; read-only one-off queries still 
   hooks.reply_dispatch(event('3分钟后提醒我喝水', '2'));
   assert.equal(hooks.before_tool_call({toolName: 'personal_reminder_propose'}, hookCtx), undefined);
 });
+
+for (const text of ['大肥鱼，第六条可以删了', '提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"删掉。', '提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"作废。']) {
+  test(`structured deletion succeeds without requiring a prescribed phrase: ${text}`, async t => {
+    const f = setup(t);
+    const titles = ['组会', '作业', '带身份证', '查材料', '读论文', '党支部换届选举后需要整理党费缴纳情况'];
+    for (const [i, title] of titles.entries()) {
+      f.hooks.reply_dispatch(f.event(`提醒列表添加${title}`, `add-${i}`));
+      assert.equal((await f.run(f.create('personal_reminder_list_manage'), {action: 'add', title})).ok, true);
+    }
+    const prior = await f.run(f.create('personal_reminder_list_get'), {});
+    const target = prior.items.find(i => i.title === titles[5]);
+    f.hooks.reply_dispatch(f.event(text, 'delete'));
+    const tool = f.create('personal_reminder_list_manage');
+    const args = {action: 'void', id: target.id, expectedVersion: target.version};
+    const result = await f.run(tool, args);
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.item.id, target.id); assert.equal(result.item.status, 'void');
+    assert.equal((await f.run(tool, args)).idempotent, true);
+    const history = await f.run(f.create('personal_reminder_list_get'), {history: true});
+    assert.equal(history.items.filter(i => i.status === 'active').length, 5);
+    assert.equal(history.items.find(i => i.id === target.id).version, target.version + 1);
+    assert.equal(f.hooks.before_tool_call({toolName: 'personal_reminder_propose'}, f.ctx).block, true);
+  });
+}
+
+test('structured semantics retain current-message, host-session, freshness and record version checks', async t => {
+  const f = setup(t);
+  f.hooks.reply_dispatch(f.event('提醒列表添加查材料', 'add'));
+  const item = (await f.run(f.create('personal_reminder_list_manage'), {action: 'add', title: '查材料'})).item;
+  f.hooks.reply_dispatch(f.event('那条不用了', 'void'));
+  const args = {action: 'void', id: item.id, expectedVersion: item.version};
+  const old = f.create('personal_reminder_list_manage');
+  assert.equal((await f.run(old, {...args, expectedVersion: 99})).ok, false);
+  assert.equal((await f.run(f.create('personal_reminder_list_manage', {...f.ctx, sessionId: 'other'}), args)).ok, false);
+  assert.equal((await f.run(f.create('personal_reminder_list_manage', {...f.ctx, sessionId: undefined}), args)).ok, false);
+  f.hooks.reply_dispatch(f.event('先聊其他事情', 'new'));
+  assert.equal((await f.run(old, args)).ok, false);
+  const current = f.create('personal_reminder_list_manage');
+  t.mock.timers.tick(300000);
+  assert.equal((await f.run(current, args)).ok, false);
+  assert.equal((await f.run(f.create('personal_reminder_list_get'), {})).items[0].status, 'active');
+});

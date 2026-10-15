@@ -1,0 +1,364 @@
+TAP version 13
+# Subtest: shared package preserves its complete runtime public API without leaking split helpers
+ok 1 - shared package preserves its complete runtime public API without leaking split helpers
+  ---
+  duration_ms: 1.253693
+  type: 'test'
+  ...
+# Subtest: grant consumption can roll back with a business transaction and then commit exactly once
+ok 2 - grant consumption can roll back with a business transaction and then commit exactly once
+  ---
+  duration_ms: 3.346927
+  type: 'test'
+  ...
+# Subtest: weather deployment container registers independent backends and cleans them up on stop
+ok 3 - weather deployment container registers independent backends and cleans them up on stop
+  ---
+  duration_ms: 0.365891
+  type: 'test'
+  ...
+# Subtest: a partial backend-registration failure removes only the registrations it owns
+ok 4 - a partial backend-registration failure removes only the registrations it owns
+  ---
+  duration_ms: 0.348308
+  type: 'test'
+  ...
+# Subtest: composed interaction hooks block only the intended tool/run and never register confirmation backends
+ok 5 - composed interaction hooks block only the intended tool/run and never register confirmation backends
+  ---
+  duration_ms: 0.627778
+  type: 'test'
+  ...
+# Subtest: internal storage takes structured facts; the tool service separately enforces source rules
+ok 6 - internal storage takes structured facts; the tool service separately enforces source rules
+  ---
+  duration_ms: 49.1075
+  type: 'test'
+  ...
+# Subtest: a structured current request may target an existing item without title or action keywords
+ok 7 - a structured current request may target an existing item without title or action keywords
+  ---
+  duration_ms: 57.356957
+  type: 'test'
+  ...
+# Subtest: item, audit and replay ledger roll back together if recording the request fails
+ok 8 - item, audit and replay ledger roll back together if recording the request fails
+  ---
+  duration_ms: 50.190064
+  type: 'test'
+  ...
+# Subtest: schedule version, audit and replay ledger share the same transaction
+ok 9 - schedule version, audit and replay ledger share the same transaction
+  ---
+  duration_ms: 46.606818
+  type: 'test'
+  ...
+# Subtest: memory storage remains reusable without chat text; revision guards remain enforced
+ok 10 - memory storage remains reusable without chat text; revision guards remain enforced
+  ---
+  duration_ms: 6.860242
+  type: 'test'
+  ...
+# Subtest: actual memory tool rejects inferred/quoted facts and preserves a captured current request through reads
+ok 11 - actual memory tool rejects inferred/quoted facts and preserves a captured current request through reads
+  ---
+  duration_ms: 8.244218
+  type: 'test'
+  ...
+# Subtest: memory owner authorization still precedes any storage access
+ok 12 - memory owner authorization still precedes any storage access
+  ---
+  duration_ms: 0.529405
+  type: 'test'
+  ...
+# Subtest: all six original add phrases authorize only add; capability inquiry does not authorize any mutation
+ok 13 - all six original add phrases authorize only add; capability inquiry does not authorize any mutation
+  ---
+  duration_ms: 2.796253
+  type: 'test'
+  ...
+# Subtest: trusted opening activates only append; reads bind the actual host UUID after dispatch
+ok 14 - trusted opening activates only append; reads bind the actual host UUID after dispatch
+  ---
+  duration_ms: 0.97272
+  type: 'test'
+  ...
+# Subtest: plain capability question alone, missing UUID, different UUID and different route cannot activate implicit add
+ok 15 - plain capability question alone, missing UUID, different UUID and different route cannot activate implicit add
+  ---
+  duration_ms: 0.423428
+  type: 'test'
+  ...
+# Subtest: successful explicit add opens continuation even without a prior announcement
+ok 16 - successful explicit add opens continuation even without a prior announcement
+  ---
+  duration_ms: 0.231901
+  type: 'test'
+  ...
+# Subtest: idle limit and total limit expire, even when successful additions refresh idle time
+ok 17 - idle limit and total limit expire, even when successful additions refresh idle time
+  ---
+  duration_ms: 0.285591
+  type: 'test'
+  ...
+# Subtest: conversation end, topic change, inquiries, one-off reminder and list maintenance close implicit intake
+ok 18 - conversation end, topic change, inquiries, one-off reminder and list maintenance close implicit intake
+  ---
+  duration_ms: 0.468241
+  type: 'test'
+  ...
+# Subtest: negative/hypothetical/untrusted current text and quoted material never authorize or keep an intake
+ok 19 - negative/hypothetical/untrusted current text and quoted material never authorize or keep an intake
+  ---
+  duration_ms: 0.271565
+  type: 'test'
+  ...
+# Subtest: reset/end lifecycle clears exact old generation; delayed old end cannot revoke a new generation
+ok 20 - reset/end lifecycle clears exact old generation; delayed old end cannot revoke a new generation
+  ---
+  duration_ms: 0.205332
+  type: 'test'
+  ...
+# Subtest: new trusted message revokes retained request; list failures cannot transfer to one-off or automations writes
+ok 21 - new trusted message revokes retained request; list failures cannot transfer to one-off or automations writes
+  ---
+  duration_ms: 0.326077
+  type: 'test'
+  ...
+# Subtest: explicit opt-out of list permits one-off flow and closes prior continuation
+ok 22 - explicit opt-out of list permits one-off flow and closes prior continuation
+  ---
+  duration_ms: 0.695353
+  type: 'test'
+  ...
+# Subtest: list audit joins exact message/item/slot and does not copy task text or invent scheduled turn
+ok 23 - list audit joins exact message/item/slot and does not copy task text or invent scheduled turn
+  ---
+  duration_ms: 76.641845
+  type: 'test'
+  ...
+# Subtest: missing DB is absent, corrupt DB is an explicit failure
+ok 24 - missing DB is absent, corrupt DB is an explicit failure
+  ---
+  duration_ms: 0.746448
+  type: 'test'
+  ...
+# Subtest: two optional tools and a scheduler register; untrusted get cannot touch state
+ok 25 - two optional tools and a scheduler register; untrusted get cannot touch state
+  ---
+  duration_ms: 3.72498
+  type: 'test'
+  ...
+# Subtest: actual plugin requires current inbound authorization and preserves it through list reads
+ok 26 - actual plugin requires current inbound authorization and preserves it through list reads
+  ---
+  duration_ms: 69.173612
+  type: 'test'
+  ...
+# Subtest: quoted BodyForAgent and stale context do not grant mutation
+ok 27 - quoted BodyForAgent and stale context do not grant mutation
+  ---
+  duration_ms: 45.130131
+  type: 'test'
+  ...
+# Subtest: original seven messages save six distinct list items without proposals; null DDL and conditions survive digest
+ok 28 - original seven messages save six distinct list items without proposals; null DDL and conditions survive digest
+  ---
+  duration_ms: 166.932273
+  type: 'test'
+  ...
+# Subtest: actual plugin accepts bounded continuation and reset clears it
+ok 29 - actual plugin accepts bounded continuation and reset clears it
+  ---
+  duration_ms: 35.591555
+  type: 'test'
+  ...
+# Subtest: failure and success both keep list route; read-only one-off queries still allowed; subsequent one-off request allowed
+ok 30 - failure and success both keep list route; read-only one-off queries still allowed; subsequent one-off request allowed
+  ---
+  duration_ms: 35.353341
+  type: 'test'
+  ...
+# Subtest: structured deletion succeeds without requiring a prescribed phrase: 大肥鱼，第六条可以删了
+ok 31 - structured deletion succeeds without requiring a prescribed phrase: 大肥鱼，第六条可以删了
+  ---
+  duration_ms: 97.126926
+  type: 'test'
+  ...
+# Subtest: structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"删掉。
+ok 32 - structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"删掉。
+  ---
+  duration_ms: 94.534783
+  type: 'test'
+  ...
+# Subtest: structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"作废。
+ok 33 - structured deletion succeeds without requiring a prescribed phrase: 提醒列表里，把"党支部换届选举后需要整理党费缴纳情况"作废。
+  ---
+  duration_ms: 96.067575
+  type: 'test'
+  ...
+# Subtest: structured semantics retain current-message, host-session, freshness and record version checks
+ok 34 - structured semantics retain current-message, host-session, freshness and record version checks
+  ---
+  duration_ms: 30.341327
+  type: 'test'
+  ...
+# Subtest: fixed command payload and owner route; defaults create four jobs once
+ok 35 - fixed command payload and owner route; defaults create four jobs once
+  ---
+  duration_ms: 35.324728
+  type: 'test'
+  ...
+# Subtest: persisted runner requires an explicit deployed backend root, never a capture fallback
+ok 36 - persisted runner requires an explicit deployed backend root, never a capture fallback
+  ---
+  duration_ms: 38.262935
+  type: 'test'
+  ...
+# Subtest: changing times removes obsolete declarations; pause removes only owned jobs and resume recreates
+ok 37 - changing times removes obsolete declarations; pause removes only owned jobs and resume recreates
+  ---
+  duration_ms: 65.973468
+  type: 'test'
+  ...
+# Subtest: RPC failure is pending, does not overwrite settings; retry repairs a partial reconciliation
+ok 38 - RPC failure is pending, does not overwrite settings; retry repairs a partial reconciliation
+  ---
+  duration_ms: 50.035156
+  type: 'test'
+  ...
+# Subtest: prefix collision cannot adopt or remove an unowned command/recipient
+ok 39 - prefix collision cannot adopt or remove an unowned command/recipient
+  ---
+  duration_ms: 47.793375
+  type: 'test'
+  ...
+# Subtest: concurrent syncs serialize and do not create duplicate declarations
+ok 40 - concurrent syncs serialize and do not create duplicate declarations
+  ---
+  duration_ms: 42.916182
+  type: 'test'
+  ...
+# Subtest: DDL date-only, leap date, minute, empty, invalid calendar and timezone
+ok 41 - DDL date-only, leap date, minute, empty, invalid calendar and timezone
+  ---
+  duration_ms: 2.195254
+  type: 'test'
+  ...
+# Subtest: times normalize 24:00 and reject duplicates, malformed, empty and excess
+ok 42 - times normalize 24:00 and reject duplicates, malformed, empty and excess
+  ---
+  duration_ms: 0.388974
+  type: 'test'
+  ...
+# Subtest: explicit state root is mandatory; no legacy fallback
+ok 43 - explicit state root is mandatory; no legacy fallback
+  ---
+  duration_ms: 0.19349
+  type: 'test'
+  ...
+# Subtest: add optional fields and source validation; do not invent facts or accept past DDL
+ok 44 - add optional fields and source validation; do not invent facts or accept past DDL
+  ---
+  duration_ms: 48.746849
+  type: 'test'
+  ...
+# Subtest: explicit no DDL never becomes a timestamp; urgency and activity relation cannot be dropped
+ok 45 - explicit no DDL never becomes a timestamp; urgency and activity relation cannot be dropped
+  ---
+  duration_ms: 64.858273
+  type: 'test'
+  ...
+# Subtest: event relation can have a separately stated deadline; item update cannot contradict an explicit clearing request
+ok 46 - event relation can have a separately stated deadline; item update cannot contradict an explicit clearing request
+  ---
+  duration_ms: 58.732136
+  type: 'test'
+  ...
+# Subtest: one trusted message is durable idempotent, changed arguments cannot run another write
+ok 47 - one trusted message is durable idempotent, changed arguments cannot run another write
+  ---
+  duration_ms: 42.121773
+  type: 'test'
+  ...
+# Subtest: completion, void, modification and explicit reopening preserve history
+ok 48 - completion, void, modification and explicit reopening preserve history
+  ---
+  duration_ms: 45.810887
+  type: 'test'
+  ...
+# Subtest: DDL exact boundary expires once; no DDL survives; midnight belongs to next day
+ok 49 - DDL exact boundary expires once; no DDL survives; midnight belongs to next day
+  ---
+  duration_ms: 38.906682
+  type: 'test'
+  ...
+# Subtest: ambiguous title, unknown target and missing/stale version never mutate
+ok 50 - ambiguous title, unknown target and missing/stale version never mutate
+  ---
+  duration_ms: 32.274504
+  type: 'test'
+  ...
+# Subtest: duplicate active titles, invalid inputs and partial transactions are rejected
+ok 51 - duplicate active titles, invalid inputs and partial transactions are rejected
+  ---
+  duration_ms: 29.44486
+  type: 'test'
+  ...
+# Subtest: TTL, malformed target and different owner cannot write
+ok 52 - TTL, malformed target and different owner cannot write
+  ---
+  duration_ms: 26.737683
+  type: 'test'
+  ...
+# Subtest: frequency alone and unknown class deadline cannot be silently invented
+ok 53 - frequency alone and unknown class deadline cannot be silently invented
+  ---
+  duration_ms: 25.607661
+  type: 'test'
+  ...
+# Subtest: settings complete replacement changes count; pause/resume and saved preference survives restart
+ok 54 - settings complete replacement changes count; pause/resume and saved preference survives restart
+  ---
+  duration_ms: 38.407294
+  type: 'test'
+  ...
+# Subtest: digest sorts all active records, omits terminal, outputs fields without persona or command execution
+ok 55 - digest sorts all active records, omits terminal, outputs fields without persona or command execution
+  ---
+  duration_ms: 42.070138
+  type: 'test'
+  ...
+# Subtest: digest claim survives restart, settings edits cannot redeliver same slot; missed slots skip
+ok 56 - digest claim survives restart, settings edits cannot redeliver same slot; missed slots skip
+  ---
+  duration_ms: 39.454051
+  type: 'test'
+  ...
+# Subtest: empty, paused and removed times are silent; arbitrary CLI args rejected
+ok 57 - empty, paused and removed times are silent; arbitrary CLI args rejected
+  ---
+  duration_ms: 34.349714
+  type: 'test'
+  ...
+# Subtest: delivery observation matches time/day; unknown or failed never automatically retry
+ok 58 - delivery observation matches time/day; unknown or failed never automatically retry
+  ---
+  duration_ms: 46.973831
+  type: 'test'
+  ...
+# Subtest: trusted original text only: deny strangers/groups/cron/tails/stale/instruction samples
+ok 59 - trusted original text only: deny strangers/groups/cron/tails/stale/instruction samples
+  ---
+  duration_ms: 1.194542
+  type: 'test'
+  ...
+1..59
+# tests 59
+# suites 0
+# pass 59
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1424.012228

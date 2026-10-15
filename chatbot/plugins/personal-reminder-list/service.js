@@ -3,7 +3,7 @@
 // language rules inside a storage method.
 import {createHash} from 'node:crypto';
 import {validateCommand, validateScheduleCommand, prepareAddedItem, prepareItemChange} from './model.js';
-import {checkPermit, checkTextSource, checkScheduleSource, checkItemFacts, checkTargetSource, listRequestKey, checkRequestReplay} from './policy.js';
+import {checkPermit, checkTextSource, checkScheduleSource, checkItemFacts, listRequestKey, checkRequestReplay} from './policy.js';
 
 function stable(value) {
   if (Array.isArray(value)) return value.map(stable);
@@ -37,7 +37,6 @@ export function manageList(store, args, permit, context = {}) {
       if ('times' in args) throw Error('Invalid item parameters');
       const row = store.select(args);
       if (row.ok === false) return row;
-      checkTargetSource(args, row, permit);
       const fields = prepareItemChange(args, row, store.now());
       if (args.action === 'update' || args.action === 'reopen') {
         for (const field of ['title', 'content', 'note']) if (field in args) checkTextSource(fields[field], permit);

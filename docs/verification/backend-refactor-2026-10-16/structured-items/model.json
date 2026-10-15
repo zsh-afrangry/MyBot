@@ -1,0 +1,797 @@
+{
+  "at": "2026-10-15T18:33:41.373Z",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only; competing one-off declaration is a non-writing routing fixture. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.",
+  "cases": [
+    {
+      "label": "show-six-items",
+      "input": "把当前提醒列表按查询返回顺序编号列出来。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-16T02:33:42",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "2b829aa560a4",
+                "title": "验收事项1",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-18",
+                "deadlineMs": 1792339200000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.397Z",
+                "updatedAt": "2026-10-15T18:33:41.397Z"
+              },
+              {
+                "id": "a7e10b6d39e9",
+                "title": "验收事项2",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-19",
+                "deadlineMs": 1792425600000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.400Z",
+                "updatedAt": "2026-10-15T18:33:41.400Z"
+              },
+              {
+                "id": "743c6f2c95bb",
+                "title": "验收事项3",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-20",
+                "deadlineMs": 1792512000000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.404Z",
+                "updatedAt": "2026-10-15T18:33:41.404Z"
+              },
+              {
+                "id": "94c71b913d0a",
+                "title": "验收事项4",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-21",
+                "deadlineMs": 1792598400000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.408Z",
+                "updatedAt": "2026-10-15T18:33:41.408Z"
+              },
+              {
+                "id": "0547ce480931",
+                "title": "验收事项5",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-22",
+                "deadlineMs": 1792684800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.412Z",
+                "updatedAt": "2026-10-15T18:33:41.412Z"
+              },
+              {
+                "id": "d519d20e1de6",
+                "title": "党支部换届选举后需要整理党费缴纳情况",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.416Z",
+                "updatedAt": "2026-10-15T18:33:41.416Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        }
+      ],
+      "reply": "当前有效提醒列表，按查询返回顺序编号：\n\n1. 验收事项1 — 截止 2026-10-18\n2. 验收事项2 — 截止 2026-10-19\n3. 验收事项3 — 截止 2026-10-20\n4. 验收事项4 — 截止 2026-10-21\n5. 验收事项5 — 截止 2026-10-22\n6. 党支部换届选举后需要整理党费缴纳情况 — 无截止日期（事后条件）\n\n真实ID依次为：2b829aa560a4、a7e10b6d39e9、743c6f2c95bb、94c71b913d0a、0547ce480931、d519d20e1de6。\n\n另外，每日播报设置目前仍是 00:00、08:00、12:00、18:00（已开启），但后台调度还在重试对齐，稍后会自动补上。需要我改时刻或暂停播报，说一声就行。",
+      "passed": true
+    },
+    {
+      "label": "ordinal-delete-after-reorder",
+      "input": "大肥鱼，第六条可以删了",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-16T02:33:45",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b8432b91fe13",
+                "title": "验收新插入项",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-17",
+                "deadlineMs": 1792252800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:44.562Z",
+                "updatedAt": "2026-10-15T18:33:44.562Z"
+              },
+              {
+                "id": "2b829aa560a4",
+                "title": "验收事项1",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-18",
+                "deadlineMs": 1792339200000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.397Z",
+                "updatedAt": "2026-10-15T18:33:41.397Z"
+              },
+              {
+                "id": "a7e10b6d39e9",
+                "title": "验收事项2",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-19",
+                "deadlineMs": 1792425600000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.400Z",
+                "updatedAt": "2026-10-15T18:33:41.400Z"
+              },
+              {
+                "id": "743c6f2c95bb",
+                "title": "验收事项3",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-20",
+                "deadlineMs": 1792512000000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.404Z",
+                "updatedAt": "2026-10-15T18:33:41.404Z"
+              },
+              {
+                "id": "94c71b913d0a",
+                "title": "验收事项4",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-21",
+                "deadlineMs": 1792598400000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.408Z",
+                "updatedAt": "2026-10-15T18:33:41.408Z"
+              },
+              {
+                "id": "0547ce480931",
+                "title": "验收事项5",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-22",
+                "deadlineMs": 1792684800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.412Z",
+                "updatedAt": "2026-10-15T18:33:41.412Z"
+              },
+              {
+                "id": "d519d20e1de6",
+                "title": "党支部换届选举后需要整理党费缴纳情况",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.416Z",
+                "updatedAt": "2026-10-15T18:33:41.416Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "void",
+            "id": "d519d20e1de6",
+            "expectedVersion": 1
+          },
+          "result": {
+            "ok": true,
+            "action": "void",
+            "item": {
+              "id": "d519d20e1de6",
+              "title": "党支部换届选举后需要整理党费缴纳情况",
+              "content": null,
+              "note": null,
+              "ddl": null,
+              "deadlineMs": null,
+              "status": "void",
+              "version": 2,
+              "createdAt": "2026-10-15T18:33:41.416Z",
+              "updatedAt": "2026-10-15T18:33:47.178Z"
+            }
+          }
+        }
+      ],
+      "reply": "删好了，大肥鱼 🐟\n\n按我上次给你列的那份编号，第六条是「党支部换届选举后需要整理党费缴纳情况」，已经作废，记录保留在历史里，现在有效列表里不再显示它。\n\n顺带一提，刚才重新查询时列表里多了一条「验收新插入项」（截止 10-17），顺序已经变了。这次我仍然按上次展示的编号执行，没有误删新列表里的第六条。要不要我把最新顺序再给你列一遍？",
+      "passed": true
+    },
+    {
+      "label": "title-delete",
+      "input": "提醒列表里，把“验收事项2”删掉。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-16T02:33:50",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b8432b91fe13",
+                "title": "验收新插入项",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-17",
+                "deadlineMs": 1792252800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:44.562Z",
+                "updatedAt": "2026-10-15T18:33:44.562Z"
+              },
+              {
+                "id": "2b829aa560a4",
+                "title": "验收事项1",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-18",
+                "deadlineMs": 1792339200000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.397Z",
+                "updatedAt": "2026-10-15T18:33:41.397Z"
+              },
+              {
+                "id": "a7e10b6d39e9",
+                "title": "验收事项2",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-19",
+                "deadlineMs": 1792425600000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.400Z",
+                "updatedAt": "2026-10-15T18:33:41.400Z"
+              },
+              {
+                "id": "743c6f2c95bb",
+                "title": "验收事项3",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-20",
+                "deadlineMs": 1792512000000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.404Z",
+                "updatedAt": "2026-10-15T18:33:41.404Z"
+              },
+              {
+                "id": "94c71b913d0a",
+                "title": "验收事项4",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-21",
+                "deadlineMs": 1792598400000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.408Z",
+                "updatedAt": "2026-10-15T18:33:41.408Z"
+              },
+              {
+                "id": "0547ce480931",
+                "title": "验收事项5",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-22",
+                "deadlineMs": 1792684800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.412Z",
+                "updatedAt": "2026-10-15T18:33:41.412Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "void",
+            "expectedVersion": 1,
+            "id": "a7e10b6d39e9"
+          },
+          "result": {
+            "ok": true,
+            "action": "void",
+            "item": {
+              "id": "a7e10b6d39e9",
+              "title": "验收事项2",
+              "content": null,
+              "note": null,
+              "ddl": "2026-10-19",
+              "deadlineMs": 1792425600000,
+              "status": "void",
+              "version": 2,
+              "createdAt": "2026-10-15T18:33:41.400Z",
+              "updatedAt": "2026-10-15T18:33:51.350Z"
+            }
+          }
+        }
+      ],
+      "reply": "已删除「验收事项2」（截止 2026-10-19），状态改为作废，历史记录保留。\n\n现在有效提醒列表是：\n1. 验收新插入项 — 2026-10-17\n2. 验收事项1 — 2026-10-18\n3. 验收事项3 — 2026-10-20\n4. 验收事项4 — 2026-10-21\n5. 验收事项5 — 2026-10-22\n\n每日播报时间仍是 00:00、08:00、12:00、18:00，后台调度还在重试对齐。",
+      "passed": true
+    },
+    {
+      "label": "title-void",
+      "input": "提醒列表里，把“验收事项3”作废。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-16T02:33:53",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b8432b91fe13",
+                "title": "验收新插入项",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-17",
+                "deadlineMs": 1792252800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:44.562Z",
+                "updatedAt": "2026-10-15T18:33:44.562Z"
+              },
+              {
+                "id": "2b829aa560a4",
+                "title": "验收事项1",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-18",
+                "deadlineMs": 1792339200000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.397Z",
+                "updatedAt": "2026-10-15T18:33:41.397Z"
+              },
+              {
+                "id": "743c6f2c95bb",
+                "title": "验收事项3",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-20",
+                "deadlineMs": 1792512000000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.404Z",
+                "updatedAt": "2026-10-15T18:33:41.404Z"
+              },
+              {
+                "id": "94c71b913d0a",
+                "title": "验收事项4",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-21",
+                "deadlineMs": 1792598400000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.408Z",
+                "updatedAt": "2026-10-15T18:33:41.408Z"
+              },
+              {
+                "id": "0547ce480931",
+                "title": "验收事项5",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-22",
+                "deadlineMs": 1792684800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.412Z",
+                "updatedAt": "2026-10-15T18:33:41.412Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_manage",
+          "args": {
+            "action": "void",
+            "expectedVersion": 1,
+            "id": "743c6f2c95bb"
+          },
+          "result": {
+            "ok": true,
+            "action": "void",
+            "item": {
+              "id": "743c6f2c95bb",
+              "title": "验收事项3",
+              "content": null,
+              "note": null,
+              "ddl": "2026-10-20",
+              "deadlineMs": 1792512000000,
+              "status": "void",
+              "version": 2,
+              "createdAt": "2026-10-15T18:33:41.404Z",
+              "updatedAt": "2026-10-15T18:33:54.210Z"
+            }
+          }
+        }
+      ],
+      "reply": "已作废「验收事项3」（截止 2026-10-20），记录保留在历史中。\n\n现在有效列表还剩 4 条：\n1. 验收新插入项 — 2026-10-17\n2. 验收事项1 — 2026-10-18\n3. 验收事项4 — 2026-10-21\n4. 验收事项5 — 2026-10-22\n\n播报设置未动，后台调度仍在重试对齐。",
+      "passed": true
+    },
+    {
+      "label": "negative",
+      "input": "别删验收事项4，保留它。",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-16T02:33:57",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b8432b91fe13",
+                "title": "验收新插入项",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-17",
+                "deadlineMs": 1792252800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:44.562Z",
+                "updatedAt": "2026-10-15T18:33:44.562Z"
+              },
+              {
+                "id": "2b829aa560a4",
+                "title": "验收事项1",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-18",
+                "deadlineMs": 1792339200000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.397Z",
+                "updatedAt": "2026-10-15T18:33:41.397Z"
+              },
+              {
+                "id": "94c71b913d0a",
+                "title": "验收事项4",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-21",
+                "deadlineMs": 1792598400000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.408Z",
+                "updatedAt": "2026-10-15T18:33:41.408Z"
+              },
+              {
+                "id": "0547ce480931",
+                "title": "验收事项5",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-22",
+                "deadlineMs": 1792684800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.412Z",
+                "updatedAt": "2026-10-15T18:33:41.412Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        }
+      ],
+      "reply": "明白，没动它。\n\n刚查过，「验收事项4」（截止 2026-10-21）状态是正常的有效待办，我也没有对它做任何操作——你这句话只是保留意愿，不属于维护请求，所以我只读不写。\n\n当前有效列表：\n1. 验收新插入项 — 2026-10-17\n2. 验收事项1 — 2026-10-18\n3. 验收事项4 — 2026-10-21\n4. 验收事项5 — 2026-10-22\n\n如果你其实想改它的截止时间或内容，再说一句具体怎么改就行。",
+      "passed": true
+    },
+    {
+      "label": "hypothetical",
+      "input": "如果我说“验收事项4作废”，你会怎么办？仅讨论，不执行。",
+      "calls": [],
+      "reply": "纯讨论的话，我会这么做：\n\n1. 先查一次列表，确认「验收事项4」的真实ID（现在对应 94c71b913d0a）和最新 version——不凭记忆或列表顺序下手，避免中间有插入、改动导致版本过期。\n2. 然后执行作废，带上核对到的 version；作废后它退出有效列表，但历史记录保留，不会真被抹掉。\n3. 回来告诉你结果：作了哪条、原来截止时间、现在有效列表剩什么。\n\n几个边界我想先说清：作废和“删掉”我按同一意图处理（都是void），因为你要的是它不再出现在待办里；如果哪天想恢复，那要你明确说“恢复/重新启用”，我才会把它拉回有效列表——而且它没有过去DDL的问题，恢复后要不要重新设截止时间也得你定。反过来，如果你只是说“如果它作废了会怎样”这种假设句，我就只回答、不动手，就像现在这样。",
+      "passed": true
+    },
+    {
+      "label": "ordinal-without-prior-list",
+      "input": "大肥鱼，第六条可以删了",
+      "calls": [
+        {
+          "name": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-16T02:34:02",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b8432b91fe13",
+                "title": "验收新插入项",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-17",
+                "deadlineMs": 1792252800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:44.562Z",
+                "updatedAt": "2026-10-15T18:33:44.562Z"
+              },
+              {
+                "id": "2b829aa560a4",
+                "title": "验收事项1",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-18",
+                "deadlineMs": 1792339200000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.397Z",
+                "updatedAt": "2026-10-15T18:33:41.397Z"
+              },
+              {
+                "id": "94c71b913d0a",
+                "title": "验收事项4",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-21",
+                "deadlineMs": 1792598400000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.408Z",
+                "updatedAt": "2026-10-15T18:33:41.408Z"
+              },
+              {
+                "id": "0547ce480931",
+                "title": "验收事项5",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-22",
+                "deadlineMs": 1792684800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.412Z",
+                "updatedAt": "2026-10-15T18:33:41.412Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "name": "personal_reminder_list_get",
+          "args": {
+            "history": true
+          },
+          "result": {
+            "ok": true,
+            "now": "2026-10-16T02:34:04",
+            "timezone": "Asia/Shanghai",
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "items": [
+              {
+                "id": "b8432b91fe13",
+                "title": "验收新插入项",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-17",
+                "deadlineMs": 1792252800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:44.562Z",
+                "updatedAt": "2026-10-15T18:33:44.562Z"
+              },
+              {
+                "id": "2b829aa560a4",
+                "title": "验收事项1",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-18",
+                "deadlineMs": 1792339200000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.397Z",
+                "updatedAt": "2026-10-15T18:33:41.397Z"
+              },
+              {
+                "id": "a7e10b6d39e9",
+                "title": "验收事项2",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-19",
+                "deadlineMs": 1792425600000,
+                "status": "void",
+                "version": 2,
+                "createdAt": "2026-10-15T18:33:41.400Z",
+                "updatedAt": "2026-10-15T18:33:51.350Z"
+              },
+              {
+                "id": "743c6f2c95bb",
+                "title": "验收事项3",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-20",
+                "deadlineMs": 1792512000000,
+                "status": "void",
+                "version": 2,
+                "createdAt": "2026-10-15T18:33:41.404Z",
+                "updatedAt": "2026-10-15T18:33:54.210Z"
+              },
+              {
+                "id": "94c71b913d0a",
+                "title": "验收事项4",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-21",
+                "deadlineMs": 1792598400000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.408Z",
+                "updatedAt": "2026-10-15T18:33:41.408Z"
+              },
+              {
+                "id": "0547ce480931",
+                "title": "验收事项5",
+                "content": null,
+                "note": null,
+                "ddl": "2026-10-22",
+                "deadlineMs": 1792684800000,
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-15T18:33:41.412Z",
+                "updatedAt": "2026-10-15T18:33:41.412Z"
+              },
+              {
+                "id": "d519d20e1de6",
+                "title": "党支部换届选举后需要整理党费缴纳情况",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "deadlineMs": null,
+                "status": "void",
+                "version": 2,
+                "createdAt": "2026-10-15T18:33:41.416Z",
+                "updatedAt": "2026-10-15T18:33:47.178Z"
+              }
+            ],
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        }
+      ],
+      "reply": "主人，我这边没有你之前看到的那份带序号的列表，而这会儿库里也没法唯一对上“第六条”，怕误删，先跟你核一下。\n\n现在的有效项是这四条：\n1. 验收新插入项（10-17）\n2. 验收事项1（10-18）\n3. 验收事项4（10-21）\n4. 验收事项5（10-22）\n\n另外历史上还有已作废的“验收事项2”“验收事项3”和“党支部换届选举后需要整理党费缴纳情况”。\n\n你要删的是其中哪一条？说标题或序号都行，我核对无误再动手。",
+      "passed": true
+    }
+  ],
+  "suite": "ordinal",
+  "competingProposalAttempts": 0,
+  "passed": true,
+  "productionUnchanged": true
+}

@@ -1,7 +1,8 @@
 // Authorized live primary-model acceptance with actual plugin tool factories.
 // Only /tmp domain state. Service callbacks are not started; Gateway token is
 // removed, so schedule sync cannot mutate production Cron. No QQ delivery.
-// --natural runs the user dialogue suite; --out selects a separate evidence directory.
+// --natural runs the user dialogue suite; --ordinal verifies contextual item operations.
+// --out selects a separate evidence directory.
 // Evidence: docs/verification/reminder-list-2026-10-11/model.json
 import {manageList} from '../../plugins/personal-reminder-list/service.js';
 import fs from 'node:fs';
@@ -19,6 +20,8 @@ import weather from '../../plugins/personal-weather/dist/index.js';
 
 const repo = resolve(fileURLToPath(new URL('../../../', import.meta.url)));
 const natural = process.argv.includes('--natural');
+const ordinal = process.argv.includes('--ordinal');
+if (natural && ordinal) throw Error('Choose one suite');
 const outArg = process.argv.indexOf('--out');
 const explicitOut = outArg < 0 ? undefined : process.argv[outArg + 1];
 if (outArg >= 0 && !explicitOut) throw Error('--out requires an output directory');
@@ -43,7 +46,7 @@ if (natural) {
   definitions.push({type: 'function', function: {name: declaration.name, description: declaration.description, parameters: declaration.parameters}});
 }
 const messages = [{role: 'system', content: fs.readFileSync(join(repo, 'scripts/fusion/templates/AGENTS.md'), 'utf8') + `\n当前实际本地时间 ${localTime(Date.now())} Asia/Shanghai。本人QQ身份已由可信入站提供；所有工具结果指向独立验收库。自然澄清缺失字段，真实工具结果才是完成依据。`}];
-const report = {at: new Date().toISOString(), model: primary, boundary: 'Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only; competing one-off declaration is a non-writing routing fixture. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.', cases: [], suite: natural ? 'natural-input' : 'baseline', competingProposalAttempts: 0};
+const report = {at: new Date().toISOString(), model: primary, boundary: 'Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only; competing one-off declaration is a non-writing routing fixture. No QQ send, no production domain write or Cron mutation; not full OpenClaw/QQ inbound.', cases: [], suite: ordinal ? 'ordinal' : natural ? 'natural-input' : 'baseline', competingProposalAttempts: 0};
 function productionSnapshot() {return guardedSnapshot(runtime);}
 const before = productionSnapshot();
 let seq = 0;
@@ -88,7 +91,43 @@ async function turn(label, text, verify) {
   throw Error('Exceeded bounded tool rounds');
 }
 try {
-  if (natural) {
+  if (ordinal) {
+    const seed = new ListStore({root, ownerId: owner});
+    const seedItem = (title, ddl = null) => manageList(seed, {action: 'add', title, ddl}, {raw: `提醒列表添加${title} DDL ${ddl ?? ''}`, actions: new Set(['add']), at: Date.now(), messageId: 'seed-' + title, sessionKey: session}).item;
+    let target, inserted;
+    try {
+      for (let i = 1; i <= 5; i++) seedItem('验收事项' + i, localTime(Date.now() + (i + 1) * 86400000).slice(0, 10));
+      target = seedItem('党支部换届选举后需要整理党费缴纳情况');
+      await turn('show-six-items', '把当前提醒列表按查询返回顺序编号列出来。', (data, row) => {
+        assert.equal(data.items.length, 6);
+        const listed = row.calls.find(c => c.name === 'personal_reminder_list_get')?.result.items;
+        assert.equal(listed?.[5]?.id, target.id);
+        assert.match(row.reply ?? '', /6[.、．)）\s][\s\S]*党费/u);
+      });
+      // A concurrent insertion changes the latest sort order. The spoken ordinal
+      // must continue referring to the list already shown to the user.
+      inserted = seedItem('验收新插入项', localTime(Date.now() + 86400000).slice(0, 10));
+    } finally {seed.close();}
+    await turn('ordinal-delete-after-reorder', '大肥鱼，第六条可以删了', (data, row) => {
+      assert.equal(data.items.find(i => i.id === target.id)?.status, 'void');
+      assert.equal(data.items.find(i => i.id === inserted.id)?.status, 'active');
+      const writes = row.calls.filter(c => c.name === 'personal_reminder_list_manage');
+      assert.equal(writes.length, 1); assert.equal(writes[0].result.ok, true);
+      assert.equal(writes[0].args.action, 'void'); assert.equal(writes[0].result.item.id, target.id);
+    });
+    await turn('title-delete', '提醒列表里，把“验收事项2”删掉。', data => assert.equal(data.items.find(i => i.title === '验收事项2')?.status, 'void'));
+    await turn('title-void', '提醒列表里，把“验收事项3”作废。', data => assert.equal(data.items.find(i => i.title === '验收事项3')?.status, 'void'));
+    const unchanged = JSON.stringify(inspect().items);
+    for (const [label, text] of [['negative', '别删验收事项4，保留它。'], ['hypothetical', '如果我说“验收事项4作废”，你会怎么办？仅讨论，不执行。']]) {
+      await turn(label, text, (data, row) => {assert.equal(JSON.stringify(data.items), unchanged); assert.ok(!row.calls.some(c => c.name === 'personal_reminder_list_manage'));});
+    }
+    hooks.before_reset({}, ctx); ctx.sessionId = 'ordinal-new-session'; messages.splice(1);
+    await turn('ordinal-without-prior-list', '大肥鱼，第六条可以删了', (data, row) => {
+      assert.equal(JSON.stringify(data.items), unchanged);
+      assert.ok(!row.calls.some(c => c.name === 'personal_reminder_list_manage'));
+      assert.match(row.reply ?? '', /哪|确认|列表|标题|不确定|对应/u);
+    });
+  } else if (natural) {
     await turn('user-1-capability', dialogue[0], (data, row) => {
       assert.equal(data.items.length, 0); assert.ok(row.calls.some(c => c.name === 'personal_reminder_list_get'));
       assert.equal(data.settings.version, 1);

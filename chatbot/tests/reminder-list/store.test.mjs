@@ -101,14 +101,14 @@ test('DDL exact boundary expires once; no DDL survives; midnight belongs to next
   assert.throws(() => manageList(store, {action: 'reopen', id: a.id, expectedVersion: 2}, permit('提醒列表恢复今天事项', 'reopen')));
   assert.equal(manageList(store, {action: 'reopen', id: a.id, expectedVersion: 2, ddl: null}, permit('提醒列表恢复今天事项并清除DDL', 'reopen')).item.status, 'active');
 });
-test('ambiguous title, missing target, missing/stale version and unrelated target never mutate', t => {
+test('ambiguous title, unknown target and missing/stale version never mutate', t => {
   const {store, permit, add} = fixture(t), a = add('论文初稿'), b = add('论文二稿');
   const args = {action: 'complete', query: '论文', expectedVersion: 1};
   const result = manageList(store, args, permit('提醒列表论文做完了', 'complete'));
   assert.equal(result.ok, false); assert.equal(result.error.code, 'ambiguous_target'); assert.equal(result.candidates.length, 2);
   assert.throws(() => manageList(store, {action: 'complete', id: a.id}, permit('提醒列表论文初稿做完了', 'complete')));
   assert.throws(() => manageList(store, {action: 'complete', id: a.id, expectedVersion: 2}, permit('提醒列表论文初稿做完了', 'complete')));
-  assert.throws(() => manageList(store, {action: 'complete', id: b.id, expectedVersion: 1}, permit('提醒列表论文初稿做完了', 'complete')));
+  assert.equal(manageList(store, {action: 'complete', id: '123456abcdef', expectedVersion: 1}, permit('那条做完了', 'complete')).error.code, 'not_found');
   assert.equal(store.get().items.length, 2);
 });
 test('duplicate active titles, invalid inputs and partial transactions are rejected', t => {
@@ -118,7 +118,7 @@ test('duplicate active titles, invalid inputs and partial transactions are rejec
   assert.equal(store.get().items.length, 1);
   assert.equal(store.settings().version, 1);
 });
-test('TTL, unauthorized action, used message key and different owner cannot write', t => {
+test('TTL, malformed target and different owner cannot write', t => {
   const {store, permit, clock, now, root} = fixture(t);
   const p = permit('提醒列表添加 看论文', 'add');
   assert.throws(() => manageList(store, {action: 'complete', id: '123'}, p));

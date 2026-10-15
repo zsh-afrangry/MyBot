@@ -43,7 +43,10 @@ export function listIntent(ctx, owner, event = {}, now = Date.now()) {
   return {raw, actions, at: now, messageId: String(ctx.MessageSid), sessionKey: ctx.SessionKey};
 }
 export function checkPermit(permit, action, now) {
-  if (!permit || now < permit.at || now - permit.at >= PERMIT_TTL_MS || !permit.actions.has(action)) throw Error('需要本人本次原文明确要求此提醒列表操作；连续录入仅追加，一个请求只维护一项');
+  if (!permit || !Number.isFinite(permit.at) || now < permit.at || now - permit.at >= PERMIT_TTL_MS) throw Error('需要有效的本人当前请求');
+  // Existing-item semantics belong to the model. Transport freshness is still
+  // enforced, but an exact title/list name/verb in this message is not a grant.
+  if (!['update', 'complete', 'void', 'reopen'].includes(action) && !permit.actions?.has(action)) throw Error('需要本人本次原文明确要求此提醒列表操作；连续录入仅追加，一个请求只维护一项');
 }
 export function checkTextSource(value, permit) {
   if (value !== null && value !== '' && value !== undefined && !normalize(permit.raw).includes(normalize(value))) throw Error('标题、内容和备注需取自本次原文，不能添加推测事实');
@@ -63,11 +66,6 @@ export function checkItemFacts(fields, permit, checkDeadline = true) {
 }
 export function checkScheduleSource(permit) {
   if (!/(?:\d{1,2}[:：.]\d{2}|\d{1,2}[点时]|[零一二三四五六七八九十两]{1,3}点|午夜|零点)/u.test(permit.raw)) throw Error('仅指定次数还不能确定播报时刻，请补充每日具体时间');
-}
-
-export function checkTargetSource(args, row, permit) {
-  const raw = normalize(permit.raw);
-  if (!raw.includes(row.id) && !raw.includes(normalize(row.title)) && !(args.query && raw.includes(normalize(args.query)))) throw Error('本次原文没有指出要维护的事项');
 }
 
 // One mutation per incoming message is a product policy, separate from exact

@@ -19,6 +19,8 @@ export function item(row) {
 export function validateCommand(args) {
   const allowed = ['action', 'id', 'query', 'expectedVersion', 'title', 'content', 'note', 'ddl', 'times'];
   if (!args || typeof args !== 'object' || Array.isArray(args) || Object.keys(args).some(k => !allowed.includes(k))) throw Error('Unknown list parameters');
+  if ('id' in args && (typeof args.id !== 'string' || !/^[a-f0-9]{12}$/.test(args.id))) throw Error('Invalid item ID');
+  if ('query' in args && (typeof args.query !== 'string' || args.query.trim().length < 2 || args.query.length > 200)) throw Error('Invalid item query');
 }
 export function validateScheduleCommand(args) {
   if (Object.keys(args).some(k => !['action', 'times'].includes(k)) || (args.action !== 'schedule' && 'times' in args)) throw Error('Invalid schedule parameters');

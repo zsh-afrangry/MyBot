@@ -25,7 +25,7 @@ const toolDeclarations = [
   {name: 'personal_reminder_list_get', label: '查看提醒列表', parameters: getParameters,
     description: '查询本人持久提醒列表、历史及每日播报设置；包含后端当前时间。DDL过期自动退出有效列表。完成、作废、修改先查真实ID/version。'},
   {name: 'personal_reminder_list_manage', label: '维护提醒列表', parameters: manageParameters,
-    description: '本人明确提醒列表维护可直接保存，无需带码确认，一条消息一项。已开启的短时连续录入可省略列表名，但只授权add；其他操作仍须本次明确请求。标题/内容/备注取本次原文，越快越好和活动结束后等条件须保留；无DDL必须null。失败须澄清，不能转一次性提案或批量确认。update/complete/void/reopen先get，传唯一id或query及expectedVersion。多候选先澄清。schedule完整替换每日时刻；pause/resume暂停恢复播报。现有一次性提醒仍走personal_reminder提案确认，不混用。'},
+    description: '本人明确提醒列表维护可直接保存，无需带码确认，一条消息一项。结合对话理解当前真实维护请求；查询能力、引用、假设、否定不执行维护。update/complete/void/reopen不要求当前原文重复列表名、完整标题或特定动词；删了/删掉等删除意图转void，保留历史。第几条依据此前向用户展示的列表确定真实id，再get核对该id与version；不能按最新列表顺序改选目标，没有明确的列表或多候选先澄清，不要求用户改用工具关键词。已开启的短时连续录入只授权add。标题/内容/备注取本次原文，越快越好和活动结束后等条件须保留；无DDL必须null。失败须澄清，不能转一次性提案或批量确认。schedule完整替换每日时刻；pause/resume暂停恢复播报。现有一次性提醒仍走personal_reminder提案确认，不混用。'},
 ];
 const plugin = {id: 'personal-reminder-list', name: 'Personal reminder list', register(api) {
   const ownerId = api.config.channels?.['kurumi-qq']?.ownerId;
@@ -51,10 +51,11 @@ const plugin = {id: 'personal-reminder-list', name: 'Personal reminder list', re
           ctx.assertInvocationCurrent(); signal?.throwIfAborted();
           let store;
           try {
-            const permit = intake.bind(request, ctx);
+            const permit = intake.bind(request, ctx, {structured: name === 'personal_reminder_list_manage'});
             store = new ListStore(options);
             if (name === 'personal_reminder_list_get') return json({...store.get(args), scheduleSync: scheduler.status()});
             if (intake.current() !== request) throw Error('本次请求已被后续消息替代');
+            if (permit) intake.targeted(request);
             const result = manageList(store, args, permit, {runId: ctx.runId});
             store.close(); store = undefined;
             if (result.ok && args.action === 'add') intake.added(request, ctx, permit);

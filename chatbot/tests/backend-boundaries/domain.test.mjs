@@ -37,14 +37,12 @@ test('internal storage takes structured facts; the tool service separately enfor
   assert.equal(snapshot(), before);
 });
 
-test('correct item ID still requires the existing target policy; denial cannot leave writes', t => {
+test('a structured current request may target an existing item without title or action keywords', t => {
   const {store, permit, snapshot} = listFixture(t);
   const created = manageList(store, {action: 'add', title: '材料归档'}, permit('提醒列表添加材料归档', 'add')).item;
   const args = {action: 'void', id: created.id, expectedVersion: created.version};
-  const request = permit('提醒列表第1条作废', 'void'), before = snapshot();
-  assert.throws(() => manageList(store, args, request), /没有指出/);
-  assert.equal(snapshot(), before);
-  request.raw = '提醒列表材料归档作废';
+  const request = permit('大肥鱼，第六条可以删了', 'void');
+  request.actions.clear();
   assert.equal(manageList(store, args, request).item.status, 'void');
   assert.equal(store.get({history: true}).items[0].version, 2);
 });

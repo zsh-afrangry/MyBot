@@ -22,10 +22,11 @@ export function createListIntake(owner, now = Date.now) {
       explicit, activation, candidate, listTarget: !!raw && !isStandaloneReminder(raw) && (/提醒列表/u.test(raw) || candidate)};
     return current;
   }
-  function bind(request, ctx) {
+  function bind(request, ctx, {structured = false} = {}) {
     if (!request || current !== request || ctx.sessionKey !== sessionKey || !request.raw) return;
     if (request.sessionId && request.sessionId !== ctx.sessionId) return;
     const id = ctx.sessionId;
+    if (structured && !id) return;
     if (id && !request.sessionId) request.sessionId = id;
     if (continuous && (!fresh(continuous) || !id || continuous.sessionId !== id)) continuous = undefined;
     if (request.activation && id && !request.activated) {
@@ -37,6 +38,8 @@ export function createListIntake(owner, now = Date.now) {
       return {raw: request.raw, at: request.at, messageId: request.messageId, sessionKey,
         sessionId: id, actions: new Set(['add']), continuation: true};
     }
+    if (structured) return {raw: request.raw, at: request.at, messageId: request.messageId,
+      sessionKey, sessionId: id, actions: new Set()};
   }
   function added(request, ctx, permit) {
     if (current !== request || !ctx.sessionId || !permit) return;
@@ -57,5 +60,6 @@ export function createListIntake(owner, now = Date.now) {
     if (/^personal_reminder_(?:propose|commit|change_propose|change_commit|cancel_propose|cancel_commit)$/u.test(event.toolName)) return true;
     return event.toolName === 'automations' && !['list', 'get', 'status', 'runs'].includes(event.params?.action);
   }
-  return {receive, bind, added, end, blocksTool, current: () => current};
+  function targeted(request) {if (current === request && request?.raw) request.listTarget = true;}
+  return {receive, bind, added, end, blocksTool, targeted, current: () => current};
 }
