@@ -55,7 +55,11 @@
             "personal_reminder_list_get",
             "personal_reminder_list_manage",
             "kurumi_memory",
-            "kurumi_sticker"
+            "kurumi_sticker",
+            "email_status",
+            "email_draft",
+            "email_send",
+            "email_outbox"
           ],
           "deny": [
             "read",
@@ -196,7 +200,8 @@
       "personal-weather",
       "personal-reminder-list",
       "kurumi-memory",
-      "kurumi-research"
+      "kurumi-research",
+      "kurumi-mail"
     ],
     "load": {
       "paths": [
@@ -207,7 +212,8 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory",
-        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research"
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-mail"
       ]
     },
     "entries": {
@@ -244,10 +250,18 @@
         "enabled": true,
         "config": {
           "backendRoot": "/home/afrangry/kurumi-fusion/chatbot",
-          "defaultTimes": ["00:00", "08:00", "12:00", "18:00"]
+          "defaultTimes": [
+            "00:00",
+            "08:00",
+            "12:00",
+            "18:00"
+          ]
         }
       },
       "kurumi-research": {
+        "enabled": true
+      },
+      "kurumi-mail": {
         "enabled": true
       }
     },

@@ -1,0 +1,28 @@
+{
+  "id": "kurumi-mail",
+  "name": "Kurumi mail",
+  "description": "Owner-only email drafting and delivery behind the shared confirmation gate.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "email_status",
+      "email_draft",
+      "email_send",
+      "email_outbox"
+    ]
+  },
+  "toolMetadata": {
+    "email_status": { "optional": true },
+    "email_draft": { "optional": true },
+    "email_send": { "optional": true },
+    "email_outbox": { "optional": true }
+  }
+}
