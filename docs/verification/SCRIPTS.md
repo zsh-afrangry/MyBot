@@ -166,6 +166,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/test-fulltext-research.mjs` | 验收 | 论文全文研究任务 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/26-fulltext-research.json` |
 | `scripts/fusion/test-live-inbound.mjs` | 验收 | 合成入站 → 真实模型 → 本人 QQ 外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/01-native-inbound.json` |
 | `scripts/fusion/test-live-media.mjs` | 验收 | 合成图片入站与真实外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/03-native-media.json` |
+| `scripts/fusion/test-mail-delivery.mjs` | 验收 | 邮件真实投递：真实授权码与真实 SMTP；确认由脚本按宿主路由同一调用记录，不含 QQ 入站与到信确认 | 真实外部API、写运行状态 | 是 | boundary | — |
 | `scripts/fusion/test-memory.mjs` | 验收 | 真实模型记忆 CRUD（合成事实） | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/13-memory-model.json` |
 | `scripts/fusion/test-native-concurrency.mjs` | 验收 | 两个原生会话并发；不发 QQ | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/05-native-concurrency.json` |
 | `scripts/fusion/test-native-cron.mjs` | 验收 | 原生 Cron CRUD 与频道投递 | 真实QQ外发、建/改任务或提醒、重启或停服务、写仓库内文件 | 是 | header | `docs/verification/fusion/04-native-cron.json` |

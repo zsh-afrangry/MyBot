@@ -5,7 +5,15 @@
   "version": "0.1.0",
   "configSchema": {
     "type": "object",
-    "properties": {},
+    "properties": {
+      "allowedRecipients": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Recipient allowlist (exact addresses). Empty means no recipient is permitted; there is no wildcard."
+      }
+    },
     "additionalProperties": false
   },
   "activation": {
@@ -20,9 +28,17 @@
     ]
   },
   "toolMetadata": {
-    "email_status": { "optional": true },
-    "email_draft": { "optional": true },
-    "email_send": { "optional": true },
-    "email_outbox": { "optional": true }
+    "email_status": {
+      "optional": true
+    },
+    "email_draft": {
+      "optional": true
+    },
+    "email_send": {
+      "optional": true
+    },
+    "email_outbox": {
+      "optional": true
+    }
   }
 }

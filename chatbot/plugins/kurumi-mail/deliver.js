@@ -11,6 +11,7 @@
 import { randomUUID } from "node:crypto";
 import { buildMessage } from "./mime.js";
 import { deliver, SmtpError } from "./smtp.js";
+import { MailPolicyError, assertRecipientsAllowed, normalizeAllowlist } from "./store.js";
 
 /**
  * @param {object} input
@@ -20,9 +21,18 @@ import { deliver, SmtpError } from "./smtp.js";
  * @param {{user: string, authCode: string, host: string, port: number, configured: boolean}} input.config
  * @param {Function} [input.connector] injectable transport (tests use a local mock server)
  */
-export async function sendApprovedDraft({ store, draftId, scope, config, connector, tlsOptions, clientHostname = "kurumi-fusion" }) {
+export async function sendApprovedDraft({ store, draftId, scope, config, allowedRecipients = [], connector, tlsOptions, clientHostname = "kurumi-fusion" }) {
   const draft = store.getDraft(draftId);
   if (!draft) return { ok: false, code: "unknown_draft", sent: false };
+
+  // Re-check policy before the approval is consumed. The draft was checked when created, but the
+  // allowlist can change in between; checking again here costs nothing and closes that window.
+  try {
+    assertRecipientsAllowed([...draft.to, ...(draft.cc ?? [])], normalizeAllowlist(allowedRecipients));
+  } catch (error) {
+    if (error instanceof MailPolicyError) return { ok: false, code: error.code, sent: false, reason: error.message };
+    throw error;
+  }
 
   const approval = store.consumeApproval({ draftId: draft.draftId, scope });
   if (!approval.ok) {

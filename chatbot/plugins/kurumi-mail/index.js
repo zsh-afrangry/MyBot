@@ -16,8 +16,8 @@ import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { ownerAuthorized } from "../kurumi-qq/src/config.js";
-import { registerConfirmationBackend, scopeFromToolContext } from "@kurumi/confirmation-core";
-import { MailStore } from "./store.js";
+import { confirmationBackendIds, registerConfirmationBackend, scopeFromToolContext } from "@kurumi/confirmation-core";
+import { MailPolicyError, MailStore, normalizeAllowlist } from "./store.js";
 import { sendApprovedDraft } from "./deliver.js";
 import { defaultConnector, SmtpClient } from "./smtp.js";
 
@@ -49,6 +49,11 @@ export function readMailConfig(env = process.env) {
   const parsedPort = Number(env[ENV_PORT] ?? DEFAULT_PORT);
   const port = Number.isInteger(parsedPort) && parsedPort > 0 && parsedPort < 65_536 ? parsedPort : DEFAULT_PORT;
   return { user, authCode, host, port, configured: Boolean(user && authCode) };
+}
+
+/** Recipient policy, read from the plugin's managed config. Fail-closed when absent. */
+function mailPolicy(api) {
+  return normalizeAllowlist(api.pluginConfig?.allowedRecipients);
 }
 
 function json(value) {
@@ -88,8 +93,16 @@ export default {
       start() {
         const unregister = registerConfirmationBackend({
           id: BACKEND_ID,
-          open: () => new MailStore({ stateDirectory: mailStateDirectory() }),
+          open: () => new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: normalizeAllowlist(api.pluginConfig?.allowedRecipients) }),
         });
+        // Logged so the registration is observable in the journal. Without this line the only way to
+        // know whether confirmations can reach this domain would be to send a real one.
+        api.logger?.info?.(JSON.stringify({
+          component: "kurumi-mail",
+          event: "confirmation-backend-registered",
+          backend: BACKEND_ID,
+          registered: confirmationBackendIds(),
+        }));
         return () => unregister();
       },
     });
@@ -112,12 +125,18 @@ export default {
           ownerOnly(ctx, api);
           ctx.assertInvocationCurrent?.();
           const config = readMailConfig();
+          const allowedRecipients = mailPolicy(api);
           const result = {
             ok: true,
             configured: config.configured,
             sender: config.user || null,
             host: config.host,
             port: config.port,
+            allowedRecipients,
+            confirmationBackendRegistered: confirmationBackendIds().includes(BACKEND_ID),
+            recipientPolicy: allowedRecipients.length === 0
+              ? "closed: the allowlist is empty, so no recipient is permitted"
+              : "allowlist",
             secretsExposed: false,
           };
           if (!config.configured) {
@@ -154,6 +173,7 @@ export default {
         label: "Draft an email",
         description:
           "Create a pending email draft and return the confirmation instruction the owner must read back verbatim. "
+          + "Recipients must appear in the configured allowlist; a recipient outside it is refused with recipient_not_allowed. "
           + "Nothing is sent by this tool. Show the preview (sender, recipients, subject, body excerpt) and the confirmation "
           + "instruction on its own line, then wait for the owner's own message. Owner private chat only.",
         parameters: {
@@ -172,12 +192,22 @@ export default {
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           const scope = requireScope(ctx);
-          const store = new MailStore({ stateDirectory: mailStateDirectory() });
+          const allowedRecipients = mailPolicy(api);
+          const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients });
           try {
-            const created = store.createDraft(
-              { to: args.to, cc: args.cc ?? [], subject: args.subject, text: args.text },
-              scope,
-            );
+            let created;
+            try {
+              created = store.createDraft(
+                { to: args.to, cc: args.cc ?? [], subject: args.subject, text: args.text },
+                scope,
+              );
+            } catch (error) {
+              // Policy and validation refusals are owner-facing answers, not tool crashes.
+              if (error instanceof MailPolicyError) {
+                return json({ ok: false, code: error.code, reason: error.message, allowedRecipients, sent: false });
+              }
+              return json({ ok: false, code: "invalid_draft", reason: String(error?.message ?? error).slice(0, 300), sent: false });
+            }
             const config = readMailConfig();
             return json({
               ok: true,
@@ -219,13 +249,14 @@ export default {
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           const scope = requireScope(ctx);
-          const store = new MailStore({ stateDirectory: mailStateDirectory() });
+          const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: mailPolicy(api) });
           try {
             const result = await sendApprovedDraft({
               store,
               draftId: args.draftId,
               scope,
               config: readMailConfig(),
+              allowedRecipients: mailPolicy(api),
             });
             return json(result);
           } finally {
@@ -257,7 +288,7 @@ export default {
           ownerOnly(ctx, api);
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
-          const store = new MailStore({ stateDirectory: mailStateDirectory() });
+          const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: mailPolicy(api) });
           try {
             if (args.action === "list") {
               return json({ ok: true, drafts: store.listDrafts({ limit: args.limit ?? 10 }) });

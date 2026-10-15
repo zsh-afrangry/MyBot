@@ -164,6 +164,7 @@ const TABLE = {
   'scripts/fusion/test-project-scoped-commit.mjs': ['验收', '提交范围只含指定文件', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-qq-interaction.mjs': ['验收', '合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发', {auth: 1, model: 1, qq: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'scripts/fusion/test-recurring-weather.mjs': ['验收', '周期天气 automations', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'code'],
+  'scripts/fusion/test-mail-delivery.mjs': ['验收', '邮件真实投递：真实授权码与真实 SMTP；确认由脚本按宿主路由同一调用记录，不含 QQ 入站与到信确认', {auth: 1, externalApi: 1, writesState: 1}, 'boundary'],
   'scripts/fusion/test-reminder-delivery.mjs': ['验收', '自然语言 → automations → 到点外发', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-reminder-tool.mjs': ['验收', '提醒工具 CRUD（须先取消未来任务）', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-research-cancel.mjs': ['验收', '研究任务查询与取消', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],

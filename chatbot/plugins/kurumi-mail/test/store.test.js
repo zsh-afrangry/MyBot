@@ -8,14 +8,24 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import { MailStore, draftPayloadHash } from "../store.js";
+import {
+  MailPolicyError,
+  MailStore,
+  assertRecipientsAllowed,
+  draftPayloadHash,
+  normalizeAllowlist,
+  recipientsNotAllowed,
+} from "../store.js";
 import { inboundEvent, ownerScope, OWNER_EMAIL, RECIPIENT } from "./helpers/owner-context.js";
 
-/** Each test gets its own state directory and a controllable clock. */
-function withStore(run, { startUtc = 1_800_000_000 } = {}) {
+/**
+ * Each test gets its own state directory and a controllable clock.
+ * The allowlist is fail-closed, so tests must opt recipients in explicitly.
+ */
+function withStore(run, { startUtc = 1_800_000_000, allowedRecipients = [RECIPIENT] } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kurumi-mail-"));
   let now = startUtc;
-  const store = new MailStore({ stateDirectory: dir, now: () => now });
+  const store = new MailStore({ stateDirectory: dir, now: () => now, allowedRecipients });
   try {
     return run({ store, dir, advance: (seconds) => { now += seconds; }, at: () => now });
   } finally {
@@ -235,4 +245,75 @@ test("an unknown draft id is refused without touching other state", () => {
     assert.equal(check.ok, false);
     assert.equal(check.code, "unknown_draft");
   });
+});
+
+test("the allowlist admits listed recipients and refuses everyone else", () => {
+  withStore(({ store }) => {
+    const scope = ownerScope();
+    const ok = store.createDraft(DRAFT, scope);
+    assert.equal(store.getDraft(ok.draftId).status, "pending");
+
+    assert.throws(
+      () => store.createDraft({ ...DRAFT, to: ["stranger@example.test"] }, scope),
+      (error) => {
+        assert.ok(error instanceof MailPolicyError);
+        assert.equal(error.code, "recipient_not_allowed");
+        assert.match(error.message, /stranger@example\.test/u);
+        assert.match(error.message, new RegExp(RECIPIENT.replace(".", "\\."), "u"), "the refusal names what is allowed");
+        return true;
+      },
+    );
+  });
+});
+
+test("a refused draft leaves nothing behind to approve", () => {
+  withStore(({ store }) => {
+    const scope = ownerScope();
+    assert.throws(() => store.createDraft({ ...DRAFT, to: ["stranger@example.test"] }, scope), MailPolicyError);
+    // No draft row, no proposal: there is nothing the owner could accidentally confirm.
+    assert.equal(store.listDrafts({ limit: 10 }).length, 0);
+    assert.equal(store.listInboundConfirmationCandidates(inboundEvent({ content: "确认 000000000000" })).length, 0);
+  });
+});
+
+test("cc recipients are subject to the same allowlist", () => {
+  withStore(({ store }) => {
+    const scope = ownerScope();
+    assert.throws(
+      () => store.createDraft({ ...DRAFT, cc: ["stranger@example.test"] }, scope),
+      (error) => error instanceof MailPolicyError && error.code === "recipient_not_allowed",
+    );
+  });
+});
+
+test("an empty allowlist closes the capability instead of silently allowing everything", () => {
+  withStore(({ store }) => {
+    const scope = ownerScope();
+    assert.throws(
+      () => store.createDraft(DRAFT, scope),
+      (error) => {
+        assert.ok(error instanceof MailPolicyError);
+        assert.equal(error.code, "allowlist_empty");
+        assert.match(error.message, /plugins\.entries\.kurumi-mail\.config\.allowedRecipients/u);
+        return true;
+      },
+    );
+  }, { allowedRecipients: [] });
+});
+
+test("allowlist matching ignores case and surrounding whitespace", () => {
+  withStore(({ store }) => {
+    const scope = ownerScope();
+    const mixed = RECIPIENT.toUpperCase();
+    const created = store.createDraft({ ...DRAFT, to: [`  ${mixed}  `] }, scope);
+    assert.equal(store.getDraft(created.draftId).to[0], mixed);
+  }, { allowedRecipients: [RECIPIENT] });
+});
+
+test("allowlist helpers normalise and compare as documented", () => {
+  assert.deepEqual(normalizeAllowlist([" B@x.test ", "a@x.test", "a@x.test", "", null]), ["a@x.test", "b@x.test"]);
+  assert.deepEqual(normalizeAllowlist(undefined), []);
+  assert.deepEqual(recipientsNotAllowed(["A@X.test", "c@x.test"], ["a@x.test"]), ["c@x.test"]);
+  assert.throws(() => assertRecipientsAllowed(["a@x.test"], []), MailPolicyError);
+  assert.doesNotThrow(() => assertRecipientsAllowed(["A@X.test"], ["a@x.test"]));
 });

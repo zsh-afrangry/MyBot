@@ -81,6 +81,53 @@ export function draftPayloadHash({ to, cc = [], subject, text, attachments = [] 
   return createHash("sha256").update(canonical).digest("hex");
 }
 
+/**
+ * A policy refusal the owner can act on. Separate from validation errors so tools can report a
+ * machine-readable code instead of a bare message.
+ */
+export class MailPolicyError extends Error {
+  constructor(code, message) {
+    super(message);
+    this.name = "MailPolicyError";
+    this.code = code;
+  }
+}
+
+/** Normalise a configured allowlist: trimmed, lowercased, de-duplicated, sorted. */
+export function normalizeAllowlist(value) {
+  const list = Array.isArray(value) ? value : [];
+  return [...new Set(list.map((entry) => String(entry ?? "").trim().toLowerCase()).filter(Boolean))].sort();
+}
+
+/** Recipients (to + cc) that the allowlist does not cover. */
+export function recipientsNotAllowed(recipients, allowlist) {
+  const allowed = new Set(allowlist);
+  return recipients.map((entry) => String(entry).trim().toLowerCase()).filter((entry) => !allowed.has(entry));
+}
+
+/**
+ * Enforce the recipient allowlist.
+ *
+ * Fail-closed by design: an empty allowlist permits nothing. A missing allowlist that silently
+ * allowed everything would be the worst outcome — the protection would look present while doing
+ * nothing. The message therefore names the config path so a refusal is self-explanatory.
+ */
+export function assertRecipientsAllowed(recipients, allowlist) {
+  if (allowlist.length === 0) {
+    throw new MailPolicyError(
+      "allowlist_empty",
+      "recipient allowlist is empty, so no recipient is permitted; add addresses to plugins.entries.kurumi-mail.config.allowedRecipients",
+    );
+  }
+  const blocked = recipientsNotAllowed(recipients, allowlist);
+  if (blocked.length > 0) {
+    throw new MailPolicyError(
+      "recipient_not_allowed",
+      `recipient not allowed: ${blocked.join(", ")}; allowed: ${allowlist.join(", ")}`,
+    );
+  }
+}
+
 function unauthorized(message) {
   const error = new Error(message);
   error.code = "unauthorized_owner_context";
@@ -99,8 +146,11 @@ export class MailStore {
   #file;
   #now;
 
-  constructor({ stateDirectory, now = () => Math.floor(Date.now() / 1000) } = {}) {
+  #allowedRecipients;
+
+  constructor({ stateDirectory, now = () => Math.floor(Date.now() / 1000), allowedRecipients = [] } = {}) {
     if (!stateDirectory) throw new Error("stateDirectory is required");
+    this.#allowedRecipients = normalizeAllowlist(allowedRecipients);
     fs.mkdirSync(stateDirectory, { recursive: true, mode: 0o700 });
     this.#file = path.join(stateDirectory, "mail.sqlite");
     this.#db = new DatabaseSync(this.#file);
@@ -112,6 +162,11 @@ export class MailStore {
 
   get file() {
     return this.#file;
+  }
+
+  /** Current policy, exposed so status output can show what is permitted. */
+  get allowedRecipients() {
+    return [...this.#allowedRecipients];
   }
 
   close() {
@@ -161,6 +216,9 @@ export class MailStore {
 
     const draftId = randomUUID();
     const payloadHash = draftPayloadHash({ to, cc, subject, text, attachments });
+    // Policy check before anything is written: a refused draft must leave no trace to approve.
+    assertRecipientsAllowed([...to, ...cc], this.#allowedRecipients);
+
     const createdAtUtc = this.nowUtc();
     const expiresAtUtc = createdAtUtc + DRAFT_TTL_SECONDS;
 

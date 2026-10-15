@@ -262,7 +262,12 @@
         "enabled": true
       },
       "kurumi-mail": {
-        "enabled": true
+        "enabled": true,
+        "config": {
+          "allowedRecipients": [
+            "365999865@qq.com"
+          ]
+        }
       }
     },
     "slots": {
