@@ -4,6 +4,7 @@
 // linked under its own node_modules). Acceptance scripts live outside that tree, so they import the
 // helpers through this module instead of hard-coding a node_modules path.
 export {
+  buildConfirmationInstruction,
   confirmationBackendIds,
   scopeFromInboundEvent,
   scopeFromToolContext,

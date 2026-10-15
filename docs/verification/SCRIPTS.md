@@ -87,8 +87,10 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/packages/confirmation-core/src/public-id.test.ts` | 离线 | 公开 ID 脱敏与冲突规避 | 只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-mail/test/gate.test.js` | 离线 | 邮件端到端负向核心：确认前 mock SMTP 收到 0 封；另含完整往返与失败路径 | 写临时测试目录、只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-mail/test/mime.test.js` | 离线 | 邮件 MIME：RFC 2047 主题、RFC 2231 附件名、折行、注入防护、信封发件人 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/policy.test.js` | 离线 | 邮件输入策略：单收件人字符串与 body 别名的真实失败回归、白名单、参数规整 | 只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-mail/test/smtp.test.js` | 离线 | SMTP 协议：仅连本地 mock 服务器，覆盖认证失败、收件人拒绝、超时与 dot-stuffing | 写临时测试目录、只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-mail/test/store.test.js` | 离线 | 邮件草稿与确认闸门：提案、授权、幂等、过期、跨会话与参数校验 | 写临时测试目录、只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/tool.test.js` | 离线 | 邮件工具层：以生产失败参数驱动真实注册工具，含非主人拒绝与凭据不泄露 | 写临时测试目录、只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-memory/test/memory.test.js` | 离线 | 长期记忆读写、版本与损坏拒绝 | 只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-qq/test/channel.test.js` | 离线 | QQ 频道分段、配额、账本与幂等 | 只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-qq/test/presentation.test.js` | 离线 | QQ 呈现与分段节奏 | 只读 | 否 | offline | — |

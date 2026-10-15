@@ -211,3 +211,44 @@ test("a recipient outside the allowlist cannot even be drafted", async () => {
     assert.equal(server.receivedCount, 0);
   });
 });
+
+test("a confirmation carrying a MILLISECOND timestamp is accepted (regression)", async () => {
+  // The host forwards ctx.Timestamp unchanged (`personal-confirmation/src/inbound.ts`), and that value
+  // is milliseconds — the same value it range-checks against nowMs. Proposals and grants are stored in
+  // seconds, and the candidate query is `expires_at_utc > nowUtc`. Reading milliseconds as seconds made
+  // every proposal look decades expired, so no proposal matched, the host logged no_match, no grant was
+  // ever issued, and the QQ round trip could not succeed at all. This case is the one that was missing.
+  await scenario({}, async ({ server, store, config, scope, allowed }) => {
+    const created = store.createDraft(DRAFT, scope);
+    const event = inboundEvent({ content: created.instruction, timestamp: Date.now() });
+    assert.equal(store.listInboundConfirmationCandidates(event).length, 1, "the proposal must be visible to the inbound router");
+    assert.equal(store.recordInboundConfirmation(event, created.draftId), true, "the millisecond timestamp must not expire the proposal");
+    const result = await sendApprovedDraft({ store, draftId: created.draftId, scope, config, connector: connectorTrustingTestCert, allowedRecipients: allowed });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(server.receivedCount, 1);
+  });
+});
+
+test("a confirmation carrying a SECOND timestamp still works", async () => {
+  // Tolerating already-converted seconds keeps the caller contract forgiving in both directions.
+  await scenario({}, async ({ server, store, config, scope, allowed }) => {
+    const created = store.createDraft(DRAFT, scope);
+    const event = inboundEvent({ content: created.instruction, timestamp: Math.floor(Date.now() / 1000) });
+    assert.equal(store.recordInboundConfirmation(event, created.draftId), true);
+    const result = await sendApprovedDraft({ store, draftId: created.draftId, scope, config, connector: connectorTrustingTestCert, allowedRecipients: allowed });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(server.receivedCount, 1);
+  });
+});
+
+test("an event without a timestamp falls back to the store clock", async () => {
+  await scenario({}, async ({ server, store, config, scope, allowed }) => {
+    const created = store.createDraft(DRAFT, scope);
+    const event = inboundEvent({ content: created.instruction });
+    delete event.timestamp;
+    assert.equal(store.recordInboundConfirmation(event, created.draftId), true);
+    const result = await sendApprovedDraft({ store, draftId: created.draftId, scope, config, connector: connectorTrustingTestCert, allowedRecipients: allowed });
+    assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(server.receivedCount, 1);
+  });
+});

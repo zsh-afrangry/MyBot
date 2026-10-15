@@ -60,6 +60,8 @@ const TABLE = {
   'chatbot/plugins/kurumi-tasks/test/git.test.js': ['离线', '副本内受限 Git 提交范围', {readonly: 1}, 'offline'],
   'chatbot/plugins/kurumi-tasks/test/sandbox.test.js': ['离线', 'Bubblewrap 隔离边界与进程树终止', {readonly: 1}, 'offline'],
   'chatbot/plugins/kurumi-research/test/papers.test.js': ['离线', '论文来源校验与拒绝规则', {readonly: 1}, 'offline'],
+  'chatbot/plugins/kurumi-mail/test/policy.test.js': ['离线', '邮件输入策略：单收件人字符串与 body 别名的真实失败回归、白名单、参数规整', {readonly: 1}, 'offline'],
+  'chatbot/plugins/kurumi-mail/test/tool.test.js': ['离线', '邮件工具层：以生产失败参数驱动真实注册工具，含非主人拒绝与凭据不泄露', {readonly: 1, testDir: 1}, 'offline'],
   'chatbot/plugins/kurumi-mail/test/mime.test.js': ['离线', '邮件 MIME：RFC 2047 主题、RFC 2231 附件名、折行、注入防护、信封发件人', {readonly: 1}, 'offline'],
   'chatbot/plugins/kurumi-mail/test/smtp.test.js': ['离线', 'SMTP 协议：仅连本地 mock 服务器，覆盖认证失败、收件人拒绝、超时与 dot-stuffing', {readonly: 1, testDir: 1}, 'offline'],
   'chatbot/plugins/kurumi-mail/test/store.test.js': ['离线', '邮件草稿与确认闸门：提案、授权、幂等、过期、跨会话与参数校验', {readonly: 1, testDir: 1}, 'offline'],

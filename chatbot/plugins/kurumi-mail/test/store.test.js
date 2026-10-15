@@ -8,14 +8,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import {
-  MailPolicyError,
-  MailStore,
-  assertRecipientsAllowed,
-  draftPayloadHash,
-  normalizeAllowlist,
-  recipientsNotAllowed,
-} from "../store.js";
+import { MailStore, draftPayloadHash, eventSeconds } from "../store.js";
+import { MailPolicyError, assertRecipientsAllowed, normalizeAllowlist, recipientsNotAllowed } from "../policy.js";
 import { inboundEvent, ownerScope, OWNER_EMAIL, RECIPIENT } from "./helpers/owner-context.js";
 
 /**
@@ -310,10 +304,17 @@ test("allowlist matching ignores case and surrounding whitespace", () => {
   }, { allowedRecipients: [RECIPIENT] });
 });
 
-test("allowlist helpers normalise and compare as documented", () => {
-  assert.deepEqual(normalizeAllowlist([" B@x.test ", "a@x.test", "a@x.test", "", null]), ["a@x.test", "b@x.test"]);
-  assert.deepEqual(normalizeAllowlist(undefined), []);
-  assert.deepEqual(recipientsNotAllowed(["A@X.test", "c@x.test"], ["a@x.test"]), ["c@x.test"]);
-  assert.throws(() => assertRecipientsAllowed(["a@x.test"], []), MailPolicyError);
-  assert.doesNotThrow(() => assertRecipientsAllowed(["A@X.test"], ["a@x.test"]));
+
+test("eventSeconds converts milliseconds and leaves seconds alone", () => {
+  const seconds = 1_792_088_771;
+  assert.equal(eventSeconds({ timestamp: seconds * 1000 }, 0), seconds, "milliseconds must divide down");
+  assert.equal(eventSeconds({ timestamp: seconds }, 0), seconds, "seconds must pass through");
+  // The boundary the two units are separated on: 1e10 seconds is the year 2286, so anything larger is
+  // necessarily a millisecond value.
+  assert.equal(eventSeconds({ timestamp: 10_000_000_001 }, 0), 10_000_000, "just over the threshold is milliseconds");
+  assert.equal(eventSeconds({ timestamp: 10_000_000_000 }, 0), 10_000_000_000, "at the threshold it is seconds");
+  assert.equal(eventSeconds({}, 12345), 12345, "a missing timestamp falls back");
+  assert.equal(eventSeconds({ timestamp: Number.NaN }, 12345), 12345, "NaN falls back");
+  assert.equal(eventSeconds(undefined, 12345), 12345, "a missing event falls back");
+  assert.equal(eventSeconds({ timestamp: -5 }, 0), 0, "negatives clamp to zero");
 });

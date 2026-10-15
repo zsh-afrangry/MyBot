@@ -17,7 +17,8 @@ import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import { ownerAuthorized } from "../kurumi-qq/src/config.js";
 import { confirmationBackendIds, registerConfirmationBackend, scopeFromToolContext } from "@kurumi/confirmation-core";
-import { MailPolicyError, MailStore, normalizeAllowlist } from "./store.js";
+import { MailStore } from "./store.js";
+import { MailPolicyError, normalizeAllowlist, normalizeDraftArgs, normalizeOutboxArgs, normalizeSendArgs } from "./policy.js";
 import { sendApprovedDraft } from "./deliver.js";
 import { defaultConnector, SmtpClient } from "./smtp.js";
 
@@ -176,15 +177,28 @@ export default {
           + "Recipients must appear in the configured allowlist; a recipient outside it is refused with recipient_not_allowed. "
           + "Nothing is sent by this tool. Show the preview (sender, recipients, subject, body excerpt) and the confirmation "
           + "instruction on its own line, then wait for the owner's own message. Owner private chat only.",
+        // Shape is intentionally permissive; content is validated at runtime.
+        //
+        // A schema rejection never reaches this plugin: the model only sees "Invalid arguments" and
+        // must spend another turn recovering — and a model that retries a few times can emit a
+        // malformed tool call and fail the whole run. A real round trip failed exactly that way,
+        // because a single recipient was passed as a string and the body as "body". Both are
+        // accepted now, and anything still wrong comes back as a structured, fixable message.
         parameters: {
           type: "object",
-          additionalProperties: false,
-          required: ["to", "subject", "text"],
+          additionalProperties: true,
           properties: {
-            to: { type: "array", minItems: 1, maxItems: 20, items: { type: "string" }, description: "Recipient addresses." },
-            cc: { type: "array", maxItems: 20, items: { type: "string" } },
-            subject: { type: "string", maxLength: 300 },
+            to: {
+              anyOf: [{ type: "string" }, { type: "array", items: { type: "string" } }],
+              description: "Recipients. One address as a plain string is fine; an array or a comma-separated string also works.",
+            },
+            cc: {
+              anyOf: [{ type: "string" }, { type: "array", items: { type: "string" } }],
+              description: "Optional carbon-copy recipients, same shapes as 'to'.",
+            },
+            subject: { type: "string", maxLength: 300, description: "Subject line." },
             text: { type: "string", maxLength: 100000, description: "Plain-text body." },
+            body: { type: "string", maxLength: 100000, description: "Alias for 'text'." },
           },
         },
         async execute(callId, args, signal) {
@@ -195,10 +209,14 @@ export default {
           const allowedRecipients = mailPolicy(api);
           const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients });
           try {
+            const input = normalizeDraftArgs(args);
+            if (input.problem) {
+              return json({ ok: false, code: "invalid_draft", reason: input.problem, sent: false });
+            }
             let created;
             try {
               created = store.createDraft(
-                { to: args.to, cc: args.cc ?? [], subject: args.subject, text: args.text },
+                { to: input.to, cc: input.cc, subject: input.subject, text: input.text },
                 scope,
               );
             } catch (error) {
@@ -215,10 +233,10 @@ export default {
               draftId: created.draftId,
               confirmationInstruction: created.instruction,
               from: config.user || null,
-              to: args.to,
-              cc: args.cc ?? [],
-              subject: args.subject,
-              bodyChars: String(args.text).length,
+              to: input.to,
+              cc: input.cc,
+              subject: input.subject,
+              bodyChars: String(input.text).length,
               expiresAtUtc: created.expiresAtUtc,
               note: "Not sent. The owner must reply with the confirmation instruction before email_send can deliver it.",
             });
@@ -238,22 +256,31 @@ export default {
           "Deliver a draft that the owner has already approved. Requires the draft id from email_draft plus the approval the host "
           + "recorded when the owner replied with the confirmation code. Without that approval this returns approval_required and "
           + "sends nothing; repeated sends are refused. Owner private chat only.",
+        // Same reasoning as email_draft: shape stays permissive, content is checked at runtime.
+        // Models tend to echo the confirmation line back as an extra field; rejecting the call over
+        // that key would cost a turn without adding any safety, because approval is never taken from
+        // an argument — it is the grant the host recorded from the owner's own message.
         parameters: {
           type: "object",
-          additionalProperties: false,
-          required: ["draftId"],
-          properties: { draftId: { type: "string", description: "Draft id returned by email_draft." } },
+          additionalProperties: true,
+          properties: {
+            draftId: { type: "string", description: "Draft id returned by email_draft." },
+          },
         },
         async execute(callId, args, signal) {
           ownerOnly(ctx, api);
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           const scope = requireScope(ctx);
+          const input = normalizeSendArgs(args);
+          if (input.problem) {
+            return json({ ok: false, code: "invalid_send", reason: input.problem, sent: false });
+          }
           const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: mailPolicy(api) });
           try {
             const result = await sendApprovedDraft({
               store,
-              draftId: args.draftId,
+              draftId: input.draftId,
               scope,
               config: readMailConfig(),
               allowedRecipients: mailPolicy(api),
@@ -276,10 +303,9 @@ export default {
           + "Read-only except for cancel. Owner private chat only.",
         parameters: {
           type: "object",
-          additionalProperties: false,
-          required: ["action"],
+          additionalProperties: true,
           properties: {
-            action: { type: "string", enum: ["list", "audit", "cancel"] },
+            action: { type: "string", enum: ["list", "audit", "cancel"], description: "Defaults to list." },
             draftId: { type: "string", description: "Required for cancel." },
             limit: { type: "number", minimum: 1, maximum: 50 },
           },
@@ -290,15 +316,18 @@ export default {
           signal?.throwIfAborted();
           const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: mailPolicy(api) });
           try {
-            if (args.action === "list") {
-              return json({ ok: true, drafts: store.listDrafts({ limit: args.limit ?? 10 }) });
+            const input = normalizeOutboxArgs(args);
+            if (input.problem) {
+              return json({ ok: false, code: "invalid_action", reason: input.problem });
             }
-            if (args.action === "audit") {
-              return json({ ok: true, entries: store.listAudit({ limit: args.limit ?? 10 }) });
+            if (input.action === "list") {
+              return json({ ok: true, action: "list", drafts: store.listDrafts({ limit: input.limit ?? 10 }) });
             }
-            if (!args.draftId) return json({ ok: false, code: "draft_id_required" });
-            const cancelled = store.cancelDraft(args.draftId);
-            return json({ ok: cancelled, cancelled, draftId: args.draftId });
+            if (input.action === "audit") {
+              return json({ ok: true, action: "audit", entries: store.listAudit({ limit: input.limit ?? 10 }) });
+            }
+            const cancelled = store.cancelDraft(input.draftId);
+            return json({ ok: cancelled, cancelled, action: "cancel", draftId: input.draftId });
           } finally {
             store.close();
           }

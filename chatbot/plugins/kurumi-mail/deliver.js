@@ -11,7 +11,7 @@
 import { randomUUID } from "node:crypto";
 import { buildMessage } from "./mime.js";
 import { deliver, SmtpError } from "./smtp.js";
-import { MailPolicyError, assertRecipientsAllowed, normalizeAllowlist } from "./store.js";
+import { MailPolicyError, assertRecipientsAllowed, normalizeAllowlist } from "./policy.js";
 
 /**
  * @param {object} input

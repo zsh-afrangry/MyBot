@@ -12,7 +12,12 @@ import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { createHash, randomUUID } from "node:crypto";
-import { isValidAddress } from "./mime.js";
+import {
+  MailPolicyError,
+  assertRecipient,
+  assertRecipientsAllowed,
+  normalizeAllowlist,
+} from "./policy.js";
 import {
   buildConfirmationInstruction,
   checkApprovalGrant,
@@ -82,63 +87,27 @@ export function draftPayloadHash({ to, cc = [], subject, text, attachments = [] 
 }
 
 /**
- * A policy refusal the owner can act on. Separate from validation errors so tools can report a
- * machine-readable code instead of a bare message.
- */
-export class MailPolicyError extends Error {
-  constructor(code, message) {
-    super(message);
-    this.name = "MailPolicyError";
-    this.code = code;
-  }
-}
-
-/** Normalise a configured allowlist: trimmed, lowercased, de-duplicated, sorted. */
-export function normalizeAllowlist(value) {
-  const list = Array.isArray(value) ? value : [];
-  return [...new Set(list.map((entry) => String(entry ?? "").trim().toLowerCase()).filter(Boolean))].sort();
-}
-
-/** Recipients (to + cc) that the allowlist does not cover. */
-export function recipientsNotAllowed(recipients, allowlist) {
-  const allowed = new Set(allowlist);
-  return recipients.map((entry) => String(entry).trim().toLowerCase()).filter((entry) => !allowed.has(entry));
-}
-
-/**
- * Enforce the recipient allowlist.
+ * Convert an inbound event's timestamp to the seconds the confirmation tables use.
  *
- * Fail-closed by design: an empty allowlist permits nothing. A missing allowlist that silently
- * allowed everything would be the worst outcome — the protection would look present while doing
- * nothing. The message therefore names the config path so a refusal is self-explanatory.
+ * The host hands us MILLISECONDS (`personal-confirmation/src/inbound.ts` forwards `ctx.Timestamp`,
+ * the same value it range-checks against `nowMs`). Proposals and grants are stored in SECONDS.
+ * Passing milliseconds straight through made every proposal look long expired — the candidate query
+ * is `expires_at_utc > nowUtc` — so no proposal ever matched, the host logged `no_match`, and no grant
+ * was ever issued. The QQ round trip could not succeed at all until this was fixed.
+ *
+ * The threshold also tolerates a caller that already passes seconds, which is what the weather domain
+ * does; anything above 1e10 seconds is a millisecond value (1e10 seconds is the year 2286).
  */
-export function assertRecipientsAllowed(recipients, allowlist) {
-  if (allowlist.length === 0) {
-    throw new MailPolicyError(
-      "allowlist_empty",
-      "recipient allowlist is empty, so no recipient is permitted; add addresses to plugins.entries.kurumi-mail.config.allowedRecipients",
-    );
-  }
-  const blocked = recipientsNotAllowed(recipients, allowlist);
-  if (blocked.length > 0) {
-    throw new MailPolicyError(
-      "recipient_not_allowed",
-      `recipient not allowed: ${blocked.join(", ")}; allowed: ${allowlist.join(", ")}`,
-    );
-  }
+export function eventSeconds(event, fallback) {
+  const stamp = event?.timestamp;
+  if (typeof stamp !== "number" || !Number.isFinite(stamp)) return fallback;
+  return Math.max(0, Math.floor(stamp > 10_000_000_000 ? stamp / 1000 : stamp));
 }
 
 function unauthorized(message) {
   const error = new Error(message);
   error.code = "unauthorized_owner_context";
   return error;
-}
-
-/** Validate one recipient using the same rule the MIME builder applies. */
-export function assertRecipient(value, label = "recipient") {
-  const address = String(value ?? "").trim();
-  if (!isValidAddress(address)) throw new Error(`invalid ${label}: ${address}`);
-  return address;
 }
 
 export class MailStore {
@@ -342,7 +311,7 @@ export class MailStore {
       subjectId: OWNER_SUBJECT_ID,
       scope,
       content: event.content,
-      nowUtc: typeof event.timestamp === "number" ? Math.floor(event.timestamp) : this.nowUtc(),
+      nowUtc: eventSeconds(event, this.nowUtc()),
     });
   }
 
@@ -350,7 +319,7 @@ export class MailStore {
     if (!event?.messageId || event.replyToIsQuote === true) return false;
     const scope = scopeFromInboundEvent(event);
     if (!scope) return false;
-    const nowUtc = typeof event.timestamp === "number" ? Math.floor(event.timestamp) : this.nowUtc();
+    const nowUtc = eventSeconds(event, this.nowUtc());
     this.#db.exec("BEGIN IMMEDIATE");
     try {
       const proposal = findConfirmationProposalForInbound(this.#db, {
