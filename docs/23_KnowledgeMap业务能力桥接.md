@@ -240,9 +240,9 @@ flowchart LR
 
 本轮文档收尾重新读取两个仓库、后台副本、服务状态和 Fusion 自检结果，未把历史提交或并行开发改动误写为本轮产物：
 
-- Fusion `/home/afrangry/kurumi-fusion` 的 `main` 为 `f019ff7`，`origin/main` 为 `d717965f`，本地领先 13 个提交，工作区干净。
+- Fusion `/home/afrangry/kurumi-fusion` 的 `main` 当前提交以 `git rev-parse HEAD` 为准，`origin/main` 为 `d717965f`，本地领先 13 个提交，工作区干净。
 - KnowledgeMap `/home/afrangry/repository` 的 `master` 为 `27f4519`，`origin/master` 为 `2889e62`，本地领先 3 个提交；账单视觉开发的 6 个文件仍保持原有未提交状态，本轮没有暂存、提交、覆盖或清理它们。
-- `/home/afrangry/.openclaw-fusion/projects/fusion` 当前为 `a4e7487`，分支 `kurumi/main-sync-2026-10-10`，工作区干净、无 remote；其最后内容同步仍是主仓库 `2c234af` 经 `0ada63a` 合入，尚未追平 Fusion 当前 `f019ff7`。下一次后台代码任务开始前必须重新审阅并同步。
+- `/home/afrangry/.openclaw-fusion/projects/fusion` 当前为 `a4e7487`，分支 `kurumi/main-sync-2026-10-10`，工作区干净、无 remote；其最后内容同步仍是主仓库 `2c234af` 经 `0ada63a` 合入，尚未追平 Fusion 当前主仓库。下一次后台代码任务开始前必须重新审阅并同步。
 - `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 当前 active/enabled；旧 `openclaw-gateway.service` 和 `qq-bridge.service` inactive/masked。用户级 `dsh-web.service` 当前不存在；本轮没有改动系统级 DSH 单元。
 - `evidence-coverage.mjs`、`evidence-index.mjs`、`health.mjs`、`sync-config.mjs --diff`、`sync-persona.mjs --diff`、`verify-dependencies.mjs` 和 `git diff --check` 全部通过。
 - 本轮只更新 Fusion 的文档 10、12、16、23，未新增业务测试、未修改文档 22、未修改 KnowledgeMap 代码、未向任何远端推送。上述备份目录仍按本文第 7、8 节的“配对资料、非同一时刻停写快照”定义保留。
