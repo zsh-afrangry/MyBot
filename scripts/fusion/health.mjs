@@ -1,5 +1,7 @@
 // Read-only operational health: valid scheduled jobs are not failures. No credentials or message contents.
 import fs from 'node:fs';import {spawnSync} from 'node:child_process';import {DatabaseSync} from 'node:sqlite';import {rpc} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {KnowledgeMapClient} from '../../chatbot/packages/knowledgemap-client/client.js';
+import {readListSource} from '../../chatbot/plugins/personal-reminder-list/data-source.js';
 const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(state+'/openclaw.json')),acceptance=process.argv.includes('--acceptance'),r={at:new Date().toISOString(),ok:true,issues:[]};
 const issue=x=>{r.ok=false;r.issues.push(x);};
 try{await rpc('health',{},8000);r.gateway=true;}catch{issue('Gateway is unavailable');r.gateway=false;}
@@ -13,7 +15,13 @@ if(r.gateway){
 for(const [name,file] of [['channel','channel/channel.sqlite'],['weather','state/personal-weather/weather.sqlite'],['reminders','state/personal-reminders/reminders.sqlite'],...(cfg.plugins?.entries?.['personal-reminder-list']?.enabled?[['reminderList','state/personal-reminder-list/list.sqlite']]:[])]){
  try{const db=new DatabaseSync(state+'/'+file,{readOnly:true});try{const check=db.prepare('PRAGMA quick_check').get();r[name+'Database']=Object.values(check)[0];if(r[name+'Database']!=='ok')issue(name+' database integrity error');if(name==='channel'){r.outbound=db.prepare('SELECT status,COUNT(*) count FROM outbound GROUP BY status').all();r.recentAttempts=db.prepare('SELECT COUNT(*) n FROM outbound WHERE at>=?').get(Date.now()-86400000).n;r.dailyLimit=cfg.channels['kurumi-qq'].dailySendLimit??120;if(r.recentAttempts>=r.dailyLimit)issue('QQ daily send quota exhausted');r.recentFailedInbound=db.prepare("SELECT COUNT(*) n FROM inbound WHERE status='failed' AND at>=?").get(Date.now()-86400000).n;}}finally{db.close();}}catch{issue(name+' database could not be checked');}
 }
-r.services={};for(const name of ['kurumi-fusion','qq-bridge','openclaw-gateway','snowluma','snowluma-qq']){const p=spawnSync('systemctl',['--user','show',name+'.service','-p','ActiveState','-p','UnitFileState'],{encoding:'utf8',timeout:3000});r.services[name]=Object.fromEntries((p.stdout??'').trim().split('\n').filter(x=>x.includes('=')).map(x=>x.split('=')));}
+const sharedList=cfg.plugins?.entries?.['personal-reminder-list']?.config;
+if(sharedList?.dataSource==='knowledgemap'){
+ try{const source=readListSource(state);if(!source||source.baseUrl!==sharedList.bridgeBaseUrl||source.tokenFile!==sharedList.bridgeTokenFile)issue('Reminder-list cutover marker is missing or differs from configuration');
+ const status=await new KnowledgeMapClient({baseUrl:sharedList.bridgeBaseUrl,tokenFile:sharedList.bridgeTokenFile,trace(){}}).request('/api/assistant/status');r.knowledgeMap={ok:status.ok,contract:status.contract,domains:status.domains};if(status.ok!==true||status.contract!==1)issue('KnowledgeMap business contract is unavailable');
+ }catch{issue('KnowledgeMap shared data API is unavailable');}
+}
+r.services={};for(const name of ['kurumi-fusion','qq-bridge','openclaw-gateway','snowluma','snowluma-qq',...(sharedList?.dataSource==='knowledgemap'?['knowledgemap-assistant']:[])]){const p=spawnSync('systemctl',['--user','show',name+'.service','-p','ActiveState','-p','UnitFileState'],{encoding:'utf8',timeout:3000});r.services[name]=Object.fromEntries((p.stdout??'').trim().split('\n').filter(x=>x.includes('=')).map(x=>x.split('=')));}
 if(r.services['qq-bridge'].ActiveState==='active')issue('Old bridge is active: duplicate consumer risk');
 const legacy=spawnSync('systemctl',['show','dsh-web.service','-p','ActiveState','-p','UnitFileState'],{encoding:'utf8',timeout:3000});r.services['dsh-web']=Object.fromEntries((legacy.stdout??'').trim().split('\n').filter(x=>x.includes('=')).map(x=>x.split('=')));
 if(!acceptance){if(r.services['kurumi-fusion'].ActiveState!=='active'||r.services['kurumi-fusion'].UnitFileState!=='enabled')issue('Fusion default service is not active and enabled');for(const name of ['openclaw-gateway'])if(r.services[name].ActiveState==='active')issue('Legacy assistant still active: '+name);}

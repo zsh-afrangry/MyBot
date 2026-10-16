@@ -19,6 +19,31 @@ export function assertNoProduction(value){
  if(typeof value==='string'&&(value.includes(PRODUCTION_STATE)||value.includes(PRODUCTION_REPO)))throw Error('Active recovery configuration still references production');
  if(value&&typeof value==='object')for(const v of Object.values(value))assertNoProduction(v);
 }
+// Shared business data is external to the Fusion SQLite snapshot. Recovery probes
+// must remain inert even if somebody starts a copied fixed runner outside bwrap.
+export function disableKnowledgeMapRecovery(cfg,runtime){
+ if(!runtime.startsWith('/tmp/')||fs.realpathSync(runtime)!==runtime)throw Error('Recovery runtime must be canonical and under /tmp');
+ const boundary=fs.realpathSync(runtime)+path.sep;
+ const token=path.join(runtime,'knowledgemap-recovery-disabled-token');
+ if(fs.lstatSync(token,{throwIfNoEntry:false})?.isSymbolicLink())throw Error('Recovery token must not be a symlink');
+ fs.writeFileSync(token,'recovery-disabled',{mode:0o600});fs.chmodSync(token,0o600);
+ for(const name of ['kurumi-knowledgemap','personal-reminder-list','personal-weather']){
+  const entry=cfg.plugins?.entries?.[name],config=entry?.config;
+  if(!config)continue;
+  if(name==='kurumi-knowledgemap'){
+   entry.enabled=false;config.baseUrl='http://127.0.0.1:9';config.tokenFile=token;
+  }else if(config.dataSource==='knowledgemap'||config.weatherBackend==='knowledgemap'){
+   entry.enabled=false;config.bridgeBaseUrl='http://127.0.0.1:9';config.bridgeTokenFile=token;
+  }
+ }
+ const marker=path.join(runtime,'state/personal-reminder-list/data-source.json');
+ if(fs.existsSync(marker)){
+  if(fs.lstatSync(marker).isSymbolicLink()||!fs.realpathSync(marker).startsWith(boundary))throw Error('Recovery cutover marker must be inside runtime');
+  const source=JSON.parse(fs.readFileSync(marker,'utf8'));
+  source.baseUrl='http://127.0.0.1:9';source.tokenFile=token;
+  fs.writeFileSync(marker,JSON.stringify(source),{mode:0o600});fs.chmodSync(marker,0o600);
+ }
+}
 export function remapLinks(root,runtime,repo){
  for(const e of fs.readdirSync(root,{withFileTypes:true})){
   const p=path.join(root,e.name);

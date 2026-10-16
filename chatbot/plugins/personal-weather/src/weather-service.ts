@@ -5,7 +5,7 @@ import {
   parseQWeatherDaily,
   parseQWeatherHourly,
 } from "./parsers.js";
-import type { QWeatherClient } from "./qweather-client.js";
+import type { WeatherClient } from "./qweather-client.js";
 import type { EffectivePlace, WeatherStore } from "./store.js";
 import type {
   ParseIssue,
@@ -46,12 +46,12 @@ interface WeatherBriefLocationSource {
 
 export class WeatherService {
   readonly #store: WeatherStore;
-  readonly #client: QWeatherClient;
+  readonly #client: WeatherClient;
   readonly #now: () => number;
 
   constructor(
     store: WeatherStore,
-    client: QWeatherClient,
+    client: WeatherClient,
     options: WeatherServiceOptions = {},
   ) {
     this.#store = store;

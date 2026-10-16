@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 
 import { asWeatherError, WeatherError } from "./errors.js";
 import { parseQWeatherGeoLookup } from "./parsers.js";
-import type { QWeatherClient } from "./qweather-client.js";
+import type { WeatherClient } from "./qweather-client.js";
 import type { QwGeoLocation } from "./types.js";
 import type {
   WeatherLocation,
@@ -72,7 +72,7 @@ type CandidateResolution =
 const MAX_LOCATION_TEXT_LENGTH = 80;
 
 export async function resolveWeatherLocation(
-  client: QWeatherClient,
+  client: WeatherClient,
   input: WeatherLocationQuery,
   signal?: AbortSignal,
 ): Promise<WeatherLocationResolution> {
@@ -93,7 +93,7 @@ export async function resolveWeatherLocation(
 
 /** Resolve one trusted GeoAPI candidate for a durable Profile location update. */
 export async function resolveProfileLocation(
-  client: QWeatherClient,
+  client: WeatherClient,
   input: WeatherLocationQuery,
   signal?: AbortSignal,
 ): Promise<ProfileLocationResolution> {
@@ -110,7 +110,7 @@ export async function resolveProfileLocation(
 }
 
 async function resolveLocationCandidate(
-  client: QWeatherClient,
+  client: WeatherClient,
   input: WeatherLocationQuery,
   signal?: AbortSignal,
 ): Promise<CandidateResolution> {

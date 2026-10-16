@@ -494,6 +494,9 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   if (include('personal-reminders')) events.push(...readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to));
   if (include('personal-reminder-list')) events.push(...readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to));
   if (include('trace-events')) events.push(...readTraceFile(path.join(runtimeRoot, 'channel', 'trace-events.jsonl'), from, to));
+  if (include('knowledgemap')) {
+    for (const file of ['trace.jsonl.1', 'trace.jsonl']) events.push(...readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to));
+  }
   attachSessionCorrelation(events, windows);
   attachTurnCorrelation(events);
   attachRuntimeCorrelation(events);

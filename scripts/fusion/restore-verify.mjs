@@ -36,7 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
-import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs} from './lib/recovery-isolation.mjs';
+import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disableKnowledgeMapRecovery} from './lib/recovery-isolation.mjs';
 
 const argv = process.argv.slice(2);
 const arg = (name, fallback = null) => {
@@ -336,6 +336,7 @@ if (skipDeps) {
 // Rewrite every active config tree and link; historical transcripts stay unchanged.
 if(cfg&&restoredRepo){
  cfg=remap(cfg,runtime,restoredRepo);
+ disableKnowledgeMapRecovery(cfg,runtime);
  const registry=remap(JSON.parse(fs.readFileSync(runtime+'/projects.json')),runtime,restoredRepo);
  assertNoProduction(cfg);assertNoProduction(registry);
  fs.writeFileSync(runtime+'/projects.json',JSON.stringify(registry,null,2),{mode:0o600});

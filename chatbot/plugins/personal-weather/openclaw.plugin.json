@@ -58,6 +58,20 @@
       "scheduledOwnerId": {
         "type": "string",
         "pattern": "^[0-9]{5,12}$"
+      },
+      "weatherBackend": {
+        "type": "string",
+        "enum": [
+          "qweather",
+          "knowledgemap"
+        ]
+      },
+      "bridgeBaseUrl": {
+        "type": "string"
+      },
+      "bridgeTokenFile": {
+        "type": "string",
+        "pattern": "^/"
       }
     },
     "additionalProperties": false

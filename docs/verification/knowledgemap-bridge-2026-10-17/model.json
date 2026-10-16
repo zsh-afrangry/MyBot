@@ -1,0 +1,356 @@
+{
+  "at": "2026-10-16T17:34:25.252Z",
+  "boundary": "Real configured model + actual v2 factories and synthetic trusted owner hooks; real isolated FastAPI HTTP/SQLite; no full OpenClaw host/QQ or production writes",
+  "model": "deepseek/deepseek-flash",
+  "cases": [
+    {
+      "label": "capability-read-only",
+      "input": "大肥鱼，你能维护提醒列表、定时提醒并记账吗？我先了解一下。",
+      "calls": [
+        {
+          "tool": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-17T01:34:28",
+            "timezone": "Asia/Shanghai",
+            "dataSource": "knowledgemap",
+            "items": [],
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "tool": "knowledge_bills_get",
+          "args": {
+            "action": "tags"
+          },
+          "result": {
+            "ok": true,
+            "items": [
+              {
+                "id": 1,
+                "name": "餐饮",
+                "type": "category",
+                "parent_id": null
+              },
+              {
+                "id": 2,
+                "name": "午饭",
+                "type": "subcategory",
+                "parent_id": 1
+              }
+            ]
+          }
+        },
+        {
+          "tool": "knowledge_bills_get",
+          "args": {
+            "action": "monthly",
+            "year": 2026,
+            "month": 10
+          },
+          "result": {
+            "ok": true,
+            "year": 2026,
+            "month": 10,
+            "income": "0.00",
+            "expense": "0.00",
+            "net": "0.00"
+          }
+        }
+      ],
+      "reply": "能，三样都能。你现在这套是真实生效的，我先看了一眼现状：\n\n**提醒列表**：目前是空的。每日播报开着，时刻是 00:00 / 08:00 / 12:00 / 18:00（Asia/Shanghai）。不过播报的调度这会儿还在重试同步，没对齐成功——要不要我调整时刻，等你说。\n\n**定时提醒**：列表里的待办是一类；另外单独的一次性提醒也能设，那种我会先给你一份带确认码的提案，你原文确认后我才提交。\n\n**记账**：分类目录现在只有「餐饮 / 午饭」一个大类加小类，其他分类还没建；2026 年 10 月目前收支都是 0。这个账本和网站共享，你直接说「午饭 14 块，微信」这种我就记了，分类或支付方式不确定的我留空、不瞎填。\n\n另外还有一条你别嫌我啰嗦：这个账本第一轮只支持新增，改和删暂时不行。要我顺手加点常用分类吗？",
+      "passed": true
+    },
+    {
+      "label": "bill-direct-save",
+      "input": "帮我记一笔：今天午饭花了14元，支出，其他信息不知道。",
+      "calls": [
+        {
+          "tool": "knowledge_bill_add",
+          "args": {
+            "record_type": "支出",
+            "expense_date": "2026-10-17",
+            "amount": "14.00",
+            "category_id": 1,
+            "subcategory_id": 2,
+            "note": "午饭"
+          },
+          "result": {
+            "ok": true,
+            "action": "create",
+            "item": {
+              "record_type": "支出",
+              "expense_date": "2026-10-17",
+              "expense_time": null,
+              "amount": "14.00",
+              "category_id": 1,
+              "subcategory_id": 2,
+              "payment_platform_id": null,
+              "payment_channel_id": null,
+              "fund_type_id": null,
+              "reimbursement_status": "无需报销",
+              "reimbursement_amount": null,
+              "transaction_id": null,
+              "note": "午饭",
+              "id": 1,
+              "created_at": "2026-10-16T17:34:34",
+              "updated_at": "2026-10-16T17:34:34",
+              "category": {
+                "name": "餐饮",
+                "type": "category",
+                "parent_id": null,
+                "sort_order": 0,
+                "id": 1,
+                "children": [
+                  {
+                    "name": "午饭",
+                    "type": "subcategory",
+                    "parent_id": 1,
+                    "sort_order": 0,
+                    "id": 2,
+                    "children": []
+                  }
+                ]
+              },
+              "subcategory": {
+                "name": "午饭",
+                "type": "subcategory",
+                "parent_id": 1,
+                "sort_order": 0,
+                "id": 2,
+                "children": []
+              },
+              "payment_platform": null,
+              "payment_channel": null,
+              "fund_type": null
+            }
+          }
+        }
+      ],
+      "reply": "记好了：\n\n- **2026-10-17** · 支出 **14.00 元**\n- 分类：餐饮 / 午饭\n- 支付方式：留空（你说不知道，我就没填）\n\n报销那栏系统给的是「无需报销」，如果其实是要报销的，跟我说一声。账本第一轮只支持新增，改删得等后面，所以这笔就先这样放着。",
+      "passed": true
+    },
+    {
+      "label": "condition-noDDL",
+      "input": "提醒列表加一条：跟本科党支部联系查党员材料，无DDL，备注写选举结束后越快越好。",
+      "calls": [
+        {
+          "tool": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-17T01:34:39",
+            "timezone": "Asia/Shanghai",
+            "dataSource": "knowledgemap",
+            "items": [],
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "tool": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "title": "跟本科党支部联系查党员材料",
+            "ddl": null,
+            "note": "选举结束后越快越好",
+            "tone": "todo"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "km:1",
+              "title": "跟本科党支部联系查党员材料",
+              "content": null,
+              "note": "选举结束后越快越好",
+              "ddl": null,
+              "tone": "todo",
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-16T17:34:40",
+              "updatedAt": "2026-10-16T17:34:40"
+            },
+            "dataSource": "knowledgemap"
+          }
+        }
+      ],
+      "reply": "加好了：\n\n- **跟本科党支部联系查党员材料**（待做）\n- 备注：选举结束后越快越好\n- 截止日期：空着——你说无 DDL，我就没给你安日期，免得以后跟着催错\n\n这条编号是 1。要不要一起说下播报时刻要不要动？现在那组调度还在重试对齐，暂时没生效。",
+      "passed": true
+    },
+    {
+      "label": "second-task",
+      "input": "提醒列表再加一条：收晾好的衣服，无DDL。",
+      "calls": [
+        {
+          "tool": "personal_reminder_list_manage",
+          "args": {
+            "action": "add",
+            "ddl": null,
+            "tone": "todo",
+            "title": "收晾好的衣服"
+          },
+          "result": {
+            "ok": true,
+            "action": "add",
+            "item": {
+              "id": "km:2",
+              "title": "收晾好的衣服",
+              "content": null,
+              "note": null,
+              "ddl": null,
+              "tone": "todo",
+              "status": "active",
+              "version": 1,
+              "createdAt": "2026-10-16T17:34:43",
+              "updatedAt": "2026-10-16T17:34:43"
+            },
+            "dataSource": "knowledgemap"
+          }
+        }
+      ],
+      "reply": "第二条也进去了：\n\n- **收晾好的衣服**（待做）· 编号 2 · 无 DDL\n\n现在列表里两条：1 跟本科党支部联系查党员材料、2 收晾好的衣服。还有要加的直接说，我接着记。",
+      "passed": true
+    },
+    {
+      "label": "new-session-semantic-target",
+      "input": "我衣服晾好了，列表里可以去掉。",
+      "calls": [
+        {
+          "tool": "personal_reminder_list_get",
+          "args": {},
+          "result": {
+            "ok": true,
+            "now": "2026-10-17T01:34:45",
+            "timezone": "Asia/Shanghai",
+            "dataSource": "knowledgemap",
+            "items": [
+              {
+                "id": "km:2",
+                "title": "收晾好的衣服",
+                "content": null,
+                "note": null,
+                "ddl": null,
+                "tone": "todo",
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-16T17:34:43",
+                "updatedAt": "2026-10-16T17:34:43"
+              },
+              {
+                "id": "km:1",
+                "title": "跟本科党支部联系查党员材料",
+                "content": null,
+                "note": "选举结束后越快越好",
+                "ddl": null,
+                "tone": "todo",
+                "status": "active",
+                "version": 1,
+                "createdAt": "2026-10-16T17:34:40",
+                "updatedAt": "2026-10-16T17:34:40"
+              }
+            ],
+            "settings": {
+              "ownerId": "365999865",
+              "times": [
+                "00:00",
+                "08:00",
+                "12:00",
+                "18:00"
+              ],
+              "enabled": true,
+              "version": 1,
+              "timezone": "Asia/Shanghai"
+            },
+            "scheduleSync": {
+              "ok": false,
+              "status": "pending"
+            }
+          }
+        },
+        {
+          "tool": "personal_reminder_list_manage",
+          "args": {
+            "action": "void",
+            "id": "km:2",
+            "expectedVersion": 1
+          },
+          "result": {
+            "ok": true,
+            "action": "void",
+            "item": {
+              "id": "km:2",
+              "title": "收晾好的衣服",
+              "content": null,
+              "note": null,
+              "ddl": null,
+              "tone": "todo",
+              "status": "void",
+              "version": 2,
+              "createdAt": "2026-10-16T17:34:43",
+              "updatedAt": "2026-10-16T17:34:46"
+            },
+            "dataSource": "knowledgemap"
+          }
+        }
+      ],
+      "reply": "已经把「收晾好的衣服」从有效列表中去掉了，历史里还留着记录。剩下的有效事项是「跟本科党支部联系查党员材料」（备注：选举结束后越快越好）。\n\n顺便说一句：每日播报的调度目前还在重试同步，暂时不影响这份列表本身。",
+      "passed": true
+    },
+    {
+      "label": "monthly-query",
+      "input": "查一下我2026年10月的账单汇总，支出、收入和结余分别是多少？",
+      "calls": [
+        {
+          "tool": "knowledge_bills_get",
+          "args": {
+            "action": "monthly",
+            "year": 2026,
+            "month": 10
+          },
+          "result": {
+            "ok": true,
+            "year": 2026,
+            "month": 10,
+            "income": "0.00",
+            "expense": "14.00",
+            "net": "-14.00"
+          }
+        }
+      ],
+      "reply": "2026年10月的账单汇总：\n\n- 支出：14.00 元\n- 收入：0.00 元\n- 结余：-14.00 元\n\n目前这个月就一笔 14 元的支出记录，收入还是空的。",
+      "passed": true
+    }
+  ],
+  "ok": true
+}

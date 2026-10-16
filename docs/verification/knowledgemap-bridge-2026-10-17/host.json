@@ -1,0 +1,64 @@
+{
+  "at": "2026-10-16T17:38:44.491Z",
+  "boundary": "Real model and real OpenClaw inbound/v2 tool catalog/native Cron + real isolated API/SQLite; mock OneBot, no real QQ/production writes",
+  "cases": [
+    {
+      "label": "host-bill-save",
+      "passed": true,
+      "captured": [
+        {
+          "text": "记好了：今天（10-17）午饭 14.00 元，归在餐饮-午饭，其他信息没填。"
+        }
+      ]
+    },
+    {
+      "label": "host-noDDL-add",
+      "passed": true,
+      "captured": [
+        {
+          "text": "加好了：「收晾好的衣服」，没有 DDL，列为待做。"
+        }
+      ]
+    },
+    {
+      "label": "host-reset",
+      "passed": true,
+      "captured": [
+        {
+          "text": "✅ New session started."
+        }
+      ]
+    },
+    {
+      "label": "host-semantic-void",
+      "passed": true,
+      "captured": [
+        {
+          "text": "去掉了，「收晾好的衣服」已经从待做列表里移出。"
+        }
+      ]
+    },
+    {
+      "label": "host-monthly",
+      "passed": true,
+      "captured": [
+        {
+          "text": "2026年10月的账单：\n\n- 支出：14.00 元\n- 收入：0.00 元\n- 结余：-14.00 元\n\n这个月目前只有一笔午饭支出，还没有收入记录。"
+        }
+      ]
+    },
+    {
+      "label": "host-schedule",
+      "passed": true,
+      "captured": [
+        {
+          "text": "改好了，每日播报改成 08:15 和 18:15 两次，调度已生效。"
+        }
+      ]
+    }
+  ],
+  "productionUnchanged": true,
+  "passed": true,
+  "childStopped": true,
+  "mockSends": 0
+}

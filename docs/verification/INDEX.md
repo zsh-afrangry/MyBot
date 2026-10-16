@@ -19,6 +19,7 @@
 | `deepseek-whale/*` | DeepSeek、角色卡和图片链路验收 |
 | [`reminder-list-2026-10-11/README.md`](reminder-list-2026-10-11/README.md) 及同目录全部文件 | 提醒列表初版证据及 `natural-input/` 自然多轮录入、空 DDL、实际会话重置、原功能回归与部署复验；原生本人 QQ 投递仍单独引用初版记录 |
 | [`backend-refactor-2026-10-16/README.md`](backend-refactor-2026-10-16/README.md) 及同目录全部文件 | 初轮职责分层；`structured-items/` 保存指代修复，`adapters/` 保存初次策略/存储替换、373 项回归与模型/隔离宿主证据；[`adapter-contracts/`](backend-refactor-2026-10-16/adapter-contracts/README.md) 保存同步返回/注销身份补正、最新 395 项回归、构建与运行自检 |
+| [knowledgemap-bridge-2026-10-17/README.md](knowledgemap-bridge-2026-10-17/README.md) 及目录全部文件 | 文档23天气/待做/账单桥接；隔离API、MySQL恢复、网页、模型/宿主与切换证据 |
 
 ## 历史领域验收
 

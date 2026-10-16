@@ -1,0 +1,19 @@
+{
+  "date": "2026-10-17",
+  "boundary": "Isolated tests, builds and disposable recovery; no production business writes or QQ",
+  "results": [
+    {"command": "python backend/tests/assistant_cases.py", "repository": "KnowledgeMap", "passed": 30},
+    {"command": "python backend/tests/calendar_crud_cases.py", "repository": "KnowledgeMap", "passed": 114},
+    {"command": "python backend/tests/dashboard_overview_cases.py", "repository": "KnowledgeMap", "passed": 55},
+    {"command": "python backend/tests/portal_crud_cases.py", "repository": "KnowledgeMap", "passed": 13},
+    {"command": "python backend/tests/weather_cases.py", "repository": "KnowledgeMap", "passed": 24},
+    {"command": "node backend/tests/assistant_browser.cjs", "repository": "KnowledgeMap", "passed": 6},
+    {"command": "python backend/tests/assistant_mysql_cases.py --backup-dir <tonight-baseline> --env-file <private-backend-env>", "repository": "KnowledgeMap", "passed": 4, "restoredCounts": {"bills": 0, "calendar_events": 5, "tags": 37}, "temporaryDatabaseRemoved": true},
+    {"command": "node --test chatbot/tests/knowledgemap/bridge.test.mjs scripts/fusion/test/recovery.test.mjs", "repository": "Fusion", "passed": 33},
+    {"command": "node --test chatbot/tests/knowledgemap/http.test.mjs", "repository": "Fusion", "passed": 1},
+    {"command": "node --test chatbot/tests/reminder-list/*.test.mjs scripts/fusion/test/log-query.test.mjs", "repository": "Fusion", "passed": 54},
+    {"command": "node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <tonight-baseline>", "repository": "Fusion", "restoredTrackedAndUntrackedFiles": {"fusion": 548, "knowledgemap": 204}, "sqliteQuickCheckAndHash": 6},
+    {"command": "npm run build", "repository": "KnowledgeMap/frontend", "ok": true},
+    {"command": "npm run build", "repository": "Fusion/chatbot/plugins/personal-weather", "ok": true}
+  ]
+}

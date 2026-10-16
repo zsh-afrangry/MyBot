@@ -3,6 +3,7 @@ import {ownerAuthorized} from '../kurumi-qq/src/config.js';
 import {createListIntake} from './intake.js';
 import {createScheduler} from './scheduler.js';
 import {readFileSync} from 'node:fs';
+import {registerRemoteList} from './remote.js';
 import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
 const json = result => ({content: [{type: 'text', text: JSON.stringify(result)}]});
 const optionalText = max => ({type: ['string', 'null'], maxLength: max});
@@ -12,22 +13,24 @@ export const getParameters = {type: 'object', additionalProperties: false, prope
 }};
 export const manageParameters = {type: 'object', additionalProperties: false, required: ['action'], properties: {
   action: {type: 'string', enum: ['add', 'update', 'complete', 'void', 'reopen', 'schedule', 'pause', 'resume']},
-  id: {type: 'string', pattern: '^[a-f0-9]{12}$'}, query: {type: 'string', minLength: 2, maxLength: 200},
+  id: {type: 'string', pattern: '^(?:[a-f0-9]{12}|km:[1-9]\\d*)$'}, query: {type: 'string', minLength: 2, maxLength: 200},
   expectedVersion: {type: 'integer', minimum: 1, description: '维护已有项必需，取自 get 返回的 version'},
   title: {type: 'string', minLength: 1, maxLength: 120, description: '添加必需；取自本人原文'},
   content: {...optionalText(800), description: '可空；从本次原文连续摘录地点、作业格式、交付方式等资料，可保留原句，不自行改写或拼接不连续事实'},
   note: {...optionalText(400), description: '可空；连续摘录原文中的越快越好、选举后/活动结束后等条件，不编造具体日期'},
   ddl: {type: ['string', 'null'], description: '可空；无DDL/越快越好/活动结束后未给截止日期时必须null，条件保存在内容或备注。Asia/Shanghai YYYY-MM-DD（当日结束）或 YYYY-MM-DDTHH:mm；缺失日期先澄清'},
   times: {type: 'array', minItems: 1, maxItems: 24, items: {type: 'string'}, description: 'schedule 完整替换每日 HH:mm 集合；24:00等同00:00；次数等于时刻数'},
+  tone: {type: 'string', enum: ['todo', 'meeting'], description: '网站共享模式的类型：待做todo、安排meeting；默认todo'},
 }};
 const toolDeclarations = [
   {name: 'personal_reminder_list_get', label: '查看提醒列表', parameters: getParameters,
-    description: '查询本人持久提醒列表、历史及每日播报设置；包含后端当前时间。DDL过期自动退出有效列表。完成、作废、修改先查真实ID/version。'},
+    description: '查询本人持久提醒列表、历史及每日播报设置；包含后端当前时间。网站共享模式下逾期仍待做，只有完成/作废退出有效列表；无DDL保留为空。完成、作废、修改先查真实ID/version；序号根据此前实际展示确定。'},
   {name: 'personal_reminder_list_manage', label: '维护提醒列表', parameters: manageParameters,
     description: '本人明确提醒列表维护可直接保存，无需带码确认，一条消息一项。结合对话理解当前真实维护请求；查询能力、引用、假设、否定不执行维护。update/complete/void/reopen不要求当前原文重复列表名、完整标题或特定动词；删了/删掉等删除意图转void，保留历史。第几条依据此前向用户展示的列表确定真实id，再get核对该id与version；不能按最新列表顺序改选目标，没有明确的列表或多候选先澄清，不要求用户改用工具关键词。已开启的短时连续录入只授权add。标题/内容/备注取本次原文，越快越好和活动结束后等条件须保留；无DDL必须null。失败须澄清，不能转一次性提案或批量确认。schedule完整替换每日时刻；pause/resume暂停恢复播报。现有一次性提醒仍走personal_reminder提案确认，不混用。'},
 ];
 export function createReminderListPlugin({registry} = {}) {
   const plugin = {id: 'personal-reminder-list', name: 'Personal reminder list', register(api) {
+    if (api.pluginConfig?.dataSource === 'knowledgemap') return registerRemoteList(api, toolDeclarations);
     const application = createListApplication({registry, policyAdapter: api.pluginConfig?.policyAdapter, storeAdapter: api.pluginConfig?.storeAdapter});
     const ownerId = api.config.channels?.['kurumi-qq']?.ownerId;
     const options = {root: stateRoot(), ownerId, repo: api.pluginConfig?.backendRoot, defaultTimes: api.pluginConfig?.defaultTimes, port: api.config.gateway?.port ?? 18890, logger: api.logger,

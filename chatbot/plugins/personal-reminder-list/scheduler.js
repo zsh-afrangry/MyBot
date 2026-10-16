@@ -4,7 +4,7 @@ import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import {createListApplication} from './application.js';
 
 export const DECLARATION_PREFIX = 'kurumi.reminder-list.daily:';
-export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite'}) {
+export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite', dataSource = 'sqlite', bridgeBaseUrl, bridgeTokenFile}) {
   // OpenClaw can import this module from a disposable plugin capture. Never
   // derive a persisted Cron executable from import.meta.url: deployment config
   // owns the backend root and the executable suffix is fixed by this domain.
@@ -16,7 +16,8 @@ export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite'}) {
     sessionTarget: 'isolated', wakeMode: 'now',
     payload: {kind: 'command', argv: [process.execPath, resolve(repo, 'scripts/reminder-list.mjs'), 'run', '--slot', time],
       cwd: repo, env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: ownerId,
-        ...(storeAdapter !== 'sqlite' ? {KURUMI_LIST_STORE_ADAPTER: storeAdapter} : {})},
+        ...(storeAdapter !== 'sqlite' ? {KURUMI_LIST_STORE_ADAPTER: storeAdapter} : {}),
+        ...(dataSource === 'knowledgemap' ? {KURUMI_LIST_DATA_SOURCE: dataSource, KURUMI_KM_BASE_URL: bridgeBaseUrl, KURUMI_KM_TOKEN_FILE: bridgeTokenFile} : {})},
       timeoutSeconds: 20, noOutputTimeoutSeconds: 10, outputMaxBytes: 524288},
     delivery: {mode: 'announce', channel: 'kurumi-qq', to: `user:${ownerId}`, accountId: 'default'},
     deleteAfterRun: false,
@@ -31,6 +32,9 @@ function isOwned(job, options) {
     && job.payload.cwd === expected.payload.cwd
     && job.payload.env?.OPENCLAW_STATE_DIR === options.root && job.payload.env?.KURUMI_LIST_OWNER_ID === options.ownerId
     && (job.payload.env?.KURUMI_LIST_STORE_ADAPTER ?? 'sqlite') === (options.storeAdapter ?? 'sqlite')
+    && ([options.dataSource ?? 'sqlite', ...(options.dataSource === 'knowledgemap' ? ['sqlite'] : [])].includes(job.payload.env?.KURUMI_LIST_DATA_SOURCE ?? 'sqlite'))
+    && (job.payload.env?.KURUMI_LIST_DATA_SOURCE !== 'knowledgemap' ||
+      (job.payload.env.KURUMI_KM_BASE_URL === options.bridgeBaseUrl && job.payload.env.KURUMI_KM_TOKEN_FILE === options.bridgeTokenFile))
     && job.delivery?.channel === 'kurumi-qq' && job.delivery?.to === `user:${options.ownerId}`
     && job.delivery?.accountId === 'default';
 }

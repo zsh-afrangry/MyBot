@@ -9,7 +9,8 @@
 //   git/     bundles of every branch and tag (source history, including uncommitted-free refs)
 //   patches/ uncommitted tracked changes, so the backup is not silently lossy
 //   config/  runtime config + credential plane + systemd units (mode 600)
-//   state/   consistent snapshots of every runtime database + channel/agent JSON state
+//   state/   consistent snapshots of every Fusion SQLite database + channel/agent JSON state
+// External KnowledgeMap MySQL must also be backed up; this is not a combined recovery point.
 //   meta/    git state, service state, versions, sizes
 //   MANIFEST.sha256 over everything
 //
@@ -100,6 +101,13 @@ for (const [name, dir] of [['legacy-openclaw', `${ARCHIVE}/legacy-openclaw`], ['
 
 // ---------------------------------------------------------------- config plane
 const CFG = path.join(dest, 'config');
+const runtimeConfig=JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`));
+const sharedBusiness=runtimeConfig.plugins?.entries?.['personal-reminder-list']?.config;
+const externalBusiness=sharedBusiness?.dataSource==='knowledgemap'?{
+ name:'KnowledgeMap',baseUrl:sharedBusiness.bridgeBaseUrl,databaseCaptured:false,
+ tokenCaptured:fs.existsSync(sharedBusiness.bridgeTokenFile),
+ recovery:'Also save KnowledgeMap MySQL and backend/.env; see docs/23 and KnowledgeMap docs/18.'
+}:null;
 const copies = [
   [`${STATE_DIR}/openclaw.json`, 'openclaw.json'],
   [`${STATE_DIR}/runtime-env.json`, 'runtime-env.json'],
@@ -109,8 +117,11 @@ const copies = [
   [`${STATE_DIR}/projects.json`, 'projects.json'],
   [`${STATE_DIR}/plugins/package.json`, 'plugins.package.json'],
   [`${STATE_DIR}/plugins/package-lock.json`, 'plugins.package-lock.json'],
-  [`${REPO_ROOT}/config/runtime.config.json`, 'repo-runtime.config.json']
+  [`${REPO_ROOT}/config/runtime.config.json`, 'repo-runtime.config.json'],
+  ...(externalBusiness?[[sharedBusiness.bridgeTokenFile,'knowledgemap-assistant-token']]:[])
 ];
+if(externalBusiness&&!externalBusiness.tokenCaptured)fail('KnowledgeMap credential','configured token file missing');
+fs.writeFileSync(path.join(dest,'meta/external-business.json'),JSON.stringify(externalBusiness),{mode:0o600});
 for (const [src, name] of copies) {
   if (fs.existsSync(src)) {
     fs.copyFileSync(src, path.join(CFG, name));
@@ -300,6 +311,7 @@ const expected = {
   // needs. The service lease retains this fact after normal restart.
   quiesced: QUIESCE && lease.quiesced,
   workingTreeFormat: "git-binary-patch",
+  externalBusiness,
   quiescedRequested: QUIESCE,
   // Non-git working-tree state that `git diff HEAD` alone would have dropped.
   untrackedCaptured,
@@ -322,6 +334,7 @@ if (failures.length) {
 console.log(
   `backup ok: every required item present (cross-database consistency: ${QUIESCE ? 'quiesced' : 'concurrent — snapshots are per-database consistent only'})`
 );
+if(externalBusiness)console.log('Fusion material only: KnowledgeMap MySQL is NOT in this backup; save it separately before business recovery.');
 fs.unlinkSync(incomplete);
 } finally {
  lease.restore();

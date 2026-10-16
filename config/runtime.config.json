@@ -59,7 +59,9 @@
             "email_status",
             "email_draft",
             "email_send",
-            "email_outbox"
+            "email_outbox",
+            "knowledge_bills_get",
+            "knowledge_bill_add"
           ],
           "deny": [
             "read",
@@ -201,7 +203,8 @@
       "personal-reminder-list",
       "kurumi-memory",
       "kurumi-research",
-      "kurumi-mail"
+      "kurumi-mail",
+      "kurumi-knowledgemap"
     ],
     "load": {
       "paths": [
@@ -213,7 +216,8 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research",
-        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-mail"
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-mail",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-knowledgemap"
       ]
     },
     "entries": {
@@ -240,7 +244,10 @@
           },
           "reminderBackend": "native-service",
           "reminderRunnerRoot": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
-          "scheduledOwnerId": "365999865"
+          "scheduledOwnerId": "365999865",
+          "weatherBackend": "knowledgemap",
+          "bridgeBaseUrl": "http://127.0.0.1:3086",
+          "bridgeTokenFile": "/home/afrangry/.config/knowledgemap/assistant-token"
         }
       },
       "kurumi-memory": {
@@ -255,7 +262,10 @@
             "08:00",
             "12:00",
             "18:00"
-          ]
+          ],
+          "dataSource": "knowledgemap",
+          "bridgeBaseUrl": "http://127.0.0.1:3086",
+          "bridgeTokenFile": "/home/afrangry/.config/knowledgemap/assistant-token"
         }
       },
       "kurumi-research": {
@@ -267,6 +277,13 @@
           "allowedRecipients": [
             "365999865@qq.com"
           ]
+        }
+      },
+      "kurumi-knowledgemap": {
+        "enabled": true,
+        "config": {
+          "baseUrl": "http://127.0.0.1:3086",
+          "tokenFile": "/home/afrangry/.config/knowledgemap/assistant-token"
         }
       }
     },

@@ -1,0 +1,8 @@
+{
+  "id":"kurumi-knowledgemap","name":"KnowledgeMap bills","version":"0.1.0",
+  "description":"Owner-only bills sharing KnowledgeMap business data; no update/delete in round one",
+  "activation":{"onStartup":true},
+  "configSchema":{"type":"object","additionalProperties":false,"required":["tokenFile"],"properties":{"baseUrl":{"type":"string"},"tokenFile":{"type":"string","pattern":"^/"}}},
+  "contracts":{"tools":["knowledge_bills_get","knowledge_bill_add"]},
+  "toolMetadata":{"knowledge_bills_get":{"optional":true},"knowledge_bill_add":{"optional":true}}
+}

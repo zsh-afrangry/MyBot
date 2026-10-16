@@ -18,6 +18,8 @@ export interface GeoLookupInput {
   adm?: string;
 }
 
+export type WeatherClient = Pick<QWeatherClient, "getCurrent" | "getDaily" | "getHourly" | "getAlerts" | "lookupPlace">;
+
 type GuardedFetch = typeof fetchWithSsrFGuard;
 type Sleep = (milliseconds: number, signal?: AbortSignal) => Promise<void>;
 

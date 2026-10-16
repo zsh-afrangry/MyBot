@@ -6,11 +6,13 @@ import {randomBytes} from 'node:crypto';
 import {TIMEZONE, DEFAULT_TIMES, localTime, normalizeTimes, dueSlot} from './time.js';
 import {normalize, item} from './model.js';
 import {formatDigest} from './formatter.js';
+import {readListSource} from './data-source.js';
 
 export class ListStore {
   constructor({root, ownerId, defaultTimes = DEFAULT_TIMES, now = Date.now}) {
     if (!/^\d{5,12}$/.test(ownerId)) throw Error('Invalid owner');
     this.now = now;
+    this.root = root;
     const dir = join(root, 'state', 'personal-reminder-list');
     mkdirSync(dir, {recursive: true, mode: 0o700});
     this.file = join(dir, 'list.sqlite');
@@ -30,6 +32,9 @@ export class ListStore {
     } catch (error) {this.db.close(); throw error;}
   }
   close() { this.db.close(); }
+  assertLocalItems() {
+    if (readListSource(this.root)) throw Error('事项已迁移到KnowledgeMap，禁止使用旧库；回退前必须核对共享数据增量');
+  }
   transaction(work) {
     this.db.exec('BEGIN IMMEDIATE');
     try { const result = work(); this.db.exec('COMMIT'); return result; }
@@ -44,6 +49,7 @@ export class ListStore {
       .run(this.now(), action, itemId ?? null, context.messageId ?? null, context.sessionKey ?? null, context.runId ?? null, JSON.stringify(details));
   }
   expire() {
+    this.assertLocalItems();
     return this.transaction(() => {
       const rows = this.db.prepare("SELECT * FROM items WHERE status='active' AND deadline_ms<=?").all(this.now());
       for (const row of rows) {
@@ -60,6 +66,7 @@ export class ListStore {
     return {ok: true, now: localTime(this.now()), timezone: TIMEZONE, settings: this.settings(), items: rows.filter(r => !query || normalize(r.title).includes(normalize(query)) || r.id === query).map(item)};
   }
   select(args) {
+    this.assertLocalItems();
     const all = this.db.prepare('SELECT * FROM items').all();
     if (!args.id && (!args.query || typeof args.query !== 'string' || args.query.trim().length < 2)) throw Error('请提供事项 ID 或至少两个字的标题');
     const matches = args.id ? all.filter(r => r.id === args.id) : all.filter(r => normalize(r.title).includes(normalize(args.query)));
@@ -85,6 +92,7 @@ export class ListStore {
     return result;
   }
   addItem(fields, context) {
+    this.assertLocalItems();
     const {title, content, note, ddl, deadlineMs} = fields;
     const count = this.db.prepare("SELECT COUNT(*) n FROM items WHERE status='active'").get().n;
     if (count >= 100) throw Error('有效事项上限为 100，请先完成或作废已有事项');
@@ -96,6 +104,7 @@ export class ListStore {
     return result;
   }
   changeItem(args, row, fields, context) {
+    this.assertLocalItems();
     const {title, content, note, ddl, deadlineMs, status} = fields;
     if (args.action === 'reopen' && this.db.prepare("SELECT COUNT(*) n FROM items WHERE status='active'").get().n >= 100 && row.status !== 'active') throw Error('有效事项上限为 100');
     if (['update', 'reopen'].includes(args.action) && status === 'active' && this.db.prepare("SELECT id FROM items WHERE status='active' AND title=? AND id<>?").get(title, row.id)) throw Error('已有相同标题的有效事项');

@@ -10,7 +10,7 @@ import type {
   UnixSeconds,
   WeatherStore,
 } from "./store.js";
-import type { QWeatherClient } from "./qweather-client.js";
+import type { WeatherClient } from "./qweather-client.js";
 import { resolveProfileLocation } from "./weather-location.js";
 import type {
   ProfileLocationRecord,
@@ -202,7 +202,7 @@ export function getProfileState(store: WeatherStore): ProfileState {
 
 export async function proposeProfileChange(
   store: WeatherStore,
-  client: QWeatherClient,
+  client: WeatherClient,
   rawInput: unknown,
   signal?: AbortSignal,
   scope?: ConfirmationScope,

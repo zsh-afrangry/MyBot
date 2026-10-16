@@ -18,6 +18,7 @@ import { buildReminderCronAddParams, buildReminderCronUpdateParams } from "./rem
 import { reconcileReminderState } from "./reminder-reconciler.js";
 import { createReminderReconcilerService } from "./reminder-reconciler-service.js";
 import { QWeatherClient } from "./qweather-client.js";
+import { KnowledgeMapWeatherClient } from "./knowledgemap-client.js";
 import {
   commitPlanningProposal,
   getPlanningState,
@@ -60,6 +61,9 @@ const configSchema = Type.Object(
     reminderBackend: Type.Optional(Type.Literal("native-service")),
     reminderRunnerRoot: Type.Optional(Type.String()),
     scheduledOwnerId: Type.Optional(Type.String()),
+    weatherBackend: Type.Optional(Type.Union([Type.Literal("qweather"), Type.Literal("knowledgemap")])),
+    bridgeBaseUrl: Type.Optional(Type.String()),
+    bridgeTokenFile: Type.Optional(Type.String()),
     apiHost: Type.String({
       description: "QWeather dedicated API hostname without scheme or path.",
     }),
@@ -267,9 +271,10 @@ const personalWeatherPlugin = defineToolPlugin({
                 message: "administrative_area 只能与 location 一起使用。",
               });
             }
-            const resolvedConfig = resolvePersonalWeatherConfig(config);
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-            const client = new QWeatherClient(resolvedConfig);
+            const client = config.weatherBackend === "knowledgemap"
+              ? new KnowledgeMapWeatherClient({baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile})
+              : new QWeatherClient(resolvePersonalWeatherConfig(config));
             const service = new WeatherService(store, client);
             let brief;
             if (params.location === undefined) {
@@ -356,11 +361,12 @@ const personalWeatherPlugin = defineToolPlugin({
           if (!isTrustedOwnerPrivateQq(toolContext)) return forbiddenResult();
           let store: WeatherStore | undefined;
           try {
-            const resolvedConfig = resolvePersonalWeatherConfig(config);
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
             return jsonResult(await proposeProfileChange(
               store,
-              new QWeatherClient(resolvedConfig),
+              config.weatherBackend === "knowledgemap"
+                ? new KnowledgeMapWeatherClient({baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile})
+                : new QWeatherClient(resolvePersonalWeatherConfig(config)),
               params,
               signal,
               scopeFromToolContext(toolContext),
