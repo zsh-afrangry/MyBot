@@ -28,7 +28,7 @@
 
 | 范围 | 当前事实 |
 | --- | --- |
-| Fusion 主仓库 | `/home/afrangry/kurumi-fusion`，`main` 当前提交以 `git rev-parse HEAD` 为准，`origin/main`=`d717965f`，本地领先 13 个提交，工作区干净 |
+| Fusion 主仓库 | `/home/afrangry/kurumi-fusion`，`main` 当前提交以 `git rev-parse HEAD` 为准；本次复核观察到 `origin/main`=`d717965f`，领先数量以 `git rev-list --count origin/main..HEAD` 实时查询，工作区干净 |
 | KnowledgeMap 主仓库 | `/home/afrangry/repository`，`master`=`27f4519`，`origin/master`=`2889e62`，本地领先 3 个提交；工作区保留 6 个并行账单视觉开发文件，未暂存、未提交、未清理 |
 | Fusion 后台副本 | `/home/afrangry/.openclaw-fusion/projects/fusion`，分支 `kurumi/main-sync-2026-10-10`，HEAD=`a4e7487`，干净、无 remote；最后内容同步基线为 `2c234af`/`0ada63a`，尚未追平 Fusion 当前主仓库 |
 | 运行服务 | `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 均 active/enabled；`openclaw-gateway.service` 与 `qq-bridge.service` inactive/masked；用户级 `dsh-web.service` 当前不存在，本复核未改动系统级单元 |

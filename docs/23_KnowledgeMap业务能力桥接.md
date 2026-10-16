@@ -240,7 +240,7 @@ flowchart LR
 
 本轮文档收尾重新读取两个仓库、后台副本、服务状态和 Fusion 自检结果，未把历史提交或并行开发改动误写为本轮产物：
 
-- Fusion `/home/afrangry/kurumi-fusion` 的 `main` 当前提交以 `git rev-parse HEAD` 为准，`origin/main` 为 `d717965f`，本地领先 13 个提交，工作区干净。
+- Fusion `/home/afrangry/kurumi-fusion` 的 `main` 当前提交以 `git rev-parse HEAD` 为准；本次复核观察到 `origin/main` 为 `d717965f`，领先数量以 `git rev-list --count origin/main..HEAD` 实时查询，工作区干净。
 - KnowledgeMap `/home/afrangry/repository` 的 `master` 为 `27f4519`，`origin/master` 为 `2889e62`，本地领先 3 个提交；账单视觉开发的 6 个文件仍保持原有未提交状态，本轮没有暂存、提交、覆盖或清理它们。
 - `/home/afrangry/.openclaw-fusion/projects/fusion` 当前为 `a4e7487`，分支 `kurumi/main-sync-2026-10-10`，工作区干净、无 remote；其最后内容同步仍是主仓库 `2c234af` 经 `0ada63a` 合入，尚未追平 Fusion 当前主仓库。下一次后台代码任务开始前必须重新审阅并同步。
 - `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 当前 active/enabled；旧 `openclaw-gateway.service` 和 `qq-bridge.service` inactive/masked。用户级 `dsh-web.service` 当前不存在；本轮没有改动系统级 DSH 单元。
