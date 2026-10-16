@@ -1,0 +1,78 @@
+{
+  "status": "passed",
+  "date": "2026-10-16",
+  "baselineCommit": "1fc0ca3",
+  "at": "2026-10-16T01:22:38.426488+00:00",
+  "baselineReproduction": {
+    "pass": 4,
+    "fail": 2,
+    "exit": 1,
+    "uncovered": [
+      "ordinary store method returning Promise",
+      "stale unregister after re-registering identical store factory"
+    ]
+  },
+  "tests": {
+    "node": 201,
+    "confirmationCore": 17,
+    "confirmationInbound": 15,
+    "weather": 162,
+    "total": 395,
+    "adaptersIncludedInNode": 31,
+    "countsIncludeSubtests": true
+  },
+  "builds": [
+    "confirmation-core",
+    "personal-confirmation",
+    "personal-weather"
+  ],
+  "typeDeclarations": "strict tsc --noEmit passed for registry and both domain contracts",
+  "selfchecks": {
+    "dependencies": "passed",
+    "configuration": "passed",
+    "persona": "passed",
+    "health": "passed"
+  },
+  "runtime": {
+    "ExecMainStartTimestamp": "Fri 2026-10-16 09:19:46 CST",
+    "ActiveState": "active",
+    "SubState": "running"
+  },
+  "scope": {
+    "modelRerun": false,
+    "isolatedHostRerun": false,
+    "testQQSend": false,
+    "testMailSend": false,
+    "productionStoreMigration": false,
+    "remotePush": false,
+    "snapshotOrWorkerSync": false,
+    "unrelatedMailDocumentPreserved": true
+  },
+  "limits": [
+    "Return guards cannot cancel asynchronous effects already started by invalid adapters",
+    "Adapters remain responsible for internal synchronous execution and transaction atomicity",
+    "The returned store is a contract facade, not the original object or a descriptor-preserving clone"
+  ],
+  "documentation": {
+    "markdownFiles": 5,
+    "localLinks": 61,
+    "broken": [],
+    "scope": [
+      "chatbot/packages/domain-adapters/README.md",
+      "docs/21_后端职责分层与代码整理.md",
+      "docs/16_验收与测试总表.md",
+      "docs/verification/INDEX.md",
+      "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md"
+    ]
+  },
+  "evidenceCoverage": {
+    "files": 180,
+    "unclassified": 0
+  },
+  "scriptIndex": {
+    "scripts": 138,
+    "boundaries": 34,
+    "consistent": true
+  },
+  "diffCheck": "passed"
+}

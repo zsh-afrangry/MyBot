@@ -1,0 +1,12 @@
+{
+  "markdownFiles": 5,
+  "localLinks": 61,
+  "broken": [],
+  "scope": [
+    "chatbot/packages/domain-adapters/README.md",
+    "docs/21_后端职责分层与代码整理.md",
+    "docs/16_验收与测试总表.md",
+    "docs/verification/INDEX.md",
+    "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md"
+  ]
+}

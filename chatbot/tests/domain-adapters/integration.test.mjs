@@ -8,6 +8,7 @@ import {fileURLToPath} from 'node:url';
 import {createListRegistry} from '../../plugins/personal-reminder-list/adapters.js';
 import {createListApplication} from '../../plugins/personal-reminder-list/application.js';
 import {defaultListPolicy} from '../../plugins/personal-reminder-list/policy.js';
+import {ListStore} from '../../plugins/personal-reminder-list/store.js';
 import {createReminderListPlugin} from '../../plugins/personal-reminder-list/index.js';
 import {createScheduler, buildJob} from '../../plugins/personal-reminder-list/scheduler.js';
 import {main as runDigest} from '../../scripts/reminder-list.mjs';
@@ -157,4 +158,40 @@ test('memory tool uses independent policy and store; untrusted inbound cannot be
   assert.equal(data.revision, 1); assert.equal(opens, closes); assert.equal(existsSync(join(root, 'MEMORY.md')), false);
   const app = createMemoryApplication({registry, policyAdapter: 'structured', storeAdapter: 'alternate'});
   assert.throws(() => app.changeMemory(root, {action: 'upsert', text: '过期事实'}, {...request(), at: 0}), /当前记忆请求/);
+});
+
+test('a Promise-returning list mutation or replay write rolls back data, audit and ledger', async t => {
+  for (const method of ['addItem', 'recordRequest']) {
+    await t.test(method, t => {
+      const root = temp(t), registry = createListRegistry();
+      registry.registerStore('invalid', options => {
+        const raw = new ListStore(options), original = raw[method];
+        // Deliberately write synchronously before returning an invalid Promise.
+        raw[method] = function (...args) {return Promise.resolve(original.apply(this, args));};
+        return raw;
+      });
+      const app = createListApplication({registry, storeAdapter: 'invalid'}), store = app.openStore({root, ownerId: owner});
+      try {
+        const permit = {...request('提醒列表添加回滚检查'), actions: new Set(['add'])};
+        assert.throws(() => app.manageList(store, {action: 'add', title: '回滚检查'}, permit),
+          new RegExp(`Async reminder-list store\\.${method}`));
+        for (const table of ['items', 'audit', 'requests']) {
+          assert.equal(store.db.prepare(`SELECT COUNT(*) n FROM ${table}`).get().n, 0, `${table} rolled back`);
+        }
+      } finally {store.close();}
+    });
+  }
+});
+
+test('an asynchronous memory write is not reported or cached as completed and still closes', t => {
+  const root = temp(t), registry = createMemoryRegistry(); let closed = 0;
+  registry.registerStore('invalid', () => ({
+    read: () => ({version: 1, revision: 0, entries: []}),
+    write: () => Promise.resolve({version: 1, revision: 1, entries: []}),
+    close() {closed++;},
+  }));
+  const app = createMemoryApplication({registry, storeAdapter: 'invalid'}), permit = {...request('记住这是回归事实'), verb: '记住'};
+  assert.throws(() => app.changeMemory(root, {action: 'upsert', text: '这是回归事实'}, permit), /Async memory store\.write/);
+  assert.equal(permit.used, undefined); assert.equal(permit.result, undefined); assert.equal(closed, 1);
+  assert.equal(existsSync(join(root, 'MEMORY.md')), false);
 });

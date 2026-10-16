@@ -1,0 +1,14 @@
+
+> openclaw-plugin-personal-confirmation@0.1.0 test
+> vitest run --config ./vitest.config.ts
+
+
+ RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation
+
+ ✓ src/inbound.test.ts (14 tests) 25ms
+ ✓ src/index.test.ts (1 test) 9ms
+
+ Test Files  2 passed (2)
+      Tests  15 passed (15)
+   Start at  09:19:13
+   Duration  1.24s (transform 326ms, setup 0ms, collect 500ms, tests 34ms, environment 2ms, prepare 602ms)

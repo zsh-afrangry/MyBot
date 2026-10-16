@@ -1,0 +1,24 @@
+$ npm --prefix chatbot/packages/confirmation-core run build
+
+> @kurumi/confirmation-core@0.1.0 build
+> tsc -p tsconfig.json
+
+
+exit=0
+$ npm --prefix chatbot/plugins/personal-confirmation run build
+
+> openclaw-plugin-personal-confirmation@0.1.0 build
+> tsc -p tsconfig.json
+
+
+exit=0
+$ npm --prefix chatbot/plugins/personal-weather run build
+
+> openclaw-plugin-personal-weather@0.1.0 build
+> tsc -p tsconfig.json
+
+
+exit=0
+$ chatbot/packages/confirmation-core/node_modules/.bin/tsc --noEmit --strict --skipLibCheck --lib ES2023 --moduleResolution nodenext --module nodenext chatbot/packages/domain-adapters/index.d.ts chatbot/plugins/personal-reminder-list/contracts.d.ts chatbot/plugins/kurumi-memory/contracts.d.ts
+
+exit=0

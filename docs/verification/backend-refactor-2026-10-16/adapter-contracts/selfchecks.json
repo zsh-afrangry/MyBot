@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "exit": 0,
+    "output": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n"
+  },
+  "configuration": {
+    "exit": 0,
+    "output": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n"
+  },
+  "persona": {
+    "exit": 0,
+    "output": "persona in sync with roles/小鲸鱼.md (4 workspace file(s) match)\n"
+  }
+}
