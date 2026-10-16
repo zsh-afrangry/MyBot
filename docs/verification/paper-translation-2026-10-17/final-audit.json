@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-17T03:03:10+08:00",
+  "scope": "文档22论文PDF翻译与文件投递的最终本地复核；不改变生产数据，不发送新的邮件或QQ消息。",
+  "repository": {
+    "head": "362c388e95450f9ee7080ab22cef5fb9cb8af83c",
+    "parent": "4f26366200c9603c4b8fa3b02eab4f4ec1b46098",
+    "featureCommitOnly": true,
+    "knowledgeMapPathsInCommit": 0,
+    "paperPathsInUnstagedChanges": 0,
+    "parallelKnowledgeMapChangesPreserved": true
+  },
+  "offlineTests": {
+    "paperNode": "20/20",
+    "responses": "11/11",
+    "installedEngine": "4/4",
+    "mailQqLog": "112/112",
+    "evidenceCoverage": "229/229",
+    "evidenceIndex": "161 scripts; 40 boundary declarations; 0 contradictions; 0 unregistered"
+  },
+  "runtime": {
+    "health": "passed",
+    "dependencyVerification": "passed",
+    "configSync": "passed",
+    "personaSync": "passed",
+    "activePaperEngineProcesses": 0,
+    "input": {
+      "path": "/home/afrangry/桌面/2609.32536v1.pdf",
+      "bytes": 646721,
+      "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db"
+    }
+  },
+  "realAcceptance": {
+    "firstPageTranslation": "succeeded",
+    "qqDelivery": "owner_confirmed",
+    "mailMimeAndAttachmentHash": "passed",
+    "mailSmtp": "accepted",
+    "mailOwnerInbox": "pending",
+    "fullDocument": "blocked_after_two_upstream_stream_failures"
+  },
+  "boundary": "本记录证明实现、离线回归、运行对齐、第一页真实翻译、QQ收件和修复后邮件的SMTP/MIME结构；不把SMTP接受扩大为邮箱到信，也不把第一页扩大为完整16页译稿。"
+}
