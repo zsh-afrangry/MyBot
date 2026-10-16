@@ -22,6 +22,20 @@
 
 旧B另依赖 `/etc/systemd/system/dsh-web.service` 以及 `~/.config/systemd/user/` 下 qq-bridge、snowluma、snowluma-qq 服务。DSH 当前服务用户为 afrangry、HOME 为 `/home/afrangry`、DSH_HOME 为 `/var/lib/dsh/.dsh`。`/opt/deepseek-harness/README.md` 中版本 0.1.5-rc.3 和服务用户 dsh 的文字已落后于实况；该官方安装目录不属于 MyBot 文档改造范围。
 
+## 当前资产复核（2026-10-17）
+
+本节记录本次收尾读取到的实际状态；较早的采集时间、提交号和体积只保留为历史资料，不能覆盖本节。
+
+| 范围 | 当前事实 |
+| --- | --- |
+| Fusion 主仓库 | `/home/afrangry/kurumi-fusion`，`main`=`f019ff7`，`origin/main`=`d717965f`，本地领先 13 个提交，工作区干净 |
+| KnowledgeMap 主仓库 | `/home/afrangry/repository`，`master`=`27f4519`，`origin/master`=`2889e62`，本地领先 3 个提交；工作区保留 6 个并行账单视觉开发文件，未暂存、未提交、未清理 |
+| Fusion 后台副本 | `/home/afrangry/.openclaw-fusion/projects/fusion`，分支 `kurumi/main-sync-2026-10-10`，HEAD=`a4e7487`，干净、无 remote；最后内容同步基线为 `2c234af`/`0ada63a`，尚未追平 Fusion 当前 `f019ff7` |
+| 运行服务 | `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 均 active/enabled；`openclaw-gateway.service` 与 `qq-bridge.service` inactive/masked；用户级 `dsh-web.service` 当前不存在，本复核未改动系统级单元 |
+| 备份资料 | `knowledgemap-bridge-2026-10-17-01-03-26`、`knowledgemap-bridge-2026-10-17-post-cutover`、`2026-10-16-18-07-42-knowledgemap-post-cutover`、`knowledgemap-bridge-git-closeout-2026-10-17-02-54-28` 均存在；它们是配对代码/状态或差异资料，不是同一时刻跨系统停写快照 |
+
+本次只更新 Fusion 文档，不触碰 KnowledgeMap 的 6 个并行文件，也不把历史 `8dbdaef` 或 `0f2255a2` 写成当前提交。后台副本的追平与合入留到下一次后台代码任务开始前处理。
+
 ## 备份资产与保留规则
 
 `/home/afrangry/kurumi-backups/` 保存私有恢复材料；Git 不替代凭据、数据库、忽略文件和依赖的备份。共享业务接入后的代码基线、Fusion运行快照和KnowledgeMap MySQL配对资料见[文档23备份与恢复演练](23_KnowledgeMap业务能力桥接.md#备份与恢复演练)及其[恢复证据](verification/knowledgemap-bridge-2026-10-17/recovery.json)：Fusion26/26、MySQL4组通过，非跨系统同一时刻停写快照。固定SDK及此前停写点仍按[2026-10-10恢复报告](verification/recovery-2026-10-10-final/README.md)保留：`2026-10-10-12-36-17-final-closeout`，对应`0f2255a2`、24/24；它不包含新共享业务。更早报告保留对照；目录名含FINAL本身不代表验收通过。
