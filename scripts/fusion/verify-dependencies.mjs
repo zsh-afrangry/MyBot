@@ -14,14 +14,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { STATE_DIR, REPO_ROOT } from './lib/legacy-source.mjs';
 import { PLUGINS } from './lib/plugins.mjs';
+import {lockedPackages} from './lib/package-manifests.mjs';
 
 const SDK = '/home/afrangry/.npm-global/lib/node_modules/openclaw';
 const EXPECTED_SDK = '2026.9.7';
-const PACKAGES = [
-  'chatbot/packages/confirmation-core',
-  'chatbot/plugins/personal-confirmation',
-  'chatbot/plugins/personal-weather'
-];
+const PACKAGES = lockedPackages(REPO_ROOT).map(p => p.relative);
 // Anything under these roots is archived/foreign and must never satisfy a runtime import.
 // kurumi-archive is where the legacy trees now live after step 7, so it MUST be listed here —
 // omitting it meant the check silently stopped covering the archived tree it was written for.

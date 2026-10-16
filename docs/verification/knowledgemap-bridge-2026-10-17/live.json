@@ -1,0 +1,55 @@
+{
+  "at": "2026-10-16T17:58:32.347Z",
+  "boundary": "Real configured model and production OpenClaw/API/MySQL + actual website/browser; synthetic owner inbound, one native QQ digest to owner only; no human sent these test inputs",
+  "marker": "[doc23-mvb9u4d7]",
+  "cases": [
+    {
+      "label": "model-bill-to-website",
+      "ok": true
+    },
+    {
+      "label": "website-bill-to-model",
+      "ok": true
+    },
+    {
+      "label": "model-null-DDL-to-website",
+      "ok": true
+    },
+    {
+      "label": "actual-browser-bill-and-task-shared-edit",
+      "ok": true
+    },
+    {
+      "label": "model-semantic-void",
+      "ok": true
+    },
+    {
+      "label": "model-weather-via-shared-API",
+      "ok": true
+    },
+    {
+      "label": "native-Cron-shared-API-owner-QQ-readback",
+      "ok": true
+    }
+  ],
+  "testIngressRestored": true,
+  "jobId": "0d9c31ba-3f66-407f-b72c-c55ab2f56714",
+  "qq": {
+    "owner": "365999865",
+    "readbacks": [
+      {
+        "messageId": "783269364",
+        "allActiveTitlesPresent": true
+      }
+    ],
+    "digestCount": 4,
+    "duplicateSilent": true
+  },
+  "ok": true,
+  "testJobRemoved": true,
+  "cleanedTestRows": {
+    "bills": 2,
+    "tasks": 1,
+    "receiptsKept": true
+  }
+}

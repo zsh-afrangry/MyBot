@@ -24,7 +24,7 @@
 
 ## 备份资产与保留规则
 
-`/home/afrangry/kurumi-backups/` 保存私有恢复材料；Git 不替代凭据、数据库、忽略文件和依赖的备份。新系统最新已验收恢复点及固定 SDK 包以[最终恢复报告](verification/recovery-2026-10-10-final/README.md)为准：`2026-10-10-12-36-17-final-closeout`，quiesced，对应 `0f2255a2`，无未提交补丁，已有隔离恢复 24/24 证据。10 月 6 日报告保留为历史对照；目录名含 FINAL 本身不代表验收通过。
+`/home/afrangry/kurumi-backups/` 保存私有恢复材料；Git 不替代凭据、数据库、忽略文件和依赖的备份。共享业务接入后的代码基线、Fusion运行快照和KnowledgeMap MySQL配对资料见[文档23备份与恢复演练](23_KnowledgeMap业务能力桥接.md#备份与恢复演练)及其[恢复证据](verification/knowledgemap-bridge-2026-10-17/recovery.json)：Fusion26/26、MySQL4组通过，非跨系统同一时刻停写快照。固定SDK及此前停写点仍按[2026-10-10恢复报告](verification/recovery-2026-10-10-final/README.md)保留：`2026-10-10-12-36-17-final-closeout`，对应`0f2255a2`、24/24；它不包含新共享业务。更早报告保留对照；目录名含FINAL本身不代表验收通过。
 
 新需求前收尾已于 2026-10-10 完成独立复验并归档；结论与批准延期项统一见[文档 16](16_验收与测试总表.md)。**收尾核验基线**为当时本地及实际远端 main `8dbdaef`；本次回填只改文档，不改变 `0f2255a2` 恢复点的运行态覆盖范围。
 

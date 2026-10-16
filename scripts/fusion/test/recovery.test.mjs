@@ -3,8 +3,28 @@ import fs from 'node:fs';import os from 'node:os';import path from 'node:path';i
 import {serviceLease} from '../lib/backup-service.mjs';
 import {captureWorkingTree} from '../lib/working-tree-backup.mjs';
 import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs} from '../lib/recovery-isolation.mjs';
+import {lockedPackages} from '../lib/package-manifests.mjs';
 const tmp=()=>fs.mkdtempSync('/tmp/kurumi-recovery-test-');
 function mock(initial,failStart=false){let state=initial;const calls=[];const run=(_cmd,args)=>{if(args.includes('show'))return {status:0,stdout:state};if(args.includes('stop')){calls.push('stop');state='inactive';return {status:0};}if(args.includes('start')){calls.push('start');if(failStart)return {status:1};state='active';return {status:0};}throw Error('unexpected');};return {run,calls};}
+test('recovery discovers every locked plugin and only builds declared build scripts',()=>{
+ const dir=tmp();
+ try{
+  for(const [name,build] of [['chatbot/packages/confirmation-core',true],['chatbot/plugins/kurumi-mail',false],['chatbot/plugins/new-domain',false]]){
+   fs.mkdirSync(dir+'/'+name,{recursive:true});
+   fs.writeFileSync(dir+'/'+name+'/package.json',JSON.stringify({scripts:build?{build:'tsc'}:{test:'node --test'}}));
+   fs.writeFileSync(dir+'/'+name+'/package-lock.json','{}');
+  }
+  fs.mkdirSync(dir+'/chatbot/plugins/kurumi-mail/node_modules/ignored',{recursive:true});
+  fs.writeFileSync(dir+'/chatbot/plugins/kurumi-mail/node_modules/ignored/package-lock.json','{}');
+  assert.deepEqual(lockedPackages(dir),[
+   {relative:'chatbot/packages/confirmation-core',build:true},
+   {relative:'chatbot/plugins/kurumi-mail',build:false},
+   {relative:'chatbot/plugins/new-domain',build:false},
+  ]);
+  const repo=new URL('../../../',import.meta.url).pathname;
+  assert.ok(lockedPackages(repo).some(p=>p.relative==='chatbot/plugins/kurumi-mail'&&!p.build));
+ }finally{fs.rmSync(dir,{recursive:true});}
+});
 test('backup restores only the service it stopped; cleanup is idempotent',()=>{const m=mock('active');const l=serviceLease(m);l.stop();assert(l.quiesced);l.restore();l.restore();assert.deepEqual(m.calls,['stop','start']);const n=mock('inactive');const idle=serviceLease(n);idle.stop();assert(idle.quiesced);idle.restore();assert.deepEqual(n.calls,[]);});
 test('ambiguous service transition and failed restart do not pass',()=>{assert.throws(()=>serviceLease(mock('activating')).stop(),/transition/);const l=serviceLease(mock('active',true));l.stop();assert.throws(()=>l.restore(),/restart failed/);});
 for(const signal of ['SIGINT','SIGTERM','SIGHUP'])test(`backup ${signal} restores service and exits nonzero`,async()=>{

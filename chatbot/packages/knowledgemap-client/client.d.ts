@@ -4,7 +4,7 @@ export interface RequestOptions {method?: 'GET' | 'POST'; query?: Record<string,
 export class KnowledgeMapClient {
   constructor(options?: ClientOptions);
   request(path: string, options?: RequestOptions): Promise<any>;
-  allTasks(options?: {history?: boolean; query?: string; signal?: AbortSignal}): Promise<any[]>;
+  allTasks(options?: {history?: boolean; query?: string; signal?: AbortSignal; runId?: string}): Promise<any[]>;
 }
 export function requestKey(domain: string, request: {sessionKey: string; messageId: string}): string;
 export function clientFromEnvironment(env?: Record<string, string | undefined>): KnowledgeMapClient;

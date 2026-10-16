@@ -36,6 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
+import {lockedPackages} from './lib/package-manifests.mjs';
 import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery} from './lib/recovery-isolation.mjs';
 
 const argv = process.argv.slice(2);
@@ -312,7 +313,8 @@ if (skipDeps) {
 
 // 7. Dependencies installed INTO THE RESTORED REPO from its own committed lockfiles.
 const restoredRepo = clones.get('kurumi-fusion');
-const depPackages = ['chatbot/packages/confirmation-core', 'chatbot/plugins/personal-confirmation', 'chatbot/plugins/personal-weather'];
+const packagePlan = restoredRepo ? lockedPackages(restoredRepo) : [];
+const depPackages = packagePlan.map(p => p.relative);
 if (skipDeps) {
   console.log('SKIP dependencies/build/Gateway: materials-only mode');
 } else if (!restoredRepo) {
@@ -370,7 +372,7 @@ if(cfg&&restoredRepo){
   }
 
   for(const [name,to] of [['openclaw',sdk],['ws',sdk+'/node_modules/ws']])fs.symlinkSync(to,restoredRepo+'/node_modules/'+name);
-  for(const rel of depPackages){
+  for(const {relative: rel} of packagePlan.filter(p => p.build)){
    const build=sh('bwrap',[...sandboxArgs(target),'--chdir',restoredRepo+'/'+rel,'/usr/bin/npm','run','build']);
    check('sandbox build '+rel,build.status===0,build.status===0?'compiled':(build.stdout+build.stderr).slice(-1800));
   }

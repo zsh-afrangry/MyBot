@@ -93,11 +93,12 @@ test('response size is bounded', async t => {
   await assert.rejects(c.request('/api/assistant/tasks'), {code: 'invalid_response'});
 });
 test('pagination checks snapshots, unique IDs and total', async t => {
-  let calls = 0; const c = client(t, url => {
+  let calls = 0; const c = client(t, (url, init) => {
+    assert.equal(init.headers['X-Kurumi-Run-Id'], 'read-run');
     calls++; if (calls === 2) assert.equal(url.searchParams.get('snapshot'), 'a'.repeat(64));
     return response({ok: true, snapshot: 'a'.repeat(64), items: [row(calls)], total: 2, truncated: calls === 1});
   });
-  assert.equal((await c.allTasks()).length, 2);
+  assert.equal((await c.allTasks({runId: 'read-run'})).length, 2);
   c.fetchImpl = () => response({ok: true, snapshot: 'a'.repeat(64), items: [row()], total: 2, truncated: true});
   await assert.rejects(c.allTasks(), {code: 'invalid_response'});
   calls = 0; c.fetchImpl = () => response({ok: true, snapshot: (++calls === 1 ? 'a' : 'b').repeat(64), items: [row(calls)], total: 2, truncated: calls === 1});

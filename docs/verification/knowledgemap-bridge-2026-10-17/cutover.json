@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-16T17:53:36.201Z",
+  "ok": true,
+  "sourceCount": 14,
+  "sourceHash": "e921d1cdbacea36bd89a90f98192898bb61acff3edc6c4267cb771093d882549",
+  "sourceStatusCounts": {
+    "active": 4,
+    "completed": 4,
+    "expired": 4,
+    "void": 2
+  },
+  "sameLegacyItems": true,
+  "sameSettings": true,
+  "sharedHistoryCount": 19,
+  "sharedPendingCount": 4,
+  "markerActivated": true,
+  "verifiedOriginsAndFields": 14,
+  "legacySourceUnchanged": true,
+  "sourceStatesPreserved": true
+}

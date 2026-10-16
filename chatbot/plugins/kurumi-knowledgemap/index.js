@@ -47,7 +47,7 @@ export function createKnowledgeMapPlugin({clientFactory = options => new Knowled
           }
           const {action = 'list', ...query} = args;
           if (!['tags', 'list', 'monthly'].includes(action)) throw Error('未知查询动作');
-          return json(await client.request(action === 'tags' ? '/api/assistant/tags' : action === 'monthly' ? '/api/assistant/bills/monthly' : '/api/assistant/bills', {query, signal}));
+          return json(await client.request(action === 'tags' ? '/api/assistant/tags' : action === 'monthly' ? '/api/assistant/bills/monthly' : '/api/assistant/bills', {query, signal, runId: ctx.runId}));
         } catch (error) {
           return json(error instanceof BridgeError ? error.toJSON() : {ok: false, error: {code: 'request_rejected', message: String(error.message).slice(0, 200)}});
         }

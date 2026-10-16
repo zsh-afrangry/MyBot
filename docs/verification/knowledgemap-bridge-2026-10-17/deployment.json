@@ -1,0 +1,75 @@
+{
+  "at": "2026-10-16T18:18:05.186Z",
+  "ok": true,
+  "api": {
+    "address": "http://127.0.0.1:3086",
+    "ok": true,
+    "contract": 1,
+    "domains": [
+      "weather",
+      "tasks",
+      "bills"
+    ]
+  },
+  "services": {
+    "kurumi-fusion": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "qq-bridge": {
+      "ActiveState": "inactive",
+      "UnitFileState": "masked"
+    },
+    "openclaw-gateway": {
+      "ActiveState": "inactive",
+      "UnitFileState": "masked"
+    },
+    "snowluma": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "snowluma-qq": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "knowledgemap-assistant": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "dsh-web": {
+      "ActiveState": "inactive",
+      "UnitFileState": "disabled"
+    }
+  },
+  "testIngress": false,
+  "testMethodDisabled": true,
+  "businessCounts": {
+    "bills": 0,
+    "historyTasks": 19,
+    "pendingTasks": 4
+  },
+  "listJobs": [
+    {
+      "time": "00:00",
+      "enabled": true,
+      "sharedSource": true
+    },
+    {
+      "time": "08:00",
+      "enabled": true,
+      "sharedSource": true
+    },
+    {
+      "time": "12:00",
+      "enabled": true,
+      "sharedSource": true
+    },
+    {
+      "time": "18:00",
+      "enabled": true,
+      "sharedSource": true
+    }
+  ],
+  "temporaryAcceptanceJobRemoved": true,
+  "productionBusinessBodiesOmitted": true
+}

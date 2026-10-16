@@ -106,7 +106,7 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
           const store = new ListControlStore(options);
           try {
             result = {ok: true, now: localTime(Date.now()), timezone: 'Asia/Shanghai', dataSource: 'knowledgemap',
-              items: (await client.allTasks({history: args.history, query: args.query, signal})).map(taskItem), settings: store.settings(), scheduleSync: scheduler.status()};
+              items: (await client.allTasks({history: args.history, query: args.query, signal, runId: ctx.runId})).map(taskItem), settings: store.settings(), scheduleSync: scheduler.status()};
           } finally {store.close();}
         } else {
           inbound.require(request, ctx, config);

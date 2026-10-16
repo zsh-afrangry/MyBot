@@ -2,18 +2,144 @@
   "date": "2026-10-17",
   "boundary": "Isolated tests, builds and disposable recovery; no production business writes or QQ",
   "results": [
-    {"command": "python backend/tests/assistant_cases.py", "repository": "KnowledgeMap", "passed": 30},
-    {"command": "python backend/tests/calendar_crud_cases.py", "repository": "KnowledgeMap", "passed": 114},
-    {"command": "python backend/tests/dashboard_overview_cases.py", "repository": "KnowledgeMap", "passed": 55},
-    {"command": "python backend/tests/portal_crud_cases.py", "repository": "KnowledgeMap", "passed": 13},
-    {"command": "python backend/tests/weather_cases.py", "repository": "KnowledgeMap", "passed": 24},
-    {"command": "node backend/tests/assistant_browser.cjs", "repository": "KnowledgeMap", "passed": 6},
-    {"command": "python backend/tests/assistant_mysql_cases.py --backup-dir <tonight-baseline> --env-file <private-backend-env>", "repository": "KnowledgeMap", "passed": 4, "restoredCounts": {"bills": 0, "calendar_events": 5, "tags": 37}, "temporaryDatabaseRemoved": true},
-    {"command": "node --test chatbot/tests/knowledgemap/bridge.test.mjs scripts/fusion/test/recovery.test.mjs", "repository": "Fusion", "passed": 33},
-    {"command": "node --test chatbot/tests/knowledgemap/http.test.mjs", "repository": "Fusion", "passed": 1},
-    {"command": "node --test chatbot/tests/reminder-list/*.test.mjs scripts/fusion/test/log-query.test.mjs", "repository": "Fusion", "passed": 54},
-    {"command": "node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <tonight-baseline>", "repository": "Fusion", "restoredTrackedAndUntrackedFiles": {"fusion": 548, "knowledgemap": 204}, "sqliteQuickCheckAndHash": 6},
-    {"command": "npm run build", "repository": "KnowledgeMap/frontend", "ok": true},
-    {"command": "npm run build", "repository": "Fusion/chatbot/plugins/personal-weather", "ok": true}
-  ]
+    {
+      "command": "python backend/tests/assistant_cases.py",
+      "repository": "KnowledgeMap",
+      "passed": 30
+    },
+    {
+      "command": "python backend/tests/calendar_crud_cases.py",
+      "repository": "KnowledgeMap",
+      "passed": 114
+    },
+    {
+      "command": "python backend/tests/dashboard_overview_cases.py",
+      "repository": "KnowledgeMap",
+      "passed": 55
+    },
+    {
+      "command": "python backend/tests/portal_crud_cases.py",
+      "repository": "KnowledgeMap",
+      "passed": 13
+    },
+    {
+      "command": "python backend/tests/weather_cases.py",
+      "repository": "KnowledgeMap",
+      "passed": 24
+    },
+    {
+      "command": "node backend/tests/assistant_browser.cjs",
+      "repository": "KnowledgeMap",
+      "passed": 6
+    },
+    {
+      "command": "python backend/tests/assistant_mysql_cases.py --backup-dir <tonight-baseline> --env-file <private-backend-env>",
+      "repository": "KnowledgeMap",
+      "passed": 4,
+      "restoredCounts": {
+        "bills": 0,
+        "calendar_events": 5,
+        "tags": 37
+      },
+      "temporaryDatabaseRemoved": true
+    },
+    {
+      "command": "node --test chatbot/tests/reminder-list/*.test.mjs scripts/fusion/test/log-query.test.mjs",
+      "repository": "Fusion",
+      "passed": 54
+    },
+    {
+      "command": "node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <tonight-baseline>",
+      "repository": "Fusion",
+      "restoredTrackedAndUntrackedFiles": {
+        "fusion": 548,
+        "knowledgemap": 204
+      },
+      "sqliteQuickCheckAndHash": 6
+    },
+    {
+      "command": "npm run build",
+      "repository": "KnowledgeMap/frontend",
+      "ok": true
+    },
+    {
+      "command": "npm run build",
+      "repository": "Fusion/chatbot/plugins/personal-weather",
+      "ok": true
+    },
+    {
+      "command": "node --test chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/http.test.mjs scripts/fusion/test/recovery.test.mjs",
+      "repository": "Fusion",
+      "passed": 35,
+      "components": {
+        "bridge": 23,
+        "HTTP": 1,
+        "recovery": 11
+      }
+    },
+    {
+      "command": "npm test",
+      "repository": "Fusion/chatbot/plugins/personal-weather",
+      "passed": 162
+    },
+    {
+      "command": "python backend/tests/assistant_mysql_cases.py --backup-dir <post-cutover> --env-file <private-backend-env>",
+      "repository": "KnowledgeMap",
+      "passed": 4,
+      "restoredCounts": {
+        "bills": 0,
+        "calendar_events": 19,
+        "tags": 37
+      },
+      "temporaryDatabaseRemoved": true
+    }
+  ],
+  "postCutoverRecovery": "recovery.json",
+  "realIngressAndQQ": "live.json (separate boundary)",
+  "finalCloseoutChecks": {
+    "at": "2026-10-16T18:56:30.312616+00:00",
+    "boundary": "Offline regressions and read-only deployment/schema checks; no new business writes, model requests or QQ delivery in closeout.",
+    "bridgeAndRecoveryRegression": {
+      "passed": 34,
+      "command": "node --test chatbot/tests/knowledgemap/bridge.test.mjs scripts/fusion/test/recovery.test.mjs"
+    },
+    "isolatedBranchIndexes": {
+      "scripts": 147,
+      "boundaryChecks": 37,
+      "evidenceFiles": 188,
+      "contradictions": 0,
+      "note": "Index scripts default to the fixed main checkout; verification substituted only the scan root in memory without modifying source."
+    },
+    "mainWorkingTreeIndexes": {
+      "scripts": 161,
+      "boundaryChecks": 40,
+      "evidenceFiles": 228,
+      "contradictions": 0,
+      "includesConcurrentDocument22": true
+    },
+    "selfChecks": [
+      "health",
+      "dependencies",
+      "config sync",
+      "persona sync"
+    ],
+    "knowledgeMap": {
+      "scriptDocRefs": 36,
+      "inlineDocRefs": 115,
+      "schemaMatchesLive": true,
+      "unchangedSincePreCutover": [
+        "bills",
+        "tags",
+        "simulation_records",
+        "notes_topics",
+        "notes_seed_versions"
+      ]
+    },
+    "activeDocumentLinks": {
+      "documents": 20,
+      "localLinks": 225,
+      "broken": 0
+    },
+    "gitPreCloseoutBackup": "/home/afrangry/kurumi-backups/knowledgemap-bridge-git-closeout-2026-10-17-02-54-28/"
+  }
 }

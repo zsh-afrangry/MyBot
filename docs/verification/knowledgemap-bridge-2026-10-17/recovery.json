@@ -1,0 +1,177 @@
+{
+  "date": "2026-10-17",
+  "boundary": "Disposable restore and isolated Gateway only; production paths/network invisible; no real delivery or model requests. KnowledgeMap MySQL restored separately in a unique temporary database.",
+  "fusion": {
+    "backup": "/home/afrangry/kurumi-backups/2026-10-16-18-07-42-knowledgemap-post-cutover",
+    "sourceHead": "4f26366200c9603c4b8fa3b02eab4f4ec1b46098",
+    "includesUncommittedAndUntrackedAtBackup": true,
+    "quiesced": false,
+    "crossSystemPointInTime": false,
+    "manifestEntries": 42710,
+    "sqliteHealthy": 12,
+    "initialResult": {
+      "passed": 25,
+      "total": 26,
+      "reason": "Verifier omitted the existing mail plugin from dependency installation; package not found during isolated import."
+    },
+    "correction": "Dependency verification and restoration share repository-owned lockfile discovery; npm ci for all four packages; build only when declared.",
+    "result": {
+      "ok": true,
+      "passed": 26,
+      "total": 26,
+      "checks": [
+        {
+          "name": "manifest (42710 files)",
+          "ok": true
+        },
+        {
+          "name": "required content (15 entries)",
+          "ok": true
+        },
+        {
+          "name": "expected databases (12)",
+          "ok": true
+        },
+        {
+          "name": "bundle kurumi-fusion valid",
+          "ok": true
+        },
+        {
+          "name": "clone kurumi-fusion matches expected refs",
+          "ok": true
+        },
+        {
+          "name": "bundle legacy-openclaw valid",
+          "ok": true
+        },
+        {
+          "name": "clone legacy-openclaw matches expected refs",
+          "ok": true
+        },
+        {
+          "name": "bundle qq-bridge valid",
+          "ok": true
+        },
+        {
+          "name": "clone qq-bridge matches expected refs",
+          "ok": true
+        },
+        {
+          "name": "patch kurumi-fusion-uncommitted.patch applies",
+          "ok": true
+        },
+        {
+          "name": "archive kurumi-fusion-untracked.tar restores 57 file(s)",
+          "ok": true
+        },
+        {
+          "name": "database snapshots (12)",
+          "ok": true
+        },
+        {
+          "name": "assemble: all runtime directories copied",
+          "ok": true
+        },
+        {
+          "name": "assemble: databases placed at runtime paths",
+          "ok": true
+        },
+        {
+          "name": "assemble: runtime config loads",
+          "ok": true
+        },
+        {
+          "name": "assemble: token/credential files present",
+          "ok": true
+        },
+        {
+          "name": "immutable SDK artifact restored",
+          "ok": true
+        },
+        {
+          "name": "assemble: plugin prefix rebuilt from lockfile",
+          "ok": true
+        },
+        {
+          "name": "load: restored repo dependencies installed",
+          "ok": true
+        },
+        {
+          "name": "all active configuration roots remapped; delivery disabled",
+          "ok": true
+        },
+        {
+          "name": "sandbox build chatbot/packages/confirmation-core",
+          "ok": true
+        },
+        {
+          "name": "sandbox build chatbot/plugins/personal-confirmation",
+          "ok": true
+        },
+        {
+          "name": "sandbox build chatbot/plugins/personal-weather",
+          "ok": true
+        },
+        {
+          "name": "isolated Gateway startup, plugin imports and production exclusion",
+          "ok": true
+        },
+        {
+          "name": "load: restored memory readable via restored source",
+          "ok": true
+        },
+        {
+          "name": "load: assembled databases open in place",
+          "ok": true
+        }
+      ]
+    },
+    "isolation": {
+      "ok": true,
+      "loaded": [
+        "@kurumi/qq-channel",
+        "@kurumi/tasks",
+        "@openclaw/tavily-plugin",
+        "openclaw-plugin-personal-confirmation",
+        "openclaw-plugin-personal-weather",
+        "@kurumi/personal-reminder-list",
+        "kurumi-memory",
+        "kurumi-research",
+        "kurumi-mail",
+        "kurumi-papers",
+        "@kurumi/knowledgemap"
+      ],
+      "productionInvisible": true,
+      "hostBusInvisible": true,
+      "networkNamespace": true,
+      "gatewayHealth": true,
+      "mockOneBotDelivery": 2,
+      "imageStaging": true,
+      "projectChecks": 1,
+      "realDelivery": false,
+      "cronEnabled": false
+    },
+    "externalMySQLIncluded": false,
+    "sharedAPIAndPersistedRunnerDisabledInRecovery": true
+  },
+  "knowledgeMap": {
+    "backup": "/home/afrangry/kurumi-backups/knowledgemap-bridge-2026-10-17-post-cutover",
+    "consistency": "MySQL single-transaction, not cross-system quiesced",
+    "mysqlDumpSha256": "d129d496e14f8778d33c43e8f9c94bfa32fdec7118e0407118314f4fddddad5b",
+    "hashTarget": "gzip bytes",
+    "restoredCounts": {
+      "bills": 0,
+      "calendar_events": 19,
+      "tags": 37
+    },
+    "passed": 4,
+    "temporaryDatabaseRemoved": true,
+    "checks": [
+      "full dump hash and disposable restore",
+      "additive migration idempotence and original rows retained",
+      "optimistic version conflict across two sessions",
+      "concurrent identical key commits one bill"
+    ]
+  },
+  "scope": "Recovery proves material reconstruction and isolated loading; not all business workflows, paid PDF translation or a live legacy startup."
+}

@@ -79,10 +79,10 @@ export class KnowledgeMapClient {
         durationMs: Date.now() - started, itemId: result?.item?.id ?? null});} catch { /* Observation failure cannot rewrite a committed business result. */ }
     }
   }
-  async allTasks({history = false, query = '', signal} = {}) {
+  async allTasks({history = false, query = '', signal, runId} = {}) {
     const items = [], seen = new Set(); let skip = 0, snapshot;
     for (let page = 0; page < 50; page++) {
-      const result = await this.request('/api/assistant/tasks', {query: {history, query, skip, limit: 200, snapshot}, signal});
+      const result = await this.request('/api/assistant/tasks', {query: {history, query, skip, limit: 200, snapshot}, signal, runId});
       if (result.ok !== true || !Array.isArray(result.items) || !Number.isSafeInteger(result.total) || !/^[a-f0-9]{64}$/.test(result.snapshot ?? '')) throw new BridgeError('invalid_response', '事项列表契约不符');
       if (snapshot && result.snapshot !== snapshot) throw new BridgeError('list_changed', '列表在分页期间变化，请重新查询');
       snapshot = result.snapshot;
