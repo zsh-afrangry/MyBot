@@ -44,6 +44,24 @@ $EDITOR /home/afrangry/.openclaw-fusion/runtime-env.json
 - 草稿创建时与投递前**各校验一次**：即使草稿建好后名单被收紧，也不会被投递出去。
 - 策略拒绝会保留主人的授权（什么都没发出，就没有消耗），名单放开后仍可发送。
 
+## 实现选择（适配器）
+
+策略与存储通过共享注册表选定，默认组合是 `default` + `sqlite`：
+
+```json
+"kurumi-mail": { "enabled": true, "config": {
+  "allowedRecipients": ["365999865@qq.com"],
+  "policyAdapter": "default",
+  "storeAdapter": "sqlite"
+} }
+```
+
+- 换实现只需在 `adapters.js` 注册并在配置里选 id，**不必改工具、确认后端或服务**；
+  确认后端取的是 `application.openStore(...)`，因此同样跟随所选存储。
+- **未知 id 会在加载时明确失败**（`Unavailable mail adapter selection`），不会静默回退。
+- `email_status` 会报告当前生效的 `policyAdapter` / `storeAdapter`。
+- 存储契约是**同步**的：返回 Promise 的 store 会被注册表直接拒绝；投递是异步动作，因此它在服务层。
+
 ## 工具
 
 | 工具 | 作用 |

@@ -20,8 +20,7 @@
 //   node scripts/fusion/test-mail-delivery.mjs --to 365999865@qq.com --dry-run   # no send, no approval
 import fs from "node:fs";
 import path from "node:path";
-import {MailStore} from "../../chatbot/plugins/kurumi-mail/store.js";
-import {sendApprovedDraft} from "../../chatbot/plugins/kurumi-mail/deliver.js";
+import {createMailApplication} from "../../chatbot/plugins/kurumi-mail/application.js";
 import {scopeFromInboundEvent, scopeFromToolContext} from "../../chatbot/plugins/kurumi-mail/scope.js";
 
 const STATE = "/home/afrangry/.openclaw-fusion";
@@ -90,7 +89,8 @@ if (!scope) {
   process.exit(2);
 }
 
-const store = new MailStore({stateDirectory, allowedRecipients});
+const application = createMailApplication();
+const store = application.openStore({stateDirectory, allowedRecipients});
 try {
   const created = store.createDraft({
     to: [to],
@@ -127,12 +127,8 @@ try {
   report.scopeResolved = Boolean(scopeFromInboundEvent(event));
   report.confirmationRecorded = store.recordInboundConfirmation(event, created.draftId);
 
-  const outcome = await sendApprovedDraft({
-    store,
-    draftId: created.draftId,
-    scope,
-    config,
-    allowedRecipients,
+  const outcome = await application.directives.sendDraft(store, {draftId: created.draftId}, {
+    scope, config, allowedRecipients,
   });
   Object.assign(report, {
     ok: outcome.ok,

@@ -67,6 +67,7 @@ const TABLE = {
   'chatbot/plugins/kurumi-mail/test/mime.test.js': ['离线', '邮件 MIME：RFC 2047 主题、RFC 2231 附件名、折行、注入防护、信封发件人', {readonly: 1}, 'offline'],
   'chatbot/plugins/kurumi-mail/test/smtp.test.js': ['离线', 'SMTP 协议：仅连本地 mock 服务器，覆盖认证失败、收件人拒绝、超时与 dot-stuffing', {readonly: 1, testDir: 1}, 'offline'],
   'chatbot/plugins/kurumi-mail/test/store.test.js': ['离线', '邮件草稿与确认闸门：提案、授权、幂等、过期、跨会话与参数校验', {readonly: 1, testDir: 1}, 'offline'],
+  'chatbot/plugins/kurumi-mail/test/adapters.test.js': ['离线', '邮件适配器：宿主入站路由到达被选中的 store、工具消费注入实现、替换策略不能授予身份、未知 id 明确失败', {readonly: 1, testDir: 1}, 'offline'],
   'chatbot/plugins/kurumi-mail/test/gate.test.js': ['离线', '邮件端到端负向核心：确认前 mock SMTP 收到 0 封；另含完整往返与失败路径', {readonly: 1, testDir: 1}, 'offline'],
   'scripts/fusion/test/recovery.test.mjs': ['离线', '备份/恢复工具单元与集成回归', {readonly: 1}, 'offline'],
   'scripts/fusion/test/register-project.test.mjs': ['离线', '项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝）', {readonly: 1}, 'offline'],

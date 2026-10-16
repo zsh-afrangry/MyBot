@@ -12,6 +12,14 @@
           "type": "string"
         },
         "description": "Recipient allowlist (exact addresses). Empty means no recipient is permitted; there is no wildcard."
+      },
+      "policyAdapter": {
+        "type": "string",
+        "description": "Registered policy id to use. Defaults to 'default'. An unknown id fails loudly at load."
+      },
+      "storeAdapter": {
+        "type": "string",
+        "description": "Registered store id to use. Defaults to 'sqlite'. An unknown id fails loudly at load."
       }
     },
     "additionalProperties": false

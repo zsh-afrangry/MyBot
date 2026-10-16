@@ -127,3 +127,19 @@ export function assertRecipient(value, label = "recipient") {
   if (!isValidAddress(address)) throw new Error(`invalid ${label}: ${address}`);
   return address;
 }
+
+/**
+ * The default Policy implementation, as registered in adapters.js.
+ *
+ * The standalone functions above stay exported because they are the unit-tested pieces and the
+ * confirmation-backend path uses them directly; this object is the contract-shaped view of the same
+ * rules, so a replacement policy only has to satisfy four methods.
+ *
+ * @type {import('./contracts.js').Policy}
+ */
+export const defaultMailPolicy = Object.freeze({
+  normalizeDraft: normalizeDraftArgs,
+  normalizeSend: normalizeSendArgs,
+  normalizeOutbox: normalizeOutboxArgs,
+  assertRecipientsAllowed,
+});

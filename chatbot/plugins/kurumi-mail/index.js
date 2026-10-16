@@ -12,48 +12,18 @@
 //   * Credentials come from the runtime environment (runtime-env.json is expanded by run-gateway.mjs
 //     into the gateway process). They are never returned by any tool, never written to the audit
 //     table, and never included in error messages.
-import { homedir } from "node:os";
-import { join, resolve } from "node:path";
-import { randomUUID } from "node:crypto";
-import { ownerAuthorized } from "../kurumi-qq/src/config.js";
-import { confirmationBackendIds, registerConfirmationBackend, scopeFromToolContext } from "@kurumi/confirmation-core";
-import { MailStore } from "./store.js";
-import { MailPolicyError, normalizeAllowlist, normalizeDraftArgs, normalizeOutboxArgs, normalizeSendArgs } from "./policy.js";
-import { sendApprovedDraft } from "./deliver.js";
+import { confirmationBackendIds, registerConfirmationBackend } from "@kurumi/confirmation-core";
+import { assertOwnerContext, requireConfirmationScope } from "./inbound.js";
+import { ENV_AUTH_CODE, ENV_USER, createMailApplication, mailStateDirectory, readMailConfig } from "./application.js";
+import { normalizeAllowlist } from "./policy.js";
 import { defaultConnector, SmtpClient } from "./smtp.js";
 
 const PLUGIN_ID = "kurumi-mail";
 const BACKEND_ID = "kurumi-mail";
 const CHANNEL = "kurumi-qq";
 
-/** Environment keys, expanded from runtime-env.json by run-gateway.mjs. */
-export const ENV_USER = "KURUMI_MAIL_USER";
-export const ENV_AUTH_CODE = "KURUMI_MAIL_AUTH_CODE";
-export const ENV_HOST = "KURUMI_MAIL_HOST";
-export const ENV_PORT = "KURUMI_MAIL_PORT";
-const DEFAULT_HOST = "smtp.qq.com";
-const DEFAULT_PORT = 465;
-
-export function openClawStateDirectory(env = process.env) {
-  return env.OPENCLAW_STATE_DIR?.trim() ? resolve(env.OPENCLAW_STATE_DIR) : join(homedir(), ".openclaw-fusion");
-}
-
-export function mailStateDirectory(env = process.env) {
-  return join(openClawStateDirectory(env), "state", "kurumi-mail");
-}
-
-/** Read configuration without ever exposing the authorization code. */
-export function readMailConfig(env = process.env) {
-  const user = env[ENV_USER]?.trim() ?? "";
-  const authCode = env[ENV_AUTH_CODE]?.trim() ?? "";
-  const host = env[ENV_HOST]?.trim() || DEFAULT_HOST;
-  const parsedPort = Number(env[ENV_PORT] ?? DEFAULT_PORT);
-  const port = Number.isInteger(parsedPort) && parsedPort > 0 && parsedPort < 65_536 ? parsedPort : DEFAULT_PORT;
-  return { user, authCode, host, port, configured: Boolean(user && authCode) };
-}
-
-/** Recipient policy, read from the plugin's managed config. Fail-closed when absent. */
-function mailPolicy(api) {
+/** Recipient allowlist from the plugin's managed config. Passed to the store and to policy checks. */
+function allowlistOf(api) {
   return normalizeAllowlist(api.pluginConfig?.allowedRecipients);
 }
 
@@ -61,40 +31,34 @@ function json(value) {
   return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
 }
 
-function ownerOnly(ctx, api) {
-  const cfg = ctx.getRuntimeConfig?.() ?? api.config;
-  if (!ownerAuthorized(ctx, cfg)) {
-    const error = new Error("Mail tools are available in the owner's private chat only");
-    error.code = "unauthorized_owner_context";
-    throw error;
-  }
-  return cfg;
-}
-
-function requireScope(ctx) {
-  const scope = scopeFromToolContext(ctx);
-  if (!scope) {
-    const error = new Error("Mail confirmation requires a trusted owner private-chat context");
-    error.code = "untrusted_confirmation_context";
-    throw error;
-  }
-  return scope;
-}
-
-const TOOL_METADATA = { email_status: { optional: true }, email_draft: { optional: true }, email_send: { optional: true }, email_outbox: { optional: true } };
-
-export default {
+export function createMailPlugin({ registry } = {}) {
+  const plugin = {
   id: PLUGIN_ID,
   name: "Kurumi mail",
   register(api) {
+    // Resolve the policy and store this instance runs with. `registry` lets a test or an embedding
+    // host supply its own implementations; pluginConfig can select an implementation by id.
+    const application = createMailApplication({
+      registry,
+      policyAdapter: api.pluginConfig?.policyAdapter,
+      storeAdapter: api.pluginConfig?.storeAdapter,
+    });
+    const storeOptions = () => ({ stateDirectory: mailStateDirectory(), allowedRecipients: allowlistOf(api) });
+    /** Open the selected store for one operation. Nothing here constructs a concrete store. */
+    const withStore = (work) => {
+      const store = application.openStore(storeOptions());
+      try { return work(store); } finally { store.close(); }
+    };
+
     // The host routes the owner's "确认 <code>" message to registered backends only, so this
-    // registration is what makes confirmation reachable at all.
+    // registration is what makes confirmation reachable at all. The backend opens the SELECTED store,
+    // so a replacement store is picked up here without editing this file.
     api.registerService({
       id: "kurumi-mail-confirmation-backend",
       start() {
         const unregister = registerConfirmationBackend({
           id: BACKEND_ID,
-          open: () => new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: normalizeAllowlist(api.pluginConfig?.allowedRecipients) }),
+          open: () => application.openStore(storeOptions()),
         });
         // Logged so the registration is observable in the journal. Without this line the only way to
         // know whether confirmations can reach this domain would be to send a real one.
@@ -103,6 +67,8 @@ export default {
           event: "confirmation-backend-registered",
           backend: BACKEND_ID,
           registered: confirmationBackendIds(),
+          policyAdapter: application.policyId,
+          storeAdapter: application.storeId,
         }));
         return () => unregister();
       },
@@ -123,10 +89,10 @@ export default {
           properties: { probe: { type: "boolean", description: "Also connect and authenticate to the SMTP server." } },
         },
         async execute(callId, args, signal) {
-          ownerOnly(ctx, api);
+          assertOwnerContext(ctx);
           ctx.assertInvocationCurrent?.();
           const config = readMailConfig();
-          const allowedRecipients = mailPolicy(api);
+          const allowedRecipients = allowlistOf(api);
           const result = {
             ok: true,
             configured: config.configured,
@@ -134,6 +100,8 @@ export default {
             host: config.host,
             port: config.port,
             allowedRecipients,
+            policyAdapter: application.policyId,
+            storeAdapter: application.storeId,
             confirmationBackendRegistered: confirmationBackendIds().includes(BACKEND_ID),
             recipientPolicy: allowedRecipients.length === 0
               ? "closed: the allowlist is empty, so no recipient is permitted"
@@ -202,47 +170,13 @@ export default {
           },
         },
         async execute(callId, args, signal) {
-          ownerOnly(ctx, api);
+          assertOwnerContext(ctx);
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
-          const scope = requireScope(ctx);
-          const allowedRecipients = mailPolicy(api);
-          const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients });
-          try {
-            const input = normalizeDraftArgs(args);
-            if (input.problem) {
-              return json({ ok: false, code: "invalid_draft", reason: input.problem, sent: false });
-            }
-            let created;
-            try {
-              created = store.createDraft(
-                { to: input.to, cc: input.cc, subject: input.subject, text: input.text },
-                scope,
-              );
-            } catch (error) {
-              // Policy and validation refusals are owner-facing answers, not tool crashes.
-              if (error instanceof MailPolicyError) {
-                return json({ ok: false, code: error.code, reason: error.message, allowedRecipients, sent: false });
-              }
-              return json({ ok: false, code: "invalid_draft", reason: String(error?.message ?? error).slice(0, 300), sent: false });
-            }
-            const config = readMailConfig();
-            return json({
-              ok: true,
-              status: "needs_confirmation",
-              draftId: created.draftId,
-              confirmationInstruction: created.instruction,
-              from: config.user || null,
-              to: input.to,
-              cc: input.cc,
-              subject: input.subject,
-              bodyChars: String(input.text).length,
-              expiresAtUtc: created.expiresAtUtc,
-              note: "Not sent. The owner must reply with the confirmation instruction before email_send can deliver it.",
-            });
-          } finally {
-            store.close();
-          }
+          const scope = requireConfirmationScope(ctx);
+          const result = withStore((store) => application.directives.createDraft(store, args, scope, allowlistOf(api)));
+          if (result.ok) result.from = readMailConfig().user || null;
+          return json(result);
         },
       }),
     });
@@ -268,24 +202,17 @@ export default {
           },
         },
         async execute(callId, args, signal) {
-          ownerOnly(ctx, api);
+          assertOwnerContext(ctx);
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
-          const scope = requireScope(ctx);
-          const input = normalizeSendArgs(args);
-          if (input.problem) {
-            return json({ ok: false, code: "invalid_send", reason: input.problem, sent: false });
-          }
-          const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: mailPolicy(api) });
+          const scope = requireConfirmationScope(ctx);
+          const store = application.openStore(storeOptions());
           try {
-            const result = await sendApprovedDraft({
-              store,
-              draftId: input.draftId,
+            return json(await application.directives.sendDraft(store, args, {
               scope,
               config: readMailConfig(),
-              allowedRecipients: mailPolicy(api),
-            });
-            return json(result);
+              allowedRecipients: allowlistOf(api),
+            }));
           } finally {
             store.close();
           }
@@ -311,30 +238,24 @@ export default {
           },
         },
         async execute(callId, args, signal) {
-          ownerOnly(ctx, api);
+          assertOwnerContext(ctx);
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
-          const store = new MailStore({ stateDirectory: mailStateDirectory(), allowedRecipients: mailPolicy(api) });
-          try {
-            const input = normalizeOutboxArgs(args);
-            if (input.problem) {
-              return json({ ok: false, code: "invalid_action", reason: input.problem });
-            }
-            if (input.action === "list") {
-              return json({ ok: true, action: "list", drafts: store.listDrafts({ limit: input.limit ?? 10 }) });
-            }
-            if (input.action === "audit") {
-              return json({ ok: true, action: "audit", entries: store.listAudit({ limit: input.limit ?? 10 }) });
-            }
+          return json(withStore((store) => {
+            const input = application.policy.normalizeOutbox(args);
+            if (input.problem) return { ok: false, code: "invalid_action", reason: input.problem };
+            if (input.action === "list") return { ok: true, action: "list", drafts: store.listDrafts({ limit: input.limit ?? 10 }) };
+            if (input.action === "audit") return { ok: true, action: "audit", entries: store.listAudit({ limit: input.limit ?? 10 }) };
             const cancelled = store.cancelDraft(input.draftId);
-            return json({ ok: cancelled, cancelled, action: "cancel", draftId: input.draftId });
-          } finally {
-            store.close();
-          }
+            return { ok: cancelled, cancelled, action: "cancel", draftId: input.draftId };
+          }));
         },
       }),
     });
   },
-};
+  };
+  return plugin;
+}
 
-export { TOOL_METADATA, CHANNEL };
+export default createMailPlugin();
+export { CHANNEL };

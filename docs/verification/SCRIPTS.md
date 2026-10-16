@@ -85,6 +85,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | --- | --- | --- | --- | --- | --- | --- |
 | `chatbot/packages/confirmation-core/src/confirmation.test.ts` | 离线 | 确认核心：提案校验、TTL、幂等与 grant 消费 | 只读 | 否 | offline | — |
 | `chatbot/packages/confirmation-core/src/public-id.test.ts` | 离线 | 公开 ID 脱敏与冲突规避 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/adapters.test.js` | 离线 | 邮件适配器：宿主入站路由到达被选中的 store、工具消费注入实现、替换策略不能授予身份、未知 id 明确失败 | 写临时测试目录、只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-mail/test/gate.test.js` | 离线 | 邮件端到端负向核心：确认前 mock SMTP 收到 0 封；另含完整往返与失败路径 | 写临时测试目录、只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-mail/test/mime.test.js` | 离线 | 邮件 MIME：RFC 2047 主题、RFC 2231 附件名、折行、注入防护、信封发件人 | 只读 | 否 | offline | — |
 | `chatbot/plugins/kurumi-mail/test/policy.test.js` | 离线 | 邮件输入策略：单收件人字符串与 body 别名的真实失败回归、白名单、参数规整 | 只读 | 否 | offline | — |
