@@ -38,7 +38,7 @@
     "installedEngineTests": "4/4",
     "existingMailQqLogTests": "112/112",
     "sharedBoundaryRecoveryTests": "54/54",
-    "evidenceCoverage": "229/229; 0 unclassified",
+    "evidenceCoverage": "230/230; 0 unclassified",
     "evidenceIndex": "161 scripts; 40 boundary declarations; 0 contradictions; 0 unregistered",
     "indexScope": "统计针对当前工作树，含文档23尚未提交的脚本与证据；不代表论文独立提交包含这些并行文件。",
     "documentLinks": {

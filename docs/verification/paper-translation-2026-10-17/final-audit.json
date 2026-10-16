@@ -3,8 +3,9 @@
   "at": "2026-10-17T03:03:10+08:00",
   "scope": "文档22论文PDF翻译与文件投递的最终本地复核；不改变生产数据，不发送新的邮件或QQ消息。",
   "repository": {
-    "head": "362c388e95450f9ee7080ab22cef5fb9cb8af83c",
-    "parent": "4f26366200c9603c4b8fa3b02eab4f4ec1b46098",
+    "head": "92626a3",
+    "featureCommit": "362c388e95450f9ee7080ab22cef5fb9cb8af83c",
+    "parent": "362c388e95450f9ee7080ab22cef5fb9cb8af83c",
     "featureCommitOnly": true,
     "knowledgeMapPathsInCommit": 0,
     "paperPathsInUnstagedChanges": 0,
@@ -15,7 +16,7 @@
     "responses": "11/11",
     "installedEngine": "4/4",
     "mailQqLog": "112/112",
-    "evidenceCoverage": "229/229",
+    "evidenceCoverage": "230/230",
     "evidenceIndex": "161 scripts; 40 boundary declarations; 0 contradictions; 0 unregistered"
   },
   "runtime": {
