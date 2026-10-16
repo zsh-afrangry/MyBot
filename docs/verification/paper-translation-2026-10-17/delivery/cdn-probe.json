@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-16T17:52:08.950Z",
+  "boundary": "Actual HTTPS retrieval probe using fixed QQ CDN hostnames and authenticated OneBot file token; no new send/model/mail; no URL token logged.",
+  "attempts": [
+    {
+      "host": "gzc-download.ftn.qq.com",
+      "status": 400,
+      "type": "text/octet",
+      "length": "16",
+      "bytes": 16,
+      "pdf": false
+    },
+    {
+      "host": "sz-download.ftn.qq.com",
+      "error": "UND_ERR_CONNECT_TIMEOUT"
+    },
+    {
+      "host": "sh-download.ftn.qq.com",
+      "error": "UND_ERR_CONNECT_TIMEOUT"
+    },
+    {
+      "host": "c2c-download.ftn.qq.com",
+      "error": "ENOTFOUND"
+    }
+  ]
+}

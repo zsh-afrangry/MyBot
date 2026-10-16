@@ -36,7 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
-import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disableKnowledgeMapRecovery} from './lib/recovery-isolation.mjs';
+import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery} from './lib/recovery-isolation.mjs';
 
 const argv = process.argv.slice(2);
 const arg = (name, fallback = null) => {
@@ -343,6 +343,7 @@ if(cfg&&restoredRepo){
  remapLinks(runtime,runtime,restoredRepo);remapLinks(restoredRepo,runtime,restoredRepo);
  // A recovery verification copy cannot act as a live assistant, even outside the sandbox.
  cfg.cron={...cfg.cron,enabled:false};
+ disablePaperRecovery(cfg,runtime);
  cfg.channels['kurumi-qq'].enabled=false;
  cfg.channels['kurumi-qq'].httpUrl='http://127.0.0.1:9';cfg.channels['kurumi-qq'].wsUrl='ws://127.0.0.1:9';
  cfg.gateway.port=18891;

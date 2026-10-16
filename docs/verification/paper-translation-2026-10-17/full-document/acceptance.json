@@ -1,0 +1,238 @@
+{
+  "startedAt": "2026-10-16T17:46:44.275Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/mvb7tbhu",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-16T17:01:55.719Z"
+  },
+  "jobId": "job_457de2736081ba514e6e01ce",
+  "job": {
+    "id": "job_457de2736081ba514e6e01ce",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "fea064eb1ed22f041052b117302a5016f38add673c187dab9f93c2f11b194a22",
+    "status": "failed",
+    "correlation": {},
+    "createdAt": "2026-10-16T17:46:44.280Z",
+    "artifacts": {},
+    "updatedAt": "2026-10-16T18:03:44.329Z",
+    "error": "api_stream_error",
+    "usage": {
+      "requests": 6,
+      "inputTokens": 3273,
+      "outputTokens": 46576,
+      "reportedTokens": 49849,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 814,
+          "stream": true,
+          "startedAt": "2026-10-16T17:47:11Z",
+          "streamProgress": {
+            "events": 289,
+            "outputChars": 352,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 317.516,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 288,
+            "output_tokens": 11132,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 10876
+            }
+          },
+          "responseId": "resp_ft_f588d11429754fc98385fa489a4e86eb",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 2,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 4299,
+          "stream": true,
+          "startedAt": "2026-10-16T17:52:29Z",
+          "streamProgress": {
+            "events": 1203,
+            "outputChars": 2346,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 258.619,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 1457,
+            "output_tokens": 22087,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 20640
+            }
+          },
+          "responseId": "resp_ft_e3d0657f68ad40828326373f49092d9e",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 3,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1685,
+          "stream": true,
+          "startedAt": "2026-10-16T17:56:47Z",
+          "streamProgress": {
+            "events": 393,
+            "outputChars": 703,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 30.357,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 541,
+            "output_tokens": 2705,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 2192
+            }
+          },
+          "responseId": "resp_09130cab350904dd016ad26560ad6c81988da62593572060df",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 4,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1898,
+          "stream": true,
+          "startedAt": "2026-10-16T17:57:18Z",
+          "streamProgress": {
+            "events": 551,
+            "outputChars": 877,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 202.551,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 542,
+            "output_tokens": 8668,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 8135
+            }
+          },
+          "responseId": "resp_000002edb89bae15016ad2658086a881998afd1f82d5c2dc79",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 5,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1478,
+          "stream": true,
+          "startedAt": "2026-10-16T18:00:40Z",
+          "streamProgress": {
+            "events": 7,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 25.385,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 445,
+            "output_tokens": 1984,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1552
+            }
+          },
+          "responseId": "resp_09d3e253f569893e016ad2664a1ac881998592c182055f04eb",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 6,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1269,
+          "stream": true,
+          "startedAt": "2026-10-16T18:01:06Z",
+          "streamProgress": {
+            "events": 11,
+            "outputChars": 0,
+            "lastEvent": "error"
+          },
+          "elapsedSeconds": 46.647,
+          "apiErrorCode": "upstream_stream_read_error",
+          "apiErrorType": "error"
+        }
+      ],
+      "failure": "api_stream_error",
+      "hardCostLimit": false
+    },
+    "engineProgress": {
+      "type": "progress_update",
+      "stage": "Translate Paragraphs",
+      "stage_progress": 99.87623762376238,
+      "overall_progress": 85.40480022807319
+    }
+  },
+  "sends": 0,
+  "ok": false,
+  "error": "api_stream_error",
+  "finishedAt": "2026-10-16T18:03:45.270Z",
+  "elapsedSeconds": 1020.995
+}

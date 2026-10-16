@@ -125,6 +125,13 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/backend-boundaries/domain.test.mjs` | 离线 | 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/domain-adapters/integration.test.mjs` | 离线 | 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/domain-adapters/registry.test.mjs` | 离线 | 领域适配器注册/注销、启动选择、同步契约和失败拒绝 | 只读 | 否 | header | — |
+| `chatbot/tests/papers/documents.test.mjs` | 离线 | PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/engine_test.py` | 离线 | 锁定排版引擎的探测、批次 JSON、公式/样式接口；独立 HOME/cache | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/jobs.test.mjs` | 离线 | 翻译配置、任务幂等/取消/重启与独立投递状态 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/log-query.test.mjs` | 离线 | 论文事件接入只读统一查询与可信消息/任务关联 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/mail.test.mjs` | 离线 | 受管附件快照、确认、完整性、大小限制及本地 TLS SMTP | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/responses_test.py` | 离线 | 原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/worker.test.mjs` | 离线 | 实际翻译进程文件系统隔离与恢复副本的付费/凭据关闭 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/reminder-list/intake.test.mjs` | 离线 | 自然录入授权、实际会话 UUID、超时/重置/换题与跨提醒领域拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/log-query.test.mjs` | 离线 | 提醒列表审计接入日志查询，精确消息/slot 关联 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/reminder-list/plugin.test.mjs` | 离线 | 提醒列表 v2 工具、可信原文钩子和过期上下文拒绝 | 写临时测试目录 | 否 | header | — |
@@ -134,12 +141,26 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/test/log-query.test.mjs` | 离线 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
+| `scripts/fusion/configure-deepseek-persona.mjs` | 迁移工具 | 一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口 | 真实模型、写运行状态 | 是 | header | — |
+| `scripts/fusion/configure-domains.mjs` | 迁移工具 | 启用主人绑定领域插件 | 写运行状态 | 是 | header | — |
+| `scripts/fusion/configure-fulltext-research.mjs` | 迁移工具 | 研究会话、笔记工作区与来源缓存 | 写运行状态 | 是 | header | — |
+| `scripts/fusion/configure-interaction.mjs` | 迁移工具 | 复制表情目录并设定迁移/每日发送预算 | 写运行状态 | 是 | header | — |
+| `scripts/fusion/configure-persona-memory.mjs` | 迁移工具 | 只导入稳定的主人字段进私有记忆 | 写运行状态 | 是 | header | — |
+| `scripts/fusion/configure-production.mjs` | 迁移工具 | 关闭仅验收能力，保留历史；需先审阅活动任务 | 写运行状态 | 是 | header | `docs/verification/migration/33-production-config.json` |
+| `scripts/fusion/configure-projects.mjs` | 迁移工具 | 一次性首次引导：只在 id 不存在时追加登记并写运行 openclaw.json | 写运行状态 | 是 | header | — |
+| `scripts/fusion/configure-research.mjs` | 迁移工具 | 配置检索 provider 与抓取路径 | 写运行状态 | 是 | header | — |
+| `scripts/fusion/configure-worker.mjs` | 迁移工具 | 显式配置隔离代码 worker | 写运行状态 | 是 | header | — |
+| `scripts/fusion/prepare.mjs` | 迁移工具 | 首次引导隔离运行目录，拒绝覆盖已写内容 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/import-paper-credentials.mjs` | 领域运维 | 显式导入三份指定 GPT 凭据到私密 0600 文件；不输出密钥 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/setup-paper-translation.sh` | 领域运维 | 按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发 | 真实外部API、写运行状态 | 是 | header | — |
 | `chatbot/scripts/reminder-list.mjs` | 领域运行 | 固定提醒列表 Cron 程序：到期判定、slot 防重和汇总输出，OpenClaw 投递本人 | 写运行状态 | 是 | header | — |
 | `chatbot/tests/acceptance/call-analysis.mjs` | 库 | 旧验收调用观察工具（只观察，不证明写入） | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/domain-fixture.mjs` | 库 | 旧验收领域夹具与工具定义 | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/host-driver.mjs` | 库 | 旧 harness Host 驱动，只开测试状态目录 | 写临时测试目录、只读 | 否 | code | — |
 | `chatbot/tests/acceptance/model-driver.mjs` | 库 | 旧 harness 模型驱动（构造模型客户端，读取遗留 AGENTS） | 真实模型 | 否 | code | — |
 | `chatbot/tests/acceptance/retrieval-config.mjs` | 库 | 旧验收检索输出预算配置 | 只读 | 否 | header | — |
+| `chatbot/tests/papers/fixtures.mjs` | 库 | 生成最小有效 PDF 测试字节，不读生产文件 | 只读 | 否 | header | — |
+| `chatbot/tests/papers/mime-parse.py` | 库 | 标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/dialogue-cases.mjs` | 库 | 用户七句验收样例与字段期望（纯数据，无生产导入） | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/production-guard.mjs` | 库 | 只读比较生产列表与一次性提案/提醒逻辑数据，不输出私有记录 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/backup-service.mjs` | 库 | 备份期间停写并恢复服务 | 重启或停服务 | 否 | header | — |
@@ -162,6 +183,9 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/run-retrieval-t3.mjs` | 遗留验收 | 真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置 | 真实模型、真实外部API | 是 | boundary | — |
 | `chatbot/tests/acceptance/run.mjs` | 遗留验收 | 旧 harness 总入口：真实 Host 调度 + 合成 QQ 输入 + 确定性认知 + 假调度 | 写仓库内文件、写临时测试目录 | 是 | boundary | — |
 | `chatbot/tests/acceptance/verify-restart.mjs` | 遗留验收 | 在新进程里重开测试目录并验证幂等；不重启任何服务 | 写临时测试目录、只读 | 否 | header | — |
+| `chatbot/tests/papers/acceptance-download.mjs` | 验收 | 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录 | 真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.`<br>`docs/verification/paper-translation-2026-10-17/download.json` |
+| `chatbot/tests/papers/acceptance-host.mjs` | 验收 | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/host.json`<br>`docs/verification/paper-translation-2026-10-17/host.json.` |
+| `chatbot/tests/papers/acceptance.mjs` | 验收 | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.` |
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
 | `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
 | `chatbot/tests/reminder-list/acceptance-native.mjs` | 验收 | 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务 | 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/native.json` |
@@ -200,16 +224,6 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/restore-verify.mjs` | 运维写状态 | 隔离恢复演练（只写新建 /tmp 目标） | 写临时测试目录 | 是 | header | — |
 | `scripts/fusion/run-gateway.mjs` | 运维写状态 | 前台生产入口；日常只由 systemd 启动 | 真实模型、重启或停服务、写运行状态 | 是 | header | — |
 | `scripts/fusion/stop-gateway.mjs` | 运维写状态 | 按环境证明停止隔离 Gateway | 重启或停服务 | 是 | header | — |
-| `scripts/fusion/configure-deepseek-persona.mjs` | 迁移工具 | 一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口 | 真实模型、写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-domains.mjs` | 迁移工具 | 启用主人绑定领域插件 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-fulltext-research.mjs` | 迁移工具 | 研究会话、笔记工作区与来源缓存 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-interaction.mjs` | 迁移工具 | 复制表情目录并设定迁移/每日发送预算 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-persona-memory.mjs` | 迁移工具 | 只导入稳定的主人字段进私有记忆 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-production.mjs` | 迁移工具 | 关闭仅验收能力，保留历史；需先审阅活动任务 | 写运行状态 | 是 | header | `docs/verification/migration/33-production-config.json` |
-| `scripts/fusion/configure-projects.mjs` | 迁移工具 | 一次性首次引导：只在 id 不存在时追加登记并写运行 openclaw.json | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-research.mjs` | 迁移工具 | 配置检索 provider 与抓取路径 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-worker.mjs` | 迁移工具 | 显式配置隔离代码 worker | 写运行状态 | 是 | header | — |
-| `scripts/fusion/prepare.mjs` | 迁移工具 | 首次引导隔离运行目录，拒绝覆盖已写内容 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/evidence-coverage.mjs` | 只读运维 | 校验证据目录分类覆盖，未分类即非零退出 | 只读 | 否 | header | `docs/verification/` |
 | `scripts/fusion/evidence-index.mjs` | 只读运维 | 生成本脚本与证据索引 | 只读 | 否 | header | `docs/verification/SCRIPTS.md` |
 | `scripts/fusion/health.mjs` | 只读运维 | 服务、QQ、频道、Cron、数据库健康 | 只读 | 否 | header | — |

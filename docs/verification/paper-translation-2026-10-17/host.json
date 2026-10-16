@@ -1,0 +1,82 @@
+{
+  "at": "2026-10-16T17:16:51.636Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No GPT translation request, real QQ/mail delivery or production write.",
+  "cases": [
+    {
+      "label": "list-real-managed-id",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "收到了 1 个 PDF：\n\n- 验收论文.pdf — 1 页，618 字节，收到时间 2026-10-17 01:16（刚上传的）\n\n还没有翻译，需要的时候说一声就行。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-default-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "翻译任务已经排队了，用的是默认配置：naiccc 的 GPT 6.1 Sol、max 强度、英文译中文、双语 PDF，完成后会直接发到你 QQ。\n\n现在还是排队中，等生成完我确认了再告诉你结果。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "query-after-new-session",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到了，最近一笔翻译任务的情况：\n\n- 英文→中文，模型 gpt-6.1-sol（max），双语 PDF 发本人 QQ\n- 状态：**已完成**，产物已生成\n- 投递：平台已受理（kurumi-qq），但平台受理不等于你那边确认收到，这点我没法替你确认\n\n没有重新翻译，也没有重发。需要我只看产物详情、或者做别的处理再说。"
+          }
+        ]
+      }
+    }
+  ],
+  "job": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "platform_accepted",
+      "receipts": [
+        {
+          "channel": "kurumi-qq",
+          "status": "platform_accepted",
+          "documentId": "pdf_bd0d1dcc2828f779d58befc561b6e0ae",
+          "fileId": "fixture-upload-1"
+        }
+      ]
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "passed": true,
+  "childStopped": true,
+  "mockUploads": [
+    {
+      "name": "验收论文-mono.pdf"
+    }
+  ]
+}

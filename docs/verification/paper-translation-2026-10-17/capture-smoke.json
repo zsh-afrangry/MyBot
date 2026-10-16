@@ -1,0 +1,6 @@
+{
+  "at": "2026-10-16T18:20:49.487Z",
+  "ok": true,
+  "boundary": "Actual production plugin-captured runner loads its fixed Python source inside the real worker sandbox. No model/API/QQ/SMTP call.",
+  "capturePath": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/380c513a-0b4d-45fd-aed3-fbec65907458/captures/openclaw-plugin-build-JluorB/package-0/node_modules/kurumi-papers/runner.js"
+}

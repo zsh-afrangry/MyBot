@@ -40,6 +40,10 @@ const MAX_SUBJECT = 300;
 const MAX_BODY = 100_000;
 const MAX_ATTACHMENTS = 10;
 const MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+const MAX_TOTAL_ATTACHMENT_BYTES = 20 * 1024 * 1024;
+const attachmentBytes = value => value instanceof Uint8Array
+  ? Buffer.from(value.buffer, value.byteOffset, value.byteLength)
+  : Buffer.from(String(value ?? ""), "utf8");
 
 const SCHEMA_SQL = String.raw`
 CREATE TABLE IF NOT EXISTS mail_drafts (
@@ -77,9 +81,9 @@ export function draftPayloadHash({ to, cc = [], subject, text, attachments = [] 
     attachments: attachments.map((entry) => ({
       filename: String(entry.filename),
       contentType: String(entry.contentType ?? "application/octet-stream"),
-      bytes: Buffer.isBuffer(entry.content) ? entry.content.length : Buffer.byteLength(String(entry.content ?? ""), "utf8"),
+      bytes: attachmentBytes(entry.content).length,
       sha256: createHash("sha256")
-        .update(Buffer.isBuffer(entry.content) ? entry.content : Buffer.from(String(entry.content ?? ""), "utf8"))
+        .update(attachmentBytes(entry.content))
         .digest("hex"),
     })),
   });
@@ -175,13 +179,16 @@ export class MailStore {
     if (text.length > MAX_BODY) throw new Error(`body must be at most ${MAX_BODY} characters`);
     const attachments = Array.isArray(input?.attachments) ? input.attachments : [];
     if (attachments.length > MAX_ATTACHMENTS) throw new Error(`at most ${MAX_ATTACHMENTS} attachments are supported`);
+    let totalAttachmentBytes = 0;
     for (const attachment of attachments) {
       const filename = String(attachment?.filename ?? "");
       if (!filename || /[\r\n\0]/.test(filename)) throw new Error("each attachment needs a safe filename");
-      const bytes = Buffer.isBuffer(attachment.content) ? attachment.content.length : Buffer.byteLength(String(attachment.content ?? ""), "utf8");
+      const bytes = attachmentBytes(attachment.content).length;
       if (bytes === 0) throw new Error(`attachment ${filename} is empty`);
       if (bytes > MAX_ATTACHMENT_BYTES) throw new Error(`attachment ${filename} exceeds the size limit`);
+      totalAttachmentBytes += bytes;
     }
+    if (totalAttachmentBytes > MAX_TOTAL_ATTACHMENT_BYTES) throw new Error('attachments exceed the total 20 MiB size limit');
 
     const draftId = randomUUID();
     const payloadHash = draftPayloadHash({ to, cc, subject, text, attachments });
@@ -200,7 +207,11 @@ export class MailStore {
           ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`)
         .run(
           draftId, payloadHash, JSON.stringify(to), JSON.stringify(cc), subject, text,
-          JSON.stringify(attachments.map((entry) => ({ filename: String(entry.filename), contentType: String(entry.contentType ?? "application/octet-stream") }))),
+          JSON.stringify(attachments.map((entry) => {
+            const bytes = attachmentBytes(entry.content);
+            return {filename: String(entry.filename), contentType: String(entry.contentType ?? "application/octet-stream"),
+              documentId: entry.documentId, bytes: bytes.length, sha256: createHash("sha256").update(bytes).digest("hex"), contentBase64: bytes.toString("base64")};
+          })),
           createdAtUtc, expiresAtUtc,
         );
       registerConfirmationProposal(this.#db, {
@@ -232,7 +243,7 @@ export class MailStore {
       cc: JSON.parse(row.cc_json),
       subject: row.subject,
       text: row.text_body,
-      attachments: JSON.parse(row.attachments_json),
+      attachments: JSON.parse(row.attachments_json).map(({contentBase64, ...metadata}) => metadata),
       status: row.status,
       createdAtUtc: Number(row.created_at_utc),
       expiresAtUtc: Number(row.expires_at_utc),
@@ -240,6 +251,19 @@ export class MailStore {
       messageId: row.message_id ?? undefined,
       lastError: row.last_error ?? undefined,
     };
+  }
+
+  /** Immutable draft bytes stay in the private SQLite DB, never in model-visible draft listings. */
+  readAttachments(draftId) {
+    const row = this.#db.prepare("SELECT attachments_json FROM mail_drafts WHERE draft_id = ?").get(String(draftId));
+    if (!row) throw new Error("unknown attachment draft");
+    return JSON.parse(row.attachments_json).map(entry => {
+      if (typeof entry.contentBase64 !== "string") throw new Error("legacy attachment content is unavailable; create a new draft");
+      const content = Buffer.from(entry.contentBase64, "base64");
+      if (content.length !== entry.bytes || createHash("sha256").update(content).digest("hex") !== entry.sha256) throw new Error("draft attachment integrity mismatch");
+      const {contentBase64, ...metadata} = entry;
+      return {...metadata, content};
+    });
   }
 
   listDrafts({ status, limit = 20 } = {}) {
@@ -289,6 +313,7 @@ export class MailStore {
     if (draft.status !== "pending") return { ok: false, code: "draft_not_pending" };
     const nowUtc = this.nowUtc();
     if (nowUtc > draft.expiresAtUtc) return { ok: false, code: "draft_expired" };
+    if (draftPayloadHash({...draft, attachments: this.readAttachments(draftId)}) !== draft.payloadHash) return {ok: false, code: "draft_payload_changed"};
     return checkApprovalGrant(this.#db, {
       proposalId: draft.draftId,
       domain: MAIL_DOMAIN,

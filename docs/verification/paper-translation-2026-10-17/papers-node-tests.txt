@@ -1,0 +1,28 @@
+✔ Real PDF inspection, portable catalog and byte integrity survive reopen (40.22578ms)
+✔ PDF ID dedup, path/symlink/size/encryption rejection (12.758869ms)
+✔ File-only messages and offline-file notices require actual owner and bot metadata (4.742847ms)
+✔ QQ URL is read from the authenticated API, not the uploaded text/URL (36.830939ms)
+✔ Private file upload is durable, owner-only; null success has no invented message ID (111.071713ms)
+✔ Explicit provider/model/effort; pages cannot silently truncate or execute (3.608368ms)
+✔ Lifecycle, immutable invocation identity and separate output/delivery state (19.652434ms)
+✔ Cancel running/queued jobs, no post-cancel delivery and restart never replays API (21.8074ms)
+✔ A lost send receipt preserves successful translation and does not replay worker (12.530093ms)
+✔ Registered tools reject non-owner, keep generic filesystem tools absent (4.046613ms)
+✔ Configured paper trace source joins job and QQ message without including credentials (22.482565ms)
+✔ Draft freezes exact PDF bytes, survives reopen; previews contain only metadata (116.268204ms)
+✔ The store Uint8Array contract preserves the selected bytes and approval hash (120.269363ms)
+✔ Attachment delivery needs approval, sends captured bytes once even if source later changes (247.881936ms)
+✔ MIME round trip preserves Unicode boundaries and binary files as attachments (103.134939ms)
+✔ Unknown refs/raw paths/oversized attachments/recipient bypass cannot create a draft (85.991369ms)
+✔ Tampering with a persisted attachment after confirmation prevents network delivery (114.269238ms)
+✔ Recovery disables paid translation and erases its active credential values (4.235604ms)
+✔ The actual worker sandbox hides host credentials and only writes job/cache directories (66.758455ms)
+✔ A real sandboxed worker stops writing when the parent wall deadline kills it (632.794352ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 926.653709

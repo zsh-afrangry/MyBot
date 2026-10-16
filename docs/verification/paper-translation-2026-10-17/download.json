@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-16T17:24:18.836Z",
+  "boundary": "Actual public arXiv PDF download and networkless PDF inspection; private acceptance catalog only. No model/QQ/mail call.",
+  "document": {
+    "id": "doc_bdfaa68d8984f0dc02beaca527b76f20",
+    "kind": "input",
+    "filename": "paper-c3ab01e47e614fe3.pdf",
+    "sha256": "bdfaa68d8984f0dc02beaca527b76f207d99b666d31d1da728ee0728182df697",
+    "bytes": 2215244,
+    "pages": 15,
+    "source": {
+      "type": "scholarly",
+      "url": "https://arxiv.org/pdf/1706.03762"
+    },
+    "createdAt": "2026-10-16T17:24:19.707Z"
+  },
+  "passed": true
+}

@@ -1,0 +1,99 @@
+音频 LLM 会在行动前先倾听吗？诊断语音智能体中的声学上下文门控
+
+Yanjie Zhang1∗† , Nanchen Hu1∗ & Yushi Sun2‡
+1
+HKUST, Hong Kong SAR, China
+2
+LIGHTSPEED, Shenzhen, China
+{yzhangj,nhuab,ysunbp}@connect.ust.hk
+
+YanjieZhang1∗†, NanchenHu1∗ & Yushi Sun2‡1HKUST，
+中国香港特别行政区2LIGHTSPEED，中国深圳{
+yzhangj,nhuab,ysunbp}@connect.ust.hk
+
+A BSTRACT
+Audio language models can recognize spoken commands and invoke tools, but
+an agent must first decide whether the acoustic and conversational context warrants action. We introduce VGB ENCH, a 1,018-item diagnostic benchmark for
+action-level addressedness across side-talk, self-talk, and speaker-switch scenarios. Each item uses a shared action space comprising silence, a tool call, and
+a natural-language answer. Speaker-switch pairs hold the specified words fixed
+while source, distance rendering, and a temporal boundary define a controlled
+wearer-to-bystander shift. Six raw Audio LLMs and three training-free adaptations often identify the target tool yet rarely withhold action under this shift; the
+highest raw switch mute rate is 14%. We then use VOX G ATE as a post-training
+case study. Supervised training mutes 91.3% of switched commands while choosing the correct tool for all nearby wearer commands and text-only controls. An
+exploratory GRPO stage has similar switch performance; side-talk accuracy rises
+from 68.4% to 70.9%, and self-talk muting from 52.0% to 60.0%. Factorized
+controls identify an independent source-change effect, while sensitivity to the farfield manipulation varies across acoustic renderings. The benchmark therefore
+measures multi-cue acoustic-context gating rather than isolated speaker identity.
+
+1
+
+I NTRODUCTION
+
+Voice agents increasingly perform consequential actions: they schedule appointments, send messages, place orders, and control physical systems. A spoken instruction carries both textual content,
+which specifies an action, and acoustic and conversational context, which indicates whether the utterance is addressed to the assistant. A bystander can utter the same command as the user, and a user
+can mention a command while thinking aloud. An agent that relies on text alone may recognize the
+requested operation while making the wrong decision to act.
+Existing systems often place keyword spotting, device-directed speech detection, or speaker verification before the agent (Mallidi et al., 2018; Nam et al., 2026). End-to-end Audio LLMs instead
+expose one policy that can remain silent, answer, or invoke a tool. Existing evaluations usually pair
+well-formed requests with a response or tool label, so high tool-selection accuracy does not show
+that acoustic context controls execution. We ask a narrower action-level question: when the specified words are held fixed but the trigger comes from a different acoustic source and scene, does an
+Audio LLM act or remain silent?
+We study this question with VGB ENCH, a 1,018-item diagnostic benchmark for agentic addressedness. It contains 395 side-talk recordings, 223 self-talk recordings, and 400 paired speaker-switch
+cases. Every item maps to a shared action space comprising [Mute], a tool call, and a natural∗
+
+Equal contribution.
+Work done during Yanjie’s internship at Tencent LIGHTSPEED.
+‡
+Corresponding author.
+†
+
+1
+
+arXiv:2609.32536v1 [cs.SD] 26 Sep 2026
+
+arXiv:2609.32536v1 [cs.SD] 26 Sep 2026
+
+D O AUDIO LLM S L ISTEN B EFORE T HEY ACT ?
+D IAGNOSING ACOUSTIC -C ONTEXT G ATING IN VOICE
+AGENTS
+
+摘要
+
+音频语言模型能够识别口语指令并调用工具，但智能体必须首先判断声学和对话上
+下文是否足以触发行动。我们提出 VGBENCH，这是一个包含 1,018 个条目的诊断
+基准，用于评估旁谈、自言自语和说话者切换场景下行动层面的指向性。每个条目
+都使用一个共享的动作空间，其中包括静默、工具调用和自然语言回答。说话者切
+换配对样本固定指定的词语，同时由声源、距离渲染和时间边界定义出从佩戴者到
+旁观者的受控切换。六个原始音频 LLM 和三种无需训练的适配方法通常能够识别
+目标工具，却很少在这种切换下抑制行动；原始模型的最高切换静默率为 14%。
+随后，我们以 VOXGATE 为例开展训练后案例研究。监督训练使模型对 91.3% 的
+切换指令保持静默，同时为所有近场佩戴者指令和纯文本控制选择正确的工具。一
+个探索性的 GRPO 阶段在说话者切换方面表现相近；旁谈准确率从 68.4% 提升至
+70.9%，自言自语静默率从 52.0% 提升至 60.0%。因子化控制揭示了独立的声源
+变化效应，而模型对远场操控的敏感性在不同声学渲染之间有所不同。因此，该基
+准衡量的是多线索声学上下文门控，而不是孤立的说话者身份。
+
+1 引言
+
+语音代理正越来越多地执行具有实际后果的操作：它们安排预约、发送消息、下订单，并控制物理系
+统。口头指令同时包含文本内容（用于指定操作）以及声学和对话上下文（用于表明该话语是否是对
+助手说的）。旁观者可能说出与用户相同的命令，而用户在自言自语时也可能提及某条命令。仅依赖
+文本的代理可能识别出所请求的操作，却错误地决定执行该操作。
+现有系统通常会在代理之前进行关键词检测、面向设备的语音检测或说话人验证（Mallidi et al., 2018; Nam et
+al., 2026）。相较之下，端到端的 Audio LLM 采用单一策略，可以保持沉默、作出回答或调用工具。现有评估
+通常将
+
+格式良好的请求与响应或工具标签配对，因此较高的工具选择准确率并不能表明声学上下文控制着执
+行过程。我们提出一个更狭义的、操作层面的问题：当指定的词语保持不变，但触发来自不同的声学
+来源和场景时，Audio LLM 会采取行动，还是保持沉默？
+
+我们使用 VGBENCH 研究这一问题，这是一个包含 1,018 个条目的、用于诊断 面向智能体的指向性 的基
+准。它包含 395 段旁谈录音、223 段自言自语录音和 400 个成对的说话人切换案例。每个条目都映射到一
+个共享的动作空间，其中包括 [静音], 、一次工具调用以及一个自然贡献相同。 †本工作完成于 Yanjie 在 Tencent LIGHTSPEED 实习
+期间。 ‡通讯作者。
+
+∗
+
+1
+
+

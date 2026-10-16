@@ -1,0 +1,209 @@
+{
+  "startedAt": "2026-10-16T18:04:49.652Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/mvb7tbhu",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-16T17:01:55.719Z"
+  },
+  "jobId": "job_e016a27a7b9bd3dca6bef968",
+  "job": {
+    "id": "job_e016a27a7b9bd3dca6bef968",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "fea064eb1ed22f041052b117302a5016f38add673c187dab9f93c2f11b194a22",
+    "status": "failed",
+    "correlation": {},
+    "createdAt": "2026-10-16T18:04:49.657Z",
+    "artifacts": {},
+    "updatedAt": "2026-10-16T18:13:28.109Z",
+    "error": "api_stream_error",
+    "usage": {
+      "requests": 5,
+      "inputTokens": 2207,
+      "outputTokens": 10294,
+      "reportedTokens": 12501,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1269,
+          "stream": true,
+          "startedAt": "2026-10-16T18:05:12Z",
+          "streamProgress": {
+            "events": 369,
+            "outputChars": 533,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 104.5,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 432,
+            "output_tokens": 4382,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 3999
+            }
+          },
+          "responseId": "resp_0497efc2ab55cd1d016ad2675c4d848198af2664ca145cda38",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 2,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1295,
+          "stream": true,
+          "startedAt": "2026-10-16T18:06:57Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 9.523,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 453,
+            "output_tokens": 1009,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 610
+            }
+          },
+          "responseId": "resp_0f81e668849de58e016ad267c2a3308190a82e71115ebce3e6",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 3,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1098,
+          "stream": true,
+          "startedAt": "2026-10-16T18:07:06Z",
+          "streamProgress": {
+            "events": 223,
+            "outputChars": 415,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 97.917,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 440,
+            "output_tokens": 3473,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 3106
+            }
+          },
+          "responseId": "resp_ft_e6e639f9b1f14ec3af7d4b5ce09f0c1b",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 4,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 982,
+          "stream": true,
+          "startedAt": "2026-10-16T18:08:44Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 124.535,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 882,
+            "output_tokens": 1430,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 652
+            }
+          },
+          "responseId": "resp_0a1426128649879b016ad268a3cf68819f865fc93da00f9583",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 5,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1245,
+          "stream": true,
+          "startedAt": "2026-10-16T18:10:49Z",
+          "streamProgress": {
+            "events": 17,
+            "outputChars": 0,
+            "lastEvent": "error"
+          },
+          "elapsedSeconds": 52.083,
+          "apiErrorCode": "upstream_stream_read_error",
+          "apiErrorType": "error"
+        }
+      ],
+      "failure": "api_stream_error",
+      "hardCostLimit": false
+    },
+    "engineProgress": {
+      "type": "progress_update",
+      "stage": "Translate Paragraphs",
+      "stage_progress": 99.87623762376238,
+      "overall_progress": 85.40480022807319
+    }
+  },
+  "sends": 0,
+  "ok": false,
+  "error": "api_stream_error",
+  "finishedAt": "2026-10-16T18:13:28.174Z",
+  "elapsedSeconds": 518.522
+}

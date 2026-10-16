@@ -19,6 +19,20 @@ export function assertNoProduction(value){
  if(typeof value==='string'&&(value.includes(PRODUCTION_STATE)||value.includes(PRODUCTION_REPO)))throw Error('Active recovery configuration still references production');
  if(value&&typeof value==='object')for(const v of Object.values(value))assertNoProduction(v);
 }
+// A recovery copy never starts paid paper jobs, even outside its test sandbox.
+export function disablePaperRecovery(cfg,runtime){
+ const paper=cfg.plugins?.entries?.['kurumi-papers']?.config;
+ if(!paper)return;
+ paper.liveTranslationEnabled=false;
+ const file=paper.credentialsFile;
+ const boundary=fs.realpathSync(runtime)+path.sep;
+ if(typeof file!=='string'||!path.resolve(file).startsWith(boundary))throw Error('Recovery paper credential path must be inside restored runtime');
+ if(fs.existsSync(file)){
+  if(!fs.realpathSync(file).startsWith(boundary))throw Error('Recovery paper credential path must be inside restored runtime');
+  if(fs.lstatSync(file).isSymbolicLink()||!fs.statSync(file).isFile())throw Error('Recovery paper credentials must be regular');
+  fs.writeFileSync(file,'{}',{mode:0o600});fs.chmodSync(file,0o600);
+ }
+}
 // Shared business data is external to the Fusion SQLite snapshot. Recovery probes
 // must remain inert even if somebody starts a copied fixed runner outside bwrap.
 export function disableKnowledgeMapRecovery(cfg,runtime){

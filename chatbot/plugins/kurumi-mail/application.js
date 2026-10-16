@@ -35,9 +35,9 @@ export function readMailConfig(env = process.env) {
   return { user, authCode, host, port, configured: Boolean(user && authCode) };
 }
 
-export function createMailApplication({ policyAdapter = "default", storeAdapter = "sqlite", registry = createMailRegistry() } = {}) {
+export function createMailApplication({ policyAdapter = "default", storeAdapter = "sqlite", registry = createMailRegistry(), resolveAttachment } = {}) {
   const selected = registry.resolve({ policy: policyAdapter, store: storeAdapter });
-  return Object.freeze({ ...selected, directives: createMailService(selected.policy) });
+  return Object.freeze({ ...selected, directives: createMailService(selected.policy, {resolveAttachment}) });
 }
 
 // Explicit default composition for offline callers (tests, the acceptance script). It is the same

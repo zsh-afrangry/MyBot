@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-16T17:53:41.276Z",
+  "boundary": "Actual owner-file HTTPS endpoint capability check, using authenticated OneBot URL and fixed QQ certificate name. No new send/model/mail.",
+  "pathKind": "asn.com",
+  "pathLengths": [
+    0,
+    7,
+    15
+  ],
+  "queryKeys": [
+    "ver",
+    "openid",
+    "rkeycodec",
+    "rkey",
+    "fileType",
+    "isthumb"
+  ],
+  "result": {
+    "error": "ERR_TLS_CERT_ALTNAME_INVALID"
+  }
+}

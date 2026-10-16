@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "createdAt": "2026-10-17T02:56:06+08:00",
+  "task": "paper-translation-2026-10-17",
+  "sourceDocument": "docs/22_论文PDF翻译与文件投递.md",
+  "scope": {
+    "included": [
+      "受管 PDF 目录与公开论文下载",
+      "按需隔离翻译任务、原生 Responses 与三凭据降级",
+      "QQ PDF 入站/出站",
+      "邮件附件字节快照、MIME 修复与投递回归",
+      "文档、证据和脚本索引"
+    ],
+    "excluded": [
+      "docs/23_KnowledgeMap业务能力桥接.md 及其并行代码、测试和证据修改",
+      "远端 push",
+      "旧系统、归档和恢复点改造"
+    ],
+    "baseHead": "4f26366",
+    "commitPolicy": "创建论文功能独立本地提交；不推送远端。"
+  },
+  "git": {
+    "branch": "main",
+    "stagedReview": "论文功能范围；未暂存的文档23并行修改保持原样",
+    "credentialValueScan": {
+      "patterns": [
+        "OPENAI_API_KEY*=...",
+        "sk-* token literals",
+        "long api-key assignments"
+      ],
+      "matches": 0
+    },
+    "workingTreeExpectation": "论文提交后仓库仍可能因文档23并行修改而显示脏；不能把全仓库报告为干净。"
+  },
+  "verification": {
+    "paperNodeTests": "20/20",
+    "responsesTests": "11/11",
+    "installedEngineTests": "4/4",
+    "existingMailQqLogTests": "112/112",
+    "sharedBoundaryRecoveryTests": "54/54",
+    "evidenceCoverage": "229/229; 0 unclassified",
+    "evidenceIndex": "161 scripts; 40 boundary declarations; 0 contradictions; 0 unregistered",
+    "indexScope": "统计针对当前工作树，含文档23尚未提交的脚本与证据；不代表论文独立提交包含这些并行文件。",
+    "documentLinks": {
+      "files": 21,
+      "localTargets": 209,
+      "broken": []
+    },
+    "stagedDiffChecks": [
+      "git diff --cached --check",
+      "git diff --check"
+    ]
+  },
+  "delivery": {
+    "qq": {
+      "status": "owner_confirmed",
+      "scope": "第一页验收 PDF；本人确认已收到"
+    },
+    "mail": {
+      "status": "smtp_accepted_owner_inbox_pending",
+      "recipient": "365999865@qq.com",
+      "attachment": {
+        "contentType": "application/pdf",
+        "bytes": 348896,
+        "sha256": "004864521b77f2fd2417f505ddac92b04cf70950151f93f4e04cbc31b5d31356"
+      },
+      "evidence": [
+        "mail-mime.json",
+        "delivery-mail-fixed/acceptance.json",
+        "observations.json"
+      ],
+      "ownerAction": "确认中文正文正常、PDF 附件存在且可打开后，才能关闭 B2。"
+    }
+  },
+  "blockers": [
+    {
+      "id": "B1",
+      "status": "blocked",
+      "description": "整篇 GPT 6.1 Sol/MAX 两轮均因 upstream_stream_read_error 中断，没有完整译稿；本轮停止继续付费复试。"
+    },
+    {
+      "id": "B2",
+      "status": "waiting_owner",
+      "description": "修复后的邮件已被 SMTP 接受，尚待本人邮箱确认正文和 PDF 附件。"
+    }
+  ],
+  "boundary": "单页翻译、QQ 收件、MIME 结构与 SMTP 接受已证明；不能扩大为整篇翻译质量或邮箱到信已证明。"
+}

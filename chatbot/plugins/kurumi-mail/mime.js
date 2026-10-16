@@ -40,13 +40,16 @@ export function encodeHeaderValue(value, label = "header") {
   const maxBase64Chars = Math.floor((ENCODED_WORD_LIMIT - 12) / 4) * 4;
   const maxBytes = (maxBase64Chars / 4) * 3;
   const words = [];
-  for (let offset = 0; offset < bytes.length; offset += maxBytes) {
+  for (let offset = 0; offset < bytes.length;) {
     // Never split a multi-byte character: back off to a UTF-8 boundary.
     let end = Math.min(offset + maxBytes, bytes.length);
     while (end > offset && end < bytes.length && (bytes[end] & 0xc0) === 0x80) end -= 1;
     words.push(`=?UTF-8?B?${bytes.subarray(offset, end).toString("base64")}?=`);
+    offset = end;
   }
-  return words.join(`${CRLF} `);
+  // Only foldHeader inserts wire line breaks. Pre-folding here makes its next fold add an empty
+  // line, ending the message headers before Content-Type and turning PDF base64 into visible text.
+  return words.join(" ");
 }
 
 /**
@@ -68,14 +71,11 @@ export function formatAddress(input) {
   return `"${encoded}" <${address}>`;
 }
 
-/** RFC 2231 filename parameter, with an ASCII fallback for old clients. */
+/** RFC 2231 filename parameter. Do not duplicate filename/filename*: some clients keep only first. */
 export function contentDisposition(filename) {
   assertSafeHeaderValue(filename, "attachment filename");
   const ascii = filename.replace(/[^\x20-\x7E]/g, "_").replace(/["\\]/g, "_");
-  const needsExtended = !isPlainAscii(filename);
-  const parts = [`filename="${ascii}"`];
-  if (needsExtended) parts.push(`filename*=UTF-8''${encodeURIComponent(filename)}`);
-  return `attachment; ${parts.join("; ")}`;
+  return isPlainAscii(filename) ? `attachment; filename="${ascii}"` : `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`;
 }
 
 /** Wrap base64 into 76-character lines, as required inside a MIME body. */
@@ -174,7 +174,7 @@ export function buildMessage(input) {
         `Content-Disposition: ${contentDisposition(filename)}`,
         "Content-Transfer-Encoding: base64",
         "",
-        wrapBase64(Buffer.isBuffer(attachment.content) ? attachment.content : Buffer.from(String(attachment.content), "utf8")),
+        wrapBase64(attachment.content instanceof Uint8Array ? attachment.content : Buffer.from(String(attachment.content), "utf8")),
       );
     }
     chunks.push(`--${boundary}--`, "");

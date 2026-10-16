@@ -1,0 +1,37 @@
+{
+  "at": "2026-10-16T18:02:18.517Z",
+  "boundary": "Standard Python email parser against generated RFC5322 wire message using the actual failed subject and actual translated PDF. Not a copy fetched from recipient inbox.",
+  "expected": {
+    "subject": "[论文翻译验收] 2609.32536v1.pdf（仅页码 1）",
+    "text": "本测试要求 PDF 作为附件发送。",
+    "filename": "2609.32536v1-dual.pdf",
+    "bytes": 348896,
+    "sha256": "004864521b77f2fd2417f505ddac92b04cf70950151f93f4e04cbc31b5d31356"
+  },
+  "before": {
+    "subject": "[论文翻译验收] 2609.32536v1.pdf（仅",
+    "multipart": false,
+    "type": "text/plain",
+    "defects": [],
+    "attachments": [],
+    "bodyChars": 478053,
+    "bodyContainsAttachmentHeaders": true
+  },
+  "after": {
+    "subject": "[论文翻译验收] 2609.32536v1.pdf（仅页码 1）",
+    "multipart": true,
+    "type": "multipart/mixed",
+    "body": "本测试要求 PDF 作为附件发送。",
+    "defects": [],
+    "attachments": [
+      {
+        "filename": "2609.32536v1-dual.pdf",
+        "disposition": "attachment",
+        "type": "application/pdf",
+        "bytes": 348896,
+        "sha256": "004864521b77f2fd2417f505ddac92b04cf70950151f93f4e04cbc31b5d31356"
+      }
+    ]
+  },
+  "ok": true
+}

@@ -14,7 +14,7 @@ import {MailStore} from './store.js';
 export function createMailRegistry() {
   const registry = createAdapterRegistry({domain: 'mail',
     policyMethods: ['normalizeDraft', 'normalizeSend', 'normalizeOutbox', 'assertRecipientsAllowed'],
-    storeMethods: ['nowUtc', 'close', 'createDraft', 'getDraft', 'listDrafts', 'listAudit', 'consumeApproval',
+    storeMethods: ['nowUtc', 'close', 'createDraft', 'getDraft', 'readAttachments', 'listDrafts', 'listAudit', 'consumeApproval',
       'markSent', 'markFailed', 'cancelDraft', 'listInboundConfirmationCandidates', 'recordInboundConfirmation'],
   });
   registry.registerPolicy('default', defaultMailPolicy);

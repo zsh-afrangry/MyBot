@@ -16,7 +16,7 @@ import { deliver, SmtpError } from "./smtp.js";
 /**
  * @param {import('./contracts.js').Policy} policy
  */
-export function createMailService(policy) {
+export function createMailService(policy, {resolveAttachment} = {}) {
   return Object.freeze({
     /**
      * Create a draft and register its confirmation proposal. Synchronous: nothing leaves the machine.
@@ -27,8 +27,15 @@ export function createMailService(policy) {
       if (input.problem) return { ok: false, code: "invalid_draft", reason: input.problem, sent: false };
       let created;
       try {
+        const attachments = (input.attachments ?? []).map(entry => {
+          if (!resolveAttachment) throw new Error("managed PDF attachments are not configured");
+          let doc;
+          try { doc = resolveAttachment(entry.documentId); }
+          catch { throw new Error("Managed PDF is unavailable or failed integrity checks; verify its documentId."); }
+          return {documentId: doc.id, filename: doc.filename, contentType: 'application/pdf', content: doc.content};
+        });
         created = store.createDraft(
-          { to: input.to, cc: input.cc, subject: input.subject, text: input.text },
+          { to: input.to, cc: input.cc, subject: input.subject, text: input.text, attachments },
           scope,
         );
       } catch (error) {
@@ -46,6 +53,7 @@ export function createMailService(policy) {
         cc: input.cc,
         subject: input.subject,
         bodyChars: String(input.text).length,
+        attachments: store.getDraft(created.draftId)?.attachments ?? [],
         expiresAtUtc: created.expiresAtUtc,
         note: "Not sent. The owner must reply with the confirmation instruction before email_send can deliver it.",
       };
@@ -72,7 +80,11 @@ export function createMailService(policy) {
         throw error;
       }
 
-      const approval = store.consumeApproval({ draftId: draft.draftId, scope });
+      let attachments, approval;
+      try {
+        attachments = (draft.attachments ?? []).length ? store.readAttachments(draft.draftId) : [];
+        approval = store.consumeApproval({ draftId: draft.draftId, scope });
+      } catch { return {ok: false, code: 'draft_attachment_integrity_failed', sent: false}; }
       if (!approval.ok) {
         return {
           ok: false,
@@ -92,6 +104,7 @@ export function createMailService(policy) {
         to: draft.to,
         subject: draft.subject,
         text: draft.text,
+        attachments,
         messageId,
       });
 

@@ -1,0 +1,7 @@
+{
+  "boundary": "One-time production cache warmup from authorized acceptance. SQLite uses online backup while acceptance may write; existing destination files unchanged, credential cooldown not imported.",
+  "copied": 39,
+  "sqliteBackups": 2,
+  "kept": 0,
+  "bytes": 344869220
+}

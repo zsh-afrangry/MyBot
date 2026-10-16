@@ -1,0 +1,190 @@
+{
+  "startedAt": "2026-10-16T17:35:06.449Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/mvb7tbhu",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-16T17:01:55.719Z"
+  },
+  "jobId": "job_4c8329ba20d178069d4aad5d",
+  "job": {
+    "id": "job_4c8329ba20d178069d4aad5d",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "pages": "1",
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "7f1e4d1c60f28fcc12c0f52ab399282faa35bb7cc9928d13b4e86a0a5220e1b8",
+    "status": "succeeded",
+    "correlation": {},
+    "createdAt": "2026-10-16T17:35:06.453Z",
+    "artifacts": {
+      "mono": "pdf_b421e8d42e02b1cea3f6cac4b3ea82da",
+      "dual": "pdf_004864521b77f2fd2417f505ddac92b0"
+    },
+    "updatedAt": "2026-10-16T17:44:54.495Z",
+    "usage": {
+      "requests": 3,
+      "inputTokens": 1697,
+      "outputTokens": 25765,
+      "reportedTokens": 27462,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1754,
+          "stream": true,
+          "streamProgress": {
+            "events": 35,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 1097,
+            "output_tokens": 17342,
+            "input_tokens_details": {
+              "cached_tokens": 898,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 16275
+            }
+          },
+          "responseId": "resp_093e1c8d90d460cf016ad260bf079c8191a1386b715fbe13df",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 2,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1290,
+          "stream": true,
+          "streamProgress": {
+            "events": 246,
+            "outputChars": 385,
+            "lastEvent": "response.output_text.delta"
+          },
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 372,
+            "output_tokens": 2178,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1863
+            }
+          },
+          "responseId": "resp_0e5f64dbc4b5ca14016ad261a9beb48194a9d4ae0c833ba9d1",
+          "responseEffort": "max"
+        },
+        {
+          "attempt": 3,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 475,
+          "stream": true,
+          "streamProgress": {
+            "events": 25,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 228,
+            "output_tokens": 6245,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 6073
+            }
+          },
+          "responseId": "resp_0ffbd95511a1a15d016ad261e66efc819a8ec423af320a0501",
+          "responseEffort": "max"
+        }
+      ],
+      "failure": null,
+      "hardCostLimit": false
+    },
+    "delivery": {
+      "status": "not_requested"
+    },
+    "engineProgress": {
+      "type": "progress_end",
+      "stage": "Save PDF",
+      "stage_progress": 100,
+      "overall_progress": 100
+    }
+  },
+  "sends": 0,
+  "artifacts": {
+    "mono": {
+      "id": "pdf_b421e8d42e02b1cea3f6cac4b3ea82da",
+      "kind": "artifact",
+      "filename": "2609.32536v1-mono.pdf",
+      "sha256": "b421e8d42e02b1cea3f6cac4b3ea82da7f2f0bfd94bbe183e144e76d91fd514f",
+      "bytes": 806159,
+      "pages": 1,
+      "source": {
+        "type": "translation",
+        "inputId": "doc_71658ea5beea1cf5f9485d825f57b8a5"
+      },
+      "jobId": "job_4c8329ba20d178069d4aad5d",
+      "createdAt": "2026-10-16T17:44:54.481Z"
+    },
+    "dual": {
+      "id": "pdf_004864521b77f2fd2417f505ddac92b0",
+      "kind": "artifact",
+      "filename": "2609.32536v1-dual.pdf",
+      "sha256": "004864521b77f2fd2417f505ddac92b04cf70950151f93f4e04cbc31b5d31356",
+      "bytes": 348896,
+      "pages": 1,
+      "source": {
+        "type": "translation",
+        "inputId": "doc_71658ea5beea1cf5f9485d825f57b8a5"
+      },
+      "jobId": "job_4c8329ba20d178069d4aad5d",
+      "createdAt": "2026-10-16T17:44:54.495Z"
+    }
+  },
+  "ok": true,
+  "finishedAt": "2026-10-16T17:44:55.029Z",
+  "elapsedSeconds": 588.58
+}

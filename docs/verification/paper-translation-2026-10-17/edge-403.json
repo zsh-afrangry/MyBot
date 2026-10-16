@@ -1,0 +1,90 @@
+{
+  "startedAt": "2026-10-16T17:01:55.698Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/mvb7tbhu",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-16T17:01:55.719Z"
+  },
+  "jobId": "job_a2f0a955441523345332b9cc",
+  "job": {
+    "id": "job_a2f0a955441523345332b9cc",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "pages": "1",
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "7f1e4d1c60f28fcc12c0f52ab399282faa35bb7cc9928d13b4e86a0a5220e1b8",
+    "status": "failed",
+    "correlation": {},
+    "createdAt": "2026-10-16T17:01:55.721Z",
+    "artifacts": {},
+    "updatedAt": "2026-10-16T17:04:07.690Z",
+    "error": "all_translation_credentials_unavailable",
+    "usage": {
+      "requests": 3,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "reportedTokens": 0,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "httpStatus": 403
+        },
+        {
+          "attempt": 2,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "httpStatus": 403
+        },
+        {
+          "attempt": 3,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "httpStatus": 403
+        }
+      ],
+      "failure": "all_translation_credentials_unavailable",
+      "hardCostLimit": false
+    }
+  },
+  "sends": 0,
+  "ok": false,
+  "error": "all_translation_credentials_unavailable",
+  "finishedAt": "2026-10-16T17:04:07.846Z",
+  "elapsedSeconds": 132.148
+}

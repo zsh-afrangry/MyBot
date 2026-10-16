@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-16T17:50:58.643Z",
+  "boundary": "Read-only authenticated retrieval of a bot-uploaded owner-private file; no new file send, translation or SMTP.",
+  "keys": [
+    "url"
+  ],
+  "url": {
+    "protocol": "http:",
+    "host": "180.109.156.103",
+    "port": ""
+  },
+  "urlAccepted": false,
+  "stageError": {
+    "name": "Error",
+    "code": null,
+    "localReason": "Unsupported QQ file download source"
+  }
+}

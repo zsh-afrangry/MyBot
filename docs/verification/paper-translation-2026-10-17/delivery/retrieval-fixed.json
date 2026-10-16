@@ -1,0 +1,18 @@
+{
+  "at": "2026-10-16T18:01:02.476Z",
+  "boundary": "Read-only actual OneBot lookup/TLS download of earlier bot-uploaded file; not an owner-upload event.",
+  "ok": true,
+  "document": {
+    "id": "doc_004864521b77f2fd2417f505ddac92b0",
+    "kind": "input",
+    "filename": "2609.32536v1-dual.pdf",
+    "sha256": "004864521b77f2fd2417f505ddac92b04cf70950151f93f4e04cbc31b5d31356",
+    "bytes": 348896,
+    "pages": 1,
+    "source": {
+      "type": "qq",
+      "fileId": "5511f66af95b09df4de35ea1c783c368_ffb41aa4-c989-11f1-b99a-c1311ba84d21"
+    },
+    "createdAt": "2026-10-16T18:01:02.852Z"
+  }
+}

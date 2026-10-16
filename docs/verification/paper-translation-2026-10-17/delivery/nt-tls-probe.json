@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-16T17:54:29.150Z",
+  "boundary": "Authenticated bot-file retrieval over verified QQ TLS names; no new sends/model/mail.",
+  "records": [
+    {
+      "type": "fixed-host-alias",
+      "host": "multimedia.nt.qq.com.cn",
+      "status": 400,
+      "bytes": 61,
+      "pdf": false
+    },
+    {
+      "type": "fixed-qq-tls-name",
+      "status": 200,
+      "bytes": 348896,
+      "pdf": true
+    }
+  ]
+}

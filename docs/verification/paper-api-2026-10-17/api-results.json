@@ -1,0 +1,618 @@
+{
+  "date": "2026-10-17",
+  "timezone": "Asia/Shanghai",
+  "source_commit": "df376ca9ee51d6ee1bd8fd39cf52883c72d2607e",
+  "boundary": "Real third-party API and published-package source inspection; synthetic text only; no installed translator or actual PDF translation; no QQ/email sends; no production config or database changes.",
+  "authorization": "User supplied the third-party host, model, max effort and credential order, requested investigation, and allowed isolated local installation/testing if needed. Full translator installation was not needed for this protocol investigation.",
+  "base_url": "https://naiccc.com",
+  "model": "gpt-6.1-sol",
+  "reasoning_effort": "max",
+  "credential_order": [
+    "OPENAI_API_KEY1_014",
+    "OPENAI_API_KEY2_030",
+    "OPENAI_API_KEY3_040"
+  ],
+  "credentials_actually_used": [
+    "OPENAI_API_KEY1_014"
+  ],
+  "key_rotation_tested": false,
+  "automatic_chat_fallback_enabled": false,
+  "requests": [
+    {
+      "label": "model-list",
+      "endpoint": "/v1/models",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 0.47,
+      "content_type": "application/json; charset=utf-8",
+      "model_count": 32,
+      "requested_model_listed": true,
+      "request_body": null
+    },
+    {
+      "label": "responses-max-nonstream",
+      "endpoint": "/v1/responses",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 4.27,
+      "content_type": "application/json",
+      "id": "resp_0077dc9b8c704ce0016ad24b7a236c8191987dbc6cf0a2eca6",
+      "object": "response",
+      "model": "gpt-6.1-sol",
+      "status": "completed",
+      "usage": {
+        "input_tokens": 4239,
+        "input_tokens_details": {
+          "cached_tokens": 4096,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 53,
+        "output_tokens_details": {
+          "reasoning_tokens": 41
+        },
+        "total_tokens": 4292,
+        "attribution": {
+          "items": {
+            "msg_0077dc9b8c704ce0016ad24b7a2418819192ec44f390fcddc4": {
+              "input_tokens": 21,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 0,
+              "content": [
+                {
+                  "input_tokens": 21,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 0
+                }
+              ]
+            },
+            "msg_0077dc9b8c704ce0016ad24b7c73e0819193fd102771975334": {
+              "input_tokens": 0,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 12,
+              "content": [
+                {
+                  "input_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 12
+                }
+              ]
+            },
+            "rs_0077dc9b8c704ce0016ad24b7c421481918f90e52be007380b": {
+              "input_tokens": 2,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 41
+            }
+          },
+          "request_fields": {
+            "instructions": {
+              "input_tokens": 4216,
+              "cached_tokens": 4096,
+              "cache_write_tokens": 0,
+              "output_tokens": 0
+            }
+          }
+        }
+      },
+      "incomplete_details": null,
+      "output_types": [
+        "reasoning",
+        "message"
+      ],
+      "reasoning_encrypted_present": true,
+      "output_text": "本文研究神经网络。",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning": {
+          "effort": "max"
+        },
+        "max_output_tokens": 1024,
+        "store": false,
+        "stream": false,
+        "input": [
+          {
+            "role": "user",
+            "content": [
+              {
+                "type": "input_text",
+                "text": "Translate into Simplified Chinese. Output only the translation: This paper studies neural networks."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "label": "chat-max-nonstream",
+      "endpoint": "/v1/chat/completions",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 7.35,
+      "content_type": "application/json; charset=utf-8",
+      "id": "resp_079c3704b20318ad016ad24b7e577c8199b830d96ee7722661",
+      "object": "chat.completion",
+      "model": "gpt-6.1-sol",
+      "usage": {
+        "prompt_tokens": 4239,
+        "completion_tokens": 37,
+        "total_tokens": 4276,
+        "prompt_tokens_details": {
+          "cached_tokens": 4096
+        },
+        "completion_tokens_details": {
+          "reasoning_tokens": 25
+        }
+      },
+      "output_types": [],
+      "reasoning_encrypted_present": false,
+      "finish_reason": "stop",
+      "output_text": "本文研究神经网络。",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "max",
+        "max_completion_tokens": 1024,
+        "store": false,
+        "stream": false,
+        "messages": [
+          {
+            "role": "user",
+            "content": "Translate into Simplified Chinese. Output only the translation: This paper studies neural networks."
+          }
+        ]
+      }
+    },
+    {
+      "label": "responses-max-explicit-instructions",
+      "endpoint": "/v1/responses",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 4.82,
+      "content_type": "application/json",
+      "id": "resp_02aec014d01894b0016ad24bc6f62c81999935cd2fc2c5c773",
+      "object": "response",
+      "model": "gpt-6.1-sol",
+      "status": "completed",
+      "usage": {
+        "input_tokens": 29,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 12,
+        "output_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "total_tokens": 41,
+        "attribution": {
+          "items": {
+            "msg_02aec014d01894b0016ad24bc6f7508199a60f337256095b77": {
+              "input_tokens": 10,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 0,
+              "content": [
+                {
+                  "input_tokens": 10,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 0
+                }
+              ]
+            },
+            "msg_02aec014d01894b0016ad24bc7ac8c81999f1219fa8d548acb": {
+              "input_tokens": 2,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 12,
+              "content": [
+                {
+                  "input_tokens": 2,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 12
+                }
+              ]
+            }
+          },
+          "request_fields": {
+            "instructions": {
+              "input_tokens": 17,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 0
+            }
+          }
+        }
+      },
+      "incomplete_details": null,
+      "output_types": [
+        "message"
+      ],
+      "reasoning_encrypted_present": false,
+      "output_text": "这篇论文研究神经网络。",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning": {
+          "effort": "max"
+        },
+        "max_output_tokens": 1024,
+        "store": false,
+        "stream": false,
+        "instructions": "Translate the input into Simplified Chinese. Return only the translation.",
+        "input": "This paper studies neural networks."
+      }
+    },
+    {
+      "label": "chat-max-explicit-system",
+      "endpoint": "/v1/chat/completions",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 2.51,
+      "content_type": "application/json; charset=utf-8",
+      "id": "resp_ft_e66b6428c9e84c119320006b442e4007",
+      "object": "chat.completion",
+      "model": "gpt-6.1-sol",
+      "usage": {
+        "prompt_tokens": 4241,
+        "completion_tokens": 45,
+        "total_tokens": 4286,
+        "completion_tokens_details": {
+          "reasoning_tokens": 33
+        }
+      },
+      "output_types": [],
+      "reasoning_encrypted_present": false,
+      "finish_reason": "stop",
+      "output_text": " 本文研究神经网络。",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "max",
+        "max_completion_tokens": 1024,
+        "store": false,
+        "stream": false,
+        "messages": [
+          {
+            "role": "system",
+            "content": "Translate the input into Simplified Chinese. Return only the translation."
+          },
+          {
+            "role": "user",
+            "content": "This paper studies neural networks."
+          }
+        ]
+      }
+    },
+    {
+      "label": "responses-max-json-placeholder",
+      "endpoint": "/v1/responses",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 502,
+      "seconds": 51.08,
+      "content_type": "text/plain; charset=UTF-8",
+      "error": "error code: 502\n",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning": {
+          "effort": "max"
+        },
+        "max_output_tokens": 1024,
+        "store": false,
+        "stream": false,
+        "instructions": "Translate string values into Simplified Chinese. Preserve all keys and the literal placeholder {v1}. Return a JSON object only.",
+        "input": "{\"text\":\"This paper studies neural networks. {v1}\"}",
+        "text": {
+          "format": {
+            "type": "json_object"
+          }
+        }
+      }
+    },
+    {
+      "label": "chat-max-custom-instructions",
+      "endpoint": "/v1/chat/completions",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 8.64,
+      "content_type": "application/json; charset=utf-8",
+      "id": "resp_0e83290d825d9913016ad24c49f4048196ae371b9efbe7b694",
+      "object": "chat.completion",
+      "model": "gpt-6.1-sol",
+      "usage": {
+        "prompt_tokens": 29,
+        "completion_tokens": 44,
+        "total_tokens": 73,
+        "completion_tokens_details": {
+          "reasoning_tokens": 32
+        }
+      },
+      "output_types": [],
+      "reasoning_encrypted_present": false,
+      "finish_reason": "stop",
+      "output_text": "本文研究神经网络。",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning_effort": "max",
+        "max_completion_tokens": 1024,
+        "store": false,
+        "stream": false,
+        "instructions": "Translate the input into Simplified Chinese. Return only the translation.",
+        "messages": [
+          {
+            "role": "user",
+            "content": "This paper studies neural networks."
+          }
+        ]
+      }
+    },
+    {
+      "label": "responses-max-json-prompt-only",
+      "endpoint": "/v1/responses",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 4.32,
+      "content_type": "application/json",
+      "id": "resp_0ec7570aaf4ace3a016ad24c7860348194b2a71b853e245849",
+      "object": "response",
+      "model": "gpt-6.1-sol",
+      "status": "completed",
+      "usage": {
+        "input_tokens": 49,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 139,
+        "output_tokens_details": {
+          "reasoning_tokens": 119
+        },
+        "total_tokens": 188,
+        "attribution": {
+          "items": {
+            "msg_0ec7570aaf4ace3a016ad24c7860a881948d2ad5dbfdb318d2": {
+              "input_tokens": 18,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 0,
+              "content": [
+                {
+                  "input_tokens": 18,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 0
+                }
+              ]
+            },
+            "msg_0ec7570aaf4ace3a016ad24c7aed7c8194868a101b8167983d": {
+              "input_tokens": 0,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 20,
+              "content": [
+                {
+                  "input_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 20
+                }
+              ]
+            },
+            "rs_0ec7570aaf4ace3a016ad24c7ad56c8194a04af6c5ec403f60": {
+              "input_tokens": 2,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 119
+            }
+          },
+          "request_fields": {
+            "instructions": {
+              "input_tokens": 29,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 0
+            }
+          }
+        }
+      },
+      "incomplete_details": null,
+      "reasoning": {
+        "effort": "max",
+        "context": "all_turns",
+        "summary": null,
+        "mode": "standard"
+      },
+      "max_output_tokens": null,
+      "output_types": [
+        "reasoning",
+        "message"
+      ],
+      "reasoning_encrypted_present": true,
+      "output_text": "{\"text\":\"本文研究神经网络。{v1}\"}",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning": {
+          "effort": "max"
+        },
+        "max_output_tokens": 1024,
+        "store": false,
+        "stream": false,
+        "instructions": "Translate string values into Simplified Chinese. Preserve all keys and the literal placeholder {v1}. Return a JSON object only.",
+        "input": "{\"text\":\"This paper studies neural networks. {v1}\"}"
+      }
+    },
+    {
+      "label": "responses-max-small-output-cap",
+      "endpoint": "/v1/responses",
+      "credential": "OPENAI_API_KEY1_014",
+      "http_status": 200,
+      "seconds": 10.05,
+      "content_type": "application/json",
+      "id": "resp_005348514618c612016ad24caf96dc8196b42d1d7050fb722c",
+      "object": "response",
+      "model": "gpt-6.1-sol",
+      "status": "completed",
+      "usage": {
+        "input_tokens": 35,
+        "input_tokens_details": {
+          "cached_tokens": 0,
+          "cache_write_tokens": 0
+        },
+        "output_tokens": 106,
+        "output_tokens_details": {
+          "reasoning_tokens": 21
+        },
+        "total_tokens": 141,
+        "attribution": {
+          "items": {
+            "msg_005348514618c612016ad24caf97d48196bc9445607f33f0f4": {
+              "input_tokens": 9,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 0,
+              "content": [
+                {
+                  "input_tokens": 9,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 0
+                }
+              ]
+            },
+            "msg_005348514618c612016ad24cb61aac8196a6e0cd0fbb76e999": {
+              "input_tokens": 0,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 85,
+              "content": [
+                {
+                  "input_tokens": 0,
+                  "cached_tokens": 0,
+                  "cache_write_tokens": 0,
+                  "output_tokens": 85
+                }
+              ]
+            },
+            "rs_005348514618c612016ad24cb5ed848196bd39e490f1f87331": {
+              "input_tokens": 2,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 21
+            }
+          },
+          "request_fields": {
+            "instructions": {
+              "input_tokens": 24,
+              "cached_tokens": 0,
+              "cache_write_tokens": 0,
+              "output_tokens": 0
+            }
+          }
+        }
+      },
+      "incomplete_details": null,
+      "reasoning": {
+        "effort": "max",
+        "context": "all_turns",
+        "summary": null,
+        "mode": "standard"
+      },
+      "max_output_tokens": null,
+      "output_types": [
+        "reasoning",
+        "message"
+      ],
+      "reasoning_encrypted_present": true,
+      "output_text": "1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40",
+      "request_body": {
+        "model": "gpt-6.1-sol",
+        "reasoning": {
+          "effort": "max"
+        },
+        "max_output_tokens": 16,
+        "store": false,
+        "stream": false,
+        "instructions": "Return exactly the integers from 1 to 40, separated by single spaces. Output nothing else.",
+        "input": "Return the requested sequence."
+      }
+    }
+  ],
+  "published_package_inspection": [
+    {
+      "wheel": "babeldoc-0.6.2-py3-none-any.whl",
+      "sha256": "fa7252aa2b4b57c833334a0ab3f3466a1de8300953aaff86b53cd5df4b30db1e",
+      "call_sites": [
+        {
+          "path": "babeldoc/translator/translator.py",
+          "chat_create_lines": [
+            270,
+            315
+          ],
+          "responses_create_present": false
+        }
+      ]
+    },
+    {
+      "wheel": "pdf2zh-1.9.11-py3-none-any.whl",
+      "sha256": "bd07509730bf87beec158f7c1efac9e96af0aa6657e6f1cf6ff359225609ad4d",
+      "call_sites": [
+        {
+          "path": "pdf2zh/translator.py",
+          "chat_create_lines": [
+            446,
+            509,
+            584,
+            1043
+          ],
+          "responses_create_present": false
+        }
+      ]
+    },
+    {
+      "wheel": "pdf2zh_next-2.9.0-py3-none-any.whl",
+      "sha256": "4cf72454dbff21c6c35380aed5e3bfe29278f0fdbe87e83942adf89e33b37c68",
+      "call_sites": [
+        {
+          "path": "pdf2zh_next/translator/translator_impl/azureopenai.py",
+          "chat_create_lines": [
+            48,
+            74
+          ],
+          "responses_create_present": false
+        },
+        {
+          "path": "pdf2zh_next/translator/translator_impl/openai.py",
+          "chat_create_lines": [
+            91,
+            138
+          ],
+          "responses_create_present": false
+        },
+        {
+          "path": "pdf2zh_next/translator/translator_impl/qwenmt.py",
+          "chat_create_lines": [
+            78
+          ],
+          "responses_create_present": false
+        },
+        {
+          "path": "pdf2zh_next/translator/translator_impl/siliconflow.py",
+          "chat_create_lines": [
+            71,
+            119
+          ],
+          "responses_create_present": false
+        }
+      ]
+    }
+  ],
+  "verification_limits": [
+    "HTTP responses and reported usage are gateway observations, not an independent upstream identity or billing audit.",
+    "No official SDK, installed pdf2zh runtime, streaming, concurrent workload, full paper, actual fallback to the second/third credential, or full delivery flow was exercised.",
+    "The JSON-mode request returned a single 502; this does not prove the feature is unsupported.",
+    "Output cap violation was reproduced: requested 16, reported output 106, status completed.",
+    "Usage is absent for the 502; any incurred upstream charge is unknown."
+  ]
+}

@@ -17,6 +17,7 @@ import { assertOwnerContext, requireConfirmationScope } from "./inbound.js";
 import { ENV_AUTH_CODE, ENV_USER, createMailApplication, mailStateDirectory, readMailConfig } from "./application.js";
 import { normalizeAllowlist } from "./policy.js";
 import { defaultConnector, SmtpClient } from "./smtp.js";
+import {Documents, documentRoot} from '../../packages/documents/index.js';
 
 const PLUGIN_ID = "kurumi-mail";
 const BACKEND_ID = "kurumi-mail";
@@ -42,6 +43,7 @@ export function createMailPlugin({ registry } = {}) {
       registry,
       policyAdapter: api.pluginConfig?.policyAdapter,
       storeAdapter: api.pluginConfig?.storeAdapter,
+      resolveAttachment: id => new Documents(documentRoot(api.config)).get(id),
     });
     const storeOptions = () => ({ stateDirectory: mailStateDirectory(), allowedRecipients: allowlistOf(api) });
     /** Open the selected store for one operation. Nothing here constructs a concrete store. */
@@ -167,6 +169,7 @@ export function createMailPlugin({ registry } = {}) {
             subject: { type: "string", maxLength: 300, description: "Subject line." },
             text: { type: "string", maxLength: 100000, description: "Plain-text body." },
             body: { type: "string", maxLength: 100000, description: "Alias for 'text'." },
+            attachments: {type: 'array', maxItems: 10, items: {type: 'object', additionalProperties: false, required: ['documentId'], properties: {documentId: {type: 'string'}}}, description: 'Managed PDF IDs from kurumi_document or a completed kurumi_translate job. Only references, no paths or base64. The draft freezes exact bytes and shows filenames/hashes for confirmation.'},
           },
         },
         async execute(callId, args, signal) {

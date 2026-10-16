@@ -88,7 +88,9 @@ export function normalizeDraftArgs(args = {}) {
   if (to.length === 0) problem = "at least one recipient is required in 'to' (a single address as a string is fine)";
   else if (!subject.trim()) problem = "'subject' is required";
   else if (text === undefined || !text.trim()) problem = "a plain-text body is required as 'text' (or 'body')";
-  return { to, cc, subject, text, problem };
+  const attachments = input.attachments ?? [];
+  if (!Array.isArray(attachments) || attachments.length > 10 || attachments.some(a => !a || typeof a.documentId !== 'string' || Object.keys(a).some(k => k !== 'documentId'))) problem = "attachments must be up to 10 managed {documentId} references; paths and raw content are not accepted";
+  return { to, cc, subject, text, attachments, problem };
 }
 
 /** Normalise email_outbox arguments; listing is the obvious default when action is omitted. */

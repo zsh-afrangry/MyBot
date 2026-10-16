@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-16T18:21:31.405Z",
+  "boundary": "Production feature configuration/persona already aligned when inspected; restarted only kurumi-fusion to reload the tested MIME code. No model call or message from checks.",
+  "service": {
+    "MainPID": "3116522",
+    "ActiveState": "active",
+    "ActiveEnterTimestamp": "Sat 2026-10-17 02:21:16 CST"
+  },
+  "health": {
+    "ok": true,
+    "issues": [],
+    "gateway": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "testIngress": false,
+    "testMethodDisabled": true,
+    "channelDatabase": "ok",
+    "weatherDatabase": "ok",
+    "remindersDatabase": "ok",
+    "reminderListDatabase": "ok",
+    "knowledgeMap": {
+      "ok": true,
+      "contract": 1,
+      "domains": [
+        "weather",
+        "tasks",
+        "bills"
+      ]
+    }
+  },
+  "checks": {
+    "health": 0,
+    "dependencies": 0,
+    "sync-config": 0,
+    "sync-persona": 0
+  },
+  "cacheWarm": "cache-warm.json",
+  "snapshot": "Existing quiesced snapshot predates this feature; no new full backup/restore performed.",
+  "restartNote": "A health check immediately after restart observed Gateway unavailable; subsequent readiness check passed. Evidence records ready state, not merely systemd active.",
+  "codeNote": "Reload includes final missing-document error-path redaction."
+}

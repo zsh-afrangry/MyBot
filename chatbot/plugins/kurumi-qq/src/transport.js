@@ -5,8 +5,8 @@ import {account,ownerTarget,token} from './config.js';
 import {Ledger} from './ledger.js';
 import {setTimeout as pause} from 'node:timers/promises';
 import {presentForQQ} from './presentation.js';
-export async function onebot(a,action,params,signal){
- const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(15000)]):AbortSignal.timeout(15000)});
+export async function onebot(a,action,params,signal,{timeoutMs=15000}={}){
+ const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeoutMs)]):AbortSignal.timeout(timeoutMs)});
  if(!r.ok)throw Error(`OneBot HTTP ${r.status}`);
  const data=await r.json();if(data.status!=='ok'||data.retcode!==0){const e=Error(`OneBot rejected action (${data.retcode})`);e.rejected=true;throw e;}return data.data;
 }

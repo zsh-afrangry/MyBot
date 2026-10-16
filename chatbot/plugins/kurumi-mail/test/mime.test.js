@@ -32,13 +32,13 @@ test("plain ASCII headers stay readable", () => {
 
 test("non-ASCII subjects use RFC 2047 and never exceed 75 characters per encoded word", () => {
   const encoded = encodeHeaderValue("项目进度与下周安排（含附件）以及更多需要折行的中文说明文字用于验证分段行为正确");
-  for (const word of encoded.split("\r\n ")) {
+  for (const word of encoded.split(/\s+/u)) {
     assert.ok(word.length <= 75, `encoded word too long: ${word.length}`);
   }
   assert.match(encoded, /^=\?UTF-8\?B\?/u);
   // Decoding all words yields the original text.
   const decoded = encoded
-    .split("\r\n ")
+    .split(/\s+/u)
     .map((word) => Buffer.from(word.replace(/^=\?UTF-8\?B\?/u, "").replace(/\?=$/u, ""), "base64").toString("utf8"))
     .join("");
   assert.equal(decoded, "项目进度与下周安排（含附件）以及更多需要折行的中文说明文字用于验证分段行为正确");
@@ -53,9 +53,9 @@ test("header values containing CR, LF or NUL are rejected outright", () => {
   assert.throws(() => build({ attachments: [{ filename: "x\r\n.txt", content: "x" }] }), /filename/u);
 });
 
-test("non-ASCII attachment filenames carry an RFC 2231 extended parameter plus an ASCII fallback", () => {
+test("non-ASCII attachment filenames carry one unambiguous RFC 2231 extended parameter", () => {
   const disposition = contentDisposition("季度报告.pdf");
-  assert.match(disposition, /^attachment; filename="/u);
+  assert.match(disposition, /^attachment; filename\*=UTF-8''/u);
   assert.match(disposition, /filename\*=UTF-8''%E5%AD%A3%E5%BA%A6%E6%8A%A5%E5%91%8A\.pdf/u);
   const message = build({ attachments: [{ filename: "季度报告.pdf", content: "hi", contentType: "application/pdf" }] });
   assert.match(message.raw, /filename\*=UTF-8''%E5%AD%A3%E5%BA%A6%E6%8A%A5%E5%91%8A\.pdf/u);

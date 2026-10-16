@@ -15,7 +15,7 @@ export interface DraftInput {
   cc?: string[];
   subject: string;
   text: string;
-  attachments?: Array<{filename: string; content: string | Uint8Array; contentType?: string}>;
+  attachments?: Array<{documentId?: string; filename: string; content: string | Uint8Array; contentType?: string}>;
 }
 
 /** Draft arguments as they arrive from a tool call, before normalisation. */
@@ -26,6 +26,7 @@ export interface DraftCommand {
   text?: unknown;
   /** Accepted alias for `text`; models reach for it at least as often. */
   body?: unknown;
+  attachments?: unknown;
 }
 
 /**
@@ -37,6 +38,7 @@ export interface NormalizedDraft {
   cc?: string[];
   subject?: string;
   text?: string;
+  attachments?: Array<{documentId: string}>;
   problem?: string;
 }
 
@@ -73,7 +75,7 @@ export interface Draft {
   cc: string[];
   subject: string;
   text: string;
-  attachments: Array<{filename: string; contentType: string}>;
+  attachments: Array<{documentId?: string; filename: string; contentType: string; bytes: number; sha256: string}>;
   status: 'pending' | 'sent' | 'failed' | 'cancelled';
   createdAtUtc: number;
   expiresAtUtc: number;
@@ -100,6 +102,7 @@ export interface Store {
 
   createDraft(input: DraftInput, scope: object): {draftId: string; payloadHash: string; instruction: string; expiresAtUtc: number};
   getDraft(draftId: string): Draft | undefined;
+  readAttachments(draftId: string): Array<{filename: string; contentType: string; content: Uint8Array}>;
   listDrafts(args?: {status?: string; limit?: number}): Draft[];
   listAudit(args?: {limit?: number}): AuditEntry[];
 

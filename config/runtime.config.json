@@ -60,6 +60,9 @@
             "email_draft",
             "email_send",
             "email_outbox",
+            "kurumi_document",
+            "kurumi_translate",
+            "kurumi_document_send",
             "knowledge_bills_get",
             "knowledge_bill_add"
           ],
@@ -204,6 +207,7 @@
       "kurumi-memory",
       "kurumi-research",
       "kurumi-mail",
+      "kurumi-papers",
       "kurumi-knowledgemap"
     ],
     "load": {
@@ -217,6 +221,7 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-mail",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-papers",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-knowledgemap"
       ]
     },
@@ -277,6 +282,19 @@
           "allowedRecipients": [
             "365999865@qq.com"
           ]
+        }
+      },
+      "kurumi-papers": {
+        "enabled": true,
+        "config": {
+          "root": "/home/afrangry/.openclaw-fusion/documents",
+          "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+          "credentialsFile": "/home/afrangry/.openclaw-fusion/paper-credentials.json",
+          "liveTranslationEnabled": true,
+          "maxPages": 30,
+          "maxRequests": 200,
+          "maxReportedTokens": 150000,
+          "timeoutSeconds": 1200
         }
       },
       "kurumi-knowledgemap": {

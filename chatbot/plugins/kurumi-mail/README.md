@@ -67,7 +67,7 @@ $EDITOR /home/afrangry/.openclaw-fusion/runtime-env.json
 | 工具 | 作用 |
 | --- | --- |
 | `email_status` | 报告是否已配置（发件账号、SMTP 主机端口），**不回显授权码**；`probe=true` 时额外做一次真实 TLS 连接与认证，不发信 |
-| `email_draft` | 创建待确认草稿，返回确认口令、预览与草稿 ID；**不发信** |
+| `email_draft` | 创建待确认草稿，返回确认口令、预览与草稿 ID；可附受管 PDF `attachments:[{documentId}]`，**不发信** |
 | `email_send` | 投递已获批准的草稿；没有授权时返回 `approval_required` 且不发信；重复发送被拒 |
 | `email_outbox` | 列出草稿与状态、读取审计、取消待确认草稿（只读，除取消外） |
 
@@ -75,7 +75,7 @@ $EDITOR /home/afrangry/.openclaw-fusion/runtime-env.json
 
 ```bash
 cd chatbot/plugins/kurumi-mail
-npm test        # 47 个用例：MIME 编码、SMTP 协议、闸门、端到端
+npm test        # MIME 编码、SMTP 协议、闸门、端到端；计数以本次输出为准
 ```
 
 测试对**本地 mock SMTP 服务器**跑真实 TLS 与真实 SMTP 对话（自签证书在 `test/fixtures/`，仅测试用），
@@ -95,7 +95,7 @@ node scripts/fusion/test-mail-delivery.mjs --to 365999865@qq.com             # �
 
 ## 已知边界
 
-- 只支持纯文本正文（`html` 会被拒绝），附件上限 10 个、单个 10 MiB。
+- 只支持纯文本正文（`html` 会被拒绝）；工具附件只接受受管 PDF ID，上限 10 个、单个 10 MiB、合计 20 MiB。内容快照与确认 hash 绑定，契约和真实验收见[文档 22](../../../docs/22_论文PDF翻译与文件投递.md)。
 - 收件人白名单已实现（见上），当前只放行 `365999865@qq.com`。
 - 只发信，不收信（无 IMAP）。
 - 当前只验证过 QQ 邮箱的 465 隐式 TLS；Gmail 需要先解决非 HTTP 协议的代理接入（见文档 20）。

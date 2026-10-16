@@ -1,0 +1,26 @@
+{
+  "at": "2026-10-16T18:08:52.032609+00:00",
+  "ownerQQReceipt": {
+    "status": "owner_confirmed",
+    "scope": "First-page acceptance PDF only; owner reports received expected file through QQ."
+  },
+  "originalMail": {
+    "status": "owner_reported_garbled",
+    "causeReproduced": "Long RFC2047 subject was folded twice, inserting early header terminator. Standard MIME parser treated attachment headers/base64 as body.",
+    "evidence": "mail-mime.json"
+  },
+  "correctedMail": {
+    "smtp": "accepted",
+    "ownerInboxConfirmation": "pending",
+    "receipt": "delivery-mail-fixed/acceptance.json"
+  },
+  "qqDownload": {
+    "status": "passed",
+    "scope": "Authenticated retrieval of earlier bot-uploaded PDF with verified fixed QQ SNI; not a real owner upload.",
+    "receipt": "delivery/retrieval-fixed.json"
+  },
+  "layout": {
+    "firstPageBody": "readable in mono and dual renderings",
+    "knownDefect": "Author/affiliation area merges lines/names; no publication-quality claim."
+  }
+}
