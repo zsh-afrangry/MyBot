@@ -24,17 +24,17 @@
 
 ## 当前资产复核（2026-10-17）
 
-本节记录本次收尾读取到的实际状态；较早的采集时间、提交号和体积只保留为历史资料，不能覆盖本节。
+本节记录文档23第二轮收尾时的资产状态；实现提交后还有文档/证据收尾提交，实际HEAD和领先数量从Git读取。
 
 | 范围 | 当前事实 |
 | --- | --- |
-| Fusion 主仓库 | `/home/afrangry/kurumi-fusion`，`main` 当前提交以 `git rev-parse HEAD` 为准；本次复核观察到 `origin/main`=`d717965f`，领先数量以 `git rev-list --count origin/main..HEAD` 实时查询，工作区干净 |
-| KnowledgeMap 主仓库 | `/home/afrangry/repository`，`master`=`27f4519`，`origin/master`=`2889e62`，本地领先 3 个提交；工作区保留 6 个并行账单视觉开发文件，未暂存、未提交、未清理 |
+| Fusion 主仓库 | `/home/afrangry/kurumi-fusion`，`main`，第二轮实现`97ed797`；当前HEAD用`git rev-parse HEAD`、领先数用`git rev-list --count origin/main..HEAD`查询。本轮本地提交，不推送 |
+| KnowledgeMap 主仓库 | `/home/afrangry/repository`，`master`，第二轮实现`1efec0e`；当前HEAD/领先数从Git读取，原6份P15并行改动保留未提交。桥接只纳入共享Bills.vue两处版本传参及本轮todolist状态，未提交视觉实现 |
 | Fusion 后台副本 | `/home/afrangry/.openclaw-fusion/projects/fusion`，分支 `kurumi/main-sync-2026-10-10`，HEAD=`a4e7487`，干净、无 remote；最后内容同步基线为 `2c234af`/`0ada63a`，尚未追平 Fusion 当前主仓库 |
 | 运行服务 | `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 均 active/enabled；`openclaw-gateway.service` 与 `qq-bridge.service` inactive/masked；用户级 `dsh-web.service` 当前不存在，本复核未改动系统级单元 |
-| 备份资料 | `knowledgemap-bridge-2026-10-17-01-03-26`、`knowledgemap-bridge-2026-10-17-post-cutover`、`2026-10-16-18-07-42-knowledgemap-post-cutover`、`knowledgemap-bridge-git-closeout-2026-10-17-02-54-28` 均存在；它们是配对代码/状态或差异资料，不是同一时刻跨系统停写快照 |
+| 备份资料 | 第一轮基线/配对恢复资料继续保留；第二轮新增`knowledgemap-bills-round2-2026-10-17-code`及`...-mysql`，代码668+221文件逐项恢复、MySQL1账单/19事项/37标签完整还原并通过6组。不是同一时刻跨系统停写快照，精确路径与范围见文档23 |
 
-本次只更新 Fusion 文档，不触碰 KnowledgeMap 的 6 个并行文件，也不把历史 `8dbdaef` 或 `0f2255a2` 写成当前提交。后台副本的追平与合入留到下一次后台代码任务开始前处理。
+本次业务变更、受管配置、迁移SQL与收尾文档分别在两仓库提交；未改文档22业务。原6份并行文件中的不相交4份字节不变，共享文件仅按本任务差异入index。后台副本的追平与合入留到下一次后台代码任务开始前处理。
 
 ## 备份资产与保留规则
 

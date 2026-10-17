@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-17T05:26:52.962992+00:00",
+  "ok": true,
+  "boundary": "Real production additive bills.version migration; no business row changes",
+  "originalRows": {
+    "bills": {
+      "count": 1,
+      "sha256": "4bc5ef56e29885cb97585058f1844dbe6f5259e1efe45beafcfd6c13cac6ecca"
+    },
+    "calendar_events": {
+      "count": 19,
+      "sha256": "278bebcfbcfb191a3e5ca6233801fdc071281dcc2d2d4d81362fc1063d0f4ead"
+    },
+    "tags": {
+      "count": 37,
+      "sha256": "2b2923a701ff1f2799fe624de0947e8fee79528a881982d4c9d5645bfbbe739d"
+    }
+  },
+  "migrationOutput": [
+    "{\"apply\": true, \"alterCount\": 1, \"createTables\": []}",
+    "schema aligned; business rows untouched"
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "at": "2026-10-17T05:27:31.189Z",
+  "marker": "[doc23-r2-mvbyg5md]",
+  "boundary": "Real model/production OpenClaw/API/MySQL/browser/weather; synthetic owner inbound captured without QQ delivery; exact test-row cleanup, original bills unchanged",
+  "cases": [
+    {
+      "label": "new-before-create",
+      "ok": true
+    },
+    {
+      "label": "expression-to-first-bill",
+      "ok": true
+    },
+    {
+      "label": "semantic-single-update",
+      "ok": true
+    },
+    {
+      "label": "actual-website-form-update",
+      "ok": true
+    },
+    {
+      "label": "website-edit-visible-to-model",
+      "ok": true
+    },
+    {
+      "label": "new-before-delete",
+      "ok": true
+    },
+    {
+      "label": "semantic-single-actual-delete",
+      "ok": true
+    },
+    {
+      "label": "new-before-ambiguous",
+      "ok": true
+    },
+    {
+      "label": "ambiguous-delete-clarifies",
+      "ok": true
+    },
+    {
+      "label": "weather-real-run-correlation",
+      "ok": true
+    }
+  ],
+  "correlation": {
+    "apiEvents": 12,
+    "allRunIdsMatchRealHost": true,
+    "runIdQueryFindsBusinessEvents": true,
+    "weatherCovered": true,
+    "invalidBillArgumentAttempts": 0
+  },
+  "ok": true,
+  "testIngressRestored": true,
+  "cleanup": {
+    "testBillIds": [
+      4,
+      5,
+      6
+    ],
+    "noTestRowsRemain": true,
+    "originalBillsUnchanged": true,
+    "receiptsKept": true
+  }
+}

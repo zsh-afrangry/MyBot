@@ -1,0 +1,133 @@
+{
+  "at": "2026-10-17T05:32:35.608643+00:00",
+  "ok": true,
+  "implementationCommits": {
+    "fusion": "97ed797",
+    "knowledgemap": "1efec0e"
+  },
+  "results": [
+    {
+      "command": "python -m unittest discover -s backend/tests -p assistant*cases.py -v",
+      "repo": "KnowledgeMap",
+      "passed": 43,
+      "boundary": "isolated SQLite/HTTP; no production/model/QQ"
+    },
+    {
+      "command": "python backend/tests/portal_crud_cases.py",
+      "repo": "KnowledgeMap",
+      "passed": 13,
+      "boundary": "isolated SQLite"
+    },
+    {
+      "command": "node --test chatbot/tests/knowledgemap/*.test.mjs (KM_TEST_REPO set to isolated checkout)",
+      "repo": "Fusion",
+      "passed": 32,
+      "boundary": "offline or local isolated HTTP/SQLite"
+    },
+    {
+      "command": "node --test chatbot/tests/reminder-list/*.test.mjs scripts/fusion/test/log-query.test.mjs",
+      "repo": "Fusion",
+      "passed": 54,
+      "boundary": "offline"
+    },
+    {
+      "command": "npm --prefix chatbot/plugins/personal-weather test",
+      "repo": "Fusion",
+      "passed": 162,
+      "boundary": "offline"
+    },
+    {
+      "command": "node backend/tests/assistant_browser.cjs",
+      "repo": "KnowledgeMap",
+      "passed": 9,
+      "boundary": "real browser + separate Vite/API/SQLite; passed isolated checkout then current primary P15 UI"
+    },
+    {
+      "command": "python backend/tests/assistant_mysql_cases.py --backup-dir <round2-mysql> --env-file <private-env>",
+      "repo": "KnowledgeMap",
+      "passed": 6,
+      "boundary": "real MySQL unique temporary restored clone; source untouched; clone dropped"
+    },
+    {
+      "command": "node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <round2-code> --code-only",
+      "repo": "Fusion",
+      "restoredFiles": {
+        "fusion": 668,
+        "knowledgemap": 221
+      },
+      "boundary": "new temporary code restore, each hash and HEAD checked; not runtime restore"
+    },
+    {
+      "command": "npm --prefix frontend run build",
+      "repo": "KnowledgeMap",
+      "ok": true,
+      "boundary": "TS/Vite; isolated then primary P15 UI; existing PURE annotation/chunk-size warnings"
+    },
+    {
+      "command": "npm --prefix chatbot/plugins/personal-weather run build",
+      "repo": "Fusion",
+      "ok": true
+    },
+    {
+      "command": "python backend/scripts/check_doc_refs.py",
+      "repo": "KnowledgeMap",
+      "ok": true,
+      "scripts": 37,
+      "inlineRefs": 115
+    },
+    {
+      "command": "KM_MYSQLDUMP=mysqldump python backend/scripts/export_schema.py --check; python backend/scripts/migrate_assistant.py",
+      "repo": "KnowledgeMap",
+      "ok": true,
+      "ddlRemaining": 0
+    }
+  ],
+  "additionalReadOnlyValidation": {
+    "existingAmbiguousTurnActuallyAskedWhichBill": true,
+    "backendJournalWrites": 3,
+    "allBackendRunIdsMatchHostAndHTTP": true,
+    "journalSource": "journalctl --user -u knowledgemap-assistant.service from live.json timestamp, parsed operation/request/run only"
+  },
+  "postDeployment": {
+    "fourSelfChecks": "health, sync-config --diff, sync-persona --diff, verify-dependencies all exit0",
+    "testIngress": false,
+    "sourceOfTruth": "KnowledgeMap API/MySQL",
+    "sqlSnapshotChange": "bills.version only",
+    "testBills": [
+      4,
+      5,
+      6
+    ],
+    "testRowsRemoved": true,
+    "originalBillUnchanged": true,
+    "requestReceiptsKept": true,
+    "realQQSendsInThisRound": 0
+  },
+  "notCovered": [
+    "phone-originated continuous QQ chat",
+    "long-running load/outage recovery",
+    "new full Fusion state snapshot",
+    "shared default city, TradeSim, Notes, bulk bill mutation or delete undo"
+  ],
+  "evidence": [
+    "host.json",
+    "live.json",
+    "migration.json"
+  ],
+  "notes": [
+    "Same-key concurrent mutation failure was reproduced then corrected; distinct requests keep version conflicts.",
+    "First bill schema arguments are correct in these model runs, not a promise of perfect model performance; category-ID retry was observed.",
+    "Code and MySQL baselines are separate-time captures, not one quiesced snapshot.",
+    "No push; P15 and document22 implementation excluded from this round."
+  ],
+  "closeoutChecks": {
+    "classifiedEvidenceFiles": 280,
+    "classifiedScripts": 167,
+    "boundaryContradictions": 0,
+    "markdownFiles": 33,
+    "localLinks": 325,
+    "brokenLinks": 0,
+    "bothGitDiffChecks": true,
+    "knowledgeMapCloseoutCommit": "see Git log, isolated from all P15 changes"
+  }
+}
