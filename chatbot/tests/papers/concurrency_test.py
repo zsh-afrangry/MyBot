@@ -27,6 +27,31 @@ def reply(label, tokens=17):
 
 
 class ConcurrencyTest(unittest.TestCase):
+    def test_six_calls_overlap_and_queued_callers_cannot_take_a_seventh_slot(self):
+        lock, reached, release = threading.Lock(), threading.Event(), threading.Event()
+        active = peak = calls = 0
+        def request(url, key, body, timeout):
+            nonlocal active, peak, calls
+            with lock:
+                calls += 1; active += 1; peak = max(peak, active)
+                if active == 6: reached.set()
+            if not release.wait(3): raise AssertionError("network barrier timed out")
+            with lock: active -= 1
+            return reply(body["input"])
+        client = ResponsesClient(PROFILE, KEYS, request=request, max_concurrency=6)
+        with concurrent.futures.ThreadPoolExecutor(max_workers=11) as pool:
+            futures = [pool.submit(client.generate, str(i), "i") for i in range(11)]
+            try:
+                self.assertTrue(reached.wait(2))
+                self.assertEqual(calls, 6)
+                self.assertEqual(client.snapshot()["inFlight"], 6)
+            finally: release.set()
+            self.assertEqual([f.result(3) for f in futures], list(map(str, range(11))))
+        self.assertEqual(peak, 6)
+        usage = client.snapshot()
+        self.assertEqual((usage["requests"], usage["reportedTokens"], usage["inFlight"]), (11, 187, 0))
+        self.assertEqual(usage["peakInFlight"], 6)
+
     def test_four_calls_really_overlap_and_all_additional_callers_wait(self):
         lock, four, release = threading.Lock(), threading.Event(), threading.Event()
         active = peak = calls = 0
@@ -212,7 +237,7 @@ class ConcurrencyTest(unittest.TestCase):
             self.assertEqual(list(Path(directory).glob("*.tmp-*")), [])
 
     def test_bad_concurrency_fails_before_any_request(self):
-        for concurrency in (0, 5, True, "4", 1.5):
+        for concurrency in (0, 7, True, "6", 1.5):
             with self.assertRaisesRegex(TranslationFailure, "invalid_translation_concurrency"):
                 ResponsesClient(PROFILE, KEYS, max_concurrency=concurrency)
         for qps in (0, -1, True, "4", float("nan")):

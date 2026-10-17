@@ -1,0 +1,437 @@
+{
+  "at": "2026-10-17T15:42:55.299818+00:00",
+  "boundary": "One authorized full-paper run, cold translation cache and public resources only. No new QQ/SMTP delivery. Baseline comparison at a different time cannot isolate concurrency from provider latency or output/reasoning variance. Reported usage excludes unknown billed amounts.",
+  "sourceSha256": "751cf5ad26d243beaac124c699d1409a5cac71dfab34f02335bf6c6b5ae0f8d9",
+  "sourcePages": 19,
+  "sourceMatchesBaseline": true,
+  "baseline": {
+    "jobId": "job_df73bdfdde2f420e6382049e",
+    "status": "succeeded",
+    "startedAt": "2026-10-17T14:09:00.596Z",
+    "finishedAt": "2026-10-17T14:29:59.167Z",
+    "elapsedSeconds": 1258.571,
+    "execution": {
+      "apiConcurrency": 4,
+      "apiQps": 1,
+      "batchValidationRetries": 1,
+      "channelRecoveryRetries": 1
+    },
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "usage": {
+      "requests": 160,
+      "inputTokens": 47941,
+      "outputTokens": 73772,
+      "reportedTokens": 121713,
+      "unknownUsageAttempts": 5,
+      "channelFailures": 5,
+      "validationRetriesScheduled": 1,
+      "maxConcurrency": 4,
+      "maxQps": 1,
+      "peakInFlight": 4,
+      "inFlight": 0
+    },
+    "reasoningTokens": 42131,
+    "visibleOutputTokens": 31641,
+    "completedRequestSeconds": {
+      "mean": 16.502201298701298,
+      "median": 13.6705,
+      "p90": 28.668
+    },
+    "channels": {
+      "OPENAI_API_KEY1_014": {
+        "completed": 56,
+        "validation_failed": 1,
+        "channel_failed": 3
+      },
+      "OPENAI_API_KEY2_030": {
+        "completed": 45,
+        "channel_failed": 1
+      },
+      "OPENAI_API_KEY3_040": {
+        "completed": 53,
+        "channel_failed": 1
+      }
+    },
+    "outcomes": {
+      "completed": 154,
+      "validation_failed": 1,
+      "channel_failed": 5
+    },
+    "minimumRequestStartGapSeconds": 1.0000220000000013,
+    "meanInFlightOverApiPeriod": 3.124466961108742,
+    "reconstructedPeakInFlight": 4,
+    "completedOtherThanTimedOutBatchesAtSeconds": 736.715885,
+    "timedOutBatches": [
+      {
+        "batchId": 124,
+        "attempt": 127,
+        "credentialId": "OPENAI_API_KEY1_014",
+        "error": "api_request_timed_out_unknown",
+        "seconds": 600.004,
+        "finishedOffsetSeconds": 1232.199475,
+        "streamProgress": {
+          "events": 1,
+          "outputChars": 0,
+          "lastEvent": "response.created",
+          "lastEventOffsetSeconds": 0,
+          "lastOutputOffsetSeconds": null
+        },
+        "recovery": [
+          {
+            "attempt": 159,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "outcome": "completed",
+            "seconds": 10.399,
+            "finishedOffsetSeconds": 1242.613745
+          }
+        ]
+      },
+      {
+        "batchId": 122,
+        "attempt": 130,
+        "credentialId": "OPENAI_API_KEY3_040",
+        "error": "api_request_timed_out_unknown",
+        "seconds": 600.004,
+        "finishedOffsetSeconds": 1243.395008,
+        "streamProgress": {
+          "events": 4,
+          "outputChars": 0,
+          "lastEvent": "response.output_item.done",
+          "lastEventOffsetSeconds": 13.435,
+          "lastOutputOffsetSeconds": null
+        },
+        "recovery": [
+          {
+            "attempt": 160,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "outcome": "completed",
+            "seconds": 7.164,
+            "finishedOffsetSeconds": 1250.573821
+          }
+        ]
+      }
+    ],
+    "failures": [
+      {
+        "attempt": 24,
+        "batchId": 24,
+        "credentialId": "OPENAI_API_KEY1_014",
+        "outcome": "validation_failed",
+        "error": "invalid_batch_translation",
+        "elapsedSeconds": 29.389,
+        "diagnostics": null
+      },
+      {
+        "attempt": 42,
+        "batchId": 41,
+        "credentialId": "OPENAI_API_KEY1_014",
+        "outcome": "channel_failed",
+        "error": "api_transport_unknown",
+        "elapsedSeconds": 19.598,
+        "diagnostics": null
+      },
+      {
+        "attempt": 65,
+        "batchId": 63,
+        "credentialId": "OPENAI_API_KEY2_030",
+        "outcome": "channel_failed",
+        "error": "api_transport_unknown",
+        "elapsedSeconds": 7.264,
+        "diagnostics": null
+      },
+      {
+        "attempt": 125,
+        "batchId": 122,
+        "credentialId": "OPENAI_API_KEY1_014",
+        "outcome": "channel_failed",
+        "error": "api_transport_unknown",
+        "elapsedSeconds": 16.341,
+        "diagnostics": null
+      },
+      {
+        "attempt": 127,
+        "batchId": 124,
+        "credentialId": "OPENAI_API_KEY1_014",
+        "outcome": "channel_failed",
+        "error": "api_request_timed_out_unknown",
+        "elapsedSeconds": 600.004,
+        "diagnostics": null
+      },
+      {
+        "attempt": 130,
+        "batchId": 122,
+        "credentialId": "OPENAI_API_KEY3_040",
+        "outcome": "channel_failed",
+        "error": "api_request_timed_out_unknown",
+        "elapsedSeconds": 600.004,
+        "diagnostics": null
+      }
+    ]
+  },
+  "six": {
+    "jobId": "job_b8b78e6fd7477523e743802f",
+    "status": "succeeded",
+    "startedAt": "2026-10-17T15:24:22.484Z",
+    "finishedAt": "2026-10-17T15:41:55.814Z",
+    "elapsedSeconds": 1053.33,
+    "execution": {
+      "apiConcurrency": 6,
+      "apiQps": 1,
+      "batchValidationRetries": 1,
+      "channelRecoveryRetries": 1
+    },
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "usage": {
+      "requests": 157,
+      "inputTokens": 47734,
+      "outputTokens": 92362,
+      "reportedTokens": 140096,
+      "unknownUsageAttempts": 2,
+      "channelFailures": 2,
+      "validationRetriesScheduled": 1,
+      "maxConcurrency": 6,
+      "maxQps": 1,
+      "peakInFlight": 6,
+      "inFlight": 0
+    },
+    "reasoningTokens": 61202,
+    "visibleOutputTokens": 31160,
+    "completedRequestSeconds": {
+      "mean": 16.55457792207792,
+      "median": 9.2065,
+      "p90": 30.692
+    },
+    "channels": {
+      "OPENAI_API_KEY1_014": {
+        "completed": 67,
+        "validation_failed": 1,
+        "channel_failed": 1
+      },
+      "OPENAI_API_KEY2_030": {
+        "completed": 86,
+        "channel_failed": 1
+      },
+      "OPENAI_API_KEY3_040": {
+        "completed": 1
+      }
+    },
+    "outcomes": {
+      "completed": 154,
+      "validation_failed": 1,
+      "channel_failed": 2
+    },
+    "minimumRequestStartGapSeconds": 1.0000119999999981,
+    "meanInFlightOverApiPeriod": 3.144206739521552,
+    "reconstructedPeakInFlight": 6,
+    "completedOtherThanTimedOutBatchesAtSeconds": 478.949481,
+    "timedOutBatches": [
+      {
+        "batchId": 129,
+        "attempt": 131,
+        "credentialId": "OPENAI_API_KEY2_030",
+        "error": "api_request_timed_out_unknown",
+        "seconds": 600.004,
+        "finishedOffsetSeconds": 1031.079419,
+        "streamProgress": {
+          "events": 1,
+          "outputChars": 0,
+          "lastEvent": "response.created",
+          "lastEventOffsetSeconds": 0,
+          "lastOutputOffsetSeconds": null
+        },
+        "recovery": [
+          {
+            "attempt": 157,
+            "credentialId": "OPENAI_API_KEY3_040",
+            "outcome": "completed",
+            "seconds": 14.081,
+            "finishedOffsetSeconds": 1045.176282
+          }
+        ]
+      }
+    ],
+    "failures": [
+      {
+        "attempt": 48,
+        "batchId": 48,
+        "credentialId": "OPENAI_API_KEY1_014",
+        "outcome": "validation_failed",
+        "error": "invalid_batch_translation",
+        "elapsedSeconds": 26.415,
+        "diagnostics": null
+      },
+      {
+        "attempt": 68,
+        "batchId": 67,
+        "credentialId": "OPENAI_API_KEY1_014",
+        "outcome": "channel_failed",
+        "error": "api_transport_unknown",
+        "elapsedSeconds": 16.828,
+        "diagnostics": null
+      },
+      {
+        "attempt": 131,
+        "batchId": 129,
+        "credentialId": "OPENAI_API_KEY2_030",
+        "outcome": "channel_failed",
+        "error": "api_request_timed_out_unknown",
+        "elapsedSeconds": 600.004,
+        "diagnostics": null
+      }
+    ]
+  },
+  "comparison": {
+    "secondsSaved": 205.24099999999999,
+    "elapsedReductionPercent": 16.30746298778535,
+    "reportedTokenIncrease": 18383,
+    "reportedTokenChangePercent": 15.103563300551293
+  },
+  "privateReceipt": "/home/afrangry/.openclaw-fusion/paper-acceptance/concurrency-six-20261017-19p/runs/19p-cold-01/acceptance.json",
+  "artifactCheck": {
+    "ok": true,
+    "boundary": "All 19 pages parsed and Chinese/Latin presence counted; SHA256 and byte count match registered artifact. Poppler pages 1/10/19 visually inspected; not full semantic/formula quality.",
+    "path": "/home/afrangry/.openclaw-fusion/paper-acceptance/concurrency-six-20261017-19p/files/pdf_4752e9121aa9c108ae760ac7c695d9f1.pdf",
+    "bytes": 27980287,
+    "sha256": "4752e9121aa9c108ae760ac7c695d9f1a0624f4be42bc8c763e6be7678fde35f",
+    "pages": [
+      {
+        "page": 1,
+        "chineseCharacters": 1292,
+        "latinCharacters": 4591
+      },
+      {
+        "page": 2,
+        "chineseCharacters": 1368,
+        "latinCharacters": 4529
+      },
+      {
+        "page": 3,
+        "chineseCharacters": 1673,
+        "latinCharacters": 5388
+      },
+      {
+        "page": 4,
+        "chineseCharacters": 776,
+        "latinCharacters": 2615
+      },
+      {
+        "page": 5,
+        "chineseCharacters": 1442,
+        "latinCharacters": 5025
+      },
+      {
+        "page": 6,
+        "chineseCharacters": 909,
+        "latinCharacters": 3470
+      },
+      {
+        "page": 7,
+        "chineseCharacters": 1057,
+        "latinCharacters": 4153
+      },
+      {
+        "page": 8,
+        "chineseCharacters": 1032,
+        "latinCharacters": 4006
+      },
+      {
+        "page": 9,
+        "chineseCharacters": 837,
+        "latinCharacters": 2961
+      },
+      {
+        "page": 10,
+        "chineseCharacters": 1117,
+        "latinCharacters": 3627
+      },
+      {
+        "page": 11,
+        "chineseCharacters": 819,
+        "latinCharacters": 3290
+      },
+      {
+        "page": 12,
+        "chineseCharacters": 1401,
+        "latinCharacters": 4631
+      },
+      {
+        "page": 13,
+        "chineseCharacters": 1689,
+        "latinCharacters": 5304
+      },
+      {
+        "page": 14,
+        "chineseCharacters": 749,
+        "latinCharacters": 4600
+      },
+      {
+        "page": 15,
+        "chineseCharacters": 678,
+        "latinCharacters": 4153
+      },
+      {
+        "page": 16,
+        "chineseCharacters": 707,
+        "latinCharacters": 4342
+      },
+      {
+        "page": 17,
+        "chineseCharacters": 744,
+        "latinCharacters": 3523
+      },
+      {
+        "page": 18,
+        "chineseCharacters": 234,
+        "latinCharacters": 775
+      },
+      {
+        "page": 19,
+        "chineseCharacters": 523,
+        "latinCharacters": 2380
+      }
+    ],
+    "renderPages": [
+      1,
+      10,
+      19
+    ],
+    "renderDirectory": "/home/afrangry/.openclaw-fusion/paper-acceptance/concurrency-six-20261017-19p/runs/19p-cold-01/render",
+    "visualReview": {
+      "pages": [
+        1,
+        10,
+        19
+      ],
+      "bodyPlotsTableReadable": true,
+      "knownLimitations": [
+        "Author/affiliation crowding and a small residual fragment on page 1.",
+        "Full semantics/formulas and other page renders not individually reviewed."
+      ]
+    }
+  },
+  "quality": "All 19 pages contain Chinese and Latin text. Poppler pages 1/10/19 visually inspected: body, plots and table are readable; known author/affiliation crowding and a small header fragment remain on page 1. No full semantic/formula review; this new artifact has not been delivered or confirmed by owner.",
+  "productionConcurrency": 4,
+  "productionReloaded": false,
+  "offlineTests": {
+    "node": 35,
+    "responses": 20,
+    "concurrency": 11,
+    "engine": 15,
+    "reliability": 21,
+    "total": 102
+  }
+}

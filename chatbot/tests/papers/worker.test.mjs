@@ -10,20 +10,23 @@ import {disablePaperRecovery} from '../../../scripts/fusion/lib/recovery-isolati
 
 test('Operator concurrency is validated and reaches actual sandbox stdin, never argv',async t=>{
   assert.deepEqual(executionSettings({}),{apiConcurrency:1,apiQps:1});
-  for(const value of [0,5,true,'4',1.5]){
+  const properties=JSON.parse(fs.readFileSync(new URL('../../plugins/kurumi-papers/openclaw.plugin.json',import.meta.url))).configSchema.properties;
+  assert.equal(properties.apiConcurrency.maximum,6);assert.equal(properties.apiQps.maximum,4);
+  for(const apiConcurrency of [4,5,6])assert.equal(executionSettings({apiConcurrency}).apiConcurrency,apiConcurrency);
+  for(const value of [0,7,true,'6',1.5]){
     assert.throws(()=>executionSettings({apiConcurrency:value}),/Invalid/);
-    assert.throws(()=>executionSettings({apiQps:value}),/Invalid/);
   }
+  for(const value of [0,5,true,'1',1.5])assert.throws(()=>executionSettings({apiQps:value}),/Invalid/);
   const root=fs.mkdtempSync('/var/tmp/kurumi-worker-stdin-');
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   for(const name of ['work','cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
   const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
   fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
-  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==4 and r[\"apiQps\"]==1; assert r[\"maxRequests\"]==300; assert r[\"batchValidationRetries\"]==3 and r[\"channelRecoveryRetries\"]==2 and r[\"executionTimeoutSeconds\"]==1800; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
+  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==6 and r[\"apiQps\"]==1; assert r[\"maxRequests\"]==300; assert r[\"batchValidationRetries\"]==3 and r[\"channelRecoveryRetries\"]==2 and r[\"executionTimeoutSeconds\"]==1800; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
   fs.writeFileSync(python,"#!/bin/sh\nexec /usr/bin/python3 -c '"+script+"'\n",{mode:0o700});
-  const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:4,apiQps:1,batchValidationRetries:3,channelRecoveryRetries:2},
+  const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:6,apiQps:1,batchValidationRetries:3,channelRecoveryRetries:2},
     work:path.join(root,'work'),cache:path.join(root,'cache'),profile:{},sourceLang:'en',targetLang:'zh'});
-  assert.deepEqual(result.usage,{maxConcurrency:4,maxQps:1});
+  assert.deepEqual(result.usage,{maxConcurrency:6,maxQps:1});
   assert(!Object.hasOwn(result,'mono'));assert(result.dual.endsWith('/dual.pdf'));
 });
 

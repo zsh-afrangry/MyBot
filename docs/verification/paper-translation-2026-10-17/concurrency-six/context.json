@@ -1,0 +1,41 @@
+{
+  "at": "2026-10-17T15:24:22.400177+00:00",
+  "baseCommit": "9ad48f54b76c87d097a51d15cb744549dfbaf2bb",
+  "boundary": "One authorized paid 19-page translation; fresh translation/cooldown cache; public layout resources seeded only; production settings unchanged; no QQ/SMTP from this run.",
+  "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/concurrency-six-20261017-19p",
+  "baselineReceipt": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-19/runs/19p-cold-01/acceptance.json",
+  "source": {
+    "sha256": "751cf5ad26d243beaac124c699d1409a5cac71dfab34f02335bf6c6b5ae0f8d9",
+    "bytes": 13634538,
+    "pages": 19
+  },
+  "profile": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "execution": {
+    "apiConcurrency": 6,
+    "apiQps": 1,
+    "timeoutSeconds": 1800,
+    "maxRequests": 300,
+    "maxReportedTokens": 300000,
+    "batchValidationRetries": 1,
+    "channelRecoveryRetries": 1
+  },
+  "productionConcurrency": 4,
+  "sourceHashes": {
+    "chatbot/plugins/kurumi-papers/runner.js": "a77fa55fdf614f63cc62f5332a37579507299d46b9675365f17e285820296317",
+    "chatbot/plugins/kurumi-papers/openclaw.plugin.json": "566380fb70a9af4fc504e7fbf8b77ef1ca13bd78ea35ef916babefdec934a312",
+    "chatbot/plugins/kurumi-papers/python/engine.py": "d1d67d8345f9e0608c808fd86f73ddb87eeb3cb9103c1ae7bdf09c9b91bee949",
+    "chatbot/plugins/kurumi-papers/python/responses.py": "5bb30e16def4b43f8c8896f3464decaac86f8edfcf74c405b7bfc31729b3d71a",
+    "chatbot/plugins/kurumi-papers/python/profiles.json": "28043caf43c29a11edcc1d8d23644948b9fc3149c68e5c0f6066cc9e899e6f91",
+    "chatbot/plugins/kurumi-papers/python/requirements.lock.txt": "6a5b29fd18099ceefa53af8e9dd46693b8b745b7e0f5b0161b5b21fbb1578c6b",
+    "chatbot/plugins/kurumi-papers/python/http_worker.py": "66990ba5b31bf349db1972cb1a093c11e53b767eeda86e4b79a35c9ef23cdfa4"
+  },
+  "configIntentSha256": "c2d1f8d54ce21ae342194e30db46c3fd1542113a2146833b97183bd8f7cf496a",
+  "runtimeConfigSha256": "c994893098de50e45d84777ed2f62f6e9ca3f26e89ba27d151d91e5b43d99e64"
+}

@@ -1,0 +1,89 @@
+{
+  "at": "2026-10-17T15:45:56.636783+00:00",
+  "boundary": "Read-only closeout plus this explicit evidence write; local commit follows separately. No new paid API, QQ/SMTP, service reload, remote push, config or database edits.",
+  "ok": true,
+  "baseCommit": "9ad48f54b76c87d097a51d15cb744549dfbaf2bb",
+  "offlineTests": {
+    "node": 35,
+    "responses": 20,
+    "concurrency": 11,
+    "engine": 15,
+    "reliability": 21,
+    "total": 102
+  },
+  "onlineSingleRun": {
+    "jobId": "job_b8b78e6fd7477523e743802f",
+    "ok": true,
+    "elapsedSeconds": 1053.33,
+    "peakInFlight": 6,
+    "finalInFlight": 0,
+    "onlyDual": true,
+    "pages": 19
+  },
+  "sourceHashesMatchRunContext": true,
+  "repoRuntimeConfigUnchanged": true,
+  "privateRuntimeConfigUnchanged": true,
+  "productionConcurrency": 4,
+  "productionReloaded": false,
+  "activePaperJobs": [],
+  "health": {
+    "ok": true,
+    "issues": [],
+    "gateway": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "testIngress": false
+  },
+  "scriptIndex": {
+    "exitCode": 0,
+    "scripts": 169,
+    "boundaryDeclarations": 43
+  },
+  "localLinks": {
+    "targetsChecked": 82,
+    "missing": [],
+    "boundary": "Local file targets only, not anchors/external URLs."
+  },
+  "privateValueScan": {
+    "scannedFiles": 22,
+    "privateValues": 10,
+    "matchedPaths": []
+  },
+  "changedPaths": [
+    "chatbot/plugins/kurumi-papers/openclaw.plugin.json",
+    "chatbot/plugins/kurumi-papers/python/engine.py",
+    "chatbot/plugins/kurumi-papers/python/responses.py",
+    "chatbot/plugins/kurumi-papers/runner.js",
+    "chatbot/tests/papers/concurrency_test.py",
+    "chatbot/tests/papers/engine_test.py",
+    "chatbot/tests/papers/worker.test.mjs",
+    "docs/16_验收与测试总表.md",
+    "docs/22_论文PDF翻译与文件投递.md",
+    "docs/verification/INDEX.md",
+    "docs/verification/paper-translation-2026-10-17/README.md",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/README.md",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/README.md",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/concurrency-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/context.json",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/engine-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/node-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/reliability-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/responses-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/results.json",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/runtime-checks.json",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/tail-observation.json"
+  ],
+  "excludedParallelWork": true,
+  "notCovered": [
+    "Repeated stress runs and concurrency 8+",
+    "New artifact delivery and owner receipt",
+    "Full semantic/formula review",
+    "Runtime activation of the expanded concurrency upper bound"
+  ],
+  "evidenceCoverage": {
+    "exitCode": 0,
+    "files": 360
+  }
+}

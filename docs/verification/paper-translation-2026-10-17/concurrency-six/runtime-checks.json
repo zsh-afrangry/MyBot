@@ -1,0 +1,33 @@
+{
+  "at": "2026-10-17T15:26:23.745Z",
+  "boundary": "Read-only production health/config/persona/dependency checks during isolated six-concurrency translation; no production writes, QQ/SMTP, or restart.",
+  "results": [
+    {
+      "name": "health",
+      "exitCode": 0
+    },
+    {
+      "name": "dependencies",
+      "exitCode": 0
+    },
+    {
+      "name": "config",
+      "exitCode": 0
+    },
+    {
+      "name": "persona",
+      "exitCode": 0
+    }
+  ],
+  "health": {
+    "ok": true,
+    "issues": [],
+    "gateway": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "testIngress": false
+  },
+  "productionConcurrency": 4
+}

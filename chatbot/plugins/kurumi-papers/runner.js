@@ -14,7 +14,10 @@ export function translationTimeoutSeconds(config) {
 
 export function executionSettings(config) {
   const settings = {apiConcurrency: config.apiConcurrency ?? 1, apiQps: config.apiQps ?? 1};
-  for (const value of Object.values(settings)) if (!Number.isInteger(value) || value < 1 || value > 4) throw Error('Invalid translation concurrency or QPS (1–4)');
+  for (const [key, value] of Object.entries(settings)) {
+    const maximum = key === 'apiConcurrency' ? 6 : 4;
+    if (!Number.isInteger(value) || value < 1 || value > maximum) throw Error(`Invalid translation ${key} (1–${maximum})`);
+  }
   return settings;
 }
 

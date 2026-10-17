@@ -189,7 +189,8 @@ def create_monitor(stages, progress, cancel_event):
 
 def execution_limits(request):
     concurrency, qps = request.get("apiConcurrency", 1), request.get("apiQps", 1)
-    if any(type(value) is not int or not 1 <= value <= 4 for value in (concurrency, qps)):
+    if (type(concurrency) is not int or not 1 <= concurrency <= 6 or
+            type(qps) is not int or not 1 <= qps <= 4):
         raise TranslationFailure("invalid_translation_concurrency")
     return concurrency, qps
 

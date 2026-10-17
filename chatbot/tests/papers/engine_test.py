@@ -49,7 +49,7 @@ class EngineTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             request={"input":directory+"/input.pdf","output":directory,"sourceLang":"en","targetLang":"zh",
                      "profile":{},"keys":{},"maxRequests":200,"maxReportedTokens":150000,
-                     "apiConcurrency":4,"apiQps":1}
+                     "apiConcurrency":6,"apiQps":1}
             with patch('engine.ResponsesClient') as client, patch('engine.create_translator'), \
                  patch('engine.create_monitor'), \
                  patch('babeldoc.translator.translator.set_translate_rate_limiter') as limiter, \
@@ -59,15 +59,17 @@ class EngineTest(unittest.TestCase):
                        return_value=SimpleNamespace(mono_pdf_path='mono.pdf',dual_pdf_path='dual.pdf')):
                 client.return_value.failure=None;client.return_value.snapshot.return_value={"requests":0}
                 translate(request)
-                self.assertEqual(client.call_args.kwargs['max_concurrency'],4)
+                self.assertEqual(client.call_args.kwargs['max_concurrency'],6)
                 self.assertEqual(client.call_args.kwargs['max_qps'],1)
                 limiter.assert_called_once_with(1)
-                self.assertEqual(config.call_args.kwargs['pool_max_workers'],4)
+                self.assertEqual(config.call_args.kwargs['pool_max_workers'],6)
                 self.assertEqual(config.call_args.kwargs['term_pool_max_workers'],1)
                 self.assertEqual(config.call_args.kwargs['qps'],1)
                 self.assertTrue(Path(directory,'result.json').exists())
         self.assertEqual(execution_limits({}),(1,1))
-        for args in ({'apiConcurrency':5},{'apiQps':0},{'apiConcurrency':True},{'apiQps':1.5}):
+        for concurrency in (4,5,6):
+            self.assertEqual(execution_limits({'apiConcurrency':concurrency}),(concurrency,1))
+        for args in ({'apiConcurrency':7},{'apiQps':5},{'apiQps':0},{'apiConcurrency':True},{'apiQps':1.5}):
             with self.assertRaisesRegex(TranslationFailure,'invalid_translation_concurrency'):
                 execution_limits(args)
 

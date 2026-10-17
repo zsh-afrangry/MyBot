@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-17T15:36:07.614023+00:00",
+  "boundary": "Read-only usage snapshot while one request is pending; token totals and elapsed time are not final. No raw body, API response ID or private URLs.",
+  "jobId": "job_b8b78e6fd7477523e743802f",
+  "elapsedSeconds": 705.130047,
+  "counters": {
+    "requests": 156,
+    "reportedTokens": 139701,
+    "channelFailures": 1,
+    "inFlight": 1,
+    "peakInFlight": 6,
+    "failure": null
+  },
+  "lastCompletedOffsetSeconds": 478.949481,
+  "active": [
+    {
+      "batchId": 129,
+      "attempt": 131,
+      "credentialId": "OPENAI_API_KEY2_030",
+      "startedOffsetSeconds": 431.069306,
+      "streamProgress": {
+        "events": 1,
+        "outputChars": 0,
+        "lastEvent": "response.created",
+        "lastEventOffsetSeconds": 0.0,
+        "lastOutputOffsetSeconds": null
+      }
+    }
+  ]
+}

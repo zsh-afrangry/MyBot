@@ -297,7 +297,7 @@ class ResponsesClient:
         self.keys = {k: keys[k].strip() for k in self.key_ids if isinstance(keys.get(k), str) and keys[k].strip()}
         if not self.keys:
             raise TranslationFailure("missing_translation_credentials")
-        if (type(max_concurrency) is not int or not 1 <= max_concurrency <= 4 or
+        if (type(max_concurrency) is not int or not 1 <= max_concurrency <= 6 or
                 (max_qps is not None and (type(max_qps) not in (int, float) or not 0 < max_qps <= 100))):
             raise TranslationFailure("invalid_translation_concurrency")
         for value in (batch_validation_retries, channel_recovery_retries):
