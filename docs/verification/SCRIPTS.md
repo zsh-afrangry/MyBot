@@ -191,6 +191,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/knowledgemap/acceptance-live.mjs` | 验收 | 真实模型/生产API/MySQL/网页与一次本人QQ播报；短暂测试入口、精确测试行清理并保留回执 | 真实模型、真实外部API、真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/knowledgemap-bridge-2026-10-17/live.json` |
 | `chatbot/tests/knowledgemap/acceptance-model.mjs` | 验收 | 真实模型、实际v2工具及临时HTTP/SQLite，无QQ/生产写入 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/knowledgemap/recovery.mjs` | 验收 | 今晚Git工作树和SQLite备份的临时目录恢复，不启动旧服务 | 写临时测试目录 | 是 | header | — |
+| `chatbot/tests/papers/acceptance-api.py` | 验收 | 合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发 | 真实模型、真实外部API、写仓库内文件 | 是 | header | `docs/verification/paper-translation-2026-10-17/channel-upgrade/.` |
 | `chatbot/tests/papers/acceptance-download.mjs` | 验收 | 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录 | 真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.`<br>`docs/verification/paper-translation-2026-10-17/download.json` |
 | `chatbot/tests/papers/acceptance-host.mjs` | 验收 | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/host.json`<br>`docs/verification/paper-translation-2026-10-17/host.json.` |
 | `chatbot/tests/papers/acceptance.mjs` | 验收 | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.` |

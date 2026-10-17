@@ -50,6 +50,7 @@ const TABLE = {
   'chatbot/tests/papers/responses_test.py': ['离线', '原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执', {testDir: 1}, 'header'],
   'chatbot/tests/papers/engine_test.py': ['离线', '锁定排版引擎的探测、批次 JSON、公式/样式接口；独立 HOME/cache', {testDir: 1}, 'header'],
   'chatbot/tests/papers/acceptance-download.mjs': ['验收', '真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录', {auth: 1, externalApi: 1, writesState: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/tests/papers/acceptance-api.py': ['验收', '合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发', {auth: 1, model: 1, externalApi: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/papers/acceptance-host.mjs': ['验收', '真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件', {auth: 1, model: 1, restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/papers/acceptance.mjs': ['验收', '真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认', {auth: 1, model: 1, externalApi: 1, qq: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/domain-adapters/registry.test.mjs': ['离线', '领域适配器注册/注销、启动选择、同步契约和失败拒绝', {readonly: 1}, 'header'],

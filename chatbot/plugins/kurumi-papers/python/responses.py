@@ -5,6 +5,7 @@ No SDK retries, upstream Chat calls or upstream translator health-check requests
 """
 import collections
 import hashlib
+import http.client
 import json
 import os
 from pathlib import Path
@@ -18,6 +19,12 @@ KEY_IDS = ("OPENAI_API_KEY1_014", "OPENAI_API_KEY2_030", "OPENAI_API_KEY3_040")
 PROMPT_VERSION = "kurumi-paper-v2-batch"
 AUTH_CODES = ("invalid_api_key", "authentication_error", "key_disabled")
 QUOTA_CODES = ("insufficient_quota", "quota_exceeded", "credit_balance_too_low")
+CHANNEL_ERROR_CODES = ("upstream_stream_read_error", "upstream_error", "server_error",
+                       "internal_server_error", "service_unavailable", "overloaded_error",
+                       "gateway_timeout")
+CHANNEL_HTTP_STATUSES = (408, 500, 502, 503, 504, 520, 522, 524, 529)
+CHANNEL_FAILURES = ("api_transport_unknown", "api_request_timed_out_unknown",
+                    "api_stream_interrupted_unknown")
 
 
 def placeholders(text):
@@ -57,7 +64,12 @@ def http_request(url, key, body, timeout, on_progress=None):
     try:
         with opener.open(request, timeout=timeout) as response:
             if body.get("stream"):
-                return response.status, read_response_stream(response, on_progress=on_progress, deadline=deadline)
+                try:
+                    value = read_response_stream(response, on_progress=on_progress, deadline=deadline)
+                except TranslationFailure as error:
+                    error.details["httpStatus"] = response.status
+                    raise
+                return response.status, value
             return response.status, json.loads(response.read(4 * 1024 * 1024))
     except urllib.error.HTTPError as error:
         try:
@@ -68,9 +80,11 @@ def http_request(url, key, body, timeout, on_progress=None):
         return error.code, body
     except TranslationFailure:
         raise
-    except Exception:
-        # A timeout may already have consumed upstream budget; do not automatically replay it.
+    except (OSError, urllib.error.URLError, http.client.HTTPException):
+        # The next independent channel may replay this batch, with unknown usage recorded.
         raise TranslationFailure("api_transport_unknown") from None
+    except (ValueError, UnicodeError):
+        raise TranslationFailure("invalid_api_response") from None
 
 
 def read_response_stream(response, on_progress=None, deadline=None):
@@ -153,6 +167,8 @@ class ResponsesClient:
         return {"requests": self.requests, "inputTokens": self.input_tokens,
                 "outputTokens": self.output_tokens, "reportedTokens": self.input_tokens + self.output_tokens,
                 "receipts": list(self.receipts), "failure": self.failure,
+                "unknownUsageAttempts": sum(r.get("usageStatus") == "unknown" for r in self.receipts),
+                "channelFailures": sum(r.get("outcome") == "channel_failed" for r in self.receipts),
                 "hardCostLimit": False}
 
     def _publish(self):
@@ -166,6 +182,11 @@ class ResponsesClient:
         self.cooldowns[self._cool_key(name)] = self.now() + seconds
         if self.cooldown_file:
             atomic_json(self.cooldown_file, self.cooldowns)
+
+    def _channel_failed(self, name, receipt, code):
+        receipt.update(outcome="channel_failed", failoverReason=code)
+        self._cool(name, 300)
+        self._publish()
 
     def generate(self, text, instructions, *, preserve_placeholders=False):
         with self.lock:
@@ -201,6 +222,7 @@ class ResponsesClient:
                 receipt = {"attempt": self.requests, "credentialId": name,
                            "model": self.profile["model"], "effort": self.profile["effort"],
                            "inputChars": len(text), "stream": True,
+                           "usageStatus": "unknown",
                            "startedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                 self.receipts.append(receipt)
                 self._publish()  # A killed/incomplete call is visible as an attempt with unknown usage.
@@ -212,9 +234,20 @@ class ResponsesClient:
                     options["on_progress"] = progress
                 started = time.monotonic()
                 try:
-                    status, data = self.request(self.profile["baseUrl"] + "/responses", self.keys[name], body, self.timeout, **options)
-                finally:
-                    receipt["elapsedSeconds"] = round(time.monotonic() - started, 3)
+                    try:
+                        status, data = self.request(self.profile["baseUrl"] + "/responses", self.keys[name], body, self.timeout, **options)
+                    finally:
+                        receipt["elapsedSeconds"] = round(time.monotonic() - started, 3)
+                except TranslationFailure as error:
+                    receipt.update(error.details)
+                    receipt["error"] = str(error)
+                    retryable = (str(error) in CHANNEL_FAILURES or
+                        (str(error) == "api_stream_error" and error.details.get("apiErrorCode") in CHANNEL_ERROR_CODES))
+                    if retryable:
+                        self._channel_failed(name, receipt, error.details.get("apiErrorCode", str(error)))
+                        break
+                    self._publish()
+                    raise
                 receipt["httpStatus"] = status
                 if isinstance(data, dict) and isinstance(data.get("usage"), dict):
                     usage = data["usage"]
@@ -223,6 +256,7 @@ class ResponsesClient:
                         self.input_tokens += inp
                         self.output_tokens += out
                         receipt["usage"] = {k: usage[k] for k in ("input_tokens", "output_tokens", "input_tokens_details", "output_tokens_details") if k in usage}
+                        receipt["usageStatus"] = "reported"
                 if isinstance(data, dict) and isinstance(data.get("id"), str):
                     receipt["responseId"] = data["id"][:150]
                 self._publish()
@@ -243,19 +277,26 @@ class ResponsesClient:
                     if error_code in AUTH_CODES: effective_status = 401
                     elif error_code in QUOTA_CODES + ("rate_limit_exceeded",): effective_status = 429
                 if effective_status == 401 or (effective_status == 403 and error_code in AUTH_CODES):
+                    receipt.update(outcome="credential_rejected", usageStatus="reported" if "usage" in receipt else "not_reported_on_rejection")
                     self._cool(name, 86400)
+                    self._publish()
                     break
                 if effective_status == 429:
+                    receipt.update(outcome="quota_or_rate_limit", usageStatus="reported" if "usage" in receipt else "not_reported_on_rejection")
                     code = error_code
                     if code not in QUOTA_CODES and attempt == 0:
+                        self._publish()
                         self.sleep(1)
                         continue
                     self._cool(name, 120)
+                    self._publish()
                     break
-                if status in (502, 503) and attempt == 0:
-                    self.sleep(1)
-                    continue
+                if (status in CHANNEL_HTTP_STATUSES or
+                    (status == 200 and data.get("status") == "failed" and error_code in CHANNEL_ERROR_CODES)):
+                    self._channel_failed(name, receipt, error_code or "responses_http_" + str(status))
+                    break
                 if status != 200:
+                    receipt["outcome"] = "request_rejected"
                     raise TranslationFailure("responses_http_" + str(status))
                 if "usage" not in receipt:
                     raise TranslationFailure("api_usage_unknown")
@@ -280,5 +321,9 @@ class ResponsesClient:
                 if preserve_placeholders:
                     if placeholders(text) != placeholders(result):
                         raise TranslationFailure("translation_placeholder_mismatch")
+                receipt["outcome"] = "completed"
+                self._publish()
                 return result
+        if any(r.get("outcome") == "channel_failed" for r in self.receipts):
+            raise TranslationFailure("all_translation_channels_failed")
         raise TranslationFailure("all_translation_credentials_unavailable")

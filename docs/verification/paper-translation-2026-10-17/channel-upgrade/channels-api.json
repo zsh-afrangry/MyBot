@@ -1,0 +1,159 @@
+{
+  "at": "2026-10-17T04:27:54Z",
+  "boundary": "Real model/API requests with synthetic text and explicitly selected private credentials; no QQ/mail or production writes. Each channel is tested independently, not a forced real failover.",
+  "profile": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "max",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "cases": [
+    {
+      "credentialId": "OPENAI_API_KEY1_014",
+      "ok": true,
+      "translation": "神经网络能够学到有用的表示。",
+      "usage": {
+        "requests": 1,
+        "inputTokens": 30,
+        "outputTokens": 61,
+        "reportedTokens": 91,
+        "receipts": [
+          {
+            "attempt": 1,
+            "credentialId": "OPENAI_API_KEY1_014",
+            "model": "gpt-6.1-sol",
+            "effort": "max",
+            "inputChars": 45,
+            "stream": true,
+            "usageStatus": "reported",
+            "startedAt": "2026-10-17T04:27:54Z",
+            "streamProgress": {
+              "events": 1,
+              "outputChars": 0,
+              "lastEvent": "response.created"
+            },
+            "elapsedSeconds": 8.336,
+            "httpStatus": 200,
+            "usage": {
+              "input_tokens": 30,
+              "output_tokens": 61,
+              "input_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 44
+              }
+            },
+            "responseId": "resp_058d429e9316d8d5016ad2f94bd514819a8a5e0887afaa8321",
+            "responseEffort": "max",
+            "outcome": "completed"
+          }
+        ],
+        "failure": null,
+        "unknownUsageAttempts": 0,
+        "channelFailures": 0,
+        "hardCostLimit": false
+      }
+    },
+    {
+      "credentialId": "OPENAI_API_KEY2_030",
+      "ok": true,
+      "translation": "神经网络学习有用的表征。",
+      "usage": {
+        "requests": 1,
+        "inputTokens": 30,
+        "outputTokens": 158,
+        "reportedTokens": 188,
+        "receipts": [
+          {
+            "attempt": 1,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "model": "gpt-6.1-sol",
+            "effort": "max",
+            "inputChars": 45,
+            "stream": true,
+            "usageStatus": "reported",
+            "startedAt": "2026-10-17T04:28:02Z",
+            "streamProgress": {
+              "events": 1,
+              "outputChars": 0,
+              "lastEvent": "response.created"
+            },
+            "elapsedSeconds": 4.418,
+            "httpStatus": 200,
+            "usage": {
+              "input_tokens": 30,
+              "output_tokens": 158,
+              "input_tokens_details": {
+                "cached_tokens": 0,
+                "cache_write_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 142
+              }
+            },
+            "responseId": "resp_0be7cae8e77bd318016ad2f95372ac819798418c10cb6e207e",
+            "responseEffort": "max",
+            "outcome": "completed"
+          }
+        ],
+        "failure": null,
+        "unknownUsageAttempts": 0,
+        "channelFailures": 0,
+        "hardCostLimit": false
+      }
+    },
+    {
+      "credentialId": "OPENAI_API_KEY3_040",
+      "ok": true,
+      "translation": "神经网络学习有用的表征。",
+      "usage": {
+        "requests": 1,
+        "inputTokens": 30,
+        "outputTokens": 175,
+        "reportedTokens": 205,
+        "receipts": [
+          {
+            "attempt": 1,
+            "credentialId": "OPENAI_API_KEY3_040",
+            "model": "gpt-6.1-sol",
+            "effort": "max",
+            "inputChars": 45,
+            "stream": true,
+            "usageStatus": "reported",
+            "startedAt": "2026-10-17T04:28:07Z",
+            "streamProgress": {
+              "events": 1,
+              "outputChars": 0,
+              "lastEvent": "response.created"
+            },
+            "elapsedSeconds": 5.433,
+            "httpStatus": 200,
+            "usage": {
+              "input_tokens": 30,
+              "output_tokens": 175,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 159
+              }
+            },
+            "responseId": "resp_0f9b3c028e82ab9b016ad2f957ef8c87d199be4adbee1fd4b6",
+            "responseEffort": "max",
+            "outcome": "completed"
+          }
+        ],
+        "failure": null,
+        "unknownUsageAttempts": 0,
+        "channelFailures": 0,
+        "hardCostLimit": false
+      }
+    }
+  ],
+  "ok": true
+}

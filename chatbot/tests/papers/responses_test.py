@@ -63,9 +63,9 @@ class ResponsesTest(unittest.TestCase):
         self.assertEqual(client.requests,1)
         calls=[]
         client=self.client(lambda *a:(calls.append(1) or (502,{})))
-        with self.assertRaisesRegex(TranslationFailure,"502"):client.generate("x","i")
+        with self.assertRaisesRegex(TranslationFailure,"all_translation_channels_failed"):client.generate("x","i")
         with self.assertRaises(TranslationFailure):client.generate("x","i")
-        self.assertEqual(len(calls),2)
+        self.assertEqual(len(calls),3)
 
     def test_empty_reasoning_refusal_wrong_model_and_formula_loss_are_errors(self):
         for modify in (lambda d:d.update(output=[{"type":"reasoning"}]),lambda d:d.update(model="other"),lambda d:d.update(status="incomplete"),lambda d:d.update(output=[{"type":"message","role":"assistant","content":[{"type":"refusal"}]}])):
@@ -74,11 +74,15 @@ class ResponsesTest(unittest.TestCase):
         with self.assertRaisesRegex(TranslationFailure,"placeholder"):
             self.client(lambda *a:success("no formula")).generate("x {v1}","i",preserve_placeholders=True)
 
-    def test_no_nested_retries_or_replay_on_transport_uncertainty(self):
+    def test_transport_uncertainty_visits_each_channel_once_then_stays_terminal(self):
         def request(*a):raise TranslationFailure("api_transport_unknown")
         client=self.client(request)
-        with self.assertRaisesRegex(TranslationFailure,"transport_unknown"):client.generate("x","i")
-        self.assertEqual(client.requests,1)
+        with self.assertRaisesRegex(TranslationFailure,"all_translation_channels_failed"):client.generate("x","i")
+        self.assertEqual(client.requests,3)
+        self.assertEqual(client.snapshot()['unknownUsageAttempts'],3)
+        self.assertEqual([r['credentialId'] for r in client.receipts],list(KEY_IDS))
+        with self.assertRaises(TranslationFailure):client.generate("x","i")
+        self.assertEqual(client.requests,3)
 
     def test_empty_capability_probe_cannot_reach_the_api(self):
         used=[]
@@ -104,7 +108,7 @@ class ResponsesTest(unittest.TestCase):
         self.assertEqual(caught.exception.details,{'apiErrorCode':'upstream_error','apiErrorType':'error'})
         def fail(*args):raise caught.exception
         client=self.client(fail)
-        with self.assertRaisesRegex(TranslationFailure,'api_stream_error'):client.generate('x','i')
+        with self.assertRaisesRegex(TranslationFailure,'all_translation_channels_failed'):client.generate('x','i')
         snapshot=json.dumps(client.snapshot())
         self.assertIn('upstream_error',snapshot)
         self.assertNotIn('synthetic-secret',snapshot)
@@ -123,5 +127,92 @@ class ResponsesTest(unittest.TestCase):
         self.assertEqual(used,list(KEYS.values()))
         self.assertEqual(client.receipts[0]['httpStatus'],200)
         self.assertEqual(client.receipts[0]['apiErrorCode'],'invalid_api_key')
+
+    def test_upstream_stream_failure_rotates_in_order_and_cools_independent_channels(self):
+        used=[];bodies=[]
+        def request(url,key,body,timeout):
+            used.append(key);bodies.append(body)
+            if key.endswith('040'):return success()
+            events=[{'type':'response.output_text.delta','delta':'DISCARD PARTIAL'},
+                    {'type':'error','code':'upstream_stream_read_error'}]
+            stream=''.join('data: '+json.dumps(e)+'\n\n' for e in events)
+            return 200,read_response_stream(io.BytesIO(stream.encode()))
+        with tempfile.TemporaryDirectory() as directory:
+            file=Path(directory)/'cooldowns.json'
+            c=self.client(request,cooldown_file=file)
+            self.assertEqual(c.generate('text {v1}','translate',preserve_placeholders=True),'译文 {v1}')
+            self.assertEqual(used,list(KEYS.values()))
+            self.assertEqual(c.snapshot()['unknownUsageAttempts'],2)
+            self.assertEqual(c.snapshot()['reportedTokens'],17)
+            self.assertIsNone(c.failure)
+            self.assertTrue(all(b==bodies[0] for b in bodies))
+            self.assertNotIn('DISCARD PARTIAL',json.dumps(c.snapshot()))
+            used.clear()
+            self.client(request,cooldown_file=file).generate('x','i')
+            self.assertEqual(used,[KEYS[KEY_IDS[2]]])
+            self.assertNotIn('synthetic-',file.read_text())
+
+    def test_transient_http_and_failed_terminal_events_reach_next_channel(self):
+        for status in (408,500,502,503,504,520,522,524,529):
+            used=[]
+            def request(url,key,*a):
+                used.append(key)
+                return (status,{}) if key.endswith('014') else success()
+            c=self.client(request);c.generate('x','i')
+            self.assertEqual(used,list(KEYS.values())[:2])
+            self.assertEqual(c.snapshot()['unknownUsageAttempts'],1)
+        used=[]
+        def request(url,key,*a):
+            used.append(key)
+            if not key.endswith('014'):return success()
+            return 200,{'status':'failed','error':{'code':'upstream_stream_read_error'},
+                        'usage':{'input_tokens':3,'output_tokens':2}}
+        c=self.client(request);c.generate('x','i')
+        self.assertEqual(c.snapshot()['reportedTokens'],22)
+        self.assertEqual(c.snapshot()['unknownUsageAttempts'],0)
+
+    def test_unknown_or_permanent_errors_do_not_hide_behind_channel_rotation(self):
+        for code in ('bad_request','content_policy_violation','unrecognized_error'):
+            used=[]
+            def request(url,key,*a):
+                used.append(key)
+                raise TranslationFailure('api_stream_error',{'apiErrorCode':code})
+            c=self.client(request)
+            with self.assertRaisesRegex(TranslationFailure,'api_stream_error'):c.generate('x','i')
+            self.assertEqual(used,[KEYS[KEY_IDS[0]]])
+
+    def test_failover_respects_global_request_and_reported_token_limits(self):
+        used=[]
+        def request(url,key,*a):
+            used.append(key);raise TranslationFailure('api_stream_interrupted_unknown')
+        c=self.client(request,max_requests=2)
+        with self.assertRaisesRegex(TranslationFailure,'budget_exhausted'):c.generate('x','i')
+        self.assertEqual(used,list(KEYS.values())[:2])
+        self.assertEqual(c.snapshot()['unknownUsageAttempts'],2)
+        def metered(url,key,*a):
+            return 200,{'status':'failed','error':{'code':'upstream_stream_read_error'},
+                        'usage':{'input_tokens':10,'output_tokens':10}}
+        c=self.client(metered,max_tokens=20)
+        with self.assertRaisesRegex(TranslationFailure,'budget_exhausted'):c.generate('x','i')
+        self.assertEqual(c.requests,1)
+
+    def test_stream_timeout_uses_next_channel_and_a_cooled_channel_can_recover(self):
+        clock=[1000.0];used=[]
+        def request(url,key,*a):
+            used.append(key)
+            if key.endswith('014') and clock[0]<1300:raise TranslationFailure('api_request_timed_out_unknown')
+            return success()
+        c=self.client(request,now=lambda:clock[0])
+        c.generate('x','i');self.assertEqual(used,list(KEYS.values())[:2])
+        used.clear();clock[0]=1301;c.generate('y','i')
+        self.assertEqual(used,[KEYS[KEY_IDS[0]]])
+
+    def test_rate_limit_has_one_same_channel_retry_then_moves_on(self):
+        used=[]
+        def request(url,key,*a):
+            used.append(key)
+            return (429,{'error':{'code':'rate_limit_exceeded'}}) if key.endswith('014') else success()
+        c=self.client(request);c.generate('x','i')
+        self.assertEqual(used,[KEYS[KEY_IDS[0]],KEYS[KEY_IDS[0]],KEYS[KEY_IDS[1]]])
 
 if __name__=="__main__":unittest.main()

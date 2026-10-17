@@ -1,0 +1,22 @@
+test_auth_and_quota_errors_in_http200_streams_use_the_same_fallback (__main__.ResponsesTest) ... ok
+test_boolean_usage_is_not_a_token_count (__main__.ResponsesTest) ... ok
+test_credential_fallback_and_shared_cooldown (__main__.ResponsesTest) ... ok
+test_empty_capability_probe_cannot_reach_the_api (__main__.ResponsesTest) ... ok
+test_empty_reasoning_refusal_wrong_model_and_formula_loss_are_errors (__main__.ResponsesTest) ... ok
+test_failover_respects_global_request_and_reported_token_limits (__main__.ResponsesTest) ... ok
+test_limits_count_all_attempts_and_failure_stays_terminal (__main__.ResponsesTest) ... ok
+test_native_protocol_and_usage (__main__.ResponsesTest) ... ok
+test_parameter_and_parse_failures_do_not_rotate (__main__.ResponsesTest) ... ok
+test_rate_limit_has_one_same_channel_retry_then_moves_on (__main__.ResponsesTest) ... ok
+test_stream_errors_keep_only_safe_machine_codes (__main__.ResponsesTest) ... ok
+test_stream_needs_completed_response_and_ignores_partial_reasoning (__main__.ResponsesTest) ... ok
+test_stream_timeout_uses_next_channel_and_a_cooled_channel_can_recover (__main__.ResponsesTest) ... ok
+test_transient_http_and_failed_terminal_events_reach_next_channel (__main__.ResponsesTest) ... ok
+test_transport_uncertainty_visits_each_channel_once_then_stays_terminal (__main__.ResponsesTest) ... ok
+test_unknown_or_permanent_errors_do_not_hide_behind_channel_rotation (__main__.ResponsesTest) ... ok
+test_upstream_stream_failure_rotates_in_order_and_cools_independent_channels (__main__.ResponsesTest) ... ok
+
+----------------------------------------------------------------------
+Ran 17 tests in 0.007s
+
+OK
