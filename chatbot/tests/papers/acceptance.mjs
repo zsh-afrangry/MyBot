@@ -17,7 +17,7 @@ if(fs.existsSync(path.join(out,'acceptance.json')))throw Error('Evidence exists;
 const at=new Date().toISOString(), tag=Date.now().toString(36);
 const root=arg('root',path.join(state,'paper-acceptance','gpt-default'));
 if(!path.isAbsolute(root)||!root.startsWith(path.join(state,'paper-acceptance')+path.sep))throw Error('Acceptance root must be inside private paper-acceptance state');
-const config={root,python:path.join(state,'venvs/paper-translation/bin/python'),credentialsFile:path.join(state,'paper-credentials.json'),maxPages:30,maxRequests:300,maxReportedTokens:200000,timeoutSeconds:1800,liveTranslationEnabled:true};
+const config={root,python:path.join(state,'venvs/paper-translation/bin/python'),credentialsFile:path.join(state,'paper-credentials.json'),maxPages:30,maxRequests:300,maxReportedTokens:200000,timeoutSeconds:1800,apiConcurrency:Number(arg('concurrency',1)),apiQps:Number(arg('qps',1)),liveTranslationEnabled:true};
 const cfg=JSON.parse(fs.readFileSync(path.join(state,'openclaw.json')));
 cfg.plugins.entries['kurumi-papers']={enabled:true,config};
 let sends=0;

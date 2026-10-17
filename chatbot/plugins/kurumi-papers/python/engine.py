@@ -29,9 +29,8 @@ def translate_batch(client, text, source_lang, target_lang):
         if any(not isinstance(item["input"], str) for item in source):
             raise ValueError()
     except (ValueError, KeyError, TypeError):
-        client.failure = "invalid_engine_batch"
-        if hasattr(client, "_publish"): client._publish()
-        raise TranslationFailure(client.failure) from None
+        client.fail("invalid_engine_batch")
+        raise TranslationFailure("invalid_engine_batch") from None
     structured = getattr(client, "batch_format", "plain_array") == "json_schema"
     instructions = (f"Translate each input from {source_lang} to {target_lang}. " +
         ("Return only a JSON object with a translations array " if structured else "Return only a JSON array ") +
@@ -59,8 +58,7 @@ def translate_batch(client, text, source_lang, target_lang):
     fenced = re.fullmatch(r"```(?:json)?\s*\n([\s\S]*?)\n```", output.strip())
     if fenced:
         output = fenced.group(1)
-        client.normalized_json_fences = getattr(client, "normalized_json_fences", 0) + 1
-        if hasattr(client, "_publish"): client._publish()
+        client.normalize_json_fence()
     try:
         translated = json.loads(output)
         if structured:
@@ -89,12 +87,10 @@ def translate_batch(client, text, source_lang, target_lang):
                 raise ValueError()
         return json.dumps([{"id": item["id"], "output": by_id[item["id"]]} for item in source], ensure_ascii=False)
     except (ValueError, KeyError, TypeError) as error:
-        client.failure = "invalid_batch_translation"
         if isinstance(error, json.JSONDecodeError): details["jsonErrorPosition"] = error.pos
         # Structural diagnostics only: never persist source/output text or arbitrary model fields.
-        client.validation_failure = {"reason": reason, **details}
-        if hasattr(client, "_publish"): client._publish()
-        raise TranslationFailure(client.failure) from None
+        client.fail("invalid_batch_translation", validation={"reason": reason, **details})
+        raise TranslationFailure("invalid_batch_translation") from None
 
 
 def create_translator(request, client):
@@ -166,10 +162,22 @@ def create_monitor(stages, progress, cancel_event):
                            finish_callback=lambda **event: None, report_interval=2, cancel_event=cancel_event)
 
 
+def execution_limits(request):
+    concurrency, qps = request.get("apiConcurrency", 1), request.get("apiQps", 1)
+    if any(type(value) is not int or not 1 <= value <= 4 for value in (concurrency, qps)):
+        raise TranslationFailure("invalid_translation_concurrency")
+    return concurrency, qps
+
+
 def translate(request):
     from babeldoc.format.pdf.translation_config import TranslationConfig, WatermarkOutputMode
     from babeldoc.format.pdf.high_level import do_translate, get_translation_stage
+    from babeldoc.translator.translator import set_translate_rate_limiter
 
+    concurrency, qps = execution_limits(request)
+    # Direct API use bypasses BabelDOC's CLI setup. Configure both the engine limiter and
+    # our network limiter: main/fallback pools share the client semaphore, retries share QPS.
+    set_translate_rate_limiter(qps)
     usage_file = Path(request["output"]) / "usage.json"
     cancel_event = threading.Event()
     def usage(value):
@@ -179,14 +187,14 @@ def translate(request):
     client = ResponsesClient(request["profile"], request["keys"],
                              max_requests=request["maxRequests"], max_tokens=request["maxReportedTokens"],
                              cooldown_file=request.get("cooldownFile"),
-                             on_usage=usage)
+                             on_usage=usage, max_concurrency=concurrency, max_qps=qps)
     client._publish()
     source_lang, target_lang = request["sourceLang"], request["targetLang"]
     translator = create_translator(request, client)
     config = TranslationConfig(translator=translator, input_file=request["input"],
         lang_in=source_lang, lang_out=target_lang, doc_layout_model=None,
         output_dir=request["output"], working_dir=str(Path(request["output"]) / "working"),
-        pages=request.get("pages"), qps=1, pool_max_workers=1, term_pool_max_workers=1,
+        pages=request.get("pages"), qps=qps, pool_max_workers=concurrency, term_pool_max_workers=1,
         no_mono=False, no_dual=False, use_rich_pbar=False, auto_extract_glossary=False,
         watermark_output_mode=WatermarkOutputMode.NoWatermark,
         only_include_translated_page=True, auto_enable_ocr_workaround=False,

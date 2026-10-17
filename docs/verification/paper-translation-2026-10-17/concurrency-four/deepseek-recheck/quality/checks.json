@@ -1,0 +1,62 @@
+{
+  "boundary": "Read-only PDF structure/text and selected-page rendering; not full semantic/formula or owner-receipt acceptance.",
+  "artifacts": {
+    "mono": {
+      "pages": 16,
+      "bytes": 1061588,
+      "sha256Matches": true,
+      "cjkPerPage": [
+        827,
+        1027,
+        1126,
+        1123,
+        717,
+        892,
+        637,
+        722,
+        964,
+        403,
+        410,
+        849,
+        460,
+        837,
+        798,
+        90
+      ],
+      "replacementChars": 0,
+      "renderedPages": []
+    },
+    "dual": {
+      "pages": 16,
+      "bytes": 1705777,
+      "sha256Matches": true,
+      "cjkPerPage": [
+        827,
+        1027,
+        1126,
+        1123,
+        717,
+        892,
+        637,
+        722,
+        964,
+        403,
+        410,
+        849,
+        460,
+        837,
+        798,
+        90
+      ],
+      "replacementChars": 0,
+      "renderedPages": [
+        "dual-page-1.png",
+        "dual-page-8.png",
+        "dual-page-16.png"
+      ],
+      "popplerWarnings": [
+        "Syntax Warning: Mismatch between font type and embedded font file"
+      ]
+    }
+  }
+}

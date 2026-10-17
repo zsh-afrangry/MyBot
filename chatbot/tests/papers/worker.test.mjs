@@ -5,8 +5,26 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {workerCommand,runTranslation} from '../../plugins/kurumi-papers/runner.js';
+import {workerCommand,runTranslation,executionSettings} from '../../plugins/kurumi-papers/runner.js';
 import {disablePaperRecovery} from '../../../scripts/fusion/lib/recovery-isolation.mjs';
+
+test('Operator concurrency is validated and reaches actual sandbox stdin, never argv',async t=>{
+  assert.deepEqual(executionSettings({}),{apiConcurrency:1,apiQps:1});
+  for(const value of [0,5,true,'4',1.5]){
+    assert.throws(()=>executionSettings({apiConcurrency:value}),/Invalid/);
+    assert.throws(()=>executionSettings({apiQps:value}),/Invalid/);
+  }
+  const root=fs.mkdtempSync('/var/tmp/kurumi-worker-stdin-');
+  t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  for(const name of ['work','cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
+  const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
+  fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
+  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==4 and r[\"apiQps\"]==1; p=pathlib.Path; p(\"/work/mono.pdf\").write_bytes(b\"pdf\"); p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"mono\":\"/work/mono.pdf\",\"dual\":\"/work/dual.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
+  fs.writeFileSync(python,"#!/bin/sh\nexec /usr/bin/python3 -c '"+script+"'\n",{mode:0o700});
+  const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:4,apiQps:1},
+    work:path.join(root,'work'),cache:path.join(root,'cache'),profile:{},sourceLang:'en',targetLang:'zh'});
+  assert.deepEqual(result.usage,{maxConcurrency:4,maxQps:1});
+});
 
 test('Recovery disables paid translation and erases its active credential values',t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-paper-recovery-'));

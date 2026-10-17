@@ -1,0 +1,296 @@
+{
+  "startedAt": "2026-10-17T06:00:56.966Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/deepseek-four-fresh-20261017",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-17T06:00:56.985Z"
+  },
+  "jobId": "job_6f504d0d08b06dfb09ac7e8c",
+  "job": {
+    "id": "job_6f504d0d08b06dfb09ac7e8c",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "low",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "0f5766d0a38d14af6447d5bb20de339934bcaf97030168a065beda39b41148d3",
+    "status": "failed",
+    "correlation": {},
+    "createdAt": "2026-10-17T06:00:56.987Z",
+    "artifacts": {},
+    "updatedAt": "2026-10-17T06:01:48.689Z",
+    "execution": {
+      "apiConcurrency": 4,
+      "apiQps": 1
+    },
+    "error": "invalid_batch_translation",
+    "usage": {
+      "requests": 5,
+      "inputTokens": 3699,
+      "outputTokens": 10386,
+      "reportedTokens": 14085,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "DEEPSEEK_API_KEY",
+          "provider": "deepseek",
+          "channel": "official",
+          "model": "deepseek-flash",
+          "effort": "low",
+          "inputChars": 814,
+          "stream": true,
+          "outputFormat": "json_schema",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 24.305374,
+          "startedAt": "2026-10-17T06:01:22Z",
+          "streamProgress": {
+            "events": 884,
+            "outputChars": 0,
+            "lastEvent": "response.reasoning_text.delta"
+          },
+          "elapsedSeconds": 8.409,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 445,
+            "output_tokens": 1689,
+            "input_tokens_details": {
+              "cached_tokens": 256
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1480
+            }
+          },
+          "responseId": "72903098-33fb-4ca2-80af-773be3d88e96",
+          "responseEffort": "low",
+          "outcome": "completed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 363,
+            "jsonFenced": false,
+            "expectedItems": 2,
+            "actualItems": 2,
+            "itemIndex": 0,
+            "expectedPlaceholders": 4,
+            "actualPlaceholders": 2
+          }
+        },
+        {
+          "attempt": 2,
+          "credentialId": "DEEPSEEK_API_KEY",
+          "provider": "deepseek",
+          "channel": "official",
+          "model": "deepseek-flash",
+          "effort": "low",
+          "inputChars": 1233,
+          "stream": true,
+          "outputFormat": "json_schema",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 25.305469,
+          "startedAt": "2026-10-17T06:01:23Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.652,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 499,
+            "output_tokens": 708,
+            "input_tokens_details": {
+              "cached_tokens": 256
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 454
+            }
+          },
+          "responseId": "4a755051-b370-41f4-82d5-b8189761eaf3",
+          "responseEffort": "low",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 3,
+          "credentialId": "DEEPSEEK_API_KEY",
+          "provider": "deepseek",
+          "channel": "official",
+          "model": "deepseek-flash",
+          "effort": "low",
+          "inputChars": 1685,
+          "stream": true,
+          "outputFormat": "json_schema",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 26.305549,
+          "startedAt": "2026-10-17T06:01:24Z",
+          "streamProgress": {
+            "events": 1187,
+            "outputChars": 154,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 6.51,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 699,
+            "output_tokens": 1560,
+            "input_tokens_details": {
+              "cached_tokens": 512
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1108
+            }
+          },
+          "responseId": "bf888a94-c298-4cef-b04a-ababdfc20fef",
+          "responseEffort": "low",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 4,
+          "credentialId": "DEEPSEEK_API_KEY",
+          "provider": "deepseek",
+          "channel": "official",
+          "model": "deepseek-flash",
+          "effort": "low",
+          "inputChars": 1350,
+          "stream": true,
+          "outputFormat": "json_schema",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 27.305637,
+          "startedAt": "2026-10-17T06:01:25Z",
+          "streamProgress": {
+            "events": 864,
+            "outputChars": 0,
+            "lastEvent": "response.reasoning_text.delta"
+          },
+          "elapsedSeconds": 6.193,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 503,
+            "output_tokens": 1122,
+            "input_tokens_details": {
+              "cached_tokens": 256
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 878
+            }
+          },
+          "responseId": "6a559557-48a6-4a73-aca5-ecba5aace639",
+          "responseEffort": "low",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 5,
+          "credentialId": "DEEPSEEK_API_KEY",
+          "provider": "deepseek",
+          "channel": "official",
+          "model": "deepseek-flash",
+          "effort": "low",
+          "inputChars": 4299,
+          "stream": true,
+          "outputFormat": "json_schema",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 28.989943,
+          "startedAt": "2026-10-17T06:01:27Z",
+          "streamProgress": {
+            "events": 3790,
+            "outputChars": 0,
+            "lastEvent": "response.reasoning_text.delta"
+          },
+          "elapsedSeconds": 20.197,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 1553,
+            "output_tokens": 5307,
+            "input_tokens_details": {
+              "cached_tokens": 1408
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 3956
+            }
+          },
+          "responseId": "10bc2c21-3a30-4f2e-86c4-0929364b7117",
+          "responseEffort": "low",
+          "outcome": "completed"
+        }
+      ],
+      "failure": "invalid_batch_translation",
+      "validationFailure": {
+        "reason": "placeholder_mismatch",
+        "outputChars": 363,
+        "jsonFenced": false,
+        "expectedItems": 2,
+        "actualItems": 2,
+        "itemIndex": 0,
+        "expectedPlaceholders": 4,
+        "actualPlaceholders": 2
+      },
+      "normalizedJsonFences": 0,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "maxConcurrency": 4,
+      "maxQps": 1,
+      "inFlight": 0,
+      "peakInFlight": 4,
+      "hardCostLimit": false
+    },
+    "engineProgress": {
+      "type": "progress_update",
+      "stage": "Translate Paragraphs",
+      "stage_progress": 41.70792079207921,
+      "overall_progress": 58.094420719816426
+    },
+    "engineFailure": {
+      "code": "invalid_batch_translation",
+      "errorType": "TranslationFailure",
+      "frames": [
+        {
+          "file": "engine.py",
+          "function": "main",
+          "line": 228
+        },
+        {
+          "file": "engine.py",
+          "function": "translate",
+          "line": 214
+        }
+      ]
+    }
+  },
+  "sends": 0,
+  "ok": false,
+  "error": "invalid_batch_translation",
+  "finishedAt": "2026-10-17T06:01:49.041Z",
+  "elapsedSeconds": 52.075
+}

@@ -1,0 +1,5 @@
+  DIFFERS  AGENTS.md
+  role card: roles/小鲸鱼.md
+  NOT touched: openclaw.json, runtime-env.json, memory, reminders, state
+  wrote AGENTS.md
+persona applied from roles/小鲸鱼.md; model and credential configuration untouched

@@ -1,0 +1,2119 @@
+{
+  "startedAt": "2026-10-17T06:02:16.699Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/gpt-four-resume-20261017",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-17T06:02:16.718Z"
+  },
+  "jobId": "job_3755a748ef41d6da9461b3cb",
+  "job": {
+    "id": "job_3755a748ef41d6da9461b3cb",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "fea064eb1ed22f041052b117302a5016f38add673c187dab9f93c2f11b194a22",
+    "status": "succeeded",
+    "correlation": {},
+    "createdAt": "2026-10-17T06:02:16.720Z",
+    "artifacts": {
+      "mono": "pdf_6975b0afb3ed55ac2c17c08a9a1cc4cc",
+      "dual": "pdf_ad2e8d1df40b449078821f600be0ae62"
+    },
+    "updatedAt": "2026-10-17T06:05:03.836Z",
+    "execution": {
+      "apiConcurrency": 4,
+      "apiQps": 1
+    },
+    "usage": {
+      "requests": 57,
+      "inputTokens": 10863,
+      "outputTokens": 29576,
+      "reportedTokens": 40439,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 419,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 27.569773,
+          "startedAt": "2026-10-17T06:02:46Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.684,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 217,
+            "output_tokens": 469,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 341
+            }
+          },
+          "responseId": "resp_07308fb2cfc81fa0016ad30f8733408197820ea4ea87bbdae7",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 2,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 391,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 28.56991,
+          "startedAt": "2026-10-17T06:02:47Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 6.315,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 228,
+            "output_tokens": 411,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 276
+            }
+          },
+          "responseId": "resp_05cc24b5c95896d0016ad30f89fe388195a266002177213619",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 3,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 388,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 29.569981,
+          "startedAt": "2026-10-17T06:02:48Z",
+          "streamProgress": {
+            "events": 9,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 13.452,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 211,
+            "output_tokens": 582,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 455
+            }
+          },
+          "responseId": "resp_ft_caaf80bab4494b5bacd60e7a425c270e",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 4,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 415,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 30.570042,
+          "startedAt": "2026-10-17T06:02:49Z",
+          "streamProgress": {
+            "events": 9,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 24.679,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 220,
+            "output_tokens": 644,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 516
+            }
+          },
+          "responseId": "resp_ft_23b7c4e48ca941658cdfecf44f5ac430",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 5,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 402,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 32.268341,
+          "startedAt": "2026-10-17T06:02:50Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 5.857,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 241,
+            "output_tokens": 663,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 516
+            }
+          },
+          "responseId": "resp_001c070177bc75a7016ad30f8bc9cc819b8ab0306ef8eea221",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 6,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 354,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 34.891977,
+          "startedAt": "2026-10-17T06:02:53Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 6.713,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 205,
+            "output_tokens": 330,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 230
+            }
+          },
+          "responseId": "resp_0ac3aa9cd06b0f83016ad30f8e8bec819b8e6303869058b123",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 7,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 323,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 38.133942,
+          "startedAt": "2026-10-17T06:02:56Z",
+          "streamProgress": {
+            "events": 27,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 50.027,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 199,
+            "output_tokens": 7357,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 7250
+            }
+          },
+          "responseId": "resp_0ace851bdb31a8e8016ad30f9198dc819bb9d0f4c4710a25fa",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 8,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 196,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 41.611527,
+          "startedAt": "2026-10-17T06:03:00Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 12.36,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 188,
+            "output_tokens": 147,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 64
+            }
+          },
+          "responseId": "resp_0abba90e3eb32f4e016ad30f965e1c8194a5d5b10dbf90bd69",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 9,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 203,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 43.028488,
+          "startedAt": "2026-10-17T06:03:01Z",
+          "streamProgress": {
+            "events": 9,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 12.361,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 194,
+            "output_tokens": 167,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 78
+            }
+          },
+          "responseId": "resp_ft_7abfb9cd3fff491582d50f45f307dfc5",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 10,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 288,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 53.97893,
+          "startedAt": "2026-10-17T06:03:12Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.616,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 197,
+            "output_tokens": 255,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 158
+            }
+          },
+          "responseId": "resp_088916acf0a48f57016ad30fa15e788197a5e3f6b34af13376",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 11,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 242,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 55.258166,
+          "startedAt": "2026-10-17T06:03:13Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 2.716,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 195,
+            "output_tokens": 144,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 55
+            }
+          },
+          "responseId": "resp_057280f5905ff28b016ad30fa2a6c08198b11be032dff2d6f3",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 12,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 227,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 56.258316,
+          "startedAt": "2026-10-17T06:03:14Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.808,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 195,
+            "output_tokens": 205,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 117
+            }
+          },
+          "responseId": "resp_0f1cc092676888bb016ad30fa3da5c819ba980b5b93649d367",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 13,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 298,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 57.604227,
+          "startedAt": "2026-10-17T06:03:16Z",
+          "streamProgress": {
+            "events": 7,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 14.625,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 196,
+            "output_tokens": 1731,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1634
+            }
+          },
+          "responseId": "resp_0b0db08ee934c68e016ad30fa507c081998a1f5576aae85b5d",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 14,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 198,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 58.604346,
+          "startedAt": "2026-10-17T06:03:17Z",
+          "streamProgress": {
+            "events": 9,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 10.886,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 181,
+            "output_tokens": 567,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 491
+            }
+          },
+          "responseId": "resp_ft_5c9f7cd1bd7b426cb4cd4bc878cd0cdd",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 15,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 261,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 61.075919,
+          "startedAt": "2026-10-17T06:03:19Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 6.524,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 198,
+            "output_tokens": 303,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 211
+            }
+          },
+          "responseId": "resp_00d01d96b70da007016ad30fab85108195a23a92bf03f811ca",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 16,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 275,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 67.609513,
+          "startedAt": "2026-10-17T06:03:26Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.362,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 202,
+            "output_tokens": 412,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 309
+            }
+          },
+          "responseId": "resp_0905f915deae198c016ad30faf2ed481988d247baf51d4e8aa",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 17,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 291,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 69.499668,
+          "startedAt": "2026-10-17T06:03:27Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 2.834,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 190,
+            "output_tokens": 182,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 84
+            }
+          },
+          "responseId": "resp_025dfb0f9297bd43016ad30fb126e08193909fcf4e6d271b52",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 18,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 240,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 71.979293,
+          "startedAt": "2026-10-17T06:03:30Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.091,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 200,
+            "output_tokens": 287,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 195
+            }
+          },
+          "responseId": "resp_0fe3490a214e32a6016ad30fb34e70819fa3e822a0d390170c",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 19,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 263,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 72.979452,
+          "startedAt": "2026-10-17T06:03:31Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.717,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 190,
+            "output_tokens": 171,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 86
+            }
+          },
+          "responseId": "resp_0ab43a15d3d5513d016ad30fb5630c81999c1283148bc7dc4e",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 20,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 322,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 73.979545,
+          "startedAt": "2026-10-17T06:03:32Z",
+          "streamProgress": {
+            "events": 7,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 16.518,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 196,
+            "output_tokens": 2005,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1899
+            }
+          },
+          "responseId": "resp_036b8d6bb94455e3016ad30fb7a180819abb6b3f4ecc6c2b02",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 21,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 217,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 75.080533,
+          "startedAt": "2026-10-17T06:03:33Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.568,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 190,
+            "output_tokens": 199,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 112
+            }
+          },
+          "responseId": "resp_04298ea494a04a37016ad30fb6db3881968b16281ceda1905f",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 22,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 278,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 76.706064,
+          "startedAt": "2026-10-17T06:03:35Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.835,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 193,
+            "output_tokens": 212,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 119
+            }
+          },
+          "responseId": "resp_01bf6862ba40daca016ad30fb80bc08198b4bb90b76bde5018",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 23,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 270,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 78.658832,
+          "startedAt": "2026-10-17T06:03:37Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 26.481,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 193,
+            "output_tokens": 504,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 408
+            }
+          },
+          "responseId": "resp_05b50e876901d3ec016ad30fba0b488198a4dea0bc54f14708",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 24,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 277,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 80.551435,
+          "startedAt": "2026-10-17T06:03:38Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 17.154,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 188,
+            "output_tokens": 481,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 385
+            }
+          },
+          "responseId": "resp_000381358793cc61016ad30fbc1030819bb5c6c548720e2ce1",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 25,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 310,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 88.170089,
+          "startedAt": "2026-10-17T06:03:46Z",
+          "streamProgress": {
+            "events": 7,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 11.798,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 188,
+            "output_tokens": 1493,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1398
+            }
+          },
+          "responseId": "resp_040a884d4f114413016ad30fc3cb288197a1ce782018a0d929",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 26,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 280,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 90.507187,
+          "startedAt": "2026-10-17T06:03:48Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 8.125,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 198,
+            "output_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 198
+            }
+          },
+          "responseId": "resp_043430940d6c5eba016ad30fc866ec819babf644ddacb80b54",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 27,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 137,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 97.716252,
+          "startedAt": "2026-10-17T06:03:56Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 7.069,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 136,
+            "output_tokens": 209,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 160
+            }
+          },
+          "responseId": "resp_ft_82dc620137164be29a29db92f4b0d8ea",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 28,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 239,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 98.716395,
+          "startedAt": "2026-10-17T06:03:57Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.761,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 186,
+            "output_tokens": 211,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 123
+            }
+          },
+          "responseId": "resp_0a387293648acb20016ad30fcefd90819bb901638a39e21f26",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 29,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 268,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 99.978519,
+          "startedAt": "2026-10-17T06:03:58Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 6.387,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 193,
+            "output_tokens": 617,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 516
+            }
+          },
+          "responseId": "resp_0611e3f3a72491e7016ad30fd0206481938af6c2ea92a254d3",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 30,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 275,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 102.489714,
+          "startedAt": "2026-10-17T06:04:00Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.107,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 188,
+            "output_tokens": 362,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 277
+            }
+          },
+          "responseId": "resp_0b94225e0e1e5e86016ad30fd20c04819a80fd63525356e65f",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 31,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 265,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 104.795895,
+          "startedAt": "2026-10-17T06:04:03Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 21.837,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 190,
+            "output_tokens": 604,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 516
+            }
+          },
+          "responseId": "resp_0c634795aafd069b016ad30fd44ed8819bbf4e9d4938d4a566",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 32,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 220,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 105.796049,
+          "startedAt": "2026-10-17T06:04:04Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.235,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 190,
+            "output_tokens": 196,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 108
+            }
+          },
+          "responseId": "resp_075e1108339a795c016ad30fd55ca4819abea01ef4299a9926",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 33,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 262,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 106.796121,
+          "startedAt": "2026-10-17T06:04:05Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.658,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 184,
+            "output_tokens": 286,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 193
+            }
+          },
+          "responseId": "resp_0970f281858f2663016ad30fd64f60819bbf34a406f7b10df2",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 34,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 261,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 107.796166,
+          "startedAt": "2026-10-17T06:04:06Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 16.653,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 188,
+            "output_tokens": 1069,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 984
+            }
+          },
+          "responseId": "resp_085c001d8757b27c016ad30fd749e4819aada9511111f2830c",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 35,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 270,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 109.042223,
+          "startedAt": "2026-10-17T06:04:07Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 11.41,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 188,
+            "output_tokens": 297,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 210
+            }
+          },
+          "responseId": "resp_0acaec2bce6124fa016ad30fd895f8819994d914b5a36b94b2",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 36,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 203,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 110.464696,
+          "startedAt": "2026-10-17T06:04:08Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 10.882,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 180,
+            "output_tokens": 143,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 68
+            }
+          },
+          "responseId": "resp_0087d309797b738d016ad30fe20124819b8706dbe8a87f899a",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 37,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 215,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 120.462981,
+          "startedAt": "2026-10-17T06:04:18Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.816,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 180,
+            "output_tokens": 449,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 371
+            }
+          },
+          "responseId": "resp_019805c2964230c4016ad30fe411d48190b1933139b777bf59",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 38,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 243,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 121.463148,
+          "startedAt": "2026-10-17T06:04:19Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.843,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 191,
+            "output_tokens": 306,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 214
+            }
+          },
+          "responseId": "resp_02f94ca2c03ad326016ad30fe4f0c48199b41e7537fa4e4c8e",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 39,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 247,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 124.459689,
+          "startedAt": "2026-10-17T06:04:22Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 23.53,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 188,
+            "output_tokens": 603,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 516
+            }
+          },
+          "responseId": "resp_09370b61533c9e5f016ad30fe7e5788198ad4ce50b916f46b1",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 40,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 215,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 125.459834,
+          "startedAt": "2026-10-17T06:04:23Z",
+          "streamProgress": {
+            "events": 9,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 21.097,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 178,
+            "output_tokens": 426,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 349
+            }
+          },
+          "responseId": "resp_ft_7f2b394f217a4099b87f215587c4e015",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 41,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 233,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 126.459884,
+          "startedAt": "2026-10-17T06:04:24Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.621,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 178,
+            "output_tokens": 288,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 209
+            }
+          },
+          "responseId": "resp_016db4ce95789d45016ad30fea28048194a1e98c4118b20cfd",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 42,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 217,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 127.459937,
+          "startedAt": "2026-10-17T06:04:25Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 8.598,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 178,
+            "output_tokens": 347,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 272
+            }
+          },
+          "responseId": "resp_05a3655638005d42016ad30fefbb6c819aa17cb717e03e4e85",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 43,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 948,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 130.092676,
+          "startedAt": "2026-10-17T06:04:28Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 8.423,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 291,
+            "output_tokens": 103,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 96
+            }
+          },
+          "responseId": "resp_0cde335df3a6dacf016ad30fed7ae4819b89575ac5f0139e3b",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 44,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 945,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 136.06492,
+          "startedAt": "2026-10-17T06:04:34Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 5.324,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 291,
+            "output_tokens": 335,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 327
+            }
+          },
+          "responseId": "resp_0a2ed7debfad8525016ad30ff4a7e0819981f330db94936c98",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 45,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 226,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 138.52302,
+          "startedAt": "2026-10-17T06:04:36Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.999,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 176,
+            "output_tokens": 366,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 288
+            }
+          },
+          "responseId": "resp_0f267caea73420c3016ad30ff60f208199b92ee892a3273a37",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 46,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 213,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 141.394271,
+          "startedAt": "2026-10-17T06:04:39Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.188,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 177,
+            "output_tokens": 181,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 106
+            }
+          },
+          "responseId": "resp_0a4727c02c45f500016ad30ff8da74819995e6fcf3c44f7c3e",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 47,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 210,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 142.563405,
+          "startedAt": "2026-10-17T06:04:40Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.827,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 184,
+            "output_tokens": 319,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 239
+            }
+          },
+          "responseId": "resp_0a1181965b13a1d3016ad30ffa3e908193bde278e327f16322",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 48,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 209,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 144.593851,
+          "startedAt": "2026-10-17T06:04:43Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.479,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 176,
+            "output_tokens": 166,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 97
+            }
+          },
+          "responseId": "resp_0f4ea273e9b5c645016ad30ffc6b80819788504c778520d49b",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 49,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 201,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 146.401528,
+          "startedAt": "2026-10-17T06:04:44Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.41,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 186,
+            "output_tokens": 172,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 87
+            }
+          },
+          "responseId": "resp_02b12947bbe25eaa016ad30ffe80a8819486b7ba36d0a72c95",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 50,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 213,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 147.401647,
+          "startedAt": "2026-10-17T06:04:45Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 3.433,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 181,
+            "output_tokens": 279,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 201
+            }
+          },
+          "responseId": "resp_0abc8692868baf9c016ad30ffebd1c8195898577c9f27670dd",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 51,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 214,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 148.401698,
+          "startedAt": "2026-10-17T06:04:46Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 2.419,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 184,
+            "output_tokens": 172,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 83
+            }
+          },
+          "responseId": "resp_0869caae3b48cdbc016ad30fffadf88198aca73e0f6fdc3d44",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 52,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 195,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 149.401762,
+          "startedAt": "2026-10-17T06:04:47Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.719,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 172,
+            "output_tokens": 234,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 167
+            }
+          },
+          "responseId": "resp_092ec72ec8e14eb7016ad31000a2a0819a9150186f01986635",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 53,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 198,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 150.828099,
+          "startedAt": "2026-10-17T06:04:49Z",
+          "streamProgress": {
+            "events": 37,
+            "outputChars": 67,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 8.528,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 182,
+            "output_tokens": 183,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 102
+            }
+          },
+          "responseId": "resp_ft_991ae2938d344629bdde75407a4a772a",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 54,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 205,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 151.828184,
+          "startedAt": "2026-10-17T06:04:50Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 2.857,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 171,
+            "output_tokens": 142,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 68
+            }
+          },
+          "responseId": "resp_01ee554db856df2e016ad3100385208193b42db54c1364c075",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 55,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 192,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 152.828241,
+          "startedAt": "2026-10-17T06:04:51Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 2.849,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 168,
+            "output_tokens": 147,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 84
+            }
+          },
+          "responseId": "resp_00816dbcc902aea0016ad31004360c819a88141a965611e5ae",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 56,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 36,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 154.132213,
+          "startedAt": "2026-10-17T06:04:52Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 1.801,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 108,
+            "output_tokens": 50,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 30
+            }
+          },
+          "responseId": "resp_0042ab8b52d2793c016ad310058530819481945d0e5918bc2a",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 57,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "provider": "openai",
+          "channel": "naiccc",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 30,
+          "stream": true,
+          "outputFormat": "text",
+          "usageStatus": "reported",
+          "startedOffsetSeconds": 155.132358,
+          "startedAt": "2026-10-17T06:04:53Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.722,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 107,
+            "output_tokens": 97,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 77
+            }
+          },
+          "responseId": "resp_08b4d6637fd77a3e016ad31009030c819b8d4bb8837381ba97",
+          "responseEffort": "max",
+          "outcome": "completed"
+        }
+      ],
+      "failure": null,
+      "validationFailure": null,
+      "normalizedJsonFences": 0,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "maxConcurrency": 4,
+      "maxQps": 1,
+      "inFlight": 0,
+      "peakInFlight": 4,
+      "hardCostLimit": false
+    },
+    "delivery": {
+      "status": "not_requested"
+    },
+    "engineProgress": {
+      "type": "progress_end",
+      "stage": "Save PDF",
+      "stage_progress": 100,
+      "overall_progress": 100
+    }
+  },
+  "sends": 0,
+  "artifacts": {
+    "mono": {
+      "id": "pdf_6975b0afb3ed55ac2c17c08a9a1cc4cc",
+      "kind": "artifact",
+      "filename": "2609.32536v1-mono.pdf",
+      "sha256": "6975b0afb3ed55ac2c17c08a9a1cc4cc7fe6e37f4bad737fef18391770fdd6ab",
+      "bytes": 1078717,
+      "pages": 16,
+      "source": {
+        "type": "translation",
+        "inputId": "doc_71658ea5beea1cf5f9485d825f57b8a5"
+      },
+      "jobId": "job_3755a748ef41d6da9461b3cb",
+      "createdAt": "2026-10-17T06:05:03.813Z"
+    },
+    "dual": {
+      "id": "pdf_ad2e8d1df40b449078821f600be0ae62",
+      "kind": "artifact",
+      "filename": "2609.32536v1-dual.pdf",
+      "sha256": "ad2e8d1df40b449078821f600be0ae621576df14c2ec47cee6aa1519a72a9c37",
+      "bytes": 1722906,
+      "pages": 16,
+      "source": {
+        "type": "translation",
+        "inputId": "doc_71658ea5beea1cf5f9485d825f57b8a5"
+      },
+      "jobId": "job_3755a748ef41d6da9461b3cb",
+      "createdAt": "2026-10-17T06:05:03.834Z"
+    }
+  },
+  "ok": true,
+  "finishedAt": "2026-10-17T06:05:03.891Z",
+  "elapsedSeconds": 167.192
+}

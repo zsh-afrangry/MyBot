@@ -2,7 +2,7 @@
 
 归属：[文档 22](../../../22_论文PDF翻译与文件投递.md)。授权：先补 014 → 030 → 040 的渠道故障切换，再接 DeepSeek 官方 Key；保持 GPT 6.1 Sol/MAX 默认，不推送远端，不收录文档 23 的并行开发。起点 `f8fd5fc`，阶段一提交 `f049a64`，后续提交见 Git 历史。
 
-**结论：渠道切换和官方 Key 接入已实现、测试、部署。DeepSeek Flash/low 已生成整篇 16 页 mono/dual；GPT/MAX 整篇仍超时（B1）。** 原先本人 QQ/邮件单页收件确认仍有效；本轮没有真实 QQ/邮件外发。
+**该阶段结论：渠道切换和官方Key接入已部署，DeepSeek/low已生成16页，GPT/MAX串行当时超时。后续四并发缓存续验已生成完整GPT/MAX与DeepSeek译稿，当前69项回归与部署见[四并发报告](../concurrency-four/README.md)。** 原先本人 QQ/邮件单页收件确认仍有效；本轮没有真实 QQ/邮件外发。
 
 ## 真实结果
 
@@ -32,7 +32,7 @@ DeepSeek 这次实测消耗低于生产默认的 200 请求/150000 已报告 tok
 
 | 文件 | 已证明的范围 |
 | --- | --- |
-| [paper-node-tests.txt](paper-node-tests.txt) | 当前源码 Node26/26：厂商默认/冲突、凭据隔离/原子合并、任务/产物、受管文件、附件/本地TLS SMTP、边界与恢复隔离；无真实外发 |
+| [paper-node-tests.txt](paper-node-tests.txt) | 该阶段源码 Node26/26：厂商默认/冲突、凭据隔离/原子合并、任务/产物、受管文件、附件/本地TLS SMTP、边界与恢复隔离；无真实外发 |
 | [responses-final-tests.txt](responses-final-tests.txt) | 20/20，含渠道有界切换/冷却/预算、未知用量、官方配置与凭据/格式；网络注入 |
 | [engine-tests.txt](engine-tests.txt) | 9/9，实际安装 BabelDOC0.6.2 的缓存、批次/标记及正常结束/取消契约；API模拟 |
 | [host-final.json](host-final.json) | 真实隔离 OpenClaw/主模型四轮：列文件、GPT默认且仅dual一份、会话重置后不重发、DeepSeek/low且仅生成。翻译/OneBot模拟；无真实翻译API或QQ/邮件 |
@@ -41,7 +41,7 @@ DeepSeek 这次实测消耗低于生产默认的 200 请求/150000 已报告 tok
 | [dependencies.txt](dependencies.txt)、[sync-config.txt](sync-config.txt)、[sync-persona.txt](sync-persona.txt) | 依赖自持、受管配置0漂移、人格四文件对齐；不等于模型/实际交付全验收 |
 | [doc-links.json](doc-links.json)、[closeout.json](closeout.json) | 本轮维护文档的本地目标存在检查、脚本/证据分类、差异/私密值检查与提交范围；不验证远端链接、标题锚点或人工分类的语义正确性 |
 
-本轮当前回归合计55/55；原报告中的112、54项是早期时点回执，本轮未重跑。`tool-fields-tests.txt` 是字段说明调整后的中间定向回归，最终以 Node26/26为准。`paper-node-phase1.txt`、`responses-tests.txt`、`engine-phase1.txt` 为阶段一的20/17/4通过记录，未覆盖后续DeepSeek最终实现。
+该阶段回归合计55/55；原报告中的112、54项是早期时点回执，本轮未重跑。`tool-fields-tests.txt` 是字段说明调整后的中间定向回归，最终以 Node26/26为准。`paper-node-phase1.txt`、`responses-tests.txt`、`engine-phase1.txt` 为阶段一的20/17/4通过记录，未覆盖后续DeepSeek最终实现。
 
 新增/更新脚本均在 `chatbot/tests/papers/`；凭据导入脚本在 `chatbot/scripts/`。`acceptance-api.py` 用显式私密凭据调用合成短文/批次；`acceptance.mjs` 用指定PDF，支持已登记厂商/模型/强度及新证据目录；`acceptance-host.mjs` 真实主模型但模拟翻译/OneBot；`acceptance-worker.mjs` 只测实际隔离进程。授权/副作用与完整清单见[SCRIPTS.md](../../SCRIPTS.md)。
 
@@ -62,7 +62,7 @@ DeepSeek 这次实测消耗低于生产默认的 200 请求/150000 已报告 tok
 
 ## 仍未覆盖
 
-- B1是GPT/MAX整篇时间/稳定性阻塞，三渠道切换通过不能关闭它；不继续自动付费复试。
+- B1的全文产物缺口已由后续四并发缓存续验关闭，见[四并发报告](../concurrency-four/README.md)；全新缓存耗时/稳定性仍未证明，不自动付费重试。
 - DeepSeek完整产物未向本人实际发送；本人真实上传→主模型→真实翻译→收件的完整链路、真实邮件带码确认往返、整篇人工语义/公式校对未覆盖。
 - 030→040的真实故障、真实额度耗尽/吊销未制造；注入覆盖全部顺序/冷却/预算。V4 Pro全文、none全文成功未证明；Grok未实现。
-- GPU/OCR、并发压力、新功能完整灾难恢复和第三方账单硬上限未验收；恢复点未重打。旧系统和文档23开发未改。
+- GPU/OCR、超过4并发压力、新功能完整灾难恢复和第三方账单硬上限未验收；恢复点未重打。旧系统和文档23开发未改。

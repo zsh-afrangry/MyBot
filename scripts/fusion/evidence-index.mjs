@@ -51,6 +51,7 @@ const TABLE = {
   'chatbot/tests/papers/mime-parse.py': ['库', '标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin', {readonly: 1}, 'header'],
   'chatbot/tests/papers/worker.test.mjs': ['离线', '实际翻译进程文件系统隔离与恢复副本的付费/凭据关闭', {testDir: 1}, 'header'],
   'chatbot/tests/papers/log-query.test.mjs': ['离线', '论文事件接入只读统一查询与可信消息/任务关联', {testDir: 1}, 'header'],
+  'chatbot/tests/papers/concurrency_test.py': ['离线', '网络四并发上限、乱序回执/不可变快照、预算、终态取消、共享冷却/频率与并发原子写入；注入HTTP/临时目录', {testDir: 1}, 'header'],
   'chatbot/tests/papers/responses_test.py': ['离线', '原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执', {testDir: 1}, 'header'],
   'chatbot/tests/papers/engine_test.py': ['离线', '锁定排版引擎的探测、批次 JSON、公式/样式接口；独立 HOME/cache', {testDir: 1}, 'header'],
   'chatbot/tests/papers/acceptance-download.mjs': ['验收', '真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录', {auth: 1, externalApi: 1, writesState: 1, writesRepo: 1}, 'boundary'],

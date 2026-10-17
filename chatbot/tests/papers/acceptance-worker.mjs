@@ -16,13 +16,14 @@ if(!capture.startsWith(state+'/tmp/plugin-captures/')||path.basename(capture)!==
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-capture-smoke-'));
 const report={at:new Date().toISOString(),boundary:'Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.',capturePath:capture};
 try{
-  const {workerCommand}=await import(pathToFileURL(capture).href);
+  const {workerCommand,executionSettings}=await import(pathToFileURL(capture).href);
   const config=JSON.parse(fs.readFileSync(state+'/openclaw.json')).plugins.entries['kurumi-papers'].config;
+  report.execution=executionSettings(config);
   for(const name of ['work','cache'])fs.mkdirSync(path.join(root,name));
   const {command,args}=workerCommand({config,work:path.join(root,'work'),cache:path.join(root,'cache')});
   const app=args.indexOf('/app'),pythonSource=args[app-1];
   report.sourceHashes=Object.fromEntries(['engine.py','responses.py','profiles.json'].map(name=>[name,createHash('sha256').update(fs.readFileSync(path.join(pythonSource,name))).digest('hex')]));
-  const code=`import pathlib,json,sys; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs]}))`;
+  const code=`import pathlib,json,sys; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; assert engine.execution_limits(json.loads('${JSON.stringify(report.execution)}'))==(${report.execution.apiConcurrency},${report.execution.apiQps}); print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs]}))`;
   const result=spawnSync(command,[...args.slice(0,-1),'-c',code],{encoding:'utf8',timeout:20000,env:{PATH:'/usr/bin:/bin'}});
   report.exitCode=result.status;report.ok=result.status===0;
   if(report.ok)report.worker=JSON.parse(result.stdout.trim().split('\n').at(-1));

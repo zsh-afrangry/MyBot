@@ -1,0 +1,12 @@
+  MISSING  plugins.entries.kurumi-papers.config.apiConcurrency
+            repo    : 4
+  MISSING  plugins.entries.kurumi-papers.config.apiQps
+            repo    : 1
+
+  repo-managed top-level keys : agents, bindings, channels, commands, discovery, gateway, logging, models, plugins, secrets, session, skills, tools
+  host-maintained keys kept   : (none)
+applied: 2 changed, 0 removed
+  backup          : /home/afrangry/.openclaw-fusion/openclaw.json.bak.2026-10-17T06-06-27-102Z
+  managed keys    : 13 replaced from repo
+  host-maintained : 0 key(s) kept as-is
+  state untouched : state/, channel/, agents/, workspace/, media/ were not opened

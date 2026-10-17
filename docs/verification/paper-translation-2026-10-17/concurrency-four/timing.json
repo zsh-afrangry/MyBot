@@ -1,0 +1,142 @@
+{
+  "at": "2026-10-17T06:08:48Z",
+  "boundary": "Actual per-job receipts; historical serial runs and current cached rechecks are not matched cold-cache A/B experiments. Latency is complete API response, not time-to-first-token. Sums of overlapping request duration are not wall time. DeepSeek aggregate includes first failed cold run plus one explicit cached recheck; GPT new tokens exclude all previous calls/cache costs.",
+  "cases": {
+    "gpt_serial_partial": {
+      "evidence": "channel-upgrade/gpt-full/acceptance.json",
+      "ok": false,
+      "elapsedSeconds": 1800.748,
+      "requests": 41,
+      "reportedTokens": 87359,
+      "inputTokens": 12340,
+      "outputTokens": 75019,
+      "unknownUsageAttempts": 3,
+      "channelFailures": 2,
+      "credentialsUsed": [
+        "OPENAI_API_KEY1_014",
+        "OPENAI_API_KEY2_030"
+      ],
+      "failure": null,
+      "httpCompleted": 38,
+      "batchValidationFailures": 0,
+      "meanResponseSeconds": 42.203526,
+      "medianResponseSeconds": 30.9965,
+      "maxResponseSeconds": 258.109,
+      "sumResponseSeconds": 1603.734,
+      "configuredApiConcurrency": 1,
+      "configuredApiQps": 1,
+      "peakInFlight": null,
+      "recomputedPeak": null,
+      "minimumStartSpacingSeconds": null
+    },
+    "deepseek_serial_translation": {
+      "evidence": "channel-upgrade/deepseek-low/acceptance.json",
+      "ok": false,
+      "elapsedSeconds": 458.441,
+      "requests": 105,
+      "reportedTokens": 136595,
+      "inputTokens": 45817,
+      "outputTokens": 90778,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "credentialsUsed": [
+        "DEEPSEEK_API_KEY"
+      ],
+      "failure": null,
+      "httpCompleted": 105,
+      "batchValidationFailures": 0,
+      "meanResponseSeconds": 4.062495,
+      "medianResponseSeconds": 3.524,
+      "maxResponseSeconds": 22.285,
+      "sumResponseSeconds": 426.562,
+      "configuredApiConcurrency": 1,
+      "configuredApiQps": 1,
+      "peakInFlight": null,
+      "recomputedPeak": null,
+      "minimumStartSpacingSeconds": null
+    },
+    "gpt_four_cached": {
+      "evidence": "concurrency-four/gpt-resume/acceptance.json",
+      "ok": true,
+      "elapsedSeconds": 167.192,
+      "requests": 57,
+      "reportedTokens": 40439,
+      "inputTokens": 10863,
+      "outputTokens": 29576,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "credentialsUsed": [
+        "OPENAI_API_KEY1_014"
+      ],
+      "failure": null,
+      "httpCompleted": 57,
+      "batchValidationFailures": 0,
+      "meanResponseSeconds": 8.782246,
+      "medianResponseSeconds": 4.816,
+      "maxResponseSeconds": 50.027,
+      "sumResponseSeconds": 500.588,
+      "configuredApiConcurrency": 4,
+      "configuredApiQps": 1,
+      "peakInFlight": 4,
+      "recomputedPeak": 4,
+      "minimumStartSpacingSeconds": 1.000045
+    },
+    "deepseek_four_first_failure": {
+      "evidence": "concurrency-four/deepseek-fresh/acceptance.json",
+      "ok": false,
+      "elapsedSeconds": 52.075,
+      "requests": 5,
+      "reportedTokens": 14085,
+      "inputTokens": 3699,
+      "outputTokens": 10386,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "credentialsUsed": [
+        "DEEPSEEK_API_KEY"
+      ],
+      "failure": "invalid_batch_translation",
+      "httpCompleted": 5,
+      "batchValidationFailures": 1,
+      "meanResponseSeconds": 8.9922,
+      "medianResponseSeconds": 6.51,
+      "maxResponseSeconds": 20.197,
+      "sumResponseSeconds": 44.961,
+      "configuredApiConcurrency": 4,
+      "configuredApiQps": 1,
+      "peakInFlight": 4,
+      "recomputedPeak": 4,
+      "minimumStartSpacingSeconds": 1.00008
+    },
+    "deepseek_four_recheck_cached": {
+      "evidence": "concurrency-four/deepseek-recheck/acceptance.json",
+      "ok": true,
+      "elapsedSeconds": 155.163,
+      "requests": 101,
+      "reportedTokens": 119848,
+      "inputTokens": 42563,
+      "outputTokens": 77285,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "credentialsUsed": [
+        "DEEPSEEK_API_KEY"
+      ],
+      "failure": null,
+      "httpCompleted": 101,
+      "batchValidationFailures": 0,
+      "meanResponseSeconds": 3.788426,
+      "medianResponseSeconds": 3.179,
+      "maxResponseSeconds": 9.399,
+      "sumResponseSeconds": 382.631,
+      "configuredApiConcurrency": 4,
+      "configuredApiQps": 1,
+      "peakInFlight": 4,
+      "recomputedPeak": 4,
+      "minimumStartSpacingSeconds": 1.000003
+    }
+  },
+  "deepseekFourCumulativeFromEmptyTranslationCache": {
+    "elapsedSeconds": 207.238,
+    "requests": 106,
+    "reportedTokens": 133933
+  }
+}

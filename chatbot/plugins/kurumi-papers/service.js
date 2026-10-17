@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {Documents, atomicJson} from '../../packages/documents/index.js';
 import {downloadPaper} from '../kurumi-research/papers.js';
 import {resolveProfile} from './profiles.js';
-import {runTranslation} from './runner.js';
+import {runTranslation,executionSettings} from './runner.js';
 
 const JOB_ID = /^job_[a-f0-9]{24}$/;
 export function normalizePages(value, pages, maxPages = 30) {
@@ -96,7 +96,7 @@ export class PaperService {
     try {
       fs.mkdirSync(work, {mode: 0o700});
       fs.writeFileSync(path.join(work, 'input.pdf'), this.documents.get(job.documentId).content, {mode: 0o600, flag: 'wx'});
-      job.status = 'running'; this.save(job);
+      job.status = 'running'; job.execution = executionSettings(this.config); this.save(job);
       const result = await this.runner({config: this.config, work, cache: path.join(this.documents.root, 'cache'), profile: job.profile, pages: job.pages, sourceLang: job.sourceLang, targetLang: job.targetLang, signal});
       signal.throwIfAborted();
       job.usage = result.usage;

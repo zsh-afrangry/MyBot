@@ -69,6 +69,36 @@ test('A lost send receipt preserves successful translation and does not replay w
   const fresh=new PaperService(service.config,{inspect});fresh.start();
   assert.equal(fresh.get(job.id).delivery.status,'failed_or_unknown');await fresh.stop();
 });
+test('Multiple papers stay serial and send each completed paper before translating the next',async t=>{
+  const events=[];let translations=0,sends=0,release,entered;
+  const sending=new Promise(resolve=>{entered=resolve;}),gate=new Promise(resolve=>{release=resolve;});
+  const {service,doc}=await setup(t,{
+    runner:async({work})=>{
+      events.push('translate-'+(++translations));const files={};
+      for(const kind of ['mono','dual']){files[kind]=path.join(work,kind+'.pdf');fs.writeFileSync(files[kind],pdf(kind));}
+      return files;
+    },
+    sendFile:async()=>{
+      const n=++sends;events.push('send-'+n+'-start');
+      if(n===1){entered();await gate;}
+      events.push('send-'+n+'-end');return {status:'platform_accepted'};
+    }
+  });
+  service.config.apiConcurrency=4;service.config.apiQps=1;
+  const first=service.submit({documentId:doc.id},{key:'serial-first'});
+  const second=service.submit({documentId:doc.id},{key:'serial-second'});
+  try{
+    await sending;
+    assert.equal(service.get(first.id).status,'succeeded');
+    assert.deepEqual(service.get(first.id).execution,{apiConcurrency:4,apiQps:1});
+    assert.equal(service.get(second.id).status,'queued');
+    assert.deepEqual(events,['translate-1','send-1-start']);
+  }finally{release();}
+  await terminal(service,second.id);
+  while(service.active)await new Promise(r=>setTimeout(r,5));
+  assert.deepEqual(events,['translate-1','send-1-start','send-1-end','translate-2','send-2-start','send-2-end']);
+  assert.equal(service.get(second.id).delivery.status,'platform_accepted');
+});
 test('Worker failure retains bounded structural diagnostics before removing its work directory',async t=>{
   const {service,doc,root}=await setup(t,{runner:async({work})=>{
     fs.writeFileSync(path.join(work,'engine-error.json'),JSON.stringify({code:'pdf_engine_TypeError',errorType:'TypeError',frames:[{file:'engine.py',function:'translate',line:1}]}));

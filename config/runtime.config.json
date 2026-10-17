@@ -295,6 +295,8 @@
           "maxPages": 30,
           "maxRequests": 200,
           "maxReportedTokens": 150000,
+          "apiConcurrency": 4,
+          "apiQps": 1,
           "timeoutSeconds": 1200
         }
       },

@@ -129,6 +129,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线 | 固定API客户端、可信请求、参数映射、共享播报与切换防旧写 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/knowledgemap/bills.test.mjs` | 离线 | 账单工具声明一致、真实钩子runId映射、当前请求隔离和消息幂等键 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 离线 | 真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/concurrency_test.py` | 离线 | 网络四并发上限、乱序回执/不可变快照、预算、终态取消、共享冷却/频率与并发原子写入；注入HTTP/临时目录 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/credentials.test.mjs` | 离线 | 厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/documents.test.mjs` | 离线 | PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/engine_test.py` | 离线 | 锁定排版引擎的探测、批次 JSON、公式/样式接口；独立 HOME/cache | 写临时测试目录 | 否 | header | — |

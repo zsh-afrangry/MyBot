@@ -38,7 +38,7 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
       if (args.action === 'list') return {ok: true, documents: service.documents.list(args)};
       throw Error('Invalid document action');
     });
-    register('kurumi_translate', '按需翻译受管 PDF：start 返回后台任务 ID，主聊天可继续；status/list 查询结果和产物 ID，cancel 取消。未指定时用 naiccc/OpenAI gpt-6.1-sol、max；明确要求 DeepSeek 时传 provider=deepseek，默认 official/deepseek-flash/low，可选 deepseek-v4-pro、强度 none/low/high/max。none 较快但实际样式保留不稳，不能保证翻译成功。GPT 仅在014→030→040同模型同强度切换，不自动转DeepSeek。默认英文译中文、双语 PDF 发本人 QQ；纯译文用 output=mono，两份用 both。每篇独立启动，默认最多30页，可用 pages 选择页码；不默换模型或厂商。邮件使用完成后的产物 ID 调用 email_draft，再等主人带码确认后 email_send。仅任务 succeeded 表示生成成功，投递状态另看 delivery。', {
+    register('kurumi_translate', '按需翻译受管 PDF：start 返回后台任务 ID，主聊天可继续；status/list 查询结果和产物 ID，cancel 取消。未指定时用 naiccc/OpenAI gpt-6.1-sol、max；明确要求 DeepSeek 时传 provider=deepseek，默认 official/deepseek-flash/low，可选 deepseek-v4-pro、强度 none/low/high/max。none 较快但实际样式保留不稳，不能保证翻译成功。GPT 仅在014→030→040同模型同强度切换，不自动转DeepSeek。默认英文译中文、双语 PDF 发本人 QQ；纯译文用 output=mono，两份用 both。多篇分别start并排队，始终逐篇翻译，每完成一篇立即自动发送该篇，不等待整批。默认最多30页，可用 pages 选择页码；不默换模型或厂商。邮件使用完成后的产物 ID 调用 email_draft，再等主人带码确认后 email_send。仅任务 succeeded 表示生成成功，投递状态另看 delivery。', {
       action: {type: 'string', enum: ['start','status','list','cancel']}, documentId: {type: 'string'}, jobId: {type: 'string'},
       provider: {type: 'string'}, channel: {type: 'string'}, model: {type: 'string'}, effort: {type: 'string'},
       pages: {type: 'string', maxLength: 200}, sourceLang: {type: 'string'}, targetLang: {type: 'string'},

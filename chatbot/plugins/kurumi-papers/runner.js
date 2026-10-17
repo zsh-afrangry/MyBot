@@ -5,6 +5,12 @@ import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
 import {resolveProfile, credentialIdsForProfile} from './profiles.js';
 
+export function executionSettings(config) {
+  const settings = {apiConcurrency: config.apiConcurrency ?? 1, apiQps: config.apiQps ?? 1};
+  for (const value of Object.values(settings)) if (!Number.isInteger(value) || value < 1 || value > 4) throw Error('Invalid translation concurrency or QPS (1–4)');
+  return settings;
+}
+
 export function loadKeys(file, profile = {}) {
   const stat = fs.lstatSync(file);
   if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077)) throw Error('Translation credential file must be owner-only and regular');
@@ -31,11 +37,12 @@ export function workerCommand({config, work, cache}) {
 }
 export function runTranslation({config, work, cache, profile, pages, sourceLang, targetLang, signal}) {
   signal?.throwIfAborted();
+  const execution = executionSettings(config);
   profile = resolveProfile(profile);
   const {command, args} = workerCommand({config, work, cache});
   const request = {profile, keys: loadKeys(config.credentialsFile, profile), input: '/work/input.pdf', output: '/work',
     cooldownFile: '/cache/credential-cooldowns.json', pages, sourceLang, targetLang,
-    maxRequests: config.maxRequests ?? 200, maxReportedTokens: config.maxReportedTokens ?? 150000};
+    maxRequests: config.maxRequests ?? 200, maxReportedTokens: config.maxReportedTokens ?? 150000, ...execution};
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {env: {PATH: '/usr/bin:/bin'}, stdio: ['pipe','pipe','pipe'], detached: true});
     let output = '', killed = false;

@@ -1,0 +1,17 @@
+{
+  "boundary": "Existence check for local Markdown link targets in changed Markdown files and new evidence README; not remote links, anchors or prose accuracy.",
+  "files": [
+    "config/README.md",
+    "docs/16_验收与测试总表.md",
+    "docs/22_论文PDF翻译与文件投递.md",
+    "docs/verification/INDEX.md",
+    "docs/verification/SCRIPTS.md",
+    "docs/verification/paper-translation-2026-10-17/README.md",
+    "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+    "scripts/fusion/templates/AGENTS.md",
+    "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md"
+  ],
+  "localTargets": 119,
+  "broken": [],
+  "ok": true
+}
