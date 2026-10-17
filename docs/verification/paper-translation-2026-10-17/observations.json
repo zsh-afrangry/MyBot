@@ -11,8 +11,18 @@
   },
   "correctedMail": {
     "smtp": "accepted",
-    "ownerInboxConfirmation": "pending",
-    "receipt": "delivery-mail-fixed/acceptance.json"
+    "ownerInboxConfirmation": "owner_confirmed",
+    "receipt": "delivery-mail-fixed/acceptance.json",
+    "confirmedOn": "2026-10-17",
+    "evidenceSource": "Owner feedback in this task; not an automated IMAP retrieval.",
+    "confirmedChecks": {
+      "bodyReadable": true,
+      "pdfReceivedAsAttachment": true,
+      "pdfOpens": true,
+      "firstPageOriginalAndTranslationLayoutNormal": true
+    },
+    "closesFinding": "B2",
+    "scope": "Corrected email and its first-page bilingual PDF only; not full-document translation or semantic/formula quality."
   },
   "qqDownload": {
     "status": "passed",
@@ -21,6 +31,7 @@
   },
   "layout": {
     "firstPageBody": "readable in mono and dual renderings",
-    "knownDefect": "Author/affiliation area merges lines/names; no publication-quality claim."
+    "knownDefect": "Developer rendering inspection observed author/affiliation area merging lines/names; no publication-quality claim.",
+    "ownerFeedback": "2026-10-17: received first-page original/translation PDF opens and its layout is normal; not a full-document quality review."
   }
 }
