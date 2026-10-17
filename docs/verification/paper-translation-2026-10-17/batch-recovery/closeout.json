@@ -1,0 +1,158 @@
+{
+  "at": "2026-10-17T14:39:08.169052+00:00",
+  "baseCommit": "5f29fa19454e9a699eb26bb51919dd83e6af9bd4",
+  "status": "verified_before_local_commit",
+  "boundary": "Paper-only local closeout; no remote writes, legacy actions, SQL changes or KnowledgeMap code. Exact resulting commit is the next paper-scope local commit in Git history. Link checking covers existing local file targets, not anchor syntax or external URLs.",
+  "changedPaths": [
+    "chatbot/plugins/kurumi-papers/openclaw.plugin.json",
+    "chatbot/plugins/kurumi-papers/python/engine.py",
+    "chatbot/plugins/kurumi-papers/python/http_worker.py",
+    "chatbot/plugins/kurumi-papers/python/responses.py",
+    "chatbot/plugins/kurumi-papers/runner.js",
+    "chatbot/plugins/kurumi-papers/service.js",
+    "chatbot/tests/papers/acceptance-worker.mjs",
+    "chatbot/tests/papers/acceptance.mjs",
+    "chatbot/tests/papers/engine_test.py",
+    "chatbot/tests/papers/jobs.test.mjs",
+    "chatbot/tests/papers/reliability_test.py",
+    "chatbot/tests/papers/responses_test.py",
+    "chatbot/tests/papers/worker.test.mjs",
+    "config/README.md",
+    "config/runtime.config.json",
+    "docs/16_验收与测试总表.md",
+    "docs/22_论文PDF翻译与文件投递.md",
+    "docs/verification/INDEX.md",
+    "docs/verification/SCRIPTS.md",
+    "docs/verification/paper-translation-2026-10-17/README.md",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/README.md",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/captured-marker-retry-fix.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/captured-production-contract.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/captured-recovery-round-fix.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/captured-worker-final.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/captured-worker.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/closeout.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/concurrency-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/deployment.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/engine-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/network-diagnostics.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/node-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/online-results.json",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/related-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/reliability-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/responses-tests.txt",
+    "scripts/fusion/evidence-index.mjs"
+  ],
+  "privateValuesScanned": 10,
+  "privateValueMatches": [],
+  "markdown": {
+    "files": [
+      "config/README.md",
+      "docs/16_验收与测试总表.md",
+      "docs/22_论文PDF翻译与文件投递.md",
+      "docs/verification/INDEX.md",
+      "docs/verification/SCRIPTS.md",
+      "docs/verification/paper-translation-2026-10-17/README.md",
+      "docs/verification/paper-translation-2026-10-17/batch-recovery/README.md"
+    ],
+    "localTargetsChecked": 86,
+    "broken": [],
+    "nulDelimitedGitPaths": true
+  },
+  "captureSourceHashMatches": {
+    "engine.py": true,
+    "responses.py": true,
+    "http_worker.py": true,
+    "profiles.json": true
+  },
+  "runnerCaptureMatches": true,
+  "production": {
+    "budgets": {
+      "maxRequests": 300,
+      "maxReportedTokens": 300000,
+      "timeoutSeconds": 1800,
+      "apiConcurrency": 4,
+      "apiQps": 1,
+      "batchValidationRetries": 1,
+      "channelRecoveryRetries": 1
+    },
+    "testIngress": false,
+    "activePaperJobs": [],
+    "deploymentEvidence": "deployment.json"
+  },
+  "offlineTests": {
+    "node": 35,
+    "responses": 20,
+    "concurrency": 10,
+    "installedEngine": 15,
+    "reliability": 21,
+    "paperTotal": 101,
+    "relatedMailQQLog": 112
+  },
+  "paidRuns": {
+    "terminalRuns": 5,
+    "successfulColdCachePapers": [
+      {
+        "jobId": "job_3396fa64792440e7f99adebf",
+        "pages": 23,
+        "elapsedSeconds": 1548.803,
+        "requests": 209,
+        "reportedTokens": 171035,
+        "unknownUsageAttempts": 7
+      },
+      {
+        "jobId": "job_df73bdfdde2f420e6382049e",
+        "pages": 19,
+        "elapsedSeconds": 1258.571,
+        "requests": 160,
+        "reportedTokens": 121713,
+        "unknownUsageAttempts": 5
+      }
+    ],
+    "ownerQQDeliveries": 2,
+    "smtpThisRound": false,
+    "ownerReceiptConfirmed": false
+  },
+  "sqlChanges": false,
+  "uncovered": [
+    "Full manual semantic/formula quality and author/affiliation/code-label layout",
+    "GPT MAX full paper with cold translation cache",
+    "DeepSeek current high/MAX full paper and prior MAX 8192 output limit",
+    "Real owner upload to chat model to paid worker to owner receipt",
+    "Long-running reliability, more than four concurrency, OCR/GPU, new-feature disaster recovery"
+  ],
+  "approvedDeferred": [
+    "Failed partial artifact handling",
+    "Checkpoint resume/retranslation"
+  ],
+  "evidenceFiles": [
+    "README.md",
+    "captured-marker-retry-fix.json",
+    "captured-production-contract.json",
+    "captured-recovery-round-fix.json",
+    "captured-worker-final.json",
+    "captured-worker.json",
+    "closeout.json",
+    "concurrency-tests.txt",
+    "deployment.json",
+    "engine-tests.txt",
+    "network-diagnostics.json",
+    "node-tests.txt",
+    "online-results.json",
+    "related-tests.txt",
+    "reliability-tests.txt",
+    "responses-tests.txt"
+  ],
+  "evidenceCoverage": {
+    "exitCode": 0,
+    "summary": "evidence coverage\n  历史领域验收: 84\n  当前有效: 265\n  total: 349\nOK: every file is classified by a named rule."
+  },
+  "scriptIndex": {
+    "exitCode": 0,
+    "scripts": 169,
+    "boundaryContradictions": 0
+  },
+  "diffCheck": {
+    "exitCode": 0
+  },
+  "versionEvidence": "This is the completed pre-commit audit. Version inclusion and clean-worktree status are proved by the subsequent paper-scope local commit and Git status; no remote push."
+}

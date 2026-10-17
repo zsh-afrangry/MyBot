@@ -1,0 +1,127 @@
+{
+  "at": "2026-10-17T14:20:43.568Z",
+  "baseline": "5f29fa1",
+  "boundary": "Read-only checks against current production. No restart, configuration writes, paid API calls or delivery. Domain, API and PDF results are in online-results.json; health does not prove them.",
+  "checks": {
+    "health": {
+      "exitCode": 0,
+      "ok": true,
+      "gateway": true,
+      "qq": {
+        "online": true,
+        "good": true
+      },
+      "testIngress": false,
+      "testMethodDisabled": true,
+      "channel": [
+        {
+          "running": true,
+          "connected": true
+        }
+      ],
+      "databases": {
+        "channelDatabase": "ok",
+        "weatherDatabase": "ok",
+        "remindersDatabase": "ok",
+        "reminderListDatabase": "ok"
+      },
+      "services": {
+        "kurumi-fusion": {
+          "ActiveState": "active",
+          "UnitFileState": "enabled"
+        },
+        "qq-bridge": {
+          "ActiveState": "inactive",
+          "UnitFileState": "masked"
+        },
+        "openclaw-gateway": {
+          "ActiveState": "inactive",
+          "UnitFileState": "masked"
+        },
+        "snowluma": {
+          "ActiveState": "active",
+          "UnitFileState": "enabled"
+        },
+        "snowluma-qq": {
+          "ActiveState": "active",
+          "UnitFileState": "enabled"
+        },
+        "knowledgemap-assistant": {
+          "ActiveState": "active",
+          "UnitFileState": "enabled"
+        },
+        "dsh-web": {
+          "ActiveState": "inactive",
+          "UnitFileState": "disabled"
+        }
+      }
+    },
+    "dependencies": {
+      "exitCode": 0,
+      "summary": "ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies"
+    },
+    "config": {
+      "exitCode": 0,
+      "summary": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+    },
+    "persona": {
+      "exitCode": 0,
+      "summary": "persona in sync with roles/小鲸鱼.md (4 workspace file(s) match)"
+    }
+  },
+  "capturedCodeEvidence": "captured-marker-retry-fix.json",
+  "postDeliveryHealth": {
+    "at": "2026-10-17T14:37:26.419Z",
+    "boundary": "Read-only post-delivery production health check; no API translation, restart, configuration writes or outbound delivery.",
+    "ok": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "testIngress": false,
+    "testMethodDisabled": true,
+    "gateway": true,
+    "channel": [
+      {
+        "running": true,
+        "connected": true
+      }
+    ],
+    "databases": {
+      "channelDatabase": "ok",
+      "weatherDatabase": "ok",
+      "remindersDatabase": "ok",
+      "reminderListDatabase": "ok"
+    },
+    "services": {
+      "kurumi-fusion": {
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "qq-bridge": {
+        "ActiveState": "inactive",
+        "UnitFileState": "masked"
+      },
+      "openclaw-gateway": {
+        "ActiveState": "inactive",
+        "UnitFileState": "masked"
+      },
+      "snowluma": {
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "snowluma-qq": {
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "knowledgemap-assistant": {
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      },
+      "dsh-web": {
+        "ActiveState": "inactive",
+        "UnitFileState": "disabled"
+      }
+    }
+  }
+}

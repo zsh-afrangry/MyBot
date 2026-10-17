@@ -1,0 +1,43 @@
+✔ Provider-specific defaults are inferred only from compatible registered selectors (2.62119ms)
+✔ Credential selection excludes all other providers and rejects absent/private-invalid files (2.507478ms)
+✔ Operator import merges only selected keys atomically and preserves the other pool on rotation (228.069286ms)
+✔ Invalid import leaves existing bytes intact and refuses symlinks, public files or unknown fields (240.042455ms)
+✔ Real PDF inspection, portable catalog and byte integrity survive reopen (35.651086ms)
+✔ PDF ID dedup, path/symlink/size/encryption rejection (7.628082ms)
+✔ File-only messages and offline-file notices require actual owner and bot metadata (2.665212ms)
+✔ Artifacts have a separate bounded limit, including reopen, while inputs stay at 25 MiB (207.225106ms)
+✔ QQ URL is read from the authenticated API, not the uploaded text/URL (39.8451ms)
+✔ Private file upload is durable, owner-only; null success has no invented message ID (76.251114ms)
+✔ Explicit provider/model/effort; pages cannot silently truncate or execute (2.099177ms)
+✔ DeepSeek jobs persist an explicit profile and never mutate default GPT settings (17.112337ms)
+✔ Lifecycle, immutable invocation identity and separate output/delivery state (9.853564ms)
+✔ Only selected PDFs are passed to the worker, registered and delivered; originals survive (38.706496ms)
+✔ A missing selected PDF fails clearly without registering or sending the other version (9.119214ms)
+✔ Dual output over the input limit registers and sends without relaxing original PDF imports (200.370417ms)
+✔ Cancel running/queued jobs, no post-cancel delivery and restart never replays API (15.552436ms)
+✔ A lost send receipt preserves successful translation and does not replay worker (9.332552ms)
+✔ Multiple papers stay serial and send each completed paper before translating the next (9.209282ms)
+✔ Worker failure retains bounded structural diagnostics before removing its work directory (6.921845ms)
+✔ Registered tools reject non-owner, keep generic filesystem tools absent (2.1653ms)
+✔ Configured paper trace source joins job and QQ message without including credentials (24.004977ms)
+✔ Draft freezes exact PDF bytes, survives reopen; previews contain only metadata (90.830235ms)
+✔ The store Uint8Array contract preserves the selected bytes and approval hash (71.944409ms)
+✔ Attachment delivery needs approval, sends captured bytes once even if source later changes (206.716257ms)
+✔ MIME round trip preserves Unicode boundaries and binary files as attachments (85.809698ms)
+✔ Unknown refs/raw paths/oversized attachments/recipient bypass cannot create a draft (43.50058ms)
+✔ Tampering with a persisted attachment after confirmation prevents network delivery (68.943149ms)
+✔ Operator concurrency is validated and reaches actual sandbox stdin, never argv (58.713013ms)
+✔ Retry defaults, operator overrides and schema keep independent bounded counters (0.9056ms)
+✔ Default deadline is 30 minutes, longer configuration is rejected and schema agrees (0.389507ms)
+✔ Real sandbox propagates each output choice and rejects missing/escaped selected files (197.4132ms)
+✔ Recovery disables paid translation and erases its active credential values (2.079479ms)
+✔ The actual worker sandbox hides host credentials and only writes job/cache directories (35.76075ms)
+✔ A real sandboxed worker stops writing when the parent wall deadline kills it (624.71453ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1016.188095

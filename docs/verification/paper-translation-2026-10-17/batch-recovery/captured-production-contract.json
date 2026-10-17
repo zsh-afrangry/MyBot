@@ -1,0 +1,67 @@
+{
+  "at": "2026-10-17T13:11:24.526Z",
+  "boundary": "Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.",
+  "capturePath": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/686b3891-9e8c-40a7-b9d2-fb5cf9ea1355/captures/openclaw-plugin-build-WtmYzR/package-0/node_modules/kurumi-papers/runner.js",
+  "capturedSourceHashes": {
+    "service": "52e1c54488150852f950a50d05e0f153bbc29feebe16029254f503b629fd18ed",
+    "outputs": "77e9647f5755daa304156a9178c168c15b58cd651c2b20b2cbfda826ffff86ef",
+    "documents": "ce1cde5d37787bc839547af43b0b548be50ccdd1354c16c3323a9189d7ffcd1b"
+  },
+  "pdfLimits": {
+    "input": 26214400,
+    "artifact": 104857600
+  },
+  "deepseekDefault": {
+    "provider": "deepseek",
+    "channel": "official",
+    "model": "deepseek-flash",
+    "effort": "high",
+    "protocol": "responses",
+    "baseUrl": "https://api.deepseek.com"
+  },
+  "gptDefault": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "explicitMax": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "max",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "budgets": {
+    "maxRequests": 300,
+    "maxReportedTokens": 300000
+  },
+  "execution": {
+    "apiConcurrency": 4,
+    "apiQps": 1
+  },
+  "reliability": {
+    "batchValidationRetries": 1,
+    "channelRecoveryRetries": 1
+  },
+  "timeoutSeconds": 1800,
+  "sourceHashes": {
+    "engine.py": "3b359cce2d514162a73141032f83d0eb1cbb61624f623d46a913dd83bbd05b1a",
+    "responses.py": "bb55693715873a6c0685a6b7a8bf9c42e0ef2cc1beb19c351f761c8681843ace",
+    "http_worker.py": "66990ba5b31bf349db1972cb1a093c11e53b767eeda86e4b79a35c9ef23cdfa4",
+    "profiles.json": "28043caf43c29a11edcc1d8d23644948b9fc3149c68e5c0f6066cc9e899e6f91"
+  },
+  "exitCode": 0,
+  "ok": true,
+  "worker": {
+    "ok": true,
+    "providers": [
+      "openai",
+      "deepseek"
+    ],
+    "cancellableHttpWorker": true
+  }
+}

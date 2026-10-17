@@ -16,7 +16,8 @@ def success(text="译文 {v1}"):
 
 class ResponsesTest(unittest.TestCase):
     def client(self,request,**kwargs):
-        return ResponsesClient(PROFILE,KEYS,request=request,sleep=lambda n:None,**kwargs)
+        return ResponsesClient(PROFILE,KEYS,request=request,sleep=lambda n:None,
+                               **{'channel_recovery_retries':0,**kwargs})
 
     def test_deepseek_native_responses_keeps_instructions_effort_usage_and_its_own_key(self):
         seen=[]
@@ -50,7 +51,7 @@ class ResponsesTest(unittest.TestCase):
     def test_deepseek_failure_cannot_fall_back_to_gpt_or_leak_the_gpt_pool(self):
         used=[]
         client=ResponsesClient(DS_PROFILE,{**KEYS,'DEEPSEEK_API_KEY':'synthetic-official'},
-            request=lambda url,key,*args:(used.append((url,key)) or (503,{})))
+            request=lambda url,key,*args:(used.append((url,key)) or (503,{})),channel_recovery_retries=0)
         with self.assertRaisesRegex(TranslationFailure,'all_translation_channels_failed'):client.generate('x','i')
         self.assertEqual(used,[('https://api.deepseek.com/responses','synthetic-official')])
         with self.assertRaisesRegex(TranslationFailure,'missing_translation_credentials'):

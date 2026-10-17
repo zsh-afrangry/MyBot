@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-17T13:18:12.235178+00:00",
+  "boundary": "Non-billable unauthenticated HEAD to public relay homepage, direct versus existing host environment proxy. Not model API, not evidence that paid API routes are equivalent; no credentials, bodies or raw errors. Production sandbox currently clears proxy environment.",
+  "samples": [
+    {
+      "mode": "direct",
+      "attempt": 1,
+      "httpStatus": 200,
+      "elapsedSeconds": 0.555
+    },
+    {
+      "mode": "direct",
+      "attempt": 2,
+      "httpStatus": 200,
+      "elapsedSeconds": 0.566
+    },
+    {
+      "mode": "direct",
+      "attempt": 3,
+      "httpStatus": 200,
+      "elapsedSeconds": 0.824
+    },
+    {
+      "mode": "direct",
+      "attempt": 4,
+      "httpStatus": 200,
+      "elapsedSeconds": 2.78
+    },
+    {
+      "mode": "environment_proxy",
+      "attempt": 1,
+      "httpStatus": 200,
+      "elapsedSeconds": 0.342
+    },
+    {
+      "mode": "environment_proxy",
+      "attempt": 2,
+      "httpStatus": 200,
+      "elapsedSeconds": 0.333
+    },
+    {
+      "mode": "environment_proxy",
+      "attempt": 3,
+      "httpStatus": 200,
+      "elapsedSeconds": 0.353
+    },
+    {
+      "mode": "environment_proxy",
+      "attempt": 4,
+      "httpStatus": 200,
+      "elapsedSeconds": 0.345
+    }
+  ]
+}

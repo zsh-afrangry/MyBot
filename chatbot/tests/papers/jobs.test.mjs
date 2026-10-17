@@ -142,7 +142,7 @@ test('Multiple papers stay serial and send each completed paper before translati
   try{
     await sending;
     assert.equal(service.get(first.id).status,'succeeded');
-    assert.deepEqual(service.get(first.id).execution,{apiConcurrency:4,apiQps:1});
+    assert.deepEqual(service.get(first.id).execution,{apiConcurrency:4,apiQps:1,batchValidationRetries:1,channelRecoveryRetries:1});
     assert.equal(service.get(second.id).status,'queued');
     assert.deepEqual(events,['translate-1','send-1-start']);
   }finally{release();}

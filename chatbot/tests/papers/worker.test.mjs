@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {workerCommand,runTranslation,executionSettings,translationTimeoutSeconds} from '../../plugins/kurumi-papers/runner.js';
+import {workerCommand,runTranslation,executionSettings,reliabilitySettings,translationTimeoutSeconds} from '../../plugins/kurumi-papers/runner.js';
 import {disablePaperRecovery} from '../../../scripts/fusion/lib/recovery-isolation.mjs';
 
 test('Operator concurrency is validated and reaches actual sandbox stdin, never argv',async t=>{
@@ -19,12 +19,22 @@ test('Operator concurrency is validated and reaches actual sandbox stdin, never 
   for(const name of ['work','cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
   const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
   fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
-  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==4 and r[\"apiQps\"]==1; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
+  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==4 and r[\"apiQps\"]==1; assert r[\"maxRequests\"]==300; assert r[\"batchValidationRetries\"]==3 and r[\"channelRecoveryRetries\"]==2 and r[\"executionTimeoutSeconds\"]==1800; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
   fs.writeFileSync(python,"#!/bin/sh\nexec /usr/bin/python3 -c '"+script+"'\n",{mode:0o700});
-  const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:4,apiQps:1},
+  const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:4,apiQps:1,batchValidationRetries:3,channelRecoveryRetries:2},
     work:path.join(root,'work'),cache:path.join(root,'cache'),profile:{},sourceLang:'en',targetLang:'zh'});
   assert.deepEqual(result.usage,{maxConcurrency:4,maxQps:1});
   assert(!Object.hasOwn(result,'mono'));assert(result.dual.endsWith('/dual.pdf'));
+});
+
+test('Retry defaults, operator overrides and schema keep independent bounded counters',()=>{
+  assert.deepEqual(reliabilitySettings({}),{batchValidationRetries:1,channelRecoveryRetries:1});
+  const properties=JSON.parse(fs.readFileSync(new URL('../../plugins/kurumi-papers/openclaw.plugin.json',import.meta.url))).configSchema.properties;
+  for(const key of ['batchValidationRetries','channelRecoveryRetries']){
+    for(const value of [0,1,2,3,4])assert.equal(reliabilitySettings({[key]:value})[key],value);
+    for(const value of [-1,5,true,'1',1.5,NaN])assert.throws(()=>reliabilitySettings({[key]:value}),/retry limit/);
+    assert.equal(properties[key].default,1);assert.equal(properties[key].minimum,0);assert.equal(properties[key].maximum,4);
+  }
 });
 
 test('Default deadline is 30 minutes, longer configuration is rejected and schema agrees',()=>{

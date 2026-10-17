@@ -1,0 +1,1803 @@
+{
+  "at": "2026-10-17T14:34:07.892535+00:00",
+  "boundary": "Sanitized exact terminal receipts from explicitly authorized paid full-paper acceptance. All failed runs retained; final 23- and 19-page runs use separate cold translation caches. No credentials, source/translated prose, exception messages, signed URLs or private API response IDs.",
+  "baseline": "5f29fa1",
+  "runs": [
+    {
+      "ok": false,
+      "jobId": "job_293723955d0942486db80564",
+      "startedAt": "2026-10-17T12:51:36.754Z",
+      "finishedAt": "2026-10-17T13:02:17.643Z",
+      "elapsedSeconds": 640.889,
+      "error": "translation_budget_exhausted",
+      "resourceSeed": {
+        "boundary": "Public layout model, fonts and tokenizer only; no translation database, credentials, cooldowns or private papers.",
+        "files": 36,
+        "bytes": 344746304
+      },
+      "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017/runs/23p-cold-01/acceptance.json",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "outputKind": "dual",
+      "budgets": {
+        "maxRequests": 200,
+        "maxReportedTokens": 300000,
+        "timeoutSeconds": 1800,
+        "apiConcurrency": 4,
+        "apiQps": 1,
+        "batchValidationRetries": 1,
+        "channelRecoveryRetries": 1
+      },
+      "usage": {
+        "requests": 200,
+        "inputTokens": 60074,
+        "outputTokens": 78238,
+        "reportedTokens": 138312,
+        "unknownUsageAttempts": 5,
+        "inFlight": 0,
+        "peakInFlight": 4,
+        "failure": "translation_budget_exhausted",
+        "failureDetails": null,
+        "failureDetectedOffsetSeconds": null,
+        "validationFailures": 1,
+        "validationRetriesScheduled": 1,
+        "channelFailures": 2,
+        "recoveryWaits": []
+      },
+      "errors": [
+        {
+          "attempt": 17,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedOffsetSeconds": 148.033406,
+          "recoveryRound": 0,
+          "elapsedSeconds": 17.438,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 117,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "startedOffsetSeconds": 418.504344,
+          "recoveryRound": 0,
+          "elapsedSeconds": 15.326,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 137,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedOffsetSeconds": 465.864433,
+          "recoveryRound": 0,
+          "recoveryProbe": true,
+          "streamProgress": {
+            "events": 161,
+            "outputChars": 261,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 4.528,
+            "lastOutputOffsetSeconds": 4.43
+          },
+          "elapsedSeconds": 15.895,
+          "outcome": "completed"
+        },
+        {
+          "attempt": 188,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedOffsetSeconds": 609.999041,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 78,
+            "outputChars": 127,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 1.148,
+            "lastOutputOffsetSeconds": 1.074
+          },
+          "elapsedSeconds": 5.74,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 127,
+            "jsonFenced": false,
+            "expectedItems": 1,
+            "actualItems": 1,
+            "itemIndex": 0,
+            "expectedPlaceholders": 9,
+            "actualPlaceholders": 8
+          },
+          "validationAttempt": 1,
+          "validationRetryScheduled": true
+        },
+        {
+          "attempt": 197,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedOffsetSeconds": 629.113893,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created",
+            "lastEventOffsetSeconds": 0,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 7.99,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled"
+        },
+        {
+          "attempt": 198,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedOffsetSeconds": 630.113948,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created",
+            "lastEventOffsetSeconds": 0.001,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 6.939,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled"
+        },
+        {
+          "attempt": 199,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedOffsetSeconds": 631.114006,
+          "recoveryRound": 0,
+          "elapsedSeconds": 6.011,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled"
+        }
+      ],
+      "channels": {
+        "OPENAI_API_KEY1_014": {
+          "attempts": 81,
+          "completed": 76
+        },
+        "OPENAI_API_KEY2_030": {
+          "attempts": 105,
+          "completed": 104
+        },
+        "OPENAI_API_KEY3_040": {
+          "attempts": 14,
+          "completed": 14
+        }
+      },
+      "sourceSha256": "d0e76a7fb1d4c9fecc5f999913d62af23c71308b4ab8d6406e9d7c22e87e8bc2",
+      "artifactKinds": []
+    },
+    {
+      "ok": false,
+      "jobId": "job_cc515bd25da15b78052b62ea",
+      "startedAt": "2026-10-17T13:08:10.001Z",
+      "finishedAt": "2026-10-17T13:15:56.713Z",
+      "elapsedSeconds": 466.712,
+      "error": "all_translation_channels_failed",
+      "resourceSeed": {
+        "boundary": "Public layout model, fonts and tokenizer only; no translation database, credentials, cooldowns or private papers.",
+        "files": 36,
+        "bytes": 344746304
+      },
+      "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-final/runs/23p-cold-02/acceptance.json",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "outputKind": "dual",
+      "budgets": {
+        "maxRequests": 300,
+        "maxReportedTokens": 300000,
+        "timeoutSeconds": 1800,
+        "apiConcurrency": 4,
+        "apiQps": 1,
+        "batchValidationRetries": 1,
+        "channelRecoveryRetries": 1
+      },
+      "usage": {
+        "requests": 65,
+        "inputTokens": 23558,
+        "outputTokens": 36327,
+        "reportedTokens": 59885,
+        "unknownUsageAttempts": 7,
+        "inFlight": 0,
+        "peakInFlight": 4,
+        "failure": "all_translation_channels_failed",
+        "failureDetails": {},
+        "failureDetectedOffsetSeconds": 462.703967,
+        "validationFailures": 0,
+        "validationRetriesScheduled": 0,
+        "channelFailures": 4,
+        "recoveryWaits": [
+          {
+            "round": 1,
+            "credentialId": "OPENAI_API_KEY1_014",
+            "scheduledWaitSeconds": 144.123,
+            "outcome": "ready",
+            "elapsedSeconds": 144.127
+          },
+          {
+            "round": 1,
+            "credentialId": "OPENAI_API_KEY1_014",
+            "scheduledWaitSeconds": 141.195,
+            "outcome": "ready",
+            "elapsedSeconds": 161.542
+          },
+          {
+            "round": 1,
+            "credentialId": "OPENAI_API_KEY1_014",
+            "scheduledWaitSeconds": 138.546,
+            "outcome": "ready",
+            "elapsedSeconds": 138.546
+          },
+          {
+            "round": 1,
+            "credentialId": "OPENAI_API_KEY1_014",
+            "scheduledWaitSeconds": 137.545,
+            "outcome": "ready",
+            "elapsedSeconds": 157.896
+          }
+        ]
+      },
+      "errors": [
+        {
+          "attempt": 15,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 15,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 119.157382,
+          "recoveryRound": 0,
+          "elapsedSeconds": 6.566,
+          "finishedOffsetSeconds": 125.724965,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "ConnectionResetError",
+          "transportErrno": 104,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 45,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 44,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 230.698549,
+          "recoveryRound": 0,
+          "elapsedSeconds": 5.724,
+          "finishedOffsetSeconds": 236.425076,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "ConnectionResetError",
+          "transportErrno": 104,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 55,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "batchId": 53,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 265.238858,
+          "recoveryRound": 0,
+          "elapsedSeconds": 16.357,
+          "finishedOffsetSeconds": 281.598412,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 58,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 53,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 425.732055,
+          "recoveryRound": 1,
+          "recoveryProbe": true,
+          "streamProgress": {
+            "events": 170,
+            "outputChars": 221,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 1.924,
+            "lastOutputOffsetSeconds": 1.887
+          },
+          "elapsedSeconds": 20.328,
+          "finishedOffsetSeconds": 446.062503,
+          "outcome": "completed"
+        },
+        {
+          "attempt": 60,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 58,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 447.06943,
+          "recoveryRound": 1,
+          "elapsedSeconds": 15.628,
+          "finishedOffsetSeconds": 462.700501,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 63,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 60,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 459.837143,
+          "recoveryRound": 0,
+          "elapsedSeconds": 2.908,
+          "finishedOffsetSeconds": 462.747563,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled",
+          "cancellationDelaySeconds": 0.043596
+        },
+        {
+          "attempt": 64,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 61,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 461.285854,
+          "recoveryRound": 0,
+          "elapsedSeconds": 1.523,
+          "finishedOffsetSeconds": 462.811527,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled",
+          "cancellationDelaySeconds": 0.10756
+        },
+        {
+          "attempt": 65,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 62,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 462.28605,
+          "recoveryRound": 0,
+          "elapsedSeconds": 0.504,
+          "finishedOffsetSeconds": 462.794122,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled",
+          "cancellationDelaySeconds": 0.090155
+        }
+      ],
+      "channels": {
+        "OPENAI_API_KEY1_014": {
+          "attempts": 23,
+          "completed": 18
+        },
+        "OPENAI_API_KEY2_030": {
+          "attempts": 31,
+          "completed": 30
+        },
+        "OPENAI_API_KEY3_040": {
+          "attempts": 11,
+          "completed": 10
+        }
+      },
+      "sourceSha256": "d0e76a7fb1d4c9fecc5f999913d62af23c71308b4ab8d6406e9d7c22e87e8bc2",
+      "artifactKinds": []
+    },
+    {
+      "ok": false,
+      "jobId": "job_8876e24cc75b28628efa9f23",
+      "startedAt": "2026-10-17T13:19:10.916Z",
+      "finishedAt": "2026-10-17T13:40:33.433Z",
+      "elapsedSeconds": 1282.517,
+      "error": "invalid_batch_translation",
+      "resourceSeed": {
+        "boundary": "Public layout model, fonts and tokenizer only; no translation database, credentials, cooldowns or private papers.",
+        "files": 36,
+        "bytes": 344746304
+      },
+      "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-03/runs/23p-cold-03/acceptance.json",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "outputKind": "dual",
+      "budgets": {
+        "maxRequests": 300,
+        "maxReportedTokens": 300000,
+        "timeoutSeconds": 1800,
+        "apiConcurrency": 4,
+        "apiQps": 1,
+        "batchValidationRetries": 1,
+        "channelRecoveryRetries": 1
+      },
+      "usage": {
+        "requests": 148,
+        "inputTokens": 50134,
+        "outputTokens": 114650,
+        "reportedTokens": 164784,
+        "unknownUsageAttempts": 6,
+        "inFlight": 0,
+        "peakInFlight": 4,
+        "failure": "invalid_batch_translation",
+        "failureDetails": {},
+        "failureDetectedOffsetSeconds": 1279.160115,
+        "validationFailures": 5,
+        "validationRetriesScheduled": 4,
+        "channelFailures": 3,
+        "recoveryWaits": []
+      },
+      "errors": [
+        {
+          "attempt": 30,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 30,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 211.693685,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created",
+            "lastEventOffsetSeconds": 0,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 600.004,
+          "finishedOffsetSeconds": 811.700247,
+          "transportPhase": "http_wait",
+          "error": "api_request_timed_out_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_request_timed_out_unknown"
+        },
+        {
+          "attempt": 34,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 34,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 276.633583,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 425,
+            "outputChars": 807,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 26.598,
+            "lastOutputOffsetSeconds": 26.381
+          },
+          "elapsedSeconds": 35.624,
+          "finishedOffsetSeconds": 312.259167,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 807,
+            "jsonFenced": false,
+            "expectedItems": 6,
+            "actualItems": 6,
+            "itemIndex": 1,
+            "expectedPlaceholders": 42,
+            "actualPlaceholders": 39
+          },
+          "validationRetryScheduled": true
+        },
+        {
+          "attempt": 48,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 47,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 446.389052,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 286,
+            "outputChars": 513,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 9.67,
+            "lastOutputOffsetSeconds": 9.615
+          },
+          "elapsedSeconds": 27.353,
+          "finishedOffsetSeconds": 473.744388,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 513,
+            "jsonFenced": false,
+            "expectedItems": 6,
+            "actualItems": 6,
+            "itemIndex": 0,
+            "expectedPlaceholders": 15,
+            "actualPlaceholders": 10
+          },
+          "validationRetryScheduled": true
+        },
+        {
+          "attempt": 67,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 65,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 575.380192,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 395,
+            "outputChars": 694,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 96.634,
+            "lastOutputOffsetSeconds": 96.469
+          },
+          "elapsedSeconds": 112.431,
+          "finishedOffsetSeconds": 687.813998,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 694,
+            "jsonFenced": false,
+            "expectedItems": 6,
+            "actualItems": 6,
+            "itemIndex": 3,
+            "expectedPlaceholders": 47,
+            "actualPlaceholders": 46
+          },
+          "validationRetryScheduled": true
+        },
+        {
+          "attempt": 87,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 84,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 742.377818,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created",
+            "lastEventOffsetSeconds": 0.002,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 536.819,
+          "finishedOffsetSeconds": 1279.201231,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled",
+          "cancellationDelaySeconds": 0.041116
+        },
+        {
+          "attempt": 100,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 96,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 826.410264,
+          "recoveryRound": 0,
+          "elapsedSeconds": 15.284,
+          "finishedOffsetSeconds": 841.699661,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 113,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "batchId": 108,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 898.296113,
+          "recoveryRound": 0,
+          "elapsedSeconds": 380.915,
+          "finishedOffsetSeconds": 1279.21619,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled",
+          "cancellationDelaySeconds": 0.056075
+        },
+        {
+          "attempt": 144,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "batchId": 139,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 1104.162012,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 4,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.done",
+            "lastEventOffsetSeconds": 8.182,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 13.626,
+          "finishedOffsetSeconds": 1117.796209,
+          "error": "api_stream_interrupted_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_stream_interrupted_unknown"
+        },
+        {
+          "attempt": 145,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 139,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 1117.806293,
+          "recoveryRound": 1,
+          "recoveryProbe": true,
+          "streamProgress": {
+            "events": 192,
+            "outputChars": 326,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 25.29,
+            "lastOutputOffsetSeconds": 24.859
+          },
+          "elapsedSeconds": 36.072,
+          "finishedOffsetSeconds": 1153.885272,
+          "outcome": "completed"
+        },
+        {
+          "attempt": 146,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 140,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 1153.900568,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 228,
+            "outputChars": 390,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 46.042,
+            "lastOutputOffsetSeconds": 44.227
+          },
+          "elapsedSeconds": 61.614,
+          "finishedOffsetSeconds": 1215.522931,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 390,
+            "jsonFenced": false,
+            "expectedItems": 6,
+            "actualItems": 6,
+            "itemIndex": 5,
+            "expectedPlaceholders": 8,
+            "actualPlaceholders": 7
+          },
+          "validationRetryScheduled": true
+        },
+        {
+          "attempt": 147,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 141,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 1154.900685,
+          "recoveryRound": 0,
+          "elapsedSeconds": 124.264,
+          "finishedOffsetSeconds": 1279.172377,
+          "transportPhase": "http_wait",
+          "error": "api_request_cancelled_unknown",
+          "outcome": "cancelled",
+          "cancellationDelaySeconds": 0.012262
+        },
+        {
+          "attempt": 148,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 140,
+          "validationAttempt": 2,
+          "startedOffsetSeconds": 1215.543819,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 229,
+            "outputChars": 387,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 46.582,
+            "lastOutputOffsetSeconds": 46.582
+          },
+          "elapsedSeconds": 63.588,
+          "finishedOffsetSeconds": 1279.138143,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 387,
+            "jsonFenced": false,
+            "expectedItems": 6,
+            "actualItems": 6,
+            "itemIndex": 5,
+            "expectedPlaceholders": 8,
+            "actualPlaceholders": 6
+          },
+          "validationRetryScheduled": false
+        }
+      ],
+      "channels": {
+        "OPENAI_API_KEY1_014": {
+          "attempts": 97,
+          "completed": 89
+        },
+        "OPENAI_API_KEY2_030": {
+          "attempts": 10,
+          "completed": 9
+        },
+        "OPENAI_API_KEY3_040": {
+          "attempts": 41,
+          "completed": 39
+        }
+      },
+      "sourceSha256": "d0e76a7fb1d4c9fecc5f999913d62af23c71308b4ab8d6406e9d7c22e87e8bc2",
+      "artifactKinds": []
+    },
+    {
+      "ok": true,
+      "jobId": "job_3396fa64792440e7f99adebf",
+      "startedAt": "2026-10-17T13:42:58.932Z",
+      "finishedAt": "2026-10-17T14:08:47.735Z",
+      "elapsedSeconds": 1548.803,
+      "error": null,
+      "resourceSeed": {
+        "boundary": "Public layout model, fonts and tokenizer only; no translation database, credentials, cooldowns or private papers.",
+        "files": 36,
+        "bytes": 344746304
+      },
+      "outputCheck": {
+        "expectedKinds": [
+          "dual"
+        ],
+        "actualKinds": [
+          "dual"
+        ],
+        "expectedPages": 23,
+        "actualPages": {
+          "dual": 23
+        }
+      },
+      "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-04/runs/23p-cold-04/acceptance.json",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "outputKind": "dual",
+      "budgets": {
+        "maxRequests": 300,
+        "maxReportedTokens": 300000,
+        "timeoutSeconds": 1800,
+        "apiConcurrency": 4,
+        "apiQps": 1,
+        "batchValidationRetries": 1,
+        "channelRecoveryRetries": 1
+      },
+      "usage": {
+        "requests": 209,
+        "inputTokens": 60578,
+        "outputTokens": 110457,
+        "reportedTokens": 171035,
+        "unknownUsageAttempts": 7,
+        "inFlight": 0,
+        "peakInFlight": 4,
+        "failure": null,
+        "failureDetails": {},
+        "failureDetectedOffsetSeconds": null,
+        "validationFailures": 1,
+        "validationRetriesScheduled": 1,
+        "channelFailures": 7,
+        "recoveryWaits": []
+      },
+      "errors": [
+        {
+          "attempt": 49,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 49,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 382.189031,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 351,
+            "outputChars": 583,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 56.102,
+            "lastOutputOffsetSeconds": 55.864
+          },
+          "elapsedSeconds": 67.108,
+          "finishedOffsetSeconds": 449.299574,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 583,
+            "jsonFenced": false,
+            "expectedItems": 6,
+            "actualItems": 6,
+            "itemIndex": 1,
+            "expectedPlaceholders": 26,
+            "actualPlaceholders": 24,
+            "expectedMarkers": {
+              "<style id='1'>": 1,
+              "</style>": 3,
+              "{v3}": 1,
+              "<style id='4'>": 1,
+              "{v6}": 1,
+              "<style id='7'>": 1,
+              "{v9}": 1,
+              "{v10}": 1,
+              "{v11}": 1,
+              "{v12}": 1,
+              "{v13}": 1,
+              "{v14}": 1,
+              "{v15}": 1,
+              "{v16}": 1,
+              "{v17}": 1,
+              "{v18}": 1,
+              "{v19}": 1,
+              "{v20}": 1,
+              "{v21}": 1,
+              "{v22}": 1,
+              "{v23}": 1,
+              "{v24}": 1,
+              "{v25}": 1,
+              "{v26}": 1
+            },
+            "missingMarkers": {
+              "{v22}": 1,
+              "{v26}": 1
+            },
+            "extraMarkers": {}
+          },
+          "validationRetryScheduled": true
+        },
+        {
+          "attempt": 51,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 51,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 394.618321,
+          "recoveryRound": 0,
+          "elapsedSeconds": 16.02,
+          "finishedOffsetSeconds": 410.641091,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 54,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 51,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 410.644179,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created",
+            "lastEventOffsetSeconds": 0,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 600.004,
+          "finishedOffsetSeconds": 1010.650856,
+          "transportPhase": "http_wait",
+          "error": "api_request_timed_out_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_request_timed_out_unknown"
+        },
+        {
+          "attempt": 67,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 65,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 454.99469,
+          "recoveryRound": 0,
+          "elapsedSeconds": 15.374,
+          "finishedOffsetSeconds": 470.371759,
+          "transportExceptionType": "RemoteDisconnected",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "RemoteDisconnected",
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 89,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "batchId": 86,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 588.20986,
+          "recoveryRound": 0,
+          "elapsedSeconds": 600.004,
+          "finishedOffsetSeconds": 1188.2185,
+          "transportPhase": "http_wait",
+          "error": "api_request_timed_out_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_request_timed_out_unknown"
+        },
+        {
+          "attempt": 103,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 100,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 716.99215,
+          "recoveryRound": 0,
+          "recoveryProbe": true,
+          "streamProgress": {
+            "events": 246,
+            "outputChars": 469,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 7.578,
+            "lastOutputOffsetSeconds": 7.468
+          },
+          "elapsedSeconds": 19.777,
+          "finishedOffsetSeconds": 736.774274,
+          "outcome": "completed"
+        },
+        {
+          "attempt": 120,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 117,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 859.526755,
+          "recoveryRound": 0,
+          "elapsedSeconds": 15.556,
+          "finishedOffsetSeconds": 875.090275,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 122,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 117,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 875.096947,
+          "recoveryRound": 0,
+          "recoveryProbe": true,
+          "streamProgress": {
+            "events": 146,
+            "outputChars": 241,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 1.723,
+            "lastOutputOffsetSeconds": 1.39
+          },
+          "elapsedSeconds": 5.183,
+          "finishedOffsetSeconds": 880.285609,
+          "outcome": "completed"
+        },
+        {
+          "attempt": 135,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 131,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 922.400757,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created",
+            "lastEventOffsetSeconds": 0,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 600.004,
+          "finishedOffsetSeconds": 1522.410736,
+          "transportPhase": "http_wait",
+          "error": "api_request_timed_out_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_request_timed_out_unknown"
+        },
+        {
+          "attempt": 143,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 139,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 990.648928,
+          "recoveryRound": 0,
+          "elapsedSeconds": 10.797,
+          "finishedOffsetSeconds": 1001.452328,
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "ConnectionResetError",
+          "transportErrno": 104,
+          "error": "api_transport_unknown",
+          "outcome": "channel_failed",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 167,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 161,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 1179.25581,
+          "recoveryRound": 0,
+          "recoveryProbe": true,
+          "streamProgress": {
+            "events": 138,
+            "outputChars": 253,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 3.255,
+            "lastOutputOffsetSeconds": 3.152
+          },
+          "elapsedSeconds": 15.196,
+          "finishedOffsetSeconds": 1194.459756,
+          "outcome": "completed"
+        },
+        {
+          "attempt": 209,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "batchId": 131,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 1522.421944,
+          "recoveryRound": 0,
+          "recoveryProbe": true,
+          "streamProgress": {
+            "events": 140,
+            "outputChars": 260,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 6.619,
+            "lastOutputOffsetSeconds": 6.619
+          },
+          "elapsedSeconds": 12.645,
+          "finishedOffsetSeconds": 1535.075688,
+          "outcome": "completed"
+        }
+      ],
+      "channels": {
+        "OPENAI_API_KEY1_014": {
+          "attempts": 112,
+          "completed": 109
+        },
+        "OPENAI_API_KEY2_030": {
+          "attempts": 36,
+          "completed": 32
+        },
+        "OPENAI_API_KEY3_040": {
+          "attempts": 61,
+          "completed": 60
+        }
+      },
+      "sourceSha256": "d0e76a7fb1d4c9fecc5f999913d62af23c71308b4ab8d6406e9d7c22e87e8bc2",
+      "artifacts": {
+        "dual": {
+          "id": "pdf_f7c75852647bd238c59a938709b0b83b",
+          "kind": "artifact",
+          "filename": "paper-23-pages-dual.pdf",
+          "sha256": "f7c75852647bd238c59a938709b0b83b75ac73a1e766940dbef476589ce54373",
+          "bytes": 5293109,
+          "pages": 23,
+          "source": {
+            "type": "translation",
+            "inputId": "doc_d0e76a7fb1d4c9fecc5f999913d62af2"
+          },
+          "jobId": "job_3396fa64792440e7f99adebf",
+          "createdAt": "2026-10-17T14:08:46.817Z"
+        }
+      },
+      "pdfCheck": {
+        "boundary": "Read-only full page count/text/language/hash checks and Poppler render of pages 1/12/23; no full semantic or formula comparison. Original PDF unchanged. Private rendered pages retained outside Git.",
+        "pdf": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-04/files/pdf_f7c75852647bd238c59a938709b0b83b.pdf",
+        "sha256": "f7c75852647bd238c59a938709b0b83b75ac73a1e766940dbef476589ce54373",
+        "registeredSha256": "f7c75852647bd238c59a938709b0b83b75ac73a1e766940dbef476589ce54373",
+        "expectedPages": 23,
+        "actualPages": 23,
+        "encrypted": false,
+        "pages": [
+          {
+            "page": 1,
+            "hanChars": 1300,
+            "latinChars": 4287,
+            "textChars": 7006,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 2,
+            "hanChars": 1525,
+            "latinChars": 5456,
+            "textChars": 8731,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 3,
+            "hanChars": 583,
+            "latinChars": 1822,
+            "textChars": 2847,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 4,
+            "hanChars": 1127,
+            "latinChars": 3632,
+            "textChars": 5920,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 5,
+            "hanChars": 1355,
+            "latinChars": 4705,
+            "textChars": 8261,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 6,
+            "hanChars": 678,
+            "latinChars": 2666,
+            "textChars": 6536,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 7,
+            "hanChars": 1467,
+            "latinChars": 4136,
+            "textChars": 7451,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 8,
+            "hanChars": 630,
+            "latinChars": 5307,
+            "textChars": 9359,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 9,
+            "hanChars": 341,
+            "latinChars": 3130,
+            "textChars": 5788,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 10,
+            "hanChars": 832,
+            "latinChars": 2963,
+            "textChars": 5245,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 11,
+            "hanChars": 277,
+            "latinChars": 1432,
+            "textChars": 3915,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 12,
+            "hanChars": 1174,
+            "latinChars": 3523,
+            "textChars": 6217,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 13,
+            "hanChars": 1849,
+            "latinChars": 751,
+            "textChars": 3379,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 14,
+            "hanChars": 1036,
+            "latinChars": 3289,
+            "textChars": 5665,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 15,
+            "hanChars": 1559,
+            "latinChars": 712,
+            "textChars": 2933,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 16,
+            "hanChars": 1126,
+            "latinChars": 3399,
+            "textChars": 5748,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 17,
+            "hanChars": 1743,
+            "latinChars": 842,
+            "textChars": 3679,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 18,
+            "hanChars": 1259,
+            "latinChars": 3925,
+            "textChars": 7149,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 19,
+            "hanChars": 1490,
+            "latinChars": 990,
+            "textChars": 3419,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 20,
+            "hanChars": 1159,
+            "latinChars": 3980,
+            "textChars": 6707,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 21,
+            "hanChars": 1739,
+            "latinChars": 1233,
+            "textChars": 4104,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 22,
+            "hanChars": 1115,
+            "latinChars": 3327,
+            "textChars": 5940,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          },
+          {
+            "page": 23,
+            "hanChars": 1634,
+            "latinChars": 995,
+            "textChars": 3419,
+            "width": 1223.9959716796875,
+            "height": 791.9979858398438
+          }
+        ],
+        "renderedPages": [
+          1,
+          12,
+          23
+        ],
+        "ok": true
+      },
+      "visualReview": {
+        "pages": [
+          1,
+          12,
+          23
+        ],
+        "bodyReadable": true,
+        "fullSemanticFormulaCheck": false,
+        "knownLimitations": [
+          "author_affiliation_spacing",
+          "some_code_labels_translated"
+        ]
+      },
+      "recoveryProbes": {
+        "attempts": 4,
+        "completed": 4
+      }
+    },
+    {
+      "ok": true,
+      "jobId": "job_df73bdfdde2f420e6382049e",
+      "startedAt": "2026-10-17T14:09:00.596Z",
+      "finishedAt": "2026-10-17T14:29:59.167Z",
+      "elapsedSeconds": 1258.571,
+      "error": null,
+      "resourceSeed": {
+        "boundary": "Public layout model, fonts and tokenizer only; no translation database, credentials, cooldowns or private papers.",
+        "files": 36,
+        "bytes": 344746304
+      },
+      "outputCheck": {
+        "expectedKinds": [
+          "dual"
+        ],
+        "actualKinds": [
+          "dual"
+        ],
+        "expectedPages": 19,
+        "actualPages": {
+          "dual": 19
+        }
+      },
+      "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-19/runs/19p-cold-01/acceptance.json",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "outputKind": "dual",
+      "budgets": {
+        "maxRequests": 300,
+        "maxReportedTokens": 300000,
+        "timeoutSeconds": 1800,
+        "apiConcurrency": 4,
+        "apiQps": 1,
+        "batchValidationRetries": 1,
+        "channelRecoveryRetries": 1
+      },
+      "usage": {
+        "requests": 160,
+        "inputTokens": 47941,
+        "outputTokens": 73772,
+        "reportedTokens": 121713,
+        "unknownUsageAttempts": 5,
+        "inFlight": 0,
+        "peakInFlight": 4,
+        "failure": null,
+        "failureDetails": {},
+        "failureDetectedOffsetSeconds": null,
+        "validationFailures": 1,
+        "validationRetriesScheduled": 1,
+        "channelFailures": 5,
+        "recoveryWaits": []
+      },
+      "errors": [
+        {
+          "attempt": 24,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 24,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 155.162827,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 467,
+            "outputChars": 807,
+            "lastEvent": "response.completed",
+            "lastEventOffsetSeconds": 11.429,
+            "lastOutputOffsetSeconds": 11.359
+          },
+          "elapsedSeconds": 29.389,
+          "finishedOffsetSeconds": 184.553313,
+          "outcome": "validation_failed",
+          "error": "invalid_batch_translation",
+          "validationFailure": {
+            "reason": "placeholder_mismatch",
+            "outputChars": 807,
+            "jsonFenced": false,
+            "expectedItems": 4,
+            "actualItems": 4,
+            "itemIndex": 1,
+            "expectedPlaceholders": 33,
+            "actualPlaceholders": 32,
+            "expectedMarkers": {
+              "<style id='1'>": 1,
+              "</style>": 13,
+              "<style id='3'>": 1,
+              "{v5}": 1,
+              "<style id='6'>": 1,
+              "<style id='8'>": 1,
+              "<style id='10'>": 1,
+              "{v12}": 1,
+              "<style id='13'>": 1,
+              "{v15}": 1,
+              "<style id='16'>": 1,
+              "{v18}": 1,
+              "<style id='19'>": 1,
+              "{v21}": 1,
+              "<style id='22'>": 1,
+              "<style id='24'>": 1,
+              "{v26}": 1,
+              "<style id='27'>": 1,
+              "<style id='29'>": 1,
+              "{v31}": 1,
+              "<style id='32'>": 1
+            },
+            "missingMarkers": {
+              "<style id='1'>": 1
+            },
+            "extraMarkers": {}
+          },
+          "validationRetryScheduled": true
+        },
+        {
+          "attempt": 42,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 41,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 267.107146,
+          "recoveryRound": 0,
+          "elapsedSeconds": 19.598,
+          "finishedOffsetSeconds": 286.70772,
+          "outcome": "channel_failed",
+          "error": "api_transport_unknown",
+          "transportExceptionType": "RemoteDisconnected",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "RemoteDisconnected",
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 65,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "batchId": 63,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 354.641722,
+          "recoveryRound": 0,
+          "elapsedSeconds": 7.264,
+          "finishedOffsetSeconds": 361.908681,
+          "outcome": "channel_failed",
+          "error": "api_transport_unknown",
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "ConnectionResetError",
+          "transportErrno": 104,
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 125,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 122,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 627.032892,
+          "recoveryRound": 0,
+          "elapsedSeconds": 16.341,
+          "finishedOffsetSeconds": 643.379728,
+          "outcome": "channel_failed",
+          "error": "api_transport_unknown",
+          "transportExceptionType": "URLError",
+          "transportPhase": "connect_or_headers",
+          "transportCauseType": "SSLEOFError",
+          "transportErrno": 8,
+          "failoverReason": "api_transport_unknown"
+        },
+        {
+          "attempt": 127,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "batchId": 124,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 632.189466,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created",
+            "lastEventOffsetSeconds": 0,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 600.004,
+          "finishedOffsetSeconds": 1232.199475,
+          "outcome": "channel_failed",
+          "error": "api_request_timed_out_unknown",
+          "transportPhase": "http_wait",
+          "timeoutKind": "overall",
+          "failoverReason": "api_request_timed_out_unknown"
+        },
+        {
+          "attempt": 130,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "batchId": 122,
+          "validationAttempt": 1,
+          "startedOffsetSeconds": 643.386018,
+          "recoveryRound": 0,
+          "streamProgress": {
+            "events": 4,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.done",
+            "lastEventOffsetSeconds": 13.435,
+            "lastOutputOffsetSeconds": null
+          },
+          "elapsedSeconds": 600.004,
+          "finishedOffsetSeconds": 1243.395008,
+          "outcome": "channel_failed",
+          "error": "api_request_timed_out_unknown",
+          "transportPhase": "http_wait",
+          "timeoutKind": "overall",
+          "failoverReason": "api_request_timed_out_unknown"
+        }
+      ],
+      "channels": {
+        "OPENAI_API_KEY1_014": {
+          "attempts": 60,
+          "completed": 56
+        },
+        "OPENAI_API_KEY2_030": {
+          "attempts": 46,
+          "completed": 45
+        },
+        "OPENAI_API_KEY3_040": {
+          "attempts": 54,
+          "completed": 53
+        }
+      },
+      "sourceSha256": "751cf5ad26d243beaac124c699d1409a5cac71dfab34f02335bf6c6b5ae0f8d9",
+      "artifacts": {
+        "dual": {
+          "id": "pdf_0a4ae5eebb6882279b3516dc15606173",
+          "kind": "artifact",
+          "filename": "paper-19-pages-dual.pdf",
+          "sha256": "0a4ae5eebb6882279b3516dc15606173cdcf9e391a9e7e5471360d6c25e0f22b",
+          "bytes": 27979440,
+          "pages": 19,
+          "source": {
+            "type": "translation",
+            "inputId": "doc_751cf5ad26d243beaac124c699d1409a"
+          },
+          "jobId": "job_df73bdfdde2f420e6382049e",
+          "createdAt": "2026-10-17T14:29:58.647Z"
+        }
+      },
+      "pdfCheck": {
+        "boundary": "Read-only page count/text/language/hash checks and Poppler renders of pages 1/10/19. No full semantic or formula comparison. Original PDF unchanged; rendered pages remain private outside Git.",
+        "pdf": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-19/files/pdf_0a4ae5eebb6882279b3516dc15606173.pdf",
+        "bytes": 27979440,
+        "sha256": "0a4ae5eebb6882279b3516dc15606173cdcf9e391a9e7e5471360d6c25e0f22b",
+        "registeredSha256": "0a4ae5eebb6882279b3516dc15606173cdcf9e391a9e7e5471360d6c25e0f22b",
+        "expectedPages": 19,
+        "actualPages": 19,
+        "encrypted": false,
+        "pages": [
+          {
+            "page": 1,
+            "hanChars": 1297,
+            "latinChars": 4661,
+            "textChars": 7360,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 2,
+            "hanChars": 1348,
+            "latinChars": 4549,
+            "textChars": 7243,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 3,
+            "hanChars": 1656,
+            "latinChars": 5391,
+            "textChars": 8644,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 4,
+            "hanChars": 758,
+            "latinChars": 2638,
+            "textChars": 4171,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 5,
+            "hanChars": 1475,
+            "latinChars": 4951,
+            "textChars": 7841,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 6,
+            "hanChars": 921,
+            "latinChars": 3467,
+            "textChars": 5523,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 7,
+            "hanChars": 1029,
+            "latinChars": 4156,
+            "textChars": 8120,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 8,
+            "hanChars": 1040,
+            "latinChars": 3987,
+            "textChars": 8125,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 9,
+            "hanChars": 834,
+            "latinChars": 2979,
+            "textChars": 5167,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 10,
+            "hanChars": 1099,
+            "latinChars": 3628,
+            "textChars": 5933,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 11,
+            "hanChars": 833,
+            "latinChars": 3349,
+            "textChars": 5576,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 12,
+            "hanChars": 1398,
+            "latinChars": 4699,
+            "textChars": 7467,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 13,
+            "hanChars": 1681,
+            "latinChars": 5310,
+            "textChars": 8441,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 14,
+            "hanChars": 741,
+            "latinChars": 4602,
+            "textChars": 8311,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 15,
+            "hanChars": 676,
+            "latinChars": 4149,
+            "textChars": 7755,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 16,
+            "hanChars": 679,
+            "latinChars": 4349,
+            "textChars": 8152,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 17,
+            "hanChars": 745,
+            "latinChars": 3533,
+            "textChars": 5697,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 18,
+            "hanChars": 234,
+            "latinChars": 775,
+            "textChars": 1265,
+            "width": 1224.0,
+            "height": 792.0
+          },
+          {
+            "page": 19,
+            "hanChars": 529,
+            "latinChars": 2380,
+            "textChars": 3711,
+            "width": 1224.0,
+            "height": 792.0
+          }
+        ],
+        "renderedPages": [
+          1,
+          10,
+          19
+        ],
+        "ok": true
+      },
+      "visualReview": {
+        "pages": [
+          1,
+          10,
+          19
+        ],
+        "bodyReadable": true,
+        "fullSemanticFormulaCheck": false,
+        "knownLimitations": [
+          "author_affiliation_spacing",
+          "table_code_label_wrapping_and_translation"
+        ]
+      },
+      "recoveryProbes": {
+        "attempts": 2,
+        "completed": 2
+      }
+    }
+  ],
+  "deliveries": [
+    {
+      "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-04/runs/23p-owner-delivery/acceptance.json",
+      "jobId": "job_3396fa64792440e7f99adebf",
+      "reusedJob": true,
+      "newPaidTranslation": false,
+      "qq": {
+        "channel": "kurumi-qq",
+        "status": "platform_accepted",
+        "documentId": "pdf_f7c75852647bd238c59a938709b0b83b"
+      },
+      "outboundRoundTrip": {
+        "ok": true,
+        "sha256": "f7c75852647bd238c59a938709b0b83b75ac73a1e766940dbef476589ce54373",
+        "pages": 23
+      },
+      "ownerReceiptConfirmed": false,
+      "boundary": "Actual owner-only OneBot upload and TLS return download/hash match; no owner inbound event or human receipt acknowledgement. No SMTP this round."
+    },
+    {
+      "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-19/runs/19p-owner-delivery/acceptance.json",
+      "jobId": "job_df73bdfdde2f420e6382049e",
+      "reusedJob": true,
+      "newPaidTranslation": false,
+      "qq": {
+        "channel": "kurumi-qq",
+        "status": "platform_accepted",
+        "documentId": "pdf_0a4ae5eebb6882279b3516dc15606173"
+      },
+      "standardIngressRoundTrip": {
+        "ok": false,
+        "code": "outbound_file_retrieval_failed",
+        "boundary": "Upload receipt remains authoritative; not proof of an owner inbound event."
+      },
+      "outboundRoundTrip": {
+        "ok": true,
+        "sha256": "0a4ae5eebb6882279b3516dc15606173cdcf9e391a9e7e5471360d6c25e0f22b",
+        "bytes": 27979440,
+        "pages": 19,
+        "privateEvidence": "/home/afrangry/.openclaw-fusion/paper-acceptance/batch-recovery-20261017-cold-19/runs/19p-owner-delivery/outbound-retrieval.json",
+        "boundary": "Read-only authenticated owner outbound URL lookup and bounded HTTPS return download of the exact registered artifact. No upload, translation or owner inbound event. The 25 MiB original-PDF ingress limit is unchanged; this operator check accepts only the known output length within the 100 MiB artifact limit. No URL, credentials or downloaded prose persisted."
+      },
+      "ownerReceiptConfirmed": false,
+      "boundary": "Actual owner-only OneBot upload and bounded verified TLS return/hash match. Standard 25 MiB original ingress refused this 27979440-byte artifact; separate operator verification used the known artifact length within its 100 MiB output limit. No production limit changed, owner inbound event, human receipt acknowledgement or SMTP."
+    }
+  ]
+}

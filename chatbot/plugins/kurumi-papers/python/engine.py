@@ -10,7 +10,8 @@ import re
 import sys
 import threading
 import traceback
-from responses import ResponsesClient, TranslationFailure, atomic_json, PROMPT_VERSION, PROFILE_REGISTRY
+from responses import (ResponsesClient, TranslationFailure, atomic_json, PROMPT_VERSION, PROFILE_REGISTRY,
+                       marker_validation, validation_retry_hint)
 
 
 def translate_batch(client, text, source_lang, target_lang):
@@ -51,7 +52,29 @@ def translate_batch(client, text, source_lang, target_lang):
                                                    "output": {"type": "string"}},
                 "required": ["id", "output"], "additionalProperties": False}}},
                 "required": ["translations"], "additionalProperties": False}}
-    output = client.generate(json.dumps(source, ensure_ascii=False), instructions, **options)
+    with client.batch_context() as context:
+        return translate_validated_batch(client, source, ids, structured, instructions, options, context)
+
+
+def translate_validated_batch(client, source, ids, structured, instructions, options, context):
+    retries = getattr(client, "batch_validation_retries", 1)
+    for attempt in range(retries + 1):
+        context["attempt"] = attempt
+        output = client.generate(json.dumps(source, ensure_ascii=False), instructions, **options)
+        try:
+            return validate_batch_output(client, source, ids, structured, output)
+        except TranslationFailure as error:
+            validation = error.details["validationFailure"]
+            client.record_validation_failure(validation, retry=attempt, allowed=retries)
+            if attempt == retries:
+                client.fail("invalid_batch_translation", validation=validation)
+                raise
+            # Retry only this data batch; do not echo invalid output into a paid prompt/cache.
+            instructions += validation_retry_hint(validation)
+
+
+def validate_batch_output(client, source, ids, structured, output):
+    """Pure batch validation; a failed attempt cannot set the whole client's stop flag."""
     reason, details = "invalid_json", {"outputChars": len(output), "jsonFenced": output.lstrip().startswith('```')}
     # Some providers wrap valid JSON despite the instruction. Accept exactly one outer JSON
     # fence; never extract fragments from prose or relax IDs, counts or formula validation.
@@ -71,26 +94,28 @@ def translate_batch(client, text, source_lang, target_lang):
         if not isinstance(translated, list) or len(translated) != len(source):
             raise ValueError()
         reason = "invalid_ids_or_fields"
-        by_id = {item["id"]: item["output"] for item in translated}
-        if len(by_id) != len(source) or set(by_id) != set(ids):
+        if any(not isinstance(item, dict) or set(item) != {"id", "output"} or
+               type(item["id"]) not in (int, str) for item in translated):
+            raise ValueError()
+        by_id = {(type(item["id"]), item["id"]): item["output"] for item in translated}
+        if len(by_id) != len(source) or set(by_id) != {(type(i), i) for i in ids}:
             raise ValueError()
         from responses import placeholders
         for index, item in enumerate(source):
-            value = by_id[item["id"]]
+            value = by_id[(type(item["id"]), item["id"])]
             reason, details["itemIndex"] = "empty_or_nontext_output", index
             if not isinstance(value, str) or not value.strip():
                 raise ValueError()
             reason = "placeholder_mismatch"
             if placeholders(item["input"]) != placeholders(value):
-                details.update(expectedPlaceholders=sum(placeholders(item["input"]).values()),
-                               actualPlaceholders=sum(placeholders(value).values()))
+                details.update(marker_validation(item["input"], value))
                 raise ValueError()
-        return json.dumps([{"id": item["id"], "output": by_id[item["id"]]} for item in source], ensure_ascii=False)
+        normalized = [{"id": item["id"], "output": by_id[(type(item["id"]), item["id"])]} for item in source]
+        return json.dumps(normalized, ensure_ascii=False)
     except (ValueError, KeyError, TypeError) as error:
         if isinstance(error, json.JSONDecodeError): details["jsonErrorPosition"] = error.pos
         # Structural diagnostics only: never persist source/output text or arbitrary model fields.
-        client.fail("invalid_batch_translation", validation={"reason": reason, **details})
-        raise TranslationFailure("invalid_batch_translation") from None
+        raise TranslationFailure("invalid_batch_translation", {"validationFailure": {"reason": reason, **details}}) from None
 
 
 def create_translator(request, client):
@@ -191,7 +216,10 @@ def translate(request):
     client = ResponsesClient(request["profile"], request["keys"],
                              max_requests=request["maxRequests"], max_tokens=request["maxReportedTokens"],
                              cooldown_file=request.get("cooldownFile"),
-                             on_usage=usage, max_concurrency=concurrency, max_qps=qps)
+                             on_usage=usage, max_concurrency=concurrency, max_qps=qps,
+                             batch_validation_retries=request.get("batchValidationRetries", 1),
+                             channel_recovery_retries=request.get("channelRecoveryRetries", 1),
+                             execution_timeout_seconds=request.get("executionTimeoutSeconds", 1800))
     client._publish()
     source_lang, target_lang = request["sourceLang"], request["targetLang"]
     translator = create_translator(request, client)

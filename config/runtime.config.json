@@ -293,10 +293,12 @@
           "credentialsFile": "/home/afrangry/.openclaw-fusion/paper-credentials.json",
           "liveTranslationEnabled": true,
           "maxPages": 30,
-          "maxRequests": 200,
+          "maxRequests": 300,
           "maxReportedTokens": 300000,
           "apiConcurrency": 4,
           "apiQps": 1,
+          "batchValidationRetries": 1,
+          "channelRecoveryRetries": 1,
           "timeoutSeconds": 1800
         }
       },

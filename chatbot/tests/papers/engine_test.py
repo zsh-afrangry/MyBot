@@ -11,6 +11,7 @@ from unittest.mock import patch
 import threading
 import asyncio
 import concurrent.futures
+import contextlib
 from types import SimpleNamespace
 
 cache = tempfile.TemporaryDirectory(prefix="kurumi-engine-test-")
@@ -23,6 +24,11 @@ from responses import TranslationFailure, ResponsesClient, KEY_IDS, PROFILE_REGI
 
 class Client:
     def __init__(self): self.calls = []
+    @contextlib.contextmanager
+    def batch_context(self):
+        yield {"attempt":0}
+    def record_validation_failure(self, validation, **kwargs):
+        self.last_validation = validation
     def fail(self, code, *, validation=None):
         self.failure, self.validation_failure = code, validation
     def normalize_json_fence(self):
@@ -149,6 +155,34 @@ class EngineTest(unittest.TestCase):
         self.translator.llm_translate('cache-contract-unique-text')
         self.translator.llm_translate('cache-contract-unique-text')
         self.assertEqual(len(self.client.calls),1)
+
+    def test_batch_retry_only_caches_the_valid_result_and_an_exhausted_batch_is_not_cached(self):
+        profile={"provider":"openai","channel":"naiccc","protocol":"responses",
+                 "baseUrl":"https://naiccc.com/v1","model":"gpt-6.1-sol","effort":"high"}
+        config={"sourceLang":"en","targetLang":"zh","profile":profile}
+        for succeeds in (False, True):
+            seen=[]
+            def request(*args):
+                seen.append(1)
+                text='[{"id":1,"output":"译文 {v1}"}]' if succeeds and len(seen)>1 else '[{"id":1,"output":"lost"}]'
+                return 200,{"status":"completed","model":profile['model'],"usage":{"input_tokens":3,"output_tokens":2},
+                    "output":[{"type":"message","role":"assistant","content":[{"type":"output_text","text":text}]}]}
+            client=ResponsesClient(profile,{KEY_IDS[0]:"synthetic"},request=request)
+            translator=create_translator(config,client)
+            prompt='cache-retry-'+str(succeeds)+'\n## Here is the input:\n'+json.dumps([{'id':1,'input':'text {v1}'}])
+            if succeeds:
+                translator.llm_translate(prompt);translator.llm_translate(prompt)
+                self.assertEqual(len(seen),2)
+            else:
+                with self.assertRaisesRegex(TranslationFailure,'invalid_batch_translation'):translator.llm_translate(prompt)
+                class Fresh(Client):
+                    def generate(self,*args,**kwargs):
+                        self.calls.append(1)
+                        return '[{"id":1,"output":"译文 {v1}"}]'
+                fresh=Fresh()
+                create_translator(config,fresh).llm_translate(prompt)
+                self.assertEqual(len(fresh.calls),1)
+                self.assertEqual(len(seen),2)
 
     def test_inflight_success_is_cached_even_when_another_request_stops_the_job(self):
         profile={"provider":"openai","channel":"naiccc","protocol":"responses",

@@ -1,0 +1,26 @@
+test_a_retrying_batch_does_not_stop_or_retranslate_a_concurrent_good_batch (__main__.ReliabilityTest) ... ok
+test_all_channels_recover_after_cooldown_and_preserve_order_and_usage (__main__.ReliabilityTest) ... ok
+test_authentication_cooldown_is_not_waited_or_probed (__main__.ReliabilityTest) ... ok
+test_bad_retry_limits_are_rejected_before_network_work (__main__.ReliabilityTest) ... ok
+test_cooldown_wait_respects_cancellation_budget_and_total_deadline (__main__.ReliabilityTest) ... ok
+test_default_retries_exact_same_batch_once_and_accounts_both_attempts (__main__.ReliabilityTest) ... ok
+test_each_configured_final_retry_can_succeed_without_stopping_other_batches (__main__.ReliabilityTest) ... ok
+test_exhausted_channel_recovery_is_bounded_and_not_an_infinite_paid_loop (__main__.ReliabilityTest) ... ok
+test_http2_stream_error_is_a_retryable_channel_error (__main__.ReliabilityTest) ... ok
+test_ids_counts_json_and_boolean_id_mismatch_share_the_same_bounded_retry (__main__.ReliabilityTest) ... ok
+test_inherited_legacy_cooldown_waits_and_only_one_recovery_probe_is_inflight (__main__.ReliabilityTest) ... ok
+test_native_client_terminal_failure_interrupts_another_paid_wait_and_keeps_unknown_usage (__main__.ReliabilityTest) ... ok
+test_one_recovery_round_waits_for_staggered_channels_after_an_early_probe_fails (__main__.ReliabilityTest) ... ok
+test_real_blocking_headers_and_stream_are_cancelled_promptly (__main__.ReliabilityTest) ... ok
+test_recovery_never_repeats_an_attempted_channel_within_the_same_round (__main__.ReliabilityTest) ... ok
+test_repeated_style_marker_retry_gets_counts_without_echoing_invalid_output_or_prose (__main__.ReliabilityTest) ... ok
+test_retry_limit_zero_through_four_is_exact_and_exhaustion_stays_terminal (__main__.ReliabilityTest) ... ok
+test_single_paragraph_marker_validation_also_has_only_one_retry (__main__.ReliabilityTest) ... ok
+test_supervised_http_success_and_terminal_progress_keep_usage_and_timings (__main__.ReliabilityTest) ... ok
+test_transport_diagnostics_are_safe_and_distinguish_connect_headers_from_stream (__main__.ReliabilityTest) ... ok
+test_validation_retry_cannot_exceed_request_or_token_budget (__main__.ReliabilityTest) ... ok
+
+----------------------------------------------------------------------
+Ran 21 tests in 0.944s
+
+OK
