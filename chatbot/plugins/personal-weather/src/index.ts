@@ -19,6 +19,8 @@ import { reconcileReminderState } from "./reminder-reconciler.js";
 import { createReminderReconcilerService } from "./reminder-reconciler-service.js";
 import { QWeatherClient } from "./qweather-client.js";
 import { KnowledgeMapWeatherClient } from "./knowledgemap-client.js";
+import { createToolTrace } from "../../../packages/knowledgemap-client/tool-trace.js";
+const weatherTrace = createToolTrace(["personal_weather_get_brief", "personal_profile_change_propose"]);
 import {
   commitPlanningProposal,
   getPlanningState,
@@ -273,7 +275,7 @@ const personalWeatherPlugin = defineToolPlugin({
             }
             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
             const client = config.weatherBackend === "knowledgemap"
-              ? new KnowledgeMapWeatherClient({baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile})
+              ? new KnowledgeMapWeatherClient({baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile, runId: weatherTrace.resolve(toolContext, _toolCallId, "personal_weather_get_brief")})
               : new QWeatherClient(resolvePersonalWeatherConfig(config));
             const service = new WeatherService(store, client);
             let brief;
@@ -365,7 +367,7 @@ const personalWeatherPlugin = defineToolPlugin({
             return jsonResult(await proposeProfileChange(
               store,
               config.weatherBackend === "knowledgemap"
-                ? new KnowledgeMapWeatherClient({baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile})
+                ? new KnowledgeMapWeatherClient({baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile, runId: weatherTrace.resolve(toolContext, _toolCallId, "personal_profile_change_propose")})
                 : new QWeatherClient(resolvePersonalWeatherConfig(config)),
               params,
               signal,
@@ -749,6 +751,7 @@ personalWeatherPlugin.register = (api) => {
   registerPersonalWeatherTools(api);
   if (api.registrationMode !== "full") return;
   registerInteractionHooks(api);
+  weatherTrace.attach(api);
   registerDomainConfirmationBackends(api);
   if (api.pluginConfig?.reminderBackend === "native-service") {
     const channel = api.config.channels?.["kurumi-qq"] as { ownerId?: string } | undefined;

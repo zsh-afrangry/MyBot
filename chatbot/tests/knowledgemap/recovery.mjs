@@ -9,7 +9,7 @@ import {createHash} from 'node:crypto';
 import {tmpdir} from 'node:os';
 import {join, isAbsolute} from 'node:path';
 import assert from 'node:assert/strict';
-const {values} = parseArgs({options: {'backup-dir': {type: 'string'}}});
+const {values} = parseArgs({options: {'backup-dir': {type: 'string'}, 'code-only': {type: 'boolean', default: false}}});
 const backup = values['backup-dir']; assert.ok(backup && isAbsolute(backup));
 const temp = mkdtempSync(join(tmpdir(), 'km-baseline-restore-')), report = {ok: false, repos: {}, sqlite: 0};
 try {
@@ -27,6 +27,7 @@ try {
     assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], {cwd: target}).toString().trim(), manifest.head);
     report.repos[name] = {head: manifest.head, verifiedFiles: Object.keys(manifest.sha256).length};
   }
+  if (!values['code-only']) {
   const manifest = JSON.parse(readFileSync(join(backup, 'private-state/manifest.json')));
   for (const [file, hash] of Object.entries(manifest.sqlite)) {
     const source = join(backup, 'private-state/fusion', file);
@@ -36,5 +37,7 @@ try {
     report.sqlite++;
   }
   for (const file of manifest.privateFiles) assert.ok(existsSync(join(backup, 'private-state', file)));
+  }
+  report.codeOnly = values['code-only'];
   report.ok = true; console.log(JSON.stringify(report));
 } finally {rmSync(temp, {recursive: true, force: true});}

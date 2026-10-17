@@ -127,6 +127,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/domain-adapters/integration.test.mjs` | 离线 | 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/domain-adapters/registry.test.mjs` | 离线 | 领域适配器注册/注销、启动选择、同步契约和失败拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线 | 固定API客户端、可信请求、参数映射、共享播报与切换防旧写 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/knowledgemap/bills.test.mjs` | 离线 | 账单工具声明一致、真实钩子runId映射、当前请求隔离和消息幂等键 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 离线 | 真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/credentials.test.mjs` | 离线 | 厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/documents.test.mjs` | 离线 | PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界 | 写临时测试目录 | 否 | header | — |
@@ -146,6 +147,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
 | `chatbot/scripts/import-knowledgemap-list.mjs` | 迁移工具 | 默认预览旧列表导入；--apply写共享业务，--activate冻结旧项并启用runner切换标记 | 真实外部API、写运行状态 | 是 | header | — |
+| `chatbot/scripts/backup-knowledgemap-code.mjs` | 领域运维 | 只读两个主工作树、bundle/index/工作树包保存到新私密备份目录；不含数据库/忽略文件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-deepseek-persona.mjs` | 迁移工具 | 一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口 | 真实模型、写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-domains.mjs` | 迁移工具 | 启用主人绑定领域插件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-fulltext-research.mjs` | 迁移工具 | 研究会话、笔记工作区与来源缓存 | 写运行状态 | 是 | header | — |
@@ -191,6 +193,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/acceptance/verify-restart.mjs` | 遗留验收 | 在新进程里重开测试目录并验证幂等；不重启任何服务 | 写临时测试目录、只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/acceptance-host.mjs` | 验收 | 真实模型与隔离OpenClaw/原生调度、临时HTTP业务库、模拟OneBot | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/knowledgemap/acceptance-live.mjs` | 验收 | 真实模型/生产API/MySQL/网页与一次本人QQ播报；短暂测试入口、精确测试行清理并保留回执 | 真实模型、真实外部API、真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/knowledgemap-bridge-2026-10-17/live.json` |
+| `chatbot/tests/knowledgemap/acceptance-bills-live.mjs` | 验收 | 第二轮真实模型/生产API/MySQL/网页单笔增改删查、歧义澄清及天气runId；合成入站不发QQ | 真实模型、真实外部API、重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/knowledgemap-bills-round2-2026-10-17/live.json` |
 | `chatbot/tests/knowledgemap/acceptance-model.mjs` | 验收 | 真实模型、实际v2工具及临时HTTP/SQLite，无QQ/生产写入 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/knowledgemap/recovery.mjs` | 验收 | 今晚Git工作树和SQLite备份的临时目录恢复，不启动旧服务 | 写临时测试目录 | 是 | header | — |
 | `chatbot/tests/papers/acceptance-api.py` | 验收 | 合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发 | 真实模型、真实外部API、写仓库内文件 | 是 | header | `docs/verification/paper-translation-2026-10-17/channel-upgrade/.` |

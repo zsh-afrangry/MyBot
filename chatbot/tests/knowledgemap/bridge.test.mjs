@@ -155,12 +155,12 @@ test('digest outage neither claims slot nor announces stale list; schedule race 
   await runRemoteDigest(options, {allTasks: async () => {store = new ListControlStore(options); store.changeSchedule({action: 'pause'}, {}); store.close(); return [row()];}}, '08:00', x => output += x);
   assert.equal(output, ''); store = new ListControlStore(options); assert.equal(store.db.prepare('SELECT count(*) n FROM deliveries').get().n, 0); store.close();
 });
-test('bill plugin enforces current owner request and exposes only first-round operations', async () => {
+test('bill plugin enforces current owner request and exposes only approved bill operations', async () => {
   const hooks = {}, factories = {}; let sent;
   createKnowledgeMapPlugin({clientFactory: () => ({request: async (path, options) => {sent = {path, ...options}; return {ok: true};}})}).register({
     config, pluginConfig: {}, on: (n, f) => hooks[n] = f, registerTool: (f, m) => factories[m.name] = f,
   });
-  assert.deepEqual(Object.keys(factories).sort(), ['knowledge_bill_add', 'knowledge_bills_get']);
+  assert.deepEqual(Object.keys(factories).sort(), ['knowledge_bill_add', 'knowledge_bill_manage', 'knowledge_bills_get']);
   const context = ctx(), create = name => factories[name].create(context);
   assert.equal((await run(create('knowledge_bill_add'), {amount: '14.00', expense_date: '2026-10-17'})).ok, false);
   hooks.reply_dispatch(event('我午饭吃了14元'));

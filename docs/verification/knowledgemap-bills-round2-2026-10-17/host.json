@@ -1,0 +1,144 @@
+{
+  "at": "2026-10-17T05:22:36.462Z",
+  "boundary": "Real model and real OpenClaw inbound/v2 tool catalog/native Cron + real isolated API/SQLite; mock OneBot, no real QQ/production writes",
+  "cases": [
+    {
+      "label": "host-bill-save",
+      "passed": true,
+      "captured": [
+        {
+          "text": "已经记好了：今天午饭 14 元，归在餐饮里的午饭下面。支付方式这些你没说，就先空着了。"
+        }
+      ]
+    },
+    {
+      "label": "host-noDDL-add",
+      "passed": true,
+      "captured": [
+        {
+          "text": "加好了：收晾好的衣服，没设截止时间，就留在待做列表里。"
+        }
+      ]
+    },
+    {
+      "label": "host-reset",
+      "passed": true,
+      "captured": [
+        {
+          "text": "✅ New session started."
+        }
+      ]
+    },
+    {
+      "label": "host-semantic-void",
+      "passed": true,
+      "captured": [
+        {
+          "text": "搞定，「收晾好的衣服」已经作废，不再出现在待做列表里了。"
+        }
+      ]
+    },
+    {
+      "label": "host-monthly",
+      "passed": true,
+      "captured": [
+        {
+          "text": "2026年10月：支出 14.00 元，收入 0.00 元，结余 -14.00 元。"
+        }
+      ]
+    },
+    {
+      "label": "host-schedule",
+      "passed": true,
+      "captured": [
+        {
+          "text": "提醒列表的每日播报时间已经改成 08:15 和 18:15 两次，调度同步正常。"
+        }
+      ]
+    },
+    {
+      "label": "bill-new-session",
+      "passed": true,
+      "captured": [
+        {
+          "text": "✅ New session started."
+        }
+      ]
+    },
+    {
+      "label": "bill-expression-first-call",
+      "passed": true,
+      "captured": [
+        {
+          "text": "记好了，今天午饭 **36.80**（29.9 + 6.9），分类是餐饮下的午饭，备注写了“轮次二午饭”。"
+        }
+      ]
+    },
+    {
+      "label": "bill-semantic-update",
+      "passed": true,
+      "captured": [
+        {
+          "text": "改好了，那笔“轮次二午饭”的金额从 36.80 调成了 **35.50**，日期、分类和备注都没有改动。"
+        }
+      ]
+    },
+    {
+      "label": "bill-web-update-visible",
+      "passed": true,
+      "captured": [
+        {
+          "text": "现在这笔里的金额是 **32.10**，备注“轮次二午饭”。\n\n不过有点怪：我刚改成 35.50 之后，这笔又被改成了 32.10，更新记录显示就在那之后。如果不是你自己在网站上改的，要我按 35.50 再改回去吗？"
+        }
+      ]
+    },
+    {
+      "label": "bill-reset-before-delete",
+      "passed": true,
+      "captured": [
+        {
+          "text": "✅ New session started."
+        }
+      ]
+    },
+    {
+      "label": "bill-semantic-delete-after-new",
+      "passed": true,
+      "captured": [
+        {
+          "text": "删了，那条 32.10 的「轮次二午饭」已经不在账本里了。另一笔 14.00 的午饭还留着。"
+        }
+      ]
+    },
+    {
+      "label": "bill-reset-before-ambiguous",
+      "passed": true,
+      "captured": [
+        {
+          "text": "✅ New session started."
+        }
+      ]
+    },
+    {
+      "label": "bill-ambiguous-does-not-delete",
+      "passed": true,
+      "captured": [
+        {
+          "text": "两笔都叫「同名奶茶」，今天记的：一笔 9 块，一笔 8 块。删哪一个？"
+        }
+      ]
+    }
+  ],
+  "round2": {
+    "traceEvents": 18,
+    "allRunIdsMatchTranscript": true,
+    "invalidBillArgumentAttempts": 0,
+    "queryCreateUpdateDelete": true,
+    "ambiguousTargetUnchanged": true,
+    "hostFactoryRunIdNotAssumed": true
+  },
+  "productionUnchanged": true,
+  "passed": true,
+  "childStopped": true,
+  "mockSends": 0
+}

@@ -64,7 +64,8 @@
             "kurumi_translate",
             "kurumi_document_send",
             "knowledge_bills_get",
-            "knowledge_bill_add"
+            "knowledge_bill_add",
+            "knowledge_bill_manage"
           ],
           "deny": [
             "read",

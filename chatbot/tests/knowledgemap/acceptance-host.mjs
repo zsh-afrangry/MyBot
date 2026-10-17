@@ -16,11 +16,13 @@ import {WebSocketServer} from 'ws';
 import {productionSnapshot as guardedSnapshot} from '../reminder-list/production-guard.mjs';
 
 import {KnowledgeMapClient} from '../../packages/knowledgemap-client/client.js';
+import {zstdDecompressSync} from 'node:zlib';
 const repo = resolve(fileURLToPath(new URL('../../../', import.meta.url)));
 const km = process.env.KM_TEST_REPO ?? '/home/afrangry/repository';
 const outArg = process.argv.indexOf('--out');
 if (outArg < 0 || !process.argv[outArg + 1]) throw Error('--out required');
 const explicitOut = process.argv[outArg + 1];
+const round2 = process.argv.includes('--bills-round2');
 const runtime = '/home/afrangry/.openclaw-fusion', root = fs.mkdtempSync(join(tmpdir(), 'km-host-'));
 const owner = '365999865', bot = '1794511189', token = randomBytes(24).toString('hex');
 const secrets = JSON.parse(fs.readFileSync(join(runtime, 'runtime-env.json')));
@@ -48,7 +50,7 @@ const cfg = JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))
 cfg.gateway = {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}};
 cfg.agents.defaults.workspace = join(root, 'workspace');
 cfg.agents.entries = {main: {...cfg.agents.entries.main, workspace: join(root, 'workspace'), tools: {
-  profile: 'messaging', alsoAllow: ['personal_reminder_list_get', 'personal_reminder_list_manage', 'knowledge_bills_get', 'knowledge_bill_add'],
+  profile: 'messaging', alsoAllow: ['personal_reminder_list_get', 'personal_reminder_list_manage', 'knowledge_bills_get', 'knowledge_bill_add', 'knowledge_bill_manage'],
   deny: ['read', 'write', 'edit', 'exec', 'process', 'message', 'sessions_spawn', 'automations'],
 }}};
 cfg.plugins = {allow: ['kurumi-qq', 'personal-reminder-list', 'kurumi-knowledgemap'], load: {paths: ['kurumi-qq', 'personal-reminder-list', 'kurumi-knowledgemap'].map(p => join(repo, 'chatbot/plugins', p))},
@@ -90,7 +92,7 @@ try {
   });
   await turn('host-noDDL-add', '提醒列表加一条：收晾好的衣服，无DDL。', async () => {assert.equal((await api.allTasks()).length, 1); assert.equal((await api.allTasks())[0].event_date, null);});
   await turn('host-reset', '/new', async () => {});
-  await turn('host-semantic-void', '我衣服晾好了，列表里可以去掉。', async () => {assert.equal((await api.allTasks()).length, 0); assert.ok((await api.allTasks({history: true}))[0].archived_at);});
+  await turn('host-semantic-void', '收晾好衣服这件事取消了，帮我从提醒列表作废。', async () => {assert.equal((await api.allTasks()).length, 0); assert.ok((await api.allTasks({history: true}))[0].archived_at);});
   await turn('host-monthly', '查一下2026年10月的账单支出和结余。', async result => {assert.match(JSON.stringify(result.captured), /14/);});
   await turn('host-schedule', '把提醒列表每天播报改成08:15和18:15两次。', async () => {
     const db = new DatabaseSync(join(root, 'state/personal-reminder-list/list.sqlite'), {readOnly: true});
@@ -98,6 +100,48 @@ try {
     const jobs = (await call('cron.list', {includeDisabled: true, limit: 100})).jobs.filter(j => j.declarationKey?.startsWith('kurumi.reminder-list.daily:'));
     assert.equal(jobs.length, 2); for (const job of jobs) assert.equal(job.payload.env.KURUMI_LIST_DATA_SOURCE, 'knowledgemap');
   });
+  if (round2) {
+    await turn('bill-new-session', '/new', async () => {});
+    await turn('bill-expression-first-call', '今天中午吃饭花了29.9+6.9，备注写“轮次二午饭”。', async () => {
+      const page = await api.request('/api/assistant/bills', {query: {query: '轮次二午饭'}});
+      assert.equal(page.total, 1); assert.equal(page.items[0].amount, '36.80');
+    });
+    await turn('bill-semantic-update', '刚才轮次二午饭那笔我说错了，实际一共35.50元，帮我改一下，其他不变。', async () => {
+      const page = await api.request('/api/assistant/bills', {query: {query: '轮次二午饭'}});
+      assert.equal(page.items[0].amount, '35.50'); assert.equal(page.items[0].version, 2);
+    });
+    let target = (await api.request('/api/assistant/bills', {query: {query: '轮次二午饭'}})).items[0];
+    const web = await fetch(`http://127.0.0.1:${apiPort}/api/bills/${target.id}`, {method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({amount: '32.10', expected_version: target.version})});
+    assert.ok(web.ok); target = await web.json();
+    await turn('bill-web-update-visible', '再查一下轮次二午饭那笔现在的金额。', async result => {assert.match(JSON.stringify(result.captured), /32[.．]1/);});
+    await turn('bill-reset-before-delete', '/new', async () => {});
+    await turn('bill-semantic-delete-after-new', '轮次二午饭那笔是测试记录，删掉吧。', async () => {
+      assert.equal((await api.request('/api/assistant/bills', {query: {id: target.id}})).total, 0);
+    });
+    for (const [i, amount] of ['8.00', '9.00'].entries()) await api.request('/api/assistant/bills', {method: 'POST', key: `isolated-ambiguous-bill-${i}`, body: {amount, expense_date: '2026-10-17', note: '同名奶茶'}});
+    await turn('bill-reset-before-ambiguous', '/new', async () => {});
+    await turn('bill-ambiguous-does-not-delete', '把同名奶茶那笔删掉。', async () => {
+      assert.equal((await api.request('/api/assistant/bills', {query: {query: '同名奶茶'}})).total, 2);
+    });
+    const db = new DatabaseSync(join(root, 'agents/main/agent/openclaw-agent.sqlite'), {readOnly: true});
+    const observedRuns = new Set();
+    try {
+      for (const row of db.prepare('SELECT event_json,event_zstd FROM transcript_events').all()) {
+        const record = JSON.parse(row.event_json || zstdDecompressSync(row.event_zstd).toString('utf8'));
+        const runId = record.__openclaw?.runId ?? record.message?.__openclaw?.runId;
+        if (runId) observedRuns.add(runId);
+      }
+    } finally {db.close();}
+    const traceFile = join(root, 'state/knowledgemap/trace.jsonl');
+    const traces = fs.readFileSync(traceFile, 'utf8').trim().split('\n').map(s => JSON.parse(s));
+    assert.ok(traces.length > 8);
+    for (const entry of traces) assert.ok(observedRuns.has(entry.correlation.runId), 'API runId must match real transcript run');
+    const runtimeText = fs.readFileSync(join(root, 'runtime.log'), 'utf8');
+    const invalid = runtimeText.split('\n').filter(s => /Invalid arguments for tool/.test(s) && /knowledge_bill/.test(s));
+    assert.equal(invalid.length, 0, 'bill first attempts must use declared schema');
+    report.round2 = {traceEvents: traces.length, allRunIdsMatchTranscript: true, invalidBillArgumentAttempts: invalid.length,
+      queryCreateUpdateDelete: true, ambiguousTargetUnchanged: true, hostFactoryRunIdNotAssumed: true};
+  }
   report.productionUnchanged = guardedSnapshot(runtime) === before; assert.ok(report.productionUnchanged); assert.equal(mockSends.length, 0); report.passed = true;
 } catch (error) {report.passed = false; report.error = error.message; process.exitCode = 1;}
 finally {

@@ -22,6 +22,7 @@
 | [`paper-api-2026-10-17/README.md`](paper-api-2026-10-17/README.md) 及同目录全部文件 | 论文翻译第三方协议探查：014 凭据的 Responses/Chat、显式 instructions 输入开销、JSON/占位符和输出预算；不代表 pdf2zh 或文件投递已验收 |
 | [`paper-translation-2026-10-17/README.md`](paper-translation-2026-10-17/README.md) 及同目录全部文件 | 文档22的实现、回归、下载/编排与翻译/投递；[channel-upgrade](paper-translation-2026-10-17/channel-upgrade/README.md)收录三渠道/DeepSeek整篇、最终部署与质量抽查；各回执注明边界与失败项 |
 | [knowledgemap-bridge-2026-10-17/README.md](knowledgemap-bridge-2026-10-17/README.md) 及目录全部文件 | 文档23天气/待做/账单桥接；隔离API、MySQL恢复、网页、模型/宿主与切换证据 |
+| [knowledgemap-bills-round2-2026-10-17/README.md](knowledgemap-bills-round2-2026-10-17/README.md) 及目录全部文件 | 文档23第二轮账单完整维护、共享版本/幂等、真实宿主runId关联与部署验收 |
 
 ## 历史领域验收
 

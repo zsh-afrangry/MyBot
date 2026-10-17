@@ -5,7 +5,9 @@ import { WeatherError } from "./errors.js";
 
 export class KnowledgeMapWeatherClient implements WeatherClient {
   readonly #client: KnowledgeMapClient;
-  constructor(config: { baseUrl?: string | undefined; tokenFile?: string | undefined }) {
+  readonly #runId: string | undefined;
+  constructor(config: { baseUrl?: string | undefined; tokenFile?: string | undefined; runId?: string | undefined }) {
+    this.#runId = config.runId;
     this.#client = new KnowledgeMapClient({
       ...(config.baseUrl ? {baseUrl: config.baseUrl} : {}),
       ...(config.tokenFile ? {tokenFile: config.tokenFile} : {}),
@@ -13,7 +15,7 @@ export class KnowledgeMapWeatherClient implements WeatherClient {
   }
   async #get(component: string, query: Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
     try {
-      return await this.#client.request(`/api/assistant/weather/${component}`, {query, ...(signal ? {signal} : {})});
+      return await this.#client.request(`/api/assistant/weather/${component}`, {query, ...(this.#runId ? {runId: this.#runId} : {}), ...(signal ? {signal} : {})});
     } catch (error) {
       if (signal?.aborted) throw new WeatherError("REQUEST_CANCELLED");
       if (error instanceof BridgeError && error.status === 401) throw new WeatherError("AUTH_FAILED");

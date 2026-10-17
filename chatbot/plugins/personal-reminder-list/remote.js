@@ -9,6 +9,7 @@ import {formatDigest} from './formatter.js';
 import {ownerAuthorized} from '../kurumi-qq/src/config.js';
 import {KnowledgeMapClient, BridgeError, requestKey} from '../../packages/knowledgemap-client/client.js';
 import {createBridgeInbound} from '../../packages/knowledgemap-client/inbound.js';
+import {createToolTrace} from '../../packages/knowledgemap-client/tool-trace.js';
 
 export class ListControlStore extends ListStore {
   expire() {return 0;}
@@ -82,6 +83,7 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
     dataSource: 'knowledgemap', bridgeBaseUrl: api.pluginConfig.bridgeBaseUrl, bridgeTokenFile: api.pluginConfig.bridgeTokenFile,
     openStore: opts => new ListControlStore(opts), logger: api.logger};
   const scheduler = createScheduler(options), manageControls = createListService(defaultListPolicy);
+  const trace = createToolTrace(declarations.map(t => t.name)); trace.attach(api);
   if (api.registrationMode === 'full' || api.registrationMode === undefined) {
     api.on('reply_dispatch', event => inbound.receive(event));
     api.on('before_reset', (event, ctx) => inbound.end(event, ctx)); api.on('session_end', (event, ctx) => inbound.end(event, ctx));
@@ -96,27 +98,28 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
   }
   for (const declaration of declarations) api.registerTool({contextVersion: 2, create: ctx => {
     const request = inbound.current();
-    return {...declaration, async execute(_callId, args = {}, signal) {
+    return {...declaration, async execute(callId, args = {}, signal) {
       const config = ctx.getRuntimeConfig?.() ?? api.config;
       if (!ownerAuthorized(ctx, config)) return {content: [{type: 'text', text: JSON.stringify({ok: false, error: {code: 'forbidden_context', message: '只支持本人QQ私聊'}})}]};
       try {
         ctx.assertInvocationCurrent(); signal?.throwIfAborted();
+        const runId = trace.resolve(ctx, callId, declaration.name);
         let result;
         if (declaration.name === 'personal_reminder_list_get') {
           const store = new ListControlStore(options);
           try {
             result = {ok: true, now: localTime(Date.now()), timezone: 'Asia/Shanghai', dataSource: 'knowledgemap',
-              items: (await client.allTasks({history: args.history, query: args.query, signal, runId: ctx.runId})).map(taskItem), settings: store.settings(), scheduleSync: scheduler.status()};
+              items: (await client.allTasks({history: args.history, query: args.query, signal, runId})).map(taskItem), settings: store.settings(), scheduleSync: scheduler.status()};
           } finally {store.close();}
         } else {
           inbound.require(request, ctx, config);
           request.listTarget = true;
           if (['schedule', 'pause', 'resume'].includes(args.action)) {
             const store = new ListControlStore(options);
-            try {result = manageControls(store, args, {...request, actions: new Set([args.action])}, {runId: ctx.runId});}
+            try {result = manageControls(store, args, {...request, actions: new Set([args.action])}, {runId});}
             finally {store.close();}
             if (result.ok) result.scheduleSync = await scheduler.sync();
-          } else result = await manageRemoteList(client, args, request, {runId: ctx.runId, signal});
+          } else result = await manageRemoteList(client, args, request, {runId, signal});
         }
         return {content: [{type: 'text', text: JSON.stringify(result)}]};
       } catch (error) {

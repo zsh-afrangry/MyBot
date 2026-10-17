@@ -1,6 +1,6 @@
 # KnowledgeMap 业务能力桥接
 
-状态：**第一轮已验收并部署**。日期：2026-10-17。本文负责天气、待做事项、记账接入的需求、架构、决策、实施与验收记录。阅读入口：[README.md](README.md)。
+状态：**第一轮已验收并部署；第二轮开发中**。日期：2026-10-17。本文负责天气、待做事项、记账接入的需求、架构、决策、实施与验收记录。阅读入口：[README.md](README.md)。
 
 用户已于 2026-10-17 确认 Q01–Q04，并要求跨两个 Git 仓库做好版本隔离与今晚基线备份。第一轮完成天气、待做及记账新增/查询/月汇总；账单修改/删除属于第二轮，共享默认城市属于后续数据库整合迭代。文档 22 的论文/PDF/文件投递开发不属于本任务。
 
@@ -246,5 +246,41 @@ flowchart LR
 - `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 当前 active/enabled；旧 `openclaw-gateway.service` 和 `qq-bridge.service` inactive/masked。用户级 `dsh-web.service` 当前不存在；本轮没有改动系统级 DSH 单元。
 - `evidence-coverage.mjs`、`evidence-index.mjs`、`health.mjs`、`sync-config.mjs --diff`、`sync-persona.mjs --diff`、`verify-dependencies.mjs` 和 `git diff --check` 全部通过。
 - 本轮只更新 Fusion 的文档 10、12、16、23，未新增业务测试、未修改文档 22、未修改 KnowledgeMap 代码、未向任何远端推送。上述备份目录仍按本文第 7、8 节的“配对资料、非同一时刻停写快照”定义保留。
+
+## 10. 第二轮：账单完整维护与调用链优化
+
+2026-10-17 用户授权实施。背景：真人 `/new` 后的午饭记账成功，但模型首次误用 `date`，自纠为 `expense_date`；业务日志未取得真实 runId。本轮将两点和账单增删改查一并完善。第一轮验收结论保留，第二轮不得提前标为上线。
+
+### 决策与边界
+
+- 用户已确认：明确且唯一的单笔修改、删除直接执行；先查真实记录和版本，指代有歧义先澄清，不开放批量删除。删除沿用网站实际删除规则；不是作废或回收站，不承诺撤销，保留请求回执与删除前快照供审计。一次性提醒的带码确认不变。
+- KnowledgeMap 继续拥有唯一业务数据及校验。账单增加共享版本，网站编辑/删除携带读取时版本；助手按ID及版本维护，冲突重新查询，不覆盖新事实。业务写入与幂等回执同事务。
+- 新增保留现有 `knowledge_bill_add`；查询补单条和备注筛选；增设窄工具 `knowledge_bill_manage(action=update|delete)`。后端消费结构化动作，不解析聊天动词。单条维护保存前后快照；首期只支持一次消息一笔。
+- 提升工具说明及模型实际可见参数提示，不把模型字段错误静默改写成合法写入。用真实宿主首次调用证据评估，不能保证模型永不犯错。
+- 从受支持的真实工具调用上下文取得runId，贯穿HTTP头、API日志和旁路事件；不伪造runId或只在测试夹具塞字段。
+- 本轮不做默认城市共库、TradeSim、Notes、批量账单维护、网站视觉重构或文档22业务开发。
+
+### 第二轮开发与验收
+
+- [x] 核对两个仓库现状，确认删除规则；独立分支 `codex/knowledgemap-bills-round2`，工作树在 `/home/afrangry/.codex/worktrees/knowledgemap-bills-round2/{fusion,knowledgemap}`。
+- [x] 变更前备份代码/index/并行工作及共享MySQL；登记准确路径、哈希和恢复边界。
+- [ ] 实现业务版本、单条查询/修改/删除、事务幂等和网站版本传递；SQL留档。
+- [ ] 实现桥接工具、参数提示、真实调用上下文关联；更新配置及提示词意图。
+- [ ] 隔离业务、桥接、MySQL并发与恢复、真实模型/宿主测试；索引全部测试与证据。
+- [ ] 部署后只操作标记测试账单，验证网站与助手同源及日志关联，保护既有真实记录；恢复测试入口关闭。
+- [ ] 两仓库本地提交仅含本任务差异，保留并行修改；更新文档/agent入口和完成状态，不推送。
+
+初始Fusion基线以代码备份manifest为准（并行文档22正在提交，不能冻结成较早观察值）；KnowledgeMap起点`27f4519`，原6份账单UI相关改动不属于本任务。网站版本传递只改必要调用行，不提交视觉重构。
+
+产物沿用本文件「本轮产物登记」及网站文档18「测试与脚本」。新增 `chatbot/scripts/backup-knowledgemap-code.mjs` 归属本节，保存两个主工作树的Git bundle、工作树包、独立index与patch；只读源码并写新的私密备份目录，不停服务、不含忽略文件或数据库。共享MySQL另用既有 `backup_assistant.py` 保存。第二轮证据放 `docs/verification/knowledgemap-bills-round2-2026-10-17/`。
+
+当前阻塞：无。后续关键选择按用户约定记录并等待；独立方向继续开发。
+
+### 第二轮开发记录
+
+- 回退基线：`/home/afrangry/kurumi-backups/knowledgemap-bills-round2-2026-10-17-code/` 保存Fusion `c1844dd`（668文件）、KnowledgeMap `27f4519`（221文件）及原有工作树/index；`recovery.mjs --code-only`逐项恢复、哈希和HEAD核对通过。共享库及私密配置在同名前缀的 `...-mysql/`，原1账单/19事项/37标签已完整恢复到临时MySQL。二者分时采集，不是跨系统停写快照。
+- 业务与桥接初版完成：网站/助手共用账单version；窄工具维护；API同事务回执保存删除前快照；日期/金额及标签层级说明；三领域通过宿主调用钩子取得真实runId，工厂上下文本身不提供该字段。
+- 测试纠错：原事项样例“衣服晾好了”可能合理选择complete，严格void测试改为明确取消；浏览器夹具补网站标签路由。真实宿主发现新工具漏登记manifest，补齐并增加三处声明一致性回归；真实MySQL强制并发同键修改复现旧版本分支未重放回执，修正为回滚后读取原回执，不放宽不同请求的版本校验。
+- 当前进入复验与部署阶段；最终结论以本节后续测试表及专项目录为准，不能把初版通过项视为全部验收。
 
 返回[文档入口](README.md)。

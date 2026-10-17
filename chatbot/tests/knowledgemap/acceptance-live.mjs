@@ -107,7 +107,7 @@ finally{
  try{
   for(const r of (await client.request('/api/assistant/bills',{query:{limit:200}})).items)if(r.note?.includes(marker))billIds.add(r.id);
   for(const r of await client.allTasks({history:true}))if(r.title.includes(marker))taskIds.add(r.id);
-  for(const id of billIds){const rows=(await website('bills/?limit=200')).items;assert.ok(rows.find(r=>r.id===id)?.note?.includes(marker));await website('bills/'+id,'DELETE');}
+  for(const id of billIds){const rows=(await website('bills/?limit=200')).items;const row=rows.find(r=>r.id===id);assert.ok(row?.note?.includes(marker));await website('bills/'+id+'?expected_version='+row.version,'DELETE');}
   for(const id of taskIds){const r=(await client.allTasks({history:true})).find(r=>r.id===id);assert.ok(r?.title.includes(marker));await website('calendar-events/'+id,'DELETE');}
   report.cleanedTestRows={bills:billIds.size,tasks:taskIds.size,receiptsKept:true};
  }catch{report.cleanupFailed=true;report.ok=false;process.exitCode=1;}

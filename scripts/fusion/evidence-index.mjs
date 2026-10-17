@@ -32,12 +32,15 @@
 //   node scripts/fusion/evidence-index.mjs --markdown  # table for docs/verification/SCRIPTS.md
 import fs from 'node:fs';
 import path from 'node:path';
-import {REPO_ROOT} from './lib/legacy-source.mjs';
+import {fileURLToPath} from 'node:url';
 
-const ROOT = REPO_ROOT;
+const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/knowledgemap/bills.test.mjs': ['离线', '账单声明一致、真实钩子runId映射、当前请求隔离和消息幂等键', {readonly: 1}, 'header'],
+  'chatbot/scripts/backup-knowledgemap-code.mjs': ['领域运维', '只读两个主工作树，保存bundle/index/工作树包到新私密备份目录，不含数据库', {auth: 1, writesState: 1}, 'header'],
+  'chatbot/tests/knowledgemap/acceptance-bills-live.mjs': ['验收', '第二轮真实模型/生产API/MySQL/网页增改删查、歧义及天气runId；合成入站不发QQ', {auth: 1, model: 1, externalApi: 1, restart: 1, writesState: 1, writesRepo: 1}, 'header'],
   'chatbot/scripts/setup-paper-translation.sh': ['领域运维', '按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发', {auth: 1, externalApi: 1, writesState: 1}, 'header'],
   'chatbot/scripts/import-paper-credentials.mjs': ['领域运维', '显式导入指定 GPT/DeepSeek 凭据，原子合并到私密 0600 文件；不输出密钥', {auth: 1, writesState: 1}, 'header'],
   'chatbot/tests/papers/fixtures.mjs': ['库', '生成最小有效 PDF 测试字节，不读生产文件', {readonly: 1}, 'header'],
