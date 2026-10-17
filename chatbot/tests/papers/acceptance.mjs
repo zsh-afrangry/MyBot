@@ -31,7 +31,7 @@ try{
  const doc=await service.documents.add(fs.readFileSync(input),{filename:path.basename(input),source:{type:'operator-acceptance'}});
  const reuse=arg('reuse-job');report.reusedJob=Boolean(reuse);
  const profile=Object.fromEntries(['provider','channel','model','effort'].filter(name=>arg(name)!=null).map(name=>[name,arg(name)]));
- const job=reuse?service.get(reuse):service.submit({...profile,documentId:doc.id,pages:arg('pages'),delivery:'none'},{key:'acceptance:'+tag});
+ const job=reuse?service.get(reuse):service.submit({...profile,documentId:doc.id,pages:arg('pages'),output:arg('output','dual'),delivery:'none'},{key:'acceptance:'+tag});
  if(job.documentId!==doc.id)throw Error('source_document_mismatch');
  report.document=doc;report.jobId=job.id;save();
  let last='';

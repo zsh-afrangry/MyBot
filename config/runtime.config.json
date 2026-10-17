@@ -297,7 +297,7 @@
           "maxReportedTokens": 300000,
           "apiConcurrency": 4,
           "apiQps": 1,
-          "timeoutSeconds": 1200
+          "timeoutSeconds": 1800
         }
       },
       "kurumi-knowledgemap": {

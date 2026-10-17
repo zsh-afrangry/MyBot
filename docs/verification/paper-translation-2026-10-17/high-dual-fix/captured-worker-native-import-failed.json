@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-17T11:56:23.351Z",
+  "boundary": "Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.",
+  "capturePath": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/4fad2234-f568-4988-a186-3aeb13972554/captures/openclaw-plugin-build-vmkrea/package-0/node_modules/kurumi-papers/runner.js",
+  "ok": false,
+  "error": "captured_source_or_worker_unavailable"
+}

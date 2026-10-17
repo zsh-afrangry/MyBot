@@ -18,7 +18,7 @@ os.environ["HOME"] = cache.name
 os.environ["XDG_CACHE_HOME"] = cache.name + "/.cache"
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "plugins/kurumi-papers/python"))
 from engine import create_translator, translate_batch, create_monitor, translate, execution_limits
-from responses import TranslationFailure, ResponsesClient, KEY_IDS
+from responses import TranslationFailure, ResponsesClient, KEY_IDS, PROFILE_REGISTRY
 
 
 class Client:
@@ -64,6 +64,49 @@ class EngineTest(unittest.TestCase):
         for args in ({'apiConcurrency':5},{'apiQps':0},{'apiConcurrency':True},{'apiQps':1.5}):
             with self.assertRaisesRegex(TranslationFailure,'invalid_translation_concurrency'):
                 execution_limits(args)
+
+    def test_output_selection_reaches_pinned_config_and_never_publishes_unselected_paths(self):
+        for output in ('dual', 'mono', 'both', None):
+            with self.subTest(output=output), tempfile.TemporaryDirectory() as directory:
+                request={'input':directory+'/input.pdf','output':directory,'sourceLang':'en','targetLang':'zh',
+                         'profile':{},'keys':{},'maxRequests':200,'maxReportedTokens':300000}
+                if output is not None: request['outputKind']=output
+                kinds=('dual','mono') if output=='both' else (output or 'dual',)
+                finished=SimpleNamespace(**{kind+'_pdf_path':kind+'.pdf' for kind in kinds})
+                with patch('engine.ResponsesClient') as client, patch('engine.create_translator'), \
+                     patch('engine.create_monitor'), \
+                     patch('babeldoc.format.pdf.translation_config.TranslationConfig') as config, \
+                     patch('babeldoc.format.pdf.high_level.get_translation_stage',return_value=[]), \
+                     patch('babeldoc.format.pdf.high_level.do_translate',return_value=finished):
+                    client.return_value.failure=None;client.return_value.snapshot.return_value={'requests':0}
+                    translate(request)
+                self.assertEqual(config.call_args.kwargs['no_mono'],'mono' not in kinds)
+                self.assertEqual(config.call_args.kwargs['no_dual'],'dual' not in kinds)
+                result=json.loads(Path(directory,'result.json').read_text())
+                self.assertEqual({key for key in result if key in ('dual','mono')},set(kinds))
+
+    def test_missing_selected_output_fails_and_invalid_selection_starts_no_api_client(self):
+        with tempfile.TemporaryDirectory() as directory:
+            request={'input':directory+'/input.pdf','output':directory,'sourceLang':'en','targetLang':'zh',
+                     'profile':{},'keys':{},'maxRequests':200,'maxReportedTokens':300000,'outputKind':'dual'}
+            with patch('engine.ResponsesClient') as client, patch('engine.create_translator'), \
+                 patch('engine.create_monitor'), \
+                 patch('babeldoc.format.pdf.translation_config.TranslationConfig'), \
+                 patch('babeldoc.format.pdf.high_level.get_translation_stage',return_value=[]), \
+                 patch('babeldoc.format.pdf.high_level.do_translate',
+                       return_value=SimpleNamespace(mono_pdf_path='mono.pdf',dual_pdf_path=None)):
+                client.return_value.failure=None
+                with self.assertRaisesRegex(TranslationFailure,'missing_selected_pdf_output'):translate(request)
+                self.assertFalse(Path(directory,'result.json').exists())
+            for output in ('english','',[],False):
+                with patch('engine.ResponsesClient') as client:
+                    with self.assertRaisesRegex(TranslationFailure,'invalid_pdf_output'):translate({**request,'outputKind':output})
+                    client.assert_not_called()
+
+    def test_shared_registry_defaults_are_high_and_explicit_max_remains_supported(self):
+        for provider in PROFILE_REGISTRY['providers']:
+            self.assertEqual(provider['defaultEffort'],'high')
+            self.assertIn('max',provider['models'][provider['defaultModel']])
 
     def test_pinned_monitor_normal_finish_and_explicit_cancel_need_no_async_bridge(self):
         event=threading.Event();events=[]

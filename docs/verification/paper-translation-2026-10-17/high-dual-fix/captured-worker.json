@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-17T11:57:25.899Z",
+  "boundary": "Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.",
+  "capturePath": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/4fad2234-f568-4988-a186-3aeb13972554/captures/openclaw-plugin-build-vmkrea/package-0/node_modules/kurumi-papers/runner.js",
+  "capturedSourceHashes": {
+    "service": "244fddb076559e4ef6b84ad77921beff0dab071c4f6d61f7b48d2674443625fc",
+    "outputs": "77e9647f5755daa304156a9178c168c15b58cd651c2b20b2cbfda826ffff86ef",
+    "documents": "ce1cde5d37787bc839547af43b0b548be50ccdd1354c16c3323a9189d7ffcd1b"
+  },
+  "pdfLimits": {
+    "input": 26214400,
+    "artifact": 104857600
+  },
+  "deepseekDefault": {
+    "provider": "deepseek",
+    "channel": "official",
+    "model": "deepseek-flash",
+    "effort": "high",
+    "protocol": "responses",
+    "baseUrl": "https://api.deepseek.com"
+  },
+  "gptDefault": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "explicitMax": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "max",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "execution": {
+    "apiConcurrency": 4,
+    "apiQps": 1
+  },
+  "timeoutSeconds": 1800,
+  "sourceHashes": {
+    "engine.py": "daccb624f69bc2d6a55ac2eed24000d7fd380513c79654a29e652c6c12070e56",
+    "responses.py": "aaf732313eb540eb05ee365ae8058ebf95b96d99e3fb6b86e3696ac418ba7161",
+    "profiles.json": "28043caf43c29a11edcc1d8d23644948b9fc3149c68e5c0f6066cc9e899e6f91"
+  },
+  "exitCode": 0,
+  "ok": true,
+  "worker": {
+    "ok": true,
+    "providers": [
+      "openai",
+      "deepseek"
+    ]
+  }
+}

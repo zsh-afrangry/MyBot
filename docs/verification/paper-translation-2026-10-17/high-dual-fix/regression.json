@@ -1,0 +1,60 @@
+{
+  "at": "2026-10-17T11:56:23.220624+00:00",
+  "boundary": "Offline tests use synthetic PDFs/keys, isolated temporary files, actual Bubblewrap and the pinned installed engine contracts. No real translation API or QQ/SMTP delivery. Local TLS mail servers only.",
+  "checks": [
+    {
+      "command": "node --test chatbot/tests/papers/*.test.mjs",
+      "exitCode": 0,
+      "passed": 34,
+      "failed": 0
+    },
+    {
+      "command": "python3 chatbot/tests/papers/responses_test.py",
+      "exitCode": 0,
+      "passed": 20,
+      "failed": 0
+    },
+    {
+      "command": "python3 chatbot/tests/papers/concurrency_test.py",
+      "exitCode": 0,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "command": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py",
+      "exitCode": 0,
+      "passed": 14,
+      "failed": 0
+    },
+    {
+      "command": "node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js scripts/fusion/test/log-query.test.mjs",
+      "exitCode": 0,
+      "passed": 112,
+      "failed": 0
+    }
+  ],
+  "paperTestsPassed": 78,
+  "relatedTestsPassed": 112,
+  "warnings": [
+    "Pinned PyMuPDF emits SWIG DeprecationWarning; tests pass."
+  ],
+  "initialCorrection": "The new missing-selected-output regression first exposed ERR_INVALID_ARG_TYPE. The service now returns missing_selected_pdf_output; final Node run passes.",
+  "closeout": {
+    "evidenceCoverage": {
+      "exitCode": 0,
+      "classifiedFiles": 333
+    },
+    "scriptIndex": {
+      "exitCode": 0,
+      "scripts": 168,
+      "boundaryDeclarationsConsistent": 43
+    },
+    "markdownLinks": {
+      "checkedChangedFiles": 7,
+      "brokenLinks": 0
+    },
+    "gitDiffWhitespaceCheck": {
+      "exitCode": 0
+    }
+  }
+}

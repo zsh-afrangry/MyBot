@@ -7,7 +7,7 @@
       "protocol": "responses",
       "baseUrl": "https://naiccc.com/v1",
       "defaultModel": "gpt-6.1-sol",
-      "defaultEffort": "max",
+      "defaultEffort": "high",
       "batchFormat": "plain_array",
       "models": {"gpt-6.1-sol": ["low", "medium", "high", "xhigh", "max"]},
       "credentialIds": ["OPENAI_API_KEY1_014", "OPENAI_API_KEY2_030", "OPENAI_API_KEY3_040"]
@@ -18,7 +18,7 @@
       "protocol": "responses",
       "baseUrl": "https://api.deepseek.com",
       "defaultModel": "deepseek-flash",
-      "defaultEffort": "max",
+      "defaultEffort": "high",
       "batchFormat": "json_schema",
       "models": {
         "deepseek-flash": ["none", "low", "high", "max"],

@@ -2,11 +2,11 @@
 
 归属：[文档 22](../../22_论文PDF翻译与文件投递.md)。开发起点 `df376ca9`；并行 KnowledgeMap 已独立合入 `4f26366`，本需求提交仅收录论文/文件/附件相关差异。完整提交号以 Git 历史为准。
 
-**当前结论：单篇四并发已部署，多篇仍逐篇完成后投递；DeepSeek默认按主人要求调整为V4.1 Flash/MAX，部署与验收状态见[默认调整](deepseek-max-default/README.md)。** GPT/MAX与此前DeepSeek/low均取得完整16页（均有缓存复验边界），本人此前单页QQ/修复邮件收件B2有效。真实时序/用量、失败与部署证据见[四并发报告](concurrency-four/README.md)；[渠道增补](channel-upgrade/README.md)保留上一轮55项与串行基线。本页保留原单页与早期失败，不能覆盖新结果。
+**当前结论：GPT6.1 Sol与DeepSeek V4.1 Flash默认high、可显式指定MAX；单篇期限30分钟，所选产物贯通生成/登记/投递；详见[本轮修复](high-dual-fix/README.md)。** 单篇四并发、多篇逐篇完成后投递有效；原文导入25 MiB、翻译产物100 MiB，邮件限制不变。78项领域回归、112项相关回归、四轮真实隔离主模型与生产捕获/四项自检通过，未自动重跑付费全文。旧[默认MAX](deepseek-max-default/README.md)保留历史边界；GPT/MAX与此前DeepSeek/low的完整16页都有缓存复验边界，本人此前单页QQ/修复邮件收件B2有效。真实时序/用量见[四并发报告](concurrency-four/README.md)；[渠道增补](channel-upgrade/README.md)保留串行基线。本页下方是原单页与早期失败，不能覆盖新结果。
 
 ## 授权与隔离
 
-主人指定 `/home/afrangry/桌面/2609.32536v1.pdf`，允许真实翻译和本人 QQ 测试；邮件发件为 1794511189@qq.com，唯一收件白名单 365999865@qq.com。没有向其他人或群发送，不推送远端，不收录文档23的并行开发。GPT及DeepSeek凭据只在私有运行目录；默认 GPT 6.1 Sol / MAX / 原生 Responses 保持。增补测试未真实向QQ/邮件发送。
+主人指定 `/home/afrangry/桌面/2609.32536v1.pdf`，允许真实翻译和本人 QQ 测试；邮件发件为 1794511189@qq.com，唯一收件白名单 365999865@qq.com。没有向其他人或群发送，不推送远端，不收录文档23的并行开发。GPT及DeepSeek凭据只在私有运行目录；早期验收默认 GPT 6.1 Sol / MAX，当前默认high，仍为原生Responses。增补测试未真实向QQ/邮件发送。
 
 样本16页、646721字节，SHA256 `71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db`。Python3.12.15 / pdf2zh-next2.9.0 / BabelDOC0.6.2 / bitstring4.3.1，CPU。上游不遵守输出上限，页数/请求数/已报告用量/时间限制不保证金额上限；未知用量不记为零。
 

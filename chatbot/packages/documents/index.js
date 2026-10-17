@@ -6,6 +6,9 @@ import {createHash, randomUUID} from 'node:crypto';
 import {runSandbox} from '../../plugins/kurumi-tasks/sandbox.js';
 
 export const MAX_PDF_BYTES = 25 * 1024 * 1024;
+// Dual PDFs include the original and translated resources; the worker caps each output at 100 MiB.
+export const MAX_ARTIFACT_PDF_BYTES = 100 * 1024 * 1024;
+const byteLimit = kind => kind === 'artifact' ? MAX_ARTIFACT_PDF_BYTES : MAX_PDF_BYTES;
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export const validId = id => /^(?:doc|pdf)_[a-f0-9]{32}$/.test(String(id));
 export function documentRoot(cfg) {
@@ -45,7 +48,7 @@ export class Documents {
     if (data.id !== id || !['input', 'artifact'].includes(data.kind)) throw Error('Invalid document record');
     const file = path.join(this.root, 'files', id + '.pdf');
     const bytes = regular(file);
-    if (bytes.length !== data.bytes || bytes.length > MAX_PDF_BYTES || sha256(bytes) !== data.sha256) throw Error('Managed PDF integrity mismatch');
+    if (bytes.length !== data.bytes || bytes.length > byteLimit(data.kind) || sha256(bytes) !== data.sha256) throw Error('Managed PDF integrity mismatch');
     return {...data, path: file, content: bytes};
   }
   describe(id) { const {path: ignored, content, ...data} = this.get(id); return data; }
@@ -55,8 +58,9 @@ export class Documents {
       .sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0, Math.min(50, Math.max(1, limit)));
   }
   async add(bytes, {filename, source = {}, kind = 'input', jobId} = {}, {inspect = inspectPdf, signal} = {}) {
-    if (!Buffer.isBuffer(bytes) || !bytes.length || bytes.length > MAX_PDF_BYTES || !bytes.subarray(0, 1024).includes(Buffer.from('%PDF-'))) throw Error('Expected a PDF of at most 25 MiB');
     if (!['input', 'artifact'].includes(kind)) throw Error('Invalid document kind');
+    if (!Buffer.isBuffer(bytes) || !bytes.length || !bytes.subarray(0, 1024).includes(Buffer.from('%PDF-'))) throw Object.assign(Error('Expected a PDF'), {code: 'invalid_pdf'});
+    if (bytes.length > byteLimit(kind)) throw Object.assign(Error(`PDF exceeds ${byteLimit(kind) / 1024 / 1024} MiB ${kind} limit`), {code: 'pdf_size_limit_exceeded'});
     const hash = sha256(bytes), id = (kind === 'input' ? 'doc_' : 'pdf_') + hash.slice(0, 32);
     if (fs.existsSync(this.recordFile(id))) return this.describe(id);
     const staging = fs.mkdtempSync(path.join(this.root, 'work', 'import-'));

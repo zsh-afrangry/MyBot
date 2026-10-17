@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {Documents} from '../../packages/documents/index.js';
+import {Documents,MAX_PDF_BYTES,MAX_ARTIFACT_PDF_BYTES} from '../../packages/documents/index.js';
 import {parseInbound} from '../../plugins/kurumi-qq/src/inbound.js';
 import {qqFileUrl, stagePdf, sendDocument} from '../../plugins/kurumi-qq/src/files.js';
 import {pdf} from './fixtures.mjs';
@@ -42,6 +42,15 @@ test('File-only messages and offline-file notices require actual owner and bot m
   const notice={post_type:'notice',notice_type:'offline_file',self_id:1794511189,user_id:365999865,file:{id:'x',name:'x.pdf'}};
   assert.equal(parseInbound(notice,a,'1794511189').messageId,'file:x');
   assert.equal(parseInbound({...notice,user_id:2},a,'1794511189'),null);
+});
+test('Artifacts have a separate bounded limit, including reopen, while inputs stay at 25 MiB',async t=>{
+  const {docs}=setup(t),bytes=Buffer.alloc(MAX_PDF_BYTES+1);pdf('large translated output').copy(bytes);
+  await assert.rejects(docs.add(bytes,{kind:'input'},{inspect}),{code:'pdf_size_limit_exceeded'});
+  const artifact=await docs.add(bytes,{kind:'artifact',filename:'large-dual.pdf'},{inspect});
+  assert.equal(new Documents(docs.root).get(artifact.id).content.length,bytes.length);
+  const tooLarge=Buffer.alloc(MAX_ARTIFACT_PDF_BYTES+1);pdf('too large').copy(tooLarge);
+  await assert.rejects(docs.add(tooLarge,{kind:'artifact'},{inspect}),{code:'pdf_size_limit_exceeded'});
+  assert.equal(docs.list({kind:'input'}).length,0);assert.equal(docs.list({kind:'artifact'}).length,1);
 });
 test('QQ URL is read from the authenticated API, not the uploaded text/URL', async t => {
   const {cfg} = setup(t), calls=[];

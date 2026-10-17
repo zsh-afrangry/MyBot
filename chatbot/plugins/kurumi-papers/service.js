@@ -6,6 +6,7 @@ import {Documents, atomicJson} from '../../packages/documents/index.js';
 import {downloadPaper} from '../kurumi-research/papers.js';
 import {resolveProfile} from './profiles.js';
 import {runTranslation,executionSettings} from './runner.js';
+import {selectedOutputs} from './outputs.js';
 
 const JOB_ID = /^job_[a-f0-9]{24}$/;
 export function normalizePages(value, pages, maxPages = 30) {
@@ -68,7 +69,7 @@ export class PaperService {
     const sourceLang = args.sourceLang ?? 'en', targetLang = args.targetLang ?? 'zh';
     for (const lang of [sourceLang, targetLang]) if (!['en','zh','zh-cn','zh-tw','ja','de','fr','es','ru'].includes(lang)) throw Error('Unsupported translation language');
     const delivery = args.delivery ?? 'qq'; if (!['qq','none'].includes(delivery)) throw Error('Translation delivery must be qq or none; email uses the confirmed mail draft tools');
-    const deliveryKind = args.output ?? 'dual'; if (!['dual','mono','both'].includes(deliveryKind)) throw Error('Invalid PDF output preference');
+    const deliveryKind = args.output ?? 'dual'; selectedOutputs(deliveryKind);
     const parameters = {documentId: doc.id, profile, pages, sourceLang, targetLang, deliveryTarget: delivery, deliveryKind};
     const digest = createHash('sha256').update(JSON.stringify(parameters)).digest('hex');
     const id = 'job_' + createHash('sha256').update(key).digest('hex').slice(0,24);
@@ -97,17 +98,24 @@ export class PaperService {
       fs.mkdirSync(work, {mode: 0o700});
       fs.writeFileSync(path.join(work, 'input.pdf'), this.documents.get(job.documentId).content, {mode: 0o600, flag: 'wx'});
       job.status = 'running'; job.execution = executionSettings(this.config); this.save(job);
-      const result = await this.runner({config: this.config, work, cache: path.join(this.documents.root, 'cache'), profile: job.profile, pages: job.pages, sourceLang: job.sourceLang, targetLang: job.targetLang, signal});
+      const result = await this.runner({config: this.config, work, cache: path.join(this.documents.root, 'cache'), profile: job.profile, pages: job.pages, sourceLang: job.sourceLang, targetLang: job.targetLang, outputKind: job.deliveryKind, signal});
       signal.throwIfAborted();
       job.usage = result.usage;
-      for (const kind of ['mono','dual']) {
-        const record = await this.documents.add(fs.readFileSync(result[kind]), {kind: 'artifact', filename: this.documents.describe(job.documentId).filename.replace(/\.pdf$/i, `${job.pages ? '-pages-' + job.pages : ''}-${kind}.pdf`), source: {type: 'translation', inputId: job.documentId}, jobId: id}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
-        job.artifacts[kind] = record.id;
+      for (const kind of selectedOutputs(job.deliveryKind)) {
+        try {
+          if (typeof result[kind] !== 'string') throw Object.assign(Error('missing_selected_pdf_output'), {code: 'missing_selected_pdf_output'});
+          const record = await this.documents.add(fs.readFileSync(result[kind]), {kind: 'artifact', filename: this.documents.describe(job.documentId).filename.replace(/\.pdf$/i, `${job.pages ? '-pages-' + job.pages : ''}-${kind}.pdf`), source: {type: 'translation', inputId: job.documentId}, jobId: id}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
+          job.artifacts[kind] = record.id;
+        } catch (error) {
+          const code = /^[a-zA-Z0-9_]+$/.test(error.code ?? '') ? error.code : 'pdf_artifact_registration_failed';
+          job.artifactFailure = {kind, code};
+          throw Object.assign(Error(code), {code});
+        }
       }
       signal.throwIfAborted(); job.status = 'succeeded'; job.delivery = {status: 'not_requested'}; this.save(job);
       if (job.deliveryTarget === 'qq') {
         job.delivery = {status: 'dispatching', receipts: []}; this.save(job);
-        for (const kind of job.deliveryKind === 'both' ? ['dual','mono'] : [job.deliveryKind]) {
+        for (const kind of selectedOutputs(job.deliveryKind)) {
           signal.throwIfAborted();
           const receipt = await this.sendFile(job.artifacts[kind], id + ':' + kind, signal);
           job.delivery.receipts.push(receipt); this.save(job);

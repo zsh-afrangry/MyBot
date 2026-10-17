@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-17T11:51:49.984Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No real translation API request, QQ/mail delivery or production write.",
+  "cases": [
+    {
+      "label": "list-real-managed-id",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已经收到的 PDF 只有一个：\n\n**验收论文.pdf**（1 页，618 字节，今天 19:51 上传）\n\n目前没有翻译产物，我也没有开始翻译。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-default-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已经排上队了：默认 GPT 配置（gpt-6.1-sol / high），生成中英对照双语 PDF，完成后会自动发到这个 QQ 私聊。\n\n现在刚进入队列，还没开始出结果；生成好了我这边会按实际投递情况反馈。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "query-after-new-session",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到了，就一个翻译任务：\n\n论文《验收论文.pdf》已经翻译完成，用的是 naiccc 的 gpt-6.1-sol、high 强度，中英对照的双语版，共 1 页。\n\n生成的双语 PDF 文件是 `验收论文-dual.pdf`，投递状态显示平台已受理上传，但这表示 QQ 侧已接手，还不能确定是否真的送达了。\n\n没有重新翻译，也没有重新发送。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-deepseek-official-defaults",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "DeepSeek 官方接口的翻译任务跑完了：provider=deepseek，official 通道，默认 deepseek-flash + high，双语 PDF，delivery 设成了 none，没有发 QQ，也没有发邮件。\n\n不过有一处对不上得说一下：任务回执里的产物 ID 是 `pdf_bc35ff2b4bbb02ba703db229247eec3f`，和之前那篇 GPT 版双语 PDF 是同一个；文档列表里也没有新增第二条双语产物，那条记录还挂在旧任务上。所以这次任务虽然状态显示成功，但没看到独立的新文件落库。\n\n如果需要，我可以再查一次任务产物，或者你告诉我怎么处理这个重复。"
+          }
+        ]
+      }
+    }
+  ],
+  "job": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "high",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "platform_accepted",
+      "receipts": [
+        {
+          "channel": "kurumi-qq",
+          "status": "platform_accepted",
+          "documentId": "pdf_bc35ff2b4bbb02ba703db229247eec3f",
+          "fileId": "fixture-upload-1"
+        }
+      ]
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "deepseekJob": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "high",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "not_requested"
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "passed": true,
+  "childStopped": true,
+  "mockUploads": [
+    {
+      "name": "验收论文-dual.pdf"
+    }
+  ]
+}

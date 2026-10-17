@@ -174,6 +174,10 @@ def translate(request):
     from babeldoc.format.pdf.high_level import do_translate, get_translation_stage
     from babeldoc.translator.translator import set_translate_rate_limiter
 
+    output_kind = request.get("outputKind", "dual")
+    if not isinstance(output_kind, str) or output_kind not in ("dual", "mono", "both"):
+        raise TranslationFailure("invalid_pdf_output")
+    kinds = ("dual", "mono") if output_kind == "both" else (output_kind,)
     concurrency, qps = execution_limits(request)
     # Direct API use bypasses BabelDOC's CLI setup. Configure both the engine limiter and
     # our network limiter: main/fallback pools share the client semaphore, retries share QPS.
@@ -195,7 +199,8 @@ def translate(request):
         lang_in=source_lang, lang_out=target_lang, doc_layout_model=None,
         output_dir=request["output"], working_dir=str(Path(request["output"]) / "working"),
         pages=request.get("pages"), qps=qps, pool_max_workers=concurrency, term_pool_max_workers=1,
-        no_mono=False, no_dual=False, use_rich_pbar=False, auto_extract_glossary=False,
+        no_mono="mono" not in kinds, no_dual="dual" not in kinds,
+        use_rich_pbar=False, auto_extract_glossary=False,
         watermark_output_mode=WatermarkOutputMode.NoWatermark,
         only_include_translated_page=True, auto_enable_ocr_workaround=False,
         disable_same_text_fallback=True)
@@ -215,8 +220,12 @@ def translate(request):
         raise
     if not finished or client.failure:
         raise TranslationFailure(client.failure or "pdf_translation_not_finished")
-    result = {"ok": True, "usage": client.snapshot(), "engine": "pdf2zh-next-2.9.0/babeldoc-0.6.2",
-              "mono": str(finished.mono_pdf_path), "dual": str(finished.dual_pdf_path)}
+    result = {"ok": True, "usage": client.snapshot(), "engine": "pdf2zh-next-2.9.0/babeldoc-0.6.2"}
+    for kind in kinds:
+        file = getattr(finished, kind + "_pdf_path", None)
+        if not file:
+            raise TranslationFailure("missing_selected_pdf_output")
+        result[kind] = str(file)
     atomic_json(Path(request["output"]) / "result.json", result)
 
 

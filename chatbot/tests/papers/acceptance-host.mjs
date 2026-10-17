@@ -43,7 +43,7 @@ fs.writeFileSync(path.join(fixture,'index.js'),`import fs from 'node:fs';import 
 import {createPaperPlugin} from ${JSON.stringify(pathToFileURL(path.join(repo,'chatbot/plugins/kurumi-papers/index.js')).href)};
 import {PaperService} from ${JSON.stringify(pathToFileURL(path.join(repo,'chatbot/plugins/kurumi-papers/service.js')).href)};
 import {pdf} from ${JSON.stringify(pathToFileURL(path.join(repo,'chatbot/tests/papers/fixtures.mjs')).href)};
-export default createPaperPlugin({serviceFactory:(config,deps)=>new PaperService(config,{...deps,runner:async({work})=>{const result={usage:{requests:0,fixture:true}};for(const kind of ['mono','dual']){result[kind]=path.join(work,kind+'.pdf');fs.writeFileSync(result[kind],pdf('Fixture '+kind+' output, not a real translation.'));}return result;}})});
+export default createPaperPlugin({serviceFactory:(config,deps)=>new PaperService(config,{...deps,runner:async({work,outputKind})=>{const result={usage:{requests:0,fixture:true}};for(const kind of outputKind==='both'?['dual','mono']:[outputKind]){result[kind]=path.join(work,kind+'.pdf');fs.writeFileSync(result[kind],pdf('Fixture '+kind+' output, not a real translation.'));}return result;}})});
 `);
 const cfg=JSON.parse(fs.readFileSync(path.join(repo,'config/runtime.config.json')));delete cfg._managed;
 cfg.gateway={mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}};
@@ -72,10 +72,10 @@ try{
  assert(ready,'Isolated Gateway not ready');
  const listed=await turn('list-real-managed-id','帮我查一下已经收到的 PDF 文件，先不要翻译。');
  assert.match(JSON.stringify(listed.captured),/验收论文/);
- await turn('start-default-translation','把刚才那篇验收论文翻译成中文，用默认 GPT 6.1 Sol MAX，只要一份中英对照的双语 PDF，直接发我 QQ。');
+ await turn('start-default-translation','把刚才那篇验收论文翻译成中文，用默认 GPT 翻译配置，不另外指定强度，只要一份中英对照的双语 PDF，直接发我 QQ。');
  let job;for(let i=0;i<80;i++){const names=fs.readdirSync(path.join(docs.root,'jobs'));job=names.length?JSON.parse(fs.readFileSync(path.join(docs.root,'jobs',names[0]))):null;if(job?.delivery?.status==='platform_accepted')break;await new Promise(r=>setTimeout(r,100));}
- assert.equal(job?.status,'succeeded');assert.equal(job.documentId,document.id);assert.equal(job.profile.model,'gpt-6.1-sol');assert.equal(job.profile.effort,'max');assert.equal(uploads.length,1);
- assert.equal(job.deliveryKind,'dual');assert.match(uploads[0].name,/-dual\.pdf$/);
+ assert.equal(job?.status,'succeeded');assert.equal(job.documentId,document.id);assert.equal(job.profile.model,'gpt-6.1-sol');assert.equal(job.profile.effort,'high');assert.equal(uploads.length,1);
+  assert.equal(job.deliveryKind,'dual');assert.deepEqual(Object.keys(job.artifacts),['dual']);assert.match(uploads[0].name,/-dual\.pdf$/);
  report.job={documentId:job.documentId,profile:job.profile,status:job.status,delivery:job.delivery,usage:job.usage};
  await call('sessions.reset',{key:`agent:main:kurumi-qq:direct:${owner}`,reason:'new'});
  await turn('query-after-new-session','查一下我的论文翻译任务结果，现在不要重新翻译，也不要重新发送。');
@@ -88,7 +88,8 @@ try{
  }
  assert.equal(deepseek?.status,'succeeded');assert.equal(deepseek.documentId,document.id);
  assert.equal(deepseek.profile.provider,'deepseek');assert.equal(deepseek.profile.channel,'official');
- assert.equal(deepseek.profile.model,'deepseek-flash');assert.equal(deepseek.profile.effort,'max');
+ assert.equal(deepseek.profile.model,'deepseek-flash');assert.equal(deepseek.profile.effort,'high');
+ assert.deepEqual(Object.keys(deepseek.artifacts),['dual']);
  assert.equal(deepseek.deliveryTarget,'none');assert.equal(uploads.length,1);
  report.deepseekJob={documentId:deepseek.documentId,profile:deepseek.profile,status:deepseek.status,delivery:deepseek.delivery,usage:deepseek.usage};
  report.passed=true;

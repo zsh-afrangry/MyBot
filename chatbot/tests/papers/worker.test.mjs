@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {workerCommand,runTranslation,executionSettings} from '../../plugins/kurumi-papers/runner.js';
+import {workerCommand,runTranslation,executionSettings,translationTimeoutSeconds} from '../../plugins/kurumi-papers/runner.js';
 import {disablePaperRecovery} from '../../../scripts/fusion/lib/recovery-isolation.mjs';
 
 test('Operator concurrency is validated and reaches actual sandbox stdin, never argv',async t=>{
@@ -19,11 +19,48 @@ test('Operator concurrency is validated and reaches actual sandbox stdin, never 
   for(const name of ['work','cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
   const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
   fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
-  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==4 and r[\"apiQps\"]==1; p=pathlib.Path; p(\"/work/mono.pdf\").write_bytes(b\"pdf\"); p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"mono\":\"/work/mono.pdf\",\"dual\":\"/work/dual.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
+  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==4 and r[\"apiQps\"]==1; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
   fs.writeFileSync(python,"#!/bin/sh\nexec /usr/bin/python3 -c '"+script+"'\n",{mode:0o700});
   const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:4,apiQps:1},
     work:path.join(root,'work'),cache:path.join(root,'cache'),profile:{},sourceLang:'en',targetLang:'zh'});
   assert.deepEqual(result.usage,{maxConcurrency:4,maxQps:1});
+  assert(!Object.hasOwn(result,'mono'));assert(result.dual.endsWith('/dual.pdf'));
+});
+
+test('Default deadline is 30 minutes, longer configuration is rejected and schema agrees',()=>{
+  assert.equal(translationTimeoutSeconds({}),1800);
+  assert.equal(translationTimeoutSeconds({timeoutSeconds:1200}),1200);
+  for(const timeoutSeconds of [0,-1,1801,Infinity,NaN,'1800'])assert.throws(()=>translationTimeoutSeconds({timeoutSeconds}),/deadline/);
+  const schema=JSON.parse(fs.readFileSync(new URL('../../plugins/kurumi-papers/openclaw.plugin.json',import.meta.url))).configSchema.properties.timeoutSeconds;
+  assert.equal(schema.default,1800);assert.equal(schema.maximum,1800);
+});
+
+test('Real sandbox propagates each output choice and rejects missing/escaped selected files',async t=>{
+  const root=fs.mkdtempSync('/var/tmp/kurumi-worker-outputs-');t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  for(const name of ['cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
+  const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
+  fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
+  for(const outputKind of ['dual','mono','both']){
+    const work=path.join(root,outputKind);fs.mkdirSync(work);
+    fs.writeFileSync(python,`#!/usr/bin/python3
+import json,sys,pathlib
+r=json.load(sys.stdin); assert r["outputKind"]==${JSON.stringify(outputKind)}
+kinds=["dual","mono"] if r["outputKind"]=="both" else [r["outputKind"]]
+result={"ok":True}
+for kind in kinds:
+ result[kind]="/work/"+kind+".pdf"; pathlib.Path(result[kind]).write_bytes(b"pdf")
+if r.get("pages")=="missing": result.pop("dual",None)
+if r.get("pages")=="escape": result["dual"]="/etc/hosts"
+pathlib.Path("/work/result.json").write_text(json.dumps(result))
+`,{mode:0o700});
+    const request={config:{python,credentialsFile},work,cache:path.join(root,'cache'),profile:{},outputKind};
+    const result=await runTranslation(request);
+    assert.deepEqual(Object.keys(result).filter(key=>['dual','mono'].includes(key)),outputKind==='both'?['dual','mono']:[outputKind]);
+    if(outputKind==='dual'){
+      for(const pages of ['missing','escape'])await assert.rejects(runTranslation({...request,pages}),{code:'invalid_worker_result'});
+      assert.throws(()=>runTranslation({...request,outputKind:'english'}),{code:'invalid_pdf_output'});
+    }
+  }
 });
 
 test('Recovery disables paid translation and erases its active credential values',t=>{

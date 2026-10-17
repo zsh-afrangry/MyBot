@@ -1,0 +1,76 @@
+{
+  "at": "2026-10-17T11:53:22.756Z",
+  "boundary": "Authorized configuration and managed-persona synchronization, user-service reload, then read-only runtime self-checks. No translation restart or real QQ/mail test delivery.",
+  "baseCommit": "f976db3",
+  "activeJobsBeforeReload": 0,
+  "managedChanges": {
+    "plugins.entries.kurumi-papers.config.timeoutSeconds": {
+      "before": 1200,
+      "after": 1800
+    },
+    "personaTemplate": "GPT and DeepSeek translation defaults high; explicit MAX preserved"
+  },
+  "effectiveTranslation": {
+    "gpt": "gpt-6.1-sol/high",
+    "deepseek": "deepseek-flash/high",
+    "explicitMaxSupported": true,
+    "timeoutSeconds": 1800,
+    "requestTotalDeadlineSeconds": 600,
+    "maxReportedTokens": 300000,
+    "maxRequests": 200,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "maxInputPdfBytes": 26214400,
+    "maxArtifactPdfBytes": 104857600
+  },
+  "checks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exitCode": 0
+    }
+  ],
+  "health": {
+    "ok": true,
+    "issues": [],
+    "gateway": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "channel": [
+      {
+        "running": true,
+        "connected": true
+      }
+    ],
+    "testIngress": false,
+    "testMethodDisabled": true,
+    "service": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    }
+  },
+  "originalInputsKept": true,
+  "failedWorkCleanupChanged": false,
+  "paidTranslationStarted": false,
+  "oldJobsReplayed": false,
+  "notCovered": [
+    "New high-default full real paper, elapsed time, quality and owner receipt",
+    "Failed-intermediate retention/resume, explicitly deferred",
+    "New upstream_http2_stream_error failover classification",
+    "DeepSeek/MAX 8192 output capacity",
+    "Remote push, development-copy sync or new recovery snapshot"
+  ]
+}

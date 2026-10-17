@@ -8,6 +8,7 @@ import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
+import {MAX_PDF_BYTES,MAX_ARTIFACT_PDF_BYTES} from '../../packages/documents/index.js';
 
 const arg=name=>{const i=process.argv.indexOf('--'+name);return i<0?undefined:process.argv[i+1];};
 const capture=arg('capture'),out=arg('out'),state='/home/afrangry/.openclaw-fusion';
@@ -16,17 +17,41 @@ if(!capture.startsWith(state+'/tmp/plugin-captures/')||path.basename(capture)!==
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-capture-smoke-'));
 const report={at:new Date().toISOString(),boundary:'Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.',capturePath:capture};
 try{
-  const {workerCommand,executionSettings}=await import(pathToFileURL(capture).href);
+  const {workerCommand,executionSettings,translationTimeoutSeconds}=await import(pathToFileURL(capture).href);
   const {resolveProfile}=await import(new URL('./profiles.js',pathToFileURL(capture)).href);
+  const {selectedOutputs}=await import(new URL('./outputs.js',pathToFileURL(capture)).href);
+  if(selectedOutputs('dual').join(',')!=='dual'||selectedOutputs('both').join(',')!=='dual,mono')throw Error('Captured output selection differs');
+  // OpenClaw resolves cross-package imports through its own capture map, not native ESM paths.
+  // Prove those copied sources match the regression-tested source without inventing symlinks.
+  const build=path.resolve(path.dirname(capture),'../../..');
+  const capturedDocuments=fs.readdirSync(build).filter(name=>name.startsWith('package-')).map(name=>path.join(build,name,'node_modules/documents/index.js')).find(file=>fs.existsSync(file));
+  const source=file=>new URL(file,import.meta.url);
+  const pairs=[
+    ['service',path.join(path.dirname(capture),'service.js'),source('../../plugins/kurumi-papers/service.js')],
+    ['outputs',path.join(path.dirname(capture),'outputs.js'),source('../../plugins/kurumi-papers/outputs.js')],
+    ['documents',capturedDocuments,source('../../packages/documents/index.js')],
+  ];
+  report.capturedSourceHashes={};
+  for(const [label,copied,original] of pairs){
+    const bytes=fs.readFileSync(copied);
+    if(!bytes.equals(fs.readFileSync(original)))throw Error('Captured source differs');
+    report.capturedSourceHashes[label]=createHash('sha256').update(bytes).digest('hex');
+  }
+  report.pdfLimits={input:MAX_PDF_BYTES,artifact:MAX_ARTIFACT_PDF_BYTES};
+  if(MAX_PDF_BYTES!==25*1024*1024||MAX_ARTIFACT_PDF_BYTES!==100*1024*1024)throw Error('Captured PDF limits differ');
   report.deepseekDefault=resolveProfile({provider:'deepseek'});
-  if(report.deepseekDefault.model!=='deepseek-flash'||report.deepseekDefault.effort!=='max')throw Error('Captured DeepSeek default differs');
+  if(report.deepseekDefault.model!=='deepseek-flash'||report.deepseekDefault.effort!=='high')throw Error('Captured DeepSeek default differs');
+  report.gptDefault=resolveProfile();report.explicitMax=resolveProfile({effort:'MAX'});
+  if(report.gptDefault.effort!=='high'||report.explicitMax.effort!=='max')throw Error('Captured GPT effort differs');
   const config=JSON.parse(fs.readFileSync(state+'/openclaw.json')).plugins.entries['kurumi-papers'].config;
   report.execution=executionSettings(config);
+  report.timeoutSeconds=translationTimeoutSeconds(config);
+  if(report.timeoutSeconds!==1800)throw Error('Captured deadline differs');
   for(const name of ['work','cache'])fs.mkdirSync(path.join(root,name));
   const {command,args}=workerCommand({config,work:path.join(root,'work'),cache:path.join(root,'cache')});
   const app=args.indexOf('/app'),pythonSource=args[app-1];
   report.sourceHashes=Object.fromEntries(['engine.py','responses.py','profiles.json'].map(name=>[name,createHash('sha256').update(fs.readFileSync(path.join(pythonSource,name))).digest('hex')]));
-  const code=`import pathlib,json,sys; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; assert specs[1]['defaultModel']=='deepseek-flash' and specs[1]['defaultEffort']=='max'; assert engine.execution_limits(json.loads('${JSON.stringify(report.execution)}'))==(${report.execution.apiConcurrency},${report.execution.apiQps}); print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs]}))`;
+  const code=`import pathlib,json,sys; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; assert specs[1]['defaultModel']=='deepseek-flash' and specs[1]['defaultEffort']=='high'; assert engine.execution_limits(json.loads('${JSON.stringify(report.execution)}'))==(${report.execution.apiConcurrency},${report.execution.apiQps}); print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs]}))`;
   const result=spawnSync(command,[...args.slice(0,-1),'-c',code],{encoding:'utf8',timeout:20000,env:{PATH:'/usr/bin:/bin'}});
   report.exitCode=result.status;report.ok=result.status===0;
   if(report.ok)report.worker=JSON.parse(result.stdout.trim().split('\n').at(-1));

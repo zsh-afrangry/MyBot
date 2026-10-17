@@ -1,0 +1,139 @@
+{
+  "at": "2026-10-17T11:56:23.221864+00:00",
+  "boundary": "Read-only production job metadata and bounded receipts. No chat text, document text, credentials or signed URLs.",
+  "jobs": [
+    {
+      "id": "job_d8956d9d982ff59946115396",
+      "status": "failed",
+      "documentId": "doc_d0e76a7fb1d4c9fecc5f999913d62af2",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "deliveryKind": "dual",
+      "error": "translation_timed_out",
+      "artifacts": {},
+      "engineProgress": {
+        "type": "progress_update",
+        "stage": "Translate Paragraphs",
+        "stage_progress": 75.31645569620254,
+        "overall_progress": 73.87383282837104
+      },
+      "usage": {
+        "requests": 94,
+        "reportedTokens": 172858,
+        "unknownUsageAttempts": 7,
+        "peakInFlight": 4
+      },
+      "channels": [
+        {
+          "credentialId": "OPENAI_API_KEY1_014",
+          "outcomes": {
+            "channel_failed": 3,
+            "completed": 34,
+            "in_flight_at_termination": 1
+          },
+          "completedMedianSeconds": 17.275,
+          "completedMaxSeconds": 437.843
+        },
+        {
+          "credentialId": "OPENAI_API_KEY2_030",
+          "outcomes": {
+            "completed": 53,
+            "in_flight_at_termination": 3
+          },
+          "completedMedianSeconds": 18.47,
+          "completedMaxSeconds": 61.589
+        }
+      ],
+      "timeouts": [
+        {
+          "attempt": 1,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedAt": "2026-10-17T10:41:09Z",
+          "elapsedSeconds": 600.001,
+          "error": "api_transport_unknown",
+          "usageStatus": "unknown",
+          "streamProgress": {
+            "events": 77,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          }
+        },
+        {
+          "attempt": 21,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedAt": "2026-10-17T10:49:12Z",
+          "elapsedSeconds": 600.001,
+          "error": "api_transport_unknown",
+          "usageStatus": "unknown",
+          "streamProgress": {
+            "events": 83,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          }
+        }
+      ]
+    },
+    {
+      "id": "job_0f7d53f973a8db0053f3db1e",
+      "status": "failed",
+      "documentId": "doc_751cf5ad26d243beaac124c699d1409a",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "deliveryKind": "dual",
+      "error": "translation_failed",
+      "artifacts": {
+        "mono": "pdf_4d7830a6bf0d075a01ab93c189621e79"
+      },
+      "engineProgress": {
+        "type": "progress_end",
+        "stage": "Save PDF",
+        "stage_progress": 100,
+        "overall_progress": 100
+      },
+      "usage": {
+        "requests": 68,
+        "reportedTokens": 43851,
+        "unknownUsageAttempts": 0,
+        "peakInFlight": 4
+      },
+      "channels": [
+        {
+          "credentialId": "OPENAI_API_KEY2_030",
+          "outcomes": {
+            "completed": 68
+          },
+          "completedMedianSeconds": 9.221499999999999,
+          "completedMaxSeconds": 27.857
+        }
+      ],
+      "timeouts": []
+    }
+  ],
+  "requestTimeout": {
+    "totalDeadlineSeconds": 600,
+    "inactivityDeadline": false,
+    "outputCharsCountsOnly": "response.output_text.delta",
+    "noEventTimeline": true,
+    "continuousGenerationVsIdle": "not_proven"
+  },
+  "reconstruction": {
+    "boundary": "Offline same-version BabelDOC side-by-side reconstruction from retained input and mono, not the lost original dual or a paid rerun. Temporary files removed, nothing registered in production.",
+    "pages": 19,
+    "bytes": 27974086,
+    "oldLimitBytes": 26214400,
+    "exceededOldLimit": true,
+    "lostOriginalFailureCause": "unconfirmed"
+  }
+}
