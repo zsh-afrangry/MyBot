@@ -1,0 +1,36 @@
+✔ Provider-specific defaults are inferred only from compatible registered selectors (5.649244ms)
+✔ Credential selection excludes all other providers and rejects absent/private-invalid files (2.832321ms)
+✔ Operator import merges only selected keys atomically and preserves the other pool on rotation (187.927867ms)
+✔ Invalid import leaves existing bytes intact and refuses symlinks, public files or unknown fields (222.320797ms)
+✔ Real PDF inspection, portable catalog and byte integrity survive reopen (36.390836ms)
+✔ PDF ID dedup, path/symlink/size/encryption rejection (5.914839ms)
+✔ File-only messages and offline-file notices require actual owner and bot metadata (1.913077ms)
+✔ QQ URL is read from the authenticated API, not the uploaded text/URL (37.094988ms)
+✔ Private file upload is durable, owner-only; null success has no invented message ID (86.571334ms)
+✔ Explicit provider/model/effort; pages cannot silently truncate or execute (1.767636ms)
+✔ DeepSeek jobs persist an explicit profile and never mutate default GPT settings (38.289386ms)
+✔ Lifecycle, immutable invocation identity and separate output/delivery state (12.69971ms)
+✔ Cancel running/queued jobs, no post-cancel delivery and restart never replays API (17.026478ms)
+✔ A lost send receipt preserves successful translation and does not replay worker (11.472251ms)
+✔ Multiple papers stay serial and send each completed paper before translating the next (10.836215ms)
+✔ Worker failure retains bounded structural diagnostics before removing its work directory (7.811416ms)
+✔ Registered tools reject non-owner, keep generic filesystem tools absent (2.457732ms)
+✔ Configured paper trace source joins job and QQ message without including credentials (11.780496ms)
+✔ Draft freezes exact PDF bytes, survives reopen; previews contain only metadata (80.663428ms)
+✔ The store Uint8Array contract preserves the selected bytes and approval hash (92.208605ms)
+✔ Attachment delivery needs approval, sends captured bytes once even if source later changes (181.91778ms)
+✔ MIME round trip preserves Unicode boundaries and binary files as attachments (77.112727ms)
+✔ Unknown refs/raw paths/oversized attachments/recipient bypass cannot create a draft (41.874932ms)
+✔ Tampering with a persisted attachment after confirmation prevents network delivery (71.297033ms)
+✔ Operator concurrency is validated and reaches actual sandbox stdin, never argv (53.071609ms)
+✔ Recovery disables paid translation and erases its active credential values (2.094726ms)
+✔ The actual worker sandbox hides host credentials and only writes job/cache directories (39.429381ms)
+✔ A real sandboxed worker stops writing when the parent wall deadline kills it (626.099719ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 824.547912

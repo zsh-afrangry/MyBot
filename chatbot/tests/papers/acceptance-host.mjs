@@ -88,7 +88,7 @@ try{
  }
  assert.equal(deepseek?.status,'succeeded');assert.equal(deepseek.documentId,document.id);
  assert.equal(deepseek.profile.provider,'deepseek');assert.equal(deepseek.profile.channel,'official');
- assert.equal(deepseek.profile.model,'deepseek-flash');assert.equal(deepseek.profile.effort,'low');
+ assert.equal(deepseek.profile.model,'deepseek-flash');assert.equal(deepseek.profile.effort,'max');
  assert.equal(deepseek.deliveryTarget,'none');assert.equal(uploads.length,1);
  report.deepseekJob={documentId:deepseek.documentId,profile:deepseek.profile,status:deepseek.status,delivery:deepseek.delivery,usage:deepseek.usage};
  report.passed=true;

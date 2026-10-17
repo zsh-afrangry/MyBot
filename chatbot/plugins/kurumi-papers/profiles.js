@@ -2,7 +2,7 @@
 // Contract: docs/22; an explicit provider/model/channel selects its own defaults, never GPT's.
 // A static JSON import is captured by OpenClaw's plugin loader; runtime fs URLs are not.
 import registry from './python/profiles.json' with {type: 'json'};
-const unsupported = () => Object.assign(Error('未登记或冲突的翻译组合；支持 naiccc/OpenAI gpt-6.1-sol（low/medium/high/xhigh/max），DeepSeek 官方 deepseek-flash、deepseek-v4-pro（none/low/high/max）。Grok 尚未接入。'), {code: 'unsupported_translation_profile'});
+const unsupported = () => Object.assign(Error('未登记或冲突的翻译组合；支持 naiccc/OpenAI gpt-6.1-sol（low/medium/high/xhigh/max），DeepSeek 官方 deepseek-flash（V4.1 Flash）、deepseek-v4-pro（none/low/high/max）。Grok 不在支持范围。'), {code: 'unsupported_translation_profile'});
 export function resolveProfile(args = {}) {
   const selected = Object.fromEntries(['provider', 'channel', 'model', 'effort'].filter(key => args[key] != null).map(key => [key, String(args[key]).trim().toLowerCase()]));
   const candidates = registry.providers.filter(spec =>

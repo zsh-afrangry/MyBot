@@ -1,0 +1,218 @@
+{
+  "at": "2026-10-17T09:36:25.796606+00:00",
+  "boundary": "Read-only production job metadata and bounded usage summaries; no chat text, credentials, mutations, translation retries, QQ/SMTP calls or task cancellation. These are owner-started jobs, not synthetic acceptance.",
+  "jobs": [
+    {
+      "id": "job_1803f4d5d34f39ab33334118",
+      "createdAt": "2026-10-17T09:01:38.451Z",
+      "updatedAt": "2026-10-17T09:18:15.396Z",
+      "status": "failed",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "execution": {
+        "apiConcurrency": 4,
+        "apiQps": 1
+      },
+      "error": "api_stream_error",
+      "document": {
+        "pages": 23,
+        "source": {
+          "type": "scholarly",
+          "url": "https://arxiv.org/pdf/2609.24812"
+        }
+      },
+      "usage": {
+        "requests": 47,
+        "inputTokens": 18711,
+        "outputTokens": 102938,
+        "reportedTokens": 121649,
+        "unknownUsageAttempts": 4,
+        "channelFailures": 3,
+        "inFlight": 0,
+        "peakInFlight": 4,
+        "failure": "api_stream_error",
+        "reasoningTokens": 86050
+      },
+      "workDirectoryPresent": false,
+      "byCredential": [
+        {
+          "credentialId": "OPENAI_API_KEY1_014",
+          "outcome": "completed",
+          "count": 12
+        },
+        {
+          "credentialId": "OPENAI_API_KEY1_014",
+          "outcome": "channel_failed",
+          "count": 2
+        },
+        {
+          "credentialId": "OPENAI_API_KEY2_030",
+          "outcome": "completed",
+          "count": 15
+        },
+        {
+          "credentialId": "OPENAI_API_KEY2_030",
+          "outcome": "channel_failed",
+          "count": 1
+        },
+        {
+          "credentialId": "OPENAI_API_KEY3_040",
+          "outcome": "completed",
+          "count": 16
+        },
+        {
+          "credentialId": "OPENAI_API_KEY1_014",
+          "outcome": "unclassified_error",
+          "count": 1
+        }
+      ],
+      "failures": [
+        {
+          "attempt": 2,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedAt": "2026-10-17T09:02:31Z",
+          "elapsedSeconds": 15.273,
+          "outcome": "channel_failed",
+          "usageStatus": "unknown",
+          "error": "api_transport_unknown"
+        },
+        {
+          "attempt": 20,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "startedAt": "2026-10-17T09:05:03Z",
+          "elapsedSeconds": 19.384,
+          "outcome": "channel_failed",
+          "usageStatus": "unknown",
+          "error": "api_transport_unknown"
+        },
+        {
+          "attempt": 37,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedAt": "2026-10-17T09:08:13Z",
+          "elapsedSeconds": 600.005,
+          "outcome": "channel_failed",
+          "usageStatus": "unknown",
+          "error": "api_transport_unknown"
+        },
+        {
+          "attempt": 42,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedAt": "2026-10-17T09:09:10Z",
+          "elapsedSeconds": 211.326,
+          "usageStatus": "unknown",
+          "error": "api_stream_error",
+          "apiErrorCode": "upstream_http2_stream_error",
+          "apiErrorType": "error",
+          "httpStatus": 200
+        }
+      ],
+      "engineProgress": {
+        "type": "progress_update",
+        "stage": "Translate Paragraphs",
+        "stage_progress": 47.53867791842475,
+        "overall_progress": 60.83199675114203
+      },
+      "artifactsCount": 0
+    },
+    {
+      "id": "job_660589880c5a5971ff8e415e",
+      "createdAt": "2026-10-17T09:01:38.492Z",
+      "updatedAt": "2026-10-17T09:34:17.029Z",
+      "status": "failed",
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "max",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "execution": {
+        "apiConcurrency": 4,
+        "apiQps": 1
+      },
+      "error": "translation_budget_exhausted",
+      "document": {
+        "pages": 19,
+        "source": {
+          "type": "scholarly",
+          "url": "https://arxiv.org/pdf/2607.28165"
+        }
+      },
+      "usage": {
+        "requests": 88,
+        "inputTokens": 32510,
+        "outputTokens": 121166,
+        "reportedTokens": 153676,
+        "unknownUsageAttempts": 2,
+        "channelFailures": 2,
+        "inFlight": 0,
+        "peakInFlight": 4,
+        "failure": "translation_budget_exhausted",
+        "reasoningTokens": 95001
+      },
+      "workDirectoryPresent": false,
+      "byCredential": [
+        {
+          "credentialId": "OPENAI_API_KEY2_030",
+          "outcome": "completed",
+          "count": 78
+        },
+        {
+          "credentialId": "OPENAI_API_KEY1_014",
+          "outcome": "completed",
+          "count": 8
+        },
+        {
+          "credentialId": "OPENAI_API_KEY1_014",
+          "outcome": "channel_failed",
+          "count": 2
+        }
+      ],
+      "failures": [
+        {
+          "attempt": 46,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedAt": "2026-10-17T09:24:16Z",
+          "elapsedSeconds": 600.004,
+          "outcome": "channel_failed",
+          "usageStatus": "unknown",
+          "error": "api_transport_unknown"
+        },
+        {
+          "attempt": 50,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "startedAt": "2026-10-17T09:25:20Z",
+          "elapsedSeconds": 17.315,
+          "outcome": "channel_failed",
+          "usageStatus": "unknown",
+          "error": "api_transport_unknown"
+        }
+      ],
+      "engineProgress": {
+        "type": "progress_update",
+        "stage": "Translate Paragraphs",
+        "stage_progress": 66.95557963163597,
+        "overall_progress": 69.94835052491126
+      },
+      "artifactsCount": 0
+    }
+  ],
+  "knownOpenIssue": {
+    "upstreamCode": "upstream_http2_stream_error",
+    "localCode": "api_stream_error",
+    "reason": "Not classified for bounded channel failover; this default-only change does not alter paid retry rules."
+  },
+  "totals": {
+    "requests": 135,
+    "reportedTokens": 275325,
+    "unknownUsageAttempts": 6,
+    "reasoningTokens": 181051
+  }
+}

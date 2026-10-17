@@ -2,7 +2,7 @@
 
 Reads explicit private credentials, writes only --out. No automatic full-PDF job.
 Development owner: docs/22_论文PDF翻译与文件投递.md.
-Evidence: docs/verification/paper-translation-2026-10-17/channel-upgrade/.
+Evidence: docs/verification/paper-translation-2026-10-17/ (explicit --out).
 """
 import argparse
 import json

@@ -16,9 +16,10 @@ const write=(file,data,mode=0o600)=>fs.writeFileSync(file,typeof data==='string'
 const run=(source,destination,...args)=>spawnSync(process.execPath,[script,'--source',source,'--destination',destination,...args],{encoding:'utf8'});
 test('Provider-specific defaults are inferred only from compatible registered selectors',()=>{
   const expected=resolveProfile({provider:'deepseek'});
-  assert.equal(expected.model,'deepseek-flash');assert.equal(expected.effort,'low');assert.equal(expected.baseUrl,'https://api.deepseek.com');
+  assert.equal(expected.model,'deepseek-flash');assert.equal(expected.effort,'max');assert.equal(expected.baseUrl,'https://api.deepseek.com');
   assert.deepEqual(resolveProfile({channel:'official'}),expected);
   assert.deepEqual(resolveProfile({model:'deepseek-flash'}),expected);
+  assert.equal(resolveProfile({provider:'deepseek',effort:'low'}).effort,'low');
   assert.equal(resolveProfile({model:'deepseek-v4-pro',effort:'max'}).provider,'deepseek');
   assert.equal(resolveProfile({provider:' DEEPSEEK '}).provider,'deepseek');
   for(const args of [{provider:'openai',model:'deepseek-flash'},{provider:'deepseek',channel:'naiccc'},

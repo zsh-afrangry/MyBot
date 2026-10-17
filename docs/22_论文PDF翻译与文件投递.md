@@ -1,6 +1,20 @@
 # 论文 PDF 翻译与文件投递
 
-状态：**单篇 API 四并发已实现并部署，多篇仍逐篇完成后投递；GPT/MAX与DeepSeek/low均在缓存复验中生成完整16页，首轮失败与质量边界保留。** 更新于 2026-10-17（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
+状态：**单篇 API 四并发已部署，多篇逐篇完成后投递。Grok 不在需求范围；DeepSeek 的 V4.1 Flash/MAX 默认调整已部署，通过离线/合成批次/隔离宿主与生产捕获验证。** GPT/MAX 与此前 DeepSeek/low 的完整16页证据保留，不能作为新默认 MAX 的全文验收。生产新流错误的降级缺口待处理，见下文。更新于 2026-10-17（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
+
+## 默认配置调整（已部署，2026-10-17）
+
+主人明确不接入 Grok；它不再是待办。DeepSeek 翻译默认采用 **V4.1 Flash / max**，官方要求 API 标识仍用 `deepseek-flash`，当前对应 `DeepSeek-V4.1-Flash-1017`，依据为[官方模型与价格页](https://api-docs.deepseek.com/quick_start/pricing/)。未指定厂商时默认 GPT 6.1 Sol/MAX；本次改变的是显式选择 DeepSeek 后的默认强度。
+
+- [x] Node/Python 共享注册表、工具说明、运行提示词与测试统一为 DeepSeek/MAX；显式其它强度仍按本次请求执行。
+- [x] 领域离线69/69、真实合成批次1次/580已报告tokens（1.815秒，max回显、公式/样式标记保留）、真实隔离OpenClaw/主模型四轮编排通过；宿主测试的翻译/OneBot为fixture。MAX 全文质量、耗时仍需独立证据，不复用 low 的结论。
+- [x] 两篇生产任务均终止、无在途投递或worker后，同步提示词并重载；生产捕获的Node/Python默认均为DeepSeek/MAX，4并发/QPS1保持，四项自检通过、testIngress=false。部署未打断任务或改写其固定profile。
+
+本轮观察的两篇本人任务均使用 GPT 6.1 Sol/MAX，单篇4并发/QPS1、按篇串行，均在默认调整部署前终止。`2609.24812`（23页）17:18失败后，`2607.28165`（19页）开始，17:34失败；没有完整产物或文件投递。用量和失败批次回执保留，成功翻译缓存不清理；不自动重跑。[本轮证据](verification/paper-translation-2026-10-17/deepseek-max-default/README.md)保存最终状态与部署结果。
+
+**待处理：生产渠道新增错误码。** 第一篇终止为 `api_stream_error`，实际上游码 `upstream_http2_stream_error` 不在当前可切换白名单中，因而没有按临时渠道故障继续降级。47次尝试、121649已报告tokens（含86050推理tokens）、4次用量未知；三个渠道均有实际成功调用。本轮不扩展付费重试规则；后续应独立补该明确流错误的有界切换及回归，不能以默认值调整关闭此问题。
+
+**预算保护已触发，全文可完成性待评估。** 第二篇88次尝试、153676已报告tokens（含95001推理tokens）、2次未知，正文翻译阶段约67%时终止为 `translation_budget_exhausted`。触发的是单任务150000已报告tokens阈值；尚未达到200次请求或1200秒执行期限。并发中已启动的调用仍计账，因此最终可超过阈值；一个在途请求等待600秒后结束，推迟了任务终态。两篇合计275325已报告tokens、6次未知；不能据此推算实际总账单。本轮不提高生产预算，后续应结合MAX成本和成功缓存评估预算或分段策略，不将保护生效等同全文验收成功。
 
 ## 单篇四并发验证（已验收）
 
@@ -24,7 +38,7 @@
 
 - [x] GPT 014 → 030 → 040：流错误、连接/读取超时、中断、临时 5xx 的有界切换与共享冷却；成功批次缓存不重跑。
 - [x] 三渠道独立真实短句成功；串行整篇1800.748秒超时且实际两次014→030切换。后续四并发缓存续验已生成完整GPT译稿，见上节；原失败回执保留。
-- [x] DeepSeek 官方原生 Responses 与独立凭据池已接入；默认 Flash/low，保留显式模型/强度选择，GPT 默认仍为 6.1 Sol/MAX，不跨厂商自动降级。
+- [x] DeepSeek 官方原生 Responses 与独立凭据池已接入；该阶段按 Flash/low 验收，新默认 MAX 的状态见顶部，GPT 默认仍为 6.1 Sol/MAX，不跨厂商自动降级。
 - [x] 指定 16 页论文的 DeepSeek 翻译完成：105 请求、136595 已报告 tokens、458.441 秒；修复本次引入的结束回调错误后，复用成功缓存，31.047 秒、0 新 API 请求生成 mono/dual 各 16 页。
 - [x] 55 项领域回归（Node 26、Responses 20、安装引擎 9）通过；真实 OpenClaw/主模型四轮编排通过，翻译与 OneBot 为模拟。
 - [x] 最终代码已重载，生产捕获代码的隔离进程检查和四项运行自检通过，配置/人格对齐、`testIngress=false`。
@@ -38,7 +52,7 @@
 
 DeepSeek 官方支持原生 Responses、顶层 `instructions`、`reasoning.effort=none/low/high/max` 和 `text.format`，因此复用现有协议与排版，不新增监听端口、不改 site-packages。Node/Python 共用固定注册表；任务只获得本厂商 Key。官方来源：[Responses](https://api-docs.deepseek.com/guides/responses_api/)、[思考模式](https://api-docs.deepseek.com/guides/thinking_mode/)、[模型](https://api-docs.deepseek.com/quick_start/pricing/)。
 
-DeepSeek 的 none 模式短句能成功，但实际论文先后出现无效 JSON、增加/丢失样式标记；官方结构化输出也未消除标记丢失。已保留严格校验，**默认采用实测整篇成功的 low**，代价是更多推理用量与耗时。none 仍可由本人明确指定，失败不会自动改强度或重跑；V4 Pro 只完成真实短句测试，不能扩称全文通过。
+DeepSeek 的 none 模式短句能成功，但实际论文先后出现无效 JSON、增加/丢失样式标记；官方结构化输出也未消除标记丢失。已保留严格校验；low 有完整论文成功证据，**当前选择的默认强度是主人指定的 max**，其验收范围见顶部。none 仍可由本人明确指定，失败不会自动改强度或重跑；V4 Pro 只完成真实短句测试，不能扩称全文通过。
 
 ## 需求与已定选择
 
@@ -52,8 +66,8 @@ DeepSeek 的 none 模式短句能成功，但实际论文先后出现无效 JSON
 | --- | --- |
 | 默认翻译配置 | naiccc / OpenAI / **gpt-6.1-sol / max**，原生 `/v1/responses`，顶层显式 `instructions`；不修改主聊天的 DeepSeek |
 | 每次可选参数 | 厂商、渠道、准确模型、强度、源/目标语言、页码、产物类型；固定到本次任务，不永久改变默认 |
-| 当前登记组合 | naiccc/OpenAI gpt-6.1-sol，low/medium/high/xhigh/max；DeepSeek/official deepseek-flash、deepseek-v4-pro，none/low/high/max。DeepSeek 默认 Flash/low；指定厂商、准确模型或唯一渠道可推导其默认，不继承 GPT 的字段。冲突组合与未登记模型直接拒绝，不静默替换或切 Chat。none 实测样式保留不稳，仍可按主人明确指定执行；真实测试范围见顶部与证据 |
-| 待接厂商 | naiccc Grok 未实现；不会自动从 GPT 或 DeepSeek 回退到其它厂商 |
+| 当前登记组合 | naiccc/OpenAI gpt-6.1-sol，low/medium/high/xhigh/max；DeepSeek/official deepseek-flash、deepseek-v4-pro，none/low/high/max。DeepSeek 默认 V4.1 Flash/max，API 标识 deepseek-flash；指定厂商、准确模型或唯一渠道可推导其默认，不继承 GPT 的字段。冲突组合与未登记模型直接拒绝，不静默替换或切 Chat。none 实测样式保留不稳，仍可按主人明确指定执行；部署与真实测试范围见顶部与证据 |
+| 厂商范围 | 仅 GPT 与 DeepSeek；主人明确不接 Grok，不列为延期或未完成需求。不会自动跨厂商回退 |
 | 默认产物 | 双语 PDF；可选纯译文 mono，或 both 两份。不另行询问默认项，采用此前提出的推荐 |
 | 执行方式 | CPU模式，一次一篇、最多5篇等待，单篇API并发4/QPS1；每完成一篇即投递所选文件。固定CLI按需启动、结束退出，不驻留翻译服务、不新增监听端口 |
 | 持久化 | 保留任务/产物轻量记录；Gateway 重启后未完成任务标为 interrupted，**不自动重新付费翻译** |
@@ -202,8 +216,8 @@ acceptance-host 启动隔离 Gateway 并调用真实主模型，翻译/OneBot �
 
 - **B1 已验收（全文产物生成，2026-10-17）**：四并发复用成功缓存后取得GPT/MAX完整16页译稿，新增用量/耗时见顶部；此前串行超时与未知用量回执保留。全新译文缓存的GPT全文耗时、长时间稳定性及全文人工语言/公式校对仍未覆盖，不自动重跑付费任务。
 - **B2 已验收（2026-10-17）**：本人确认修复邮件正文正常、PDF 以附件收到且可打开，第一页原文/译文排版正常；与此前QQ样稿收件相互独立，不扩大为全文质量验收。反馈摘要见[observations.json](verification/paper-translation-2026-10-17/observations.json)。
-- 014/030/040 均通过一次真实短句请求；整篇自然故障实测 014 → 030，未触发 030 → 040。全部顺序/共享冷却/全失败由故障注入覆盖，未故意耗尽/吊销 Key，不能把一次成功当长期可用保证。
-- DeepSeek 官方 Flash/low 整篇已生成且抽查；V4 Pro 仅短句、none 未通过整篇标记校验。Grok 未实现；不会在 GPT/DeepSeek 之间自动切换。
+- 014/030/040 均通过一次真实短句请求；原整篇验收自然故障实测 014 → 030，本次生产任务也实际使用040并取得成功响应，见顶部记录。全部顺序/共享冷却/全失败由故障注入覆盖，未专门制造单批次030 → 040故障或耗尽/吊销 Key，不能把一次成功当长期可用保证。
+- DeepSeek 官方 Flash/low 整篇已生成且抽查；新默认 Flash/max 的证据见顶部，未做 MAX 全文验收。V4 Pro 仅短句、none 未通过整篇标记校验。Grok 经主人决定不接入；不会在 GPT/DeepSeek 之间自动切换。
 - naiccc 的显式 text.format JSON 模式曾 502，GPT 保留原数组提示词加本地校验；DeepSeek 官方结构化批次已做独立实测。上游输出硬预算和实际金额仍不可验证。
 - 主人真实QQ上传原文件→模型→翻译→本人收到、多人/群/登录受限论文、扫描OCR与GPU、超过4并发的压力、完整新增功能灾难恢复未覆盖。
 - 本轮不更新后台fusion开发副本、不操作旧系统/归档、不远端推送、不提交文档23相关开发。当前恢复点不包含本功能，若需新停写快照须独立安排。邮件SQL字段结构未变，但新增字节快照不是旧源码可安全消费的保证；回滚应联动源码/配置/私有状态，不能只退旧邮件代码继续发送新草稿。

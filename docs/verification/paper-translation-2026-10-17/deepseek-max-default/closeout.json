@@ -1,0 +1,38 @@
+{
+  "at": "2026-10-17T09:44:19.504160+00:00",
+  "boundary": "Repository document/evidence closeout only. No translation replay, paid request, QQ/SMTP delivery, runtime database edit, remote push or backup.",
+  "sourceBaseCommit": "524f8c1271027708b8144cc6cd6ffcd36e083627",
+  "offlineTests": {
+    "node": 28,
+    "responses": 20,
+    "concurrency": 10,
+    "engine": 11,
+    "total": 69,
+    "rerunForDocumentOnlyEdits": false
+  },
+  "evidenceCoverage": {
+    "files": 325,
+    "unclassified": 0
+  },
+  "scriptIndex": {
+    "scripts": 168,
+    "boundaryDeclarations": 43,
+    "contradictions": 0
+  },
+  "documentation": {
+    "checkedLocalLinks": 86,
+    "broken": 0
+  },
+  "credentialLiteralScan": {
+    "findings": 0,
+    "scope": "Changed tracked and untracked files; sk-prefixed credential pattern only, not a complete secret audit."
+  },
+  "deploymentEvidence": "deployment.json",
+  "productionJobsEvidence": "production-jobs.json",
+  "openItems": [
+    "Bounded failover does not classify upstream_http2_stream_error.",
+    "GPT/MAX full-paper budget feasibility requires reassessment; current protection remains enabled.",
+    "DeepSeek Flash/MAX full-paper translation has not been accepted."
+  ],
+  "commitScope": "Paper plugin, its tests, runtime prompt template and related docs/evidence only; local commit, no remote push."
+}

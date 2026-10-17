@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-17T09:13:52.749Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No real translation API request, QQ/mail delivery or production write.",
+  "cases": [
+    {
+      "label": "list-real-managed-id",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到了，目前只有一个 PDF：\n\n《验收论文.pdf》——1 页，618 字节，今天 17:13 收到。\n\n先没动翻译，需要再说。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-default-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已经启动了，用默认的 GPT 6.1 Sol、max 强度，输出一份中英对照的双语 PDF，做完直接发到这个 QQ。\n\n现在还在排队，翻译完会自动投递。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "query-after-new-session",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到了：目前有 1 个翻译任务，状态是**已完成**。\n\n- 我之前用的翻译模型是 GPT-6.1-sol，max 强度，目标语言中文；任务 ID 是 `job_a619b27942f1d51e0774950f`\n- 它已生成中英对照 PDF，产物 ID 是 `pdf_bc35ff2b4bbb02ba703db229247eec3f`；另有纯译文版 `pdf_88c4f9d088ab0f6ed2044e55a097949b`\n- 投递记录显示，中英对照版已交由 QQ 平台上传，状态是 `platform_accepted`；但平台受理并不等于你已经收到\n\n按你说的，我没有重新翻译，也没有重发。需要我核对产物或换一种方式给你吗？"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-deepseek-official-defaults",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "已按 DeepSeek 官方接口启动，用的是默认配置 deepseek-flash、max。这次只生成一份中英对照双语 PDF，不会发送到 QQ 或邮件。\n\n任务 ID：`job_24d02f8938e32cd014129d3d`，当前排队中。等状态变为 succeeded 后，才能拿到翻译产物的 ID。"
+          }
+        ]
+      }
+    }
+  ],
+  "job": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "platform_accepted",
+      "receipts": [
+        {
+          "channel": "kurumi-qq",
+          "status": "platform_accepted",
+          "documentId": "pdf_bc35ff2b4bbb02ba703db229247eec3f",
+          "fileId": "fixture-upload-1"
+        }
+      ]
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "deepseekJob": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "not_requested"
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "passed": true,
+  "childStopped": true,
+  "mockUploads": [
+    {
+      "name": "验收论文-dual.pdf"
+    }
+  ]
+}

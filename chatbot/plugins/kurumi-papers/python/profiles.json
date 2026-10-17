@@ -18,7 +18,7 @@
       "protocol": "responses",
       "baseUrl": "https://api.deepseek.com",
       "defaultModel": "deepseek-flash",
-      "defaultEffort": "low",
+      "defaultEffort": "max",
       "batchFormat": "json_schema",
       "models": {
         "deepseek-flash": ["none", "low", "high", "max"],

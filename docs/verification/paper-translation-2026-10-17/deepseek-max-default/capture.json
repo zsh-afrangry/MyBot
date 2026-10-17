@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-17T09:36:25.840Z",
+  "boundary": "Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.",
+  "capturePath": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/a0325662-3018-4b47-b2e5-4a3139468fc5/captures/openclaw-plugin-build-CV4pSY/package-0/node_modules/kurumi-papers/runner.js",
+  "deepseekDefault": {
+    "provider": "deepseek",
+    "channel": "official",
+    "model": "deepseek-flash",
+    "effort": "max",
+    "protocol": "responses",
+    "baseUrl": "https://api.deepseek.com"
+  },
+  "execution": {
+    "apiConcurrency": 4,
+    "apiQps": 1
+  },
+  "sourceHashes": {
+    "engine.py": "2437da5b5107badb8aa80a0b024c8ec267247f98cf5ce0592425a50d6fb558f3",
+    "responses.py": "aaf732313eb540eb05ee365ae8058ebf95b96d99e3fb6b86e3696ac418ba7161",
+    "profiles.json": "636ee617cbf5bfe2af4ce85c597c0bc6eda8571948acd3d1b24da2e29056eea2"
+  },
+  "exitCode": 0,
+  "ok": true,
+  "worker": {
+    "ok": true,
+    "providers": [
+      "openai",
+      "deepseek"
+    ]
+  }
+}
