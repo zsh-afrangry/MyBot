@@ -15,6 +15,7 @@
 | [deployment.json](deployment.json)、[capture.json](capture.json) | 两篇终止后队列/投递/worker空闲才重载；生产捕获Node/Python默认均为official/deepseek-flash/max，实际Bubblewrap隔离检查成功，4并发/QPS1保持，无翻译API或外发 |
 | [persona-apply.txt](persona-apply.txt)、[dependencies.txt](dependencies.txt)、[sync-config.txt](sync-config.txt)、[sync-persona.txt](sync-persona.txt)、[health.json](health.json) | 仅同步受管AGENTS提示词；四项自检通过、配置/人格0漂移、服务active/enabled、testIngress=false |
 | [closeout.json](closeout.json) | 文档链接、证据分类、脚本边界与本地提交范围复核；记录未覆盖项，无新增付费调用或外发 |
+| [budget-300k.json](budget-300k.json) | 后续主人QQ复测前，单任务已报告token阈值150000→300000已同步并重载；保持4并发/QPS1与其它限额，四项自检通过。操作者不发起翻译，真实完成/耗时/降级等待本人测试 |
 
 两篇任务均使用GPT6.1 Sol/MAX，按篇串行，profile未被本次默认调整改写。两篇于17:18、17:34终止，之后才同步提示词并重载Gateway；未打断或自动重跑任务。
 

@@ -1,0 +1,43 @@
+{
+  "at": "2026-10-17T10:36:32.176393+00:00",
+  "boundary": "Owner-authorized maxReportedTokens configuration change and Gateway restart while paper jobs and deliveries were idle. No translation start/replay, paid API request, QQ/SMTP test, database modification, remote push or backup.",
+  "sourceBaseCommit": "1040b17c50da6b9c147e1c65246bc445aca2ee1b",
+  "changedConfigKeys": [
+    "maxReportedTokens"
+  ],
+  "before": {
+    "maxReportedTokens": 150000,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "maxRequests": 200,
+    "timeoutSeconds": 1200,
+    "maxPages": 30
+  },
+  "runtimeAfter": {
+    "maxReportedTokens": 300000,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "maxRequests": 200,
+    "timeoutSeconds": 1200,
+    "maxPages": 30
+  },
+  "unchangedSingleRequestMaxOutputTokens": 8192,
+  "runtimeMatchesSource": true,
+  "checks": {
+    "syncConfig": "passed",
+    "syncPersona": "passed",
+    "dependencies": "passed",
+    "health": {
+      "at": "2026-10-17T10:35:46.447Z",
+      "ok": true,
+      "issues": [],
+      "testIngress": false,
+      "fusionService": {
+        "ActiveState": "active",
+        "UnitFileState": "enabled"
+      }
+    }
+  },
+  "startupNote": "Initial health check ran before Gateway was ready; the later check passed after normal startup.",
+  "translationAcceptance": "Pending owner QQ test; no completion, timing or credential failover acceptance claimed."
+}
