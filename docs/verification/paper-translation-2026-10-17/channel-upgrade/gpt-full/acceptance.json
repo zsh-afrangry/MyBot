@@ -1,0 +1,1308 @@
+{
+  "startedAt": "2026-10-17T04:28:59.220Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/mvb7tbhu",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-16T17:01:55.719Z"
+  },
+  "jobId": "job_a51b4c45cedd67c31c9fc54f",
+  "job": {
+    "id": "job_a51b4c45cedd67c31c9fc54f",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "fea064eb1ed22f041052b117302a5016f38add673c187dab9f93c2f11b194a22",
+    "status": "failed",
+    "correlation": {},
+    "createdAt": "2026-10-17T04:28:59.225Z",
+    "artifacts": {},
+    "updatedAt": "2026-10-17T04:58:59.400Z",
+    "error": "translation_timed_out",
+    "usage": {
+      "requests": 41,
+      "inputTokens": 12340,
+      "outputTokens": 75019,
+      "reportedTokens": 87359,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1245,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:29:26Z",
+          "streamProgress": {
+            "events": 15,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 60.166,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 417,
+            "output_tokens": 3830,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 3444
+            }
+          },
+          "responseId": "resp_086c8be8885084de016ad2f9a7a4e48196a25ba5992f687ffc",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 2,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1000,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:30:26Z",
+          "streamProgress": {
+            "events": 177,
+            "outputChars": 377,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 63.692,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 419,
+            "output_tokens": 1739,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1409
+            }
+          },
+          "responseId": "resp_00fb6a7950bbe59a016ad2f9e4d39c819aaf02109817737f22",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 3,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1377,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:31:30Z",
+          "streamProgress": {
+            "events": 386,
+            "outputChars": 533,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 6.755,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 388,
+            "output_tokens": 674,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 273
+            }
+          },
+          "responseId": "resp_ft_f6807b3be529408f98044beef353b9e2",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 4,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1154,
+          "stream": true,
+          "usageStatus": "unknown",
+          "startedAt": "2026-10-17T04:31:37Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 11.988,
+          "httpStatus": 200,
+          "responseId": "resp_053801c6cc3b73d5016ad2fa2a602c819086fc5034b328d970",
+          "apiErrorCode": "server_error",
+          "apiErrorType": "server_error",
+          "outcome": "channel_failed",
+          "failoverReason": "server_error"
+        },
+        {
+          "attempt": 5,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1154,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:31:49Z",
+          "streamProgress": {
+            "events": 441,
+            "outputChars": 606,
+            "lastEvent": "response.completed"
+          },
+          "elapsedSeconds": 46.388,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 388,
+            "output_tokens": 2813,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 2380
+            }
+          },
+          "responseId": "resp_06331ee2c3a65657016ad2fa36472c8197a7d742e26e7c9769",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 6,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 984,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:32:35Z",
+          "streamProgress": {
+            "events": 58,
+            "outputChars": 137,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 17.39,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 398,
+            "output_tokens": 1117,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 776
+            }
+          },
+          "responseId": "resp_0d99dadde306baa0016ad2fa646b0c8193ae25dc0155c2de37",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 7,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1053,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:32:53Z",
+          "streamProgress": {
+            "events": 7,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 31.819,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 390,
+            "output_tokens": 1838,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1481
+            }
+          },
+          "responseId": "resp_010cc37dd712d581016ad2fa75dd8881979ed847936b93fafb",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 8,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1538,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:33:24Z",
+          "streamProgress": {
+            "events": 96,
+            "outputChars": 132,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 48.178,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 401,
+            "output_tokens": 2742,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 2298
+            }
+          },
+          "responseId": "resp_00432780f7a69ff2016ad2fa95ab9481948503db8d3eb0988e",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 9,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 913,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:34:13Z",
+          "streamProgress": {
+            "events": 106,
+            "outputChars": 220,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 16.363,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 381,
+            "output_tokens": 1074,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 735
+            }
+          },
+          "responseId": "resp_05b0066b13489bc0016ad2fac5abec8195925d39a057e03278",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 10,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 931,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:34:29Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 23.371,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 344,
+            "output_tokens": 1362,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1030
+            }
+          },
+          "responseId": "resp_0eadc0a543cc0b6a016ad2fad617b48196b27d8064663054c9",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 11,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1350,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:34:52Z",
+          "streamProgress": {
+            "events": 395,
+            "outputChars": 572,
+            "lastEvent": "response.metadata"
+          },
+          "elapsedSeconds": 32.714,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 350,
+            "output_tokens": 1924,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1531
+            }
+          },
+          "responseId": "resp_0ba5553fc5a0c79c016ad2faed91d0819590a39f77d5e7db19",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 12,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1233,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:35:25Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 21.054,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 341,
+            "output_tokens": 1280,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 938
+            }
+          },
+          "responseId": "resp_090d9d69bafb623c016ad2fb0e62fc81908fbd67defb035028",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 13,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1267,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:35:46Z",
+          "streamProgress": {
+            "events": 9,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 40.501,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 408,
+            "output_tokens": 2404,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 2010
+            }
+          },
+          "responseId": "resp_07f943ab0558d58d016ad2fb280dc8819798e0a5eb60cd2e98",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 14,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1257,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:36:27Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 18.014,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 352,
+            "output_tokens": 1407,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1034
+            }
+          },
+          "responseId": "resp_08b86223cf933988016ad2fb4bac6c8196b5f041288cac2a3c",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 15,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1087,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:36:45Z",
+          "streamProgress": {
+            "events": 307,
+            "outputChars": 438,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 36.773,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 361,
+            "output_tokens": 2549,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 2200
+            }
+          },
+          "responseId": "resp_08e6ce544ce32b88016ad2fb5dc4b88194b3cd98113bbcf133",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 16,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1105,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:37:21Z",
+          "streamProgress": {
+            "events": 69,
+            "outputChars": 91,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 20.012,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 333,
+            "output_tokens": 1055,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 738
+            }
+          },
+          "responseId": "resp_0c4c2778fc1f53d6016ad2fb832284819a891f1d135a5af8de",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 17,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1117,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:37:41Z",
+          "streamProgress": {
+            "events": 306,
+            "outputChars": 450,
+            "lastEvent": "response.completed"
+          },
+          "elapsedSeconds": 58.914,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 338,
+            "output_tokens": 1967,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1671
+            }
+          },
+          "responseId": "resp_0228a3f593004fe3016ad2fb976c3481988d16d409995ec75b",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 18,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1096,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:38:40Z",
+          "streamProgress": {
+            "events": 237,
+            "outputChars": 374,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 88.375,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 377,
+            "output_tokens": 2913,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 2588
+            }
+          },
+          "responseId": "resp_ft_3cafd77264c6454c9dbb8109f00951b3",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 19,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1005,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:40:09Z",
+          "streamProgress": {
+            "events": 29,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 91.683,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 367,
+            "output_tokens": 5910,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 5593
+            }
+          },
+          "responseId": "resp_ft_4d835f192c4b441c9d8e911a8bd09d51",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 20,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1083,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:41:40Z",
+          "streamProgress": {
+            "events": 19,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 81.197,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 350,
+            "output_tokens": 4978,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 4660
+            }
+          },
+          "responseId": "resp_01826fb1b09c6100016ad2fc882e548196a2bb138e6c7b2437",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 21,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1075,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:43:02Z",
+          "streamProgress": {
+            "events": 13,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 31.573,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 362,
+            "output_tokens": 1851,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1552
+            }
+          },
+          "responseId": "resp_ft_71032228e17b46bb9585333282177095",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 22,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1083,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:43:33Z",
+          "streamProgress": {
+            "events": 27,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 84.647,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 361,
+            "output_tokens": 5524,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 5208
+            }
+          },
+          "responseId": "resp_ft_5e880ad4a97646588d1155c3e00be23b",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 23,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 1004,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:44:58Z",
+          "streamProgress": {
+            "events": 9,
+            "outputChars": 1,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 13.899,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 322,
+            "output_tokens": 709,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 395
+            }
+          },
+          "responseId": "resp_ft_bbfc0d2f985a47d88447653b278ed210",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 24,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 848,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:45:12Z",
+          "streamProgress": {
+            "events": 272,
+            "outputChars": 347,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 258.109,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 292,
+            "output_tokens": 8403,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 8153
+            }
+          },
+          "responseId": "resp_ft_80521202b67a43c1bb34c09ad0980d33",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 25,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 837,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:49:30Z",
+          "streamProgress": {
+            "events": 231,
+            "outputChars": 348,
+            "lastEvent": "response.metadata"
+          },
+          "elapsedSeconds": 70.463,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 281,
+            "output_tokens": 1442,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1214
+            }
+          },
+          "responseId": "resp_0e311c6a3bab4a82016ad2fe71d198819bb271fcb5796e7505",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 26,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 724,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:50:40Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 7.761,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 267,
+            "output_tokens": 553,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 344
+            }
+          },
+          "responseId": "resp_ft_0a44b8c764ce4d94a58dc27973632f8f",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 27,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 757,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:50:48Z",
+          "streamProgress": {
+            "events": 186,
+            "outputChars": 276,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 30.105,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 264,
+            "output_tokens": 728,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 516
+            }
+          },
+          "responseId": "resp_0b486080c029f49b016ad2fead1c3c81978840a3599628a5e7",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 28,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 762,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:51:18Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 21.609,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 251,
+            "output_tokens": 1107,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 885
+            }
+          },
+          "responseId": "resp_097b0015f4211b32016ad2fecb9fcc81909214a6ca93c15e5e",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 29,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 790,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:51:40Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 45.83,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 255,
+            "output_tokens": 882,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 681
+            }
+          },
+          "responseId": "resp_0dd12140352f2084016ad2fefce2c0819b8fe4be12a5222841",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 30,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 826,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:52:26Z",
+          "streamProgress": {
+            "events": 143,
+            "outputChars": 239,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 47.535,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 311,
+            "output_tokens": 1366,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1093
+            }
+          },
+          "responseId": "resp_04c322255ffd8f0a016ad2ff0f90a48196b199f955ba8af631",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 31,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 640,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:53:13Z",
+          "streamProgress": {
+            "events": 173,
+            "outputChars": 244,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 62.136,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 257,
+            "output_tokens": 1237,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1034
+            }
+          },
+          "responseId": "resp_0ee6c346e6b8b9f5016ad2ff49f1b081999219437c2c396e88",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 32,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 591,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:54:16Z",
+          "streamProgress": {
+            "events": 164,
+            "outputChars": 197,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 15.83,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 302,
+            "output_tokens": 1421,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1180
+            }
+          },
+          "responseId": "resp_ft_453936c49c3a4eb993b0633aa8f32f2d",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 33,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 568,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:54:31Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 14.374,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 258,
+            "output_tokens": 442,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 278
+            }
+          },
+          "responseId": "resp_06944e1b62bff52f016ad2ff901c4c81909d5cb502269f2622",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 34,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 515,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:54:46Z",
+          "streamProgress": {
+            "events": 12,
+            "outputChars": 3,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 30.42,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 261,
+            "output_tokens": 1492,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1320
+            }
+          },
+          "responseId": "resp_0a45bf1cc10ae78e016ad2ff9d3348819397f7069c2e1bff9a",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 35,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 502,
+          "stream": true,
+          "usageStatus": "unknown",
+          "startedAt": "2026-10-17T04:55:16Z",
+          "elapsedSeconds": 125.236,
+          "httpStatus": 524,
+          "apiErrorCode": "non_json_http_error",
+          "outcome": "channel_failed",
+          "failoverReason": "non_json_http_error"
+        },
+        {
+          "attempt": 36,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 502,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:57:21Z",
+          "streamProgress": {
+            "events": 116,
+            "outputChars": 194,
+            "lastEvent": "response.output_text.delta"
+          },
+          "elapsedSeconds": 14.702,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 208,
+            "output_tokens": 935,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 788
+            }
+          },
+          "responseId": "resp_097ca22bf0aa3a6f016ad30032e0ac8197b30d417c4a470808",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 37,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 524,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:57:36Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 17.236,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 228,
+            "output_tokens": 1061,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 920
+            }
+          },
+          "responseId": "resp_005ca6e9853720de016ad3004146ec8196b1eac3af326c5d3e",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 38,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 928,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:57:53Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 4.666,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 287,
+            "output_tokens": 166,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 157
+            }
+          },
+          "responseId": "resp_0f6eee8f9ad2d15c016ad30052f6748197a33654186c9ac963",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 39,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 502,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:57:58Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 13.82,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 233,
+            "output_tokens": 929,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 723
+            }
+          },
+          "responseId": "resp_038190eed09be4e4016ad300573478819483be5f24ad8ef457",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 40,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 458,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:58:12Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          },
+          "elapsedSeconds": 15.66,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 237,
+            "output_tokens": 1195,
+            "input_tokens_details": {
+              "cached_tokens": 0,
+              "cache_write_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 1034
+            }
+          },
+          "responseId": "resp_0bf4a7bb804881e2016ad30065011c819790e8f6f8d1ac475d",
+          "responseEffort": "max",
+          "outcome": "completed"
+        },
+        {
+          "attempt": 41,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "model": "gpt-6.1-sol",
+          "effort": "max",
+          "inputChars": 391,
+          "stream": true,
+          "usageStatus": "unknown",
+          "startedAt": "2026-10-17T04:58:28Z",
+          "streamProgress": {
+            "events": 5,
+            "outputChars": 0,
+            "lastEvent": "response.output_item.added"
+          }
+        }
+      ],
+      "failure": null,
+      "unknownUsageAttempts": 3,
+      "channelFailures": 2,
+      "hardCostLimit": false
+    },
+    "engineProgress": {
+      "type": "progress_update",
+      "stage": "Translate Paragraphs",
+      "stage_progress": 60.51980198019802,
+      "overall_progress": 66.92671366716756
+    }
+  },
+  "sends": 0,
+  "ok": false,
+  "error": "translation_timed_out",
+  "finishedAt": "2026-10-17T04:58:59.968Z",
+  "elapsedSeconds": 1800.748
+}

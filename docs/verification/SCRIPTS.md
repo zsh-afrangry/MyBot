@@ -40,6 +40,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 - 脚本索引表中每行的“证据位置”就是它会写入或对应的文件；`—` 表示该脚本不直接产出 `docs/verification/` 文件。
 - 需要人工修正过的历史回执（例如 `*-fixed`）不要被自动重跑覆盖；先归档再复验。
 - 提醒列表 `acceptance-model.mjs` 与 `acceptance-host.mjs` 支持 `--out <目录>`；`--natural` 默认写 `reminder-list-2026-10-11/natural-input/`。其他验收脚本的独立输出改造仍属 Q3，重跑前按固定路径规则保留旧证据。
+- 论文 `acceptance.mjs`、`acceptance-api.py`、`acceptance-host.mjs`、`acceptance-worker.mjs` 支持显式绝对 `--out` 并拒绝覆盖已有结果；整篇真实翻译可用 `--provider/--channel/--model/--effort` 选择已登记配置，未传仍为 GPT 默认。它们不因位于 tests 就成为离线测试。
 
 ## 分类依据与可信度
 
@@ -127,6 +128,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/domain-adapters/registry.test.mjs` | 离线 | 领域适配器注册/注销、启动选择、同步契约和失败拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线 | 固定API客户端、可信请求、参数映射、共享播报与切换防旧写 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 离线 | 真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/credentials.test.mjs` | 离线 | 厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/documents.test.mjs` | 离线 | PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/engine_test.py` | 离线 | 锁定排版引擎的探测、批次 JSON、公式/样式接口；独立 HOME/cache | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/jobs.test.mjs` | 离线 | 翻译配置、任务幂等/取消/重启与独立投递状态 | 写临时测试目录 | 否 | header | — |
@@ -154,7 +156,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/configure-research.mjs` | 迁移工具 | 配置检索 provider 与抓取路径 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-worker.mjs` | 迁移工具 | 显式配置隔离代码 worker | 写运行状态 | 是 | header | — |
 | `scripts/fusion/prepare.mjs` | 迁移工具 | 首次引导隔离运行目录，拒绝覆盖已写内容 | 写运行状态 | 是 | header | — |
-| `chatbot/scripts/import-paper-credentials.mjs` | 领域运维 | 显式导入三份指定 GPT 凭据到私密 0600 文件；不输出密钥 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/import-paper-credentials.mjs` | 领域运维 | 显式导入指定 GPT/DeepSeek 凭据，原子合并到私密 0600 文件；不输出密钥 | 写运行状态 | 是 | header | — |
 | `chatbot/scripts/setup-paper-translation.sh` | 领域运维 | 按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发 | 真实外部API、写运行状态 | 是 | header | — |
 | `chatbot/scripts/reminder-list.mjs` | 领域运行 | 固定提醒列表 Cron 程序：按切换来源查询、slot 防重和汇总输出，OpenClaw 投递本人 | 写运行状态 | 是 | header | — |
 | `chatbot/tests/acceptance/call-analysis.mjs` | 库 | 旧验收调用观察工具（只观察，不证明写入） | 只读 | 否 | header | — |
@@ -193,7 +195,8 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/tests/knowledgemap/recovery.mjs` | 验收 | 今晚Git工作树和SQLite备份的临时目录恢复，不启动旧服务 | 写临时测试目录 | 是 | header | — |
 | `chatbot/tests/papers/acceptance-api.py` | 验收 | 合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发 | 真实模型、真实外部API、写仓库内文件 | 是 | header | `docs/verification/paper-translation-2026-10-17/channel-upgrade/.` |
 | `chatbot/tests/papers/acceptance-download.mjs` | 验收 | 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录 | 真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.`<br>`docs/verification/paper-translation-2026-10-17/download.json` |
-| `chatbot/tests/papers/acceptance-host.mjs` | 验收 | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/host.json`<br>`docs/verification/paper-translation-2026-10-17/host.json.` |
+| `chatbot/tests/papers/acceptance-host.mjs` | 验收 | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/`<br>`docs/verification/paper-translation-2026-10-17/host.json` |
+| `chatbot/tests/papers/acceptance-worker.mjs` | 验收 | 生产捕获的插件代码在真实隔离进程内导入固定 Python 与双厂商注册表，无模型/外发 | 写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/paper-translation-2026-10-17/channel-upgrade/.` |
 | `chatbot/tests/papers/acceptance.mjs` | 验收 | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.` |
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
 | `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |

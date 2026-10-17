@@ -1,0 +1,64 @@
+{
+  "at": "2026-10-17T04:34:47Z",
+  "boundary": "Real model/API requests with synthetic text and explicitly selected private credentials; no QQ/mail or production writes. Each channel is tested independently, not a forced real failover.",
+  "profile": {
+    "provider": "deepseek",
+    "channel": "official",
+    "protocol": "responses",
+    "baseUrl": "https://api.deepseek.com",
+    "model": "deepseek-flash",
+    "effort": "none"
+  },
+  "cases": [
+    {
+      "credentialId": "DEEPSEEK_API_KEY",
+      "ok": true,
+      "translation": "神经网络学习有用的表示。",
+      "usage": {
+        "requests": 1,
+        "inputTokens": 24,
+        "outputTokens": 5,
+        "reportedTokens": 29,
+        "receipts": [
+          {
+            "attempt": 1,
+            "credentialId": "DEEPSEEK_API_KEY",
+            "provider": "deepseek",
+            "channel": "official",
+            "model": "deepseek-flash",
+            "effort": "none",
+            "inputChars": 45,
+            "stream": true,
+            "usageStatus": "reported",
+            "startedAt": "2026-10-17T04:34:47Z",
+            "streamProgress": {
+              "events": 1,
+              "outputChars": 0,
+              "lastEvent": "response.created"
+            },
+            "elapsedSeconds": 0.591,
+            "httpStatus": 200,
+            "usage": {
+              "input_tokens": 24,
+              "output_tokens": 5,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              }
+            },
+            "responseId": "1df5dc88-e4a4-48a2-8624-5956eb55122c",
+            "responseEffort": "none",
+            "outcome": "completed"
+          }
+        ],
+        "failure": null,
+        "unknownUsageAttempts": 0,
+        "channelFailures": 0,
+        "hardCostLimit": false
+      }
+    }
+  ],
+  "ok": true
+}

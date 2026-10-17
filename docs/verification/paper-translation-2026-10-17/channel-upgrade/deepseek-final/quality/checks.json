@@ -1,0 +1,86 @@
+{
+  "boundary": "Read-only Poppler structural/text checks and sampled rendering of actual full artifacts. Layout images require manual inspection; not a full language/formula review. No model/API/delivery.",
+  "sourceAcceptance": "../acceptance.json",
+  "artifacts": {
+    "mono": {
+      "id": "pdf_42b9ee78fe7a909ad755faa17acdc83f",
+      "sha256": "42b9ee78fe7a909ad755faa17acdc83f804b41bca46915c6ec6f17dc90913fe0",
+      "bytes": 1067273,
+      "pages": 16,
+      "encrypted": false,
+      "cjkByPage": [
+        830,
+        1017,
+        1120,
+        1125,
+        719,
+        866,
+        627,
+        715,
+        980,
+        404,
+        406,
+        846,
+        471,
+        843,
+        789,
+        90
+      ],
+      "replacementCharacters": 0,
+      "renderings": [
+        "mono-page1.png",
+        "mono-page8.png",
+        "mono-page16.png"
+      ]
+    },
+    "dual": {
+      "id": "pdf_88c4abbf04e7eca327502e83b0d7e70a",
+      "sha256": "88c4abbf04e7eca327502e83b0d7e70ad5532e23f714795a7fb153e0b4cf7319",
+      "bytes": 1711462,
+      "pages": 16,
+      "encrypted": false,
+      "cjkByPage": [
+        830,
+        1017,
+        1120,
+        1125,
+        719,
+        866,
+        627,
+        715,
+        980,
+        404,
+        406,
+        846,
+        471,
+        843,
+        789,
+        90
+      ],
+      "replacementCharacters": 0,
+      "renderings": [
+        "dual-page1.png",
+        "dual-page8.png",
+        "dual-page16.png"
+      ]
+    }
+  },
+  "sampledPages": [
+    1,
+    8,
+    16
+  ],
+  "manualReview": {
+    "method": "Developer visually inspected all six rendered page images (mono/dual, pages 1/8/16).",
+    "observations": [
+      "Chinese body is readable; sampled numeric tables and side-by-side original/translation are present.",
+      "First-page author/affiliation spacing is imperfect and some names are joined; terminology and line wraps still need language review.",
+      "No severe overlap, black-square glyphs or visibly missing page content in the sampled images.",
+      "The large blank area on the last page is also present in the source table-only appendix page."
+    ],
+    "limitations": "Sampled layout inspection, not full-document semantic, formula or publication-quality approval."
+  },
+  "toolWarnings": [
+    "Poppler: Mismatch between font type and embedded font file. Sampled rendering/text extraction still completed; warning is not proof of absent rendering defects."
+  ]
+}

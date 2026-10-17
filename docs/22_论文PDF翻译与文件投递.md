@@ -1,38 +1,28 @@
 # 论文 PDF 翻译与文件投递
 
-状态：**增补开发中：先完善 GPT 三渠道故障切换，再接入 DeepSeek 官方 Key；第一页 QQ/邮件收件已确认，GPT 全文验收仍阻塞**。更新于 2026-10-17（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
+状态：**GPT 三渠道故障切换与 DeepSeek 官方接入已实现、测试并部署；DeepSeek 整篇生成通过，GPT/MAX 整篇验收仍阻塞（B1）**。更新于 2026-10-17（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
 
-### 2026-10-17 增补范围与执行状态
+## 当前结果与收尾
 
-主人明确要求「先补三个 Key 的降级，再补 DeepSeek 官 Key」。014/030/040 对应不同上游渠道，不能仅实现鉴权或额度失败时换 Key。开始时仓库为 `f8fd5fc`，工作区干净；本轮只收录论文功能与其文档/索引，不推送远端。
+主人本轮要求「先补三个 Key 的降级，再补 DeepSeek 官 Key」。014/030/040 是不同上游渠道，因此切换覆盖临时渠道故障，同时保持准确模型和强度。增补起点 `f8fd5fc`；阶段一本地提交 `f049a64`。本轮只收录论文功能与相关文档/索引，不收录文档 23 的并行开发，不推送远端。
 
-- [x] 阶段一：流式上游错误、连接/读取超时、连接中断和临时 5xx 进入 014 → 030 → 040 的有界切换；只重发失败批次，不重跑成功缓存，不跨厂商换模型/强度。
-- [x] 阶段一测试：Responses 17/17、Node 20/20、安装引擎 4/4；014、030、040 分别一次真实短文请求成功，8.336/4.418/5.433 秒，91/188/205 已报告 tokens。故障切换由注入测试验证，未故意制造真实渠道故障。
-- [ ] 新规则 GPT 全文复验：已明确启动一次有界任务，复用先前成功缓存，不外发；结果待回填，不自动循环复试。
-- [ ] 阶段二：登记 `deepseek / official`，默认 `deepseek-flash / none`（非思考模式，适合直接翻译），可显式指定已登记模型与强度；默认 GPT 6.1 Sol/MAX 不变。
-- [ ] 阶段二测试：用现有官方 Key 的私有副本进行真实 Responses 与指定 16 页 PDF 验收，确认 GPT/DeepSeek 的凭据、缓存和任务隔离。
-- [ ] 同步工具说明/运行人格、运行自检、证据与索引，分阶段本地提交并如实回填未覆盖项。
+- [x] GPT 014 → 030 → 040：流错误、连接/读取超时、中断、临时 5xx 的有界切换与共享冷却；成功批次缓存不重跑。
+- [x] 三渠道独立真实短句成功；指定整篇复验实际发生两次 014 → 030 切换，但 1800.748 秒后超时，B1 保留，未取得完整 GPT 译稿。
+- [x] DeepSeek 官方原生 Responses 与独立凭据池已接入；默认 Flash/low，保留显式模型/强度选择，GPT 默认仍为 6.1 Sol/MAX，不跨厂商自动降级。
+- [x] 指定 16 页论文的 DeepSeek 翻译完成：105 请求、136595 已报告 tokens、458.441 秒；修复本次引入的结束回调错误后，复用成功缓存，31.047 秒、0 新 API 请求生成 mono/dual 各 16 页。
+- [x] 55 项领域回归（Node 26、Responses 20、安装引擎 9）通过；真实 OpenClaw/主模型四轮编排通过，翻译与 OneBot 为模拟。
+- [x] 最终代码已重载，生产捕获代码的隔离进程检查和四项运行自检通过，配置/人格对齐、`testIngress=false`。
+- [x] 文档、证据/脚本索引、私密值与提交范围已核对；本轮收录为独立本地提交（准确提交号查 Git 历史），不推送远端。
 
-**当前决策**：错误结果或流中断可能已经计费，主人在知悉这一点后授权补渠道切换。每个失败批次每渠道至多一次请求（短暂限流可同渠道退避一次），失败渠道共享有限冷却；总请求数、已报告用量与任务期限仍生效。记录所有尝试及未知用量，不把未知记为 0。参数/权限/译文结构/模型不匹配不靠换渠道掩盖。
+第一页 GPT 样稿的 QQ/修复邮件收件已由本人确认（B2 已关闭）。本轮新增整篇测试**没有实际 QQ/邮件发送**。DeepSeek 整篇已做结构/文本检查与第 1/8/16 页渲染抽查，正文可读；作者/单位间距仍不理想，Poppler 有字体类型警告，不代表全文语义、公式或出版质量验收。实际翻译约 7 分 38 秒，31 秒是缓存重建时间，均不等于“整篇约 1 分钟”。完整用量、失败原始记录与证据清单见[本轮增补报告](verification/paper-translation-2026-10-17/channel-upgrade/README.md)；原实现与单页投递见[原验收报告](verification/paper-translation-2026-10-17/README.md)。
 
-DeepSeek 官方文档已核实支持原生 Responses、顶层 `instructions` 和 `reasoning.effort=none/low/high/max`，因此复用现有协议和排版流程，新增固定厂商配置及独立凭据选择；无需新增监听端口或修改 site-packages。官方来源：[Responses](https://api-docs.deepseek.com/guides/responses_api/)、[思考模式](https://api-docs.deepseek.com/guides/thinking_mode/)、[模型](https://api-docs.deepseek.com/quick_start/pricing/)。本节勾选前不代表新增能力已上线，详细结果在完成相应阶段时更新。
+## 本轮关键决定
 
-## 当前状态与下一步
+错误/流中断可能已经计费，切换仍受总请求数、已报告用量和任务期限限制；未知用量不记为 0。每个失败批次每渠道至多一次临时故障尝试，短暂限流允许同渠道退避一次；参数、权限、译文结构、模型/强度错误不靠换渠道掩盖。全部规则见下文资源限制。
 
-- [x] 需求、窄领域架构与权限范围确认；不新增翻译监听端口。
-- [x] 受管 PDF 目录、网站下载、本人 QQ 文件入口/出口、按需任务与重启中断处理。
-- [x] 独立 Python 3.12、固定依赖、进程隔离、原生 Responses、014 → 030 → 040 降级及有限重试。
-- [x] 邮件受管附件、固定字节/哈希、原带码确认及大小限制。
-- [x] 离线回归、真实 arXiv 下载、隔离 OpenClaw + 真实主模型三轮调用。
-- [x] 指定论文第一页真实翻译、mono/dual 页图检查、本人确认 QQ 收到 PDF。
-- [x] 整篇真实翻译两轮已执行并记录；结果为上游流中断，全文验收**阻塞**，没有完整译稿。
-- [x] 邮件乱码根因修复、标准 MIME 解码/哈希回归、真实本人邮箱重发；2026-10-17 本人确认正文正常、PDF 附件可打开、第一页原文与译文排版正常（B2 关闭）。
-- [x] 配置/人格对齐、服务重载、四项运行自检与证据登记。
-- [x] 本需求独立本地提交（排除文档23并行改动；不推送）。
+DeepSeek 官方支持原生 Responses、顶层 `instructions`、`reasoning.effort=none/low/high/max` 和 `text.format`，因此复用现有协议与排版，不新增监听端口、不改 site-packages。Node/Python 共用固定注册表；任务只获得本厂商 Key。官方来源：[Responses](https://api-docs.deepseek.com/guides/responses_api/)、[思考模式](https://api-docs.deepseek.com/guides/thinking_mode/)、[模型](https://api-docs.deepseek.com/quick_start/pricing/)。
 
-**当前结论**：单页实际翻译、本人QQ收件和文件回取通过；邮件编码故障已修复，2026-10-17 本人确认收到修复邮件，正文正常、PDF 附件可打开，第一页原文与译文排版正常，B2 已关闭。此反馈只覆盖这一页与收件体验，不代表整篇语言/公式质量通过。旧规则整篇两轮分别在1020.995秒/6请求（49849已报告tokens）和518.522秒/5请求（12501已报告tokens）后遭`upstream_stream_read_error`，两轮最后一批用量均未知。原始失败不改写；本次授权新增一次新切换规则的全文复验，复用成功缓存，结果在顶部执行状态与[增补证据](verification/paper-translation-2026-10-17/channel-upgrade/README.md)回填。
-
-**后续边界**：中转稳定性及 MAX 耗时仍需实际全文结果判断；不静默换模型、降强度或用不完整 PDF 交付。DeepSeek 官方接入已获本次授权，正在开发；Grok 未接入。实现、回归、部署和 Git 收尾不能代替全文质量验收。
+DeepSeek 的 none 模式短句能成功，但实际论文先后出现无效 JSON、增加/丢失样式标记；官方结构化输出也未消除标记丢失。已保留严格校验，**默认采用实测整篇成功的 low**，代价是更多推理用量与耗时。none 仍可由本人明确指定，失败不会自动改强度或重跑；V4 Pro 只完成真实短句测试，不能扩称全文通过。
 
 ## 需求与已定选择
 
@@ -46,8 +36,8 @@ DeepSeek 官方文档已核实支持原生 Responses、顶层 `instructions` 和
 | --- | --- |
 | 默认翻译配置 | naiccc / OpenAI / **gpt-6.1-sol / max**，原生 `/v1/responses`，顶层显式 `instructions`；不修改主聊天的 DeepSeek |
 | 每次可选参数 | 厂商、渠道、准确模型、强度、源/目标语言、页码、产物类型；固定到本次任务，不永久改变默认 |
-| 当前登记组合 | naiccc/OpenAI gpt-6.1-sol，low/medium/high/xhigh/max；本轮真实测试为 max，其它强度未分别实测。未登记的模型/厂商直接说明，不静默换模型、降强度或切 Chat |
-| 未来厂商 | DeepSeek 官方、naiccc Grok 需各自核实模型、协议、推理参数、凭据池及用量；不能把主聊天已用 DeepSeek 当作翻译已接入 |
+| 当前登记组合 | naiccc/OpenAI gpt-6.1-sol，low/medium/high/xhigh/max；DeepSeek/official deepseek-flash、deepseek-v4-pro，none/low/high/max。DeepSeek 默认 Flash/low；指定厂商、准确模型或唯一渠道可推导其默认，不继承 GPT 的字段。冲突组合与未登记模型直接拒绝，不静默替换或切 Chat。none 实测样式保留不稳，仍可按主人明确指定执行；真实测试范围见顶部与证据 |
+| 待接厂商 | naiccc Grok 未实现；不会自动从 GPT 或 DeepSeek 回退到其它厂商 |
 | 默认产物 | 双语 PDF；可选纯译文 mono，或 both 两份。不另行询问默认项，采用此前提出的推荐 |
 | 执行方式 | CPU 模式，一次一篇，最多 5 篇等待；固定 CLI 按需启动，结束退出，不驻留翻译服务、不新增监听端口 |
 | 持久化 | 保留任务/产物轻量记录；Gateway 重启后未完成任务标为 interrupted，**不自动重新付费翻译** |
@@ -108,7 +98,9 @@ flowchart LR
 
 每次请求独立上下文，不带 previous_response_id；顶层 instructions 明确，原生 Responses 流式只采用终态 response 的完整 assistant/output_text 与用量，不采用 reasoning/部分 delta/空输出/incomplete。完成响应缺少可核实用量则终止；渠道中断的用量记为 unknown，按下述明确规则切换，不把 unknown 记成 0。记录请求数、实际模型、请求/回显强度、输入/输出/缓存/推理 token、responseId 与凭据名称；不记录密钥、论文正文或上游任意错误文本。
 
-凭据顺序 **014 → 030 → 040**，同模型/强度不变。鉴权失败冷却 24 小时；额度不足或短暂限流退避一次后冷却 120 秒。明确临时渠道错误（含 upstream_stream_read_error）、连接/读取超时、流中断、408/500/502/503/504/520/522/524/529 直接转下一渠道并冷却 300 秒，每批每渠道最多一次此类尝试。冷却跨任务共享、到期可恢复；成功批次缓存不重跑。没有鉴权证据的 403、参数/权限/解析/译文结构/模型或强度不匹配不切换。所有实际尝试计入任务请求预算，已报告 token 不清零；全失败明确终止。未知用量请求可能已计费，取消/整个任务超时仍终止进程组而不自动重启，因此这些限制不能保证金额上限。
+GPT 批次使用原数组协议；DeepSeek 批次显式传原生 `text.format=json_schema`，要求 `translations` 对象数组、原 ID 枚举、固定字段，源码/模型/强度与批次协议分别进入缓存键。即使 API 接受 schema，仍在本地核对条数、ID、非空译文及全部公式/样式标记；只允许移除一个精确完整的外层 JSON 围栏，不从解释文字提取片段、不放松标记校验。错误仅记录结构原因/数量/位置，不落正文；引擎接到终态失败立即取消，不继续逐段限速等待。DeepSeek 官方支持 text.format 的依据仍为上文 Responses 文档，不把它等同于中转对同参数的支持。
+
+凭据顺序 **014 → 030 → 040**，同模型/强度不变。鉴权失败冷却 24 小时；额度不足直接切换并冷却 120 秒，短暂限流同渠道退避一次仍失败再切换并冷却 120 秒。明确临时渠道错误（含 upstream_stream_read_error）、连接/读取超时、流中断、408/500/502/503/504/520/522/524/529 直接转下一渠道并冷却 300 秒，每批每渠道最多一次此类尝试。冷却跨任务共享、到期可恢复；成功批次缓存不重跑。没有鉴权证据的 403、参数/权限/解析/译文结构/模型或强度不匹配不切换。所有实际尝试计入任务请求预算，已报告 token 不清零；全失败明确终止。未知用量请求可能已计费，取消/整个任务超时仍终止进程组而不自动重启，因此这些限制不能保证金额上限。
 
 此前全文失败的精确含义：两次最后一个请求均收到了中转发送的 `type=error` 事件，错误码 `upstream_stream_read_error`，本地映射为 `api_stream_error`。中转报告读取其上游响应流失败，未取得该批的完整成功响应和用量。仅凭该码不能进一步定位是中转代理、上游服务还是超时，也不能认定是模型厂商本身故障。当前规则将此错误纳入有界渠道切换，仍不把部分文本拼成完整译稿。这与 QQ/邮件投递和 PDF 排版是不同阶段。官方协议的完成/错误事件说明见 [OpenAI Docs](https://developers.openai.com/api/docs/guides/streaming-responses)；该说明不替中转证明故障根因。
 
@@ -118,12 +110,12 @@ flowchart LR
 | --- | --- |
 | `chatbot/packages/documents/index.js` | 受管文档唯一实现，供论文、QQ、邮件共用 |
 | `chatbot/plugins/kurumi-papers/{index,profiles,service,runner}.js` | 工具、配置解析、任务与固定子进程 |
-| `chatbot/plugins/kurumi-papers/python/{engine,responses}.py` | 排版适配与原生 Responses / 三凭据规则 |
+| `chatbot/plugins/kurumi-papers/python/{engine,responses}.py`、`python/profiles.json` | 排版适配、原生 Responses / 渠道规则与 Node/Python 共用的固定厂商注册表 |
 | `chatbot/plugins/kurumi-papers/python/requirements.lock.txt` | 固定 Python 依赖；bitstring 固定 4.3.1 |
 | `chatbot/plugins/kurumi-qq/src/{inbound,files,transport}.js` | 本人 PDF 接收与原 OneBot 文件投递 |
 | `chatbot/plugins/kurumi-mail/` | 受管附件快照、内容绑定、原确认/SMTP；契约见文档 20 |
 | `/home/afrangry/.openclaw-fusion/documents/` | 生产受管记录/files/jobs/work/cache/events.jsonl；不进 Git |
-| `/home/afrangry/.openclaw-fusion/paper-credentials.json` | 0600 的三份私密 GPT 凭据；不进 Git |
+| `/home/afrangry/.openclaw-fusion/paper-credentials.json` | 0600 的三份私密 GPT 凭据与 `DEEPSEEK_API_KEY`；任务只读取所选厂商的凭据，不进 Git |
 | `/home/afrangry/.openclaw-fusion/venvs/paper-translation/` | 独立 Python 环境，按锁文件重建 |
 | `/home/afrangry/.openclaw-fusion/paper-acceptance/` | 本轮实际 PDF 验收状态/缓存；不是生产目录或可自动续跑队列 |
 | `scripts/fusion/log-query.mjs --source papers` | 统一只读链路入口；事件契约见文档 18 |
@@ -133,9 +125,10 @@ flowchart LR
 ```bash
 bash chatbot/scripts/setup-paper-translation.sh
 node chatbot/scripts/import-paper-credentials.mjs --source /绝对路径/凭据资料.txt --destination /home/afrangry/.openclaw-fusion/paper-credentials.json
+node chatbot/scripts/import-paper-credentials.mjs --provider deepseek --source /home/afrangry/.openclaw-fusion/runtime-env.json --destination /home/afrangry/.openclaw-fusion/paper-credentials.json --replace
 ```
 
-导入只取中转-GPT 段的三个指定变量，默认拒绝覆盖；轮换前核对，使用显式 --replace。不得把真实值放进文档、测试输出或提交。配置先改 `config/runtime.config.json` 再 sync-config，人格规则改模板再 sync-persona，不能手改运行副本。完整契约见 config/README。
+默认导入只取中转-GPT 段的三个指定变量；`--provider deepseek` 只取显式 JSON 来源中的 `DEEPSEEK_API_KEY`，不复制邮件等其它变量。已有目标默认拒绝覆盖；显式 `--replace` 原子合并所选厂商并保留另一厂商，拒绝符号链接、非 0600 目标及未知旧字段，失败不改旧字节。不得把真实值放进文档、测试输出或提交。配置先改 `config/runtime.config.json` 再 sync-config，人格规则改模板再 sync-persona，不能手改运行副本。完整契约见 config/README。
 
 备份包含受管文档、任务及凭据；Python 环境虽可能被全运行目录备份采集，恢复后仍应按锁文件重建并验证路径。恢复演练副本会关闭 liveTranslationEnabled 并清空其活动论文凭据；不在本轮冒称已做新增功能的全量灾难恢复演练。
 
@@ -150,13 +143,16 @@ node chatbot/scripts/import-paper-credentials.mjs --source /绝对路径/凭据�
 | API客户端标识 | urllib默认UA被边缘403/1010拒绝；显式Kurumi-Papers/1.0后同凭据模型查询200。非鉴权403不轮换，误设冷却只在验收缓存更正 |
 | 长请求与推理 | 非流式90秒超时、524/503已保存；流式接口与独立短文通过。原批次首请求报告1001输入、25304输出，其中24740推理；不把“少固定输入开销”说成“总消费已低” |
 | CLI结束 | 原异步回调在PDF已生成后可能继续等待；固定独立worker改用同步排版API，父任务仍异步。失败/中断原始回执与真实基线产物归属证据报告 |
-| 批次提示词 | 仅解析锁定BabelDOC批次的ID/input，翻译规则放原生instructions；本地检查JSON/ID数量和公式标记。保持指定模型/max，待真实复验后评价收益 |
+| 批次提示词 | 仅解析锁定BabelDOC批次的ID/input，翻译规则放原生instructions；本地检查JSON/ID数量和公式标记。保持指定模型/max；性能依据真实任务分别记录，不由合成提示词实验推断全文收益 |
 | 邮件附件 | 使用既有SQL字段保存实际字节，元数据/hash绑定确认；86项邮件回归保留，新增大小/篡改/重开/本地TLS及标准MIME解码回归；未知ID不泄露宿主路径 |
 | 邮件乱码修复 | 实际长中文标题触发两次折行，提前结束邮件头，附件Base64被当正文；改为唯一折行入口、UTF-8分块连续、单一RFC2231参数、Uint8Array原始字节。修复邮件重新SMTP投递；2026-10-17 本人确认正文正常、PDF 附件可打开且第一页排版正常，B2 关闭 |
 | 单页实际翻译 | 第一页588.58秒、3请求、27462已报告tokens；mono/dual正文可读，作者/单位区合并。本人确认QQ收到，实际TLS回取哈希一致 |
-| 整篇实际翻译 | 首轮上游流中断失败；开发者在授权测试范围内显式新建一轮任务复用成功缓存，仍因同类错误失败。两次均保留记录，未伪造全篇或自动重放未知请求 |
+| 整篇实际翻译 | GPT 旧规则两轮流中断；新规则实测两次 014 → 030 切换，仍因 30 分钟超时失败。DeepSeek Flash/low 实际 105 请求完成翻译，修复完成回调后缓存复验生成完整 16 页；分开保留原始失败与最终成功 |
 | 部署 | 生产配置/人格核对已对齐，重载kurumi-fusion；四项自检通过，testIngress=false。模型/字体缓存39文件344869220字节预热，2个SQLite使用在线备份；不从验收导入凭据冷却 |
-| 集成 | 真实arXiv获取通过；隔离OpenClaw+真实DeepSeek主模型三轮通过，翻译worker/OneBot为fixture，仅证明工具与任务编排，不能替代GPT或真实投递 |
+| 集成 | 真实 arXiv 获取通过；增补后隔离 OpenClaw/真实主模型四轮通过，包含默认 GPT、会话重置、DeepSeek/low 及仅生成。翻译 worker/OneBot 为 fixture，只证明编排 |
+| 插件捕获与产物选择 | 厂商注册表使用静态 JSON import，保证 OpenClaw 捕获完整依赖；双语一份明确为 dual，both 只用于明确要两份，qq 自动发送后不另调发送工具；真实隔离 Host 和最终生产捕获检查通过 |
+| 失败取消与结束回调 | 新增终态取消时曾遗漏 BabelDOC0.6.2 的 finish_callback，导致 Save PDF100% 后 TypeError；这是本次适配引入的错误。已补同步 no-op 回调，以同步返回/异常为准；实际安装版本完成/取消回归及零 API 全文复验通过 |
+| 诊断边界 | 失败保存 code、异常类型、文件名/函数/行号，在清理任务工作目录前存入任务记录；不落异常原文、正文、源码行、locals 或凭据 |
 
 ## 测试命令与当前结果
 
@@ -169,26 +165,28 @@ python3 chatbot/tests/papers/responses_test.py
 node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js scripts/fusion/test/log-query.test.mjs
 ```
 
-当前离线为新增Node **20/20**、Responses **11/11**、安装引擎契约 **4/4**、既有邮件/QQ/查询 **112/112**。另有共享接口/后端边界与既有恢复回归 **54/54**（当前工作树含文档23新增的包发现回归；本需求提交不收录该测试改动）。这些离线结果不包括真实论文质量、真人入站或邮箱到信。
+本轮当前源码回归：Node **26/26**、Responses **20/20**、安装引擎契约 **9/9**，合计 **55/55**。覆盖厂商配置/凭据隔离、原子导入、跨厂商缓存、结构化批次/占位符、结束/取消及既有论文边界。原实现阶段既有邮件/QQ/查询 **112/112**、共享接口/后端与恢复 **54/54** 是历史回执，本轮未重跑，不计入这 55 项。离线通过不替代实际论文质量、真人入站或邮箱到信。
 
 明确授权的真实验收脚本（不要混进离线批量命令）：
 
 ```bash
 node chatbot/tests/papers/acceptance-download.mjs
-node chatbot/tests/papers/acceptance-host.mjs
+node chatbot/tests/papers/acceptance-host.mjs --out /绝对路径/新的host结果.json
 node chatbot/tests/papers/acceptance.mjs --input /home/afrangry/桌面/2609.32536v1.pdf --pages 1 --out /绝对路径/证据目录
+# DeepSeek 显式加 --provider deepseek；可选 --model deepseek-v4-pro --effort high
 # 整篇去掉 --pages；--send-qq / --send-mail 才实际向本人外发
+# 每次必须使用新的 --out；不自动续跑付费任务
 ```
 
-acceptance-host 启动隔离Gateway并调用真实主模型，翻译/OneBot模拟；不写生产业务。acceptance使用真实翻译API及私密验收目录，可用--root复用该目录缓存；每次新任务均是明确运行，不自动续跑旧付费调用。--send-mail按主人本轮授权程序化记录测试确认，**不代表真实QQ带码确认往返或到信**。
+acceptance-host 启动隔离 Gateway 并调用真实主模型，翻译/OneBot 模拟；不写生产业务。acceptance-worker 需显式 --capture（当前生产捕获的 runner.js）和新 --out，只验证固定 Python/双厂商注册表的真实隔离进程，无凭据/API/外发。acceptance-api.py 需显式 --credentials 和新 --out，真实调用合成短句或 --batch 合成批次，可指定 --provider/--model/--effort；不得作为离线回归运行。acceptance使用真实翻译API及私密验收目录，可用--root复用该目录缓存；每次新任务均是明确运行，不自动续跑旧付费调用。--send-mail按主人本轮授权程序化记录测试确认，**不代表真实QQ带码确认往返或到信**。
 
 ## 未覆盖、阻塞与收尾
 
-- **B1 全文验收待复验**：旧规则整篇 GPT/MAX 两轮上游流中断，单页 9.8 分钟也未达到主人对整篇约 10 分钟的参考预期。本次授权已启动一次新规则全文复验，结果待回填；此前失败记录保留。
+- **B1 GPT/MAX 全文验收仍阻塞**：新规则整篇 1800.748 秒超时，41 请求、87359 已报告 tokens、3 次未知用量，实际两次 014 → 030 切换后仍无完整译稿；段落翻译进度约 60.52%。渠道切换已生效，但不解决 MAX 的耗时/中转稳定性。保留 GPT 默认，不擅自降强度，不继续自动付费复试。DeepSeek 整篇生成成功单列，不能关闭此项。
 - **B2 已验收（2026-10-17）**：本人确认修复邮件正文正常、PDF 以附件收到且可打开，第一页原文/译文排版正常；与此前QQ样稿收件相互独立，不扩大为全文质量验收。反馈摘要见[observations.json](verification/paper-translation-2026-10-17/observations.json)。
-- 014/030/040 均通过一次真实短句请求；真实额度耗尽、吊销及流故障未故意制造，降级顺序与冷却由故障注入测试覆盖，不能把短样本当作长期可用保证。
-- DeepSeek 官方接入正在本次授权范围内开发，Grok 尚未实现；不会从 GPT 自动回退到它们。
-- 显式 text.format JSON模式曾502，当前采用提示词加本地JSON校验；上游输出硬预算和实际金额仍不可验证。
+- 014/030/040 均通过一次真实短句请求；整篇自然故障实测 014 → 030，未触发 030 → 040。全部顺序/共享冷却/全失败由故障注入覆盖，未故意耗尽/吊销 Key，不能把一次成功当长期可用保证。
+- DeepSeek 官方 Flash/low 整篇已生成且抽查；V4 Pro 仅短句、none 未通过整篇标记校验。Grok 未实现；不会在 GPT/DeepSeek 之间自动切换。
+- naiccc 的显式 text.format JSON 模式曾 502，GPT 保留原数组提示词加本地校验；DeepSeek 官方结构化批次已做独立实测。上游输出硬预算和实际金额仍不可验证。
 - 主人真实QQ上传原文件→模型→翻译→本人收到、多人/群/登录受限论文、扫描OCR与GPU、并发压力、完整新增功能灾难恢复未覆盖。
 - 本轮不更新后台fusion开发副本、不操作旧系统/归档、不远端推送、不提交文档23相关开发。当前恢复点不包含本功能，若需新停写快照须独立安排。邮件SQL字段结构未变，但新增字节快照不是旧源码可安全消费的保证；回滚应联动源码/配置/私有状态，不能只退旧邮件代码继续发送新草稿。
 

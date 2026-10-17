@@ -1,0 +1,113 @@
+{
+  "startedAt": "2026-10-17T04:57:45.414Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/deepseek-official-fresh-20261017",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-17T04:42:45.051Z"
+  },
+  "jobId": "job_3f4e489ccd6d69d2f92be1b5",
+  "job": {
+    "id": "job_3f4e489ccd6d69d2f92be1b5",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "low",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "0f5766d0a38d14af6447d5bb20de339934bcaf97030168a065beda39b41148d3",
+    "status": "succeeded",
+    "correlation": {},
+    "createdAt": "2026-10-17T04:57:45.422Z",
+    "artifacts": {
+      "mono": "pdf_42b9ee78fe7a909ad755faa17acdc83f",
+      "dual": "pdf_88c4abbf04e7eca327502e83b0d7e70a"
+    },
+    "updatedAt": "2026-10-17T04:58:15.847Z",
+    "usage": {
+      "requests": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "reportedTokens": 0,
+      "receipts": [],
+      "failure": null,
+      "validationFailure": null,
+      "normalizedJsonFences": 0,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "hardCostLimit": false
+    },
+    "delivery": {
+      "status": "not_requested"
+    },
+    "engineProgress": {
+      "type": "progress_end",
+      "stage": "Save PDF",
+      "stage_progress": 100,
+      "overall_progress": 100
+    }
+  },
+  "sends": 0,
+  "artifacts": {
+    "mono": {
+      "id": "pdf_42b9ee78fe7a909ad755faa17acdc83f",
+      "kind": "artifact",
+      "filename": "2609.32536v1-mono.pdf",
+      "sha256": "42b9ee78fe7a909ad755faa17acdc83f804b41bca46915c6ec6f17dc90913fe0",
+      "bytes": 1067273,
+      "pages": 16,
+      "source": {
+        "type": "translation",
+        "inputId": "doc_71658ea5beea1cf5f9485d825f57b8a5"
+      },
+      "jobId": "job_3f4e489ccd6d69d2f92be1b5",
+      "createdAt": "2026-10-17T04:58:15.828Z"
+    },
+    "dual": {
+      "id": "pdf_88c4abbf04e7eca327502e83b0d7e70a",
+      "kind": "artifact",
+      "filename": "2609.32536v1-dual.pdf",
+      "sha256": "88c4abbf04e7eca327502e83b0d7e70ad5532e23f714795a7fb153e0b4cf7319",
+      "bytes": 1711462,
+      "pages": 16,
+      "source": {
+        "type": "translation",
+        "inputId": "doc_71658ea5beea1cf5f9485d825f57b8a5"
+      },
+      "jobId": "job_3f4e489ccd6d69d2f92be1b5",
+      "createdAt": "2026-10-17T04:58:15.846Z"
+    }
+  },
+  "ok": true,
+  "finishedAt": "2026-10-17T04:58:16.461Z",
+  "elapsedSeconds": 31.047
+}

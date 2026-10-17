@@ -1,0 +1,68 @@
+{
+  "at": "2026-10-17T04:45:46Z",
+  "boundary": "Real model/API requests with synthetic text and explicitly selected private credentials; no QQ/mail or production writes. Each channel is tested independently, not a forced real failover.",
+  "profile": {
+    "provider": "deepseek",
+    "channel": "official",
+    "protocol": "responses",
+    "baseUrl": "https://api.deepseek.com",
+    "model": "deepseek-flash",
+    "effort": "none"
+  },
+  "batch": true,
+  "cases": [
+    {
+      "credentialId": "DEEPSEEK_API_KEY",
+      "ok": true,
+      "translation": "[{\"id\": 0, \"output\": \"神经网络研究\"}, {\"id\": 1, \"output\": \"训练损失减少了 {v1}。\"}, {\"id\": 2, \"output\": \"<style id='1'>重要</style>发现已被报道。\"}]",
+      "usage": {
+        "requests": 1,
+        "inputTokens": 287,
+        "outputTokens": 52,
+        "reportedTokens": 339,
+        "receipts": [
+          {
+            "attempt": 1,
+            "credentialId": "DEEPSEEK_API_KEY",
+            "provider": "deepseek",
+            "channel": "official",
+            "model": "deepseek-flash",
+            "effort": "none",
+            "inputChars": 184,
+            "stream": true,
+            "outputFormat": "json_schema",
+            "usageStatus": "reported",
+            "startedAt": "2026-10-17T04:45:46Z",
+            "streamProgress": {
+              "events": 1,
+              "outputChars": 0,
+              "lastEvent": "response.created"
+            },
+            "elapsedSeconds": 0.753,
+            "httpStatus": 200,
+            "usage": {
+              "input_tokens": 287,
+              "output_tokens": 52,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 0
+              }
+            },
+            "responseId": "d6340a58-0861-4ba2-a03c-09d1b4a60a12",
+            "responseEffort": "none",
+            "outcome": "completed"
+          }
+        ],
+        "failure": null,
+        "validationFailure": null,
+        "normalizedJsonFences": 0,
+        "unknownUsageAttempts": 0,
+        "channelFailures": 0,
+        "hardCostLimit": false
+      }
+    }
+  ],
+  "ok": true
+}

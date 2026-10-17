@@ -19,10 +19,22 @@ async function setup(t,deps={}) {
 async function terminal(service,id) {for(let i=0;i<200;i++){const job=service.get(id);if(!['queued','running'].includes(job.status))return job;await new Promise(r=>setTimeout(r,5));}throw Error('test job timed out');}
 test('Explicit provider/model/effort; pages cannot silently truncate or execute',()=>{
   assert.equal(resolveProfile().model,'gpt-6.1-sol');assert.equal(resolveProfile().effort,'max');
-  for(const args of [{provider:'deepseek'},{model:'gpt-5.6-sol'},{channel:'other'},{effort:'ultra'}]) assert.throws(()=>resolveProfile(args));
+  for(const args of [{provider:'grok'},{model:'gpt-5.6-sol'},{channel:'other'},{effort:'ultra'}]) assert.throws(()=>resolveProfile(args));
   assert.equal(normalizePages('3,1-2,2',8,3),'1,2,3');
   for(const range of ['0','3-1','1;curl x','1-10000'])assert.throws(()=>normalizePages(range,8,3));
   assert.throws(()=>normalizePages(null,31,30));
+});
+test('DeepSeek jobs persist an explicit profile and never mutate default GPT settings',async t=>{
+  let received;
+  const {service,doc}=await setup(t,{runner:async request=>{
+    received=request.profile;const files={};for(const kind of ['mono','dual']){files[kind]=path.join(request.work,kind+'.pdf');fs.writeFileSync(files[kind],pdf(kind));}return files;
+  }});
+  const job=service.submit({documentId:doc.id,provider:'deepseek',delivery:'none'},{key:'deepseek'});
+  assert.equal((await terminal(service,job.id)).status,'succeeded');
+  assert.deepEqual(received,resolveProfile({provider:'deepseek'}));
+  assert.deepEqual(service.get(job.id).profile,received);
+  assert.throws(()=>service.submit({documentId:doc.id,delivery:'none'},{key:'deepseek'}),/different/);
+  assert.equal(resolveProfile().provider,'openai');assert.equal(resolveProfile().effort,'max');
 });
 test('Lifecycle, immutable invocation identity and separate output/delivery state',async t=>{
   let files=0;const {service,doc,root}=await setup(t,{sendFile:async()=>{files++;return{status:'platform_accepted'};}});
@@ -56,6 +68,17 @@ test('A lost send receipt preserves successful translation and does not replay w
   state.delivery.status='dispatching';service.save(state);
   const fresh=new PaperService(service.config,{inspect});fresh.start();
   assert.equal(fresh.get(job.id).delivery.status,'failed_or_unknown');await fresh.stop();
+});
+test('Worker failure retains bounded structural diagnostics before removing its work directory',async t=>{
+  const {service,doc,root}=await setup(t,{runner:async({work})=>{
+    fs.writeFileSync(path.join(work,'engine-error.json'),JSON.stringify({code:'pdf_engine_TypeError',errorType:'TypeError',frames:[{file:'engine.py',function:'translate',line:1}]}));
+    throw Object.assign(Error('worker failure'),{code:'pdf_engine_TypeError'});
+  }});
+  const job=service.submit({documentId:doc.id,delivery:'none'},{key:'engine-failure'});
+  const result=await terminal(service,job.id);
+  assert.equal(result.status,'failed');assert.equal(result.error,'pdf_engine_TypeError');
+  assert.equal(result.engineFailure.frames[0].file,'engine.py');
+  assert(!fs.existsSync(path.join(root,'work',job.id)));
 });
 test('Registered tools reject non-owner, keep generic filesystem tools absent',async t=>{
   const {service}=await setup(t), tools=[],services=[];

@@ -124,6 +124,8 @@ export class PaperService {
       if (fs.existsSync(usageFile)) { try { job.usage = JSON.parse(fs.readFileSync(usageFile)); this.save(job); } catch {} }
       const progressFile = path.join(work, 'progress.json');
       if (fs.existsSync(progressFile)) { try { job.engineProgress = JSON.parse(fs.readFileSync(progressFile)); this.save(job); } catch {} }
+      const engineError = path.join(work, 'engine-error.json');
+      if (fs.existsSync(engineError)) { try { job.engineFailure = JSON.parse(fs.readFileSync(engineError)); this.save(job); } catch {} }
       fs.rmSync(work, {recursive: true, force: true});
     }
   }

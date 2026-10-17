@@ -1,0 +1,105 @@
+{
+  "startedAt": "2026-10-17T04:56:44.091Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/deepseek-official-fresh-20261017",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-17T04:42:45.051Z"
+  },
+  "jobId": "job_949da4a4852dfe66906e687d",
+  "job": {
+    "id": "job_949da4a4852dfe66906e687d",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "low",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "0f5766d0a38d14af6447d5bb20de339934bcaf97030168a065beda39b41148d3",
+    "status": "failed",
+    "correlation": {},
+    "createdAt": "2026-10-17T04:56:44.096Z",
+    "artifacts": {},
+    "updatedAt": "2026-10-17T04:57:18.491Z",
+    "error": "pdf_engine_TypeError",
+    "usage": {
+      "requests": 0,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "reportedTokens": 0,
+      "receipts": [],
+      "failure": null,
+      "validationFailure": null,
+      "normalizedJsonFences": 0,
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "hardCostLimit": false
+    },
+    "engineProgress": {
+      "type": "progress_end",
+      "stage": "Save PDF",
+      "stage_progress": 100,
+      "overall_progress": 100
+    },
+    "engineFailure": {
+      "code": "pdf_engine_TypeError",
+      "errorType": "TypeError",
+      "frames": [
+        {
+          "file": "engine.py",
+          "function": "main",
+          "line": 214
+        },
+        {
+          "file": "engine.py",
+          "function": "translate",
+          "line": 197
+        },
+        {
+          "file": "high_level.py",
+          "function": "do_translate",
+          "line": 672
+        },
+        {
+          "file": "progress_monitor.py",
+          "function": "on_finish",
+          "line": 147
+        }
+      ]
+    }
+  },
+  "sends": 0,
+  "ok": false,
+  "error": "pdf_engine_TypeError",
+  "finishedAt": "2026-10-17T04:57:19.136Z",
+  "elapsedSeconds": 35.045
+}

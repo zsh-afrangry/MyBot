@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-17T04:40:01.042Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No real translation API request, QQ/mail delivery or production write.",
+  "cases": [
+    {
+      "label": "list-real-managed-id",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "收到一份：\n\n验收论文.pdf —— 1 页，618 字节，今天 12:40 刚收到的。\n\n先没动它，没翻译。就是这体积小得有点离谱，比目录还轻，八成是个测试文件或者空壳，要不要我确认下内容？"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-default-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "译文生成完毕，双语 PDF 已经投出去了。\n\n- 文档：验收论文.pdf\n- 配置：naiccc / gpt-6.1-sol / max，英译中，双语对照\n- 状态：生成成功，QQ 平台已受理文件上传\n\n平台受理不等于你那边真收到了，你翻一下聊天记录确认下；要没看到文件我再帮你查投递回执。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "query-after-new-session",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到了，只有一个任务：\n\n- 任务：`job_b4506ee41f2c567fc11a5d99`，英译中双语，gpt-6.1-sol / max\n- 状态：succeeded（生成成功）\n- 产物：`pdf_bd0d1dcc2828f779d58befc561b6e0ae`\n- 投递：platform_accepted，已由 QQ 平台受理；但这只表示平台接单，并不等于你已确认收到\n\n我没有重新翻译，也没有重发。\n\n不过有件事得说清楚：这条记录里标记为 `fixture`、请求数为 0，看起来更像演示或测试数据，不太像真实调用产生的翻译结果。如果这是你要的正式产物，可能需要重新核准一下。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-deepseek-official-defaults",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "生成完成了：这次使用 DeepSeek 官方接口，模型为默认的 deepseek-flash，强度为 none；按你的要求只生成、不投递。\n\n- 任务：`job_563cf9a91bd95bba0e6e7151`\n- 文档：验收论文.pdf（1 页）\n- 输出：双语 PDF（dual）\n- 产物 ID：`pdf_bd0d1dcc2828f779d58befc561b6e0ae`\n- 投递：not_requested（未发给 QQ 或邮件）\n\n还得提醒一句：这次任务同样带 `fixture` 标记、请求数为 0，生成的产物 ID 也跟上一份占位文件完全一样。所以这更像是环境里的测试产物，而不是真正调用了 DeepSeek 接口的结果。如果需要我进一步核查，请告诉我。"
+          }
+        ]
+      }
+    }
+  ],
+  "job": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "platform_accepted",
+      "receipts": [
+        {
+          "channel": "kurumi-qq",
+          "status": "platform_accepted",
+          "documentId": "pdf_bd0d1dcc2828f779d58befc561b6e0ae",
+          "fileId": "fixture-upload-1"
+        }
+      ]
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "deepseekJob": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "none",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "not_requested"
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "passed": true,
+  "childStopped": true,
+  "mockUploads": [
+    {
+      "name": "验收论文-mono.pdf"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "defaultProvider": "openai",
+  "providers": [
+    {
+      "provider": "openai",
+      "channel": "naiccc",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1",
+      "defaultModel": "gpt-6.1-sol",
+      "defaultEffort": "max",
+      "batchFormat": "plain_array",
+      "models": {"gpt-6.1-sol": ["low", "medium", "high", "xhigh", "max"]},
+      "credentialIds": ["OPENAI_API_KEY1_014", "OPENAI_API_KEY2_030", "OPENAI_API_KEY3_040"]
+    },
+    {
+      "provider": "deepseek",
+      "channel": "official",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com",
+      "defaultModel": "deepseek-flash",
+      "defaultEffort": "low",
+      "batchFormat": "json_schema",
+      "models": {
+        "deepseek-flash": ["none", "low", "high", "max"],
+        "deepseek-v4-pro": ["none", "low", "high", "max"]
+      },
+      "credentialIds": ["DEEPSEEK_API_KEY"]
+    }
+  ]
+}

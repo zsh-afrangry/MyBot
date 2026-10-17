@@ -1,0 +1,115 @@
+{
+  "at": "2026-10-17T04:54:33.912Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No real translation API request, QQ/mail delivery or production write.",
+  "cases": [
+    {
+      "label": "list-real-managed-id",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到一份，就这个：\n\n**验收论文.pdf** — 1 页，618 字节，今天 12:54 刚收到的\n\n不过 618 字节实在太小了，基本是个空壳或者示例文件，不像真论文。要确认下是不是传错了？没让我翻译，我就先不动它。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-default-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "翻译好了，中英对照双语的 PDF 已经发到你 QQ 上了（平台已受理上传，你那边看到文件就算到了）。\n\n就一页纸的验收稿内容，所以成品也不会长。查收一下，没收到我再重发。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "query-after-new-session",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到了，目前只有一个翻译任务：\n\n状态是**已成功**，生成的是中英双语 PDF，QQ 投递显示“平台已受理”，不过平台受理不等于你那边一定已经收到。\n\n我没有重新翻译，也没有重新发送。产物还留着，需要的话我再帮你核对或补发。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-deepseek-official-defaults",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "DeepSeek 官方接口的任务已经完成，状态为成功。\n\n本次用的是默认配置：official/deepseek-flash，强度 low；生成了一份中英双语 PDF。未发 QQ、未发邮件，投递状态是“未请求”。\n\n任务编号：job_b2643e5d6cfdeb75a03efcc8。需要取件时再告诉我。"
+          }
+        ]
+      }
+    }
+  ],
+  "job": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "openai",
+      "channel": "naiccc",
+      "model": "gpt-6.1-sol",
+      "effort": "max",
+      "protocol": "responses",
+      "baseUrl": "https://naiccc.com/v1"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "platform_accepted",
+      "receipts": [
+        {
+          "channel": "kurumi-qq",
+          "status": "platform_accepted",
+          "documentId": "pdf_bc35ff2b4bbb02ba703db229247eec3f",
+          "fileId": "fixture-upload-1"
+        }
+      ]
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "deepseekJob": {
+    "documentId": "doc_bd0d1dcc2828f779d58befc561b6e0ae",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "low",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "status": "succeeded",
+    "delivery": {
+      "status": "not_requested"
+    },
+    "usage": {
+      "requests": 0,
+      "fixture": true
+    }
+  },
+  "passed": true,
+  "childStopped": true,
+  "mockUploads": [
+    {
+      "name": "验收论文-dual.pdf"
+    }
+  ]
+}

@@ -39,8 +39,9 @@ const ROOT = REPO_ROOT;
 // [group, purpose, flags, basis]
 const TABLE = {
   'chatbot/scripts/setup-paper-translation.sh': ['领域运维', '按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发', {auth: 1, externalApi: 1, writesState: 1}, 'header'],
-  'chatbot/scripts/import-paper-credentials.mjs': ['领域运维', '显式导入三份指定 GPT 凭据到私密 0600 文件；不输出密钥', {auth: 1, writesState: 1}, 'header'],
+  'chatbot/scripts/import-paper-credentials.mjs': ['领域运维', '显式导入指定 GPT/DeepSeek 凭据，原子合并到私密 0600 文件；不输出密钥', {auth: 1, writesState: 1}, 'header'],
   'chatbot/tests/papers/fixtures.mjs': ['库', '生成最小有效 PDF 测试字节，不读生产文件', {readonly: 1}, 'header'],
+  'chatbot/tests/papers/credentials.test.mjs': ['离线', '厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据', {testDir: 1}, 'header'],
   'chatbot/tests/papers/documents.test.mjs': ['离线', 'PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界', {testDir: 1}, 'header'],
   'chatbot/tests/papers/jobs.test.mjs': ['离线', '翻译配置、任务幂等/取消/重启与独立投递状态', {testDir: 1}, 'header'],
   'chatbot/tests/papers/mail.test.mjs': ['离线', '受管附件快照、确认、完整性、大小限制及本地 TLS SMTP', {testDir: 1}, 'header'],
@@ -52,6 +53,7 @@ const TABLE = {
   'chatbot/tests/papers/acceptance-download.mjs': ['验收', '真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录', {auth: 1, externalApi: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/papers/acceptance-api.py': ['验收', '合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发', {auth: 1, model: 1, externalApi: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/papers/acceptance-host.mjs': ['验收', '真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件', {auth: 1, model: 1, restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/tests/papers/acceptance-worker.mjs': ['验收', '生产捕获的插件代码在真实隔离进程内导入固定 Python 与双厂商注册表，无模型/外发', {testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/papers/acceptance.mjs': ['验收', '真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认', {auth: 1, model: 1, externalApi: 1, qq: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/domain-adapters/registry.test.mjs': ['离线', '领域适配器注册/注销、启动选择、同步契约和失败拒绝', {readonly: 1}, 'header'],
   'chatbot/tests/domain-adapters/integration.test.mjs': ['离线', '真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退', {testDir: 1}, 'header'],

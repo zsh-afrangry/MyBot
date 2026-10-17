@@ -1,0 +1,1032 @@
+                                         D O AUDIO LLM S L ISTEN B EFORE T HEY ACT ?                                                                                                      音频大语言模型会在行动前聆听吗？诊断语音智能体中的声学上
+                                         D IAGNOSING ACOUSTIC -C ONTEXT G ATING IN VOICE                                                                                                  下文门控
+                                         AGENTS
+                                          Yanjie Zhang1∗† , Nanchen Hu1∗ & Yushi Sun2‡                                                                                                    YanjieZhang1∗†，Nanchen Hu1∗ 与 Yushi Sun2‡1香港
+                                          1
+                                            HKUST, Hong Kong SAR, China                                                                                                                   科技大学，中国香港特别行政区2LIGHTSPEED，中国
+                                          2
+                                            LIGHTSPEED, Shenzhen, China                                                                                                                   深圳{yzhangj,nhuab,ysunbp}@connect.ust.hk
+                                          {yzhangj,nhuab,ysunbp}@connect.ust.hk
+arXiv:2609.32536v1 [cs.SD] 26 Sep 2026
+
+
+
+
+                                                                                                                                                 arXiv:2609.32536v1 [cs.SD] 26 Sep 2026
+                                                                                     A BSTRACT                                                                                                                             摘要
+
+                                                  Audio language models can recognize spoken commands and invoke tools, but                                                                      音频语言模型可以识别语音命令并调用工具，但智能体必须首先判断声学和会
+                                                  an agent must first decide whether the acoustic and conversational context war-                                                                话上下文是否足以支持采取行动。我们提出 VGBENCH，一个包含 1,018 个条
+                                                  rants action. We introduce VGB ENCH, a 1,018-item diagnostic benchmark for
+                                                                                                                                                                                                 目的诊断基准，用于评估旁谈、自语和说话人切换场景中的动作层面受话性。
+                                                  action-level addressedness across side-talk, self-talk, and speaker-switch scenar-
+                                                  ios. Each item uses a shared action space comprising silence, a tool call, and                                                                 每个条目使用一个共享动作空间，包括静音、工具调用和自然语言回答。说话
+                                                  a natural-language answer. Speaker-switch pairs hold the specified words fixed                                                                 人切换配对保持指定词语不变，同时由声源、距离渲染和时间边界定义一个受
+                                                  while source, distance rendering, and a temporal boundary define a controlled                                                                  控的佩戴者到旁观者转变。六个原始音频 LLM 和三种免训练适配方法常常能
+                                                  wearer-to-bystander shift. Six raw Audio LLMs and three training-free adapta-
+                                                  tions often identify the target tool yet rarely withhold action under this shift; the                                                          识别目标工具，却很少在这种转变下抑制行动；原始模型中最高的切换静音率
+                                                  highest raw switch mute rate is 14%. We then use VOX G ATE as a post-training                                                                  为 14%。随后我们以 VOXGATE 作为训练后案例研究。监督训练会将 91.3%
+                                                  case study. Supervised training mutes 91.3% of switched commands while choos-                                                                  的切换命令静音，同时对全部近场佩戴者命令和纯文本控制项都选择正确工具。
+                                                  ing the correct tool for all nearby wearer commands and text-only controls. An
+                                                  exploratory GRPO stage has similar switch performance; side-talk accuracy rises                                                                探索性 GRPO 阶段具有类似的切换表现；旁谈准确率从 68.4% 升至 70.9%，
+                                                  from 68.4% to 70.9%, and self-talk muting from 52.0% to 60.0%. Factorized                                                                      自语静音率从 52.0% 升至 60.0%。因子化控制识别出独立的声源变化效应，
+                                                  controls identify an independent source-change effect, while sensitivity to the far-                                                           而对远场操纵的敏感性因声学渲染而异。因此，该基准测量的是多线索声学上
+                                                  field manipulation varies across acoustic renderings. The benchmark therefore
+                                                                                                                                                                                                 下文门控，而非孤立的说话人身份。
+                                                  measures multi-cue acoustic-context gating rather than isolated speaker identity.
+
+
+                                         1   I NTRODUCTION                                                                                                                                1 引言
+
+                                         Voice agents increasingly perform consequential actions: they schedule appointments, send mes-                                                   语音智能体越来越多地执行具有后果的操作：它们安排预约、发送消息、下达订单并控制物理
+                                         sages, place orders, and control physical systems. A spoken instruction carries both textual content,                                            系统。口头指令既承载文本内容，用以指明操作，也承载声学和对话语境，用以表明该话语是
+                                         which specifies an action, and acoustic and conversational context, which indicates whether the ut-
+                                                                                                                                                                                          否是对助手说的。旁观者可以像用户一样说出同一命令，而用户也可能在思考出声时提到某个
+                                         terance is addressed to the assistant. A bystander can utter the same command as the user, and a user
+                                         can mention a command while thinking aloud. An agent that relies on text alone may recognize the                                                 命令。仅依赖文本的智能体可能识别出所请求的操作，却作出错误的执行决定。
+                                         requested operation while making the wrong decision to act.
+                                         Existing systems often place keyword spotting, device-directed speech detection, or speaker verifi-                                              现有系统通常将关键词检测、设备定向语音检测或说话人验证置于智能体之前（Mallidi et al., 2018; Nam et
+                                         cation before the agent (Mallidi et al., 2018; Nam et al., 2026). End-to-end Audio LLMs instead                                                  al., 2026）。端到端 Audio LLM 则改为暴露一个策略，该策略可以保持沉默、回答或调用工具。现有评估通常
+                                         expose one policy that can remain silent, answer, or invoke a tool. Existing evaluations usually pair                                            将
+                                         well-formed requests with a response or tool label, so high tool-selection accuracy does not show                                                格式良好的请求与响应或工具标签配对，因此高工具选择准确率并不能表明声学语境控制
+                                         that acoustic context controls execution. We ask a narrower action-level question: when the speci-
+                                                                                                                                                                                          执行。我们提出一个更窄的操作层面问题：当指定词语保持不变，但触发来自不同的声学
+                                         fied words are held fixed but the trigger comes from a different acoustic source and scene, does an
+                                         Audio LLM act or remain silent?                                                                                                                  来源和场景时，Audio LLM 会执行还是保持沉默？
+                                         We study this question with VGB ENCH, a 1,018-item diagnostic benchmark for agentic addressed-                                                   我们使用 VGBENCH 研究这个问题，这是一个包含 1,018 个项目的诊断基准，用于评估 智能体被寻址性。
+                                         ness. It contains 395 side-talk recordings, 223 self-talk recordings, and 400 paired speaker-switch                                              它包含 395 段旁谈录音、223 段自语录音和 400 个成对的说话人切换案例。每个项目都映射到一个共享动
+                                         cases. Every item maps to a shared action space comprising [Mute], a tool call, and a natural-                                                   作空间，该空间包含 [Mute], 工具调用，以及一个自然-
+                                             ∗
+                                               Equal contribution.                                                                                                                          同等贡献。†本工作完成于 Yanjie 在腾讯 LIGHTSPEED 实
+                                                                                                                                                                                            ∗
+                                             †
+                                             ‡
+                                               Work done during Yanjie’s internship at Tencent LIGHTSPEED.                                                                                  习期间。‡通讯作者。
+                                               Corresponding author.
+
+
+                                                                                           1                                                                                                                                    1
+language answer. Side-talk tests conversational attribution within one recording; self-talk tests          语言回答。旁谈测试单个录音内的对话归因；自语测试类似命令的独白；说话人切换将目
+command-like monologues; speaker-switch reverses the target from a tool call to [Mute] while               标从工具调用反转为 [Mute] ，同时保留指定的上下文和触发词。切换条件共同改变触发
+preserving the specified context and trigger words. The switch condition jointly changes trig-
+ger source, far-field rendering, and a 600 ms boundary. It therefore tests a controlled wearer-to-         源、远场渲染和 600 ms 边界。因此，它测试的是受控的佩戴者到旁观者的来源与场景转
+bystander source-and-scene shift, not isolated speaker identity.                                           变，而非孤立的说话人身份。
+We evaluate six raw Audio LLMs and three training-free adaptations under the same standardized             我们在同一标准化动作契约下评估了六个原始 Audio LLM 和三种免训练适配。最强的原始切换
+action contract. The strongest raw switch mute rate is 14%, and the strongest training-free result         命令静音率为 14%，最强的免训练结果为 6%，即使目标工具选择率很高也是如此。例如，
+is 6%, even when target-tool selection is high. Step-Audio-R1.1, for example, selects the target
+                                                                                                           Step-Audio-R1.1 在同说话人和纯文本控制项上的目标工具选择率分别为 96% 和 97%，但仅对
+tool on 96% and 97% of same-speaker and text-only controls, respectively, but mutes only 1% of
+switched commands. These results expose a gap between recognizing command content and using                1% 的切换命令执行静音。这些结果揭示了识别命令内容与利用声学-语用证据控制动作之间存
+acoustic-pragmatic evidence to control action.                                                             在差距。
+We then use VOX G ATE as a post-training case study. Supervised fine-tuning combines the training          随后我们将 VOXGATE 作为训练后案例研究。监督微调将 VGBENCH 的训练分区与来自
+partition of VGB ENCH with answer, abstention, tool-use, and translation examples from WearVox.            WearVox 的答案、弃答、工具使用和翻译示例相结合。它解释了观察到的大部分门控改进，对
+It accounts for most of the observed gating improvement, muting 91.3% of switched commands                 91.3% 的切换命令执行静音，同时为所有附近的佩戴者命令和纯文本控制项选择正确工具。探索性反
+while choosing the correct tool for all nearby wearer commands and text-only controls. An ex-
+                                                                                                           事实配对 GRPO 阶段产生了类似的切换静音效果。在一次运行中，旁谈准确率从 68.4% 上升到
+ploratory counterfactual-pair GRPO stage yields similar switch muting. In one run, side-talk accu-
+racy rises from 68.4% to 70.9%, self-talk muting from 52.0% to 60.0%, and WearVox overall from             70.9%，自语静音率从 52.0% 上升到 60.0%，WearVox 总体从 72.14% 上升到 76.30%。这些差异
+72.14% to 76.30%. These differences do not isolate the effect of pair-aware grouping. Factorized           并未分离出配对感知分组的效果。因子化控制表明，源变化会独立影响动作，而远场渲染会对 60%
+controls show that source change affects action independently, while far-field rendering mutes 60%         的同说话人触发执行静音，符合邻近规则的要求。我们进一步使用等预算线索平衡 SFT 来测试这些
+of same-speaker triggers, as the proximity rule requires. We further use equal-budget cue-balanced
+                                                                                                           线索如何影响动作。
+SFT to test how these cues affect action.
+Our contributions are:                                                                                     我们的贡献如下：
+
+• Action-level benchmark. VGB ENCH evaluates side-talk, self-talk, and text-matched source-                • 动作级基准。VGBENCH 在统一的静默、工具和回答接口下评估旁谈、自谈以及文本匹配的源与场景偏
+  and-scene shifts under one silence, tool, and answer interface.                                          移。
+
+• Behavioral diagnosis. Full-corpus evaluation shows that current systems can recover target tools         • 行为诊断。全语料评估表明，当前系统能够恢复目标工具，却未能使执行以声学和对话证据为条件。
+  while failing to condition execution on acoustic and conversational evidence.
+• Post-training case study. Joint supervised training shows that the measured gate is learnable            • 后训练案例研究。联合监督训练表明，所测量的门控是可学习的，且不会使阳性对照崩
+  without collapsing the positive controls; exploratory GRPO and factorized controls characterize          溃；探索性 GRPO 和因子化对照刻画了剩余的增益与线索依赖。
+  the remaining gains and cue dependence.
+
+
+2   R ELATED W ORK                                                                                         2 相关工作
+
+
+Addressedness and voice-agent evaluation. Voice-assistant pipelines traditionally treat “was I             受话性与语音智能体评估。 语音助手流水线传统上将“我是否在对之说话？”视为单独的检测问题，
+spoken to?” as a separate detection problem, using keyword spotting, device-directed-utterance de-         使用关键词识别、设备定向话语检测、说话人验证，或注视等额外信号（Mallidi et al., 2018;
+tection, speaker verification, or additional signals such as gaze (Mallidi et al., 2018; Siegert et al.,   Siegert et al., 2022; Zhang & Rekimoto, 2025; Nam et al., 2026）。近期基准将这些相关决策带入
+2022; Zhang & Rekimoto, 2025; Nam et al., 2026). Recent benchmarks bring related decisions into
+                                                                                                           更丰富的智能体设置中。WearVox 使用 3,842 段真实第一人称多通道录音，并包含旁谈拒绝和工具
+richer agent settings. WearVox uses 3,842 real egocentric multichannel recordings and includes both
+side-talk rejection and tool calling (Lin et al., 2026). Audio2Tool evaluates spoken tool use across       调用（Lin et al., 2026）。Audio2Tool 评估直接、组合和声学混合查询中的口语工具使用（
+direct, compositional, and acoustically mixed queries (Pahwa et al., 2026). ProVoice-Bench studies         Pahwa et al., 2026）。ProVoice-Bench 研究主动式语音智能体应在何时介入或保持休眠（Xu et
+when proactive voice agents should intervene or remain dormant (Xu et al., 2026). VGB ENCH com-            al., 2026）。VGBENCH 通过文本匹配的动作对比来补充这些资源：同一指定命令在一种条件下支持
+plements these resources with text-matched action contrasts: the same specified command supports
+                                                                                                           执行，在另一种条件下支持静默。这种设计将声学上下文的使用直接连接到动作选择，而不是将受话
+execution in one condition and silence in another. This design connects acoustic-context use directly
+to action selection rather than treating addressedness as a separate front-end score.                      性视为单独的前端分数。
+
+
+Acoustic and paralinguistic evidence in Audio LLMs. MMAU and MMAU-Pro cover broad                          音频大语言模型中的声学与副语言证据。MMAU 和 MMAU-Pro 涵盖广泛的音频理解与推理（
+audio understanding and reasoning (Sakshi et al., 2025; Kumar et al., 2026). Other benchmarks              Sakshi et al., 2025; Kumar et al., 2026）。其他基准研究 MMSU 中的韵律与音系（Wang et al.,
+study prosody and phonology in MMSU (Wang et al., 2026), stress and intonation in WildSpeech-              2026）、WildSpeech-Bench 中的重音与语调（Zhang et al., 2025b）、SD-Eval 中的说话人属性
+Bench (Zhang et al., 2025b), speaker attributes in SD-Eval (Ao et al., 2024), multi-speaker ground-
+                                                                                                           （Ao et al., 2024）、MSU-Bench 中的多说话人 grounding（Sun et al., 2026），以及 AUDITA 中
+ing in MSU-Bench (Sun et al., 2026), and audio-dependent questions in AUDITA (Kabir et al.,
+2026). Closest to our diagnostic design, VoxParadox constructs linguistic-acoustic conflicts to test       的音频依赖问题（Kabir et al., 2026）。与我们的诊断设计最接近的是，VoxParadox 构造语言-声
+whether a model uses paralinguistic cues (Pang et al., 2026). Its targets are perceptual answers; VG-      学冲突，以测试模型是否使用副语言线索（Pang et al., 2026）。其目标是感知性答案；
+B ENCH instead asks whether acoustic and pragmatic evidence changes the choice to remain silent,           VG-BENCH 则追问声学与语用证据是否会改变选择保持沉默、回答或调用工具。
+answer, or invoke a tool.
+
+
+                                                   2                                                                                             2
+1. Benchmark construction (1,018 items)                                                                                                                                                                                                                                                                  1. 基准构建（1,018 项）
+                              Side-talk (395 retained recordings)                            Self-talk (223 retained recordings)                                                   Speaker-switch (400 items)                                                                                                                 旁谈（保留395条录音）                         自我对话（223条保留录音）                                     说话人转换（400 项）
+                                                  8 order × content                                  Command core + non-addressed frame
+                                                                                                                                                                                           100 seed + 300 generated = 400 items                                                                                                         8个顺序 × 内容                                                                           100 个种子 + 300 生成的 = 400 项目
+                                                                                                                                                                                                                                                                                                                                                                         命令核心 + 非寻址帧
+                                                  configurations                                                                                                                                         10 tools × 40 items                                                                                                                                                                                                        10 个工具 × 40 项目
+                                                                                                                                                                                                                                                                                                                                        配置
+                                                 50% both verbatim                                        7 discourse frames                                                                                                                                                                                                           50%两者逐字                            7个语篇框架
+                                                 50% one rewritten                                                                                                                                                                                                         Retained VGBench                                                                                                                                                                                    保留的 VGBench
+                                                                                                        • Planning                • Rhetorical                                                                                                                                                                                         50%其中一个改写
+                                                                                                                                                                                                                                                                                                                                                                         • 规划             • 修辞
+ WearVox-style                                                                                          • Regret                  question                           context       imperative     validate     separate       RIR + room      2-author                                                    WearVox 风格                                                                      问题                 上下文      命令式      验证         分离         RIR + 房间   2-作者
+                                                                                                                                                                    validation       triggers     triggers     TTS calls      rendering        verify                                                                                                                    • 后悔                                验证        触发器     触发器        TTS 调用     渲染          验证
+ utterance pools                                                400 scripts                             • Quotation               • Conditional
+                                                                                                                                                                                                                                                                                                          话语池                                          400个脚本            • 引用             • 条件
+                                                             (before filtering)                         • Sarcasm                 • Metaphor
+                                                                                                                                                                                                                                                                                                                                                 （过滤前）                                    • 隐喻
+                                                                                                                                                                                       Specified context + trigger text held fixed                                                                                                                                       • 讽刺                                              指定上下文 + 触发文本保持固定
+ • Tool-call utterances                                                                                                                                                                                                                                                                                  • 工具调用话语
+
+ • Assistant-directed
+                                                             ···                                                                                                       Text-matched acoustic counterfactual pair                     Text-only control
+                                                                                                                                                                                                                                                                           395 + 223 + 400                                                       ···                                                           文本匹配的声学反事实对                             纯文本控制                   395 + 223 + 400
+                                                                                                                                                                                                                                                                                                         • 面向助手的
+   conversational speech
+                                              Two utterances by the same                                                                                                Same-speaker                     Switch                         Text-only                           = 1,018 items                  对话语音
+                                                                                                                                                                                                                                                                                                                                     同一说话者的两个话语                                                                同一说话人                 切换                    仅文本                  = 1,018 个条目
+ • Bystander-directed                        speaker within each recording                                                                                                                                                                                                                               • 面向旁观者                     每个录音中的说话者
+                                                                                                             16 kHz          2-author                                                               A — context — B                                                                                                                                                                                                             A —上下文 —B
+   conversational speech                                                                      record                                         filter                    A — context — A                                                                                (1,818 condition-level inputs)       对话语音                                                             16 kHz    2位作者         筛选          A —上下文 —A                                                   （1,818 个条件级输入）
+                                                                                                             mono             verify                                                                     │ trigger                                                                                                                                                 记录       mono                                                   │ 触发
+                                                                                                                                                                          │ trigger                  B: 1 of 8 voices                                                                                                                                                                     验证                       │ 触发器         B：8 个声部中的 1 个
+                                                                                                                                                                                                                                        same text                                                                                                                                                                                                          相同文本
+                                                                                                                                                                                                                                                                           (audio/text x, prompt p,                                                                                                                                                                            （音频/文本x，提示词 p，
+                                                                                                                                                                          Target: Tool              Target: [Mute]                     Target: Tool                                tools T)                                                                                                                     目标：工具                                                               工具 T）
+                                  record
+                                               16 kHz       2-author           filter                                                                                                                                                                                                                                                16 kHz      2 位作者
+                                                                                                                                                                                                                                                                                                                                                            筛选                                                                   目标：[静音]                  目标：工具
+                                                                                                       223 retained recordings                                                                                                                                                                                                 录音
+                                               mono          verify                                                                                                                                                                                                                                                                  mono                                223条保留录音
+
+
+
+
+                                                                                                                                                                                                                                                                                     →
+                                                                                                                                                                                                                                                                                                                                                  验证
+                                                                                                                                                                                                                                                                          [Mute] | Tool | Answer                                                                                                                                                                               [静音] | 工具 | 回答
+                                           395 retained recordings                                               Target: [Mute]                                                           400 speaker-switch items                                                                                                                  395 条保留录音                                    目标：[静音]                                    400 个说话人切换条目
+                                           varied factor: intended recipient                             varied factor: discourse function                                            varied factor: trigger source + acoustic scene                                                                                                变化因素：预期接收者                            变化因素：话语功能                                    变化因素：触发源 + 声学场景
+
+
+
+2. Unified benchmark evaluation                                                                                                                                                                                                                                                                          2. 统一基准评估
+       1. Systems                                2. Shared protocol + inference                                                               3. Output normalization and scoring                                   4. Scenario-wise metrics                               (no single aggregate score)
+                                                                                                                                                                                                                                                                                                            1. 系统                      2. 共享协议 + 推理                                                3. 输出归一化与评分                                 4. 按场景的指标                       （无单一综合分数）
+
+                                                     Full benchmark: 1,018 items             audio + pragmatic evidence                       [Mute]             exact normalized match                            Side-talk                     Self-talk                     Speaker-switch                                                 完整基准测试：1,018 个条目     音频 + 语用证据                       [静音]     精确归一化匹配                         侧谈                   自我对话             说话人切换
+               6 raw Audio LLMs                      (1,818 condition-level inputs)                                                                                                                                                                                                                             6 个原始 Audio LLMs
+                                                                                                                                                                                                                                                                                                                                              （1,818 个条件级输入）
+               3 training-free                                                                                                                                   target tool-name match;                            Assistant-only             Correct mute ↑                     Same-speaker Tool ↑           3 个免训练方法                                                                                    目标工具名称匹配；                          仅助手              正确静音 ↑             同一说话人工具 ↑
+                                                     same action instruction                              Audio LLM                             Tool                                                                attribution                                                   Switch [Mute] ↑                                             相同的动作指令                     音频 LLM                    Tool
+               Qwen adaptations                                                                                                                                  arguments excluded                                                                                                                                                                                                                         参数已排除
+                                                                                                                                                                                                                    accuracy                   False-trigger rate ↓               Text-only Tool ↑              Qwen 适配                                                                                                                        归因
+                                                                                                                                                                                                                                                                                                                                                                                                                                               准确率              误触发率 ↓
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   切换 [静音] ↑
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   纯文本工具 ↑
+                                                     temperature 0 / greedy                                                                                                                                                                    (any non-[Mute] output)                                                                        温度 0 / 贪心解码                                                                                                       （任何非[静音] 输出）
+                                                                                                                                                                 side-talk only · fixed judge ·                                                                                                                                                                                                             仅限侧谈 · 固定评判 ·
+                                                     no benchmark-specific training                                                          Answer                                                                                                                                                                                                                                                答案
+                                                                                          [Mute]          Tool         Answer                                    assistant alone = correct                                              Interpret jointly · no aggregate score                                                                未进行针对基准的专门训练        [静音]    Tool                              仅助手 = 正确                                       联合解读 · 无汇总得分
+                frozen backbone                                                                                                                                                                                                                                                                                    冻结骨干网络                                                            答案
+                                                     no auxiliary addressedness /                                                                                                                                                                                                                                                             无辅助寻址性 /
+                                                     speaker verification               Does the evidence change the decision to act?                 Judge applies only to Side-talk answers.                             All-mute shortcut                             Command-text shortcut                                                说话人验证              证据是否会改变采取行动的决定？                        评判仅适用于侧谈回答。                                全部静音快捷键                 命令文本快捷键
+
+
+
+
+Figure 1: Overview of VGB ENCH construction and evaluation. The benchmark contains 1,018                                                                                                                                                                                                                 图1：VGBENCH 构建与评估概览。该基准包含 1,018 个条目，涵盖旁谈、自言自语和说话
+items across side-talk, self-talk, and speaker-switch scenarios. Each speaker-switch item has same-                                                                                                                                                                                                      人切换场景。每个说话人切换条目都有同一说话人、切换和纯文本条件。指标被联合解读，
+speaker, switch, and text-only conditions. Metrics are interpreted jointly rather than collapsed into
+one aggregate score.                                                                                                                                                                                                                                                                                     而不是合并为一个聚合分数。
+
+
+Post-training and inference-time adaptation. GRPO was introduced in DeepSeekMath (Shao                                                                                                                                                                                                                   后训练与推理时适应。GRPO 在 DeepSeekMath 中提出（Shao et al., 2024），现用于音
+et al., 2024) and is now used for audio reasoning post-training (Li et al., 2025; Wen et al.,                                                                                                                                                                                                            频推理后训练（Li et al., 2025; Wen et al., 2025; Zhang et al., 2025a）。Omni-R1 表明，
+2025; Zhang et al., 2025a). Omni-R1 shows that text-only fine-tuning can improve audio bench-
+marks (Rouditchenko et al., 2025), while recent methods explicitly measure audio contribution or                                                                                                                                                                                                         仅文本微调可以提升音频基准（Rouditchenko et al., 2025），而近期方法显式测量音频
+penalize late-stage loss of audio attention (He et al., 2026; Xiao et al., 2026). Training-free systems                                                                                                                                                                                                  贡献或惩罚后期音频注意力的丧失（He et al., 2026; Xiao et al., 2026）。免训练系统则通
+instead structure inference through tool orchestration, acoustic DSP, or chunked listening (Wijngaard                                                                                                                                                                                                    过工具编排、声学 DSP 或分块聆听来构建推理（Wijngaard et al., 2025; Maben et al.,
+et al., 2025; Maben et al., 2025; Xiong et al., 2025; Chiang et al., 2026). We evaluate representative
+inference-time adaptations as behavioral probes and use post-training to test whether the VGB ENCH                                                                                                                                                                                                       2025; Xiong et al., 2025; Chiang et al., 2026）。我们将代表性的推理时适应作为行为探
+action boundary is learnable.                                                                                                                                                                                                                                                                            针进行评估，并使用后训练来检验 VGBENCH 动作边界是否可学习。
+
+3         VGB ENCH : ACTION -L EVEL A DDRESSEDNESS D IAGNOSTICS                                                                                                                                                                                                                                          3 VGBENCH：动作级被指向性诊断
+
+3.1           TASK F ORMULATION                                                                                                                                                                                                                                                                          3.1 任务形式化
+
+An agentic voice assistant receives audio x, a system prompt p, and available tools T . It selects one                                                                                                                                                                                                   一个智能体语音助手接收音频 x、系统提示 p 和可用工具 T 。它从三种动作中选择一种：
+of three actions: M UTE, T OOL, or A NSWER. M UTE returns the literal token [Mute] and executes                                                                                                                                                                                                          MUTE、TOOL 或 ANSWER。MUTE 返回字面 token [Mute]并不执行任何操作；TOOL 发出
+nothing; T OOL emits one structured call; and A NSWER returns natural language without invoking a
+                                                                                                                                                                                                                                                                                                         一次结构化调用；ANSWER 返回自然语言而不调用工具。我们将基于文本语义、预期接收者和
+tool. We call the joint decision based on textual semantics, intended recipient, and acoustic source
+agentic addressedness. Unlike perceptual classification, this task tests whether contextual evidence                                                                                                                                                                                                     声学来源的联合决策称为智能体被指向性。与感知分类不同，该任务测试上下文证据是否会改
+changes an executable decision.                                                                                                                                                                                                                                                                          变可执行决策。
+
+3.2           D IAGNOSTIC D ESIGN                                                                                                                                                                                                                                                                        3.2 诊断设计
+
+VGB ENCH uses three scenario families to separate complementary failures that are usually col-                                                                                                                                                                                                           VGBENCH 使用三个场景族来区分通常被合并为单一语音助手准确率分数的互补性失败。
+lapsed into a single voice-assistant accuracy score. Side-talk asks which utterance within a local ex-                                                                                                                                                                                                   Side-talk 询问在局部交流中哪一句话语授权采取行动。Self-talk 询问当话语框架将这些词
+change licenses action. Self-talk asks whether command-like words are sufficient to trigger an action
+when the discourse frame marks them as non-instructions. Speaker-switch pairs hold the specified                                                                                                                                                                                                         标记为非指令时，类似命令的词语是否足以触发行动。Speaker-switch 配对在受控地改变
+words fixed while reversing the target action under a controlled change in source and scene. The                                                                                                                                                                                                         来源和场景的情况下保持指定词语不变，同时反转目标行动。每个场景族附带的阳性对照
+positive controls attached to each family are essential for interpretation: side-talk checks whether                                                                                                                                                                                                     对于解释至关重要：Side-talk 检查模型是否仅对被告知的话语采取行动，Self-talk 测试模
+the model acts only on the addressed utterance, self-talk tests whether it rejects lexical command
+shortcuts, and speaker-switch requires action reversal while retaining tool recognition.                                                                                                                                                                                                                 型是否拒绝词汇层面的命令捷径，而 Speaker-switch 要求反转行动，同时保留工具识别。
+
+
+                                                                                                                                        3                                                                                                                                                                                                                                                      3
+Side-talk. Each of 395 recordings contains two consecutive utterances from the same stored                   旁谈。 395 段录音中的每一段都包含来自同一存储说话人的两个连续话语，一个指向助手，
+speaker, one directed to the assistant and one to a nearby person, with balanced order. Using one            一个指向附近的人，顺序保持平衡。使用同一个声音消除了说话人身份作为解释的可能，
+voice removes speaker identity as an explanation and tests pragmatic attribution. The agent should
+act only on the assistant-directed utterance. The scripts also balance tool-like and conversational          并测试语用归因。智能体应仅对指向助手的话语采取行动。脚本还平衡了类似工具的内容
+content, so utterance position or the presence of an obvious command is not by itself a reliable             和对话内容，因此话语位置或明显命令的存在本身并不是可靠的决策规则。
+decision rule.
+
+Self-talk. The 223 recordings contain command-like monologues framed as planning, regret, quo-               自我对话。 这 223 条录音包含类似命令的独白，其形式包括计划、后悔、引用、讽刺、反
+tation, sarcasm, rhetorical questions, and related discourse forms. Every item targets [Mute] even           问及相关话语形式。每一项都指向 [Mute] ，即使话语中包含可映射到可用工具的命令。
+when the words contain a command that maps to an available tool.
+
+Speaker-switch. The 400 counterfactual pairs cover ten consequential tools. For these tool trig-             说话人切换。 这 400 组反事实配对涵盖十种有后果的工具。对于这些工具触发，我们采用保守
+gers, we adopt a conservative wearable authorization rule: Tool ⇐⇒ same authorized source ∧                  的可穿戴设备授权规则：工具 ⇐⇒ 同一授权来源 ∧近场。不同来源或远场触发则指向 [
+near-field. A different source or a far-field trigger targets [Mute]. In the same-speaker condition,
+                                                                                                             Mute]。在同一说话人 条件下，来源 A（会话发起者）说出上下文和近场触发，目标是工具调
+source A (the session initiator) speaks the context and near-field trigger, and the target is a tool call.
+In the switch condition, A speaks the context and a bystander source B speaks the same trigger under         用。在切换 条件下，A 说出上下文，旁观者来源 B 在 600 毫秒边界后以固定远场渲染说出同一
+fixed far-field rendering after a 600 ms boundary, so the target is [Mute]. The text-only condition          触发，因此目标为 [Mute]。纯文本 条件使用相同词语并保留工具目标。该对比保持指定文本
+uses the same words and retains the tool target. The contrast holds specified text fixed while jointly       不变，同时联合改变来源、距离渲染和时间边界。根据此规则，来自 A 的远场触发也指向[
+changing source, distance rendering, and temporal boundary. A far-field trigger from A also targets
+[Mute] under this rule.                                                                                      Mute]。
+
+3.3   C ONSTRUCTION AND S PLITS                                                                              3.3 构建与划分
+
+Side-talk and self-talk scripts are derived from tool-like, assistant-directed, and bystander-directed       旁谈和自谈话术脚本来自工具式、面向助手和面向旁观者的种子池。其构建平衡了话语顺
+seed pools. Their construction balances utterance order and content type and places command                  序和内容类型，并将命令核心置于不同的话语框架中。受委托的说话人将这些脚本录制为
+cores in varied discourse frames. Commissioned speakers recorded the scripts as natural speech.
+Recordings are converted to 16 kHz mono PCM WAV and retained after two rounds of annota-                     自然语音。录音被转换为 16 kHz 单声道 PCM WAV，并在经过两轮标注、目标标签验证
+tion, target-label verification, and script-audio consistency checks, yielding 395 side-talk and 223         和脚本-音频一致性检查后保留，最终得到 395 条旁谈录音和 223 条自谈录音。
+self-talk recordings.
+Speaker-switch uses 100 seed cases and 300 generated cases, balanced across ten consequential                说话人切换使用 100 个种子案例和 300 个生成案例，在十个后果性工具之间平衡，每个工具
+tools with 40 cases per tool. Context and trigger segments are synthesized separately using eight            40 个案例。上下文和触发片段使用八个不同声音分别合成，以模拟说话人变化。同一说话人条
+distinct voices to simulate speaker changes. The same-speaker condition uses source A for both
+                                                                                                             件对两个片段都使用源 A。切换条件对上下文使用源 A，插入 600 ms 静音，并使用固定的远场
+segments. The switch condition uses source A for context, inserts 600 ms of silence, and renders the
+trigger from source B with a fixed far-field room transform. Segments are normalized to −20 dBFS             房间变换从源 B 渲染触发片段。片段在导出为 16 kHz 单声道之前，被归一化到 −20 dBFS 并
+with 5 ms fades before 16 kHz mono export. The manifest records voice, duration, normaliza-                  带有 5 ms 淡入淡出。清单记录声音、时长、归一化、峰值、边界和房间配置。这些控制使聚合
+tion, peak, boundary, and room configuration. These controls make the aggregate switch condition             切换条件可复现，同时也定义了其范围：它是一种联合的源、距离和边界干预。
+reproducible, while also defining its scope: it is a joint source, distance, and boundary intervention.
+Raw models and training-free adaptations are evaluated on the full corpus. Post-training uses one            原始模型与免训练适配在全量语料上评估。训练后使用每个场景内一次约 80/20 的条目划
+approximately 80/20 item split within each scenario, including 320/80 speaker-switch pairs. Only             分，其中包括 320/80 个说话人切换对。只有训练分区进入 SFT 或 GRPO，所有报告的
+the training partition enters SFT or GRPO, and all reported post-training addressedness scores use
+the disjoint held-out partition. This protocol establishes item-level separation; it does not establish      training-after addressedness 分数均使用不相交的留出分区。该协议建立了条目级分离；
+held-out voice, template-family, or tool-family generalization.                                              它并未建立留出语音、模板族或工具族的泛化。
+
+3.4   E VALUATION C ONTRACT                                                                                  3.4 评估契约
+
+Every system receives the same tool inventory and instruction to emit exactly one of three ac-               每个系统都收到相同的工具清单，并被指示精确输出三种动作形式之一。规范静音输出为 [
+tion forms. The canonical mute output is [Mute]. A tool action is a single structured object,                Mute]。工具动作是单个结构化对象，<|TOOL|>{{"name": name, "params": {...}}}</|T
+<|TOOL|>{{"name": name, "params": {...}}}</|TOOL|>, and an answer con-
+                                                                                                             OOL|>，而答案既不包含规范工具调用，也不包含 [Mute]。我们全程使用贪心解码。模型特
+tains neither a canonical tool call nor [Mute]. We use greedy decoding throughout. Model-specific
+wrappers preserve required chat templates and response terminators, but evaluation always applies            定的包装器保留所需的聊天模板和响应终止符，但评估始终应用相同的规范化解析器和目标动
+the same normalized parser and target action.                                                                作。
+We report scenario-specific metrics jointly. Speaker-switch evaluation combines switch-condition             我们联合报告场景特定指标。说话人切换评估将切换条件下的静音率与同说话人控制和纯文本
+mute rate with target-tool selection in the same-speaker and text-only controls, preventing an always-       控制中的目标工具选择相结合，防止始终静音的策略获得高分。自说使用静音率，旁说衡量模
+mute policy from scoring well. Self-talk uses mute rate, and side-talk measures whether the model
+                                                                                                             型是否仅对面向助手的语句采取行动。正确的工具输出必须可解析并匹配目标工具名称。参数
+acts only on the assistant-directed utterance. A correct tool output must be parseable and match the
+target tool name. Arguments remain in prediction records but are outside the VGB ENCH score, so              保留在预测记录中，但不在 VGBENCH 评分范围内，因此该指标衡量的是工具名称选择，而不
+the metric measures tool-name selection rather than complete executable-call accuracy.                       是完整可执行调用的准确性。
+
+
+                                                    4                                                                                        4
+Table 1: Action-selection results on the complete VGB ENCH corpus. Values are percentages.              表1：在完整 VGBENCH 语料上的动作选择结果。数值为百分比。Speaker-switch 报告近
+Speaker-switch reports switch mute rate and target-tool selection in the near-field same-speaker and    场同说话人和纯文本阳性对照中的切换静音率与目标工具选择。侧谈结合规范工具选择以
+text-only positive controls. Side-talk combines canonical tool selection and free responses scored
+by the fixed Qwen3.5-35B judge.                                                                         及由固定 Qwen3.5-35B 评判器评分的自由回答。
+                                 Side-talk     Self-talk     Switch      Same-speaker       Text-only
+                                                                                                                                       侧谈            自我对话         切换          同一说话人             纯文本
+Method                            correct       mute          mute          select.          select.    方法                             正确             mute        mute          选择。              选择。
+ Raw Audio LLMs                                                                                          原始音频大语言模型
+Qwen3-Omni                           39.0            57.0         1                77             81    Qwen3-Omni                         39.0            57.0        1                77            81
+Nemotron-Omni                        32.7            28.7         0                84             85    Nemotron-Omni                      32.7            28.7        0                84            85
+Gemini-3.8-flash                     32.4            68.6         7                80             71    Gemini-3.8-flash                   32.4            68.6        7                80            71
+Kimi-Audio-7B                        38.2            30.5        14                53             44    Kimi-Audio-7B                      38.2            30.5       14                53            44
+Step-Audio-R1.1                      41.0            22.4         1                96             97    Step-Audio-R1.1                    41.0            22.4        1                96            97
+Audio Flamingo 3                     36.0             1.0         0                 0              0    Audio Flamingo 3                   36.0             1.0        0                 0             0
+ Training-free adaptations                                                                               免训练适配
+Qwen + AURA adaptation               46.6            63.2         0                95             99    Qwen + AURA 适配                     46.6            63.2        0                95            99
+Qwen + TwS adaptation                23.0            85.7         6                90             82    Qwen + TwS 适配                      23.0            85.7        6                90            82
+Qwen + SHANKS adaptation             17.5            79.8         1                 1             81    Qwen + SHANKS 适配                   17.5            79.8        1                 1            81
+
+
+
+Side-talk tool items use the canonical parser. For free responses, a fixed Qwen3.5-35B-A3B judge        旁说工具项使用规范解析器。对于自由响应，固定的 Qwen3.5-35B-A3B 评判器分配四种
+assigns one of four labels: assistant-directed, bystander-directed, both, or neither. Only assistant-   标签之一：面向助手、面向旁观者、两者皆是或两者皆非。只有仅面向助手是正确的。相
+directed alone is correct. The same system instruction, decoding configuration, parser, judge, pre-
+diction schema, and summary procedure are frozen for each comparison block. The current protocol        同的系统指令、解码配置、解析器、评判器、预测模式和汇总流程在每个比较块中均被冻
+has no reported human-agreement estimate for the judge; this affects the free-response subset rather    结。当前协议没有报告评判器的人工一致性估计；这影响自由响应子集，而不影响规则评
+than the rule-scored mute and tool decisions. Appendix A records the result artifacts and scorer        分的静音和工具决策。附录 A 记录了结果工件和评分器来源。
+provenance.
+
+4     O FF - THE -S HELF ACTION P OLICIES                                                               4 现成动作策略
+
+4.1    S ETUP                                                                                           4.1 设置
+
+We evaluate six raw Audio LLMs: Qwen3-Omni-30BXu et al. (2025), Nemotron-3-Nano-Omni-                   我们评估了六个原始音频 LLM：Qwen3-Omni-30BXu et al. (2025)、
+30BDeshmukh et al. (2026), Gemini-3.8-flashDoshi & Popa (2026), Kimi-Audio-7B (Ding et al.,             Nemotron-3-Nano-Omni-30BDeshmukh et al. (2026)、Gemini-3.8-flashDoshi & Popa (2026)、
+2025), Step-Audio-R1.1 (Tian et al., 2025), and Audio Flamingo 3 (Ghosh et al., 2026). We also test     Kimi-Audio-7B (Ding et al., 2025)、Step-Audio-R1.1 (Tian et al., 2025) 和 Audio Flamingo 3 (Ghosh
+local, method-style adaptations of AURA, Thinking with Sound (TwS), and SHANKS on the Qwen              et al., 2026)。我们还在 Qwen 主干上测试了 AURA、Thinking with Sound (TwS) 和 SHANKS 的本地、
+backbone (Maben et al., 2025; Xiong et al., 2025; Chiang et al., 2026). These implementations probe
+                                                                                                        方法式适配 (Maben et al., 2025; Xiong et al., 2025; Chiang et al., 2026)。这些实现探究推理时提示、声
+inference-time prompting, acoustic tools, and chunked reasoning; they are not claimed as official
+reproductions. All systems use temperature zero, the same action instruction, and the same scorer.      学工具和分块推理；它们并不声称是官方复现。所有系统均使用温度为零、相同的动作指令和相同的评分
+Model-specific normalization maps native outputs to the canonical parser, so the raw comparison         器。模型特定的归一化将原生输出映射到规范解析器，因此原始比较同时反映动作行为以及与标准化接口
+reflects both action behavior and compatibility with the standardized interface.                        的兼容性。
+
+Tool recognition does not imply acoustic-context gating. Step-Audio selects the target tool on          工具识别并不意味着声学上下文门控。Step-Audio 在同类说话者对照和纯文本对照中分别
+96% and 97% of same-speaker and text-only controls, respectively, yet mutes only 1% of switched         有 96% 和 97% 的情况选择目标工具，却仅将 1% 的切换指令静音。Kimi 的原始切换静音
+commands. Kimi has the highest raw switch mute rate at 14%, but selects the target tool on only
+53% and 44% of the two controls. These paired measurements expose failure to change the action          率最高，为 14%，但在两个对照中仅分别有 53% 和 44% 选择目标工具。这些配对测量揭
+under a source-and-scene shift, rather than a general inability to recognize tools.                     示的是在来源与场景变化下未能改变动作，而非普遍无法识别工具。
+
+Systems fail through different shortcuts. Qwen preferentially acts on the first side-talk utterance,    系统通过不同的捷径失败。Qwen 优先作用于第一句旁谈话语，Gemini 偏好较晚的话语，而
+Gemini favors the later utterance, and Step often responds to both. Audio Flamingo 3 receives           Step 常常对两者都作出响应。Audio Flamingo 3 获得零个规范工具选择得分，因为它输出了
+zero canonical tool-selection credit because it emits a different bracketed action language. This
+                                                                                                        不同的带括号动作语言。这种格式不匹配限制了阳性对照得分的跨模型比较，但并不能解释其
+format mismatch limits cross-model comparison of positive-control scores, but it does not explain
+its 1% self-talk mute rate or zero switch mute rate. The standardized interface therefore diagnoses     1% 的自我对话静音率或零切换静音率。因此，标准化接口诊断的是可部署的动作行为，而不是
+deployable action behavior, not a format-invariant latent capability.                                   格式不变的潜在能力。
+
+Inference-time adaptations change the error profile. AURA improves side-talk from 39.0% to              推理时适应会改变错误特征分布。 AURA 将 side-talk 从 39.0% 提升到 46.6%，将 self-talk 从 57.0% 提
+46.6% and self-talk from 57.0% to 63.2%, but mutes no switched commands. TwS raises self-talk           升到 63.2%，但不会静音任何已切换命令。TwS 提高了 self-talk
+
+
+                                                 5                                                                                                     5
+muting to 85.7% while side-talk falls to 23.0%, largely through overuse of silence. SHANKS also          静音率提高到 85.7%，而 side-talk 降至 23.0%，很大程度上是因为过度使用静音。SHANKS 也提高了
+raises self-talk muting, but its chunked output often violates the action grammar, leaving 1% same-      self-talk 静音率，但其分块输出常违反动作语法，只留下 1% 的同说话人工具选择。声学证据可能出现在
+speaker tool selection. Acoustic evidence may appear in intermediate reasoning without controlling       中间推理中，却不控制最终动作，这是 VoxParadox 所研究的利用差距在动作层面的对应现象。
+the final action, an action-level counterpart to the utilization gap studied by VoxParadox.
+
+5     C AN ACOUSTIC -C ONTEXT G ATING B E L EARNED ?                                                     5 声学上下文门控可以被学习吗？
+
+We use VOX G ATE as a post-training intervention rather than as evidence for a new speaker-              我们将 VOXGATE 用作训练后干预，而不是作为新的说话人识别机制的证据。监督微调是
+identification mechanism. Supervised fine-tuning is the primary intervention; an exploratory GRPO        主要干预；一个探索性的 GRPO 阶段检验配对的 rollout 是否保持或改善所学到的动作边
+stage tests whether paired rollouts preserve or improve the learned action boundary. Both stages use
+the same action contract as the benchmark.                                                               界。两个阶段都使用与基准相同的动作契约。
+
+5.1   S UPERVISED JOINT TRAINING                                                                         5.1 监督式联合训练
+
+The model outputs y ∈ {M UTE, T OOL, A NSWER}. We train a LoRA adapter on a mixture of                   模型输出 y ∈ {MUTE,TOOL, ANSWER}。我们在 VGBENCH 训练划分与 WearVox 的
+the VGB ENCH training partition and WearVox answer, abstention, tool-use, and translation exam-          answer、abstention、tool-use 和翻译示例的混合数据上训练一个 LoRA 适配器。被称呼性数
+ples. The addressedness data include side-talk attribution, self-talk mute targets, and speaker-switch
+                                                                                                         据包括 side-talk 归因、self-talk mute 目标和说话人切换反事实。在每个切换对中，匹配词支
+counterfactuals. In each switch pair, matched words support a tool call for the same-source near-field
+condition and [Mute] for the bystander condition; text-only examples retain the tool target.             持同源近场条件下的工具调用，而 [Mute]支持旁观者条件；纯文本示例保留工具目标。
+We use Qwen3-Omni-30B-A3B-Instruct with LoRA rank 32 and alpha 64 on attention q, k, v, and o            我们使用 Qwen3-Omni-30B-A3B-Instruct，在 48 层的注意力 q、 k、 v 和 o 投影上使用 LoRA rank 32
+projections across 48 layers. The audio encoder and aligner are frozen. Training uses three epochs,      和 alpha 64。音频编码器和对齐器被冻结。训练使用三个 epoch、学习率 10−4、有效批大小 32 和八个
+learning rate 10−4 , effective batch size 32, and eight H200 GPUs.                                       H200 GPU。
+For the cue-balanced SFT control, we replace only 1,212 speaker-switch audio training slots in the       对于线索平衡的 SFT 对照，我们仅替换 5,748 行混合数据中的 1,212 个说话人切换音频训练槽
+5,748-row mixture. Other task proportions, 540 optimization steps, and the LoRA configuration            位。其他任务比例、540 个优化步骤和 LoRA 配置保持不变。在 tool 和 [Mute] 这两个标签
+remain fixed. Within both tool and [Mute] labels, near/far rendering is crossed with 0/600 ms
+                                                                                                         内，近场/远场渲染与 0/600 ms 间隔交叉，并在四种组合间保持平衡。该混合数据包含远场授
+separation and balanced across the four combinations. The mixture includes far-field authorized-
+source/tool rows, making this a cue-control experiment rather than a proximity-gate training proto-      权来源/工具行，使其成为线索控制实验，而不是邻近门控训练协议。附录 H 详述了构建方式。
+col. Appendix H details the construction.
+
+5.2   E XPLORATORY COUNTERFACTUAL - PAIR GRPO                                                            5.2 探索性反事实配对 GRPO
+
+For a speaker-switch pair q = (x+ , x− ), Stage II samples K/2 completions from each condition and       对于说话人切换对 q = (x+, x−)，Stage II 从每个条件中采样 K/2 个补全，并将它们放入
+places them in one rollout group. Here x+ is the same-speaker condition with a tool target, and x−       一个 rollout 组。这里 x+ 是带有工具目标的同说话人条件， x− 是带有静音目标的切换条
+is the switched condition with a mute target. Grouping matched text with opposite actions makes
+reward normalization depend on whether the policy separates the counterfactual pair, rather than on      件。将匹配文本与相反动作分组，使奖励归一化取决于策略是否区分该反事实对，而不是
+unrelated prompt difficulty.                                                                             取决于无关的提示难度。
+Let r(yq,i , xq,i ) be the rule-based reward for completion i. We compute                                设 r(yq,i,xq,i) 为补全 i 的基于规则的奖励。我们计算
+                                                                      K                                                                                                  K
+                              r(yq,i , xq,i ) − µq                1 X                                                            r(yq,i , xq,i ) − µq                1 X
+                     Aq,i =                        ,       µq =         r(yq,i , xq,i ),           (1)                  Aq,i =                        ,       µq =         r(yq,i , xq,i ),   (1)
+                                    σq + ϵ                        K i=1                                                                σq + ϵ                        K i=1
+
+where µq and σq are calculated across both sides of the pair. Only groups with nonzero reward            其中 µq 和 σq 在配对的两侧计算。只有奖励方差非零的组才会贡献更新。这会移除每个
+variance contribute an update. This removes groups in which every sampled action receives the            采样动作都获得相同奖励、因而无法提供组内策略梯度信号的组。
+same reward and hence provides no within-group policy-gradient signal.
+A correct mute or matching tool receives +1, and an incorrect action receives −1; malformed tool         正确的静音或匹配工具获得 +1，错误动作获得 −1；格式错误的工具语法会额外产生 −0.2。
+syntax incurs an additional −0.2. For answer targets, nonempty natural language receives +0.5,           对于答案目标，非空自然语言获得 +0.5，静音获得 −1，空输出或仅工具输出获得 −0.5。
+mute receives −1, and empty or tool-only output receives −0.5. WearVox examples retain task-
+specific rewards for answer, abstention, structured tool use, and translation. We track rewards by       WearVox 示例保留针对答案、弃权、结构化工具使用和翻译的任务特定奖励。我们按场景
+scenario because an aggregate curve can hide a saturated positive control or a failed mute boundary.     跟踪奖励，因为聚合曲线可能掩盖饱和的阳性对照或失败的静音边界。除非另有说明，训
+The post-training mixture, frozen components, and decoding contract are shared with SFT unless           练后混合、冻结组件和解码契约与 SFT 共享。
+stated otherwise.
+This stage tests whether paired optimization preserves or improves the learned action boundary.          本阶段检验配对优化是否保持或改善已学到的动作边界。该实验没有非配对 GRPO 或重复
+The experiment has no unpaired-GRPO or repeated-seed control, so it does not isolate pair-aware          种子对照，因此无法将配对感知分组孤立为 SFT 到 GRPO 差异的原因。附录 D 记录了完
+grouping as the cause of an SFT-to-GRPO difference. Appendix D records the full implementation
+configuration.                                                                                           整实现配置。
+
+
+                                                       6                                                                                                  6
+Table 2: Addressedness results on the fixed 20% VGB ENCH test split. Values are percentages.                表 2：在固定的 20% VGBENCH 测试划分上的被寻址性结果。数值为百分比。Switch
+Switch mute is reported with near-field same-speaker and text-only target-tool selection to expose          mute 在使用近场同说话人和仅文本目标工具选择时报告，以揭示全静音行为。
+all-mute behavior.
+                                    Self-talk        Side-talk         Same-speaker    Switch   Text-only                           自言自语            旁谈                同说话人           切换      纯文本
+Model or training setting            mute             correct             select.       mute     select.    模型或训练设置                      mute       正确                  选择。          mute     选择。
+Base Qwen                                   50.0              53.2              81.3      0.0       87.5    基础 Qwen                       50.0        53.2                    81.3     0.0     87.5
+VOX G ATE supervised training               52.0              68.4             100.0     91.3      100.0    VOXGATE 监督训练                  52.0        68.4                   100.0    91.3    100.0
+VOX G ATE + GRPO                            60.0              70.9             100.0     92.5      100.0    VOXGATE +GRPO                 60.0        70.9                   100.0    92.5    100.0
+
+
+6     P OST- TRAINING R ESULTS                                                                              6 后训练结果
+
+The base, supervised, and GRPO models use the same system instruction, greedy decoding, canon-              基础模型、监督模型和 GRPO 模型使用相同的系统指令、贪心解码、规范动作解析器，以
+ical action parser, and fixed Qwen3.5-35B-A3BQwen Team (2026) side-talk judge. All addressed-               及固定的 Qwen3.5-35B-A3BQwen Team (2026) side-talk 评判器。所有
+ness results use the disjoint held-out partition. Task-only SFT and GRPO controls use WearVox
+without VGB ENCH examples. Downstream evaluation follows the fixed 384-example WearVox                      addressedness 结果均使用不相交的留出分区。仅任务 SFT 和 GRPO 对照使用不含
+protocol.                                                                                                   VGBENCH 示例的 WearVox。下游评估遵循固定的 384 个示例的 WearVox 协议。
+
+Supervised training accounts for most of the switch result. It mutes 73 of 80 held-out switched             监督训练占开关结果的大部分。它在 80 条留出的切换命令中静音了 73 条，同时为每个近场同
+commands while selecting the target tool for every near-field same-speaker and text-only control.           说话人和纯文本对照选择了目标工具。GRPO 将切换结果改为 80 条中的 74 条，将自我对话静
+GRPO changes the switch result to 74 of 80, raises self-talk muting from 52.0% to 60.0%, and raises
+                                                                                                            音率从 52.0% 提高到 60.0%，并将旁谈准确率从 68.4% 提高到 70.9%。这些是来自一次训练
+side-talk accuracy from 68.4% to 70.9%. These are descriptive differences from one training run.
+They show that GRPO preserves the SFT gate, but do not establish that pair-aware grouping caused            运行的描述性差异。它们表明 GRPO 保留了 SFT 门控，但并不能证明是配对感知分组导致了改
+the improvement.                                                                                            进。
+
+The aggregate switch score combines several cues. Table 3 factorizes trigger source, distance,              聚合切换分数结合了若干线索。表 3 在相同的 80 条命令上分解了触发源、距离和 600
+and the 600 ms boundary on the same 80 commands. With near-field rendering and a fixed gap,                 ms 边界。在近场渲染和固定间隔下，仅改变触发源会使 SFT 的静音率从 1.25% 提高到
+changing only the trigger source raises mute rate from 1.25% to 50.0% for SFT and to 53.75%
+for GRPO. Changing a same-speaker trigger from near-field to far-field raises muting to 60.0% for           50.0%，使 GRPO 提高到 53.75%。将同说话人触发从近场改为远场会使两个模型的静音率
+both models, appropriate under the proximity rule. The gap alone changes same-speaker near-field            都提高到 60.0%，这在接近规则下是合适的。仅改变间隔只会使同说话人近场静音率变化
+muting by only 1.25 points. The 91.3–92.5% main switch result therefore combines source and
+                                                                                                            1.25 个百分点。因此，91.3–92.5% 的主切换结果结合了触发源和距离依赖性。
+distance dependence.
+
+
+Table 3: Mute rates (%) on the original 80-command cue validity WAVs. Same/near targets a                   表3：在原始80条命令线索有效性WAV上的静音率（%）。相同/近目标指向工具；相同/远
+tool; same/far and different-speaker conditions target [Mute]. The last row is the original switch          和不同说话人条件指向 [Mute]。最后一行是原始切换条件。
+condition.
+                                Source       Field Gap Base           SFT GRPO                                                   来源         字段间隙             Base   SFT GRPO
+                                Same         Near   0         7.50    0.00    0.00                                               Same       Near   0         7.50   0.00    0.00
+                                Same         Near   600       5.00    1.25    1.25                                               Same       Near   600       5.00   1.25    1.25
+                                Same         Far    600       6.25   60.00   60.00                                               Same       Far    600       6.25 60.00    60.00
+                                Different    Near   0         6.25   35.00   31.25                                               不同         Near   0         6.25 35.00    31.25
+                                Different    Near   600       7.50   50.00   53.75                                               不同         Near   600       7.50 50.00    53.75
+                                Different    Far    600       0.00   91.25   92.50                                               不同 远              600       0.00 91.25    92.50
+
+
+6.1   C UE - BALANCED SFT AS A CUE CONTROL                                                                  6.1 CUE-BALANCEDSFT 作为提示控制
+
+We call the supervised model in Tables 2 and 3 original SFT; cue-balanced SFT is a separate SFT-            我们将表2和表3中的监督模型称为 original SFT；cue-balanced SFT 是一个单独的仅
+only run, with no subsequent GRPO stage. The original SFT learned from switch examples in which             SFT 运行，没有后续的 GRPO 阶段。original SFT 从 switch 示例中学习，这些示例中旁
+bystander speech, far-field rendering, and a 600 ms gap occurred together. We retrain with the same
+budget after balancing distance and gap within both action labels, then test all eight source, distance,    观者语音、远场渲染和 600 ms 间隔同时出现。我们在两个动作标签内平衡距离和间隔后，
+and gap combinations on 80 held-out commands.                                                               以相同预算重新训练，然后在 80 条留出命令上测试所有八种来源、距离和间隔组合。
+
+
+
+
+                                                          7                                                                                              7
+Table 4: Target-action accuracy (%) under the proximity rule in the scene-consistent eight-condition              表 4：在场景一致的八条件测试中，按接近规则的目标-动作准确率（%），原始 SFT → 线索平衡 SFT。
+test, original SFT → cue-balanced SFT. Each cell has n = 80; equal-weight accuracy is 39.22%                      每个单元格包含 n = 80；等权重准确率为 39.22%→ 66.88%。同说话人触发在近处时目标为工具，在远
+→ 66.88%. Same-speaker triggers target a tool when near and [Mute] when far; different-speaker                    处时目标为 [Mute]；不同说话人触发目标为 [Mute]。完整的 Mute/工具 比率见附录 H。
+triggers target [Mute]. Complete mute/tool rates appear in Appendix H.
+                       Field, gap        Same: Tool near, [Mute] far Different: [Mute]                                               字段，差距          相同：Tool 近， [Mute]远              不同： [Mute]
+                       Near, 0 ms                        97.50 → 97.50          18.75 → 68.75                                        Near, 0 ms                   97.50 → 97.50           18.75 → 68.75
+                       Near, 600 ms                     100.00 → 98.75          18.75 → 85.00                                        Near, 600 毫秒                100.00 → 98.75           18.75 → 85.00
+                       Far, 0 ms                           2.50 → 3.75          23.75 → 80.00                                        Far, 0 ms                      2.50 → 3.75           23.75 → 80.00
+                       Far, 600 ms                         6.25 → 5.00          46.25 → 96.25                                        Far, 600 毫秒                    6.25 → 5.00           46.25 → 96.25
+
+
+
+
+Direct retesting on the original validity WAVs raises same/far/600 muting from 60.00% to 90.00%                   在原始有效性 WAV 上直接重测，使 same/far/600 的静音率从 60.00% 提高到 90.00%，并使
+and different/near muting from 35.00%/50.00% to 66.25%/82.50% at 0/600 ms (Appendix G, Ta-                        different/near 的静音率在 0/600 ms 时分别从 35.00%/50.00% 提高到 66.25%/82.50%（附录
+ble 12). The eight-condition study instead uses scene-consistent far-field audio, rendering the
+                                                                                                                  G，表 12）。八条件研究则使用场景一致的远场音频，将佩戴者的上下文和触发一起渲染；它
+wearer’s context and trigger together; it yields only 3.75%/5.00% muting of same/far triggers. These
+are different WAVs, so distance rejection is scene dependent.                                                     仅产生 3.75%/5.00% 的 same/far 触发静音。这些是不同的 WAV，因此距离拒绝取决于场景。
+
+
+6.2   D OWNSTREAM TASK R ETENTION                                                                                 6.2 下游任务保留
+
+The addressedness objective should not improve muting by erasing the model’s ability to answer, use               应答性目标不应通过消除模型回答、使用工具或翻译的能力来改善静音效果。因此，我们在固
+tools, or translate. We therefore evaluate the post-trained models on the fixed 384-example WearVox               定的 384 示例 WearVox 协议上评估训练后的模型。它包含 59 个闭卷答案示例、55 个有依据
+protocol. It contains 59 closed-book answer examples, 55 grounded-answer examples, 58 abstention
+                                                                                                                  答案示例、58 个弃权示例、112 个工具使用示例和 100 个实时翻译示例。 A 分数汇总了两个
+examples, 112 tool-use examples, and 100 live-translation examples. The A score aggregates the
+two answer subsets.                                                                                               答案子集。
+
+
+Table 5: Held-out WearVox task retention for the original SFT/GRPO training route (cue-balanced                   表 5：原始 SFT/GRPO 训练路线的留出 WearVox 任务保留（线索平衡的 SFT 在上文单独
+SFT is reported separately above). A aggregates closed-book and grounded answers; B, C, and D                     报告）。 A 汇总闭卷和有依据答案； B、 C 和 D 分别表示弃权、工具使用和实时翻译。
+denote abstention, tool use, and live translation. Counts are shown in the column headers. D is
+the mean judged translation score (×100); Overall thresholds each translation item at 0.85 before                 计数显示在列标题中。 D 是平均评判翻译分数（×100）；Overall 在汇总所有 384 个二
+aggregating all 384 binary outcomes.                                                                              元结果之前将每个翻译项阈值设为 0.85。
+       Model                           A (n = 114)   B (n = 58)   C (n = 112)   D (n = 100)   Overall (n = 384)          型号                     A(n = 114)    B(n = 58)    C(n = 112)     D(n = 100)    总体 (n = 384)
+       Base Qwen                             28.11        96.60         55.40         65.30               45.57          基础版 Qwen                     28.11        96.60          55.40         65.30            45.57
+       WearVox-only post-training                                                                                        仅 WearVox 后训练
+       SFT                                   33.33        94.83         85.71         84.80               63.28          SFT                          33.33        94.83          85.71         84.80            63.28
+       SFT + GRPO                            42.98        98.28         86.61         83.43               67.71          SFT +GRPO                    42.98        98.28          86.61         83.43            67.71
+       Joint VoxGate post-training                                                                                       联合 VoxGate 后训练
+       VOX G ATE supervised training         37.71        91.40         90.20         89.50               72.14          VOXGATE 监督训练                 37.71        91.40          90.20         89.50            72.14
+       VOX G ATE + GRPO                      42.10       100.00         92.00         89.70               76.30          VOXGATE +GRPO                42.10       100.00          92.00         89.70            76.30
+
+
+
+Joint training retains downstream task performance. Task-only SFT and GRPO reach 63.28% and                       联合训练保留了下游任务性能。仅任务 SFT 和 GRPO 的总体得分分别达到 63.28% 和
+67.71% overall, while joint supervised training and joint GRPO reach 72.14% and 76.30%. The                       67.71%，而联合监督训练和联合 GRPO 分别达到 72.14% 和 76.30%。相对于仅任务对照
+joint models improve tool use and translation relative to task-only controls; joint GRPO also attains
+100.00% abstention accuracy. The answer aggregate remains lower than the other task families for                  组，联合模型改善了工具使用和翻译；联合 GRPO 还达到了 100.00% 的弃答准确率。对于
+every system, including the base model, and the joint GRPO answer score is close to the task-only                 包括基础模型在内的每个系统，答案汇总得分仍低于其他任务族，且联合 GRPO 的答案得
+GRPO score. These results show that the learned benchmark gate does not come from a general
+                                                                                                                  分接近仅任务 GRPO 的得分。这些结果表明，学到的基准门控并非来自保留任务的一般性
+collapse of retained tasks. WearVox retention does not, however, measure transfer to natural ad-
+dressedness interactions because its downstream categories and scorer serve a different evaluation                崩溃。然而，WearVox 保留率并不能衡量向自然称呼互动的迁移，因为其下游类别和评分
+purpose.                                                                                                          器服务于不同的评估目的。
+
+7     D ISCUSSION                                                                                                 7 讨论
+
+Action selection is distinct from command recognition. The strongest positive-control results                     动作选择不同于命令识别。最强的阳性对照结果与现成模型接近零的开关抑制并存。在标
+coexist with near-zero switch muting for off-the-shelf models. Under the standardized interface,                  准化接口下，音频 LLM 可以恢复命令并选择其工具，而不使用声学上下文来决定该动作是
+an Audio LLM can recover a command and select its tool without using acoustic context to decide
+whether the action should execute. VGB ENCH makes this gap observable by pairing positive and                     否应执行。VGBENCH 通过将正向和负向动作与相同的指定词语配对，使这一差距变得可
+negative actions with the same specified words.                                                                   观察。
+
+                                                           8                                                                                                        8
+The learned gate uses source and proximity cues. At fixed near-field rendering and a 600 ms              学习到的门控使用来源和接近度线索。在固定的近场渲染和 600 ms 间隔下，改变触发来源会使
+gap, changing the trigger source raises muting by 48.75 points for SFT and 52.50 for GRPO. At            SFT 的抑制提高 48.75 个百分点，GRPO 提高 52.50 个百分点。在固定来源和间隔下，远场渲染会使
+fixed source and gap, far-field rendering raises it by 58.75 points for both. Under the proximity        两者的抑制均提高 58.75 个百分点。在接近度规则下，原始 SFT 的 60% 同源/远场抑制是合适的，而
+rule, the original SFT’s 60% same/far muting is appropriate, while its 35–50% different/near muting
+                                                                                                         其 35–50% 不同源/近场抑制会使许多旁观者触发仍可执行。这一差距会放大声源变化，但并不是独
+leaves many bystander triggers executable. The gap amplifies source changes but is not a standalone
+mute rule.                                                                                               立的静音规则。
+
+Paired reporting separates recognition from policy errors. A mute score alone rewards a de-              配对报告将识别与策略错误区分开来。 仅凭静音分数会奖励一种从不行动的退化策略，而
+generate policy that never acts, while tool accuracy alone rewards a policy that executes every          仅凭工具准确率会奖励一种执行所有已识别命令的策略。近场同说话人和纯文本对照暴露
+recognized command. The near-field same-speaker and text-only controls expose false rejection;
+different-speaker conditions expose false execution. The factorized study changes one cue at a time      错误拒绝；不同说话人条件暴露错误执行。因子化研究一次只改变一个线索，同时保持命
+while preserving the command and matching-tool identity, revealing near-field bystander errors that      令和匹配工具身份不变，揭示聚合分数会掩盖的近场旁观者错误。
+an aggregate score would conceal.
+
+Implications for voice-agent design. An action gate needs both proximity and source evidence:            语音代理设计的启示。 动作门控需要同时具备邻近性和来源证据：仅凭距离无法拒绝附近
+distance alone cannot reject a nearby bystander. Evaluation should report false execution and false      的旁观者。评估应分别报告错误执行和错误拒绝。
+rejection separately.
+
+The scenario families test different information pathways. Side-talk tests recipient attribution,        场景族测试不同的信息通路。 旁谈测试接收者归属，自语测试话语是否抵消命令效力，而
+self-talk tests whether discourse cancels command force, and speaker-switch changes source and           说话人切换在保持词语不变的同时改变来源和场景。在一个场景族上的表现并不意味着在
+scene while holding words fixed. Performance on one family does not imply performance on the
+others, so we report them separately.                                                                    其他场景族上的表现，因此我们分别报告它们。
+
+What post-training establishes. Supervised training learns the benchmark’s conditional action            后训练确立了什麼。 监督训练学习基准的条件动作映射，同时保留近场和纯文本工具对照
+mapping while preserving near-field and text-only tool controls and WearVox tasks. The cue study         以及 WearVox 任务。线索研究表明为什么聚合动作反转无法识别规则：来源和距离各自
+shows why an aggregate action reversal cannot identify the rule: source and distance can each change
+the decision.                                                                                            都能改变决策。
+
+Cue balancing improves near-bystander suppression but is scene dependent. The equal-                     线索平衡可改善近旁旁观者抑制，但这依赖于场景。等预算 SFT 对照在两种训练标签内都跨越距离
+budget SFT control crosses distance and gap within both training labels, including far-field             和间隙，包括远场佩戴者/工具行；它探测的是线索敏感性，而不是训练接近策略。在原始有效性
+wearer/tool rows; it probes cue sensitivity rather than training the proximity policy. On the original   WAV 上，它将不同/近处静音从 35.00%/50.00% 提高到 66.25%/82.50%，并将相同/远处静音从
+validity WAVs, it raises different/near muting from 35.00%/50.00% to 66.25%/82.50% and same/far
+                                                                                                         60.00% 提高到 90.00%。在场景一致的八条件音频上，接近规则准确率从 39.22% 升至 66.88%，但
+muting from 60.00% to 90.00%. On scene-consistent eight-condition audio, proximity-rule accuracy
+rises from 39.22% to 66.88%, but same/far muting remains only 3.75%/5.00%. Original speaker-             相同/远处静音仍仅为 3.75%/5.00%。原始说话人切换静音从 73/80 降至 70/80，WearVox 工具调用
+switch muting falls from 73/80 to 70/80, and WearVox tool-call accuracy falls from 90.18% to             准确率从 90.18% 降至 83.04%。匹配 WAV 上的增益并不能在跨声学场景中建立可靠的接近门控。
+83.04%. The matched-WAV gains do not establish a reliable proximity gate across acoustic scenes.
+
+Current evidence boundaries. Results use one split and one run per setting. The balanced test            当前证据边界。结果使用一个划分，且每个设置只运行一次。平衡测试改变了佩戴者声音，
+varies wearer voice but not room, template, natural bystander speech, or open-set speakers. Side-        但没有改变房间、模板、自然旁观者语音或开放集说话人。Side-talk 使用 LLM 评判器，
+talk uses an LLM judge without reported human agreement; VGB ENCH tool accuracy checks names
+rather than arguments.                                                                                   且未报告人工一致性；VGBENCH 工具准确率检查的是名称而非参数。
+
+
+8   C ONCLUSION                                                                                          8 结论
+
+VGB ENCH shows that Audio LLMs often recognize spoken commands without reliably choosing                 VGBENCH 表明，Audio LLMs 往往能识别口头命令，但在 1,018 个受控项目上并不能可
+the intended action across 1,018 controlled items. Supervised training learns much of this bench-        靠地选择预期动作。监督训练学习了该基准动作边界的大部分内容，而一次探索性 GRPO
+mark action boundary, while an exploratory GRPO stage also adds small gains in one run. Factorized
+controls identify an independent source-change effect, but sensitivity to far-field rendering varies     阶段在单次运行中也带来小幅增益。因子化控制识别出一个独立的源变化效应，但对远场
+across acoustic scenes. Cue-balanced SFT improves near-bystander suppression without establish-          渲染的敏感性在不同声学场景中有所差异。线索平衡的 SFT 改善了近旁观者抑制，但未能
+ing a reliable cross-scene proximity gate. These results highlight a gap between understanding what      建立可靠的跨场景接近门控。这些结果突显了理解说了什么与判断声学和对话上下文是否
+was said and deciding whether acoustic and conversational context warrants action, and motivate
+evaluating voice agents at the level of executable action rather than command recognition alone.         值得采取行动之间的差距，并促使在可执行动作层面而非仅命令识别层面评估语音代理。
+
+
+
+
+                                                  9                                                                                    9
+R EFERENCES                                                                                         参考文献
+Junyi Ao, Yuancheng Wang, Xiaohai Tian, Dekun Chen, Jun Zhang, Lu Lu, Yuxuan Wang, Haizhou          Junyi Ao、Yuancheng Wang、Xiaohai Tian、Dekun Chen、Jun Zhang、Lu Lu、Yuxuan Wang、
+  Li, and Zhizheng Wu. Sd-eval: A benchmark dataset for spoken dialogue understanding beyond        Haizhou Li 和 Zhizheng Wu。Sd-eval：一个超越字词的语音对话理解基准数据集。神经信息处理系统进
+  words. Advances in Neural Information Processing Systems, 37:56898–56918, 2024.                   展，37:56898–56918，2024。
+
+Cheng-Han Chiang, Xiaofei Wang, Linjie Li, Chung-Ching Lin, Kevin Lin, Shujie Liu, Zhendong         Cheng-Han Chiang、Xiaofei Wang、Linjie Li、Chung-Ching Lin、Kevin Lin、Shujie Liu、
+  Wang, Zhengyuan Yang, Hung-yi Lee, and Lijuan Wang. Shanks: Simultaneous hearing and              Zhendong Wang、Zhengyuan Yang、Hung-yi Lee 和 Lijuan Wang。Shanks：面向口语语言模型的同
+  thinking for spoken language models. In Proceedings of the 64th Annual Meeting of the Associa-    步听觉与思考。载于第64届计算语言学协会年会论文集（第1卷：长论文），第8951–8972页，2026年。
+  tion for Computational Linguistics (Volume 1: Long Papers), pp. 8951–8972, 2026.
+Amala Sanjay Deshmukh, Kateryna Chumachenko, Tuomas Rintamaki, Matthieu Le, Tyler Poon,             Amala Sanjay Deshmukh、Kateryna Chumachenko、Tuomas Rintamaki、Matthieu Le、Tyler
+ Danial Mohseni Taheri, Ilia Karmanov, Guilin Liu, Jarno Seppanen, Arushi Goel, et al. Nemotron     Poon、Danial MohseniTaheri、IliaKarmanov、Guilin Liu、Jarno Seppanen、ArushiGoel 等。
+ 3 nano omni: efficient and open multimodal intelligence. arXiv preprint arXiv:2604.24954, 2026.    Nemotron 3 nano omni：高效且开放的多模态智能。arXiv预印本 arXiv:2604.24954，2026年。
+
+Ding Ding, Zeqian Ju, Yichong Leng, Songxiang Liu, Tong Liu, Zeyu Shang, Kai Shen, Wei Song,        Ding Ding、Zeqian Ju、Yichong Leng、Songxiang Liu、Tong Liu、Zeyu Shang、Kai Shen、Wei
+  Xu Tan, Heyi Tang, et al. Kimi-audio technical report. arXiv preprint arXiv:2504.18425, 2025.     Song、Xu Tan、Heyi Tang 等。Kimi-audio 技术报告。arXiv预印本 arXiv:2504.18425，2025年。
+
+Tulsee Doshi and Raluca Ada Popa. Introducing gemini 3.8 flash and 3.8 flash                        Tulsee Doshi 和 Raluca Ada Popa。介绍 Gemini 3.8 Flash 和 3.8 Flash Cyber。
+  cyber. https://blog.google/innovation-and-ai/models-and-research/                                 https://blog.google/innovation-and-ai/models-and-research/
+  gemini-models/3-8-flash-and-3-8-flash-cyber/, September 2026. Google
+  Blog.                                                                                             gemini-models/3-8-flash-and-3-8-flash-cyber/，2026年9月。Google 博客。
+
+Sreyan Ghosh, Arushi Goel, Jaehyeon Kim, Sonal Kumar, Zhifeng Kong, Sang-gil Lee, Chao-Han          Sreyan Ghosh, Arushi Goel, Jaehyeon Kim, Sonal Kumar, Zhifeng Kong, Sang-gil Lee,
+  Yang, Ramani Duraiswami, Dinesh Manocha, Rafael Valle, et al. Audio flamingo 3: Advancing         Chao-Han Yang, Ramani Duraiswami, Dinesh Manocha, Rafael Valle, 等。Audio Flamingo 3：
+  audio intelligence with fully open large audio language models. Advances in Neural Information    以完全开放的大型音频语言模型推进音频智能。神经信息处理系统进展，38：41819–41886，2026。
+  Processing Systems, 38:41819–41886, 2026.
+Haolin He, Xingjian Du, Renhe Sun, Zheqi Dai, Yujia Xiao, Mingru Yang, Jiayi Zhou, Xiquan Li,       Haolin He, Xingjian Du, Renhe Sun, Zheqi Dai, Yujia Xiao, Mingru Yang, Jiayi Zhou,
+  Zhengxi Liu, Zining Liang, et al. Measuring audio’s impact on correctness: Audio-contribution-    Xiquan Li, Zhengxi Liu, Zining Liang, 等。测量音频对正确性的影响：大型音频语言模型的
+  aware post-training of large audio language models. In International Conference on Learning
+                                                                                                    音频贡献感知后训练。载于 国际学习表征会议，第 2026 卷，第 110411–110432 页，2026。
+  Representations, volume 2026, pp. 110411–110432, 2026.
+Tasnim Kabir, Dmytro Kurdydyk, Aadi Palnitkar, Liam Dorn, Ahmed Haj Ahmed, and Jordan Lee           Tasnim Kabir、Dmytro Kurdydyk、Aadi Palnitkar、Liam Dorn、Ahmed Haj Ahmed 和 Jordan
+  Boyd-Graber. Audita: A new dataset to audit humans vs. ai skill at audio qa. In Findings of the   Lee Boyd-Graber。Audita：一个用于审计人类 vs. AI 在音频问答中技能的新数据集。载于 计算语言学协
+  Association for Computational Linguistics: ACL 2026, pp. 25922–25951, 2026.                       会发现：ACL 2026，第 25922–25951 页，2026。
+
+Sonal Kumar, Šimon Sedláček, Vaibhavi Lokegaonkar, Fernando López, Wenyi Yu, Nishit Anand,         ˇSonal Kumar、Simon Sedl´aˇcek、Vaibhavi Lokegaonkar、Fernando L´opez、
+  Hyeonggon Ryu, Lichang Chen, Maxim Plička, Miroslav Hlaváček, et al. Mmau-pro: A chal-         Wenyi Yu、Nishit Anand、Hyeonggon Ryu、Lichang Chen、Maxim Pliˇcka、
+  lenging and comprehensive benchmark for holistic evaluation of audio general intelligence. In
+                                                                                                    Miroslav Hlav´aˇcek 等。Mmau-pro：一个用于音频通用智能整体评估的具有挑战性和全面
+  Proceedings of the AAAI Conference on Artificial Intelligence, volume 40, pp. 22688–22697,
+  2026.                                                                                             的基准。载于AAAI 人工智能会议论文集，第 40 卷，第 22688–22697 页，2026。
+
+Gang Li, Jizhong Liu, Heinrich Dinkel, Yadong Niu, Junbo Zhang, and Jian Luan. Reinforcement        Gang Li、Jizhong Liu、Heinrich Dinkel、Yadong Niu、Junbo Zhang 和 Jian Luan。
+  learning outperforms supervised fine-tuning: A case study on audio question answering. arXiv      强化学习优于监督微调：音频问答的案例研究。arXiv 预印本 arXiv:2503.11197，2025。
+  preprint arXiv:2503.11197, 2025.
+Zhaojiang Lin, Yong Xu, Kai Sun, Jing Zheng, Yin Huang, Surya Appini, Krish Narang, Renjie          Zhaojiang Lin, Yong Xu, Kai Sun, Jing Zheng, Yin Huang, Surya Appini, Krish Narang,
+  Tao, Ishan Jain, Siddhant Arora, et al. Wearvox: An egocentric multichannel voice assistant       Renjie Tao, Ishan Jain, Siddhant Arora, 等. Wearvox：用于可穿戴设备的自我中心多通道语
+  benchmark for wearables. In International Conference on Learning Representations, volume
+                                                                                                    音助手基准。载于 国际学习表征会议，第 2026 卷，第 66555–66574 页，2026。
+  2026, pp. 66555–66574, 2026.
+Leander Melroy Maben, Gayathri Ganesh Lakshmy, Srijith Radhakrishnan, Siddhant Arora, and           Leander Melroy Maben, Gayathri Ganesh Lakshmy, Srijith Radhakrishnan, Siddhant
+  Shinji Watanabe. Aura: agent for understanding, reasoning, and automated tool use in voice-       Arora, 和 Shinji Watanabe. Aura：用于语音驱动任务中的理解、推理和自动化工具使用的智
+  driven tasks. In 2025 IEEE Automatic Speech Recognition and Understanding Workshop (ASRU),
+                                                                                                    能体。载于 2025 IEEE 自动语音识别与理解研讨会 (ASRU)，第 1–4 页。IEEE，2025。
+  pp. 1–4. IEEE, 2025.
+Sri Harish Mallidi, Roland Maas, Kyle Goehner, Ariya Rastrow, Spyros Matsoukas, and Björn          Sri Harish Mallidi, Roland Maas, Kyle Goehner, Ariya Rastrow, Spyros Matsoukas, 和 Bj¨orn
+  Hoffmeister. Device-directed utterance detection. arXiv preprint arXiv:1808.02504, 2018.          Hoffmeister. 设备定向话语检测。 arXiv 预印本 arXiv:1808.02504，2018。
+KiHyun Nam, Jungwoo Heo, Siu Bae, Ha-Jin Yu, and Joon Son Chung. Speakerllm: A speaker-             KiHyun Nam、Jungwoo Heo、Siu Bae、Ha-Jin Yu 和 Joon Son Chung。Speakerllm：一种用于
+  specialized audio-llm for speaker understanding and verification reasoning. arXiv preprint        说话人理解与验证推理的说话人专用音频大语言模型。arXiv 预印本 arXiv:2605.15044，2026。
+  arXiv:2605.15044, 2026.
+
+
+                                               10                                                                                              10
+Ramit Pahwa, Apoorva Beedu, Parivesh Priye, Rutu Gandhi, Saloni Takawale, Aruna Baijal, and          Ramit Pahwa、Apoorva Beedu、Parivesh Priye、Rutu Gandhi、Saloni Takawale、
+  Zengli Yang. Audio2tool: Speak, call, act–a dataset for benchmarking speech tool use. arXiv        Aruna Baijal 和 Zengli Yang。Audio2tool：说、调用、执行——一个用于评测语音工具
+  preprint arXiv:2604.22821, 2026.
+                                                                                                     使用能力的数据集。arXiv 预印本 arXiv:2604.22821，2026。Jiacheng Pang、
+Jiacheng Pang, Ashutosh Chaubey, and Mohammad Soleymani. Do audio llms listen or read? ana-          Ashutosh Chaubey 和 Mohammad Soleymani。音频大语言模型是在听还是在读？用
+   lyzing and mitigating paralinguistic failures with voxparadox. arXiv preprint arXiv:2605.27772,
+   2026.                                                                                             voxparadox 分析和缓解副语言失败。arXiv 预印本 arXiv:2605.27772，2026。Qwen
+                                                                                                     Team。Qwen3.5：迈向原生多模态智能体，2026 年 2 月。URL https://qwen.
+Qwen Team. Qwen3.5: Towards native multimodal agents, February 2026. URL https://qwen.
+ ai/blog?id=qwen3.5.                                                                                 ai/blog?id=qwen3.5。Andrew Rouditchenko、Saurabhchand Bhati、Edson
+                                                                                                     Araujo、Samuel Thomas、Hilde Kuehne、Roge- rio Feris 和 James Glass。
+Andrew Rouditchenko, Saurabhchand Bhati, Edson Araujo, Samuel Thomas, Hilde Kuehne, Roge-
+  rio Feris, and James Glass. Omni-r1: Do you really need audio to fine-tune your audio llm? In      Omni-r1：微调音频大语言模型真的需要音频吗？见2025 IEEE 自动语音识别与理解研讨
+  2025 IEEE Automatic Speech Recognition and Understanding Workshop (ASRU), pp. 1–7. IEEE,           会（ASRU），第 1–7 页。IEEE，2025。Sakshi Sakshi、Utkarsh Tyagi、Sonal
+  2025.
+                                                                                                     Kumar、Ashish Seth、Ramaneswaran Selvakumar、Oriol Nieto、Ramani
+Sakshi Sakshi, Utkarsh Tyagi, Sonal Kumar, Ashish Seth, Ramaneswaran Selvakumar, Oriol Nieto,        Duraiswami、Sreyan Ghosh 和 Dinesh Manocha。Mmau：一个大规模多任务音频理
+  Ramani Duraiswami, Sreyan Ghosh, and Dinesh Manocha. Mmau: A massive multi-task audio
+  understanding and reasoning benchmark. In International Conference on Learning Representa-         解与推理基准。见 国际学习表征会议，第 2025 卷，第 84929–84964 页，2025。
+  tions, volume 2025, pp. 84929–84964, 2025.                                                         Zhihong Shao、Peiyi Wang、Qihao Zhu、Runxin Xu、Junxiao Song、Xiao Bi、
+Zhihong Shao, Peiyi Wang, Qihao Zhu, Runxin Xu, Junxiao Song, Xiao Bi, Haowei Zhang,                 Haowei Zhang、Mingchuan Zhang、YK Li、Yang Wu 等。Deepseekmath：推动开放
+  Mingchuan Zhang, YK Li, Yang Wu, et al. Deepseekmath: Pushing the limits of mathemati-             语言模型中数学推理的极限。arXiv 预印本 arXiv:2402.03300，2024。Ingo Siegert、
+  cal reasoning in open language models. arXiv preprint arXiv:2402.03300, 2024.                      Norman Weißkirchen 和 Andreas Wendemuth。基于声学的技术系统自动受话人检测：
+Ingo Siegert, Norman Weißkirchen, and Andreas Wendemuth. Acoustic-based automatic addressee          综述。计算机科学前沿，4:831784，2022。Zhaokai Sun、Shuai Wang、Zhennan
+  detection for technical systems: A review. Frontiers in Computer Science, 4:831784, 2022.          Lin、Chengyou Wang、Dehui Gao、Yuang Cao、Chunjiang He、Pan Zhou 和 Lei
+Zhaokai Sun, Shuai Wang, Zhennan Lin, Chengyou Wang, Dehui Gao, Yuang Cao, Chunjiang He,             Xie。Msu-bench：迈向对话式多说话人场景中以说话人为中心的理解。arXiv 预印本
+  Pan Zhou, and Lei Xie. Msu-bench: Towards speaker-centric understanding in conversational          arXiv:2606.22868，2026。Fei Tian、Xiangyu Tony Zhang、Yuxin Zhang、
+  multi-speaker scenarios. arXiv preprint arXiv:2606.22868, 2026.
+                                                                                                     Haoyang Zhang、Yuxin Li、Daijiao Liu、Yayue Deng、Donghang Wu、Jun Chen、
+Fei Tian, Xiangyu Tony Zhang, Yuxin Zhang, Haoyang Zhang, Yuxin Li, Daijiao Liu, Yayue Deng,         Liang Zhao 等。Step-audio-r1 技术报告。arXiv 预印本 arXiv:2511.15848，2025。
+  Donghang Wu, Jun Chen, Liang Zhao, et al. Step-audio-r1 technical report. arXiv preprint
+  arXiv:2511.15848, 2025.                                                                            Dingdong Wang、Junan Li、Jincenzi Wu、Dongchao Yang、Xueyuan Chen、
+                                                                                                     Tianhua Zhang 和 Helen Meng。Mmsu：一个大规模多任务口语理解与推理基准。见 国
+Dingdong Wang, Junan Li, Jincenzi Wu, Dongchao Yang, Xueyuan Chen, Tianhua Zhang, and
+  Helen Meng. Mmsu: A massive multi-task spoken language understanding and reasoning bench-          际学习表征会议，第 2026 卷，第 31374–31410 页，2026。Cheng Wen、Tingwei
+  mark. In International Conference on Learning Representations, volume 2026, pp. 31374–31410,       Guo、Shuaijiang Zhao、Wei Zou 和 Xiangang Li。Sari：通过课程引导强化学习进行结
+  2026.
+                                                                                                     构化音频推理。arXiv 预印本 arXiv:2504.15900，2025。Gijs Wijngaard、Elia
+Cheng Wen, Tingwei Guo, Shuaijiang Zhao, Wei Zou, and Xiangang Li. Sari: Structured audio            Formisano、Michel Dumontier 和 Jenia Jitsev。Audiotoolagent：面向音频-语言模型
+  reasoning via curriculum-guided reinforcement learning. arXiv preprint arXiv:2504.15900, 2025.
+                                                                                                     的智能体框架。arXiv 预印本 arXiv:2510.02995，2025。Cihan Xiao、Yiwen Shao、
+Gijs Wijngaard, Elia Formisano, Michel Dumontier, and Jenia Jitsev. Audiotoolagent: An agentic       Chenxing Li、Xiang He、Zhenwen Liang、Steve Yves、Sanjeev Khudanpur 和
+  framework for audio-language models. arXiv preprint arXiv:2510.02995, 2025.
+                                                                                                     Liefeng Bo。逃离语言先验：通过模态感知策略优化缓解音频推理中的后期模态崩溃。
+Cihan Xiao, Yiwen Shao, Chenxing Li, Xiang He, Zhenwen Liang, Steve Yves, Sanjeev Khudanpur,         arXiv 预印本 arXiv:2605.27741，2026。Zhen Xiong、Yujun Cai、Zhecheng Li、
+  and Liefeng Bo. Escape the language prior: Mitigating late-stage modality collapse in audio
+  reasoning via modality-aware policy optimization. arXiv preprint arXiv:2605.27741, 2026.           Junsong Yuan 和 Yiwei Wang。用声音思考：音频思维链使大型音频-语言模型具备多模
+                                                                                                     态推理能力。arXiv 预印本 arXiv:2509.21749，2025。Jin Xu、Zhifang Guo、
+Zhen Xiong, Yujun Cai, Zhecheng Li, Junsong Yuan, and Yiwei Wang. Thinking with sound: Audio
+  chain-of-thought enables multimodal reasoning in large audio-language models. arXiv preprint       Hangrui Hu、Yunfei Chu、Xiong Wang、Jinzheng He、Yuxuan Wang、Xian Shi、
+  arXiv:2509.21749, 2025.                                                                            Ting He、Xinfa Zhu 等。Qwen3-omni 技术报告。arXiv 预印本 arXiv:2509.17765，
+Jin Xu, Zhifang Guo, Hangrui Hu, Yunfei Chu, Xiong Wang, Jinzheng He, Yuxuan Wang, Xian Shi,         2025。Ke Xu、Yuhao Wang 和 Yu Wang。从反应式到主动式：通过 provoice-bench
+   Ting He, Xinfa Zhu, et al. Qwen3-omni technical report. arXiv preprint arXiv:2509.17765, 2025.    评估语音智能体的主动性。arXiv 预印本 arXiv:2604.15037，2026。Haoyu Zhang、
+Ke Xu, Yuhao Wang, and Yu Wang. From reactive to proactive: Assessing the proactivity of voice       Jiaxian Guo、Dong Yang、Yusuke Iwasawa 和 Yutaka Matsuo。Aqa-ttrl：通过测试
+  agents via provoice-bench. arXiv preprint arXiv:2604.15037, 2026.                                  时强化学习实现音频问答中的自适应。arXiv 预印本 arXiv:2510.05478，2025a。
+Haoyu Zhang, Jiaxian Guo, Dong Yang, Yusuke Iwasawa, and Yutaka Matsuo. Aqa-ttrl: Self-
+  adaptation in audio question answering with test-time reinforcement learning. arXiv preprint
+  arXiv:2510.05478, 2025a.
+
+
+                                               11                                                                                     11
+Linhao Zhang, Jian Zhang, Bokai Lei, Chuhan Wu, Aiwei Liu, Wei Jia, and Xiao Zhou. Wildspeech-                         LinhaoZhang、JianZhang、BokaiLei、ChuhanWu、Aiwei Liu、WeiJia 和 XiaoZhou。
+  bench: Benchmarking end-to-end speechllms in the wild. arXiv preprint arXiv:2506.21875,                              Wildspeech-bench：在真实环境中对端到端语音大语言模型进行基准测试。arXiv 预印本 arXiv:2506.21875，
+  2025b.                                                                                                               2025b。
+
+Qing Zhang and Jun Rekimoto. Look and talk: Seamless ai assistant interaction with gaze-triggered                      QingZhang 和 Jun Rekimoto。Look and talk：通过注视触发激活实现无缝 AI 助手交互。
+  activation. In Proceedings of the Augmented Humans International Conference 2025, pp. 418–                           载于 2025 年增强人类国际会议论文集，第 418–421 页，2025。
+  421, 2025.
+
+
+A    E VALUATION C ONTRACT AND R EPRODUCIBILITY R ECORD                                                                评估契约与可复现性记录
+
+Each result is tied to a frozen benchmark manifest, system instruction, decoding configuration, ac-                    每个结果都绑定到冻结的基准清单、系统指令、解码配置、动作解析器、旁谈判断器、预测文
+tion parser, side-talk judge, prediction file, and summary file. Raw Audio LLMs and training-free                      件和摘要文件。原始音频 LLM 和免训练适配在所有保留的 VGBENCH 条目上评估。后训练系
+adaptations are evaluated on all retained VGB ENCH items. Post-trained systems are trained on an
+                                                                                                                       统在约 80% 的分区上训练，并且仅在不相交的留出分区上报告。我们全程使用贪心解码。完整
+approximately 80% partition and reported only on the disjoint held-out partition. We use greedy
+decoding throughout. The full corpus contains 395 side-talk recordings, 223 self-talk recordings,                      语料库包含 395 条旁谈录音、223 条自谈录音和 400 个说话人切换对。每个说话人切换对都有
+and 400 speaker-switch pairs. Each speaker-switch pair has single, switch, and text-only conditions;                   单说话人、切换和纯文本条件；因此，留出的后训练说话人切换集在每个条件下包含 80 个案例。
+the held-out post-training speaker-switch set therefore contains 80 cases per condition.
+
+
+Table 6: Result blocks and evaluation records. “Full” denotes the complete retained VGB ENCH                           表6：结果区块与评估记录。“Full”表示完整保留的 VGBENCH 语料库，而“held-out”表示固定的训
+corpus, while “held-out” denotes the fixed post-training test partition.                                               练后测试划分。
+      Result block          Systems                  Split        Decoding   Scoring record                                结果区块          系统                 划分           解码   评分记录
+      Raw Audio LLMs        Six native systems       Full         Greedy     Canonical parser; Qwen3.5 side-talk           原始音频LLM       六个原生系统             Full         贪心   规范   解析器； Qwen3.5 侧聊
+                                                                             judge                                                                                            判断
+      Training-free meth-   AURA,            TwS,    Full         Greedy     Same action contract and judge                免训练方法-        AURA，       TwS,   Full         贪心   相同的动作契约和评判器
+      ods                   SHANKS                                                                                         ods           SHANKS
+      VoxGate gating        Base, SFT, GRPO          Held-out     Greedy     Same instruction, parser, and judge           VoxGate 门控    基础模型、SFT、GRPO      留出           贪心   相同的指令、解析器和评判器
+      WearVox retention     Base and post-training   384 items    Greedy     Official A/B/C/D scorer and translation       WearVox 保留率   基础与后训练             384 项        贪心   官方 A/B/C/D 评分器与翻译
+                            controls                                         judge                                                       控制                                   评判
+
+
+
+B    ACTION G RAMMAR AND S CORING                                                                                      B 动作语法与评分
+
+The canonical mute output is [Mute]. A canonical tool action is a single structured object,                            规范静音输出为 [Mute]。规范工具动作是单个结构化对象，<|TOOL|>{{"name": 名称, "
+<|TOOL|>{{"name": name, "params": {...}}}</|TOOL|>. A natural-language                                                 params": {...}}}</|TOOL|>。自然语言回答既不含规范工具调用，也不含 [Mute]。
+answer contains neither a canonical tool call nor [Mute]. The VGB ENCH parser normalizes the
+                                                                                                                       VGBENCH 解析器会规范化静音 token，并检查工具输出是否包含一个可解析对象且其目标工
+mute token and checks that a tool output contains one parseable object with the target tool name.
+Tool arguments are retained in prediction logs but are not included in VGB ENCH tool-selection                         具名称正确。工具参数保留在预测日志中，但不计入 VGBENCH 工具选择准确率；它们由下游
+accuracy; they are evaluated by the downstream WearVox tool-use task.                                                  WearVox 工具使用任务评估。
+For side-talk free-response examples, the fixed judge selects one of four labels: assistant-directed                   对于旁谈自由回答示例，固定评判器会从四个标签中选择一个：面向助手的发言、面向旁
+utterance, bystander-directed utterance, both, or neither. Only the first label is correct. Speaker-                   听者的发言、两者皆是或两者皆非。只有第一个标签是正确的。说话人切换静音始终结合
+switch mute is always interpreted with same-speaker and text-only tool-selection controls, since a
+system that always mutes cannot be a valid action gate.                                                                同说话人和纯文本工具选择控制来解释，因为总是静音的系统不能成为有效的动作门控。
+
+
+C    C OMPLETE R ESULTS FOR R AW AND T RAINING -F REE S YSTEMS                                                         C 原始系统与免训练系统的完整结果
+
+Table 1 reports the compact comparison. Table 7 adds the scenario denominators and separates the                       表1报告了紧凑比较。表7增加了场景分母，并将原始块和无训练块分开。这些数值与主表
+raw and training-free blocks. The values are the same measurements as the main table, rather than                      中的测量值相同，而不是第二次选择过程。Side-talk 结合了由规范解析器评分的工具项和
+a second selection pass. Side-talk combines tool items scored by the canonical parser and response
+items scored by the fixed side-talk judge.                                                                             由固定 side-talk 评判器评分的响应项。
+
+The three training-free methods use no weight update. AURA adds a ReAct-style attribution step                         三种无训练方法都不更新权重。AURA 在最终动作选择之前增加了一个 ReAct 风格的归因
+before final action selection. TwS supplies a bounded acoustic analysis protocol with local voice,                     步骤。TwS 提供有界声学分析协议，包含局部语音、音高、能量和频谱工具。SHANKS 使
+pitch, energy, and spectral tools. SHANKS uses chunked listening and intermediate notes. These
+are local implementations of the respective method ideas and are not claimed as official full-pipeline                 用分块聆听和中间笔记。这些是各自方法思想的本地实现，并不声称是官方的完整流水线
+reproductions.                                                                                                         复现。
+Kimi-Audio receives the system instruction in its first user message because its native template does                  Kimi-Audio 在其第一条用户消息中接收系统指令，因为它的原生模板不保留 system 角色。
+not retain a system role. Step-Audio uses its required response terminators and long-audio handling.                   Step-Audio 使用其必需的响应终止符和长音频处理。
+
+
+                                                             12                                                                                                     12
+Table 7: Complete full-corpus raw and training-free results. The corpus contains 395 side-talk                    表7：完整的全语料原始结果与免训练结果。该语料包含395段旁谈录音、223段自言自语录音和400
+recordings, 223 self-talk recordings, and 400 speaker-switch pairs. All values are percentages.                   组说话人切换对。所有数值均为百分比。
+Method                 Side-talk   Self-talk mute        Switch mute    Single select.     Text-only select.      方法                 旁谈      自言自语静音          切换静音         单选。         仅文本选择。
+ Raw Audio LLMs                                                                                                    原始音频LLM
+Qwen3-Omni                 39.0              57.0                 1                77                        81   Qwen3-Omni          39.0       57.0              1             77        81
+Nemotron-Omni              32.7              28.7                 0                84                        85   Nemotron-Omni       32.7       28.7              0             84        85
+Gemini-3.8-flash           32.4              68.6                 7                80                        71   Gemini-3.8-flash    32.4       68.6              7             80        71
+Kimi-Audio-7B              38.2              30.5                14                53                        44   Kimi-Audio-7B       38.2       30.5             14             53        44
+Step-Audio-R1.1            41.0              22.4                 1                96                        97   Step-Audio-R1.1     41.0       22.4              1             96        97
+Audio Flamingo 3           36.0               1.0                 0                 0                         0   Audio Flamingo 3    36.0        1.0              0              0         0
+ Training-free adaptations                                                                                         免训练适配
+Qwen + AURA                46.6              63.2                 0                95                        99   Qwen + AURA         46.6       63.2               0            95        99
+Qwen + TwS                 23.0              85.7                 6                90                        82   Qwen + TwS          23.0       85.7               6            90        82
+Qwen + SHANKS              17.5              79.8                 1                 1                        81   Qwen + SHANKS       17.5       79.8               1             1        81
+
+
+
+                           Table 8: VoxGate implementation configuration.                                                             表 8：VoxGate 实现配置。
+    Component                                  Configuration                                                         组件                            配置
+    Base model                                 Qwen3-Omni-30B-A3B-Instruct                                           基础模型                          Qwen3-Omni-30B-A3B-Instruct
+    SFT adaptation                             LoRA on all 48-layer attention q, k, v, o projections; rank           SFT 适配                        在所有48层注意力 q, k, v, o 投影上使用LoRA；秩
+                                               32, alpha 64                                                                                        32，alpha 64
+    Frozen modules                             Audio encoder and aligner                                            冻结模块                           音频编码器和对齐器
+    SFT optimization                           Three epochs, learning rate 10−4 , effective batch size 32,          SFT 优化                         三个 epoch，学习率 10−4，有效批量大小 32，
+                                               eight H200 GPUs                                                                                     八块 H200 GPU
+    SFT mixture                                WearVox answer, abstention, tool-use, and translation                 SFT 混合数据                      WearVox 答案 , 弃权    , 工具使用 , 以及翻译
+                                               data plus the approximately 80% VGB ENCH training par-                                              数据加上约 80% 的 VGBENCH 训练分-
+                                               tition                                                                                              区
+    GRPO mixture                               The same downstream task mixture and addressedness ex-                GRPO 混合                       相同的下游任务混合和 addressedness 示-
+                                               amples; pair-aware grouping for speaker-switch                                                      例；面向说话人切换的配对感知分组
+    Rollouts                                   K/2 completions for the act and mute sides of each                    轨迹采样                          K/2每个的 act 侧和 mute 侧的补全
+                                               speaker-switch pair                                                                                 说话人切换对
+    Action rewards                             Mute, target tool, answer, and task-specific WearVox re-              动作奖励                          Mute、目标工具、答案以及任务特定的 WearVox 奖
+                                               wards                                                                                              励
+    Evaluation                                 Greedy decoding; fixed instruction, parser, and side-talk            评估                            贪婪解码；固定指令、解析器和侧谈
+                                               judge                                                                                              评判
+
+
+
+Audio Flamingo 3 emits a native bracketed action language, which does not satisfy the canonical                   Audio Flamingo 3 输出一种原生的带括号动作语言，这不符合规范的工具契约。这解释了其严格的工具选
+tool contract. This explains its strict tool-selection zeros, but not its addressedness errors: it mutes          择零值，但解释不了其称呼性错误：它只对 1% 的自我对话项进行了静音，且没有对任何切换命令进行静
+only 1% of self-talk items and no switched commands.                                                              音。
+
+
+D      VOX G ATE I MPLEMENTATION D ETAILS                                                                         D VOXGATE 实现细节
+
+
+Equation 1 defines the paired normalized advantage, and Section 5 specifies the action rewards. The               公式 1 定义了配对归一化优势，第 5 节规定了动作奖励。实现会记录每个家族的奖励分布
+implementation records per-family reward distributions and the number of nonzero-variance rollout                 以及非零方差 rollout 组的数量，以便将已处理性更新与保留任务更新区分开。
+groups so that addressedness updates can be distinguished from retained-task updates.
+
+
+E     D OWNSTREAM W EARVOX E VALUATION                                                                            E 下游 WEARVOX 评估
+
+
+Table 5 reports the complete 384-example WearVox breakdown, including task denominators. Al-                      表 5 报告了完整的 384 个示例 WearVox 细分，包括各任务的分母。尽管仅 WearVox 与
+though WearVox-only and joint-model outputs are archived separately, all Table 5 rows were eval-                  联合模型的输出分别归档，但表 5 的所有行均在相同的 384 个条目上评估，使用相同的任
+uated on the same 384 items with identical task prompts, judge model and prompt, and A/B/C/D
+scoring code.                                                                                                     务提示、评判模型和提示，以及 A/B/C/D 评分代码。
+
+
+                                                    13                                                                                                  13
+                           Table 9: Speaker-switch construction controls.                                                表9：说话人切换构式控制项。
+    Variable                                 Controlled construction                                         变量                   受控构式
+    Specified text                           Matched context and trigger across single, switch, and text-    指定文本                 在单一、切换和文本-中匹配的语境与触发项
+                                             only conditions                                                                      仅条件
+    Action target                            Tool in single/text-only; [Mute] in switch                      操作目标                 单声道/纯文本模式下的工具； [静音] 切换中
+    Voice synthesis                          Eight distinct voices simulate speaker changes                  语音合成                 八种不同语音模拟说话人变化
+    Temporal boundary                        600 ms silence before the switch trigger                        时间边界                 切换触发前 600 毫秒静音
+    Acoustic scene                           Far-field room rendering on the B trigger only                  声学场景                 仅在 B 触发器上进行远场房间渲染
+                                                                                                                                  400 个案例，10 个工具，每个工具 40 个案例
+    Coverage                                 400 cases, 10 tools, 40 cases per tool                          覆盖范围
+
+
+
+Table 10: Controlled conditions in the speaker-switch validity set. Each condition contains the same        表 10：扬声器切换有效性集合中的受控条件。每个条件包含相同的 80 条留出命令。目标遵循邻近规
+80 held-out commands. Targets follow the proximity rule.                                                    则。
+                         Trigger source      Trigger field   Gap       Target                                           触发源      触发字段  Gap  目标
+                         Same speaker        Near            0 ms      Tool                                             同一说话人     Near        0 ms     Tool
+                                                                                                                                              600 毫秒
+                         Same speaker        Near            600 ms    Tool                                             同一说话人     Near                 Tool
+                                                                                                                                              600 毫秒
+                         Same speaker        Far             600 ms    [Mute]                                           同一说话人     Far                  [静音]
+                         Different speaker   Near            0 ms      [Mute]                                           不同说话人     Near        0 ms     [静音]
+                                                                                                                                              600 毫秒
+                         Different speaker   Near            600 ms    [Mute]                                           不同说话人     Near                 [静音]
+                                                                                                                                              600 毫秒
+                         Different speaker   Far             600 ms    [Mute]                                           不同说话人     Far                  [静音]
+
+
+F     C ONSTRUCTION AND Q UALITY C ONTROLS                                                                  F 施工与质量控制
+
+Side-talk scripts are balanced over utterance order and tool-like versus conversational content, pro-       Side-talk 脚本在话语顺序以及工具型与对话型内容之间保持平衡，产生八种顺序/内容配对
+ducing eight order/content-pairing configurations. Self-talk items place a command core in dis-             配置。Self-talk 条目将命令核心置于话语框架中，包括计划、后悔、引用、讽刺和反问。
+course frames including planning, regret, quotation, sarcasm, and rhetorical questions. Recordings
+are converted to 16 kHz mono PCM WAV and retained only after annotation, label, and script-audio            录音被转换为 16 kHz 单声道 PCM WAV，并且仅在完成标注、标签以及脚本-音频一致性
+consistency checks.                                                                                         检查后才保留。
+For speaker-switch, 400 cases are balanced across ten consequential tools (40 cases per tool). Eight        对于说话人切换，400 个用例在十个后续工具之间保持平衡（每个工具 40 个用例）。使用
+distinct voices are used to synthesize speaker changes. The single condition renders source A for           八种不同的语音来合成说话人变化。单一条件为上下文和触发均渲染源 A。切换条件为上
+both context and trigger. The switch condition renders source A for context, inserts 600 ms of
+silence, and renders the trigger from source B. The B trigger receives fixed far-field room rendering.      下文渲染源 A，插入 600 毫秒静音，并从源 B 渲染触发。B 触发接收固定的远场房间渲染。
+Audio is normalized to −20 dBFS per segment with 5 ms fades and 16 kHz mono PCM output. The                 音频按段归一化到 −20 dBFS，使用 5 毫秒淡入淡出和 16 kHz 单声道 PCM 输出。合成清
+synthesis manifest records voice, duration, normalization, peak, boundary, and room configuration           单记录每个用例的语音、时长、归一化、峰值、边界和房间配置。
+for each case.
+
+
+G      S PEAKER -S WITCH C UE VALIDITY S TUDY                                                               G 说话人切换线索有效性研究
+
+We construct an evaluation-only validity set from the 80 frozen held-out speaker-switch commands.           我们基于 80 条冻结的留出说话人切换命令构建一个仅用于评估的有效性集。该集被排除在
+The set is excluded from training, prompt tuning, checkpoint selection, and model selection. For            训练、提示微调、检查点选择和模型选择之外。对于每条命令，我们各合成一次佩戴者上
+each command, we synthesize the wearer context, wearer trigger, and bystander trigger once and
+reuse those source segments across six conditions. This construction holds text, tool target, TTS           下文、佩戴者触发词和旁观者触发词，并在六种条件下复用这些源片段。这种构建方式保
+configuration, sample rate, segment-level loudness, and scoring fixed while varying speaker relation,       持文本、工具目标、TTS 配置、采样率、片段级响度和评分固定，同时改变说话人关系、
+trigger distance, and temporal separation. Far-field segments are normalized after room rendering
+                                                                                                            触发距离和时间间隔。远场片段在房间渲染后进行归一化，以免距离引入系统性电平差异。
+so that distance does not introduce a systematic level difference. All 480 generated files pass format,
+hash, peak, gap, and segment-level loudness checks.                                                         全部 480 个生成文件均通过格式、哈希、峰值、间隙和片段级响度检查。
+Table 11 reports mute and matching-tool selection rates separately for every condition. The raw base        表 11 分别报告每种条件下的静音率和匹配工具选择率。原始基础模型在六种条件下变化很
+model changes little across the six conditions. Both post-trained models respond to source change           小。两个后训练模型在近场渲染下都会对源变化作出响应，但它们也会将距离作为强门控
+under near-field rendering, but they also use distance as a strong gating cue. The 600 ms boundary
+alone has little effect on same-speaker commands and instead amplifies muting when the trigger              线索。仅 600 毫秒边界对同一说话人命令影响很小，反而会在触发源变化时加剧静音。
+source changes.
+The paired contrasts clarify the contribution of each cue. At fixed near-field rendering and 600 ms         配对对比阐明了每个线索的贡献。在固定近场渲染和600毫秒间隔下，改变触发说话者会使SFT的静
+separation, changing the trigger speaker increases mute rate by 48.75 points for SFT and 52.50              音率提高48.75个百分点，并使52.50
+
+
+                                                    14                                                                                   14
+Table 11: Speaker-switch cue validity results on the frozen 80-command test set. Cells report mute              表11：在冻结的80条命令测试集上的说话人切换线索有效性结果。单元格报告静音率（M）和匹配
+rate (M) and matching-tool selection rate (T) in percent. Under the proximity rule, same/near targets           工具选择率（T），以百分比表示。在邻近规则下，相同/邻近目标对应T，所有其他音频行目标为
+T and all other audio rows target M. The final row is the original switch condition from Table 2; its           M。最后一行是表2中的原始切换条件；其非目标工具率未保留在报告的摘要中，并用“–”标记。
+non-target tool rate was not retained in the reported summary and is marked with “–”.
+                                                                                                                                                      基础 Qwen             VoxGate SFT        VoxGate GRPO
+Source       Field    Gap        Target           Base Qwen               VoxGate SFT        VoxGate GRPO       来源      字段     Gap       目标
+                                                  M           T           M             T      M            T                                        M            T       M             T      M            T
+Same         Near     0 ms       Tool         7.50         65.00        0.00      100.00     0.00     100.00    Same    Near   0 ms      Tool      7.50        65.00    0.00       100.00    0.00       100.00
+Same         Near     600 ms     Tool         5.00         68.75        1.25       98.75     1.25      98.75    Same    Near   600 毫秒    Tool      5.00        68.75    1.25        98.75    1.25        98.75
+Same         Far      600 ms     [Mute]       6.25         73.75       60.00       40.00    60.00      40.00    Same    Far    600 毫秒              6.25        73.75   60.00        40.00   60.00        40.00
+                                                                                                                                         [静音]
+Different    Near     0 ms       [Mute]       6.25         75.00       35.00       65.00    31.25      68.75    不同      Near   0 ms      [静音]      6.25        75.00   35.00        65.00   31.25        68.75
+                                                                                                                               600 毫秒
+Different    Near     600 ms     [Mute]       7.50         71.25       50.00       50.00    53.75      46.25    不同      Near             [静音]      7.50        71.25   50.00        50.00   53.75        46.25
+                                                                                                                               600 毫秒
+Different    Far      600 ms     [Mute]       0.00             –       91.25           –    92.50          –    不同      Far              [静音]      0.00            –   91.25            –   92.50            –
+
+
+
+
+points for GRPO. At fixed speaker identity and 600 ms separation, the far-field transform increases             GRPO的百分点。在固定说话者身份和600毫秒间隔下，远场变换使两个模型的静音率提高
+mute rate by 58.75 points for both models. Removing the gap from a different near-field source                  58.75个百分点。从不同的近场源移除间隔会使SFT的静音率降低15.0个百分点，使GRPO
+reduces mute rate by 15.0 points for SFT and 22.5 points for GRPO. In contrast, adding the gap to
+the same near-field wearer changes mute rate by only 1.25 points and preserves 98.75% target-tool               降低22.5个百分点。相比之下，将间隔添加到同一近场佩戴者仅使静音率变化1.25个百分
+selection. The original speaker-switch condition therefore combines source, distance, and turn-                 点，并保持98.75%的目标工具选择率。因此，原始说话者切换条件结合了来源、距离和轮
+boundary evidence, while the same-speaker control shows that the temporal pause is not learned as               次边界证据，而同说话者控制表明，时间暂停并未被学习为独立静音规则。
+a standalone mute rule.
+
+Table 12: Cue-balanced SFT on the original six-condition validity WAVs (n = 80 per condition), us-              表 12：在原始六条件有效性 WAV 上的线索平衡 SFT（n = 80 每条件），使用与原始有效
+ing the same prompts, temperature 0, parser, and scorer as the original validity study. M is [Mute]             性研究相同的提示、温度 0、解析器和评分器。M 是 [Mute]率，T 是匹配工具选择率（%）。
+rate and T is matching-tool selection rate (%). These WAVs differ from the scene-consistent eight-
+condition set in Table 13.                                                                                      这些 WAV 与表 13 中场景一致的八条件集不同。
+                               Source      Field Gap               M       T                                                            来源   字段间隙             M        T
+                               Same        Near   0 ms         2.50    97.50                                                            Same 接近 0 ms        2.50 97.50
+                               Same        Near   600 ms       2.50    97.50                                                            Same 接近 600 ms      2.50 97.50
+                               Same        Far    600 ms      90.00    10.00                                                            Same Far  600 毫秒 90.00 10.00
+                               Different   Near   0 ms        66.25    33.75                                                            不同 近      0 ms     66.25 33.75
+                               Different   Near   600 ms      82.50    17.50                                                            不同 近      600 毫秒   82.50 17.50
+                               Different   Far    600 ms      93.75     5.00                                                            不同远近      600 ms 93.75      5.00
+
+
+
+H        C UE -BALANCED SFT C ONTROL                                                                            H 线索平衡SFT控制
+
+The cue-balanced run changes only the 1,212 frozen-train speaker-switch audio slots in the 5,748-               线索平衡运行仅更改 5,748 行原始 SFT 混合数据中的 1,212 个冻结训练说话人切换音频槽位：306
+row original SFT mixture: 306 wearer/tool and 906 bystander/[Mute] slots. The 286 speaker-                      个佩戴者/工具槽位和 906 个旁观者/[Mute] 槽位。286 个仅说话人切换文本工具行以及所有其他任
+switch text-only tool rows and all other task rows remain unchanged. The four near/far by 0/600 ms              务行保持不变。四种近/远 × 0/600 ms 组合分别获得 77、77、76 和 76 个佩戴者工具行，以及 227、
+combinations receive 77, 77, 76, and 76 wearer tool rows, and 227, 227, 226, and 226 bystander
+mute rows, respectively. The mixture includes far-field authorized-source/tool examples and serves              227、226 和 226 个旁观者静音行。该混合数据包括远场授权来源/工具示例，并作为线索控制实验而
+as a cue-control experiment rather than proximity-policy training. Training retains three epochs,               非邻近策略训练。训练保留三个 epoch、540 步以及表 8 中的 LoRA 设置。320 条训练命令与 80 条
+540 steps, and the LoRA settings in Table 8. The 320 training commands and 80 test commands                     测试命令互不重叠；一条命令的所有八个变体都保留在其划分内。训练佩戴者声音为 M000、
+are disjoint; all eight variants of a command stay within its split. Training wearer voices are M000,           M008、mom、dad、kid m 和 grandma；测试佩戴者声音为 teen f、phone caller 和 tv host。
+M008, mom, dad, kid m, and grandma; test wearer voices are teen f, phone caller, and
+tv host.
+Each command reuses one synthesized wearer context, wearer trigger, and bystander trigger across                每条命令在其八个变体中复用一个合成的佩戴者上下文、佩戴者触发词和旁观者触发词。
+its eight variants. All speech segments share the same text, TTS checkpoint, 16 kHz mono PCM                    所有语音片段共享相同的文本、TTS检查点、16 kHz单声道PCM格式以及片段级响度归一
+format, and segment-level loudness normalization. Far-field room rendering and low-pass filter-
+ing affect both the wearer context and trigger in a far-field variant; rendered voiced segments are             化。远场房间渲染和低通滤波在远场变体中同时影响佩戴者上下文和触发词；渲染后的有
+renormalized. The 0/600 ms contrast changes only the inserted silence. In the earlier six-condition             声片段会重新归一化。0/600 ms对比仅改变插入的静音。在早期的六条件线索有效性研究
+cue-validity study, far-field rendering was a trigger-only intervention. Consequently, even with the            中，远场渲染仅是对触发词的干预。因此，即使使用相同的80条命令文本，新旧条件也是
+same 80 command texts, the old and new conditions are different WAVs and their cells should not
+be pooled or used as matched before/after measurements.                                                         不同的WAV文件，其单元格不应合并，也不应作为匹配的前后测量使用。
+
+
+
+
+                                                      15                                                                                                  15
+Table 13: Complete eight-condition results on scene-consistent audio. Each row contains 80 held-   表 13：场景一致音频上的完整八条件结果。每行包含 80 条留出命令。M 是 [Mute] 率，T 是匹配
+out commands. M is [Mute] rate and T is matching-tool selection rate (%). Same/near targets T;     工具选择率（%）。相同/邻近目标为 T；相同/远距离和不同说话者行在邻近规则下以 M 为目标。
+same/far and different-speaker rows target M under the proximity rule.
+                        Relation    Field   Gap       Original SFT    Cue-balanced SFT                          关系     字段     Gap       原始 SFT          线索平衡 SFT
+                                                        M        T       M          T                                                     M        T       M       T
+                        Same        Near    0 ms      2.50    97.50    2.50      97.50                          Same   Near   0 ms      2.50    97.50    2.50   97.50
+                        Same        Near    600 ms    0.00   100.00    1.25      98.75                          Same   Near   600 毫秒    0.00   100.00    1.25   98.75
+                        Same        Far     0 ms      2.50    97.50    3.75      96.25                          Same   Far    0 ms      2.50    97.50    3.75   96.25
+                        Same        Far     600 ms    6.25    93.75    5.00      95.00                          Same   Far    600 毫秒    6.25    93.75    5.00   95.00
+                        Different   Near    0 ms     18.75    81.25   68.75      31.25                          不同     Near   0 ms     18.75    81.25   68.75   31.25
+                                                                                                                              600 毫秒
+                        Different   Near    600 ms   18.75    81.25   85.00      15.00                          不同     Near            18.75    81.25   85.00   15.00
+                        Different   Far     0 ms     23.75    76.25   80.00      20.00                          不同     Far    0 ms     23.75    76.25   80.00   20.00
+                                                                                                                              600 毫秒
+                        Different   Far     600 ms   46.25    53.75   96.25       3.75                          不同     Far             46.25    53.75   96.25    3.75
+
+
+
+
+                                                      16                                                                                16
+

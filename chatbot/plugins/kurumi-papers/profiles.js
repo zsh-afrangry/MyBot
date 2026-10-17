@@ -1,13 +1,23 @@
-// Explicit translation profiles. Unregistered providers/models fail; no silent substitution.
-export const DEFAULT_PROFILE = Object.freeze({provider: 'openai', channel: 'naiccc', model: 'gpt-6.1-sol', effort: 'max', protocol: 'responses', baseUrl: 'https://naiccc.com/v1'});
+// One registry shared with the isolated Python worker. No arbitrary endpoint or credential names.
+// Contract: docs/22; an explicit provider/model/channel selects its own defaults, never GPT's.
+// A static JSON import is captured by OpenClaw's plugin loader; runtime fs URLs are not.
+import registry from './python/profiles.json' with {type: 'json'};
+const unsupported = () => Object.assign(Error('未登记或冲突的翻译组合；支持 naiccc/OpenAI gpt-6.1-sol（low/medium/high/xhigh/max），DeepSeek 官方 deepseek-flash、deepseek-v4-pro（none/low/high/max）。Grok 尚未接入。'), {code: 'unsupported_translation_profile'});
 export function resolveProfile(args = {}) {
-  const selected = {...DEFAULT_PROFILE};
-  for (const key of ['provider', 'channel', 'model', 'effort']) {
-    if (args[key] != null) selected[key] = String(args[key]).trim().toLowerCase();
-  }
-  if (selected.provider !== 'openai' || selected.channel !== 'naiccc' || selected.model !== 'gpt-6.1-sol' || !['low','medium','high','xhigh','max'].includes(selected.effort)) {
-    const error = Error('未登记的翻译组合；当前支持 naiccc / OpenAI / gpt-6.1-sol，强度 low/medium/high/xhigh/max。DeepSeek、Grok 接入待单独验证。');
-    error.code = 'unsupported_translation_profile'; throw error;
-  }
-  return selected;
+  const selected = Object.fromEntries(['provider', 'channel', 'model', 'effort'].filter(key => args[key] != null).map(key => [key, String(args[key]).trim().toLowerCase()]));
+  const candidates = registry.providers.filter(spec =>
+    (selected.provider == null || selected.provider === spec.provider) &&
+    (selected.channel == null || selected.channel === spec.channel) &&
+    (selected.model == null || Object.hasOwn(spec.models, selected.model)));
+  const explicit = ['provider', 'channel', 'model'].some(key => selected[key] != null);
+  const spec = explicit ? (candidates.length === 1 ? candidates[0] : null) : registry.providers.find(spec => spec.provider === registry.defaultProvider);
+  if (!spec) throw unsupported();
+  const model = selected.model ?? spec.defaultModel, effort = selected.effort ?? spec.defaultEffort;
+  if (!spec.models[model]?.includes(effort)) throw unsupported();
+  return {provider: spec.provider, channel: spec.channel, model, effort, protocol: spec.protocol, baseUrl: spec.baseUrl};
+}
+export const DEFAULT_PROFILE = Object.freeze(resolveProfile());
+export function credentialIdsForProfile(profile = {}) {
+  const resolved = resolveProfile(profile);
+  return [...registry.providers.find(spec => spec.provider === resolved.provider).credentialIds];
 }

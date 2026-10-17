@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-17T05:02:52.375Z",
+  "boundary": "Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.",
+  "capturePath": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/9bfd2f51-8adb-40b2-9a70-e55f93f38d50/captures/openclaw-plugin-build-2oAPfc/package-0/node_modules/kurumi-papers/runner.js",
+  "sourceHashes": {
+    "engine.py": "f54e497ec166a9a0b0d5aa33eab97fe8bc44aa9c621ef7d74b42aea60880ce97",
+    "responses.py": "203c63ac57358dab5df21024957f0b28275100ca9f9e05530a77de6c50a6d823",
+    "profiles.json": "d0f81c4077445c8d83eca90a0dc8cf2b1a413be27c4b2aae00a9b09e956ece60"
+  },
+  "exitCode": 0,
+  "ok": true,
+  "worker": {
+    "ok": true,
+    "providers": [
+      "openai",
+      "deepseek"
+    ]
+  }
+}

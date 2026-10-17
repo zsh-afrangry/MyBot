@@ -15,7 +15,9 @@ import time
 import urllib.error
 import urllib.request
 
-KEY_IDS = ("OPENAI_API_KEY1_014", "OPENAI_API_KEY2_030", "OPENAI_API_KEY3_040")
+PROFILE_REGISTRY = json.loads(Path(__file__).with_name("profiles.json").read_text())
+# Compatibility name for the ordered GPT pool; actual selection is always provider-specific.
+KEY_IDS = tuple(next(p for p in PROFILE_REGISTRY["providers"] if p["provider"] == "openai")["credentialIds"])
 PROMPT_VERSION = "kurumi-paper-v2-batch"
 AUTH_CODES = ("invalid_api_key", "authentication_error", "key_disabled")
 QUOTA_CODES = ("insufficient_quota", "quota_exceeded", "credit_balance_too_low")
@@ -37,6 +39,18 @@ class TranslationFailure(Exception):
     def __init__(self, code, details=None):
         super().__init__(code)
         self.details = details or {}
+
+
+def registered_profile(profile):
+    """Defence in depth in the worker; no model-selected hosts or cross-provider keys."""
+    spec = next((p for p in PROFILE_REGISTRY["providers"]
+                 if p["provider"] == profile.get("provider") and p["channel"] == profile.get("channel")), None)
+    if (not spec or profile.get("baseUrl") != spec["baseUrl"] or
+            profile.get("protocol") != spec["protocol"]):
+        raise TranslationFailure("unsupported_translation_endpoint")
+    if profile.get("effort") not in spec["models"].get(profile.get("model"), []):
+        raise TranslationFailure("unsupported_translation_profile")
+    return spec
 
 
 def safe_error_details(data):
@@ -146,11 +160,12 @@ class ResponsesClient:
     def __init__(self, profile, keys, *, max_requests=200, max_tokens=150000,
                  timeout=600, cooldown_file=None, request=http_request, sleep=time.sleep,
                  now=time.time, on_usage=None):
-        self.profile, self.keys = profile, {k: keys[k] for k in KEY_IDS if keys.get(k)}
+        spec = registered_profile(profile)
+        self.profile, self.key_ids = dict(profile), tuple(spec["credentialIds"])
+        self.batch_format = spec["batchFormat"]
+        self.keys = {k: keys[k].strip() for k in self.key_ids if isinstance(keys.get(k), str) and keys[k].strip()}
         if not self.keys:
             raise TranslationFailure("missing_translation_credentials")
-        if profile.get("baseUrl") != "https://naiccc.com/v1" or profile.get("protocol") != "responses":
-            raise TranslationFailure("unsupported_translation_endpoint")
         self.max_requests, self.max_tokens, self.timeout = max_requests, max_tokens, timeout
         self.request, self.sleep, self.now = request, sleep, now
         self.cooldown_file, self.on_usage = cooldown_file, on_usage
@@ -159,6 +174,8 @@ class ResponsesClient:
         self.input_tokens = self.output_tokens = 0
         self.receipts = []
         self.failure = None
+        self.validation_failure = None
+        self.normalized_json_fences = 0
         self.cooldowns = {}
         if cooldown_file and Path(cooldown_file).exists():
             self.cooldowns = json.loads(Path(cooldown_file).read_text())
@@ -167,6 +184,8 @@ class ResponsesClient:
         return {"requests": self.requests, "inputTokens": self.input_tokens,
                 "outputTokens": self.output_tokens, "reportedTokens": self.input_tokens + self.output_tokens,
                 "receipts": list(self.receipts), "failure": self.failure,
+                "validationFailure": self.validation_failure,
+                "normalizedJsonFences": self.normalized_json_fences,
                 "unknownUsageAttempts": sum(r.get("usageStatus") == "unknown" for r in self.receipts),
                 "channelFailures": sum(r.get("outcome") == "channel_failed" for r in self.receipts),
                 "hardCostLimit": False}
@@ -188,12 +207,12 @@ class ResponsesClient:
         self._cool(name, 300)
         self._publish()
 
-    def generate(self, text, instructions, *, preserve_placeholders=False):
+    def generate(self, text, instructions, *, preserve_placeholders=False, output_format=None):
         with self.lock:
             if self.failure:
                 raise TranslationFailure(self.failure)
             try:
-                return self._generate(text, instructions, preserve_placeholders)
+                return self._generate(text, instructions, preserve_placeholders, output_format)
             except TranslationFailure as error:
                 self.failure = str(error)
                 if self.receipts:
@@ -205,14 +224,16 @@ class ResponsesClient:
                 self._publish()
                 raise TranslationFailure(self.failure) from None
 
-    def _generate(self, text, instructions, preserve_placeholders):
+    def _generate(self, text, instructions, preserve_placeholders, output_format):
         if not isinstance(text, str) or not text.strip():
             raise TranslationFailure("invalid_translation_input")
         # Every segment starts a fresh request: no previous_response_id or accumulating history.
         body = {"model": self.profile["model"], "reasoning": {"effort": self.profile["effort"]},
                 "instructions": instructions, "input": text, "store": False,
                 "max_output_tokens": 8192, "stream": True}
-        for name in KEY_IDS:
+        if output_format is not None:
+            body["text"] = {"format": output_format}
+        for name in self.key_ids:
             if name not in self.keys or self.cooldowns.get(self._cool_key(name), 0) > self.now():
                 continue
             for attempt in range(2):
@@ -220,8 +241,10 @@ class ResponsesClient:
                     raise TranslationFailure("translation_budget_exhausted")
                 self.requests += 1
                 receipt = {"attempt": self.requests, "credentialId": name,
+                           "provider": self.profile["provider"], "channel": self.profile["channel"],
                            "model": self.profile["model"], "effort": self.profile["effort"],
                            "inputChars": len(text), "stream": True,
+                           "outputFormat": "text" if output_format is None else output_format.get("type"),
                            "usageStatus": "unknown",
                            "startedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                 self.receipts.append(receipt)

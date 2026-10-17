@@ -1,0 +1,110 @@
+{
+  "startedAt": "2026-10-17T04:35:31.916Z",
+  "boundary": "Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic approval is not QQ confirmation or inbox proof.",
+  "source": "/home/afrangry/桌面/2609.32536v1.pdf",
+  "config": {
+    "root": "/home/afrangry/.openclaw-fusion/paper-acceptance/deepseek-official-20261017",
+    "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
+    "credentialsFile": "[private credential file]",
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 200000,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "sendQQ": false,
+  "sendMail": false,
+  "reusedJob": false,
+  "document": {
+    "id": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "kind": "input",
+    "filename": "2609.32536v1.pdf",
+    "sha256": "71658ea5beea1cf5f9485d825f57b8a545e7645a5ff5bbe79fe9a45e30a8d6db",
+    "bytes": 646721,
+    "pages": 16,
+    "source": {
+      "type": "operator-acceptance"
+    },
+    "createdAt": "2026-10-17T04:35:31.934Z"
+  },
+  "jobId": "job_9a2d59c59c9f23addbfcf6d1",
+  "job": {
+    "id": "job_9a2d59c59c9f23addbfcf6d1",
+    "documentId": "doc_71658ea5beea1cf5f9485d825f57b8a5",
+    "profile": {
+      "provider": "deepseek",
+      "channel": "official",
+      "model": "deepseek-flash",
+      "effort": "none",
+      "protocol": "responses",
+      "baseUrl": "https://api.deepseek.com"
+    },
+    "pages": null,
+    "sourceLang": "en",
+    "targetLang": "zh",
+    "deliveryTarget": "none",
+    "deliveryKind": "dual",
+    "requestHash": "7b0c3b335322495165e059b56c4a378bb588eac4686226c30fa0a311c92a98bf",
+    "status": "failed",
+    "correlation": {},
+    "createdAt": "2026-10-17T04:35:31.936Z",
+    "artifacts": {},
+    "updatedAt": "2026-10-17T04:37:55.301Z",
+    "error": "invalid_batch_translation",
+    "usage": {
+      "requests": 1,
+      "inputTokens": 287,
+      "outputTokens": 296,
+      "reportedTokens": 583,
+      "receipts": [
+        {
+          "attempt": 1,
+          "credentialId": "DEEPSEEK_API_KEY",
+          "provider": "deepseek",
+          "channel": "official",
+          "model": "deepseek-flash",
+          "effort": "none",
+          "inputChars": 814,
+          "stream": true,
+          "usageStatus": "reported",
+          "startedAt": "2026-10-17T04:35:57Z",
+          "streamProgress": {
+            "events": 1,
+            "outputChars": 0,
+            "lastEvent": "response.created"
+          },
+          "elapsedSeconds": 1.612,
+          "httpStatus": 200,
+          "usage": {
+            "input_tokens": 287,
+            "output_tokens": 296,
+            "input_tokens_details": {
+              "cached_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 0
+            }
+          },
+          "responseId": "9ba2e623-eeca-4cdd-b312-3335d0f7b2b1",
+          "responseEffort": "none",
+          "outcome": "completed"
+        }
+      ],
+      "failure": "invalid_batch_translation",
+      "unknownUsageAttempts": 0,
+      "channelFailures": 0,
+      "hardCostLimit": false
+    },
+    "engineProgress": {
+      "type": "progress_update",
+      "stage": "Translate Paragraphs",
+      "stage_progress": 99.87623762376238,
+      "overall_progress": 85.40480022807319
+    }
+  },
+  "sends": 0,
+  "ok": false,
+  "error": "invalid_batch_translation",
+  "finishedAt": "2026-10-17T04:37:56.080Z",
+  "elapsedSeconds": 144.164
+}

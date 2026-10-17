@@ -1,0 +1,6 @@
+{
+  "boundary": "Static existing local Markdown target check for maintained feature docs and reading entry points, not remote URL or heading validation. No model/API/runtime writes.",
+  "files": 12,
+  "localTargets": 189,
+  "broken": []
+}

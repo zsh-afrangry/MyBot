@@ -1,0 +1,65 @@
+{
+  "boundary": "Read-only diff/source verification and writing this feature evidence; no model/API/QQ/mail or remote Git operation.",
+  "scope": "GPT three-channel bounded failover and DeepSeek official native Responses translation.",
+  "startingCommit": "f8fd5fc",
+  "phaseOneCommit": "f049a64",
+  "phaseTwoCommit": "This report is included in the scoped local commit; identify it from Git history.",
+  "coverageOutput": "evidence coverage\n  历史领域验收: 84\n  当前有效: 191\n  total: 275\nOK: every file is classified by a named rule.",
+  "scripts": {
+    "classified": 164,
+    "withBoundary": 41,
+    "contradictions": 0
+  },
+  "markdownTargetsEvidence": "doc-links.json",
+  "regressions": {
+    "node": 26,
+    "responses": 20,
+    "installedEngine": 9,
+    "total": 55,
+    "passed": 55
+  },
+  "liveHostEvidence": "host-final.json",
+  "productionEvidence": [
+    "capture-final.json",
+    "deployment-final.json",
+    "health.json",
+    "dependencies.txt",
+    "sync-config.txt",
+    "sync-persona.txt"
+  ],
+  "privateValuesScan": {
+    "filesScanned": 67,
+    "findings": 0,
+    "valuesRecorded": false
+  },
+  "scopeCheck": {
+    "unrelatedFiles": [],
+    "docs23Included": false,
+    "remotePushPerformed": false
+  },
+  "sourceHashes": {
+    "chatbot/plugins/kurumi-papers/index.js": "a61c0c93179d9bdeda86d77302b523a4f567654ee8e6a0c6a7c14fe86ef2725f",
+    "chatbot/plugins/kurumi-papers/profiles.js": "00395102fe5a51237981033113d34717a7c6dfbc5e58b344c2217a2665aa0fdf",
+    "chatbot/plugins/kurumi-papers/python/engine.py": "f54e497ec166a9a0b0d5aa33eab97fe8bc44aa9c621ef7d74b42aea60880ce97",
+    "chatbot/plugins/kurumi-papers/python/profiles.json": "d0f81c4077445c8d83eca90a0dc8cf2b1a413be27c4b2aae00a9b09e956ece60",
+    "chatbot/plugins/kurumi-papers/python/responses.py": "203c63ac57358dab5df21024957f0b28275100ca9f9e05530a77de6c50a6d823",
+    "chatbot/plugins/kurumi-papers/runner.js": "6a32827fe887b54c2c9abacafd332e1e35ce84f53b7ecdeeda46a80d6ce5ac2d",
+    "chatbot/plugins/kurumi-papers/service.js": "47fc82c57753e1d7578208c0cc36402fb858e901a0c9ae38935029b2143c3a7a",
+    "chatbot/scripts/import-paper-credentials.mjs": "aae0ad36f4914ef3983245f29258cfb10f1879296f46172c9f4084fba7cd7f66",
+    "chatbot/tests/papers/acceptance-api.py": "dee12f6696bce4aeb3919e1085c08029cd631435dee87b71e2f1eb7798e62b3a",
+    "chatbot/tests/papers/acceptance-host.mjs": "e0fc7cf8ee910d5a042d5c706769cee98a59809858f4dc7a1a17acafb7a65947",
+    "chatbot/tests/papers/acceptance-worker.mjs": "d5318739f3fc64ec81d69aa4dcd73a78975ba1d2f8c0dd3ee10f3188af1e52a4",
+    "chatbot/tests/papers/acceptance.mjs": "897f6d8b45fb79de6e0934ab51dc7957c9e856e24a66547435498157189237e0",
+    "chatbot/tests/papers/credentials.test.mjs": "39d192e7b7059c9d3de6cf54eaf9f32563c558a87c0b20a287859856d7b956c6",
+    "chatbot/tests/papers/engine_test.py": "1e9223bd47db04ebab287e58a470e7c760277e7934fc1bf707b838c569498aeb",
+    "chatbot/tests/papers/jobs.test.mjs": "8a79b46fae2eca6af8698e6090aa646b9582767a268b8f1d98458d3c52e37773",
+    "chatbot/tests/papers/responses_test.py": "0ae500edf85c1f76d98bbd6f091f237050a67800658443514d9840cd7c7d0752",
+    "chatbot/tests/papers/worker.test.mjs": "e7a26ea58da351cc351dbea1b1bd4124780a093c2c8c85207d6f11ed9af8a42d",
+    "scripts/fusion/templates/AGENTS.md": "da88749d7a237a7f15db821a849f3423ae3a5a59e81c2f35093b9053f02d7ce9"
+  },
+  "remaining": [
+    "B1: GPT/MAX full paper timed out after 1800.748s despite actual channel failover.",
+    "DeepSeek full artifact generated and sampled; no owner delivery or full semantic/formula approval this increment.",
+    "Real 030-to-040 failure, real key exhaustion/revocation, V4 Pro full paper, GPU/OCR, load and full disaster recovery not covered."
+  ]
+}

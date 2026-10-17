@@ -13,6 +13,7 @@ const arg=(name,fallback)=>{const i=process.argv.indexOf('--'+name);return i<0?f
 const state='/home/afrangry/.openclaw-fusion';
 const input=arg('input'), out=arg('out');
 if(!input||!out||!path.isAbsolute(input)||!path.isAbsolute(out))throw Error('Absolute --input and --out are required');
+if(fs.existsSync(path.join(out,'acceptance.json')))throw Error('Evidence exists; use a new --out directory');
 const at=new Date().toISOString(), tag=Date.now().toString(36);
 const root=arg('root',path.join(state,'paper-acceptance','gpt-default'));
 if(!path.isAbsolute(root)||!root.startsWith(path.join(state,'paper-acceptance')+path.sep))throw Error('Acceptance root must be inside private paper-acceptance state');
@@ -29,7 +30,8 @@ try{
  if(!arg('reuse-job'))service.start();
  const doc=await service.documents.add(fs.readFileSync(input),{filename:path.basename(input),source:{type:'operator-acceptance'}});
  const reuse=arg('reuse-job');report.reusedJob=Boolean(reuse);
- const job=reuse?service.get(reuse):service.submit({documentId:doc.id,pages:arg('pages'),delivery:'none'},{key:'acceptance:'+tag});
+ const profile=Object.fromEntries(['provider','channel','model','effort'].filter(name=>arg(name)!=null).map(name=>[name,arg(name)]));
+ const job=reuse?service.get(reuse):service.submit({...profile,documentId:doc.id,pages:arg('pages'),delivery:'none'},{key:'acceptance:'+tag});
  if(job.documentId!==doc.id)throw Error('source_document_mismatch');
  report.document=doc;report.jobId=job.id;save();
  let last='';

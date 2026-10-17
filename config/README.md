@@ -21,7 +21,7 @@
 | `.openclaw-fusion/agents/` | 会话记录（JSONL）与 agent 库 | ❌ 仅私有备份 |
 | `.openclaw-fusion/{code,research}-workspace/`、`project-checks/`、`research-cache/` | 后台任务与研究的隔离工作区、检查夹具、缓存 | ❌ 仅私有备份 |
 | `.openclaw-fusion/plugins/` | 受控第三方插件安装（由仓库锁文件重建） | ❌ 可重建 |
-| `.openclaw-fusion/paper-credentials.json` | 论文翻译三份 GPT 凭据，0600；014 → 030 → 040 | ❌ 仅私有备份 |
+| `.openclaw-fusion/paper-credentials.json` | 论文翻译凭据，0600；GPT 014 → 030 → 040 与独立 DeepSeek 官方 Key，按本次厂商选取 | ❌ 仅私有备份 |
 | `.openclaw-fusion/documents/` | 受管 PDF、任务/产物记录、论文链路事件及模型/字体/译文缓存 | ❌ 仅私有备份；缓存可重建 |
 | `.openclaw-fusion/venvs/paper-translation/` | 按锁文件重建的 Python 3.12 翻译环境 | ❌ 可重建 |
 | `.openclaw-fusion/paper-acceptance/` | 明确授权的真实 PDF 验收状态与缓存，归属文档 22 | ❌ 私有验收资料 |
@@ -35,7 +35,7 @@
 - `${OPENCLAW_GATEWAY_TOKEN}`、`${QWEATHER_API_HOST}` —— 由 `run-gateway.mjs` 从
   `runtime-env.json` 展开为子进程环境变量；
 - `{"source":"env","id":"DEEPSEEK_API_KEY"}` 这类 **SecretRef** —— 由 OpenClaw 在运行时按名字解析。
-- `plugins.entries.kurumi-papers.config.credentialsFile` —— 翻译进程启动时读取 0600 私密 JSON，值只经 stdin 传入；不能在配置、命令行或工具参数中写密钥。
+- `plugins.entries.kurumi-papers.config.credentialsFile` —— 翻译进程启动时读取 0600 私密 JSON，只选择该厂商的 Key，经 stdin 传入；不能在配置、命令行或工具参数中写密钥。操作者用 `chatbot/scripts/import-paper-credentials.mjs --provider openai|deepseek` 导入；已有目标需 `--replace` 原子合并并保留另一厂商，具体来源和命令见文档 22。
 
 - KnowledgeMap专用Bearer仅从 `/home/afrangry/.config/knowledgemap/assistant-token` 读取（600），两端共享此凭据文件，不共享MySQL密码；属于私密备份范围。
 

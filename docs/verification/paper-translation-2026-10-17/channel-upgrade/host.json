@@ -1,0 +1,25 @@
+{
+  "at": "2026-10-17T04:36:07.499Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No real translation API request, QQ/mail delivery or production write.",
+  "cases": [
+    {
+      "label": "list-real-managed-id",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "我查了一下，这个对话里目前没有能看到已经收到的 PDF 记录，之前也没有上传过的文件。文档入口这会儿也没给我可用的查询结果。\n\n你再把 PDF 直接发我一次就行，我先只登记、不翻译，等你说了再动。"
+          }
+        ]
+      }
+    }
+  ],
+  "passed": false,
+  "error": "The input did not match the regular expression /验收论文/. Input:\n\n'[{\"text\":\"我查了一下，这个对话里目前没有能看到已经收到的 PDF 记录，之前也没有上传过的文件。文档入口这会儿也没给我可用的查询结果。\\\\n\\\\n你再把 PDF 直接发我一次就行，我先只登记、不翻译，等你说了再动。\"}]'\n",
+  "diagnosticsRoot": "/tmp/kurumi-paper-host-UROZKi",
+  "childStopped": true,
+  "mockUploads": []
+}

@@ -1,0 +1,34 @@
+✔ Provider-specific defaults are inferred only from compatible registered selectors (2.40529ms)
+✔ Credential selection excludes all other providers and rejects absent/private-invalid files (2.646134ms)
+✔ Operator import merges only selected keys atomically and preserves the other pool on rotation (175.159961ms)
+✔ Invalid import leaves existing bytes intact and refuses symlinks, public files or unknown fields (216.396022ms)
+✔ Real PDF inspection, portable catalog and byte integrity survive reopen (34.133019ms)
+✔ PDF ID dedup, path/symlink/size/encryption rejection (4.502954ms)
+✔ File-only messages and offline-file notices require actual owner and bot metadata (1.551828ms)
+✔ QQ URL is read from the authenticated API, not the uploaded text/URL (33.468063ms)
+✔ Private file upload is durable, owner-only; null success has no invented message ID (78.584983ms)
+✔ Explicit provider/model/effort; pages cannot silently truncate or execute (2.658657ms)
+✔ DeepSeek jobs persist an explicit profile and never mutate default GPT settings (22.256193ms)
+✔ Lifecycle, immutable invocation identity and separate output/delivery state (8.2902ms)
+✔ Cancel running/queued jobs, no post-cancel delivery and restart never replays API (17.632958ms)
+✔ A lost send receipt preserves successful translation and does not replay worker (8.954302ms)
+✔ Worker failure retains bounded structural diagnostics before removing its work directory (7.93202ms)
+✔ Registered tools reject non-owner, keep generic filesystem tools absent (3.376569ms)
+✔ Configured paper trace source joins job and QQ message without including credentials (15.385598ms)
+✔ Draft freezes exact PDF bytes, survives reopen; previews contain only metadata (70.345076ms)
+✔ The store Uint8Array contract preserves the selected bytes and approval hash (79.800571ms)
+✔ Attachment delivery needs approval, sends captured bytes once even if source later changes (173.31358ms)
+✔ MIME round trip preserves Unicode boundaries and binary files as attachments (79.906778ms)
+✔ Unknown refs/raw paths/oversized attachments/recipient bypass cannot create a draft (42.487896ms)
+✔ Tampering with a persisted attachment after confirmation prevents network delivery (72.053984ms)
+✔ Recovery disables paid translation and erases its active credential values (4.581168ms)
+✔ The actual worker sandbox hides host credentials and only writes job/cache directories (39.419466ms)
+✔ A real sandboxed worker stops writing when the parent wall deadline kills it (627.126556ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 751.893531

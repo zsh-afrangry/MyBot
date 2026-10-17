@@ -1,0 +1,31 @@
+{
+  "boundary": "Read-only final deployment verification; no model, translation API, QQ/SMTP delivery or private values recorded. Service restart preceded this check.",
+  "service": {
+    "MainPID": "3641029",
+    "ExecMainStartTimestamp": "Sat 2026-10-17 12:59:58 CST",
+    "ActiveState": "active",
+    "SubState": "running"
+  },
+  "healthEvidence": "health.json",
+  "captureEvidence": "capture-final.json",
+  "capturedPythonMatchesSource": {
+    "engine.py": true,
+    "responses.py": true,
+    "profiles.json": true
+  },
+  "credentials": {
+    "registeredIds": [
+      "DEEPSEEK_API_KEY",
+      "OPENAI_API_KEY1_014",
+      "OPENAI_API_KEY2_030",
+      "OPENAI_API_KEY3_040"
+    ],
+    "mode": "0600",
+    "allPresent": true,
+    "valuesRecorded": false
+  },
+  "configDrift": 0,
+  "personaAligned": true,
+  "dependenciesVerified": true,
+  "note": "Final service restart 2026-10-17 12:59:58 Asia/Shanghai includes monitor callback/diagnostic and output selection fixes. Full live translation used isolated acceptance state; final capture smoke has no paid calls."
+}

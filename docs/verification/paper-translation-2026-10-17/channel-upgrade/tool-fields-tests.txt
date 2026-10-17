@@ -1,0 +1,14 @@
+✔ Explicit provider/model/effort; pages cannot silently truncate or execute (1.410086ms)
+✔ DeepSeek jobs persist an explicit profile and never mutate default GPT settings (11.095889ms)
+✔ Lifecycle, immutable invocation identity and separate output/delivery state (8.824914ms)
+✔ Cancel running/queued jobs, no post-cancel delivery and restart never replays API (14.298553ms)
+✔ A lost send receipt preserves successful translation and does not replay worker (8.652368ms)
+✔ Registered tools reject non-owner, keep generic filesystem tools absent (2.045621ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 117.842842

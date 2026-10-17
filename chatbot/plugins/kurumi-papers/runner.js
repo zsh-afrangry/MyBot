@@ -3,12 +3,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {spawn} from 'node:child_process';
+import {resolveProfile, credentialIdsForProfile} from './profiles.js';
 
-export function loadKeys(file) {
+export function loadKeys(file, profile = {}) {
   const stat = fs.lstatSync(file);
   if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077)) throw Error('Translation credential file must be owner-only and regular');
-  const raw = JSON.parse(fs.readFileSync(file, 'utf8'));
-  const keys = Object.fromEntries(['OPENAI_API_KEY1_014','OPENAI_API_KEY2_030','OPENAI_API_KEY3_040'].filter(k => typeof raw[k] === 'string' && raw[k].trim()).map(k => [k, raw[k].trim()]));
+  let raw;
+  try {raw = JSON.parse(fs.readFileSync(file, 'utf8'));} catch {throw Error('Invalid translation credential file');}
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('Invalid translation credential file');
+  const keys = Object.fromEntries(credentialIdsForProfile(profile).filter(k => typeof raw[k] === 'string' && raw[k].trim()).map(k => [k, raw[k].trim()]));
   if (!Object.keys(keys).length) throw Error('No translation credentials configured');
   return keys;
 }
@@ -28,8 +31,9 @@ export function workerCommand({config, work, cache}) {
 }
 export function runTranslation({config, work, cache, profile, pages, sourceLang, targetLang, signal}) {
   signal?.throwIfAborted();
+  profile = resolveProfile(profile);
   const {command, args} = workerCommand({config, work, cache});
-  const request = {profile, keys: loadKeys(config.credentialsFile), input: '/work/input.pdf', output: '/work',
+  const request = {profile, keys: loadKeys(config.credentialsFile, profile), input: '/work/input.pdf', output: '/work',
     cooldownFile: '/cache/credential-cooldowns.json', pages, sourceLang, targetLang,
     maxRequests: config.maxRequests ?? 200, maxReportedTokens: config.maxReportedTokens ?? 150000};
   return new Promise((resolve, reject) => {

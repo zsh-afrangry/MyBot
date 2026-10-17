@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "plugins/kurumi-pap
 from responses import ResponsesClient, TranslationFailure, KEY_IDS, read_response_stream
 
 PROFILE={"provider":"openai","channel":"naiccc","model":"gpt-6.1-sol","effort":"max","protocol":"responses","baseUrl":"https://naiccc.com/v1"}
+DS_PROFILE={"provider":"deepseek","channel":"official","model":"deepseek-flash","effort":"none","protocol":"responses","baseUrl":"https://api.deepseek.com"}
 KEYS=dict(zip(KEY_IDS,("synthetic-014","synthetic-030","synthetic-040")))
 def success(text="译文 {v1}"):
     return 200,{"id":"response-test","status":"completed","model":"gpt-6.1-sol","usage":{"input_tokens":9,"output_tokens":8},"output":[{"type":"reasoning","text":"NEVER EXPOSE"},{"type":"message","role":"assistant","content":[{"type":"output_text","text":text}]}]}
@@ -16,6 +17,52 @@ def success(text="译文 {v1}"):
 class ResponsesTest(unittest.TestCase):
     def client(self,request,**kwargs):
         return ResponsesClient(PROFILE,KEYS,request=request,sleep=lambda n:None,**kwargs)
+
+    def test_deepseek_native_responses_keeps_instructions_effort_usage_and_its_own_key(self):
+        seen=[]
+        def request(url,key,body,timeout):
+            seen.append((url,key,body))
+            status,data=success("神经网络")
+            data.update(model=body['model'],reasoning={'effort':body['reasoning']['effort']})
+            data['usage']['input_tokens_details']={'cached_tokens':3}
+            stream='data: '+json.dumps({'type':'response.output_text.delta','delta':'ignored-partial'})+'\n\n'
+            stream+='data: '+json.dumps({'type':'response.completed','response':data})+'\n\n'
+            return status,read_response_stream(io.BytesIO(stream.encode()))
+        for model in ('deepseek-flash','deepseek-v4-pro'):
+            for effort in ('none','low','high','max'):
+                client=ResponsesClient({**DS_PROFILE,'model':model,'effort':effort},
+                    {**KEYS,'DEEPSEEK_API_KEY':'synthetic-official'},request=request)
+                self.assertEqual(client.generate('Neural networks','Translate into Chinese.'),'神经网络')
+                url,key,body=seen[-1]
+                self.assertEqual(url,'https://api.deepseek.com/responses')
+                self.assertEqual(key,'synthetic-official')
+                self.assertEqual(body['instructions'],'Translate into Chinese.')
+                self.assertEqual(body['reasoning'],{'effort':effort})
+                self.assertNotIn('messages',body);self.assertNotIn('previous_response_id',body)
+                receipt=client.snapshot()['receipts'][0]
+                self.assertEqual(receipt['usage']['input_tokens_details']['cached_tokens'],3)
+                self.assertEqual(receipt['credentialId'],'DEEPSEEK_API_KEY')
+                self.assertNotIn('synthetic-official',json.dumps(client.snapshot()))
+        client.generate('JSON input','Return JSON.',output_format={'type':'json_schema','name':'test','schema':{'type':'object'}})
+        self.assertEqual(seen[-1][2]['text']['format']['type'],'json_schema')
+        self.assertEqual(client.receipts[-1]['outputFormat'],'json_schema')
+
+    def test_deepseek_failure_cannot_fall_back_to_gpt_or_leak_the_gpt_pool(self):
+        used=[]
+        client=ResponsesClient(DS_PROFILE,{**KEYS,'DEEPSEEK_API_KEY':'synthetic-official'},
+            request=lambda url,key,*args:(used.append((url,key)) or (503,{})))
+        with self.assertRaisesRegex(TranslationFailure,'all_translation_channels_failed'):client.generate('x','i')
+        self.assertEqual(used,[('https://api.deepseek.com/responses','synthetic-official')])
+        with self.assertRaisesRegex(TranslationFailure,'missing_translation_credentials'):
+            ResponsesClient(DS_PROFILE,KEYS)
+        with self.assertRaisesRegex(TranslationFailure,'missing_translation_credentials'):
+            ResponsesClient(PROFILE,{'DEEPSEEK_API_KEY':'synthetic-official'})
+
+    def test_worker_rejects_cross_provider_endpoints_models_and_efforts_before_a_request(self):
+        for change in ({'baseUrl':'https://attacker.example'},{'baseUrl':'https://naiccc.com/v1'},
+                       {'protocol':'chat'},{'model':'gpt-6.1-sol'},{'channel':'naiccc'},{'effort':'medium'}):
+            with self.assertRaises(TranslationFailure):
+                ResponsesClient({**DS_PROFILE,**change},{**KEYS,'DEEPSEEK_API_KEY':'synthetic-official'})
 
     def test_native_protocol_and_usage(self):
         seen=[]

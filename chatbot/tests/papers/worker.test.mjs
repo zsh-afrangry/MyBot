@@ -11,7 +11,7 @@ import {disablePaperRecovery} from '../../../scripts/fusion/lib/recovery-isolati
 test('Recovery disables paid translation and erases its active credential values',t=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-paper-recovery-'));
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
-  const file=path.join(root,'paper-credentials.json');fs.writeFileSync(file,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}));
+  const file=path.join(root,'paper-credentials.json');fs.writeFileSync(file,JSON.stringify({OPENAI_API_KEY1_014:'synthetic',DEEPSEEK_API_KEY:'synthetic-official'}));
   const config={plugins:{entries:{'kurumi-papers':{config:{credentialsFile:file,liveTranslationEnabled:true}}}}};
   disablePaperRecovery(config,root);assert.equal(config.plugins.entries['kurumi-papers'].config.liveTranslationEnabled,false);
   assert.deepEqual(JSON.parse(fs.readFileSync(file)),{});

@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-17T04:52:10.492Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No real translation API request, QQ/mail delivery or production write.",
+  "cases": [
+    {
+      "label": "list-real-managed-id",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "查到了，目前有 1 份：\n\n- 验收论文.pdf — 1 页，今天 12:52 收到，文档 ID：doc_bd0d1dcc2828f779d58befc561b6e0ae\n\n先没翻译。要译的话说一声。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "start-default-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "captured": [
+          {
+            "text": "翻译完成了，GPT 6.1 Sol MAX 双语版，两份都发到你 QQ 了，平台已受理上传。\n\n任务状态：成功；投递状态：等待接收确认。没收到的话跟我说，我查一下。"
+          }
+        ]
+      }
+    }
+  ],
+  "passed": false,
+  "error": "Expected values to be strictly equal:\n\n2 !== 1\n",
+  "diagnosticsRoot": "/tmp/kurumi-paper-host-BIAG11",
+  "childStopped": true,
+  "mockUploads": [
+    {
+      "name": "验收论文-mono.pdf"
+    },
+    {
+      "name": "验收论文-mono.pdf"
+    }
+  ]
+}
