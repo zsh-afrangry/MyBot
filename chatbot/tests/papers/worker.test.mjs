@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {workerCommand,runTranslation,executionSettings,reliabilitySettings,translationTimeoutSeconds} from '../../plugins/kurumi-papers/runner.js';
+import {workerCommand,runTranslation,executionSettings,reliabilitySettings,translationTimeoutSeconds,requestIdleTimeoutSeconds} from '../../plugins/kurumi-papers/runner.js';
 import {disablePaperRecovery} from '../../../scripts/fusion/lib/recovery-isolation.mjs';
 
 test('Operator concurrency is validated and reaches actual sandbox stdin, never argv',async t=>{
@@ -22,12 +22,20 @@ test('Operator concurrency is validated and reaches actual sandbox stdin, never 
   for(const name of ['work','cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
   const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
   fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
-  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==6 and r[\"apiQps\"]==1; assert r[\"maxRequests\"]==300; assert r[\"batchValidationRetries\"]==3 and r[\"channelRecoveryRetries\"]==2 and r[\"executionTimeoutSeconds\"]==1800; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
+  const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==6 and r[\"apiQps\"]==1; assert r[\"requestIdleTimeoutSeconds\"]==77; assert r[\"maxRequests\"]==300; assert r[\"batchValidationRetries\"]==3 and r[\"channelRecoveryRetries\"]==2 and r[\"executionTimeoutSeconds\"]==1800; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
   fs.writeFileSync(python,"#!/bin/sh\nexec /usr/bin/python3 -c '"+script+"'\n",{mode:0o700});
-  const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:6,apiQps:1,batchValidationRetries:3,channelRecoveryRetries:2},
+  const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:6,apiQps:1,batchValidationRetries:3,channelRecoveryRetries:2,requestIdleTimeoutSeconds:77},
     work:path.join(root,'work'),cache:path.join(root,'cache'),profile:{},sourceLang:'en',targetLang:'zh'});
   assert.deepEqual(result.usage,{maxConcurrency:6,maxQps:1});
   assert(!Object.hasOwn(result,'mono'));assert(result.dual.endsWith('/dual.pdf'));
+});
+
+test('Output idle watchdog defaults to 100 seconds and operator schema bounds match',()=>{
+  assert.equal(requestIdleTimeoutSeconds({}),100);
+  for(const requestIdleTimeoutSecondsValue of [1,77,100,600])assert.equal(requestIdleTimeoutSeconds({requestIdleTimeoutSeconds:requestIdleTimeoutSecondsValue}),requestIdleTimeoutSecondsValue);
+  for(const requestIdleTimeoutSecondsValue of [0,-1,601,Infinity,NaN,true,'100',1.5])assert.throws(()=>requestIdleTimeoutSeconds({requestIdleTimeoutSeconds:requestIdleTimeoutSecondsValue}),/idle timeout/);
+  const schema=JSON.parse(fs.readFileSync(new URL('../../plugins/kurumi-papers/openclaw.plugin.json',import.meta.url))).configSchema.properties.requestIdleTimeoutSeconds;
+  assert.deepEqual(schema,{type:'integer',minimum:1,maximum:600,default:100});
 });
 
 test('Retry defaults, operator overrides and schema keep independent bounded counters',()=>{

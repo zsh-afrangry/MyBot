@@ -17,7 +17,7 @@ if(!capture.startsWith(state+'/tmp/plugin-captures/')||path.basename(capture)!==
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-capture-smoke-'));
 const report={at:new Date().toISOString(),boundary:'Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.',capturePath:capture};
 try{
-  const {workerCommand,executionSettings,reliabilitySettings,translationTimeoutSeconds}=await import(pathToFileURL(capture).href);
+  const {workerCommand,executionSettings,reliabilitySettings,translationTimeoutSeconds,requestIdleTimeoutSeconds}=await import(pathToFileURL(capture).href);
   const {resolveProfile}=await import(new URL('./profiles.js',pathToFileURL(capture)).href);
   const {selectedOutputs}=await import(new URL('./outputs.js',pathToFileURL(capture)).href);
   if(selectedOutputs('dual').join(',')!=='dual'||selectedOutputs('both').join(',')!=='dual,mono')throw Error('Captured output selection differs');
@@ -27,6 +27,7 @@ try{
   const capturedDocuments=fs.readdirSync(build).filter(name=>name.startsWith('package-')).map(name=>path.join(build,name,'node_modules/documents/index.js')).find(file=>fs.existsSync(file));
   const source=file=>new URL(file,import.meta.url);
   const pairs=[
+    ['runner',capture,source('../../plugins/kurumi-papers/runner.js')],
     ['service',path.join(path.dirname(capture),'service.js'),source('../../plugins/kurumi-papers/service.js')],
     ['outputs',path.join(path.dirname(capture),'outputs.js'),source('../../plugins/kurumi-papers/outputs.js')],
     ['documents',capturedDocuments,source('../../packages/documents/index.js')],
@@ -51,6 +52,8 @@ try{
   if(report.reliability.batchValidationRetries!==1||report.reliability.channelRecoveryRetries!==1)throw Error('Captured retry defaults differ');
   report.timeoutSeconds=translationTimeoutSeconds(config);
   if(report.timeoutSeconds!==1800)throw Error('Captured deadline differs');
+  report.requestIdleTimeoutSeconds=requestIdleTimeoutSeconds(config);
+  if(report.requestIdleTimeoutSeconds!==100)throw Error('Captured output idle timeout differs');
   for(const name of ['work','cache'])fs.mkdirSync(path.join(root,name));
   const {command,args}=workerCommand({config,work:path.join(root,'work'),cache:path.join(root,'cache')});
   const app=args.indexOf('/app'),pythonSource=args[app-1];
@@ -59,7 +62,7 @@ try{
     if(!bytes.equals(fs.readFileSync(source('../../plugins/kurumi-papers/python/'+name))))throw Error('Captured Python differs');
     return [name,createHash('sha256').update(bytes).digest('hex')];
   }));
-  const code=`import pathlib,json,sys,subprocess; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; assert specs[1]['defaultModel']=='deepseek-flash' and specs[1]['defaultEffort']=='high'; assert engine.execution_limits(json.loads('${JSON.stringify(report.execution)}'))==(${report.execution.apiConcurrency},${report.execution.apiQps}); child=subprocess.run([sys.executable,'-u','/app/http_worker.py'],input='{}',capture_output=True,text=True,timeout=5); assert json.loads(child.stdout)['code']=='api_transport_worker_error'; print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs],'cancellableHttpWorker':True}))`;
+  const code=`import pathlib,json,sys,subprocess; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; assert specs[1]['defaultModel']=='deepseek-flash' and specs[1]['defaultEffort']=='high'; assert engine.execution_limits(json.loads('${JSON.stringify(report.execution)}'))==(${report.execution.apiConcurrency},${report.execution.apiQps}); assert responses.validate_idle_timeout(${report.requestIdleTimeoutSeconds})==100; assert 'api_output_idle_timed_out_unknown' in responses.CHANNEL_FAILURES; child=subprocess.run([sys.executable,'-u','/app/http_worker.py'],input='{}',capture_output=True,text=True,timeout=5); assert json.loads(child.stdout)['code']=='api_transport_worker_error'; print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs],'cancellableHttpWorker':True}))`;
   const result=spawnSync(command,[...args.slice(0,-1),'-c',code],{encoding:'utf8',timeout:20000,env:{PATH:'/usr/bin:/bin'}});
   report.exitCode=result.status;report.ok=result.status===0;
   if(report.ok)report.worker=JSON.parse(result.stdout.trim().split('\n').at(-1));

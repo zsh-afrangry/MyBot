@@ -1,0 +1,20 @@
+{
+  "at": "2026-10-18T16:16:24.945Z",
+  "phase": "before-sync",
+  "activePaperJobs": [],
+  "config": {
+    "maxRequests": 300,
+    "maxReportedTokens": 300000,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "timeoutSeconds": 1800,
+    "batchValidationRetries": 1,
+    "channelRecoveryRetries": 1
+  },
+  "requestIdleTimeoutSeconds": null,
+  "service": [
+    "MainPID=2500487",
+    "ActiveState=active",
+    "UnitFileState=enabled"
+  ]
+}

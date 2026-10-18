@@ -220,6 +220,7 @@ def translate(request):
                              on_usage=usage, max_concurrency=concurrency, max_qps=qps,
                              batch_validation_retries=request.get("batchValidationRetries", 1),
                              channel_recovery_retries=request.get("channelRecoveryRetries", 1),
+                             idle_timeout_seconds=request.get("requestIdleTimeoutSeconds", 100),
                              execution_timeout_seconds=request.get("executionTimeoutSeconds", 1800))
     client._publish()
     source_lang, target_lang = request["sourceLang"], request["targetLang"]

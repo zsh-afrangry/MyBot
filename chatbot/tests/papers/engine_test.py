@@ -49,7 +49,7 @@ class EngineTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             request={"input":directory+"/input.pdf","output":directory,"sourceLang":"en","targetLang":"zh",
                      "profile":{},"keys":{},"maxRequests":200,"maxReportedTokens":150000,
-                     "apiConcurrency":6,"apiQps":1}
+                     "apiConcurrency":6,"apiQps":1,"requestIdleTimeoutSeconds":77}
             with patch('engine.ResponsesClient') as client, patch('engine.create_translator'), \
                  patch('engine.create_monitor'), \
                  patch('babeldoc.translator.translator.set_translate_rate_limiter') as limiter, \
@@ -61,6 +61,7 @@ class EngineTest(unittest.TestCase):
                 translate(request)
                 self.assertEqual(client.call_args.kwargs['max_concurrency'],6)
                 self.assertEqual(client.call_args.kwargs['max_qps'],1)
+                self.assertEqual(client.call_args.kwargs['idle_timeout_seconds'],77)
                 limiter.assert_called_once_with(1)
                 self.assertEqual(config.call_args.kwargs['pool_max_workers'],6)
                 self.assertEqual(config.call_args.kwargs['term_pool_max_workers'],1)
@@ -88,6 +89,7 @@ class EngineTest(unittest.TestCase):
                      patch('babeldoc.format.pdf.high_level.do_translate',return_value=finished):
                     client.return_value.failure=None;client.return_value.snapshot.return_value={'requests':0}
                     translate(request)
+                self.assertEqual(client.call_args.kwargs['idle_timeout_seconds'],100)
                 self.assertEqual(config.call_args.kwargs['no_mono'],'mono' not in kinds)
                 self.assertEqual(config.call_args.kwargs['no_dual'],'dual' not in kinds)
                 result=json.loads(Path(directory,'result.json').read_text())

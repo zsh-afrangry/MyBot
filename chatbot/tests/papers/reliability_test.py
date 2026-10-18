@@ -15,6 +15,7 @@ import threading
 import time
 import unittest
 import urllib.error
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "plugins/kurumi-papers/python"))
 from engine import translate_batch
@@ -47,6 +48,39 @@ def local_server():
         def do_POST(self):
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
             try:
+                if self.path.startswith("/idle/"):
+                    mode = self.path.split("/")[2]
+                    if mode == "headers":
+                        ready.set(); release.wait(4)
+                        return
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.end_headers()
+                    def emit(event):
+                        self.wfile.write(("data: " + json.dumps(event) + "\n\n").encode())
+                        self.wfile.flush()
+                    emit({"type": "response.created"})
+                    if mode == "failover" and self.headers.get("Authorization") != "Bearer " + KEYS[KEY_IDS[0]]:
+                        emit({"type": "response.completed", "response": completed(VALID)[1]})
+                        return
+                    if mode == "stalled":
+                        emit({"type": "response.output_text.delta", "delta": "正文"})
+                    ready.set()
+                    if mode == "output":
+                        for _ in range(6):
+                            emit({"type": "response.output_text.delta", "delta": "正文"})
+                            release.wait(.08)
+                        emit({"type": "response.completed", "response": completed()[1]})
+                    elif mode == "silent":
+                        release.wait(4)
+                    else:
+                        # Heartbeats, repeated metadata, reasoning and whitespace never renew output.
+                        while not release.wait(.03):
+                            self.wfile.write(b': heartbeat\n\n')
+                            emit({"type": "response.created"})
+                            emit({"type": "response.reasoning_text.delta", "delta": "PRIVATE_REASONING"})
+                            emit({"type": "response.output_text.delta", "delta": "正文" if mode == "overall" else " \n"})
+                    return
                 if self.path == "/headers":
                     ready.set()
                     release.wait(4)
@@ -87,6 +121,99 @@ def local_server():
 
 
 class ReliabilityTest(unittest.TestCase):
+    def test_no_headers_silent_stream_or_heartbeat_times_out_and_reaps_http_child(self):
+        import responses
+        original = responses.subprocess.Popen
+        for mode in ("headers", "silent", "heartbeat", "stalled"):
+            with self.subTest(mode=mode), local_server() as (url, ready, release):
+                children, progress = [], []
+                def launch(*args, **kwargs):
+                    child = original(*args, **kwargs); children.append(child)
+                    return child
+                started = time.monotonic()
+                with patch('responses.subprocess.Popen', side_effect=launch), self.assertRaises(TranslationFailure) as caught:
+                    http_request(url + "/idle/" + mode, "synthetic-private", {"stream": True}, 3,
+                                 on_progress=progress.append, idle_timeout_seconds=.3)
+                self.assertEqual(str(caught.exception), "api_output_idle_timed_out_unknown")
+                detail = caught.exception.details
+                self.assertEqual(detail['timeoutKind'], 'output_idle')
+                self.assertEqual(detail['outputStarted'], mode == 'stalled')
+                self.assertGreaterEqual(detail['noOutputSeconds'], .29)
+                self.assertLess(time.monotonic() - started, 1.5)
+                self.assertTrue(children and all(child.poll() is not None for child in children))
+                self.assertNotIn('PRIVATE', json.dumps(detail) + json.dumps(progress))
+
+    def test_actual_text_renews_idle_deadline_without_relaxing_terminal_response_contract(self):
+        with local_server() as (url, ready, release):
+            started = time.monotonic()
+            status, data = http_request(url + "/idle/output", 'synthetic', {'stream': True}, 3,
+                                        idle_timeout_seconds=.3)
+            self.assertGreater(time.monotonic() - started, .45)
+            self.assertEqual((status, data), completed())
+
+    def test_continuous_text_cannot_extend_overall_request_deadline(self):
+        with local_server() as (url, ready, release):
+            started = time.monotonic()
+            with self.assertRaisesRegex(TranslationFailure, 'api_request_timed_out_unknown') as caught:
+                http_request(url + '/idle/overall', 'synthetic', {'stream': True}, .6,
+                             idle_timeout_seconds=.3)
+            self.assertEqual(caught.exception.details['timeoutKind'], 'overall')
+            self.assertLess(time.monotonic() - started, 1.5)
+
+    def test_real_idle_failover_replays_only_the_same_batch_and_preserves_unknown_usage(self):
+        with local_server() as (url, ready, release):
+            client = ResponsesClient(PROFILE, KEYS, timeout=3, idle_timeout_seconds=.3,
+                                     channel_recovery_retries=0)
+            client.profile['baseUrl'] = url + '/idle/failover'  # Local-only transport fixture.
+            self.assertEqual(json.loads(translate_batch(client, PROMPT, 'en', 'zh')), json.loads(VALID))
+            usage = client.snapshot(); first, second = usage['receipts']
+            self.assertEqual((usage['requests'], usage['reportedTokens'], usage['unknownUsageAttempts']), (2, 8, 1))
+            self.assertEqual((first['batchId'], first['inputChars']), (second['batchId'], second['inputChars']))
+            self.assertEqual([first['credentialId'], second['credentialId']], list(KEY_IDS)[:2])
+            self.assertEqual(first['error'], 'api_output_idle_timed_out_unknown')
+            self.assertEqual(first['timeoutKind'], 'output_idle')
+            self.assertEqual(first['outcome'], 'channel_failed')
+            self.assertEqual(second['outcome'], 'completed')
+            self.assertEqual(usage['inFlight'], 0)
+            self.assertEqual(usage['validationRetriesScheduled'], 0)
+            self.assertNotIn('PRIVATE', json.dumps(usage))
+
+    def test_all_idle_channels_stop_after_bounded_attempts(self):
+        with local_server() as (url, ready, release):
+            client = ResponsesClient(PROFILE, KEYS, timeout=3, idle_timeout_seconds=.2,
+                                     channel_recovery_retries=0)
+            client.profile['baseUrl'] = url + '/idle/heartbeat'
+            with self.assertRaisesRegex(TranslationFailure, 'all_translation_channels_failed'):
+                client.generate('x', 'i')
+            usage = client.snapshot()
+            self.assertEqual((usage['requests'], usage['unknownUsageAttempts'], usage['inFlight']), (3, 3, 0))
+            self.assertEqual([r['credentialId'] for r in usage['receipts']], list(KEY_IDS))
+            self.assertEqual(usage['reportedTokens'], 0)  # Unknown counts remain explicit, not billed zero.
+
+    def test_only_nonblank_output_text_deltas_emit_activity_and_no_prose_enters_progress(self):
+        events = [{'type':'response.created'}, {'type':'response.reasoning_text.delta','delta':'PRIVATE_REASONING'},
+                  {'type':'response.output_text.delta','delta':' \n'}, {'type':'response.output_text.delta','delta':''},
+                  {'type':'response.output_text.delta','delta':'PRIVATE_BODY'},
+                  {'type':'response.output_text.delta','delta':'\t'},
+                  {'type':'response.completed','response':completed()[1]}]
+        stream = io.BytesIO(''.join('data: '+json.dumps(e)+'\n\n' for e in events).encode())
+        activity, progress = [], []
+        result = read_response_stream(stream, on_progress=progress.append, on_output=activity.append)
+        self.assertEqual(result, completed()[1])
+        self.assertEqual(len(activity), 1)
+        self.assertIsInstance(activity[0], float)
+        self.assertIsNotNone(progress[-1]['lastOutputOffsetSeconds'])
+        self.assertNotIn('PRIVATE', json.dumps(progress) + json.dumps(activity))
+
+    def test_idle_timeout_defaults_and_invalid_values_fail_before_network(self):
+        self.assertEqual(ResponsesClient(PROFILE, KEYS).snapshot()['requestIdleTimeoutSeconds'], 100)
+        self.assertEqual(ResponsesClient(PROFILE, KEYS).snapshot()['requestTimeoutSeconds'], 600)
+        for value in (0, -1, 601, True, '100', float('nan'), float('inf')):
+            with self.subTest(value=value), self.assertRaisesRegex(TranslationFailure, 'invalid_translation_idle_timeout'):
+                ResponsesClient(PROFILE, KEYS, idle_timeout_seconds=value)
+            with self.assertRaisesRegex(TranslationFailure, 'invalid_translation_idle_timeout'):
+                http_request('http://127.0.0.1:1', 'synthetic', {}, 5, idle_timeout_seconds=value)
+
     def test_default_retries_exact_same_batch_once_and_accounts_both_attempts(self):
         seen = []
         def request(url, key, body, timeout):

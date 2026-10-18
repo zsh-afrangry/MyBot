@@ -49,9 +49,11 @@
 
 未启用共享模式的提醒列表和长期记忆可在 `plugins.entries.<id>.config` 指定 `policyAdapter` / `storeAdapter`，值是领域 `adapters.js` 注册的实现 ID，启动时固定。默认分别为 `default` / `sqlite` 和 `explicit` / `memory-file`；未指定仍用上述默认，未知 ID 明确失败，不回退。替换实现、迁移数据与旧 Cron 绑定的处理见[文档 21](../docs/21_后端职责分层与代码整理.md)，配置选择不自动迁移业务数据。
 
-论文插件的 `root/python/credentialsFile`、`apiConcurrency/apiQps`（本机最多4个在途请求、每秒启动1个；各允许1–4，仅操作者配置）和页数、请求次数、用量、运行时限在 `plugins.entries.kurumi-papers.config` 管理。`liveTranslationEnabled` 是实际付费调用开关，插件缺省关闭；本机仓库意图已按用户授权设为 `true`。三份窄工具只加入 `main.tools.alsoAllow`，不开放通用文件或命令工具。`root` 的任务与产物需随私有状态备份，Python 环境使用仓库锁文件重建；详细契约与证据见[文档 22](../docs/22_论文PDF翻译与文件投递.md)。
+论文插件的 `root/python/credentialsFile`、`apiConcurrency/apiQps`（日常最多4个在途请求、每秒启动1个；操作者可配置并发1–6、QPS1–4）和页数、请求次数、用量、运行时限在 `plugins.entries.kurumi-papers.config` 管理。`liveTranslationEnabled` 是实际付费调用开关，插件缺省关闭；本机仓库意图已按用户授权设为 `true`。三份窄工具只加入 `main.tools.alsoAllow`，不开放通用文件或命令工具。`root` 的任务与产物需随私有状态备份，Python 环境使用仓库锁文件重建；详细契约与证据见[文档 22](../docs/22_论文PDF翻译与文件投递.md)。
 
 论文可靠性也由上述受管配置控制：`batchValidationRetries=1` 表示校验失败后仅对当前批次额外重试1次，`channelRecoveryRetries=1` 表示全部临时渠道冷却后最多再恢复1轮；两项均允许0–4，0明确禁用对应重试。两者独立计数，但共用单任务300请求、300000已报告tokens和1800秒期限。模型不能改这些值。冷却文件兼容原数字到期时间，新条目保存到期/机器原因/是否允许恢复；同一渠道恢复时仅一个在途探测。HTTP请求采用沙箱内临时子进程以便失败后立即取消，不新增服务或端口；诊断和原始回执只在私密任务状态中保留。
+
+`requestIdleTimeoutSeconds=100` 是独立的有效正文空闲期限，操作者可设整数1–600秒。自请求开始或最后一次非空白 `response.output_text.delta` 计时；心跳、`response.created`、思考事件和纯空白不重置。超时先终止当前HTTP子进程，再按既有渠道/冷却规则重试当前批次，记 `api_output_idle_timed_out_unknown` 及未知用量，不自动重跑整篇。持续有正文的单请求仍受固定600秒总期限限制，整篇仍1800秒。没有可见正文不证明上游没有推理或计费；本地取消不保证停止上游计费。
 
 ```bash
 node scripts/fusion/sync-config.mjs            # --check（默认）：只报告漂移，不写入

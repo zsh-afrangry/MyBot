@@ -1,0 +1,69 @@
+{
+  "at": "2026-10-18T16:17:02.054Z",
+  "boundary": "Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evidence writes. No model, API, QQ or SMTP calls.",
+  "capturePath": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/7e2a5e08-1559-4b83-a6e2-ffbdc7c0c397/captures/openclaw-plugin-build-88UovC/package-0/node_modules/kurumi-papers/runner.js",
+  "capturedSourceHashes": {
+    "runner": "342b96f2e6c6cb99194ff4ae14f09a00c84455989f7e876b8173c6ed1fda25d4",
+    "service": "52e1c54488150852f950a50d05e0f153bbc29feebe16029254f503b629fd18ed",
+    "outputs": "77e9647f5755daa304156a9178c168c15b58cd651c2b20b2cbfda826ffff86ef",
+    "documents": "ce1cde5d37787bc839547af43b0b548be50ccdd1354c16c3323a9189d7ffcd1b"
+  },
+  "pdfLimits": {
+    "input": 26214400,
+    "artifact": 104857600
+  },
+  "deepseekDefault": {
+    "provider": "deepseek",
+    "channel": "official",
+    "model": "deepseek-flash",
+    "effort": "high",
+    "protocol": "responses",
+    "baseUrl": "https://api.deepseek.com"
+  },
+  "gptDefault": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "explicitMax": {
+    "provider": "openai",
+    "channel": "naiccc",
+    "model": "gpt-6.1-sol",
+    "effort": "max",
+    "protocol": "responses",
+    "baseUrl": "https://naiccc.com/v1"
+  },
+  "budgets": {
+    "maxRequests": 300,
+    "maxReportedTokens": 300000
+  },
+  "execution": {
+    "apiConcurrency": 4,
+    "apiQps": 1
+  },
+  "reliability": {
+    "batchValidationRetries": 1,
+    "channelRecoveryRetries": 1
+  },
+  "timeoutSeconds": 1800,
+  "requestIdleTimeoutSeconds": 100,
+  "sourceHashes": {
+    "engine.py": "7f3ab41a532bc374d9d9b329e529602fec2886a8d857b8cca1717ef5b6100ab3",
+    "responses.py": "c8ffe1ee5155ff56193be8e429dc747e9cb44cf1ede81e6e8928605d8cfa079a",
+    "http_worker.py": "4edc7c81673856aac2d398a18aad88266bb0307d49eb71b5d46b2a055c768ee6",
+    "profiles.json": "28043caf43c29a11edcc1d8d23644948b9fc3149c68e5c0f6066cc9e899e6f91"
+  },
+  "exitCode": 0,
+  "ok": true,
+  "worker": {
+    "ok": true,
+    "providers": [
+      "openai",
+      "deepseek"
+    ],
+    "cancellableHttpWorker": true
+  }
+}

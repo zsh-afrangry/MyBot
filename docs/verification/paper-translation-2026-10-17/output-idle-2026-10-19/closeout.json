@@ -1,0 +1,103 @@
+{
+  "at": "2026-10-18T16:20:53.328453+00:00",
+  "boundary": "Offline and local HTTP regressions plus config synchronization, authorized Fusion reload, production-captured sandbox smoke and read-only health/index checks. No paid API, QQ/SMTP delivery, remote push or database edits. Local commit follows separately.",
+  "ok": true,
+  "baseCommit": "0b8366cb997321f5590c2dcf87f5abe130e4dd74",
+  "offlineTests": {
+    "node": 36,
+    "responses": 20,
+    "concurrency": 11,
+    "engine": 15,
+    "reliability": 28,
+    "total": 110
+  },
+  "currentSourceMatchesProductionCapture": true,
+  "onlyConfigurationAddition": "plugins.entries.kurumi-papers.config.requestIdleTimeoutSeconds=100",
+  "productionConfig": {
+    "requestIdleTimeoutSeconds": 100,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "timeoutSeconds": 1800,
+    "maxRequests": 300,
+    "maxReportedTokens": 300000,
+    "batchValidationRetries": 1,
+    "channelRecoveryRetries": 1
+  },
+  "productionReloaded": true,
+  "service": {
+    "MainPID": "4139168",
+    "ActiveState": "active",
+    "UnitFileState": "enabled"
+  },
+  "activePaperJobs": [],
+  "health": {
+    "ok": true,
+    "issues": [],
+    "gateway": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "testIngress": false
+  },
+  "scriptIndex": {
+    "exitCode": 0,
+    "scripts": 169,
+    "boundaryDeclarations": 43,
+    "contradictions": [],
+    "updatedDocumentRowsMatchGenerator": true
+  },
+  "privateValueScan": {
+    "scannedFiles": 31,
+    "privateValues": 10,
+    "matchedPaths": []
+  },
+  "changedPaths": [
+    "chatbot/plugins/kurumi-papers/openclaw.plugin.json",
+    "chatbot/plugins/kurumi-papers/python/engine.py",
+    "chatbot/plugins/kurumi-papers/python/http_worker.py",
+    "chatbot/plugins/kurumi-papers/python/responses.py",
+    "chatbot/plugins/kurumi-papers/runner.js",
+    "chatbot/tests/papers/acceptance-worker.mjs",
+    "chatbot/tests/papers/engine_test.py",
+    "chatbot/tests/papers/reliability_test.py",
+    "chatbot/tests/papers/worker.test.mjs",
+    "config/README.md",
+    "config/runtime.config.json",
+    "docs/10_融合助手运行维护.md",
+    "docs/16_验收与测试总表.md",
+    "docs/22_论文PDF翻译与文件投递.md",
+    "docs/verification/INDEX.md",
+    "docs/verification/SCRIPTS.md",
+    "docs/verification/paper-translation-2026-10-17/README.md",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/captured-worker.json",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/closeout.json",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/concurrency-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/config-check.txt",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/dependencies.txt",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/deployment-before.json",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/engine-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/health.json",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/node-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/persona-check.txt",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/reliability-tests.txt",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/responses-tests.txt",
+    "scripts/fusion/evidence-index.mjs"
+  ],
+  "excludedParallelWork": true,
+  "notCovered": [
+    "Owner QQ real upload/model/paid translation/delivery full path",
+    "Real-network success rate, elapsed time and provider-side billing after local cancellation",
+    "No change to already failed jobs, partial-output retention, recovery snapshots or the background development copy"
+  ],
+  "localLinks": {
+    "targetsChecked": 131,
+    "missing": [],
+    "boundary": "Local file targets only, not anchors or external URLs."
+  },
+  "evidenceCoverage": {
+    "exitCode": 0,
+    "files": 373
+  }
+}

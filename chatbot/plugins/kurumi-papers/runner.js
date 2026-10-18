@@ -12,6 +12,12 @@ export function translationTimeoutSeconds(config) {
   return seconds;
 }
 
+export function requestIdleTimeoutSeconds(config) {
+  const seconds = config.requestIdleTimeoutSeconds ?? 100;
+  if (!Number.isInteger(seconds) || seconds < 1 || seconds > 600) throw Error('Invalid translation output idle timeout (1–600 seconds)');
+  return seconds;
+}
+
 export function executionSettings(config) {
   const settings = {apiConcurrency: config.apiConcurrency ?? 1, apiQps: config.apiQps ?? 1};
   for (const [key, value] of Object.entries(settings)) {
@@ -60,7 +66,8 @@ export function runTranslation({config, work, cache, profile, pages, sourceLang,
   const request = {profile, keys: loadKeys(config.credentialsFile, profile), input: '/work/input.pdf', output: '/work',
     cooldownFile: '/cache/credential-cooldowns.json', pages, sourceLang, targetLang, outputKind,
     maxRequests: config.maxRequests ?? 300, maxReportedTokens: config.maxReportedTokens ?? 150000,
-    executionTimeoutSeconds: timeoutSeconds, ...execution, ...reliabilitySettings(config)};
+    executionTimeoutSeconds: timeoutSeconds, requestIdleTimeoutSeconds: requestIdleTimeoutSeconds(config),
+    ...execution, ...reliabilitySettings(config)};
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {env: {PATH: '/usr/bin:/bin'}, stdio: ['pipe','pipe','pipe'], detached: true});
     let output = '', killed = false;
