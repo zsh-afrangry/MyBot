@@ -1,0 +1,46 @@
+
+> @kurumi/confirmation-core@0.1.0 test
+> vitest run --config ./vitest.config.ts
+
+
+ RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/packages/confirmation-core
+
+ ✓ src/public-id.test.ts (3 tests) 17ms
+ ❯ src/confirmation.test.ts (16 tests | 1 failed) 26ms
+   ✓ domain-independent confirmation governance > short confirmations bind full payloads, preserve legacy format and reject bare agreement 5ms
+   ✓ domain-independent confirmation governance > rejects mixed proposal identifiers and completely unbound scopes 1ms
+   ✓ domain-independent confirmation governance > confirms a non-weather domain and consumes a grant once 3ms
+   ✓ domain-independent confirmation governance > rejects identity conflict even when another alias matches: {"accountId":"other"} 1ms
+   ✓ domain-independent confirmation governance > rejects identity conflict even when another alias matches: {"senderId":"stranger"} 1ms
+   ✓ domain-independent confirmation governance > rejects identity conflict even when another alias matches: {"conversationId":"qqbot:c2c:stranger"} 1ms
+   ✓ domain-independent confirmation governance > rejects identity conflict even when another alias matches: {"sessionKey":"different-session"} 1ms
+   ✓ domain-independent confirmation governance > rejects identity conflict even when another alias matches: {} 1ms
+   ✓ domain-independent confirmation governance > fails closed when two databases own the same proposal 1ms
+   ✓ domain-independent confirmation governance > never grants a partial match when another backend fails; diagnostics contain no raw exception 1ms
+   ✓ domain-independent confirmation governance > ordinary and quoted messages do not open storage 0ms
+   ✓ domain-independent confirmation governance > reports an absent provider and supports registration cleanup 1ms
+   × domain-independent confirmation governance > a stale unregister handle cannot remove a new registration of the same provider 7ms
+     → expected [] to include 'test-reused-notes'
+   ✓ domain-independent confirmation governance > registered providers keep their original receiver when opening storage 1ms
+   ✓ Fusion channel confirmation scope > binds exact owner sender, route and main session 0ms
+   ✓ records and consumes a fusion confirmation through the shared backend registry 1ms
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/confirmation.test.ts > domain-independent confirmation governance > a stale unregister handle cannot remove a new registration of the same provider
+AssertionError: expected [] to include 'test-reused-notes'
+ ❯ src/confirmation.test.ts:123:40
+    121|       current = registerConfirmationBackend(provider);
+    122|       old(); old();
+    123|       expect(confirmationBackendIds()).toContain(provider.id);
+       |                                        ^
+    124|       expect(() => registerConfirmationBackend(provider)).toThrow(/alr…
+    125|       const report = vi.fn();
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 1 passed (2)
+      Tests  1 failed | 18 passed (19)
+   Start at  23:55:42
+   Duration  384ms (transform 88ms, setup 0ms, collect 119ms, tests 42ms, environment 0ms, prepare 158ms)

@@ -1,0 +1,5 @@
+evidence coverage
+  历史领域验收: 84
+  当前有效: 361
+  total: 445
+OK: every file is classified by a named rule.

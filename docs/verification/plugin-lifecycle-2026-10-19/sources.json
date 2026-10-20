@@ -1,0 +1,21 @@
+{
+  "baseHead": "9c88003136216d082417290676027b01a40aab69",
+  "scope": "Key patched/tested inputs in a mixed working tree; not a complete source snapshot or deployment receipt",
+  "sha256": {
+    "chatbot/packages/confirmation-core/src/registry.ts": "38f8890b9c8519038ffe401a79a56dc272d9bd44ea0840ba5f91468ab7e549cd",
+    "chatbot/packages/confirmation-core/src/confirmation.test.ts": "b377715a497b81de5566d44796798058c8b9edf8dd5d60f5890fb423c2a0e752",
+    "chatbot/packages/confirmation-core/dist/registry.js": "490352defb9d7155a57927fe9cdb96e5fac1230ea2bc66db8d7c5081401e7da8",
+    "chatbot/plugins/kurumi-papers/index.js": "dcbe7041ef643d7ac91ec45bc69aacc76509675ed29cfe026fd500859cb7bc20",
+    "chatbot/plugins/kurumi-papers/service.js": "295a108f0c2681392052c54f1613d33a47624bb1c457d859060eff71de4e6216",
+    "chatbot/plugins/kurumi-mail/index.js": "24f3a92178ef9a3ea9b8bf92fdbfe1c2129f40558d7a741f806aaa3733dcf3e6",
+    "chatbot/plugins/kurumi-mail/test/adapters.test.js": "b69c08a50a0357cb013ddd620f11e6b2f20d9bdc2aa6c6f2ebcf4a5565c30fc8",
+    "chatbot/plugins/kurumi-mail/test/tool.test.js": "b9d1e5a5debbcd0f7382737e2ab3c2cb3d96d6162d215fe3b392ba0ea2b9b685",
+    "chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs": "2756f39a0d44b2601148cad29edb4cd948a5f82c016a0c8d3498b2743120b799",
+    "chatbot/tests/access-control/fixtures.mjs": "37264a70f39491ed208b3781e7e84f814f0c364c9c34633878b2cfc8b0175b7e"
+  },
+  "sdk": {
+    "version": "2026.9.7",
+    "serviceManager": "services-Da-ZpsKz.mjs",
+    "sha256": "b8a6ddbda92b7b87bf815ef415847265b43f5a55da8ba0cc445894a09c819cbc"
+  }
+}

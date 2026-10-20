@@ -1,0 +1,68 @@
+✖ OpenClaw forwards paper stop and waits for asynchronous cleanup (10.661836ms)
+✖ OpenClaw stop interrupts paper workers and queued jobs without sending or replaying (11.60313ms)
+✖ OpenClaw stops mail confirmation registration and supports restart and failed startup cleanup (2.457ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 0
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 518.735085
+
+✖ failing tests:
+
+test at chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs:57:1
+✖ OpenClaw forwards paper stop and waits for asynchronous cleanup (10.661836ms)
+  AssertionError [ERR_ASSERTION]: the real host must call the plugin stop method
+
+  0 !== 1
+
+      at TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs:70:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs:77:1
+✖ OpenClaw stop interrupts paper workers and queued jobs without sending or replaying (11.60313ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+
+  true !== false
+
+      at TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs:102:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs:117:1
+✖ OpenClaw stops mail confirmation registration and supports restart and failed startup cleanup (2.457ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+
+  + [
+  +   'kurumi-mail'
+  + ]
+  - []
+
+      at TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs:125:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ 'kurumi-mail' ],
+    expected: [],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

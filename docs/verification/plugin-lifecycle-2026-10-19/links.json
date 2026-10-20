@@ -1,0 +1,14 @@
+{
+  "files": [
+    "docs/16_验收与测试总表.md",
+    "docs/20_邮件能力与横切扩展.md",
+    "docs/21_后端职责分层与代码整理.md",
+    "docs/22_论文PDF翻译与文件投递.md",
+    "docs/verification/INDEX.md",
+    "docs/verification/SCRIPTS.md",
+    "docs/verification/plugin-lifecycle-2026-10-19/README.md"
+  ],
+  "localLinksChecked": 149,
+  "headingAnchorsChecked": 6,
+  "errors": []
+}

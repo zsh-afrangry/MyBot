@@ -1,0 +1,2 @@
+role card: roles/世凪.md
+persona in sync with roles/世凪.md (12 workspace file(s) match)
