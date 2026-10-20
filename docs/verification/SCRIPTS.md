@@ -54,6 +54,7 @@
 | `chatbot/tests/papers/concurrency_test.py` | 离线 | 网络4/6并发上限与额外请求排队、乱序回执/不可变快照、预算、终态取消、共享冷却/频率与并发原子写入；注入HTTP/临时目录 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/credentials.test.mjs` | 离线 | 厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/documents.test.mjs` | 离线 | PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/file-ingress.test.mjs` | 离线 | QQ 附件类型/接收事实、纯失败附件直答、混合附件与真实当前文档ID | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/engine_test.py` | 离线 | 锁定排版引擎产物/公式/批次接口、重试仅缓存有效结果；独立HOME/cache | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/jobs.test.mjs` | 离线 | 翻译high/显式MAX、所选产物贯通、任务幂等/取消/重启与独立投递状态 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/log-query.test.mjs` | 离线 | 论文事件接入只读统一查询与可信消息/任务关联 | 写临时测试目录 | 否 | header | — |

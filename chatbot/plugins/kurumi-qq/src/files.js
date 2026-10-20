@@ -1,5 +1,5 @@
 // Owner-private PDF ingress/egress, sharing the managed document catalog. Contract: docs/22.
-import {Documents, documentRoot, MAX_PDF_BYTES} from '../../../packages/documents/index.js';
+import {Documents, documentRoot, MAX_PDF_BYTES, inspectPdf} from '../../../packages/documents/index.js';
 import {account, ownerTarget} from './config.js';
 import {onebot} from './transport.js';
 import {Ledger} from './ledger.js';
@@ -42,21 +42,41 @@ async function fetchQqFile(url, options) {
     req.once('error', reject);
   });
 }
+const receiveError = (code, message) => Object.assign(Error(message), {code});
 export async function stagePdf(segment, cfg, {signal, apiCall = onebot, fetcher = fetchQqFile, inspect} = {}) {
   const a = account(cfg), data = segment.data ?? segment;
   const filename = String(data.name ?? data.file_name ?? data.file ?? '');
-  if (!/\.pdf$/i.test(filename) || /[\x00-\x1f]/.test(filename)) throw Error('Only PDF uploads are accepted');
-  if (Number(data.size ?? data.file_size) > MAX_PDF_BYTES) throw Error('PDF exceeds 25 MiB');
+  if (!/\.pdf$/i.test(filename)) throw receiveError('unsupported_file_type', 'Only PDF uploads are accepted');
+  if (/[\x00-\x1f]/.test(filename)) throw receiveError('invalid_file_metadata', 'Invalid QQ file name');
+  if (Number(data.size ?? data.file_size) > MAX_PDF_BYTES) throw receiveError('pdf_size_limit_exceeded', 'PDF exceeds 25 MiB');
   const fileId = String(data.file_id ?? data.id ?? data.file ?? '');
-  if (!fileId || fileId.length > 512 || /[\x00-\x1f]/.test(fileId)) throw Error('Missing QQ file ID');
-  const r = await apiCall(a, 'get_private_file_url', {user_id: Number(a.ownerId), file_id: fileId, file_hash: String(data.file_hash ?? '')}, signal);
-  const url = qqFileUrl(r?.url);
-  const stop = signal ? AbortSignal.any([signal, AbortSignal.timeout(60000)]) : AbortSignal.timeout(60000);
-  const response = await fetcher(url, {redirect: 'manual', signal: stop});
-  if (response.status !== 200 || Number(response.headers.get('content-length')) > MAX_PDF_BYTES) throw Error('QQ PDF download failed or too large');
+  if (!fileId || fileId.length > 512 || /[\x00-\x1f]/.test(fileId)) throw receiveError('missing_qq_file_id', 'Missing QQ file ID');
   let size = 0; const chunks = [];
-  for await (const part of response.body) { size += part.length; if (size > MAX_PDF_BYTES) throw Error('PDF exceeds 25 MiB'); chunks.push(Buffer.from(part)); }
-  return new Documents(documentRoot(cfg)).add(Buffer.concat(chunks), {filename, source: {type: 'qq', fileId}}, {signal, ...(inspect ? {inspect} : {})});
+  try {
+    const r = await apiCall(a, 'get_private_file_url', {user_id: Number(a.ownerId), file_id: fileId, file_hash: String(data.file_hash ?? '')}, signal);
+    const url = qqFileUrl(r?.url);
+    const stop = signal ? AbortSignal.any([signal, AbortSignal.timeout(60000)]) : AbortSignal.timeout(60000);
+    const response = await fetcher(url, {redirect: 'manual', signal: stop});
+    if (response.status !== 200) throw receiveError('pdf_download_failed', 'QQ PDF download failed');
+    if (Number(response.headers.get('content-length')) > MAX_PDF_BYTES) throw receiveError('pdf_size_limit_exceeded', 'PDF exceeds 25 MiB');
+    for await (const part of response.body) { size += part.length; if (size > MAX_PDF_BYTES) throw receiveError('pdf_size_limit_exceeded', 'PDF exceeds 25 MiB'); chunks.push(Buffer.from(part)); }
+  } catch (error) {
+    signal?.throwIfAborted();
+    if (error?.code === 'pdf_size_limit_exceeded') throw error;
+    throw receiveError('pdf_download_failed', 'QQ PDF download failed');
+  }
+  return new Documents(documentRoot(cfg)).add(Buffer.concat(chunks), {filename, source: {type: 'qq', fileId}}, {signal,
+    inspect: async (...args) => {
+      try {
+        const details = await (inspect ?? inspectPdf)(...args);
+        if (!Number.isInteger(details.pages) || details.pages < 1 || details.pages > 500 || details.encrypted) throw Error('Invalid PDF');
+        return details;
+      } catch {
+        signal?.throwIfAborted();
+        throw receiveError('pdf_validation_failed', 'QQ PDF validation failed');
+      }
+    },
+  });
 }
 export async function sendDocument({cfg, to, documentId, key, signal, apiCall = onebot}) {
   const a = account(cfg); ownerTarget(to, a); signal?.throwIfAborted();

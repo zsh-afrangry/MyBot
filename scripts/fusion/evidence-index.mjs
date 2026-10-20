@@ -50,6 +50,7 @@ const TABLE = {
   'chatbot/tests/papers/fixtures.mjs': ['库', '生成最小有效 PDF 测试字节，不读生产文件', {readonly: 1}, 'header'],
   'chatbot/tests/papers/credentials.test.mjs': ['离线', '厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据', {testDir: 1}, 'header'],
   'chatbot/tests/papers/documents.test.mjs': ['离线', 'PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界', {testDir: 1}, 'header'],
+  'chatbot/tests/papers/file-ingress.test.mjs': ['离线', 'QQ 附件类型/接收事实、纯失败附件直答、混合附件与真实当前文档ID', {testDir: 1}, 'header'],
   'chatbot/tests/papers/jobs.test.mjs': ['离线', '翻译high/显式MAX、所选产物贯通、任务幂等/取消/重启与独立投递状态', {testDir: 1}, 'header'],
   'chatbot/tests/papers/mail.test.mjs': ['离线', '受管附件快照、确认、完整性、大小限制及本地 TLS SMTP', {testDir: 1}, 'header'],
   'chatbot/tests/papers/mime-parse.py': ['库', '标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin', {readonly: 1}, 'header'],

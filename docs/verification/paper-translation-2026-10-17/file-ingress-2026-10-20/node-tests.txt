@@ -1,0 +1,43 @@
+✔ Owner and endpoint validation fail closed (1.680142ms)
+✔ Reject group, stranger, self, wrong bot, malformed event (0.701799ms)
+✔ CQ text is literal, not metadata (0.3647ms)
+✔ Durable ingress and egress survive restart, unknown cannot be reserved again (63.931292ms)
+✔ Unicode chunking never breaks surrogate pairs (0.479053ms)
+✔ Media rejects arbitrary files and symlink escapes (1.105591ms)
+✔ Real HTTP adapter validates private target, sends literal segments, deduplicates (106.803996ms)
+✔ Inbound dispatch uses trusted sender, core route and only final delivery (80.841386ms)
+✔ Host durable delivery ID deduplicates and cancellation fences physical I/O (95.593417ms)
+✔ Accepted request with lost receipt stays unknown and never automatically resends (64.722567ms)
+✔ Receipt observer failure does not repeat physical delivery (55.429012ms)
+✔ Inbound dispatcher delivery failure is persisted rather than reported completed (34.930358ms)
+✔ Quoted confirmation remains outside original RawBody (39.728933ms)
+✔ Ingress provenance is explicit; negative QQ IDs are still real messages (33.635063ms)
+✔ real NT QQ image domain is accepted without widening arbitrary media access (0.271196ms)
+✔ short paragraphs separate naturally while reports and code remain grouped (2.089054ms)
+✔ rolling quota preserves old attempts, failed/unknown reservations and idempotent receipts across reopen (92.544092ms)
+✔ cancelling during natural pacing stops remaining physical sends (100.393215ms)
+✔ sticker labels stay data; other senders and arbitrary references are rejected before I/O (699.521211ms)
+✔ Real PDF inspection, portable catalog and byte integrity survive reopen (21.665219ms)
+✔ PDF ID dedup, path/symlink/size/encryption rejection (3.823208ms)
+✔ File-only messages and offline-file notices require actual owner and bot metadata (1.199075ms)
+✔ Artifacts have a separate bounded limit, including reopen, while inputs stay at 25 MiB (170.551325ms)
+✔ QQ URL is read from the authenticated API, not the uploaded text/URL (28.894426ms)
+✔ Private file upload is durable, owner-only; null success has no invented message ID (99.261395ms)
+✔ Attachment-only Markdown gets a direct unsupported notice and never dispatches the model (77.338877ms)
+▶ PDF download and validation failures get deterministic replies without model dispatch
+  ✔ offline.pdf (70.765853ms)
+  ✔ broken.pdf (50.354953ms)
+✔ PDF download and validation failures get deterministic replies without model dispatch (121.903184ms)
+✔ A text request with Markdown remains dialogue and receives truthful attachment facts (68.746278ms)
+✔ Successful current PDF ID survives a mixed unsupported attachment (73.943236ms)
+✔ A reply or successfully loaded image keeps the model route for attachment-only input (119.024919ms)
+✔ Receive state is bounded, labels are sanitized, and delimiter text cannot escape the data block (1.37276ms)
+✔ Non-PDF files are rejected before OneBot lookup or download (1.15315ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 34
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 795.252575
