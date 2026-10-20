@@ -14,4 +14,6 @@ const child=spawn(process.execPath,['/home/afrangry/.npm-global/lib/node_modules
 fs.writeFileSync(`${state}/gateway-pid.json`,JSON.stringify({child:child.pid}),{mode:0o600});
 let stopping=false;for(const signal of ['SIGTERM','SIGINT'])process.on(signal,()=>{stopping=true;child.kill(signal);});
 child.on('error',()=>{console.error('Fusion Gateway failed to start');process.exitCode=1;});
-child.on('exit',(code,signal)=>{console.log('Fusion Gateway exited: '+(code??signal));process.exitCode=stopping?0:(code??1);});
+// An exit we did not request is a failure even with code 0 (e.g. the host quits after `openclaw update`),
+// so Restart=on-failure retries and the version check above leaves the unit visibly failed.
+child.on('exit',(code,signal)=>{console.log('Fusion Gateway exited: '+(code??signal)+(stopping?'':' (unexpected)'));process.exitCode=stopping?0:(code||1);});
