@@ -49,7 +49,17 @@ const allowedRecipients = JSON.parse(fs.readFileSync(path.join(STATE, "openclaw.
 const dryRun = process.argv.includes("--dry-run");
 const to = arg("to", allowedRecipients[0]);
 const stateDirectory = arg("state-dir", path.join(STATE, "state", "kurumi-mail"));
-const stamp = new Date().toISOString();
+const now = new Date();
+const stamp = now.toISOString();
+// The mail body is read by the owner, so show local time with an explicit offset; the report keeps UTC.
+const localStamp = (() => {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Shanghai", hourCycle: "h23", year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(now);
+  const value = (type) => parts.find((part) => part.type === type).value;
+  return `${value("year")}-${value("month")}-${value("day")} ${value("hour")}:${value("minute")}:${value("second")}（北京时间，UTC+08:00）`;
+})();
 
 const report = {
   boundary: "Real SMTP delivery with the real authorization code. The confirmation was recorded "
@@ -95,7 +105,7 @@ try {
   const created = store.createDraft({
     to: [to],
     subject: "Kurumi 邮件能力验收测试",
-    text: `这是一封来自 Kurumi 融合助手的真实投递验收邮件。\n\n发送时间：${stamp}\n发件账号：${config.user}\n\n`
+    text: `这是一封来自 Kurumi 融合助手的真实投递验收邮件。\n\n发送时间：${localStamp}\n发件账号：${config.user}\n\n`
       + "它由 scripts/fusion/test-mail-delivery.mjs 在主人授权后发出，用于验证 SMTP 链路（TLS 握手、"
       + "授权码认证、投递）在真实账号上可用。收到即说明链路打通。",
   }, scope);
