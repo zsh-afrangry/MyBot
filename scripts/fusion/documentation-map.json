@@ -96,6 +96,12 @@
       ]
     },
     {
+      "prefix": "chatbot/tests/web-deepseek/",
+      "documents": [
+        "docs/26_基础能力插件边界整理与检索接入设计.md"
+      ]
+    },
+    {
       "prefix": "chatbot/tests/persona/",
       "documents": [
         "docs/25_人格、记忆与会话连续性.md"
@@ -238,6 +244,13 @@
       "documents": [
         "docs/18_跨模块链路日志查询.md",
         "docs/19_提醒列表与定时汇总.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/web-deepseek/log-query.test.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md",
+        "docs/26_基础能力插件边界整理与检索接入设计.md"
       ]
     },
     {

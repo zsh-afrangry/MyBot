@@ -75,6 +75,8 @@ const TABLE = {
   'chatbot/tests/papers/mime-parse.py': ['库', '标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin', {readonly: 1}, 'header'],
   'chatbot/tests/papers/worker.test.mjs': ['离线', '实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭', {testDir: 1}, 'header'],
   'chatbot/tests/papers/log-query.test.mjs': ['离线', '论文事件接入只读统一查询与可信消息/任务关联', {testDir: 1}, 'header'],
+  'chatbot/tests/web-deepseek/providers.test.mjs': ['离线', 'DeepSeek Search/Fetch provider契约：注入fetch，参数/错误码/取消/并发/URL拒绝/凭据权限/包装/缓存/日志不泄露；无网络请求', {testDir: 1}, 'header'],
+  'chatbot/tests/web-deepseek/log-query.test.mjs': ['离线', 'DeepSeek provider调用事件接入只读统一查询，不含query/Key', {testDir: 1}, 'header'],
   'chatbot/tests/papers/concurrency_test.py': ['离线', '网络4/6并发上限与额外请求排队、乱序回执/不可变快照、预算、终态取消、共享冷却/频率与并发原子写入；注入HTTP/临时目录', {testDir: 1}, 'header'],
   'chatbot/tests/papers/reliability_test.py': ['离线', '批次重试0–4次、冷却恢复/单探测/预算、本机HTTP正文空闲与总期限独立、实际取消/切渠道及安全诊断；无付费API或生产状态', {testDir: 1}, 'header'],
   'chatbot/tests/papers/responses_test.py': ['离线', '原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执', {testDir: 1}, 'header'],

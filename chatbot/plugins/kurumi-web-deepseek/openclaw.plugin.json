@@ -1,0 +1,10 @@
+{
+  "id":"kurumi-web-deepseek","name":"DeepSeek web providers","version":"0.1.0",
+  "description":"DeepSeek Search/Fetch providers for the host web_search/web_fetch; selected only by explicit tools.web.*.provider",
+  "activation":{"onStartup":false},
+  "configSchema":{"type":"object","additionalProperties":false,"required":["credentialsFile"],"properties":{
+    "credentialsFile":{"type":"string","pattern":"^/"},
+    "traceFile":{"type":"string","pattern":"^/"},
+    "timeoutSeconds":{"type":"integer","minimum":1,"maximum":60}}},
+  "contracts":{"webSearchProviders":["deepseek"],"webFetchProviders":["deepseek"]}
+}

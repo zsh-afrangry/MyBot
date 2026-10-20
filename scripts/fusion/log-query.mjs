@@ -501,6 +501,12 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
     try { root = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-papers'].config.root ?? root; } catch {}
     events.push(...readTraceFile(path.join(root, 'events.jsonl'), from, to));
   }
+  if (include('web-deepseek')) {
+    // Only a configured trace file exists; the provider writes nothing by default.
+    let file;
+    try { file = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-web-deepseek'].config.traceFile; } catch {}
+    if (typeof file === 'string' && path.isAbsolute(file)) events.push(...readTraceFile(file, from, to));
+  }
   if (include('knowledgemap')) {
     for (const file of ['trace.jsonl.1', 'trace.jsonl']) events.push(...readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to));
   }
@@ -545,6 +551,8 @@ export function formatEvent(eventValue) {
   const ids = Object.entries(eventValue.correlation).map(([key, value]) => `${key}=${value}`).join(' ');
   const body = eventValue.source === 'access-control'
     ? [eventValue.data.tool, eventValue.data.permission, eventValue.data.decision, eventValue.data.code].filter(Boolean).join(' ')
+    : eventValue.source === 'web-deepseek'
+    ? [eventValue.data.tool, eventValue.data.status, eventValue.data.code, eventValue.data.httpStatus, eventValue.data.resultCount ?? eventValue.data.chars, `${eventValue.data.durationMs}ms`].filter((value) => value !== undefined && value !== null && value !== '').join(' ')
     : eventValue.data.text ?? eventValue.data.textPreview ?? eventValue.data.content ?? eventValue.data.message ?? eventValue.data.tool ?? eventValue.data.result ?? '';
   const suffix = body ? ` | ${summarizeText(typeof body === 'string' ? body : JSON.stringify(body), 260)}` : '';
   return `${localTime(eventValue.epochMs)} [${eventValue.kind}] ${eventValue.source}${ids ? ` (${ids})` : ''}${suffix}`;
