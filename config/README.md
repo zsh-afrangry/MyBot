@@ -51,6 +51,10 @@
 
 天气、Profile、行程、一次性提醒分别配置 `plugins.entries.personal-{weather,profile,planning,reminders}` 并独立登记allow/load/开关。天气条目只持有天气API参数；Profile持有地理解析及默认城市桥接配置；行程与一次性提醒只装配自身领域，一次性提醒的 `reminderRunnerRoot` 指向持久 `chatbot/plugins/personal-reminders`。共享实现不改变历史数据归属：Profile/行程仍使用 `state/personal-weather/weather.sqlite`，提醒仍使用 `state/personal-reminders/`。旧Cron的 `personal-weather/dist/reminder-cli.js` 由集中构建生成转发入口，不因配置拆分自动重写既有任务。`kurumi-research.config.cacheRoot` 显式指定阅读/源缓存，不再从QQ频道路径推导。完整代码和兼容边界见[文档26](../docs/26_基础能力插件边界整理与检索接入设计.md)。
 
+`sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
+
+未启用共享模式的提醒列表和长期记忆可在 `plugins.entries.<id>.config` 指定 `policyAdapter` / `storeAdapter`，值是领域 `adapters.js` 注册的实现 ID，启动时固定。默认分别为 `default` / `sqlite` 和 `explicit` / `memory-file`；未指定仍用上述默认，未知 ID 明确失败，不回退。替换实现、迁移数据与旧 Cron 绑定的处理见[文档 21](../docs/21_后端职责分层与代码整理.md)，配置选择不自动迁移业务数据。
+
 主人连续性由 `plugins.entries.kurumi-memory.config.continuity.enabled` 开启；`summaryTtlDays` 为近期摘要保留天数（1–30，默认7），`maxContextChars` 为注入上限（2000–12000，默认6000）。连续性模式使用 `continuityPolicyAdapter=current-owner`、`continuityStoreAdapter=sqlite`，不与旧 `policyAdapter/storeAdapter` 混用。生产当前已启用这组配置；首次迁移仍按下面的预览→私密备份→应用流程，后续只读预览用于核对：
 
 ```bash
@@ -61,11 +65,7 @@ node chatbot/scripts/memory-migrate.mjs --apply \
 
 迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。当前生产迁移结果为revision=4、6条事实，原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。`/new`只清原生聊天上下文，仍注入有效长期事实和未过期摘要；明确更正/遗忘才推进记忆代际并清理本域摘要。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
 
-`sync-config.mjs` 是唯一的运行配置同步入口。
-
-未启用共享模式的提醒列表和长期记忆可在 `plugins.entries.<id>.config` 指定 `policyAdapter` / `storeAdapter`，值是领域 `adapters.js` 注册的实现 ID，启动时固定。默认分别为 `default` / `sqlite` 和 `explicit` / `memory-file`；未指定仍用上述默认，未知 ID 明确失败，不回退。替换实现、迁移数据与旧 Cron 绑定的处理见[文档 21](../docs/21_后端职责分层与代码整理.md)，配置选择不自动迁移业务数据。
-
-论文插件的 `root/python/credentialsFile`、`apiConcurrency/apiQps`（日常最多4个在途请求、每秒启动1个；操作者可配置并发1–6、QPS1–4）和页数、请求次数、用量、运行时限在 `plugins.entries.kurumi-papers.config` 管理。`liveTranslationEnabled` 是实际付费调用开关，插件缺省关闭；本机仓库意图已按用户授权设为 `true`。三份窄工具只加入 `main.tools.alsoAllow`，不开放通用文件或命令工具。`root` 的任务与产物需随私有状态备份，Python 环境使用仓库锁文件重建；详细契约与证据见[文档 22](../docs/22_论文PDF翻译与文件投递.md)。
+论文插件的 `root/python/credentialsFile`、`apiConcurrency/apiQps`（日常最多4个在途请求、每秒启动1个；操作者可配置并发1–6、QPS1–4）和页数、请求次数、用量、运行时限在 `plugins.entries.kurumi-papers.config` 管理。`liveTranslationEnabled` 是实际付费调用开关，插件缺省关闭；本机仓库意图已按用户授权设为 `true`。三份窄工具加入 `main.tools.alsoAllow`，已登记成员的独立 Agent 仅开放首期工具，不开放通用文件或命令。成员文件在 `root/subjects/<QQ>/`，任务共用串行队列并绑定真实请求人；任务、产物与归属需随私有状态备份，Python 环境用锁文件重建。详细契约与证据见[文档22](../docs/22_论文PDF翻译与文件投递.md)、身份边界见文档24。
 
 论文可靠性也由上述受管配置控制：`batchValidationRetries=1` 表示校验失败后仅对当前批次额外重试1次，`channelRecoveryRetries=1` 表示全部临时渠道冷却后最多再恢复1轮；两项均允许0–4，0明确禁用对应重试。两者独立计数，但共用单任务300请求、300000已报告tokens和1800秒期限。模型不能改这些值。冷却文件兼容原数字到期时间，新条目保存到期/机器原因/是否允许恢复；同一渠道恢复时仅一个在途探测。HTTP请求采用沙箱内临时子进程以便失败后立即取消，不新增服务或端口；诊断和原始回执只在私密任务状态中保留。
 
@@ -102,7 +102,8 @@ node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配�
 
 | 想改什么 | 改哪里 | 之后做什么 |
 |---|---|---|
-| 人格 / 语气 | `config/persona.json` 的 `roleFile`（角色卡在 `roles/`） | `sync-persona.mjs --apply`，再重启服务 |
+| 人格 / 语气 / 关系背景 | `config/persona.json`、`roles/` 及主人/成员模板 | `sync-persona.mjs --diff` → `--apply`；当前宿主下一回合加载，不复制记忆 |
+| QQ 身份/功能权限/邮件目标 | `config/access-control.json`，递增 revision | 校验/矩阵/漂移审阅，先准备成员人格，再同步配置、重启；按文档24验收 |
 | 模型 / provider | `config/runtime.config.json` 的 `models` 与 `agents.*.model` | `sync-config.mjs --apply` |
 | 工具白名单 | 同上，`agents.entries.main.tools.alsoAllow` | `sync-config.mjs --apply` |
 | 禁用某类工具 | 同上，`tools.deny` / `tools.fs` | `sync-config.mjs --apply` |

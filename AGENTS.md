@@ -1,7 +1,8 @@
 # 开发指引（本仓库）
 
 本文件是 `/home/afrangry/kurumi-fusion` 开发侧的指令入口。它只说明开发路径、保护范围和验证方式，不复制运行规则。
-按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则与需求方案（文档 9、10、11、12、15、16、18、19、20、21、22、23、26 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。文档中标为方案或待处理的部分不代表能力已上线。
+按任务进入文档：阅读入口 [`docs/README.md`](docs/README.md) → 当前规则与需求方案（文档 9、10、11、12、15、16、18、19、20、21、22、23、24、25、26 与 `config/README.md`） → 证据从 [`docs/verification/INDEX.md`](docs/verification/INDEX.md) 查。[文档 24](docs/24_统一身份与权限管理.md) 管理统一授权：唯一身份来源为 `config/access-control.json`，成员只允许首期聊天/自身论文能力，个人业务保持 owner-only，群聊关闭。新增身份必须由操作者显式登记；测试夹具号码不可写入生产。具体部署/真人验收状态见该文。
+[文档 25](docs/25_人格、记忆与会话连续性.md) 的P1已部署共享世凪人格与本人恋人/成员普通朋友关系，投影、隔离宿主和真实DeepSeek试聊通过；真人QQ体感待复验。P2已完成：自动记忆仅本人，成员不继承主人记忆，`/new`保留长期事实和未过期摘要；生产迁移、定向配置/主人模板同步、健康检查、备份与19/19材料模式恢复均有证据。P3–P5未实施，持续情绪、主动联系及成员记忆权限未开放。
 **文档冲突时以上面这些规则文档和代码为准**，不读 `docs/1–8` 的“现在应该从哪里继续”当作待办。
 
 ## 两处目录，不要混用
@@ -28,7 +29,8 @@
 | 改动 | 命令 / 依据 |
 | --- | --- |
 | 行为、模型、工具白名单 | `node scripts/fusion/sync-config.mjs --diff` → `--apply` → 重启 `kurumi-fusion.service` |
-| 人格 | `node scripts/fusion/sync-persona.mjs --apply`（只写 workspace 四份文件） |
+| 人格 | `node scripts/fusion/sync-persona.mjs --diff` → `--apply`（四份受管文件；可信角色选择关系，不复制记忆/历史；本机宿主下一回合加载） |
+| 身份/权限 | `node chatbot/scripts/access-control.mjs --check/--matrix`，按文档24准备独立工作区、同步配置并重启；不直接改运行名单 |
 | 领域插件 | 文档 10「开发与验证」中列出的 `node --test` 与 `npm --prefix ... run build` |
 | 收尾自检 | `health.mjs`、`verify-dependencies.mjs`、`sync-config.mjs`、`sync-persona.mjs` 四项全过 |
 
@@ -47,9 +49,8 @@
 ## 触及禁用限制时必须先告知
 
 运行期 agent 的能力由 `config/runtime.config.json` 的 `agents.entries.<id>.tools` 决定，**不是由提示词决定**。
-当前 `main`（QQ 私聊里的助手）禁用：`read`、`write`、`edit`、`apply_patch`、`exec`、`process`、`message`、
-`sessions_spawn`；它能用的只有聊天与 `tools.alsoAllow` 明列的业务工具。群聊入口永久关闭，
-`channels.kurumi-qq` 只服务主人私聊（四重校验含 `direct:` 会话）。
+当前 `main`（主人 QQ 私聊里的助手）禁用：`read`、`write`、`edit`、`apply_patch`、`exec`、`process`、`message`、
+`sessions_spawn`；它能用的只有聊天与 `tools.alsoAllow` 明列的业务工具。成员使用独立 Agent/workspace、显式窄工具上限与强制宿主授权策略，不继承主人的数据或后台工具。群聊入口关闭；不得只放宽入口、伪造 owner 标志或用模型参数决定身份/投递对象。
 
 **当某个需求需要某项被禁用的能力时**（例如"让 QQ 里的助手读文件/跑命令"）：
 
@@ -71,19 +72,20 @@
 - 账单增查改删/月汇总同样通过KnowledgeMap业务接口；单笔维护先查真实ID/version，明确唯一请求直接执行、歧义先澄清。业务规则与测试边界见文档23第二轮，不把账单实际删除当成事项作废。关联runId取自可信宿主工具调用钩子，不读模型参数或假定工厂上下文提供runId。
 - 提醒列表已有项的动作和对话指代由模型转换成 ID/版本，后端不重判原文动词/标题。可信当前请求、事务、版本和幂等是执行契约；单消息一项还受账本唯一键约束。替换列表存储必须同时覆盖工具、调度器和独立固定 runner，参见文档 21。
 - 带码确认只通过 `@kurumi/confirmation-core`；业务插件提供自己的适配器，在业务事务内消费 grant。交互钩子不签发授权。结构与删减入口见[文档 21](docs/21_后端职责分层与代码整理.md)。
+- 新业务工具/action 须登记 `chatbot/packages/access-control/permissions.js` 并在执行处检查权限；未知映射拒绝。成员若尚无资源归属/确认隔离则保持 owner-only，不靠分会话冒充数据隔离。后台任务持久绑定实际请求者，回传前复核，不改发给主人。细则见文档24。
 
 ## 记录方式
 
 - 新增领域后端脚本放 `chatbot/scripts/`，测试放 `chatbot/tests/<领域>/`；SQL 迁移随对应插件留在仓库。登记脚本与证据索引，不向 `archive/` 放未说明归属的文件。现有部署/运维脚本仍由 `scripts/fusion/` 管理。
 
 - 新需求前的收尾清单已于 2026-10-10 归档（过程记录见 Git 历史），不再接收新任务。当前结论和批准延期项见文档 16，资产与恢复点见文档 12。后续任务记录使用 `待处理 / 处理中 / 待复验 / 已验收 / 阻塞 / 经用户确认延期`，有证据才写“已验收”。
-- 行为变化先更新对应的规则文档（9、10、11、12、15、16、18、19、20、21、22、23、26 或 `config/README.md`），再在 `docs/verification/` 落证据并登记 `INDEX.md`；不把长日志复制进规范文档。
+- 行为变化先更新对应的规则文档（9、10、11、12、15、16、18、19、20、21、22、23、24、25、26 或 `config/README.md`），再在 `docs/verification/` 落证据并登记 `INDEX.md`；不把长日志复制进规范文档。
 - 需要用户判断的事项写进对应任务记录，不自行豁免或标记通过。
 
 ## 其他 agent 指令入口
 
 - `chatbot/AGENTS.md`：**不是本仓库的当前规则**。它是融合前遗留的能力登记，只作为 `chatbot/tests/acceptance/` 离线验收脚本的基础提示词保留，并已在文件头标注。不要据它判断当前能力、工具或权限。
-- 运行期 agent 提示词在 `scripts/fusion/templates/AGENTS.md`，由 `config/persona.json` 的 `agentsSubstitution` 替换后经 `sync-persona.mjs` 写入 `.openclaw-fusion/workspace/AGENTS.md`；只改模板，不改运行副本。
+- 主人运行期提示词在 `scripts/fusion/templates/AGENTS.md`，由 `config/persona.json` 的 `agentsSubstitution` 替换后经 `sync-persona.mjs` 写入 `.openclaw-fusion/workspace/AGENTS.md`；成员使用 `scripts/fusion/templates/MEMBER_AGENTS.md`，同步到各自 `users/<QQ>/workspace/`。只改模板，不改运行副本；人格可共享，主人资料/记忆不可复制。
 - `project-fusion`、`researcher` 等后台 agent 的提示词由各自的 `configure-*.mjs` 生成在对应工作区，不在本文件维护。
 
 返回[文档入口](docs/README.md)。

@@ -5,9 +5,11 @@
 > 本文的“角色、模型与回退”一节区分两件事：**一次性迁移的历史记录**（`configure-deepseek-persona.mjs`，已完成，不再作为日常入口）与**当前人格切换契约**（`config/persona.json` + `sync-persona.mjs`）。
 > 日常改人格不要运行迁移脚本；契约见 [`config/README.md`](../config/README.md)，运行命令见[文档 10](10_融合助手运行维护.md)。
 
+当前运行人格已按[文档25](25_人格、记忆与会话连续性.md)的P1切换为世凪：共享性格，本人恋人、成员普通朋友，关系只进入各自USER。投影/真实模型隔离宿主通过，真人QQ体感待复验；记忆与会话连续性等后续阶段未实施。
+
 ## 当前状态与范围
 
-- [x] 原样复制旧 bridge 的 3 份角色目录 Markdown，当前启用小鲸鱼角色卡。
+- [x] 保留旧 bridge 的角色目录素材；当前启用世凪，旧小鲸鱼/傲娇助手角色卡不改动。
 - [x] 默认及main模型切为官方DeepSeek，运行配置移除NAICCC，无NAICCC回退。
 - [x] 修复真实QQ图片CDN入口；真实下载及独立模型看图验证通过，频道19项回归通过。
 - [x] 查明Start-DSH.sh拉起旧bridge造成服务接管，恢复融合服务。
@@ -16,7 +18,7 @@
 
 ## 角色、模型与回退
 
-`/home/afrangry/桌面/qq-bridge/roles/`下的README.md、小鲸鱼.md、傲娇助手.md原样复制到`/home/afrangry/kurumi-fusion/roles/`（该桌面路径现已不存在，原件归档在`/home/afrangry/kurumi-archive/qq-bridge/roles/`）。README是原bridge说明，里面的旧命令、控制台操作和“保存即生效”都不代表融合项目启动或切换方式；自2026-10-10起该README顶部增加了来源说明块，因此只有两份角色卡仍与归档原件逐字一致。小鲸鱼卡SHA256为`237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386`，与运行时SOUL.md一致。
+`/home/afrangry/桌面/qq-bridge/roles/`下的README.md、小鲸鱼.md、傲娇助手.md原样复制到`/home/afrangry/kurumi-fusion/roles/`（该桌面路径现已不存在，原件归档在`/home/afrangry/kurumi-archive/qq-bridge/roles/`）。README是原bridge说明，里面的旧命令、控制台操作和“保存即生效”都不代表融合项目启动或切换方式；自2026-10-10起该README顶部增加了来源说明块，因此只有两份角色卡仍与归档原件逐字一致。小鲸鱼卡SHA256为`237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386`；当前运行SOUL使用世凪，不再与小鲸鱼卡相同。
 
 **日常人格切换不使用 `configure-deepseek-persona.mjs`。** 该脚本是一次性迁移工具（2026-10-05 把旧 bridge 切换到 DeepSeek+小鲸鱼时执行），除了角色卡还会重写 `models.providers`、默认模型、`runtime-env.json`（并删除 `OPENAI_API_KEY`）和四份工作区文件；它的历史作用与备份位置记录如下，脚本开头也已加警告。当前入口是 `config/persona.json` + `sync-persona.mjs`，配置契约见 [`config/README.md`](../config/README.md)。
 
@@ -24,7 +26,7 @@
 
 当前主模型为 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com`，使用 OpenAI 兼容 Chat Completions，声明 text/image 输入。实际 `/models` 返回该模型支持图片；实际 agent 终态回执的 requested/effective/responseModel 均为 DeepSeek Flash，无 reroute。它不经过 DSH 或 NAICCC。默认设置也被未单独指定模型的后台 agent 继承；全部后台任务未单独重复验收。
 
-SOUL使用完整角色卡，IDENTITY为小鲸鱼；AGENTS明确 Kurumi 是项目名，角色的群友语气用于本人私聊，业务结果必须准确。沿用仅本人私聊限制，角色卡不授予群聊权限。日常旧会话未重置，旧历史可能继续影响语气；会话管理属于后续独立工作。
+SOUL使用`roles/世凪.md`，IDENTITY为世凪；AGENTS明确Kurumi是项目名，业务结果必须准确。本人/成员的关系按文档25投影，访问范围仍按[文档24](24_统一身份与权限管理.md)的身份矩阵，群聊关闭。日常旧会话未重置，旧历史可能继续影响语气；会话管理属于后续阶段。
 
 ## 图片故障与验证边界
 
