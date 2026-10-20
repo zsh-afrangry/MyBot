@@ -137,6 +137,12 @@ test('Current sources fit native per-file budgets and owner identity is no longe
   assert(!ownerRules.includes('当前临时使用SOUL.md中的小鲸鱼'));
 });
 
+test('Owner USER points facts to continuity memory, not the MEMORY.md notice', t => {
+  const f = fixture(t), user = personaFiles(f.repo, f.state).files.get(path.join(f.state, 'workspace/USER.md'));
+  assert(!user.includes('MEMORY.md'), 'P2 MEMORY.md holds only a notice');
+  assert(user.includes('kurumi_memory') && user.includes('KURUMI_PERSONAL_MEMORY_V2'));
+});
+
 test('Projection destination symlinks cannot redirect persona writes', t => {
   const f = fixture(t), outside = path.join(f.root, 'outside'); fs.mkdirSync(outside);
   fs.mkdirSync(f.state); fs.symlinkSync(outside, path.join(f.state, 'workspace'));
