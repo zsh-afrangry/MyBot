@@ -8,23 +8,6 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `chatbot/packages/confirmation-core/src/confirmation.test.ts` | 离线 | 确认核心：提案校验、TTL、幂等与 grant 消费 | 只读 | 否 | offline | — |
 | `chatbot/packages/confirmation-core/src/public-id.test.ts` | 离线 | 公开 ID 脱敏与冲突规避 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-mail/test/adapters.test.js` | 离线 | 邮件适配器：宿主入站路由到达被选中的 store、工具消费注入实现、替换策略不能授予身份、未知 id 明确失败 | 写临时测试目录、只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-mail/test/gate.test.js` | 离线 | 邮件端到端负向核心：确认前 mock SMTP 收到 0 封；另含完整往返与失败路径 | 写临时测试目录、只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-mail/test/mime.test.js` | 离线 | 邮件 MIME：RFC 2047 主题、RFC 2231 附件名、折行、注入防护、信封发件人 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-mail/test/policy.test.js` | 离线 | 邮件输入策略：单收件人字符串与 body 别名的真实失败回归、白名单、参数规整 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-mail/test/smtp.test.js` | 离线 | SMTP 协议：仅连本地 mock 服务器，覆盖认证失败、收件人拒绝、超时与 dot-stuffing | 写临时测试目录、只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-mail/test/store.test.js` | 离线 | 邮件草稿与确认闸门：提案、授权、幂等、过期、跨会话与参数校验 | 写临时测试目录、只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-mail/test/tool.test.js` | 离线 | 邮件工具层：以生产失败参数驱动真实注册工具，含非主人拒绝与凭据不泄露 | 写临时测试目录、只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-memory/test/memory.test.js` | 离线 | 长期记忆读写、版本与损坏拒绝 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-qq/test/channel.test.js` | 离线 | QQ 频道分段、配额、账本与幂等 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-qq/test/presentation.test.js` | 离线 | QQ 呈现与分段节奏 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-qq/test/stickers.test.js` | 离线 | 表情目录与发送边界 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-research/test/papers.test.js` | 离线 | 论文来源校验与拒绝规则 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-tasks/test/git.test.js` | 离线 | 副本内受限 Git 提交范围 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-tasks/test/sandbox.test.js` | 离线 | Bubblewrap 隔离边界与进程树终止 | 只读 | 否 | offline | — |
-| `chatbot/plugins/kurumi-tasks/test/task.test.js` | 离线 | 后台任务工具的所有权与绑定 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-confirmation/src/inbound.test.ts` | 离线 | 确认入站插件：身份绑定与重放拒绝 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-confirmation/src/index.test.ts` | 离线 | 确认入站插件装配与工具暴露 | 只读 | 否 | offline | — |
 | `chatbot/packages/personal-domains/src/clarification-gate.test.ts` | 离线 | 地点歧义澄清闸门 | 只读 | 否 | offline | — |
 | `chatbot/packages/personal-domains/src/config.test.ts` | 离线 | 插件配置解析与默认值 | 只读 | 否 | offline | — |
 | `chatbot/packages/personal-domains/src/confirmation-gate.test.ts` | 离线 | 领域确认闸门 | 只读 | 否 | offline | — |
@@ -43,25 +26,47 @@
 | `chatbot/packages/personal-domains/src/store.test.ts` | 离线 | 领域 SQLite 存储与迁移 | 只读 | 否 | offline | — |
 | `chatbot/packages/personal-domains/src/weather-location.test.ts` | 离线 | 天气地点解析与叶子名保留 | 只读 | 否 | offline | — |
 | `chatbot/packages/personal-domains/src/weather-service.test.ts` | 离线 | 天气服务聚合与失败语义 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/adapters.test.js` | 离线 | 邮件适配器：宿主入站路由到达被选中的 store、工具消费注入实现、替换策略不能授予身份、未知 id 明确失败 | 写临时测试目录、只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/gate.test.js` | 离线 | 邮件端到端负向核心：确认前 mock SMTP 收到 0 封；另含完整往返与失败路径 | 写临时测试目录、只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/mime.test.js` | 离线 | 邮件 MIME：RFC 2047 主题、RFC 2231 附件名、折行、注入防护、信封发件人 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/policy.test.js` | 离线 | 邮件输入策略：单收件人字符串与 body 别名的真实失败回归、白名单、参数规整 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/smtp.test.js` | 离线 | SMTP 协议：仅连本地 mock 服务器，覆盖认证失败、收件人拒绝、超时与 dot-stuffing | 写临时测试目录、只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/store.test.js` | 离线 | 邮件草稿与确认闸门：提案、授权、幂等、过期、跨会话与参数校验 | 写临时测试目录、只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-mail/test/tool.test.js` | 离线 | 邮件工具层：以生产失败参数驱动真实注册工具，含非主人拒绝与凭据不泄露 | 写临时测试目录、只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-memory/test/memory.test.js` | 离线 | 长期记忆读写、版本与损坏拒绝 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-qq/test/channel.test.js` | 离线 | QQ 频道分段、配额、账本与幂等 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-qq/test/presentation.test.js` | 离线 | QQ 呈现与分段节奏 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-qq/test/stickers.test.js` | 离线 | 表情目录与发送边界 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-research/test/papers.test.js` | 离线 | 论文来源校验与拒绝规则 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-tasks/test/git.test.js` | 离线 | 副本内受限 Git 提交范围 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-tasks/test/sandbox.test.js` | 离线 | Bubblewrap 隔离边界与进程树终止 | 只读 | 否 | offline | — |
+| `chatbot/plugins/kurumi-tasks/test/task.test.js` | 离线 | 后台任务工具的所有权与绑定 | 只读 | 否 | offline | — |
+| `chatbot/plugins/personal-confirmation/src/inbound.test.ts` | 离线 | 确认入站插件：身份绑定与重放拒绝 | 只读 | 否 | offline | — |
+| `chatbot/plugins/personal-confirmation/src/index.test.ts` | 离线 | 确认入站插件装配与工具暴露 | 只读 | 否 | offline | — |
 | `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | `docs/verification/` |
-| `chatbot/tests/access-control/policy.test.mjs` | 离线 | 身份权限schema、可信上下文、工具映射与默认拒绝 | 只读 | 否 | header | — |
+| `chatbot/tests/access-control/isolation.test.mjs` | 离线 | 两身份实际目录/路由/任务/投递/撤权、旧账本与隔离人格；本地模拟OneBot/翻译器 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/access-control/log-query.test.mjs` | 离线 | 授权审计的统一查询、run关联、拒绝原因展示与私密文件模式 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/access-control/policy.test.mjs` | 离线 | 权限/schema/完整工具映射、可信身份与后台委托、配置派生及默认拒绝 | 只读 | 否 | header | — |
+| `chatbot/tests/backend-boundaries/capabilities.test.mjs` | 离线 | 共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
 | `chatbot/tests/backend-boundaries/confirmation.test.mjs` | 离线 | 确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合 | 只读 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/domain.test.mjs` | 离线 | 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs` | 离线 | 真实OpenClaw服务管理器验证论文异步停止/中止/不重放、邮件注销/重启/失败清理；无生产重启或外发 | 写临时测试目录 | 否 | header | `docs/verification/plugin-lifecycle-2026-10-19/README.md` |
 | `chatbot/tests/domain-adapters/integration.test.mjs` | 离线 | 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/domain-adapters/registry.test.mjs` | 离线 | 领域适配器注册/注销、启动选择、同步契约和失败拒绝 | 只读 | 否 | header | — |
+| `chatbot/tests/knowledgemap/bills.test.mjs` | 离线 | 账单声明一致、真实钩子runId映射、当前请求隔离和消息幂等键 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线 | 固定API客户端、可信请求、参数映射、共享播报与切换防旧写 | 写临时测试目录 | 否 | header | — |
-| `chatbot/tests/knowledgemap/bills.test.mjs` | 离线 | 账单工具声明一致、真实钩子runId映射、当前请求隔离和消息幂等键 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 离线 | 真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/concurrency_test.py` | 离线 | 网络4/6并发上限与额外请求排队、乱序回执/不可变快照、预算、终态取消、共享冷却/频率与并发原子写入；注入HTTP/临时目录 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/credentials.test.mjs` | 离线 | 厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/documents.test.mjs` | 离线 | PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界 | 写临时测试目录 | 否 | header | — |
-| `chatbot/tests/papers/file-ingress.test.mjs` | 离线 | QQ 附件类型/接收事实、纯失败附件直答、混合附件与真实当前文档ID | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/engine_test.py` | 离线 | 锁定排版引擎产物/公式/批次接口、重试仅缓存有效结果；独立HOME/cache | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/file-ingress.test.mjs` | 离线 | 附件类型/下载/校验事实、纯失败零模型分流、真实发送账本/未知回执、混合媒体与身份隔离 | 写临时测试目录 | 否 | header | `docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md` |
 | `chatbot/tests/papers/jobs.test.mjs` | 离线 | 翻译high/显式MAX、所选产物贯通、任务幂等/取消/重启与独立投递状态 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/log-query.test.mjs` | 离线 | 论文事件接入只读统一查询与可信消息/任务关联 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/mail.test.mjs` | 离线 | 受管附件快照、确认、完整性、大小限制及本地 TLS SMTP | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/reliability_test.py` | 离线 | 批次重试0–4次、冷却恢复/单探测/预算、本机HTTP正文空闲与总期限独立、实际取消/切渠道及安全诊断；无付费API或生产状态 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/responses_test.py` | 离线 | 原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/source-boundary.test.mjs` | 离线 | 下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
 | `chatbot/tests/papers/worker.test.mjs` | 离线 | 实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/persona/memory.test.mjs` | 离线 | 文档25 P2记忆迁移、SQLite版本/并发、来源校验、摘要TTL、遗忘屏障、成员拒绝与可插拔存储 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/persona/projection.test.mjs` | 离线 | 文档25人格/关系按身份投影、私密文件保留、非法配置/路径拒绝和旧配置兼容 | 写临时测试目录 | 否 | header | `docs/verification/persona-memory-2026-10-19/node-tests.txt` |
@@ -74,9 +79,23 @@
 | `scripts/fusion/test/log-query.test.mjs` | 离线 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
+| `chatbot/scripts/access-control.mjs` | 只读运维 | 严格校验统一身份权限并输出JSON/TSV矩阵，不改运行名单 | 只读 | 否 | header | — |
+| `scripts/fusion/evidence-coverage.mjs` | 只读运维 | 校验证据目录分类覆盖，未分类即非零退出 | 只读 | 否 | header | `docs/verification/` |
+| `scripts/fusion/evidence-index.mjs` | 只读运维 | 生成本脚本与证据索引 | 只读 | 否 | header | `docs/verification/SCRIPTS.md` |
+| `scripts/fusion/health.mjs` | 只读运维 | 服务、QQ、频道、Cron、数据库健康 | 只读 | 否 | header | — |
+| `scripts/fusion/inspect-receipts.mjs` | 只读运维 | 查看验收回执 | 只读 | 否 | code | `docs/verification/fusion/receipts.json` |
+| `scripts/fusion/log-query.mjs` | 只读运维 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询 | 只读 | 否 | header | — |
+| `scripts/fusion/probe-final.mjs` | 只读运维 | health.mjs 的兼容入口 | 只读 | 否 | header | — |
+| `scripts/fusion/stack-summary.mjs` | 只读运维 | 启停输出压缩显示 | 只读 | 否 | header | — |
+| `scripts/fusion/sync-config.mjs` | 只读运维 | 默认只报告配置漂移；--apply 才写 openclaw.json | 写运行状态、只读 | 否 | header | — |
+| `scripts/fusion/sync-persona.mjs` | 只读运维 | 默认只报告人格漂移；--apply 写各已登记身份的四份受管文件，不复制记忆/历史 | 写运行状态、只读 | 否 | header | — |
+| `scripts/fusion/verify-dependencies.mjs` | 只读运维 | 依赖自持、无归档树逃逸、锁文件一致 | 只读 | 否 | header | — |
+| `chatbot/scripts/backup-knowledgemap-code.mjs` | 领域运维 | 只读两个主工作树，保存bundle/index/工作树包到新私密备份目录，不含数据库 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/import-paper-credentials.mjs` | 领域运维 | 显式导入指定 GPT/DeepSeek 凭据，原子合并到私密 0600 文件；不输出密钥 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/setup-paper-translation.sh` | 领域运维 | 按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发 | 真实外部API、写运行状态 | 是 | header | — |
+| `chatbot/scripts/build-personal-plugins.mjs` | 构建 | 构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作 | 写仓库内文件 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
 | `chatbot/scripts/import-knowledgemap-list.mjs` | 迁移工具 | 默认预览旧列表导入；--apply写共享业务，--activate冻结旧项并启用runner切换标记 | 真实外部API、写运行状态 | 是 | header | — |
-| `chatbot/scripts/backup-knowledgemap-code.mjs` | 领域运维 | 只读两个主工作树、bundle/index/工作树包保存到新私密备份目录；不含数据库/忽略文件 | 写运行状态 | 是 | header | — |
-| `chatbot/scripts/memory-migrate.mjs` | 迁移工具 | 预览或显式迁移主人旧 MEMORY.md 到私密连续性 SQLite；--apply写私密备份与记忆状态，不调用模型/QQ/邮件 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/memory-migrate.mjs` | 迁移工具 | 文档25显式预览或迁移主人旧 MEMORY.md 到私密连续性 SQLite；--apply写私密备份与记忆状态，不调用模型/QQ/邮件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-deepseek-persona.mjs` | 迁移工具 | 一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口 | 真实模型、写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-domains.mjs` | 迁移工具 | 启用主人绑定领域插件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-fulltext-research.mjs` | 迁移工具 | 研究会话、笔记工作区与来源缓存 | 写运行状态 | 是 | header | — |
@@ -87,15 +106,13 @@
 | `scripts/fusion/configure-research.mjs` | 迁移工具 | 配置检索 provider 与抓取路径 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-worker.mjs` | 迁移工具 | 显式配置隔离代码 worker | 写运行状态 | 是 | header | — |
 | `scripts/fusion/prepare.mjs` | 迁移工具 | 首次引导隔离运行目录，拒绝覆盖已写内容 | 写运行状态 | 是 | header | — |
-| `chatbot/scripts/import-paper-credentials.mjs` | 领域运维 | 显式导入指定 GPT/DeepSeek 凭据，原子合并到私密 0600 文件；不输出密钥 | 写运行状态 | 是 | header | — |
-| `chatbot/scripts/setup-paper-translation.sh` | 领域运维 | 按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发 | 真实外部API、写运行状态 | 是 | header | — |
 | `chatbot/scripts/reminder-list.mjs` | 领域运行 | 固定提醒列表 Cron 程序：按切换来源查询、slot 防重和汇总输出，OpenClaw 投递本人 | 写运行状态 | 是 | header | — |
 | `chatbot/tests/acceptance/call-analysis.mjs` | 库 | 旧验收调用观察工具（只观察，不证明写入） | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/domain-fixture.mjs` | 库 | 旧验收领域夹具与工具定义 | 只读 | 否 | code | — |
-| `chatbot/tests/access-control/fixtures.mjs` | 库 | 构造合成QQ身份与可信上下文，不导入生产名单 | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/host-driver.mjs` | 库 | 旧 harness Host 驱动，只开测试状态目录 | 写临时测试目录、只读 | 否 | code | — |
 | `chatbot/tests/acceptance/model-driver.mjs` | 库 | 旧 harness 模型驱动（构造模型客户端，读取遗留 AGENTS） | 真实模型 | 否 | code | — |
 | `chatbot/tests/acceptance/retrieval-config.mjs` | 库 | 旧验收检索输出预算配置 | 只读 | 否 | header | — |
+| `chatbot/tests/access-control/fixtures.mjs` | 库 | 构造合成QQ身份/显式权限与可信上下文，不导入生产名单 | 只读 | 否 | header | — |
 | `chatbot/tests/papers/fixtures.mjs` | 库 | 生成最小有效 PDF 测试字节，不读生产文件 | 只读 | 否 | header | — |
 | `chatbot/tests/papers/mime-parse.py` | 库 | 标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/dialogue-cases.mjs` | 库 | 用户七句验收样例与字段期望（纯数据，无生产导入） | 只读 | 否 | header | — |
@@ -120,19 +137,22 @@
 | `chatbot/tests/acceptance/run-retrieval-t3.mjs` | 遗留验收 | 真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置 | 真实模型、真实外部API | 是 | boundary | — |
 | `chatbot/tests/acceptance/run.mjs` | 遗留验收 | 旧 harness 总入口：真实 Host 调度 + 合成 QQ 输入 + 确定性认知 + 假调度 | 写仓库内文件、写临时测试目录 | 是 | boundary | — |
 | `chatbot/tests/acceptance/verify-restart.mjs` | 遗留验收 | 在新进程里重开测试目录并验证幂等；不重启任何服务 | 写临时测试目录、只读 | 否 | header | — |
+| `chatbot/tests/access-control/acceptance-host.mjs` | 验收 | 真实隔离OpenClaw、本地确定性模型与模拟OneBot/翻译器：双身份、强制策略及后台交接；无真实API/QQ/邮件 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/access-control-2026-10-19/host.json` |
+| `chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs` | 验收 | 真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/capability-decoupling-2026-10-20/README.md` |
+| `chatbot/tests/knowledgemap/acceptance-bills-live.mjs` | 验收 | 第二轮真实模型/生产API/MySQL/网页增改删查、歧义及天气runId；合成入站不发QQ | 真实模型、真实外部API、重启或停服务、写运行状态、写仓库内文件 | 是 | header | — |
 | `chatbot/tests/knowledgemap/acceptance-host.mjs` | 验收 | 真实模型与隔离OpenClaw/原生调度、临时HTTP业务库、模拟OneBot | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/knowledgemap/acceptance-live.mjs` | 验收 | 真实模型/生产API/MySQL/网页与一次本人QQ播报；短暂测试入口、精确测试行清理并保留回执 | 真实模型、真实外部API、真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/knowledgemap-bridge-2026-10-17/live.json` |
-| `chatbot/tests/knowledgemap/acceptance-bills-live.mjs` | 验收 | 第二轮真实模型/生产API/MySQL/网页单笔增改删查、歧义澄清及天气runId；合成入站不发QQ | 真实模型、真实外部API、重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/knowledgemap-bills-round2-2026-10-17/live.json` |
 | `chatbot/tests/knowledgemap/acceptance-model.mjs` | 验收 | 真实模型、实际v2工具及临时HTTP/SQLite，无QQ/生产写入 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/knowledgemap/recovery.mjs` | 验收 | 今晚Git工作树和SQLite备份的临时目录恢复，不启动旧服务 | 写临时测试目录 | 是 | header | — |
-| `chatbot/tests/papers/acceptance-api.py` | 验收 | 合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发 | 真实模型、真实外部API、写仓库内文件 | 是 | header | `docs/verification/paper-translation-2026-10-17/` |
-| `chatbot/tests/papers/acceptance-download.mjs` | 验收 | 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录 | 真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.`<br>`docs/verification/paper-translation-2026-10-17/download.json` |
-| `chatbot/tests/papers/acceptance-host.mjs` | 验收 | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/`<br>`docs/verification/paper-translation-2026-10-17/host.json` |
-| `chatbot/tests/papers/acceptance-worker.mjs` | 验收 | 生产捕获源码、正文空闲/重试配置与可取消HTTP子进程在真实隔离Python检查，无模型/外发 | 写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/paper-translation-2026-10-17/` |
-| `chatbot/tests/papers/acceptance.mjs` | 验收 | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.` |
-| `chatbot/tests/persona/acceptance-host.mjs` | 验收 | 隔离OpenClaw人格投影与实际模型输入；默认确定性模型，可选官方DeepSeek，无真实QQ外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/.` |
-| `chatbot/tests/persona/continuity-host.mjs` | 验收 | 文档25 P2宿主生命周期调查：本人/成员`/new`、手动压缩与临时宿主重启；本地模型和模拟OneBot | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/persona-memory-2026-10-19/p2/.` |
-| `chatbot/tests/persona/memory-continuity-host.mjs` | 验收 | 文档25 P2隔离OpenClaw连续性插件：主人自动记忆、`/new`后注入与成员隔离；确定性模型/模拟OneBot | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/persona-memory-2026-10-19/p2/.` |
+| `chatbot/tests/papers/acceptance-api.py` | 验收 | 合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发 | 真实模型、真实外部API、写仓库内文件 | 是 | header | `docs/verification/paper-translation-2026-10-17/README.md` |
+| `chatbot/tests/papers/acceptance-download.mjs` | 验收 | 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录 | 真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md`<br>`docs/verification/paper-translation-2026-10-17/download.json` |
+| `chatbot/tests/papers/acceptance-file-ingress.mjs` | 验收 | 真实隔离OpenClaw/聊天模型、附件入站与双身份论文编排；合成下载/翻译/OneBot，无生产写入或真实外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md` |
+| `chatbot/tests/papers/acceptance-host.mjs` | 验收 | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md`<br>`docs/verification/paper-translation-2026-10-17/host.json` |
+| `chatbot/tests/papers/acceptance-worker.mjs` | 验收 | 生产捕获源码、正文空闲/重试配置与可取消HTTP子进程在真实隔离Python检查，无模型/外发 | 写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/paper-translation-2026-10-17/README.md` |
+| `chatbot/tests/papers/acceptance.mjs` | 验收 | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md` |
+| `chatbot/tests/persona/acceptance-host.mjs` | 验收 | 文档25真实隔离OpenClaw/模拟OneBot的实际人格注入；默认本地模型，--live使用官方DeepSeek，无真实QQ外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/README.md` |
+| `chatbot/tests/persona/continuity-host.mjs` | 验收 | 文档25 P2真实隔离OpenClaw授权钩子、/new历史清理、手动压缩与临时宿主重启；确定性模型和模拟OneBot，无真实API或QQ | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/persona-memory-2026-10-19/p2/README.md` |
+| `chatbot/tests/persona/memory-continuity-host.mjs` | 验收 | 文档25 P2真实隔离OpenClaw连续性插件；确定性模型、模拟OneBot和临时状态，验证本人自动记忆、/new后注入及成员隔离，无真实API/QQ/邮件或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | — |
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
 | `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
 | `chatbot/tests/reminder-list/acceptance-native.mjs` | 验收 | 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务 | 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/native.json` |
@@ -171,19 +191,5 @@
 | `scripts/fusion/restore-verify.mjs` | 运维写状态 | 隔离恢复演练（只写新建 /tmp 目标） | 写临时测试目录 | 是 | header | — |
 | `scripts/fusion/run-gateway.mjs` | 运维写状态 | 前台生产入口；日常只由 systemd 启动 | 真实模型、重启或停服务、写运行状态 | 是 | header | — |
 | `scripts/fusion/stop-gateway.mjs` | 运维写状态 | 按环境证明停止隔离 Gateway | 重启或停服务 | 是 | header | — |
-| `scripts/fusion/evidence-coverage.mjs` | 只读运维 | 校验证据目录分类覆盖，未分类即非零退出 | 只读 | 否 | header | `docs/verification/` |
-| `scripts/fusion/evidence-index.mjs` | 只读运维 | 生成本脚本与证据索引 | 只读 | 否 | header | `docs/verification/SCRIPTS.md` |
-| `scripts/fusion/health.mjs` | 只读运维 | 服务、QQ、频道、Cron、数据库健康 | 只读 | 否 | header | — |
-| `scripts/fusion/inspect-receipts.mjs` | 只读运维 | 查看验收回执 | 只读 | 否 | code | `docs/verification/fusion/receipts.json` |
-| `scripts/fusion/log-query.mjs` | 只读运维 | 跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询 | 只读 | 否 | header | — |
-| `scripts/fusion/probe-final.mjs` | 只读运维 | health.mjs 的兼容入口 | 只读 | 否 | header | — |
-| `scripts/fusion/stack-summary.mjs` | 只读运维 | 启停输出压缩显示 | 只读 | 否 | header | — |
-| `scripts/fusion/sync-config.mjs` | 只读运维 | 默认只报告配置漂移；--apply 才写 openclaw.json | 写运行状态、只读 | 否 | header | — |
-| `scripts/fusion/sync-persona.mjs` | 只读运维 | 默认只报告人格漂移；--apply 写所有已登记身份的四份受管文件，不复制记忆/历史 | 写运行状态、只读 | 否 | header | — |
-| `scripts/fusion/verify-dependencies.mjs` | 只读运维 | 依赖自持、无归档树逃逸、锁文件一致 | 只读 | 否 | header | — |
 | `scripts/fusion/launchers/Start-DSH.sh` | 启停脚本 | 启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
-| `chatbot/tests/backend-boundaries/capabilities.test.mjs` | 离线 | 共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
-| `chatbot/tests/papers/source-boundary.test.mjs` | 离线 | 下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
-| `chatbot/scripts/build-personal-plugins.mjs` | 构建 | 构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作 | 写仓库内文件 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
-| `chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs` | 验收 | 真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/capability-decoupling-2026-10-20/README.md` |

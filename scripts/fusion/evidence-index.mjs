@@ -42,15 +42,27 @@ const TABLE = {
   'chatbot/scripts/build-personal-plugins.mjs': ['构建', '构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作', {writesRepo: 1}, 'header'],
   'chatbot/tests/backend-boundaries/capabilities.test.mjs': ['离线', '共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口', {testDir: 1}, 'header'],
   'chatbot/tests/papers/source-boundary.test.mjs': ['离线', '下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查', {testDir: 1}, 'header'],
+  'chatbot/tests/persona/continuity-host.mjs': ['验收', '文档25 P2真实隔离OpenClaw授权钩子、/new历史清理、手动压缩与临时宿主重启；确定性模型和模拟OneBot，无真实API或QQ', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/tests/persona/memory.test.mjs': ['离线', '文档25 P2记忆迁移、SQLite版本/并发、来源校验、摘要TTL、遗忘屏障、成员拒绝与可插拔存储', {testDir: 1}, 'header'],
+  'chatbot/tests/persona/memory-continuity-host.mjs': ['验收', '文档25 P2真实隔离OpenClaw连续性插件；确定性模型、模拟OneBot和临时状态，验证本人自动记忆、/new后注入及成员隔离，无真实API/QQ/邮件或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/tests/persona/projection.test.mjs': ['离线', '文档25人格/关系按身份投影、私密文件保留、非法配置/路径拒绝和旧配置兼容', {testDir: 1}, 'header'],
+  'chatbot/tests/persona/acceptance-host.mjs': ['验收', '文档25真实隔离OpenClaw/模拟OneBot的实际人格注入；默认本地模型，--live使用官方DeepSeek，无真实QQ外发', {auth: 1, model: 1, restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/scripts/access-control.mjs': ['只读运维', '严格校验统一身份权限并输出JSON/TSV矩阵，不改运行名单', {readonly: 1}, 'header'],
+  'chatbot/tests/access-control/fixtures.mjs': ['库', '构造合成QQ身份/显式权限与可信上下文，不导入生产名单', {readonly: 1}, 'header'],
+  'chatbot/tests/access-control/policy.test.mjs': ['离线', '权限/schema/完整工具映射、可信身份与后台委托、配置派生及默认拒绝', {readonly: 1}, 'header'],
+  'chatbot/tests/access-control/isolation.test.mjs': ['离线', '两身份实际目录/路由/任务/投递/撤权、旧账本与隔离人格；本地模拟OneBot/翻译器', {testDir: 1}, 'header'],
+  'chatbot/tests/access-control/log-query.test.mjs': ['离线', '授权审计的统一查询、run关联、拒绝原因展示与私密文件模式', {testDir: 1}, 'header'],
+  'chatbot/tests/access-control/acceptance-host.mjs': ['验收', '真实隔离OpenClaw、本地确定性模型与模拟OneBot/翻译器：双身份、强制策略及后台交接；无真实API/QQ/邮件', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/knowledgemap/bills.test.mjs': ['离线', '账单声明一致、真实钩子runId映射、当前请求隔离和消息幂等键', {readonly: 1}, 'header'],
   'chatbot/scripts/backup-knowledgemap-code.mjs': ['领域运维', '只读两个主工作树，保存bundle/index/工作树包到新私密备份目录，不含数据库', {auth: 1, writesState: 1}, 'header'],
   'chatbot/tests/knowledgemap/acceptance-bills-live.mjs': ['验收', '第二轮真实模型/生产API/MySQL/网页增改删查、歧义及天气runId；合成入站不发QQ', {auth: 1, model: 1, externalApi: 1, restart: 1, writesState: 1, writesRepo: 1}, 'header'],
   'chatbot/scripts/setup-paper-translation.sh': ['领域运维', '按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发', {auth: 1, externalApi: 1, writesState: 1}, 'header'],
   'chatbot/scripts/import-paper-credentials.mjs': ['领域运维', '显式导入指定 GPT/DeepSeek 凭据，原子合并到私密 0600 文件；不输出密钥', {auth: 1, writesState: 1}, 'header'],
+  'chatbot/scripts/memory-migrate.mjs': ['迁移工具', '文档25显式预览或迁移主人旧 MEMORY.md 到私密连续性 SQLite；--apply写私密备份与记忆状态，不调用模型/QQ/邮件', {auth: 1, writesState: 1}, 'header'],
   'chatbot/tests/papers/fixtures.mjs': ['库', '生成最小有效 PDF 测试字节，不读生产文件', {readonly: 1}, 'header'],
   'chatbot/tests/papers/credentials.test.mjs': ['离线', '厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据', {testDir: 1}, 'header'],
   'chatbot/tests/papers/documents.test.mjs': ['离线', 'PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界', {testDir: 1}, 'header'],
-  'chatbot/tests/papers/file-ingress.test.mjs': ['离线', 'QQ 附件类型/接收事实、纯失败附件直答、混合附件与真实当前文档ID', {testDir: 1}, 'header'],
+  'chatbot/tests/papers/file-ingress.test.mjs': ['离线', '附件类型/下载/校验事实、纯失败零模型分流、真实发送账本/未知回执、混合媒体与身份隔离', {testDir: 1}, 'header'],
   'chatbot/tests/papers/jobs.test.mjs': ['离线', '翻译high/显式MAX、所选产物贯通、任务幂等/取消/重启与独立投递状态', {testDir: 1}, 'header'],
   'chatbot/tests/papers/mail.test.mjs': ['离线', '受管附件快照、确认、完整性、大小限制及本地 TLS SMTP', {testDir: 1}, 'header'],
   'chatbot/tests/papers/mime-parse.py': ['库', '标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin', {readonly: 1}, 'header'],
@@ -63,12 +75,14 @@ const TABLE = {
   'chatbot/tests/papers/acceptance-download.mjs': ['验收', '真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录', {auth: 1, externalApi: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/papers/acceptance-api.py': ['验收', '合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发', {auth: 1, model: 1, externalApi: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/papers/acceptance-host.mjs': ['验收', '真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件', {auth: 1, model: 1, restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/tests/papers/acceptance-file-ingress.mjs': ['验收', '真实隔离OpenClaw/聊天模型、附件入站与双身份论文编排；合成下载/翻译/OneBot，无生产写入或真实外发', {auth: 1, model: 1, restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/papers/acceptance-worker.mjs': ['验收', '生产捕获源码、正文空闲/重试配置与可取消HTTP子进程在真实隔离Python检查，无模型/外发', {testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/papers/acceptance.mjs': ['验收', '真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认', {auth: 1, model: 1, externalApi: 1, qq: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/domain-adapters/registry.test.mjs': ['离线', '领域适配器注册/注销、启动选择、同步契约和失败拒绝', {readonly: 1}, 'header'],
   'chatbot/tests/domain-adapters/integration.test.mjs': ['离线', '真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退', {testDir: 1}, 'header'],
   'chatbot/tests/backend-boundaries/domain.test.mjs': ['离线', '领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚', {testDir: 1}, 'header'],
   'chatbot/tests/backend-boundaries/confirmation.test.mjs': ['离线', '确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合', {readonly: 1}, 'header'],
+  'chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs': ['离线', '真实OpenClaw服务管理器验证论文异步停止/中止/不重放、邮件注销/重启/失败清理；无生产重启或外发', {testDir: 1}, 'header'],
   'chatbot/scripts/import-knowledgemap-list.mjs': ['迁移工具', '默认预览旧列表导入；--apply写共享业务，--activate冻结旧项并启用runner切换标记', {auth: 1, externalApi: 1, writesState: 1}, 'header'],
   'chatbot/tests/knowledgemap/bridge.test.mjs': ['离线', '固定API客户端、可信请求、参数映射、共享播报与切换防旧写', {testDir: 1}, 'header'],
   'chatbot/tests/knowledgemap/http.test.mjs': ['离线', '真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产', {testDir: 1}, 'header'],
@@ -139,7 +153,7 @@ const TABLE = {
   'scripts/fusion/stack-summary.mjs': ['只读运维', '启停输出压缩显示', {readonly: 1}, 'header'],
   'scripts/fusion/verify-dependencies.mjs': ['只读运维', '依赖自持、无归档树逃逸、锁文件一致', {readonly: 1}, 'header'],
   'scripts/fusion/sync-config.mjs': ['只读运维', '默认只报告配置漂移；--apply 才写 openclaw.json', {readonly: 1, writesState: 1}, 'header'],
-  'scripts/fusion/sync-persona.mjs': ['只读运维', '默认只报告人格漂移；--apply 才写 workspace 四份文件', {readonly: 1, writesState: 1}, 'header'],
+  'scripts/fusion/sync-persona.mjs': ['只读运维', '默认只报告人格漂移；--apply 写各已登记身份的四份受管文件，不复制记忆/历史', {readonly: 1, writesState: 1}, 'header'],
   'scripts/fusion/evidence-index.mjs': ['只读运维', '生成本脚本与证据索引', {readonly: 1}, 'header'],
   'scripts/fusion/evidence-coverage.mjs': ['只读运维', '校验证据目录分类覆盖，未分类即非零退出', {readonly: 1}, 'header'],
   'scripts/fusion/log-query.mjs': ['只读运维', '跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询', {readonly: 1}, 'header'],
@@ -287,7 +301,12 @@ function boundaryOf(text) {
 }
 
 function evidence(text) {
-  return [...new Set([...text.matchAll(/docs\/verification\/[A-Za-z0-9_\-./\u4e00-\u9fff]*/g)].map((m) => m[0]))].sort();
+  const refs = [...text.matchAll(/docs\/verification\/[A-Za-z0-9_\-./\u4e00-\u9fff]*/g)].map((m) => m[0]);
+  return [...new Set(refs.map((raw) => {
+    let rel = raw.replace(/\.+$/, '');
+    if (rel.endsWith('/') && fs.existsSync(path.join(ROOT, rel, 'README.md'))) rel += 'README.md';
+    return rel;
+  }))].sort();
 }
 
 /**
