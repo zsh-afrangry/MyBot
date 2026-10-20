@@ -138,7 +138,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/configure-domains.mjs` | 迁移工具 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 启用主人绑定领域插件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-fulltext-research.mjs` | 迁移工具 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 研究会话、笔记工作区与来源缓存 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-interaction.mjs` | 迁移工具 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 复制表情目录并设定迁移/每日发送预算 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-persona-memory.mjs` | 迁移工具 | [25](../25_人格、记忆与会话连续性.md) | 只导入稳定的主人字段进私有记忆 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-production.mjs` | 迁移工具 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 关闭仅验收能力，保留历史；需先审阅活动任务 | 写运行状态 | 是 | header | `docs/verification/migration/33-production-config.json` |
 | `scripts/fusion/configure-projects.mjs` | 迁移工具 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 一次性首次引导：只在 id 不存在时追加登记并写运行 openclaw.json | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-research.mjs` | 迁移工具 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 配置检索 provider 与抓取路径 | 写运行状态 | 是 | header | — |

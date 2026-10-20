@@ -186,12 +186,6 @@
       ]
     },
     {
-      "path": "scripts/fusion/configure-persona-memory.mjs",
-      "documents": [
-        "docs/25_人格、记忆与会话连续性.md"
-      ]
-    },
-    {
       "path": "scripts/fusion/test-memory.mjs",
       "documents": [
         "docs/25_人格、记忆与会话连续性.md"

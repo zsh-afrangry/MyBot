@@ -199,7 +199,6 @@ const TABLE = {
   'scripts/fusion/configure-domains.mjs': ['迁移工具', '启用主人绑定领域插件', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/configure-fulltext-research.mjs': ['迁移工具', '研究会话、笔记工作区与来源缓存', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/configure-interaction.mjs': ['迁移工具', '复制表情目录并设定迁移/每日发送预算', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-persona-memory.mjs': ['迁移工具', '只导入稳定的主人字段进私有记忆', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/configure-production.mjs': ['迁移工具', '关闭仅验收能力，保留历史；需先审阅活动任务', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/configure-projects.mjs': ['迁移工具', '一次性首次引导：只在 id 不存在时追加登记并写运行 openclaw.json', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/configure-research.mjs': ['迁移工具', '配置检索 provider 与抓取路径', {auth: 1, writesState: 1}, 'header'],
