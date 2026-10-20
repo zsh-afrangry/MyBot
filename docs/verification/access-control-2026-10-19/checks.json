@@ -1,0 +1,58 @@
+{
+  "at": "2026-10-19T13:40:18.655239+00:00",
+  "source": {
+    "commit": "9c88003136216d082417290676027b01a40aab69",
+    "uncommittedTaskChanges": true,
+    "otherConcurrentWorkPresent": true,
+    "taskCommittedOrPushed": false
+  },
+  "boundary": {
+    "syntheticIdentitiesOnly": true,
+    "realExternalModelOrTranslationApi": false,
+    "realQqOrMailTestDelivery": false,
+    "productionChange": "owner-only compiled accessControl + Fusion service restart; no new identity or testIngress"
+  },
+  "regression": {
+    "node": 217,
+    "weather": 162,
+    "confirmationIngress": 15,
+    "total": 394,
+    "failed": 0,
+    "accessDomainSubset": 17,
+    "isolatedHost": 10
+  },
+  "commands": [
+    "node --test chatbot/tests/access-control/*.test.mjs chatbot/plugins/kurumi-qq/test/*.test.js chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-memory/test/*.test.js chatbot/plugins/kurumi-tasks/test/task.test.js chatbot/tests/papers/documents.test.mjs chatbot/tests/papers/jobs.test.mjs chatbot/tests/papers/mail.test.mjs chatbot/tests/knowledgemap/bills.test.mjs chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/reminder-list/plugin.test.mjs chatbot/tests/domain-adapters/integration.test.mjs chatbot/tests/backend-boundaries/domain.test.mjs scripts/fusion/test/log-query.test.mjs",
+    "npm --prefix chatbot/plugins/personal-weather run build",
+    "npm --prefix chatbot/plugins/personal-weather test",
+    "npm --prefix chatbot/plugins/personal-confirmation test",
+    "node chatbot/tests/access-control/acceptance-host.mjs --out <new-absolute-evidence-file>",
+    "node chatbot/scripts/access-control.mjs --check",
+    "node scripts/fusion/sync-config.mjs --selftest",
+    "node scripts/fusion/sync-config.mjs --diff",
+    "node scripts/fusion/sync-persona.mjs",
+    "node scripts/fusion/verify-dependencies.mjs",
+    "node scripts/fusion/health.mjs"
+  ],
+  "production": {
+    "subjects": 1,
+    "onlyOriginalOwner": true,
+    "revision": 1,
+    "testIngress": false
+  },
+  "pending": [
+    "User-specified second QQ real conversation/PDF translation/file delivery",
+    "Full quiesced backup/restore for this version",
+    "Owner-only business multiuser isolation, groups and GUI/QQ editing are outside first-phase scope"
+  ],
+  "staticChecks": {
+    "gitDiffCheck": "passed",
+    "indexWasNotStaged": true,
+    "verificationFilesClassified": 390,
+    "scriptsClassified": 175,
+    "boundaryDeclarationsConsistent": 44,
+    "changedDocumentsAudited": 12,
+    "localLinksChecked": 230,
+    "brokenLocalLinks": 0
+  }
+}

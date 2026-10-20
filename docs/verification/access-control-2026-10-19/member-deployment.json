@@ -1,0 +1,148 @@
+{
+  "preparedAt": "2026-10-19T13:53:59.469Z",
+  "authorization": {
+    "qq": "3311723223",
+    "kind": "user",
+    "role": "member",
+    "scope": "一般聊天与自身论文；不含邮件、个人业务、管理或群权限",
+    "source": "用户本轮明确提供账号并限定范围"
+  },
+  "before": {
+    "revision": 1,
+    "subjectCount": 1,
+    "activePaperJobs": [],
+    "testIngress": false,
+    "ownerPolicyHash": "5caa64ed87c36582d3a8a54686bca2cea39be6f1fd7c1dd85886a7ed64111947",
+    "mainAgentHash": "442f50cf747ac033202439685acb7f44808ebea7464dbabd2a59a7171f56968d",
+    "ownerPersonaHashes": {
+      "SOUL.md": "237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386",
+      "IDENTITY.md": "2874d9abb81dd2a46387c89f583a79ba246fd4528cf26811ef80d1c59d7b7a09",
+      "AGENTS.md": "f1f6826e1599b80d274b43b868cacc403e9111adef6fdfd1a7724646d1466dda",
+      "USER.md": "a24e7758c4d93ad27eef732d0ae22bd141810e371d1fd3790e040e948dd61183"
+    }
+  },
+  "preflight": {
+    "policyCheck": true,
+    "permissionRegression": {
+      "passed": 17,
+      "failed": 0,
+      "evidence": "member-node-tests.txt"
+    },
+    "expectedConfigChanges": [
+      "agents.entries.qq-user-3311723223",
+      "channels.kurumi-qq.accessControl.revision",
+      "channels.kurumi-qq.accessControl.subjects",
+      "bindings"
+    ],
+    "expectedNewPersonaFiles": 4
+  },
+  "realQQOrEmailTestSent": false,
+  "paidTranslationStartedByThisDeployment": false,
+  "pending": [
+    "用户使用新账号进行真实聊天、上传/翻译/回传与隔离验收"
+  ],
+  "git": {
+    "stagedOrCommittedOrPushedByThisDeployment": false
+  },
+  "deployedAt": "2026-10-19T13:54:39.791Z",
+  "after": {
+    "revision": 2,
+    "subjectCount": 2,
+    "member": {
+      "qq": "3311723223",
+      "role": "member",
+      "enabled": true,
+      "permissions": [
+        "chat.use",
+        "commands.basic",
+        "search.use",
+        "qq.reply",
+        "qq.file.reply",
+        "qq.notify",
+        "papers.import",
+        "papers.read",
+        "papers.translate",
+        "papers.cancel"
+      ],
+      "mailRecipients": [],
+      "agentId": "qq-user-3311723223",
+      "sessionKey": "agent:qq-user-3311723223:kurumi-qq:direct:3311723223",
+      "workspace": "/home/afrangry/.openclaw-fusion/users/3311723223/workspace",
+      "tools": [
+        "session_status",
+        "web_search",
+        "web_fetch",
+        "kurumi_document",
+        "kurumi_translate",
+        "kurumi_document_send"
+      ]
+    },
+    "ownerPolicyUnchanged": true,
+    "mainAgentUnchanged": true,
+    "ownerManagedPersonaUnchanged": true,
+    "memberOnlyHasFourManagedPersonaFiles": true,
+    "memberWorkspaceMode": "0700",
+    "memberPersonaModes": "0600",
+    "ownerOnlyPermissionRejections": 27,
+    "testIngress": false
+  },
+  "validation": {
+    "at": "2026-10-19T13:56:08.644Z",
+    "checks": [
+      {
+        "command": "node chatbot/scripts/access-control.mjs --check",
+        "exitCode": 0
+      },
+      {
+        "command": "node --test chatbot/tests/access-control/*.test.mjs",
+        "exitCode": 0,
+        "passed": 17,
+        "failed": 0
+      },
+      {
+        "command": "node scripts/fusion/sync-config.mjs",
+        "exitCode": 0,
+        "evidence": "member-config-after.txt"
+      },
+      {
+        "command": "node scripts/fusion/sync-persona.mjs",
+        "exitCode": 0,
+        "evidence": "member-persona-after.txt"
+      },
+      {
+        "command": "node scripts/fusion/verify-dependencies.mjs",
+        "exitCode": 0,
+        "evidence": "member-dependencies.txt"
+      },
+      {
+        "command": "node scripts/fusion/health.mjs",
+        "exitCode": 0,
+        "evidence": "member-health.json"
+      },
+      {
+        "command": "node scripts/fusion/evidence-coverage.mjs",
+        "exitCode": 0,
+        "files": 398
+      },
+      {
+        "command": "node scripts/fusion/evidence-index.mjs",
+        "exitCode": 0,
+        "scripts": 175,
+        "boundaryDeclarations": 44
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0
+      }
+    ],
+    "localLinkCheck": {
+      "documents": 5,
+      "links": 154,
+      "broken": 0
+    },
+    "stagingEmpty": true,
+    "gatewayHealthy": true,
+    "qqConnected": true,
+    "serviceActive": true
+  }
+}

@@ -1,0 +1,221 @@
+{
+  "preparedAt": "2026-10-19T14:05:32.335Z",
+  "authorization": {
+    "qq": "2752966052",
+    "kind": "user",
+    "role": "member",
+    "scope": "与3311723223相同：普通聊天、论文检索、PDF导入、翻译、取消任务和QQ文件回传",
+    "source": "用户本轮明确授权"
+  },
+  "userAcceptance": {
+    "qq": "3311723223",
+    "result": "用户反馈验收成功",
+    "source": "本轮用户直接报告",
+    "boundary": "未独立复盘完整测试步骤，不扩展为跨身份攻击/负载/全量恢复验收"
+  },
+  "before": {
+    "at": "2026-10-19T14:05:32.334Z",
+    "revision": 2,
+    "subjectCount": 2,
+    "subjects": [
+      {
+        "qq": "365999865",
+        "policyHash": "5caa64ed87c36582d3a8a54686bca2cea39be6f1fd7c1dd85886a7ed64111947",
+        "agentHash": "442f50cf747ac033202439685acb7f44808ebea7464dbabd2a59a7171f56968d"
+      },
+      {
+        "qq": "3311723223",
+        "policyHash": "507219df57c1ec65b68a1c28ee2d780a0a882ec34d9fd2bb472026f49ad10aba",
+        "agentHash": "cbf31b7c2a3603ff56b9066f68fd8cfb1ee5469d3f8159596b614da40fa9e6b0"
+      }
+    ],
+    "personaHashes": {
+      "365999865": {
+        "SOUL.md": "237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386",
+        "IDENTITY.md": "2874d9abb81dd2a46387c89f583a79ba246fd4528cf26811ef80d1c59d7b7a09",
+        "AGENTS.md": "f1f6826e1599b80d274b43b868cacc403e9111adef6fdfd1a7724646d1466dda",
+        "USER.md": "a24e7758c4d93ad27eef732d0ae22bd141810e371d1fd3790e040e948dd61183"
+      },
+      "3311723223": {
+        "SOUL.md": "237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386",
+        "IDENTITY.md": "2874d9abb81dd2a46387c89f583a79ba246fd4528cf26811ef80d1c59d7b7a09",
+        "AGENTS.md": "3bfd3d9f0c7e5565a3f009867dfb577c32eb1d9483d326b7b7c109ab9f8cfe52",
+        "USER.md": "e249c3ab227d8cffa1968e12a2b99ac07cd53dd00400787f02110592e8a0d4ca"
+      }
+    },
+    "activePaperJobs": [
+      {
+        "id": "job_8b890510d73a3d339edc3c29",
+        "status": "running",
+        "delivery": null
+      }
+    ],
+    "testIngress": false
+  },
+  "status": "deployed_pending_user_end_to_end_acceptance",
+  "expectedChanges": [
+    "agents.entries.qq-user-2752966052",
+    "channels.kurumi-qq.accessControl.revision",
+    "channels.kurumi-qq.accessControl.subjects",
+    "bindings"
+  ],
+  "realQQOrEmailTestSent": false,
+  "paidTranslationStartedByThisDeployment": false,
+  "git": {
+    "stagedOrCommittedOrPushedByThisDeployment": false
+  },
+  "pending": [
+    "2752966052真人聊天及论文往返由用户验证"
+  ],
+  "preflight": {
+    "policyCheck": true,
+    "permissionRegression": {
+      "passed": 17,
+      "failed": 0,
+      "evidence": "member-2752966052-node-tests.txt"
+    },
+    "reviewedConfigChanges": [
+      "agents.entries.qq-user-2752966052",
+      "channels.kurumi-qq.accessControl.revision",
+      "channels.kurumi-qq.accessControl.subjects",
+      "bindings"
+    ],
+    "memberPersonaPrepared": true,
+    "configApplyDeferredToPreserveActiveJob": true,
+    "actualSourcePolicyCheck": {
+      "revision": 3,
+      "permissionsIdenticalToExistingMember": true,
+      "sharedPermissionsAllowed": 10,
+      "ownerOnlyPermissionsRefused": 27,
+      "independentSession": true,
+      "sourceCompiledOnly": true
+    }
+  },
+  "operatorDecision": {
+    "at": "2026-10-19T14:17:26.417Z",
+    "request": "用户明确要求停止现有任务，优先新增账号",
+    "action": "停止Fusion以终止当前翻译，保留任务/原始PDF/用量/投递回执；同步配置后启动，不自动重放",
+    "activeJobsBeforeStop": [
+      {
+        "id": "job_8b890510d73a3d339edc3c29",
+        "status": "running",
+        "delivery": null
+      }
+    ]
+  },
+  "serviceStopped": {
+    "at": "2026-10-19T14:17:38.549Z",
+    "state": {
+      "ControlGroup": "",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "heldJob": {
+      "id": "job_8b890510d73a3d339edc3c29",
+      "status": "failed",
+      "error": "pdf_worker_failed",
+      "delivery": null
+    },
+    "automaticReplay": false
+  },
+  "deployedAt": "2026-10-19T14:17:59.291Z",
+  "after": {
+    "revision": 3,
+    "subjectCount": 3,
+    "member": {
+      "qq": "2752966052",
+      "role": "member",
+      "agentId": "qq-user-2752966052",
+      "sessionKey": "agent:qq-user-2752966052:kurumi-qq:direct:2752966052",
+      "workspace": "/home/afrangry/.openclaw-fusion/users/2752966052/workspace",
+      "permissions": [
+        "chat.use",
+        "commands.basic",
+        "search.use",
+        "qq.reply",
+        "qq.file.reply",
+        "qq.notify",
+        "papers.import",
+        "papers.read",
+        "papers.translate",
+        "papers.cancel"
+      ],
+      "mailRecipients": [],
+      "tools": [
+        "session_status",
+        "web_search",
+        "web_fetch",
+        "kurumi_document",
+        "kurumi_translate",
+        "kurumi_document_send"
+      ]
+    },
+    "samePermissionsAs3311723223": true,
+    "existingIdentityPoliciesAgentsAndManagedPersonaUnchanged": true,
+    "memberOnlyHasFourManagedPersonaFiles": true,
+    "memberWorkspaceMode": "0700",
+    "memberPersonaModes": "0600",
+    "ownerOnlyPermissionRejections": 27,
+    "testIngress": false,
+    "stoppedJob": {
+      "id": "job_8b890510d73a3d339edc3c29",
+      "status": "failed",
+      "error": "pdf_worker_failed",
+      "origin": "用户要求停下任务；停止服务时worker退出记为pdf_worker_failed，不作为独立渠道故障结论",
+      "automaticReplay": false
+    }
+  },
+  "validation": {
+    "at": "2026-10-19T14:19:44.210Z",
+    "permissionRegression": {
+      "passed": 17,
+      "failed": 0,
+      "evidence": "member-2752966052-node-tests.txt"
+    },
+    "selfChecks": [
+      {
+        "command": "node scripts/fusion/sync-config.mjs",
+        "exitCode": 0,
+        "evidence": "member-2752966052-config-after.txt"
+      },
+      {
+        "command": "node scripts/fusion/sync-persona.mjs",
+        "exitCode": 0,
+        "evidence": "member-2752966052-selfchecks.txt",
+        "managedPersonaFiles": 12
+      },
+      {
+        "command": "node scripts/fusion/verify-dependencies.mjs",
+        "exitCode": 0,
+        "evidence": "member-2752966052-selfchecks.txt"
+      },
+      {
+        "command": "node scripts/fusion/health.mjs",
+        "exitCode": 0,
+        "evidence": "member-2752966052-health.json"
+      }
+    ],
+    "gatewayHealthy": true,
+    "qqConnected": true,
+    "serviceActive": true,
+    "gitDiffCheckPassed": true,
+    "stagingEmpty": true,
+    "staticChecks": {
+      "evidenceCoverage": {
+        "passed": true,
+        "files": 404
+      },
+      "evidenceIndex": {
+        "passed": true,
+        "scripts": 175,
+        "boundaryDeclarations": 44
+      },
+      "localLinks": {
+        "documents": 5,
+        "links": 162,
+        "broken": 0
+      },
+      "gitDiffCheckPassed": true
+    }
+  }
+}

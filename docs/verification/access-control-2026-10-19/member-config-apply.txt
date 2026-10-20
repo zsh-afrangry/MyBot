@@ -1,0 +1,19 @@
+  MISSING  agents.entries.qq-user-3311723223
+            repo    : {"workspace":"/home/afrangry/.openclaw-fusion/users/3311723223/workspace","model":{"primary":"deepseek/deepseek-flash"},"tools":{"profile":"full","allow":["session_status","web_search","web_fetch","kurumi_document","kurumi_translate","kurumi_document_send"],"deny":["read","write","edit","apply_patch","exec","process","message","sessions_spawn","sessions_list","sessions_history","automations","kurumi_memory"]}}
+  DIFFERS  channels.kurumi-qq.accessControl.revision
+            repo    : 2
+            runtime : 1
+  DIFFERS  channels.kurumi-qq.accessControl.subjects
+            repo    : [{"qq":"365999865","kind":"user","role":"owner","enabled":true,"permissions":{"chat.use":true,"commands.basic":true,"commands.admin":true,"access.manage":true,"search.use":true,"qq.reply":true,"qq.file.reply":true,"qq.notify":true,"papers.import":true,"papers.read":true,"papers.translate":true,"papers.cancel":true,"stickers.use":true,"mail.status":true,"mail.draft":true,"mail.send":true,"mail.history":true,"weather.read":true,"profile.read":true,"profile.manage":true,"planning.read":true,"planning.manage":true,"reminders.read":true,"reminders.manage":true,"reminder-list.read":true,"reminder-list.manage":true,"reminder-list.schedule":true,"memory.read":true,"memory.manage":true,"bills.read":true,"bills.manage":true,"tasks.code":true,"tasks.research":true,"tasks.read":true,"automations.read":true,"automations.manage":true,"sessions.read":true},"mailRecipients":["365999865@qq.com"],"note":"原主人；保留现有能力。新增QQ由操作者另行登记。"},{"qq":"3311723223","kind":"user","role":"member","enabled":true,"permissions":{"chat.use":true,"commands.basic":true,"search.use":true,"qq.reply":true,"qq.file.reply":true,"qq.notify":true,"papers.import":true,"papers.read":true,"papers.translate":true,"papers.cancel":true},"mailRecipients":[],"note":"用户明确授权：仅一般聊天与自身论文检索、导入、翻译、取消及QQ文件回传；独立成员，不共享主人数据。"}]
+            runtime : [{"qq":"365999865","kind":"user","role":"owner","enabled":true,"permissions":{"chat.use":true,"commands.basic":true,"commands.admin":true,"access.manage":true,"search.use":true,"qq.reply":true,"qq.file.reply":true,"qq.notify":true,"papers.import":true,"papers.read":true,"papers.translate":true,"papers.cancel":true,"stickers.use":true,"mail.status":true,"mail.draft":true,"mail.send":true,"mail.history":true,"weather.read":true,"profile.read":true,"profile.manage":true,"planning.read":true,"planning.manage":true,"reminders.read":true,"reminders.manage":true,"reminder-list.read":true,"reminder-list.manage":true,"reminder-list.schedule":true,"memory.read":true,"memory.manage":true,"bills.read":true,"bills.manage":true,"tasks.code":true,"tasks.research":true,"tasks.read":true,"automations.read":true,"automations.manage":true,"sessions.read":true},"mailRecipients":["365999865@qq.com"],"note":"原主人；保留现有能力。新增QQ由操作者另行登记。"}]
+  DIFFERS  bindings
+            repo    : [{"agentId":"qq-user-3311723223","match":{"channel":"kurumi-qq","accountId":"default","peer":{"kind":"direct","id":"3311723223"}}},{"agentId":"main","match":{"channel":"kurumi-qq","accountId":"default"}}]
+            runtime : [{"agentId":"main","match":{"channel":"kurumi-qq","accountId":"default"}}]
+
+  repo-managed top-level keys : agents, bindings, channels, commands, discovery, gateway, logging, models, plugins, secrets, session, skills, tools
+  host-maintained keys kept   : (none)
+applied: 4 changed, 0 removed
+  backup          : /home/afrangry/.openclaw-fusion/openclaw.json.bak.2026-10-19T13-53-59-610Z
+  managed keys    : 13 replaced from repo
+  host-maintained : 0 key(s) kept as-is
+  state untouched : state/, channel/, agents/, workspace/, media/ were not opened

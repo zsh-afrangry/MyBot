@@ -1,0 +1,338 @@
+{
+  "at": "2026-10-19T13:29:51.199Z",
+  "boundary": "Real isolated OpenClaw; local deterministic model and OneBot, fixture translator. No external API, real QQ/mail or production write.",
+  "cases": [
+    {
+      "label": "member actual trusted sender and private catalog",
+      "passed": true
+    },
+    {
+      "label": "owner compatibility",
+      "passed": true
+    },
+    {
+      "label": "mandatory host policy denies unmapped exposed tool",
+      "passed": true
+    },
+    {
+      "label": "mandatory host policy denies revoked import before HTTP",
+      "passed": true
+    },
+    {
+      "label": "member background PDF bound to original QQ",
+      "passed": true
+    },
+    {
+      "label": "other subject cannot inspect member job",
+      "passed": true
+    },
+    {
+      "label": "member /new uses own native session and leaves files/jobs",
+      "passed": true
+    },
+    {
+      "label": "member prompts contain no owner memory and native sensitive tools are absent",
+      "passed": true
+    },
+    {
+      "label": "owner task mints a trusted background lane and preserves configured tool access",
+      "passed": true
+    },
+    {
+      "label": "trusted host policy audit proves calls reached enforceable boundary",
+      "passed": true
+    }
+  ],
+  "lastResponse": {
+    "ok": true,
+    "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+    "stagedImages": 0,
+    "quoteLoaded": false,
+    "captured": [
+      {
+        "text": "ACL_RESULT {\n  \"tool\": {\n    \"id\": \"openclaw:kurumi-tasks:kurumi_task\",\n    \"name\": \"kurumi_task\",\n    \"source\": \"openclaw\"\n  },\n  \"result\": {\n    \"content\": [\n      {\n        \"type\": \"text\",\n        \"text\": \"{\\\"runId\\\":\\\"f12ff677f2666fb9c5288da7\\\",\\\"sessionKey\\\":\\\"agent:researcher:kurumi-task-f12ff677f2666fb9c5288da7\\\",\\\"agentId\\\":\\\"researcher\\\",\\\"status\\\":\\\"accepted\\\",\\\"acceptedAt\\\":1792416607696}\"\n      }\n    ]\n  }\n}"
+      }
+    ]
+  },
+  "passed": true,
+  "modelChecks": [
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": false,
+      "ownerMemory": true,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": false,
+      "ownerMemory": true,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": false,
+      "ownerMemory": true,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": true,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": false,
+      "ownerMemory": true,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": false,
+      "ownerMemory": true,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": false,
+      "ownerMemory": true,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "user",
+      "member": false,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "tool",
+      "member": false,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "lastRole": "tool",
+      "member": false,
+      "ownerMemory": false,
+      "tools": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    }
+  ],
+  "uploads": [
+    {
+      "qq": "800001",
+      "name": "member-own-dual.pdf"
+    }
+  ],
+  "modelRequests": 27,
+  "childStopped": true
+}

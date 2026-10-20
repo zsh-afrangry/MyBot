@@ -1,0 +1,25 @@
+✔ Catalog namespaces prevent list/get/file disclosure including identical bytes with independent names (82.609333ms)
+✔ Actual file URL lookup uses sender identity, never the owner, and respects import denial (7.715223ms)
+✔ Single serial queue, requester binding, own list/status/cancel and self-only automatic upload (112.554998ms)
+✔ Queued revocation does not start paid worker and never redirects notices/files to owner (12.856731ms)
+✔ Running revocation aborts injected worker within bounded poll; no following send (508.245047ms)
+✔ Revoking file permission during translation keeps successful artifact but blocks upload without owner fallback (45.256077ms)
+✔ Legacy unbound owner job remains owner-only and replay preserves its old invocation key/hash (4.083877ms)
+✔ Transport recipient namespaces preserve owner legacy keys, fence media and refuse revoked delivery (90.701397ms)
+✔ Ingress routes real sender, rejects admin slash/group/wrong route and retains raw text (72.737632ms)
+✔ Persona generation shares character only; member does not inherit owner USER/MEMORY or arbitrary symlink paths (4.914516ms)
+✔ Authorization audit joins by real run and shows decision/reason without tool parameters (19.64188ms)
+✔ Strict version, unknown permission, duplicate, owner/group and unsupported member grants fail closed (4.185046ms)
+✔ A role is not an implicit permission; disabled, expired and unknown identities are refused (1.839447ms)
+✔ Trusted sender, owner bit, agent, account, session and target must agree; text cannot elevate (0.62816ms)
+✔ Every current main tool is mapped; new tools and dangerous native/member operations are denied (5.177074ms)
+✔ Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs (2.509515ms)
+✔ Background lanes are limited to configured owner tasks and read-only weather; no absent-requester main bypass (2.000196ms)
+ℹ tests 17
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1058.445182

@@ -1,0 +1,8 @@
+  MISSING  channels.kurumi-qq.accessControl
+            repo    : {"version":1,"revision":1,"subjects":[{"qq":"365999865","kind":"user","role":"owner","enabled":true,"permissions":{"chat.use":true,"commands.basic":true,"commands.admin":true,"access.manage":true,"search.use":true,"qq.reply":true,"qq.file.reply":true,"qq.notify":true,"papers.import":true,"papers.read":true,"papers.translate":true,"papers.cancel":true,"stickers.use":true,"mail.status":true,"mail.draft":true,"mail.send":true,"mail.history":true,"weather.read":true,"profile.read":true,"profile.manage":true,"planning.read":true,"planning.manage":true,"reminders.read":true,"reminders.manage":true,"reminder-list.read":true,"reminder-list.manage":true,"reminder-list.schedule":true,"memory.read":true,"memory.manage":true,"bills.read":true,"bills.manage":true,"tasks.code":true,"tasks.research":true,"tasks.read":true,"automations.read":true,"automations.manage":true,"sessions.read":true},"mailRecipients":["365999865@qq.com"],"note":"原主人；保留现有能力。新增QQ由操作者另行登记。"}]}
+
+  repo-managed top-level keys : agents, bindings, channels, commands, discovery, gateway, logging, models, plugins, secrets, session, skills, tools
+  host-maintained keys kept   : (none)
+
+config DRIFT: 1 changed, 0 deleted-in-repo key(s)
+Run with --diff to inspect, or --apply to write the repo intent into the runtime.

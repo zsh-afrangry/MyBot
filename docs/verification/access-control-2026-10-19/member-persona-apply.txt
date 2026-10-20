@@ -1,0 +1,6 @@
+DIFFERS users/3311723223/workspace/SOUL.md
+DIFFERS users/3311723223/workspace/IDENTITY.md
+DIFFERS users/3311723223/workspace/AGENTS.md
+DIFFERS users/3311723223/workspace/USER.md
+role card: roles/小鲸鱼.md
+persona applied: 4 files; memory/history/model/credentials untouched
