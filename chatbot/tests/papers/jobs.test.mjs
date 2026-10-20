@@ -169,3 +169,20 @@ test('Registered tools reject non-owner, keep generic filesystem tools absent',a
   assert.deepEqual(tools.map(t=>t.create({}).name),['kurumi_document','kurumi_translate','kurumi_document_send']);
   for(const tool of tools)await assert.rejects(tool.create({getRuntimeConfig:()=>({channels:{'kurumi-qq':{ownerId:'365999865'}}}),senderIsOwner:false}).execute('id',{action:'list'}),/untrusted_identity_context/);
 });
+test('Composition entry authorizes the job binding, then delivers only through the QQ public interface',async()=>{
+  const sent=[],config=withAccess({});let deps,getter;
+  createPaperPlugin({serviceFactory:(c,d)=>{deps=d;return {start(){},stop(){}};},deliveryFactory:cfg=>{getter=cfg;return {
+    sendDocument:async request=>{sent.push(['file',request]);return {status:'platform_accepted'};},
+    sendText:async request=>{sent.push(['text',request]);},
+  };}}).register({pluginConfig:{root:'/unused'},config,registerTool(){},registerService(){}});
+  assert.equal(getter(),config);
+  const owner=deps.ownerBinding,signal=new AbortController().signal;
+  assert.deepEqual(await deps.sendFile('doc-1','job-1:dual',signal,owner),{status:'platform_accepted'});
+  await deps.notify('翻译完成','job-1',owner);
+  assert.deepEqual(sent,[['file',{to:owner.to,documentId:'doc-1',key:'job-1:dual',signal}],['text',{to:owner.to,text:'翻译完成',key:'paper-notice:job-1'}]]);
+  for(const forged of [{...owner,accountId:'other'},{...owner,to:'user:1'},{...owner,sessionKey:'agent:main:other'}]){
+    assert.throws(()=>deps.sendFile('doc-1','x',signal,forged),/untrusted_job_binding/);
+    assert.throws(()=>deps.notify('x','x',forged),/untrusted_job_binding/);
+  }
+  assert.equal(sent.length,2);
+});

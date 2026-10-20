@@ -1,16 +1,16 @@
 // Identity-scoped PDF tools. Fixed domain operations; no generic filesystem or command tool. docs/22.
 import {assertToolAccess,activeSubject,primaryOwner,agentFor,sessionFor} from '../../packages/access-control/index.js';
 import {Documents,documentRoot} from '../../packages/documents/index.js';
-import {sendDocument} from '../kurumi-qq/src/files.js';
-import {sendPayload} from '../kurumi-qq/src/transport.js';
+import {createQqDelivery} from '../kurumi-qq/delivery.js';
 import {PaperService} from './service.js';
 import {createTraceSink, correlationFrom} from '../../packages/observability/index.js';
 
 const json = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
-export function createPaperPlugin({serviceFactory = (config, deps) => new PaperService(config, deps)} = {}) {
+export function createPaperPlugin({serviceFactory = (config, deps) => new PaperService(config, deps), deliveryFactory = createQqDelivery} = {}) {
   return {id: 'kurumi-papers', name: 'Kurumi paper translation', register(api) {
     const config = api.pluginConfig;
     const cfg = () => api.config;
+    const delivery = deliveryFactory(cfg);
     const owner=primaryOwner(cfg());
     const binding=actor=>({subjectId:actor.id,accountId:'default',to:'user:'+actor.id,sessionKey:actor.sessionKey,agentId:actor.agentId});
     const ownerBinding={subjectId:owner.qq,accountId:'default',to:'user:'+owner.qq,sessionKey:sessionFor(owner),agentId:'main'};
@@ -21,8 +21,8 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
     };
     const service = serviceFactory(config, {
       ownerBinding,authorize,documentsFor:id=>new Documents(documentRoot(cfg(),id)),
-      sendFile: (id,key,signal,request) => {authorize(request,'qq.file.reply');return sendDocument({cfg:cfg(),to:request.to,documentId:id,key,signal});},
-      notify: (text,key,request) => {authorize(request,'qq.notify');return sendPayload({cfg:cfg(),to:request.to,text,key:'paper-notice:'+key});},
+      sendFile: (id,key,signal,request) => {authorize(request,'qq.file.reply');return delivery.sendDocument({to:request.to,documentId:id,key,signal});},
+      notify: (text,key,request) => {authorize(request,'qq.notify');return delivery.sendText({to:request.to,text,key:'paper-notice:'+key});},
       trace: event => createTraceSink(config.root + '/events.jsonl').emit({source: 'papers', ...event}),
     });
     api.registerService({

@@ -79,6 +79,35 @@ test('shared packages have no runtime imports into plugins or deployment scripts
   }
 });
 
+test('plugins reach other plugins only through public entries, never their src internals', () => {
+  const root = fileURLToPath(new URL('../../plugins/', import.meta.url));
+  // Public outward interfaces another plugin's composition entry may wire (docs/21).
+  const publicEntries = new Set([path.join(root, 'kurumi-qq', 'delivery.js')]);
+  const files = [];
+  function visit(dir) {
+    for (const e of fs.readdirSync(dir, {withFileTypes: true})) {
+      if (['dist', 'node_modules', 'vendor', 'test', 'python'].includes(e.name)) continue;
+      const file = path.join(dir, e.name);
+      if (e.isDirectory()) visit(file);
+      else if (/\.(?:js|mjs|ts)$/.test(e.name) && !/\.test\./.test(e.name)) files.push(file);
+    }
+  }
+  visit(root);
+  let crossings = 0;
+  for (const file of files) {
+    const own = path.relative(root, file).split(path.sep)[0];
+    const source = fs.readFileSync(file, 'utf8');
+    for (const [, specifier] of source.matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)['"]([^'"]+)['"]/g)) {
+      if (!specifier.startsWith('.')) continue;
+      const resolved = path.resolve(path.dirname(file), specifier);
+      if (!resolved.startsWith(root) || path.relative(root, resolved).split(path.sep)[0] === own) continue;
+      crossings++;
+      assert(publicEntries.has(resolved), `${file}: ${specifier}`);
+    }
+  }
+  assert(crossings > 0, 'scan must see the papers -> QQ delivery wiring');
+});
+
 test('four independently discovered entries register exactly their manifest tools', () => {
   const all = [];
   for (const [kind, create] of Object.entries(entries)) {

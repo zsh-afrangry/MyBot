@@ -125,6 +125,7 @@ GPT 批次使用原数组协议；DeepSeek 批次显式传原生 `text.format=js
 | `chatbot/plugins/kurumi-papers/{index,profiles,service,runner}.js` | 工具、配置解析、任务与固定子进程 |
 | `chatbot/plugins/kurumi-papers/python/{engine,responses,http_worker}.py`、`python/profiles.json` | 排版适配、批次验证/有界恢复、可取消的一次性HTTP与 Node/Python 共用的固定厂商注册表 |
 | `chatbot/plugins/kurumi-papers/python/requirements.lock.txt` | 固定 Python 依赖；bitstring 固定 4.3.1 |
+| `chatbot/plugins/kurumi-qq/delivery.js` | QQ对外投递入口；论文插件组合入口先校验任务绑定，再经它发PDF和完成通知，不直接导入QQ内部文件 |
 | `chatbot/plugins/kurumi-qq/src/{attachments,inbound,files,transport}.js` | 逐项附件事实、纯失败分流、授权身份PDF接收与原OneBot文件投递 |
 | `chatbot/plugins/kurumi-mail/` | 受管附件快照、内容绑定、原确认/SMTP；契约见文档 20 |
 | `/home/afrangry/.openclaw-fusion/documents/` | 生产受管记录/files/jobs/work/cache/events.jsonl；不进 Git |
