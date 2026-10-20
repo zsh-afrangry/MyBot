@@ -1,6 +1,13 @@
 # 论文 PDF 翻译与文件投递
 
-状态：**非PDF附件入口已修复并部署；100秒空闲切换已部署，新成员冷启动与渠道冷却优化待开发。** 先前可靠性修复已有 GPT/high 的23页和19页各一次提交整篇成功、本人QQ收件及“没有错位、翻译较准确”的反馈；不替代逐字/逐公式校对或长期性能保证。日常默认 high、30分钟、单篇四并发，多篇逐篇投递；六并发仅单篇对比，Grok 不在需求范围。更新于 2026-10-21（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
+状态：**非PDF附件入口修复与100秒空闲切换已部署；新成员冷启动与渠道冷却优化待开发。** 现行默认与限制见下文，验收结论见[文档16](16_验收与测试总表.md#分领域验收摘要)。更新于 2026-10-21（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
+
+## 术语
+
+- **014 / 030 / 040**：三个 naiccc GPT 凭据的内部代号，取自凭据ID `OPENAI_API_KEY1_014`、`OPENAI_API_KEY2_030`、`OPENAI_API_KEY3_040` 的后缀，见 [profiles.json](../chatbot/plugins/kurumi-papers/python/profiles.json)。只用于区分凭据和降级顺序，不代表模型或价格。
+- **high / MAX**：推理强度（effort）档位。默认 high；MAX 即 `effort=max`，只在用户明确指定时使用。
+- **dual / mono / both**：产物类型。dual 是原文与译文对照的双语 PDF（默认），mono 是纯译文，both 两份都发。
+- **QPS**：每秒最多启动的翻译API请求数（配置项 `apiQps`）；“4并发/QPS1”指同时最多4个在途请求、每秒最多新开1个。
 
 ## 当前实现与未完成方向
 
@@ -9,13 +16,13 @@
 | 已完成迭代 | 结果与证据边界 |
 | --- | --- |
 | 原始工具与样稿 | 受管PDF、固定CLI、QQ/邮件附件；本人确认QQ样稿及修复邮件正文/附件可读，见[原报告](verification/paper-translation-2026-10-17/README.md)及[observations](verification/paper-translation-2026-10-17/observations.json) |
-| GPT三渠道与DeepSeek | 014/030/040短句、同厂商有界切换与官方Responses接入；DeepSeek low串行105请求/136595 tokens/458.441秒，修复结束回调后零新请求缓存生成。GPT串行失败保留，见[渠道报告](verification/paper-translation-2026-10-17/channel-upgrade/README.md)；协议初探单列[paper-api](verification/paper-api-2026-10-17/README.md) |
+| GPT三渠道与DeepSeek | 014/030/040短句、同厂商有界切换与官方Responses接入；DeepSeek low串行整篇通过（请求数、tokens和耗时见报告），修复结束回调后零新请求缓存生成。GPT串行失败保留，见[渠道报告](verification/paper-translation-2026-10-17/channel-upgrade/README.md)；协议初探单列[paper-api](verification/paper-api-2026-10-17/README.md) |
 | 单篇四并发 | GPT/MAX复用旧缓存完整16页；DeepSeek首轮标记失败、一次显式缓存复验生成16页。无本轮外发，不是严格冷缓存A/B，见[四并发](verification/paper-translation-2026-10-17/concurrency-four/README.md) |
 | 默认及双语契约 | 历史MAX两次生产失败与预算上调回执保留；现默认high、30分钟，dual选择贯通登记/发送。旧600秒是单请求总期限，不证明持续生成/无思考，见[MAX历史](verification/paper-translation-2026-10-17/deepseek-max-default/README.md)与[high/dual修复](verification/paper-translation-2026-10-17/high-dual-fix/README.md) |
-| 批次恢复与整篇 | GPT/high冷译文缓存23页第4轮成功1548.803秒、209请求/171035已报告tokens/7未知；19页首轮成功1258.571秒、160请求/121713 tokens/5未知。内部有界恢复、完整dual、抽样页图及本人QQ收件/“没有错位、翻译较准确”反馈通过，原三轮失败不改写，见[可靠性报告](verification/paper-translation-2026-10-17/batch-recovery/README.md) |
+| 批次恢复与整篇 | GPT/high冷译文缓存23页第4轮成功，19页首轮成功；耗时、请求数和tokens见报告。内部有界恢复、完整dual、抽样页图及本人QQ收件/“没有错位、翻译较准确”反馈通过，原三轮失败不改写，见[可靠性报告](verification/paper-translation-2026-10-17/batch-recovery/README.md) |
 | 六并发对比 | 只做单篇隔离对比，不改变日常4并发/QPS1；有缓存/渠道波动与尾请求等待边界，见[六并发](verification/paper-translation-2026-10-17/concurrency-six/README.md) |
-| 100秒有效正文空闲 | 独立于600秒请求总期限；只有非空白正文重置、先取消再有界切换；110项阶段回归及部署通过，真人QQ全流程待复验，见[空闲期限](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md) |
-| 附件入口 | 准确类型/状态与纯失败确定性分流，191项Node及13场景真实隔离模型通过，23:48部署；翻译/OneBot模拟。原MD事件是旧稿误重发、无新翻译，见[调查](verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md)与[修复](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。并行人格同步的初次非零回执保留，后续对齐归文档25 |
+| 100秒有效正文空闲 | 独立于600秒请求总期限；只有非空白正文重置、先取消再有界切换；阶段回归及部署通过，真人QQ全流程待复验，见[空闲期限](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md) |
+| 附件入口 | 准确类型/状态与纯失败确定性分流，Node回归及真实隔离模型场景通过，23:48部署；翻译/OneBot模拟。原MD事件是旧稿误重发、无新翻译，见[调查](verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md)与[修复](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。并行人格同步的初次非零回执保留，后续对齐归文档25 |
 | 生命周期/下载 | 显式stop等待清理、不重放；下载/阅读分离、生产受控加载见[生命周期](verification/plugin-lifecycle-2026-10-19/README.md)及[结构整理](verification/capability-decoupling-2026-10-20/README.md) |
 
 完整任务ID、产物hash、缓存来源、故障/修复与逐次回执由上述报告维护；各组有重叠，不累计成总通过数。样稿/抽样可读不代表全文逐字、逐公式校对或长期成功率保证。
@@ -151,7 +158,7 @@ python3 chatbot/tests/papers/reliability_test.py
 node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js scripts/fusion/test/log-query.test.mjs
 ```
 
-附件修复轮Node相关回归**191/191**（含附件专项26项），见[本轮证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。涵盖论文、QQ、统一权限、邮件和统一查询；未改Python翻译器，未因附件修复重跑付费翻译。实现提交`5fe6f8a`在插件拆分后的基线`8937cae`上另做了独立离线复验，见[拆分后复验](verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md)。前一轮Node36、Responses20、并发11、安装引擎15、可靠性28合计**110/110**的时点回执保留于[正文空闲超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)，不重复累计或冒称本轮重跑。离线通过不替代实际论文质量、真人入站或邮箱到信。
+附件修复轮Node相关回归（含附件专项）全部通过，数量见[本轮证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。涵盖论文、QQ、统一权限、邮件和统一查询；未改Python翻译器，未因附件修复重跑付费翻译。实现提交`5fe6f8a`在插件拆分后的基线`8937cae`上另做了独立离线复验，见[拆分后复验](verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md)。前一轮Node、Responses、并发、安装引擎、可靠性各组的时点回执保留于[正文空闲超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)，不重复累计或冒称本轮重跑。离线通过不替代实际论文质量、真人入站或邮箱到信。
 
 明确授权的真实验收脚本（不要混进离线批量命令）：
 

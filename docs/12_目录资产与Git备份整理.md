@@ -32,7 +32,7 @@
 | KnowledgeMap 主仓库 | `/home/afrangry/repository`，`master`，第二轮实现`1efec0e`；当前HEAD/领先数从Git读取，原6份P15并行改动保留未提交。桥接只纳入共享Bills.vue两处版本传参及本轮todolist状态，未提交视觉实现 |
 | Fusion 后台副本 | `/home/afrangry/.openclaw-fusion/projects/fusion`，分支 `kurumi/main-sync-2026-10-10`，HEAD=`a4e7487`，干净、无 remote；最后内容同步基线为 `2c234af`/`0ada63a`，尚未追平 Fusion 当前主仓库 |
 | 运行服务 | `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 均 active/enabled；`openclaw-gateway.service` 与 `qq-bridge.service` inactive/masked；用户级 `dsh-web.service` 当前不存在，本复核未改动系统级单元 |
-| 备份资料 | 第一轮基线/配对恢复资料继续保留；第二轮新增`knowledgemap-bills-round2-2026-10-17-code`及`...-mysql`，代码668+221文件逐项恢复、MySQL1账单/19事项/37标签完整还原并通过6组。不是同一时刻跨系统停写快照，精确路径与范围见文档23 |
+| 备份资料 | 第一轮基线/配对恢复资料继续保留；第二轮新增`knowledgemap-bills-round2-2026-10-17-code`及`...-mysql`，代码文件逐项恢复、MySQL完整还原并通过恢复用例（数量见[第二轮证据](verification/knowledgemap-bills-round2-2026-10-17/README.md)）。不是同一时刻跨系统停写快照，精确路径与范围见文档23 |
 
 本次业务变更、受管配置、迁移SQL与收尾文档分别在两仓库提交；未改文档22业务。原6份并行文件中的不相交4份字节不变，共享文件仅按本任务差异入index。后台副本的追平与合入留到下一次后台代码任务开始前处理。
 
@@ -45,7 +45,7 @@
 - `legacy-archive-state-2026-10-05`：旧系统**归档现状快照**，包含忽略文件、依赖和符号链接；不是迁移前时间点的重建。
 - `legacy-baselines-2026-10-05`：保留下来的历史材料，包括恢复所需固定 SDK 包，不能整目录视为冗余。
 - `2026-10-05-pre-consolidation`：整理前的备份与远端推送资料，按其 README 解释范围。
-- `2026-10-05-15-56-20-FINAL-quiesced`：历史停写检查点，其原 20/20 是材料、目录和数据库检查，不代表当时已经隔离启动。
+- `2026-10-05-15-56-20-FINAL-quiesced`：历史停写检查点，其原检查是材料、目录和数据库检查，不代表当时已经隔离启动。
 
 `/home/afrangry/kurumi-baselines` 已删除。旧迁移前全量包的忽略文件历史内容没有被逐项证明等价覆盖；当前归档快照无法补回那个历史时点。不得宣称已经重新获得迁移前基线。
 

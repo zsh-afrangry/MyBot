@@ -1,10 +1,10 @@
 # KnowledgeMap 业务能力桥接
 
-状态：**第一、第二轮均已验收并部署**。日期：2026-10-17。本文负责跨项目桥接、接口、迁移、配对恢复和记账规则；提醒列表/播报的用户规则唯一归[文档19](19_提醒列表与定时汇总.md)。阅读入口：[README.md](README.md)。
+状态：**第一、第二轮已部署；共享默认城市待后续数据库整合。** 验收结论见[文档16](16_验收与测试总表.md#分领域验收摘要)。更新于2026-10-21。本文负责跨项目桥接、接口、迁移、配对恢复和记账规则；提醒列表/播报的用户规则唯一归[文档19](19_提醒列表与定时汇总.md)。阅读入口：[README.md](README.md)。
 
 用户已于 2026-10-17 确认 Q01–Q04，并要求跨两个 Git 仓库做好版本隔离与今晚基线备份。第一轮完成天气、待做及记账新增/查询/月汇总；账单修改/删除属于第二轮，共享默认城市属于后续数据库整合迭代。文档 22 的论文/PDF/文件投递开发不属于本任务。
 
-**当前阶段：两轮已闭环。** 14项存量及播报已切换，账单支持增删改查/月汇总和真实runId关联。各层结果见第8/10节；共享默认城市仍待后续整合，长期真人体验不由单次冒烟推断。
+14项存量及播报已切换到共享数据，账单支持增删改查/月汇总和真实runId关联；两轮实现与证据分别见第8/10节。
 
 ## 1. 需求与交付范围
 
@@ -34,6 +34,11 @@
 遵循用户引用的 [tp2.txt](tp2.txt) 工作习惯：本文保留需求、当前状态、已定判断与理由、产物路径、测试结果、阻塞和必要纠错；不累积互相矛盾的旧计划。关键业务选择等待用户决定，独立方向可在获得继续开发指令后推进。
 
 Fusion 的任务记录集中在本文；KnowledgeMap 的执行状态仍以其根目录 `/home/afrangry/repository/todolist.txt` 的稳定任务 ID 为准。业务API/测试契约见该库 `docs/18_助手业务接口与共享数据.md`，本文件只引用，不复制整套进度清单。
+
+### 术语
+
+- **runner**：原生Cron按固定payload启动的汇总程序，直接读业务API，不调用模型（定义见[文档21](21_后端职责分层与代码整理.md#术语)）。
+- **slot**：一次计划播报，键为“日期 + 设定时刻（HH:mm）”。同一slot只生成一次播报，重复触发不再发送。
 
 ## 2. 接口与运行边界
 
@@ -146,13 +151,13 @@ flowchart LR
 
 - **隔离开发**：网站新增专用认证 `/api/assistant/`，复用业务服务与同一 Base/Session，具备事务幂等和版本冲突；日期可空、备注独立保存，网页入口同样提交版本。独立 loopback `3086` 服务避免日常助手依赖开发服务器。
 - **Fusion**：`chatbot/packages/knowledgemap-client/` 固定地址异步客户端；`kurumi-knowledgemap` 提供记账工具；原列表插件显式异步共享模式，SQLite仅保留设置、请求与投递账本；天气适配保留原有解析与高级能力。通用同步领域注册表不变。
-- **隔离结果**：业务API30/30、桥接23/23、本机HTTP双入口1组、恢复回归11/11（Node合计35/35）、网页6项通过；网站与天气TS构建通过，天气插件162/162；既有日历114/114、账单13/13、仪表盘55/55、天气24/24、列表/日志Node54/54通过。真实模型6/6、隔离OpenClaw宿主6/6（含实际/new及修改时刻生成2个共享Cron）；本组不访问生产库或外发QQ。
-- **数据恢复资料**：变更前基线 `private-state/` 已保存MySQL一致性导出、6个SQLite在线备份、3份私密配置和SHA256；已在临时目录恢复Git文件548+204并逐字节核对，6库quick_check通过；MySQL完整备份在唯一临时库恢复后验证定向迁移、行数保留、双会话版本冲突和并发同键只落一笔。上述是切换前恢复证据；真实切换另记录如下。
-- **真实切换**：定向DDL完成3处列调整/新增和2张助手表；原始bills/calendar/tags行数仍为0/5/37。预览无冲突后导入14项，共享历史19项、有效待做4项；逐项核对来源映射、标题/内容/备注/日期及状态14/14，旧items逻辑hash、播报设置保持一致。4份每日列表Cron均已转为共享源；API和Fusion均active/enabled。配置/人格同步及健康通过。
+- **隔离结果**：业务API、桥接、本机HTTP双入口、恢复回归和网页用例均通过；网站与天气TS构建通过，天气插件测试通过；既有日历、账单、仪表盘、天气、列表/日志回归通过。真实模型和隔离OpenClaw宿主用例通过，其中实际/new及修改时刻会生成共享Cron。本组不访问生产库，也不外发QQ。各项数量见[第一轮证据](verification/knowledgemap-bridge-2026-10-17/README.md)的 `validation.json`、`model.json`、`host.json`。
+- **数据恢复资料**：变更前基线 `private-state/` 已保存MySQL一致性导出、6个SQLite在线备份、3份私密配置和SHA256；已在临时目录恢复两仓库Git文件并逐字节核对，各SQLite库quick_check通过（文件数和库数见 `validation.json`）；MySQL完整备份在唯一临时库恢复后验证定向迁移、行数保留、双会话版本冲突和并发同键只落一笔。上述是切换前恢复证据；真实切换另记录如下。
+- **真实切换**：定向DDL完成3处列调整/新增和2张助手表；原始bills/calendar/tags行数仍为0/5/37。预览无冲突后导入14项，共享历史19项、有效待做4项；逐项核对来源映射、标题/内容/备注/日期及状态全部一致（见 `cutover.json`），旧items逻辑hash、播报设置保持一致。4份每日列表Cron均已转为共享源；API和Fusion均active/enabled。配置/人格同步及健康通过。
 - **合入边界**：Fusion实现提交 `4f26366`，KnowledgeMap实现提交 `a311fe8`；以本任务patch单独进index，55份/5份不相交并行文件逐字节保持。共享文件合并保留文档22和账单UI的已有改动，只提交本任务差异；未推送。全量配置同步保留了工作区已有文档22的配置意图，未执行任何付费翻译。
-- **真实入口7/7**：真实模型创建14元账单→网站、网站新增3.50元→模型、无DDL事项→真实网页编辑→模型语义作废、共享天气及原生Cron本人QQ投递回读均通过。播报包含全部4项，同slot再次运行无输出。测试账单2笔/事项1条按精确ID清理，保留请求和投递回执；临时Cron已撤销，`testIngress=false`。入站为合成本人消息，未冒称真人手机发送。
-- **恢复补正**：切换后完整演练首次25/26，发现恢复器仍硬编码3个依赖包，漏装已有邮件插件。依赖检查与恢复现共用锁文件包发现，4包按各自锁文件安装，仅对声明build的包构建；新增回归后同一备份26/26通过。此项仅改运维装配，不提交文档22业务代码。
-- **收尾复验**：桥接/恢复34/34、四项自检、网站脚本引用与真实schema对齐通过；当前20份入口/规则文档225个本地链接无断链。隔离分支147脚本/188证据、并行主工作区161脚本/228证据均分类覆盖且boundary无矛盾；扫描根的区别及命令摘要记入`validation.json`。
+- **真实入口**（用例数见 `live.json`）：真实模型创建14元账单→网站、网站新增3.50元→模型、无DDL事项→真实网页编辑→模型语义作废、共享天气及原生Cron本人QQ投递回读均通过。播报包含全部4项，同slot再次运行无输出。测试账单2笔/事项1条按精确ID清理，保留请求和投递回执；临时Cron已撤销，`testIngress=false`。入站为合成本人消息，未冒称真人手机发送。
+- **恢复补正**：切换后完整演练首次有一项失败，原因是恢复器仍硬编码3个依赖包，漏装已有邮件插件。依赖检查与恢复现共用锁文件包发现，4包按各自锁文件安装，仅对声明build的包构建；新增回归后同一备份全部通过（见 `recovery.json`）。此项仅改运维装配，不提交文档22业务代码。
+- **收尾复验**：桥接/恢复回归、四项自检、网站脚本引用与真实schema对齐通过；当时的入口/规则文档本地链接无断链。隔离分支和并行主工作区的脚本、证据均分类覆盖，boundary无矛盾。数量、扫描根的区别及命令摘要记入`validation.json`。
 
 
 迁移来源共14项（active4、completed4、expired4、void2），其中active无DDL2项；旧expired保持历史退出有效列表，没有自动复活。新写入采用网站逾期仍待做规则。这里只登记数量，私有正文保留在私密库/来源映射中。
@@ -174,8 +179,8 @@ flowchart LR
 
 | 资料 | 绝对路径与验证 |
 | --- | --- |
-| KnowledgeMap共享库及私密配置 | `/home/afrangry/kurumi-backups/knowledgemap-bridge-2026-10-17-post-cutover/`；`backend/scripts/backup_assistant.py` 的MySQL single-transaction导出。独立临时库完整恢复、迁移二次无操作、双会话冲突、并发同键写入4组通过，恢复数量0账单/19事项/37标签 |
-| Fusion源码和运行材料 | `/home/afrangry/kurumi-backups/2026-10-16-18-07-42-knowledgemap-post-cutover/`；源提交`4f26366`加当时未提交补丁/未跟踪文件，含并行工作现场；`quiesced=false`，12/12 SQLite健康，42710个manifest项匹配。修正依赖装配后的隔离Gateway/导入/模拟投递/项目检查26/26，不含共享MySQL |
+| KnowledgeMap共享库及私密配置 | `/home/afrangry/kurumi-backups/knowledgemap-bridge-2026-10-17-post-cutover/`；`backend/scripts/backup_assistant.py` 的MySQL single-transaction导出。独立临时库完整恢复、迁移二次无操作、双会话冲突、并发同键写入均通过；恢复数量与用例数见第一轮证据 `recovery.json` |
+| Fusion源码和运行材料 | `/home/afrangry/kurumi-backups/2026-10-16-18-07-42-knowledgemap-post-cutover/`；源提交`4f26366`加当时未提交补丁/未跟踪文件，含并行工作现场；`quiesced=false`，SQLite全部健康，manifest项全部匹配。修正依赖装配后的隔离Gateway/导入/模拟投递/项目检查全部通过，不含共享MySQL；数量见第一轮证据 `recovery.json` |
 
 完整Fusion演练命令：`node scripts/fusion/restore-verify.mjs --backup <Fusion备份绝对路径>`。恢复副本使用不可用共享API和假token，禁Cron、真实投递和付费翻译；测试不访问真实业务。`scripts/fusion/lib/package-manifests.mjs`只读发现仓库自有锁文件包，由依赖自检和恢复器共同使用，避免新插件漏装。
 
@@ -200,13 +205,13 @@ flowchart LR
 | `chatbot/plugins/personal-reminder-list/{remote,data-source}.js` | 共享业务与本地播报控制、持久切换保护 |
 | `chatbot/packages/personal-domains/src/knowledgemap-client.ts` | 天气/默认城市的API适配，保留解析/逐小时/预警能力；天气与Profile独立插件的装配归属见文档21 |
 | `chatbot/scripts/import-knowledgemap-list.mjs` | 只读来源/默认预览；apply写共享库，activate写私密切换标记 |
-| `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线24项，含失败/防重/设置竞态/旧runner防旧写/共享模式工具声明 |
+| `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线用例，含失败/防重/设置竞态/旧runner防旧写/共享模式工具声明 |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 本机真实HTTP→独立FastAPI/SQLite，两入口数据一致 |
-| `chatbot/tests/knowledgemap/acceptance-model.mjs` | 真实模型6组+实际工具，合成可信钩子与隔离API，不证明完整宿主 |
-| `chatbot/tests/knowledgemap/acceptance-host.mjs` | 真实模型+独立OpenClaw+mockOneBot+临时API；默认6组，`--bills-round2`14组，不发QQ |
+| `chatbot/tests/knowledgemap/acceptance-model.mjs` | 真实模型对话组+实际工具，合成可信钩子与隔离API，不证明完整宿主 |
+| `chatbot/tests/knowledgemap/acceptance-host.mjs` | 真实模型+独立OpenClaw+mockOneBot+临时API；默认跑第一轮用例，`--bills-round2`跑第二轮账单用例，不发QQ |
 | `chatbot/tests/knowledgemap/acceptance-live.mjs` | `--live --qq` 才执行真实模型/API/MySQL/网页与本人QQ；短暂启用测试入口并恢复，只清理精确标记测试行，保留回执 |
 | `chatbot/tests/knowledgemap/recovery.mjs` | Git/SQLite恢复演练，不改生产、不启动旧系统 |
-| `chatbot/tests/knowledgemap/bills.test.mjs`、`acceptance-bills-live.mjs` | 第二轮离线声明/可信上下文8项；显式`--live --out <新文件>`验证真实模型/API/MySQL/网页/天气，无QQ外发，精确清理测试账单并关闭测试入口 |
+| `chatbot/tests/knowledgemap/bills.test.mjs`、`acceptance-bills-live.mjs` | 第二轮离线声明/可信上下文用例；显式`--live --out <新文件>`验证真实模型/API/MySQL/网页/天气，无QQ外发，精确清理测试账单并关闭测试入口 |
 | `scripts/fusion/lib/package-manifests.mjs`、`scripts/fusion/test/recovery.test.mjs` | 依赖包发现与恢复装配回归，归属本文件「备份与恢复演练」；不修改邮件/PDF业务 |
 | 网站 `backend/tests/assistant_*`、`backend/scripts/{migrate_assistant,serve_assistant}.py` | 精确命令/边界见网站文档18「测试与脚本」，本文件不重复清单 |
 | `docs/verification/knowledgemap-bridge-2026-10-17/` | 本轮证据，README说明边界；登记INDEX/SCRIPTS与分类脚本 |
@@ -253,16 +258,16 @@ flowchart LR
 
 ### 第二轮验收与部署结果
 
-证据集中在[第二轮目录](verification/knowledgemap-bills-round2-2026-10-17/README.md)，不复制生产聊天正文。
+证据集中在[第二轮目录](verification/knowledgemap-bills-round2-2026-10-17/README.md)，不复制生产聊天正文。各层用例数见该目录的 `validation.json`、`host.json`、`live.json`、`migration.json`。
 
 | 层次 | 结果与边界 |
 | --- | --- |
-| 业务API | 新账单13项+原助手30项=43/43；既有账单13/13，SQLite隔离，含字段校验、完整快照、不同请求版本冲突和回滚 |
-| 桥接与日志 | Node32/32（账单8、既有桥接23、真实本机HTTP1）；列表/日志54/54；天气162/162与构建通过 |
-| 真实MySQL | 临时库全恢复1账单/19事项/37标签，迁移/二次无操作、实际双会话账单更新/删除冲突及强制并发同键重放，6组通过；不写源库，临时库删除 |
-| 网页 | 独立真实浏览器9项通过，覆盖旧账单编辑/删除被409拒绝、刷新后正确版本可删除；合入后的当前P15页面也通过同组，前端TS/构建通过 |
-| 模型与宿主 | 隔离真实宿主14/14；18条API runId逐项属于真实transcript，账单schema错误0；模型计算36.80、语义修改、new后删除、两笔同名澄清通过，无QQ/生产写入 |
-| 真实运行 | 合成本人入口10/10，真实模型/API/MySQL/网页/天气；新增36.80→模型改35.50→网页表单改32.10→模型查询→new后删除；同名两笔不删并询问，12条API runId精确关联，后端3条写日志同runId |
+| 业务API | 新账单与原助手用例、既有账单回归均通过；SQLite隔离，含字段校验、完整快照、不同请求版本冲突和回滚 |
+| 桥接与日志 | 账单、既有桥接和真实本机HTTP的Node用例通过；列表/日志、天气测试与构建通过 |
+| 真实MySQL | 临时库全恢复，迁移/二次无操作、实际双会话账单更新/删除冲突及强制并发同键重放均通过；不写源库，临时库删除 |
+| 网页 | 独立真实浏览器用例通过，覆盖旧账单编辑/删除被409拒绝、刷新后正确版本可删除；合入后的当前P15页面也通过同组，前端TS/构建通过 |
+| 模型与宿主 | 隔离真实宿主用例全部通过；API runId逐项属于真实transcript，无账单schema错误；模型计算36.80、语义修改、new后删除、两笔同名澄清通过，无QQ/生产写入 |
+| 真实运行 | 合成本人入口用例全部通过，覆盖真实模型/API/MySQL/网页/天气；新增36.80→模型改35.50→网页表单改32.10→模型查询→new后删除；同名两笔不删并询问；API runId精确关联，后端写日志带同一runId |
 | 部署及清理 | 定向DDL仅新增bills.version，原三表业务行哈希不变；testIngress已关闭，测试账单ID4/5/6全部删除，原有1笔账单逐字段不变，请求回执保留；无真实QQ外发 |
 
 实现合入提交：Fusion `97ed797`、KnowledgeMap `1efec0e`；后续文档/SQL快照/证据收尾提交另见Git日志。KnowledgeMap本任务index树与独立实现提交逐字一致，网站视觉重构的4份不相交文件字节保持；共享Bills.vue只提交两处版本参数，todolist只提交本轮状态。原6份并行改动继续保留，不能声称整个网站工作区干净。
