@@ -68,7 +68,7 @@
 | `chatbot/tests/papers/responses_test.py` | 离线 | 原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/source-boundary.test.mjs` | 离线 | 下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
 | `chatbot/tests/papers/worker.test.mjs` | 离线 | 实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭 | 写临时测试目录 | 否 | header | — |
-| `chatbot/tests/persona/memory.test.mjs` | 离线 | 文档25 P2记忆迁移、SQLite版本/并发、来源校验、摘要TTL、遗忘屏障、成员拒绝与可插拔存储 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/persona/memory.test.mjs` | 离线 | 文档25 P2记忆迁移、SQLite版本/并发、来源校验、摘要TTL、遗忘屏障、成员拒绝与可插拔存储；action互斥字段、误参零提交和修正后同消息重试 | 写临时测试目录 | 否 | header | `docs/verification/persona-memory-2026-10-19/p2/README.md` |
 | `chatbot/tests/persona/projection.test.mjs` | 离线 | 文档25人格/关系按身份投影、私密文件保留、非法配置/路径拒绝和旧配置兼容 | 写临时测试目录 | 否 | header | `docs/verification/persona-memory-2026-10-19/node-tests.txt` |
 | `chatbot/tests/reminder-list/intake.test.mjs` | 离线 | 自然录入授权、实际会话 UUID、超时/重置/换题与跨提醒领域拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/log-query.test.mjs` | 离线 | 提醒列表审计接入日志查询，精确消息/slot 关联 | 写临时测试目录 | 否 | header | — |
@@ -152,7 +152,7 @@
 | `chatbot/tests/papers/acceptance.mjs` | 验收 | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md` |
 | `chatbot/tests/persona/acceptance-host.mjs` | 验收 | 文档25真实隔离OpenClaw/模拟OneBot的实际人格注入；默认本地模型，--live使用官方DeepSeek，无真实QQ外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/README.md` |
 | `chatbot/tests/persona/continuity-host.mjs` | 验收 | 文档25 P2真实隔离OpenClaw授权钩子、/new历史清理、手动压缩与临时宿主重启；确定性模型和模拟OneBot，无真实API或QQ | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/persona-memory-2026-10-19/p2/README.md` |
-| `chatbot/tests/persona/memory-continuity-host.mjs` | 验收 | 文档25 P2真实隔离OpenClaw连续性插件；确定性模型、模拟OneBot和临时状态，验证本人自动记忆、/new后注入及成员隔离，无真实API/QQ/邮件或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | — |
+| `chatbot/tests/persona/memory-continuity-host.mjs` | 验收 | 文档25 P2真实隔离OpenClaw连续性插件；默认确定性模型，--live调用官方DeepSeek（最多40请求、每次1200输出tokens）；模拟OneBot和临时状态，验证自动/显式保存、更正/遗忘、/new、成员隔离及工具契约；无真实QQ/邮件或生产写入 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/p2/README.md` |
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
 | `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
 | `chatbot/tests/reminder-list/acceptance-native.mjs` | 验收 | 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务 | 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/native.json` |

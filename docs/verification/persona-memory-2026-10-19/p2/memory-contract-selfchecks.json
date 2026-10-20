@@ -1,0 +1,30 @@
+{
+  "at": "2026-10-20T13:57:24.019Z",
+  "ok": true,
+  "checks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "stdout": "{\n  \"at\": \"2026-10-20T13:57:23.878Z\",\n  \"ok\": true,\n  \"issues\": [],\n  \"gateway\": true,\n  \"qq\": {\n    \"online\": true,\n    \"good\": true\n  },\n  \"testIngress\": false,\n  \"channel\": [\n    {\n      \"running\": true,\n      \"connected\": true\n    }\n  ],\n  \"cron\": {\n    \"total\": 11,\n    \"hasMore\": false,\n    \"jobs\": [\n      {\n        \"id\": \"1ad1bb0e-e393-4fe1-874a-f659b9187721\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"delivered\",\n        \"nextRunAtMs\": 1792512000000\n      },\n      {\n        \"id\": \"17a026c2-0a57-4176-985d-8f474294f37f\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"delivered\",\n        \"nextRunAtMs\": 1792540800000\n      },\n      {\n        \"id\": \"2bd8e62c-2bf0-4a45-b231-34e39d2ee400\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"delivered\",\n        \"nextRunAtMs\": 1792549800000\n      },\n      {\n        \"id\": \"23c06aa8-96f2-47c7-9adf-9a6f1291bb28\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"delivered\",\n        \"nextRunAtMs\": 1792555200000\n      },\n      {\n        \"id\": \"12df2be6-a477-4369-9b08-f76c4e3623a5\",\n        \"enabled\": true,\n        \"lastStatus\": \"ok\",\n        \"lastDeliveryStatus\": \"delivered\",\n        \"nextRunAtMs\": 1792576800000\n      },\n      {\n        \"id\": \"0a794dfc-bfb3-4037-8258-834cff1c3e76\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"2d61b8f2-744a-438d-be99-a2796f05d5fd\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"428bf628-20d2-4c99-a889-38782ece05a7\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"53286346-7fed-4e0e-a381-9ee815014f01\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      },\n      {\n        \"id\": \"a0b45e30-9e1c-4b33-ba36-5bf1ca6d50dc\",\n        \"enabled\": false,\n        \"lastStatus\": null,\n        \"lastDeliveryStatus\": null,\n        \"nextRunAtMs\": null\n      }\n    ]\n  },\n  \"testMethodDisabled\": true,\n  \"channelDatabase\": \"ok\",\n  \"outbound\": [\n    {\n      \"status\": \"sent\",\n      \"count\": 478\n    }\n  ],\n  \"recentAttempts\": 127,\n  \"dailyLimit\": 500,\n  \"recentFailedInbound\": 0,\n  \"weatherDatabase\": \"ok\",\n  \"remindersDatabase\": \"ok\",\n  \"reminderListDatabase\": \"ok\",\n  \"knowledgeMap\": {\n    \"ok\": true,\n    \"contract\": 1,\n    \"domains\": [\n      \"weather\",\n      \"tasks\",\n      \"bills\"\n    ]\n  },\n  \"services\": {\n    \"kurumi-fusion\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"qq-bridge\": {\n      \"ActiveState\": \"inactive\",\n      \"UnitFileState\": \"masked\"\n    },\n    \"openclaw-gateway\": {\n      \"ActiveState\": \"inactive\",\n      \"UnitFileState\": \"masked\"\n    },\n    \"snowluma\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"snowluma-qq\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"knowledgemap-assistant\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"enabled\"\n    },\n    \"dsh-web\": {\n      \"ActiveState\": \"active\",\n      \"UnitFileState\": \"disabled\"\n    }\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "stdout": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n",
+      "stderr": ""
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs --diff",
+      "exitCode": 0,
+      "stdout": "\n  repo-managed top-level keys : agents, bindings, channels, commands, discovery, gateway, logging, models, plugins, secrets, session, skills, tools\n  host-maintained keys kept   : (none)\nconfig in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n",
+      "stderr": ""
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs --diff",
+      "exitCode": 0,
+      "stdout": "role card: roles/世凪.md\npersona in sync with roles/世凪.md (12 workspace file(s) match)\n",
+      "stderr": ""
+    }
+  ]
+}

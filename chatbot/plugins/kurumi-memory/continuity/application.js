@@ -5,6 +5,7 @@ import {normalize} from '../model.js';
 import {continuityPolicy} from './policy.js';
 import {openContinuityStore} from './store.js';
 import {digest, factDigest, canonical, limits, options, validateState} from './model.js';
+import {assertContinuityArgs} from './tool-contract.js';
 export function createContinuityRegistry() {
   const registry = createAdapterRegistry({domain: 'memory-continuity', policyMethods: ['evidence','fact','summary'], storeMethods: ['read','write','close']});
   registry.registerPolicy('current-owner', continuityPolicy); registry.registerStore('sqlite', openContinuityStore);
@@ -16,6 +17,7 @@ export function createContinuityApplication({registry = createContinuityRegistry
   const source = (request, evidence) => ({origin: 'current_owner', messageId: request.messageId, sessionKey: request.sessionKey,
     sessionId: request.sessionId, runId: request.runId, at: new Date(request.at).toISOString(), rawHash: digest(request.raw), evidence});
   function change(store, args, request) {
+    assertContinuityArgs(args);
     const at = now();
     if (!request || !/^\d{5,12}$/.test(request.ownerId) || typeof request.raw !== 'string' || !request.raw.trim() || request.raw.length > 2000
       || !request.messageId || !request.runId || !request.sessionId || !Number.isFinite(request.at)
@@ -44,7 +46,6 @@ export function createContinuityApplication({registry = createContinuityRegistry
       ids.push(entry.id);
     };
     if (args.action === 'observe') {
-      if (args.id || args.text || !Array.isArray(args.facts ?? []) || (args.facts?.length ?? 0) > 4 || (!(args.facts?.length) && !args.summary)) throw Error('observe需要1至4条事实或一条近期摘要');
       for (const fact of args.facts ?? []) put(fact, false);
       if (args.summary && !suppressed) {
         const evidence = selected.policy.evidence(args.summary.evidence, request), text = selected.policy.summary(args.summary.text);
@@ -53,10 +54,8 @@ export function createContinuityApplication({registry = createContinuityRegistry
         next.summaries = next.summaries.slice(-limits.summaries); summarySaved = true;
       }
     } else if (['upsert','delete'].includes(args.action)) {
-      if (args.facts !== undefined || args.summary !== undefined) throw Error('显式更正或遗忘不能夹带自动摘要');
       const existing = args.id && next.facts.find(e => e.id === args.id);
       if (args.id && !existing) throw Error('记忆ID不存在，请先查询真实ID');
-      if (args.action === 'delete' && (!args.id || args.text)) throw Error('遗忘需要真实记忆ID');
       if (args.action === 'delete' || (existing && normalize(existing.text) !== normalize(args.text))) {
         next.generation++; next.summaries = [];
         next.barriers = [...next.barriers.filter(b => b.hash !== factDigest(existing.text)), {hash: factDigest(existing.text), at: stamp}].slice(-limits.barriers);

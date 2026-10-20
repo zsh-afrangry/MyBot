@@ -30,6 +30,10 @@ function active(t, config = {}) {
   const change=(args,raw,patch)=>app.change(f,{expectedRevision:app.read(f).revision,...args},request(raw,patch));
   return {...f,app,request,change,advance:ms=>clock+=ms};
 }
+function snapshot(f) {
+  const store=openContinuityStore({...f,readonly:true});
+  try{return store.read();}finally{store.close();}
+}
 const fact=text=>({text,evidence:text,kind:'preference'});
 test('explicit migration preserves IDs and revision, saves private originals, and leaves one writer',t=>{
   const f=fixture(t),before=fs.readFileSync(path.join(f.workspace,'MEMORY.md'));
@@ -70,6 +74,46 @@ test('automatic batch binds original evidence, persists provenance and replays e
   assert.equal(f.app.change(f,args,request).replayed,true);assert.equal(f.app.read(f).revision,1);
   const state=openContinuityStore(f);try{const data=state.read();assert.equal(data.facts[0].source.rawHash,digest(raw));assert.equal(data.facts[0].source.runId,request.runId);assert.equal(data.receipts.length,1);}finally{state.close();}
   assert.throws(()=>f.app.change(f,{...args,facts:[fact('我平时喜欢桂花茶')]},request),/不同写入/);
+});
+test('upsert facts error identifies the wrong field; a corrected attempt commits once for the same message',t=>{
+  const f=active(t),text='我的合成书签是蓝色的',request=f.request('请记住：'+text),before=snapshot(f);
+  assert.throws(()=>f.app.change(f,{action:'upsert',expectedRevision:0,facts:[fact(text)]},request),
+    /action=upsert.*facts.*顶层.*text.*未提交/u);
+  assert.deepEqual(snapshot(f),before,'failed parameters must not change facts, revision, barriers or receipts');
+  const args={action:'upsert',expectedRevision:0,text,evidence:text},saved=f.app.change(f,args,request);
+  assert.equal(saved.ok,true);assert.equal(saved.revision,1);
+  assert.equal(f.app.change(f,args,request).replayed,true);
+  assert.throws(()=>f.app.change(f,{...args,kind:'preference'},request),/不同写入/u);
+  assert.equal(snapshot(f).receipts.length,1);assert.equal(f.app.read(f).entries.length,1);
+});
+test('action-specific errors separate facts from summary and reject ignored write fields without committing',t=>{
+  const f=active(t),text='我的合成书签是蓝色的',request=f.request('请记住：'+text),before=snapshot(f);
+  for(const [args,error] of [
+    [{action:'upsert',expectedRevision:0,text,summary:{text,evidence:text}},/action=upsert.*summary.*observe/u],
+    [{action:'delete',expectedRevision:0,id:'123456abcdef',text},/action=delete.*text.*id/u],
+    [{action:'observe',expectedRevision:0,text},/action=observe.*text.*facts/u],
+    [{action:'observe',expectedRevision:0,facts:[],summary:null},/summary/u],
+    [{action:'observe',expectedRevision:0,facts:[{text}]},/facts\[0\].evidence/u],
+    [{action:'observe',expectedRevision:0,facts:[{text,evidence:text,summary:'wrong'}]},/facts\[0\].summary/u],
+    [{action:'observe',expectedRevision:0,facts:[fact(text),fact(text),fact(text),fact(text),fact(text)]},/facts.*4/u],
+    [{action:'upsert',expectedRevision:0,evidence:text},/action=upsert.*text/u],
+    [{action:'upsert',text},/expectedRevision.*revision/u],
+  ]){
+    assert.throws(()=>f.app.change(f,args,request),error);
+    assert.deepEqual(snapshot(f),before);
+  }
+});
+test('explicit correction preserves the ID; reopened context uses the new fact and forget removes it',t=>{
+  const f=active(t),blue='我的合成书签是蓝色的',green='我的合成书签是绿色的';
+  const saved=f.change({action:'upsert',text:blue,evidence:blue},'请记住：'+blue);
+  const original=f.app.read(f).entries[0];f.advance(1000);
+  const corrected=f.change({action:'upsert',id:saved.ids[0],text:green,evidence:green},'请更正：'+green);
+  const view=f.app.context(f,'我的合成书签是什么颜色');
+  assert.deepEqual(corrected.ids,saved.ids);assert.equal(view.facts.length,1);assert.equal(view.facts[0].text,green);
+  assert.equal(f.app.read(f).entries[0].createdAt,original.createdAt);assert.equal(view.generation,1);
+  f.change({action:'delete',id:saved.ids[0]},'忘掉书签颜色');
+  assert.equal(f.app.context(f,'我的合成书签是什么颜色').facts.length,0);
+  assert.equal(snapshot(f).receipts.length,3);
 });
 test('non-current sources, credentials, stale requests and unknown owners fail without committing',t=>{
   const f=active(t),base={action:'observe',expectedRevision:0,facts:[fact('我喜欢咖啡')]};
@@ -143,6 +187,14 @@ function host(t) {
   }
   return {...f,config,ctx,hooks,tools,turn,revoke:()=>live=false};
 }
+test('plugin rejects action-incompatible read parameters and exposes explicit field guidance',async t=>{
+  const f=host(t),a=f.turn('请记住我的合成书签是蓝色的');
+  await assert.rejects(a.run({action:'list',text:'我的合成书签是蓝色的'}),/action=list.*text/u);
+  const listed=await a.run({action:'list'});assert.equal(listed.revision,0);
+  assert.match(a.tool.parameters.properties.text.description,/upsert/u);
+  assert.match(a.tool.parameters.properties.facts.description,/observe/u);
+  assert.match(a.prompt.appendSystemContext,/未提交.*修正参数.*已提交.*同参/u);
+});
 test('plugin binds raw ingress, actual run/call, and current owner authority before writes',async t=>{
   const f=host(t),a=f.turn('我喜欢绿茶');assert(a.prompt.prependContext.includes('currentUserText'));
   const result=await a.run({action:'observe',expectedRevision:0,facts:[fact('我喜欢绿茶')]});assert.equal(result.ok,true);

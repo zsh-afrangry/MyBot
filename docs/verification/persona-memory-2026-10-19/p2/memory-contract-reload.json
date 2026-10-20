@@ -1,0 +1,22 @@
+{
+  "at": "2026-10-20T13:53:58.548Z",
+  "restartRequired": false,
+  "pluginIds": [
+    "kurumi-memory"
+  ],
+  "runtime": {
+    "operationId": "51301614-79d7-433e-be66-6e856821a9f7",
+    "generation": 4,
+    "pluginIds": [
+      "kurumi-memory"
+    ],
+    "sourceDigests": {
+      "kurumi-memory": "237911fb706a8847f42af266740701761d335c743a8f246e6d058f6eaf716fa8"
+    },
+    "selectedEntries": {
+      "kurumi-memory": "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/index.js"
+    }
+  },
+  "warnings": [],
+  "newDescriptionVisible": true
+}

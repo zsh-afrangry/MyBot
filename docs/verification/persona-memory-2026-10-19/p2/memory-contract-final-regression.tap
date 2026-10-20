@@ -1,0 +1,586 @@
+TAP version 13
+# Subtest: persistent create, idempotent replay, revision checked edit and complete deletion
+ok 1 - persistent create, idempotent replay, revision checked edit and complete deletion
+  ---
+  duration_ms: 21.739562
+  type: 'test'
+  ...
+# Subtest: requires exact current owner fact and rejects secrets, stale or consumed intent
+ok 2 - requires exact current owner fact and rejects secrets, stale or consumed intent
+  ---
+  duration_ms: 5.383018
+  type: 'test'
+  ...
+# Subtest: unmanaged files and symlinks cannot be overwritten; private file mode persists
+ok 3 - unmanaged files and symlinks cannot be overwritten; private file mode persists
+  ---
+  duration_ms: 9.398673
+  type: 'test'
+  ...
+# Subtest: original-message intent binds owner, route, freshness and never quoted instructions
+ok 4 - original-message intent binds owner, route, freshness and never quoted instructions
+  ---
+  duration_ms: 0.626806
+  type: 'test'
+  ...
+# Subtest: corrupt negative revision and dangling links are rejected without replacing data
+ok 5 - corrupt negative revision and dangling links are rejected without replacing data
+  ---
+  duration_ms: 0.855828
+  type: 'test'
+  ...
+# Subtest: Catalog namespaces prevent list/get/file disclosure including identical bytes with independent names
+ok 6 - Catalog namespaces prevent list/get/file disclosure including identical bytes with independent names
+  ---
+  duration_ms: 120.621748
+  type: 'test'
+  ...
+# Subtest: Actual file URL lookup uses sender identity, never the owner, and respects import denial
+ok 7 - Actual file URL lookup uses sender identity, never the owner, and respects import denial
+  ---
+  duration_ms: 8.358074
+  type: 'test'
+  ...
+# Subtest: Single serial queue, requester binding, own list/status/cancel and self-only automatic upload
+ok 8 - Single serial queue, requester binding, own list/status/cancel and self-only automatic upload
+  ---
+  duration_ms: 162.471256
+  type: 'test'
+  ...
+# Subtest: Queued revocation does not start paid worker and never redirects notices/files to owner
+ok 9 - Queued revocation does not start paid worker and never redirects notices/files to owner
+  ---
+  duration_ms: 15.613885
+  type: 'test'
+  ...
+# Subtest: Running revocation aborts injected worker within bounded poll; no following send
+ok 10 - Running revocation aborts injected worker within bounded poll; no following send
+  ---
+  duration_ms: 509.530226
+  type: 'test'
+  ...
+# Subtest: Revoking file permission during translation keeps successful artifact but blocks upload without owner fallback
+ok 11 - Revoking file permission during translation keeps successful artifact but blocks upload without owner fallback
+  ---
+  duration_ms: 76.637405
+  type: 'test'
+  ...
+# Subtest: Legacy unbound owner job remains owner-only and replay preserves its old invocation key/hash
+ok 12 - Legacy unbound owner job remains owner-only and replay preserves its old invocation key/hash
+  ---
+  duration_ms: 4.556082
+  type: 'test'
+  ...
+# Subtest: Transport recipient namespaces preserve owner legacy keys, fence media and refuse revoked delivery
+ok 13 - Transport recipient namespaces preserve owner legacy keys, fence media and refuse revoked delivery
+  ---
+  duration_ms: 150.378649
+  type: 'test'
+  ...
+# Subtest: Ingress routes real sender, rejects admin slash/group/wrong route and retains raw text
+ok 14 - Ingress routes real sender, rejects admin slash/group/wrong route and retains raw text
+  ---
+  duration_ms: 136.261484
+  type: 'test'
+  ...
+# Subtest: Persona generation shares character only; member does not inherit owner USER/MEMORY or arbitrary symlink paths
+ok 15 - Persona generation shares character only; member does not inherit owner USER/MEMORY or arbitrary symlink paths
+  ---
+  duration_ms: 5.801649
+  type: 'test'
+  ...
+# Subtest: Authorization audit joins by real run and shows decision/reason without tool parameters
+ok 16 - Authorization audit joins by real run and shows decision/reason without tool parameters
+  ---
+  duration_ms: 27.439663
+  type: 'test'
+  ...
+# Subtest: Strict version, unknown permission, duplicate, owner/group and unsupported member grants fail closed
+ok 17 - Strict version, unknown permission, duplicate, owner/group and unsupported member grants fail closed
+  ---
+  duration_ms: 2.776932
+  type: 'test'
+  ...
+# Subtest: A role is not an implicit permission; disabled, expired and unknown identities are refused
+ok 18 - A role is not an implicit permission; disabled, expired and unknown identities are refused
+  ---
+  duration_ms: 1.954775
+  type: 'test'
+  ...
+# Subtest: Trusted sender, owner bit, agent, account, session and target must agree; text cannot elevate
+ok 19 - Trusted sender, owner bit, agent, account, session and target must agree; text cannot elevate
+  ---
+  duration_ms: 0.997229
+  type: 'test'
+  ...
+# Subtest: Every current main tool is mapped; new tools and dangerous native/member operations are denied
+ok 20 - Every current main tool is mapped; new tools and dangerous native/member operations are denied
+  ---
+  duration_ms: 9.369279
+  type: 'test'
+  ...
+# Subtest: Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs
+ok 21 - Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs
+  ---
+  duration_ms: 1.825116
+  type: 'test'
+  ...
+# Subtest: Background lanes are limited to configured owner tasks and read-only weather; no absent-requester main bypass
+ok 22 - Background lanes are limited to configured owner tasks and read-only weather; no absent-requester main bypass
+  ---
+  duration_ms: 2.009355
+  type: 'test'
+  ...
+# Subtest: alternate reminder policy changes admission while mandatory freshness and SQL invariants survive
+ok 23 - alternate reminder policy changes admission while mandatory freshness and SQL invariants survive
+  ---
+  duration_ms: 56.289679
+  type: 'test'
+  ...
+# Subtest: reminder tools, scheduler and fixed runner all consume a registered alternate store
+ok 24 - reminder tools, scheduler and fixed runner all consume a registered alternate store
+  ---
+  duration_ms: 7.016851
+  type: 'test'
+  ...
+# Subtest: a replacement list policy cannot mint transport identity or overwrite trusted request metadata
+ok 25 - a replacement list policy cannot mint transport identity or overwrite trusted request metadata
+  ---
+  duration_ms: 71.994322
+  type: 'test'
+  ...
+# Subtest: unknown store disables registration; runner and scheduler refuse a mismatched store binding
+ok 26 - unknown store disables registration; runner and scheduler refuse a mismatched store binding
+  ---
+  duration_ms: 1.515354
+  type: 'test'
+  ...
+# Subtest: memory tool uses independent policy and store; untrusted inbound cannot be granted by replacement policy
+ok 27 - memory tool uses independent policy and store; untrusted inbound cannot be granted by replacement policy
+  ---
+  duration_ms: 2.622857
+  type: 'test'
+  ...
+# Subtest: a Promise-returning list mutation or replay write rolls back data, audit and ledger
+    # Subtest: addItem
+    ok 1 - addItem
+      ---
+      duration_ms: 49.551022
+      type: 'test'
+      ...
+    # Subtest: recordRequest
+    ok 2 - recordRequest
+      ---
+      duration_ms: 52.836591
+      type: 'test'
+      ...
+    1..2
+ok 28 - a Promise-returning list mutation or replay write rolls back data, audit and ledger
+  ---
+  duration_ms: 103.016753
+  type: 'test'
+  ...
+# Subtest: an asynchronous memory write is not reported or cached as completed and still closes
+ok 29 - an asynchronous memory write is not reported or cached as completed and still closes
+  ---
+  duration_ms: 0.857201
+  type: 'test'
+  ...
+# Subtest: registration validates contracts and identities; duplicate IDs are rejected separately per kind
+ok 30 - registration validates contracts and identities; duplicate IDs are rejected separately per kind
+  ---
+  duration_ms: 4.789533
+  type: 'test'
+  ...
+# Subtest: resolved selections remain fixed; old unregister handles cannot remove a later replacement
+ok 31 - resolved selections remain fixed; old unregister handles cannot remove a later replacement
+  ---
+  duration_ms: 0.712624
+  type: 'test'
+  ...
+# Subtest: missing, failing and malformed stores never fall back; malformed resources close
+ok 32 - missing, failing and malformed stores never fall back; malformed resources close
+  ---
+  duration_ms: 0.692437
+  type: 'test'
+  ...
+# Subtest: registries do not share selections between applications or plugin captures
+ok 33 - registries do not share selections between applications or plugin captures
+  ---
+  duration_ms: 0.332694
+  type: 'test'
+  ...
+# Subtest: a stale unregister handle cannot remove the same store factory registered again
+ok 34 - a stale unregister handle cannot remove the same store factory registered again
+  ---
+  duration_ms: 0.33048
+  type: 'test'
+  ...
+# Subtest: ordinary store reads, writes, transactions and close reject Promise/thenable results
+    # Subtest: read: fulfilled
+    ok 1 - read: fulfilled
+      ---
+      duration_ms: 0.356878
+      type: 'test'
+      ...
+    # Subtest: read: rejected
+    ok 2 - read: rejected
+      ---
+      duration_ms: 0.345207
+      type: 'test'
+      ...
+    # Subtest: read: thenable
+    ok 3 - read: thenable
+      ---
+      duration_ms: 0.502026
+      type: 'test'
+      ...
+    # Subtest: write: fulfilled
+    ok 4 - write: fulfilled
+      ---
+      duration_ms: 0.68884
+      type: 'test'
+      ...
+    # Subtest: write: rejected
+    ok 5 - write: rejected
+      ---
+      duration_ms: 0.270389
+      type: 'test'
+      ...
+    # Subtest: write: thenable
+    ok 6 - write: thenable
+      ---
+      duration_ms: 0.174532
+      type: 'test'
+      ...
+    # Subtest: transaction: fulfilled
+    ok 7 - transaction: fulfilled
+      ---
+      duration_ms: 1.229256
+      type: 'test'
+      ...
+    # Subtest: transaction: rejected
+    ok 8 - transaction: rejected
+      ---
+      duration_ms: 0.151079
+      type: 'test'
+      ...
+    # Subtest: transaction: thenable
+    ok 9 - transaction: thenable
+      ---
+      duration_ms: 0.125702
+      type: 'test'
+      ...
+    # Subtest: close: fulfilled
+    ok 10 - close: fulfilled
+      ---
+      duration_ms: 0.640792
+      type: 'test'
+      ...
+    # Subtest: close: rejected
+    ok 11 - close: rejected
+      ---
+      duration_ms: 0.702756
+      type: 'test'
+      ...
+    # Subtest: close: thenable
+    ok 12 - close: thenable
+      ---
+      duration_ms: 0.131843
+      type: 'test'
+      ...
+    1..12
+ok 35 - ordinary store reads, writes, transactions and close reject Promise/thenable results
+  ---
+  duration_ms: 24.700382
+  type: 'test'
+  ...
+# Subtest: frozen class stores retain private receivers, getters and extra resource access
+ok 36 - frozen class stores retain private receivers, getters and extra resource access
+  ---
+  duration_ms: 0.596571
+  type: 'test'
+  ...
+# Subtest: an opened store fixes contract methods without mutating the adapter object
+ok 37 - an opened store fixes contract methods without mutating the adapter object
+  ---
+  duration_ms: 0.411278
+  type: 'test'
+  ...
+# Subtest: only callable then properties denote asynchronous results
+ok 38 - only callable then properties denote asynchronous results
+  ---
+  duration_ms: 0.203906
+  type: 'test'
+  ...
+# Subtest: invalid native-async stores and late async factories close without leaking rejections
+ok 39 - invalid native-async stores and late async factories close without leaking rejections
+  ---
+  duration_ms: 3.34574
+  type: 'test'
+  ...
+# Subtest: explicit migration preserves IDs and revision, saves private originals, and leaves one writer
+ok 40 - explicit migration preserves IDs and revision, saves private originals, and leaves one writer
+  ---
+  duration_ms: 92.180007
+  type: 'test'
+  ...
+# Subtest: unmanaged legacy notes, symlink workspaces and symlink state cannot be silently imported
+ok 41 - unmanaged legacy notes, symlink workspaces and symlink state cannot be silently imported
+  ---
+  duration_ms: 48.462454
+  type: 'test'
+  ...
+# Subtest: a partially completed import can finish; unrelated canonical data is never overwritten
+ok 42 - a partially completed import can finish; unrelated canonical data is never overwritten
+  ---
+  duration_ms: 122.241495
+  type: 'test'
+  ...
+# Subtest: automatic batch binds original evidence, persists provenance and replays exactly once
+ok 43 - automatic batch binds original evidence, persists provenance and replays exactly once
+  ---
+  duration_ms: 69.077732
+  type: 'test'
+  ...
+# Subtest: upsert facts error identifies the wrong field; a corrected attempt commits once for the same message
+ok 44 - upsert facts error identifies the wrong field; a corrected attempt commits once for the same message
+  ---
+  duration_ms: 51.156832
+  type: 'test'
+  ...
+# Subtest: action-specific errors separate facts from summary and reject ignored write fields without committing
+ok 45 - action-specific errors separate facts from summary and reject ignored write fields without committing
+  ---
+  duration_ms: 48.099905
+  type: 'test'
+  ...
+# Subtest: explicit correction preserves the ID; reopened context uses the new fact and forget removes it
+ok 46 - explicit correction preserves the ID; reopened context uses the new fact and forget removes it
+  ---
+  duration_ms: 77.678342
+  type: 'test'
+  ...
+# Subtest: non-current sources, credentials, stale requests and unknown owners fail without committing
+ok 47 - non-current sources, credentials, stale requests and unknown owners fail without committing
+  ---
+  duration_ms: 45.066631
+  type: 'test'
+  ...
+# Subtest: credential markers are rejected across long summary boundaries
+ok 48 - credential markers are rejected across long summary boundaries
+  ---
+  duration_ms: 0.357539
+  type: 'test'
+  ...
+# Subtest: correction and forgetting clear all active summaries and fence stale sources and replays
+ok 49 - correction and forgetting clear all active summaries and fence stale sources and replays
+  ---
+  duration_ms: 99.049004
+  type: 'test'
+  ...
+# Subtest: summary TTL is enforced on read/context and expired summaries are removed on next commit
+ok 50 - summary TTL is enforced on read/context and expired summaries are removed on next commit
+  ---
+  duration_ms: 100.676768
+  type: 'test'
+  ...
+# Subtest: real SQLite CAS and failed validation roll back; process exit before commit is recovered
+ok 51 - real SQLite CAS and failed validation roll back; process exit before commit is recovered
+  ---
+  duration_ms: 109.613209
+  type: 'test'
+  ...
+# Subtest: bounded summaries and context do not silently evict facts
+ok 52 - bounded summaries and context do not silently evict facts
+  ---
+  duration_ms: 2599.070752
+  type: 'test'
+  ...
+# Subtest: alternate policy/store are composition-local; async methods fail without success receipts
+ok 53 - alternate policy/store are composition-local; async methods fail without success receipts
+  ---
+  duration_ms: 42.027169
+  type: 'test'
+  ...
+# Subtest: plugin rejects action-incompatible read parameters and exposes explicit field guidance
+ok 54 - plugin rejects action-incompatible read parameters and exposes explicit field guidance
+  ---
+  duration_ms: 41.199372
+  type: 'test'
+  ...
+# Subtest: plugin binds raw ingress, actual run/call, and current owner authority before writes
+ok 55 - plugin binds raw ingress, actual run/call, and current owner authority before writes
+  ---
+  duration_ms: 55.847647
+  type: 'test'
+  ...
+# Subtest: member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes
+ok 56 - member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes
+  ---
+  duration_ms: 40.30888
+  type: 'test'
+  ...
+# Subtest: Shared identity is identical; owner relationship and private facts never enter member payloads
+ok 57 - Shared identity is identical; owner relationship and private facts never enter member payloads
+  ---
+  duration_ms: 9.203082
+  type: 'test'
+  ...
+# Subtest: Applying projection preserves memories, histories and unrelated files and writes private modes
+ok 58 - Applying projection preserves memories, histories and unrelated files and writes private modes
+  ---
+  duration_ms: 11.193543
+  type: 'test'
+  ...
+# Subtest: Only enabled chat identities receive persona files
+ok 59 - Only enabled chat identities receive persona files
+  ---
+  duration_ms: 3.30268
+  type: 'test'
+  ...
+# Subtest: Legacy persona without relationshipFiles remains compatible
+ok 60 - Legacy persona without relationshipFiles remains compatible
+  ---
+  duration_ms: 2.917471
+  type: 'test'
+  ...
+# Subtest: Incomplete, unknown and non-object relationship configurations fail before any write
+    # Subtest: null
+    ok 1 - null
+      ---
+      duration_ms: 3.652706
+      type: 'test'
+      ...
+    # Subtest: []
+    ok 2 - []
+      ---
+      duration_ms: 4.064475
+      type: 'test'
+      ...
+    # Subtest: {}
+    ok 3 - {}
+      ---
+      duration_ms: 3.035327
+      type: 'test'
+      ...
+    # Subtest: {"owner":"roles/relationships/本人恋人.md"}
+    ok 4 - {"owner":"roles/relationships/本人恋人.md"}
+      ---
+      duration_ms: 3.824804
+      type: 'test'
+      ...
+    # Subtest: {"owner":"roles/relationships/本人恋人.md","member":"roles/relationships/普通朋友.md","unknown":"roles/世凪.md"}
+    ok 5 - {"owner":"roles/relationships/本人恋人.md","member":"roles/relationships/普通朋友.md","unknown":"roles/世凪.md"}
+      ---
+      duration_ms: 4.615762
+      type: 'test'
+      ...
+    1..5
+ok 61 - Incomplete, unknown and non-object relationship configurations fail before any write
+  ---
+  duration_ms: 20.550839
+  type: 'test'
+  ...
+# Subtest: Source traversal and symlink escape are rejected
+    # Subtest: /tmp/role.md
+    ok 1 - /tmp/role.md
+      ---
+      duration_ms: 4.678167
+      type: 'test'
+      ...
+    # Subtest: roles/../private.md
+    ok 2 - roles/../private.md
+      ---
+      duration_ms: 2.458033
+      type: 'test'
+      ...
+    # Subtest: config/persona.json
+    ok 3 - config/persona.json
+      ---
+      duration_ms: 3.10192
+      type: 'test'
+      ...
+    # Subtest: roles\\role.md
+    ok 4 - roles\\role.md
+      ---
+      duration_ms: 2.720608
+      type: 'test'
+      ...
+    # Subtest: symlink to an external relationship
+    ok 5 - symlink to an external relationship
+      ---
+      duration_ms: 3.968989
+      type: 'test'
+      ...
+    1..5
+ok 62 - Source traversal and symlink escape are rejected
+  ---
+  duration_ms: 17.872751
+  type: 'test'
+  ...
+# Subtest: Unresolved placeholders and empty relationship content fail before projection
+    # Subtest: "{{用户名}}是我的朋友"
+    ok 1 - "{{用户名}}是我的朋友"
+      ---
+      duration_ms: 2.126061
+      type: 'test'
+      ...
+    # Subtest: "   \\n"
+    ok 2 - "   \\n"
+      ---
+      duration_ms: 3.066505
+      type: 'test'
+      ...
+    1..2
+ok 63 - Unresolved placeholders and empty relationship content fail before projection
+  ---
+  duration_ms: 5.543844
+  type: 'test'
+  ...
+# Subtest: Owner template drift is explicit and replacement text is literal
+    # Subtest: NO_EXPECTED_HEADER
+    ok 1 - NO_EXPECTED_HEADER
+      ---
+      duration_ms: 2.953507
+      type: 'test'
+      ...
+    # Subtest: 你是 Kurumi，用户的中文个人助手。
+    ok 2 - 你是 Kurumi，用户的中文个人助手。
+      ---
+      duration_ms: 2.495862
+      type: 'test'
+      ...
+    # Subtest: literal dollar replacement
+    ok 3 - literal dollar replacement
+      ---
+      duration_ms: 4.1212
+      type: 'test'
+      ...
+    1..3
+ok 64 - Owner template drift is explicit and replacement text is literal
+  ---
+  duration_ms: 10.143928
+  type: 'test'
+  ...
+# Subtest: Current sources fit native per-file budgets and owner identity is no longer Kurumi/whale
+ok 65 - Current sources fit native per-file budgets and owner identity is no longer Kurumi/whale
+  ---
+  duration_ms: 4.08331
+  type: 'test'
+  ...
+# Subtest: Projection destination symlinks cannot redirect persona writes
+ok 66 - Projection destination symlinks cannot redirect persona writes
+  ---
+  duration_ms: 2.85775
+  type: 'test'
+  ...
+1..66
+# tests 95
+# suites 0
+# pass 95
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3759.280464

@@ -9,7 +9,7 @@
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
 | [`capability-decoupling-2026-10-20/README.md`](capability-decoupling-2026-10-20/README.md) 及同目录全部文件 | 文档26三项前置：受控加载、共享代码/论文下载边界、四个个人领域插件；533项回归、5组真实隔离Gateway、配置延期9项初始结果及allow成员检查补正后的10项结果、生产RPC与四项自检；新检索API仅设计 |
 | [`plugin-lifecycle-2026-10-19/README.md`](plugin-lifecycle-2026-10-19/README.md) 及同目录全部文件 | 文档21论文/邮件显式停止、共享确认注销归属的先失败后修复回归、真实宿主服务管理器隔离验证；原阶段不含生产重载，后续加载见文档26专项 |
-| [`persona-memory-2026-10-19/README.md`](persona-memory-2026-10-19/README.md) 及同目录全部文件 | 文档25 P1人格/关系分离及P2记忆连续性证据；[p2/](persona-memory-2026-10-19/p2/README.md)记录12/12宿主生命周期调查、4/4连续性宿主场景、离线记忆回归、生产迁移、15库备份与19/19材料模式恢复；持续情绪不在当前验收范围 |
+| [`persona-memory-2026-10-19/README.md`](persona-memory-2026-10-19/README.md) 及同目录全部文件 | 文档25 P1人格/关系分离及P2记忆连续性证据；[p2/](persona-memory-2026-10-19/p2/README.md)记录生命周期调查、连续性宿主、生产迁移/15库备份/19项材料恢复，以及工具契约补正的修前失败、离线/隔离/真实模型复验、定向热重载与收尾检查；各轮与未覆盖范围分别说明，持续情绪未实施 |
 | [`access-control-2026-10-19/README.md`](access-control-2026-10-19/README.md) 及同目录全部文件 | 文档24统一身份/功能授权、两身份数据/后台撤权、真实隔离宿主、本地主人兼容、授权成员登记及配置部署自检；用户真人验收反馈单列，不与模拟混同 |
 | [`recovery-2026-10-10-final/README.md`](recovery-2026-10-10-final/README.md) | 此前停写恢复点（`2026-10-10-12-36-17-final-closeout`，quiesced，对应 `0f2255a2`，24/24）；不包含新增共享业务，最新配对资料见文档23 |
 | `recovery-2026-10-10-final/*` | 上述报告的原始证据：`verification.json`、`isolation-result.json`、`gateway-probe.log`、备份 `EXPECTED.json` 与 `meta` |

@@ -1,0 +1,63 @@
+{
+  "at": "2026-10-20T13:58:26.411Z",
+  "ok": true,
+  "deployment": {
+    "method": "plugins.reload",
+    "pluginIds": [
+      "kurumi-memory"
+    ],
+    "restartRequired": false,
+    "runtimeGeneration": 4,
+    "plugin": {
+      "state": "enabled",
+      "runtime": {
+        "state": "active"
+      }
+    },
+    "templateSync": {
+      "changed": [
+        "workspace/AGENTS.md"
+      ],
+      "alignedFiles": 12
+    }
+  },
+  "checks": {
+    "memoryUnchanged": true,
+    "configUnchanged": true,
+    "cronUnchanged": true,
+    "papersNoInFlight": true,
+    "paperCountUnchanged": true,
+    "outboundUnchanged": true,
+    "serviceNotRestarted": true,
+    "memoryActive": true,
+    "runtimeGeneration": true,
+    "descriptionMatchesSource": true,
+    "parameterDescriptionsMatchSource": true
+  },
+  "memory": {
+    "revision": 10,
+    "generation": 3,
+    "facts": 6,
+    "stateSha256": "7a4378100284271aa698d3f1eeee9392a345f7702aa3f615d03a663f417b5198"
+  },
+  "configSha256": "3cf4feb8375d93cdab8956eeb6adadf67576dbb99dbea3ede21c57ce5b198ac5",
+  "cron": {
+    "total": 11,
+    "declarationsSha256": "e50c1f35fb6061605efebcdea08f7a8479ca73c55224147072eea86bdedefa32"
+  },
+  "papers": {
+    "total": 12,
+    "inFlight": 0
+  },
+  "outbound": [
+    {
+      "status": "sent",
+      "count": 478
+    }
+  ],
+  "service": "MainPID=1790930\nActiveEnterTimestamp=Tue 2026-10-20 00:51:20 CST",
+  "runtimeDescriptionSha256": "4c05841bb78e827b1aef9ff38d0513f18a62e05a550b01794505b71ac24acd2a",
+  "ownerAgentsSha256": "66ba1892cf55e01054795ce7d4a1d205b6a862e72132059377c26bfbcc5f1c51",
+  "initialVerifierCorrection": "plugins.list top-level state=enabled describes configuration. Actual loading state is runtime.state=active; initial receipt retained separately.",
+  "boundary": "Read-only runtime verification. No chat, mail, memory mutation, config apply or service restart."
+}

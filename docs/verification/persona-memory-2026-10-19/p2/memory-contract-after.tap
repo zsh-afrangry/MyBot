@@ -1,0 +1,275 @@
+TAP version 13
+# Subtest: persistent create, idempotent replay, revision checked edit and complete deletion
+ok 1 - persistent create, idempotent replay, revision checked edit and complete deletion
+  ---
+  duration_ms: 22.351804
+  type: 'test'
+  ...
+# Subtest: requires exact current owner fact and rejects secrets, stale or consumed intent
+ok 2 - requires exact current owner fact and rejects secrets, stale or consumed intent
+  ---
+  duration_ms: 4.847055
+  type: 'test'
+  ...
+# Subtest: unmanaged files and symlinks cannot be overwritten; private file mode persists
+ok 3 - unmanaged files and symlinks cannot be overwritten; private file mode persists
+  ---
+  duration_ms: 6.09737
+  type: 'test'
+  ...
+# Subtest: original-message intent binds owner, route, freshness and never quoted instructions
+ok 4 - original-message intent binds owner, route, freshness and never quoted instructions
+  ---
+  duration_ms: 0.520402
+  type: 'test'
+  ...
+# Subtest: corrupt negative revision and dangling links are rejected without replacing data
+ok 5 - corrupt negative revision and dangling links are rejected without replacing data
+  ---
+  duration_ms: 0.525762
+  type: 'test'
+  ...
+# Subtest: registration validates contracts and identities; duplicate IDs are rejected separately per kind
+ok 6 - registration validates contracts and identities; duplicate IDs are rejected separately per kind
+  ---
+  duration_ms: 5.570876
+  type: 'test'
+  ...
+# Subtest: resolved selections remain fixed; old unregister handles cannot remove a later replacement
+ok 7 - resolved selections remain fixed; old unregister handles cannot remove a later replacement
+  ---
+  duration_ms: 0.527395
+  type: 'test'
+  ...
+# Subtest: missing, failing and malformed stores never fall back; malformed resources close
+ok 8 - missing, failing and malformed stores never fall back; malformed resources close
+  ---
+  duration_ms: 0.408062
+  type: 'test'
+  ...
+# Subtest: registries do not share selections between applications or plugin captures
+ok 9 - registries do not share selections between applications or plugin captures
+  ---
+  duration_ms: 0.168134
+  type: 'test'
+  ...
+# Subtest: a stale unregister handle cannot remove the same store factory registered again
+ok 10 - a stale unregister handle cannot remove the same store factory registered again
+  ---
+  duration_ms: 0.224449
+  type: 'test'
+  ...
+# Subtest: ordinary store reads, writes, transactions and close reject Promise/thenable results
+    # Subtest: read: fulfilled
+    ok 1 - read: fulfilled
+      ---
+      duration_ms: 0.230711
+      type: 'test'
+      ...
+    # Subtest: read: rejected
+    ok 2 - read: rejected
+      ---
+      duration_ms: 0.215953
+      type: 'test'
+      ...
+    # Subtest: read: thenable
+    ok 3 - read: thenable
+      ---
+      duration_ms: 0.234749
+      type: 'test'
+      ...
+    # Subtest: write: fulfilled
+    ok 4 - write: fulfilled
+      ---
+      duration_ms: 0.163455
+      type: 'test'
+      ...
+    # Subtest: write: rejected
+    ok 5 - write: rejected
+      ---
+      duration_ms: 0.173444
+      type: 'test'
+      ...
+    # Subtest: write: thenable
+    ok 6 - write: thenable
+      ---
+      duration_ms: 0.108954
+      type: 'test'
+      ...
+    # Subtest: transaction: fulfilled
+    ok 7 - transaction: fulfilled
+      ---
+      duration_ms: 0.123451
+      type: 'test'
+      ...
+    # Subtest: transaction: rejected
+    ok 8 - transaction: rejected
+      ---
+      duration_ms: 0.119914
+      type: 'test'
+      ...
+    # Subtest: transaction: thenable
+    ok 9 - transaction: thenable
+      ---
+      duration_ms: 0.683647
+      type: 'test'
+      ...
+    # Subtest: close: fulfilled
+    ok 10 - close: fulfilled
+      ---
+      duration_ms: 0.150591
+      type: 'test'
+      ...
+    # Subtest: close: rejected
+    ok 11 - close: rejected
+      ---
+      duration_ms: 0.116318
+      type: 'test'
+      ...
+    # Subtest: close: thenable
+    ok 12 - close: thenable
+      ---
+      duration_ms: 0.101058
+      type: 'test'
+      ...
+    1..12
+ok 11 - ordinary store reads, writes, transactions and close reject Promise/thenable results
+  ---
+  duration_ms: 9.513281
+  type: 'test'
+  ...
+# Subtest: frozen class stores retain private receivers, getters and extra resource access
+ok 12 - frozen class stores retain private receivers, getters and extra resource access
+  ---
+  duration_ms: 0.344062
+  type: 'test'
+  ...
+# Subtest: an opened store fixes contract methods without mutating the adapter object
+ok 13 - an opened store fixes contract methods without mutating the adapter object
+  ---
+  duration_ms: 0.206205
+  type: 'test'
+  ...
+# Subtest: only callable then properties denote asynchronous results
+ok 14 - only callable then properties denote asynchronous results
+  ---
+  duration_ms: 0.126186
+  type: 'test'
+  ...
+# Subtest: invalid native-async stores and late async factories close without leaking rejections
+ok 15 - invalid native-async stores and late async factories close without leaking rejections
+  ---
+  duration_ms: 1.409413
+  type: 'test'
+  ...
+# Subtest: explicit migration preserves IDs and revision, saves private originals, and leaves one writer
+ok 16 - explicit migration preserves IDs and revision, saves private originals, and leaves one writer
+  ---
+  duration_ms: 62.633092
+  type: 'test'
+  ...
+# Subtest: unmanaged legacy notes, symlink workspaces and symlink state cannot be silently imported
+ok 17 - unmanaged legacy notes, symlink workspaces and symlink state cannot be silently imported
+  ---
+  duration_ms: 38.945613
+  type: 'test'
+  ...
+# Subtest: a partially completed import can finish; unrelated canonical data is never overwritten
+ok 18 - a partially completed import can finish; unrelated canonical data is never overwritten
+  ---
+  duration_ms: 76.371657
+  type: 'test'
+  ...
+# Subtest: automatic batch binds original evidence, persists provenance and replays exactly once
+ok 19 - automatic batch binds original evidence, persists provenance and replays exactly once
+  ---
+  duration_ms: 55.744073
+  type: 'test'
+  ...
+# Subtest: upsert facts error identifies the wrong field; a corrected attempt commits once for the same message
+ok 20 - upsert facts error identifies the wrong field; a corrected attempt commits once for the same message
+  ---
+  duration_ms: 52.45001
+  type: 'test'
+  ...
+# Subtest: action-specific errors separate facts from summary and reject ignored write fields without committing
+ok 21 - action-specific errors separate facts from summary and reject ignored write fields without committing
+  ---
+  duration_ms: 43.5751
+  type: 'test'
+  ...
+# Subtest: explicit correction preserves the ID; reopened context uses the new fact and forget removes it
+ok 22 - explicit correction preserves the ID; reopened context uses the new fact and forget removes it
+  ---
+  duration_ms: 72.994869
+  type: 'test'
+  ...
+# Subtest: non-current sources, credentials, stale requests and unknown owners fail without committing
+ok 23 - non-current sources, credentials, stale requests and unknown owners fail without committing
+  ---
+  duration_ms: 42.485134
+  type: 'test'
+  ...
+# Subtest: credential markers are rejected across long summary boundaries
+ok 24 - credential markers are rejected across long summary boundaries
+  ---
+  duration_ms: 0.258373
+  type: 'test'
+  ...
+# Subtest: correction and forgetting clear all active summaries and fence stale sources and replays
+ok 25 - correction and forgetting clear all active summaries and fence stale sources and replays
+  ---
+  duration_ms: 92.839739
+  type: 'test'
+  ...
+# Subtest: summary TTL is enforced on read/context and expired summaries are removed on next commit
+ok 26 - summary TTL is enforced on read/context and expired summaries are removed on next commit
+  ---
+  duration_ms: 60.949377
+  type: 'test'
+  ...
+# Subtest: real SQLite CAS and failed validation roll back; process exit before commit is recovered
+ok 27 - real SQLite CAS and failed validation roll back; process exit before commit is recovered
+  ---
+  duration_ms: 73.491917
+  type: 'test'
+  ...
+# Subtest: bounded summaries and context do not silently evict facts
+ok 28 - bounded summaries and context do not silently evict facts
+  ---
+  duration_ms: 2294.459188
+  type: 'test'
+  ...
+# Subtest: alternate policy/store are composition-local; async methods fail without success receipts
+ok 29 - alternate policy/store are composition-local; async methods fail without success receipts
+  ---
+  duration_ms: 40.821707
+  type: 'test'
+  ...
+# Subtest: plugin rejects action-incompatible read parameters and exposes explicit field guidance
+ok 30 - plugin rejects action-incompatible read parameters and exposes explicit field guidance
+  ---
+  duration_ms: 41.457344
+  type: 'test'
+  ...
+# Subtest: plugin binds raw ingress, actual run/call, and current owner authority before writes
+ok 31 - plugin binds raw ingress, actual run/call, and current owner authority before writes
+  ---
+  duration_ms: 49.312548
+  type: 'test'
+  ...
+# Subtest: member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes
+ok 32 - member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes
+  ---
+  duration_ms: 40.479167
+  type: 'test'
+  ...
+1..32
+# tests 44
+# suites 0
+# pass 44
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 3224.00514

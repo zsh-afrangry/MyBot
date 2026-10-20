@@ -1,0 +1,187 @@
+TAP version 13
+# Subtest: explicit migration preserves IDs and revision, saves private originals, and leaves one writer
+ok 1 - explicit migration preserves IDs and revision, saves private originals, and leaves one writer
+  ---
+  duration_ms: 51.474183
+  type: 'test'
+  ...
+# Subtest: unmanaged legacy notes, symlink workspaces and symlink state cannot be silently imported
+ok 2 - unmanaged legacy notes, symlink workspaces and symlink state cannot be silently imported
+  ---
+  duration_ms: 40.801783
+  type: 'test'
+  ...
+# Subtest: a partially completed import can finish; unrelated canonical data is never overwritten
+ok 3 - a partially completed import can finish; unrelated canonical data is never overwritten
+  ---
+  duration_ms: 77.953797
+  type: 'test'
+  ...
+# Subtest: automatic batch binds original evidence, persists provenance and replays exactly once
+ok 4 - automatic batch binds original evidence, persists provenance and replays exactly once
+  ---
+  duration_ms: 54.565409
+  type: 'test'
+  ...
+# Subtest: upsert facts error identifies the wrong field; a corrected attempt commits once for the same message
+not ok 5 - upsert facts error identifies the wrong field; a corrected attempt commits once for the same message
+  ---
+  duration_ms: 39.918623
+  type: 'test'
+  location: '/home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:78:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /action=upsert.*facts.*顶层.*text.*未提交/u. Input:
+
+    'Error: 显式更正或遗忘不能夹带自动摘要'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: '显式更正或遗忘不能夹带自动摘要'
+  stack: |-
+    change (file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:56:73)
+    file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:83:65
+    use (file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:15:94)
+    Object.change (file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:83:42)
+    file:///home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:80:27
+    getActual (node:assert:580:5)
+    strict.throws (node:assert:728:24)
+    TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:80:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:80:10)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: action-specific errors separate facts from summary and reject ignored write fields without committing
+not ok 6 - action-specific errors separate facts from summary and reject ignored write fields without committing
+  ---
+  duration_ms: 40.636625
+  type: 'test'
+  location: '/home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:89:1'
+  failureType: 'testCodeFailure'
+  error: |-
+    The input did not match the regular expression /action=upsert.*summary.*observe/u. Input:
+
+    'Error: 显式更正或遗忘不能夹带自动摘要'
+
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  actual:
+  error: '显式更正或遗忘不能夹带自动摘要'
+  stack: |-
+    change (file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:56:73)
+    file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:83:65
+    use (file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:15:94)
+    Object.change (file:///home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory/continuity/application.js:83:42)
+    file:///home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:99:29
+    getActual (node:assert:580:5)
+    strict.throws (node:assert:728:24)
+    TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:99:12)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+  operator: 'throws'
+  stack: |-
+    TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:99:12)
+    Test.runInAsyncScope (node:async_hooks:226:14)
+    Test.run (node:internal/test_runner/test:1402:25)
+    Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+    Test.postRun (node:internal/test_runner/test:1542:19)
+    Test.run (node:internal/test_runner/test:1467:12)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: explicit correction preserves the ID; reopened context uses the new fact and forget removes it
+ok 7 - explicit correction preserves the ID; reopened context uses the new fact and forget removes it
+  ---
+  duration_ms: 73.253715
+  type: 'test'
+  ...
+# Subtest: non-current sources, credentials, stale requests and unknown owners fail without committing
+ok 8 - non-current sources, credentials, stale requests and unknown owners fail without committing
+  ---
+  duration_ms: 44.118641
+  type: 'test'
+  ...
+# Subtest: credential markers are rejected across long summary boundaries
+ok 9 - credential markers are rejected across long summary boundaries
+  ---
+  duration_ms: 0.281416
+  type: 'test'
+  ...
+# Subtest: correction and forgetting clear all active summaries and fence stale sources and replays
+ok 10 - correction and forgetting clear all active summaries and fence stale sources and replays
+  ---
+  duration_ms: 93.945785
+  type: 'test'
+  ...
+# Subtest: summary TTL is enforced on read/context and expired summaries are removed on next commit
+ok 11 - summary TTL is enforced on read/context and expired summaries are removed on next commit
+  ---
+  duration_ms: 60.260529
+  type: 'test'
+  ...
+# Subtest: real SQLite CAS and failed validation roll back; process exit before commit is recovered
+ok 12 - real SQLite CAS and failed validation roll back; process exit before commit is recovered
+  ---
+  duration_ms: 70.680026
+  type: 'test'
+  ...
+# Subtest: bounded summaries and context do not silently evict facts
+ok 13 - bounded summaries and context do not silently evict facts
+  ---
+  duration_ms: 2006.719366
+  type: 'test'
+  ...
+# Subtest: alternate policy/store are composition-local; async methods fail without success receipts
+ok 14 - alternate policy/store are composition-local; async methods fail without success receipts
+  ---
+  duration_ms: 28.745247
+  type: 'test'
+  ...
+# Subtest: plugin rejects action-incompatible read parameters and exposes explicit field guidance
+not ok 15 - plugin rejects action-incompatible read parameters and exposes explicit field guidance
+  ---
+  duration_ms: 30.796749
+  type: 'test'
+  location: '/home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:187:1'
+  failureType: 'testCodeFailure'
+  error: 'Missing expected rejection.'
+  code: 'ERR_ASSERTION'
+  name: 'AssertionError'
+  expected:
+  operator: 'rejects'
+  stack: |-
+    async TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/chatbot/tests/persona/memory.test.mjs:189:3)
+    async Test.run (node:internal/test_runner/test:1409:7)
+    async Test.processPendingSubtests (node:internal/test_runner/test:974:7)
+  ...
+# Subtest: plugin binds raw ingress, actual run/call, and current owner authority before writes
+ok 16 - plugin binds raw ingress, actual run/call, and current owner authority before writes
+  ---
+  duration_ms: 36.257192
+  type: 'test'
+  ...
+# Subtest: member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes
+ok 17 - member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes
+  ---
+  duration_ms: 30.126477
+  type: 'test'
+  ...
+1..17
+# tests 17
+# suites 0
+# pass 14
+# fail 3
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 2856.286515

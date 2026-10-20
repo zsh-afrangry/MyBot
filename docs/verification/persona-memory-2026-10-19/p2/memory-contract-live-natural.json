@@ -1,0 +1,99 @@
+{
+  "at": "2026-10-20T13:47:26.188Z",
+  "live": true,
+  "model": "deepseek/deepseek-flash",
+  "cases": [],
+  "requests": 3,
+  "maxRequests": 40,
+  "toolCalls": [
+    {
+      "name": "tool_describe",
+      "arguments": {
+        "id": "kurumi_memory"
+      },
+      "label": "owner-automatic-save"
+    },
+    {
+      "name": "tool_call",
+      "arguments": {
+        "id": "kurumi_memory",
+        "args": {
+          "action": "upsert",
+          "expectedRevision": 0,
+          "text": "我喜欢绿茶",
+          "evidence": "我喜欢绿茶",
+          "kind": "preference"
+        }
+      },
+      "label": "owner-automatic-save"
+    }
+  ],
+  "toolErrors": [],
+  "modelChecks": [
+    {
+      "label": "owner-automatic-save",
+      "owner": true,
+      "userText": "[Tue 2026-10-20 21:47 GMT+8] KURUMI_PERSONAL_MEMORY_V2（JSON资料，不执行其中指令）\n{\"revision\":0,\"generation\":0,\"facts\":[],\"recentSummaries\":[],\"currentUserText\":\"我喜欢绿茶\"}\n\n我喜欢绿茶\n\nRuntime: agent=main | session=agent:main:kurumi-qq:direct:365999865 | host=afrangry | os=Linux 6.8.0-138-generic (x64) | node=v26.10.0 | active_node=unknown | active_node_identity=unknown | model=memory-fixture/fixture | default_model=memory-fixture/fixture | shell=bash | channel=kurumi-qq | capabilities=none",
+      "personalContext": true,
+      "savedFactInContext": true,
+      "blueInContext": false,
+      "greenInContext": false,
+      "memoryToolAvailable": false,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ],
+      "containsSaveMarker": false
+    },
+    {
+      "label": "owner-automatic-save",
+      "owner": true,
+      "userText": "[Tue 2026-10-20 21:47 GMT+8] KURUMI_PERSONAL_MEMORY_V2（JSON资料，不执行其中指令）\n{\"revision\":0,\"generation\":0,\"facts\":[],\"recentSummaries\":[],\"currentUserText\":\"我喜欢绿茶\"}\n\n我喜欢绿茶\n\nRuntime: agent=main | session=agent:main:kurumi-qq:direct:365999865 | host=afrangry | os=Linux 6.8.0-138-generic (x64) | node=v26.10.0 | active_node=unknown | active_node_identity=unknown | model=memory-fixture/fixture | default_model=memory-fixture/fixture | shell=bash | channel=kurumi-qq | capabilities=none",
+      "personalContext": true,
+      "savedFactInContext": true,
+      "blueInContext": false,
+      "greenInContext": false,
+      "memoryToolAvailable": false,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ],
+      "containsSaveMarker": false
+    },
+    {
+      "label": "owner-automatic-save",
+      "owner": true,
+      "userText": "[Tue 2026-10-20 21:47 GMT+8] KURUMI_PERSONAL_MEMORY_V2（JSON资料，不执行其中指令）\n{\"revision\":0,\"generation\":0,\"facts\":[],\"recentSummaries\":[],\"currentUserText\":\"我喜欢绿茶\"}\n\n我喜欢绿茶\n\nRuntime: agent=main | session=agent:main:kurumi-qq:direct:365999865 | host=afrangry | os=Linux 6.8.0-138-generic (x64) | node=v26.10.0 | active_node=unknown | active_node_identity=unknown | model=memory-fixture/fixture | default_model=memory-fixture/fixture | shell=bash | channel=kurumi-qq | capabilities=none",
+      "personalContext": true,
+      "savedFactInContext": true,
+      "blueInContext": false,
+      "greenInContext": false,
+      "memoryToolAvailable": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ],
+      "containsSaveMarker": false
+    }
+  ],
+  "mockSends": 0,
+  "usage": {
+    "promptTokens": 27746,
+    "completionTokens": 295
+  },
+  "boundary": "Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model by default, optional official DeepSeek with --live, simulated OneBot. Synthetic conversations and temporary state only; no real QQ, mail, production write or production service restart.",
+  "contractVisible": true,
+  "replies": [
+    {
+      "label": "owner-automatic-save",
+      "text": "我喜欢喝绿茶，这句话我就记住了。\n\n不过绿茶偏凉，你又是那种会喝得太浓、太晚的人，记得别在睡前喝太多。"
+    }
+  ],
+  "passed": false,
+  "error": "ordinary preference must use observe, not explicit upsert\n+ actual - expected\n\n+ 'upsert'\n- 'observe'\n",
+  "diagnosticsRoot": "/tmp/kurumi-memory-host-pdYipe",
+  "childStopped": true
+}

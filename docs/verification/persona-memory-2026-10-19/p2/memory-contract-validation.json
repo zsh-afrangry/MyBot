@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-20T14:05:51.283454+00:00",
+  "sourceBaseline": "b3f8b41bebc00ec38aca875d92ffd74908b47091",
+  "sourceSha256": {
+    "chatbot/plugins/kurumi-memory/continuity/application.js": "f0e22cddf4b0b6c2a4a2c7a36e8810100247ad358759310fdd5956ff65e293fa",
+    "chatbot/plugins/kurumi-memory/continuity/contracts.d.ts": "3fd6c62b88d15adf466724ab976416d781b48e34cb72ab17ce961ba96677e1e1",
+    "chatbot/plugins/kurumi-memory/continuity/plugin.js": "20ce13baa58cd09d1c660efed5602897efae684f67fd4af5599af1ab63bcc0de",
+    "chatbot/tests/persona/memory-continuity-host.mjs": "6ff17b710aaaeb3196379e8c38002c5ddf3a6d91bbdc3fb9453abdf2130ab900",
+    "chatbot/tests/persona/memory.test.mjs": "81b53fd9732331a768f5c07127eb83f6a567084510cb23345599083545c445e1",
+    "scripts/fusion/evidence-index.mjs": "7bdec55062dd5376e7797a5f4f51c65c3954cb9429eb6998c2f315de34cff5ab",
+    "scripts/fusion/templates/AGENTS.md": "514f72909d947b208316e92f1929de30fa7c8e04241edf80c16f1d1256b098ad",
+    "chatbot/plugins/kurumi-memory/continuity/tool-contract.js": "631539f944be417cb4713b8cefbfb6c6f0d825efa262b4513292b9d26e7ae01a"
+  },
+  "evidenceCoverage": {
+    "command": "node scripts/fusion/evidence-coverage.mjs",
+    "exitCode": 0,
+    "stdout": "evidence coverage\n  历史领域验收: 84\n  当前有效: 426\n  total: 510\nOK: every file is classified by a named rule.\n",
+    "stderr": ""
+  },
+  "scriptIndex": {
+    "command": "node scripts/fusion/evidence-index.mjs --json",
+    "exitCode": 0,
+    "total": 187,
+    "byBasis": {
+      "offline": 41,
+      "header": 114,
+      "code": 11,
+      "boundary": 21
+    },
+    "boundaryDeclarations": 49,
+    "contradictions": []
+  },
+  "markdown": {
+    "files": 8,
+    "targets": 244,
+    "missing": [],
+    "fenceErrors": [],
+    "boundary": "Local target existence only; external URLs and fragment anchors excluded."
+  },
+  "privacy": {
+    "checkedFiles": 32,
+    "runtimeSecretValues": 13,
+    "originalFactValues": 6,
+    "matchingFiles": [],
+    "scope": "Exact private env values and six existing fact texts; no values printed. Not a general proof against every transformed disclosure."
+  },
+  "diffCheck": {
+    "command": "git diff --cached --check",
+    "exitCode": 0
+  },
+  "ok": true,
+  "evidenceNormalization": {
+    "file": "memory-contract-before.tap",
+    "trailingWhitespaceLines": 4,
+    "assertionsAndResultsUnchanged": true
+  }
+}
