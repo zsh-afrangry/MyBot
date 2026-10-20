@@ -2,7 +2,7 @@ import { Type } from 'typebox';
 import { jsonResult } from 'openclaw/plugin-sdk/agent-runtime';
 import { defineToolPlugin } from 'openclaw/plugin-sdk/tool-plugin';
 import { scopeFromToolContext } from '@kurumi/confirmation-core';
-import { assertToolAccess } from '../../access-control/index.js';
+import { assertToolAccess } from '@kurumi/access-control';
 import type { TrustedReminderContext } from './reminders.js';
 import type { ReminderDelivery } from './reminder-store.js';
 export const planningCommitParameters = Type.Object({

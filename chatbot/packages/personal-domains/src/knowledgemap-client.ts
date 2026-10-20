@@ -1,5 +1,5 @@
 // Same weather parsers/profile semantics, with provider I/O owned by KnowledgeMap.
-import { KnowledgeMapClient, BridgeError } from "../../../packages/knowledgemap-client/client.js";
+import { KnowledgeMapClient, BridgeError } from "@kurumi/knowledgemap-client";
 import type { Coordinates, GeoLookupInput, WeatherClient } from "./qweather-client.js";
 import { WeatherError } from "./errors.js";
 

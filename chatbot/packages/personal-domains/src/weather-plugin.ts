@@ -6,7 +6,7 @@ import { authorizeTools, isTrustedWeatherRead, forbiddenResult } from './tool-co
 import { resolvePersonalWeatherConfig } from './config.js';
 import { QWeatherClient } from './qweather-client.js';
 import { KnowledgeMapWeatherClient } from './knowledgemap-client.js';
-import { createToolTrace } from '../../knowledgemap-client/tool-trace.js';
+import { createToolTrace } from '@kurumi/knowledgemap-client/tool-trace.js';
 import { asWeatherError } from './errors.js';
 import { WeatherStore } from './store.js';
 import { weatherStateDirectory } from './paths.js';

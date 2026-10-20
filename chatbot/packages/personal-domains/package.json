@@ -12,7 +12,9 @@
   ],
   "dependencies": {
     "typebox": "^1.1.38",
-    "@kurumi/confirmation-core": "file:../confirmation-core"
+    "@kurumi/access-control": "file:../access-control",
+    "@kurumi/confirmation-core": "file:../confirmation-core",
+    "@kurumi/knowledgemap-client": "file:../knowledgemap-client"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",
