@@ -1,3 +1,4 @@
+import {withAccess} from '../access-control/fixtures.mjs';
 // Offline refactor regressions: temporary state and actual plugin factories.
 // No model, QQ, external API, service restart or production state access.
 import {test} from 'node:test';
@@ -69,7 +70,7 @@ test('schedule version, audit and replay ledger share the same transaction', t =
 
 function memoryFixture(t) {
   const workspace = directory(t), hooks = {}, factories = {};
-  const config = {channels: {'kurumi-qq': {ownerId: owner}}, agents: {entries: {main: {workspace}}}};
+  const config = withAccess({channels: {'kurumi-qq': {ownerId: owner}}, agents: {entries: {main: {workspace}}}});
   memoryPlugin.register({config, on: (name, handler) => hooks[name] = handler,
     registerTool: (factory, metadata) => factories[metadata.name] = factory});
   const ctx = {senderIsOwner: true, requesterSenderId: owner, messageChannel: 'kurumi-qq', sessionKey,

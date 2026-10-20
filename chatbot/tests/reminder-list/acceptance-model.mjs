@@ -1,3 +1,4 @@
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 // Authorized live primary-model acceptance with actual plugin tool factories.
 // Only /tmp domain state. Service callbacks are not started; Gateway token is
 // removed, so schedule sync cannot mutate production Cron. No QQ delivery.
@@ -27,7 +28,7 @@ const explicitOut = outArg < 0 ? undefined : process.argv[outArg + 1];
 if (outArg >= 0 && !explicitOut) throw Error('--out requires an output directory');
 const outDir = explicitOut ? resolve(explicitOut) : resolve(repo, 'docs/verification/reminder-list-2026-10-11', natural ? 'natural-input' : '');
 const runtime = '/home/afrangry/.openclaw-fusion';
-const cfg = JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json')));
+const cfg = compileAccessConfig(JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json'))));
 const primary = cfg.agents.entries.main.model.primary, [providerId, model] = primary.split('/');
 const provider = cfg.models.providers[providerId];
 const secrets = JSON.parse(fs.readFileSync(join(runtime, 'runtime-env.json')));

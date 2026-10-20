@@ -1,3 +1,4 @@
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
 // Real model + real isolated OpenClaw dispatch + FastAPI/SQLite; mock OneBot. No QQ/production writes.
@@ -46,7 +47,7 @@ const apiPort = apiProbe.address().port; await new Promise(r => apiProbe.close(r
 const tokenFile = join(root, 'bridge-token'); fs.writeFileSync(tokenFile, token, {mode: 0o600});
 const apiChild = spawn('/home/afrangry/miniconda3/envs/desheng/bin/python', [join(km, 'backend/tests/assistant_server.py'), '--port', String(apiPort), '--token-file', tokenFile], {stdio: 'ignore'});
 const api = new KnowledgeMapClient({baseUrl: `http://127.0.0.1:${apiPort}`, tokenFile, trace() {}});
-const cfg = JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))); delete cfg._managed;
+const cfg = compileAccessConfig(JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json')))); delete cfg._managed;
 cfg.gateway = {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}};
 cfg.agents.defaults.workspace = join(root, 'workspace');
 cfg.agents.entries = {main: {...cfg.agents.entries.main, workspace: join(root, 'workspace'), tools: {

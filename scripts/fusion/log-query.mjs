@@ -494,6 +494,7 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   if (include('personal-reminders')) events.push(...readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to));
   if (include('personal-reminder-list')) events.push(...readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to));
   if (include('trace-events')) events.push(...readTraceFile(path.join(runtimeRoot, 'channel', 'trace-events.jsonl'), from, to));
+  if (include('access-control')) events.push(...readTraceFile(path.join(runtimeRoot,'channel','access-events.jsonl'),from,to));
   if (include('papers')) {
     // Configured managed root, with a portable default for isolated tests/restores.
     let root = path.join(runtimeRoot, 'documents');
@@ -542,7 +543,9 @@ function localTime(epoch) {
 
 export function formatEvent(eventValue) {
   const ids = Object.entries(eventValue.correlation).map(([key, value]) => `${key}=${value}`).join(' ');
-  const body = eventValue.data.text ?? eventValue.data.textPreview ?? eventValue.data.content ?? eventValue.data.message ?? eventValue.data.tool ?? eventValue.data.result ?? '';
+  const body = eventValue.source === 'access-control'
+    ? [eventValue.data.tool, eventValue.data.permission, eventValue.data.decision, eventValue.data.code].filter(Boolean).join(' ')
+    : eventValue.data.text ?? eventValue.data.textPreview ?? eventValue.data.content ?? eventValue.data.message ?? eventValue.data.tool ?? eventValue.data.result ?? '';
   const suffix = body ? ` | ${summarizeText(typeof body === 'string' ? body : JSON.stringify(body), 260)}` : '';
   return `${localTime(eventValue.epochMs)} [${eventValue.kind}] ${eventValue.source}${ids ? ` (${ids})` : ''}${suffix}`;
 }

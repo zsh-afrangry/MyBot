@@ -64,6 +64,10 @@
             "type": "integer",
             "minimum": 0,
             "maximum": 2000
+          },
+          "accessControl": {
+            "type": "object",
+            "additionalProperties": true
           }
         }
       }
@@ -73,6 +77,9 @@
     "tools": [
       "kurumi_test_wait",
       "kurumi_sticker"
+    ],
+    "trustedToolPolicies": [
+      "kurumi-access-control"
     ]
   },
   "toolMetadata": {

@@ -19,7 +19,9 @@ export function localImage(file,a){
  return {type:'image',data:{file:'base64://'+bytes.toString('base64')}};
 }
 export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
- const a=account(cfg);ownerTarget(to,a);
+ const a=account(cfg),target=ownerTarget(to,a);
+ // Preserve legacy owner receipt keys; every member has a separate idempotency namespace.
+ if(target!==a.ownerId)id=`subject:${target}:${id}`;
  if(!Array.isArray(message)||!message.length||message.some(x=>!['text','reply','image'].includes(x.type)))throw Error('Invalid message segments');
  context.signal?.throwIfAborted();
  const l=new Ledger(a.stateDir);
@@ -29,7 +31,8 @@ export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
   try{
    await context.onPlatformSendDispatch?.();
    context.signal?.throwIfAborted();context.assertDirectAdapterHandoff?.();
-   const r=await onebot(a,'send_private_msg',{user_id:Number(a.ownerId),message},context.signal);
+ ownerTarget(to,account(cfg));
+   const r=await onebot(a,'send_private_msg',{user_id:Number(target),message},context.signal);
    if(!Number.isSafeInteger(r?.message_id)||r.message_id===0)throw Error('Missing message receipt');
    l.sent(id,r.message_id);return {channel:'kurumi-qq',messageId:String(r.message_id)};
   }catch(e){if(e.rejected)l.failed(id);throw e;}
@@ -37,9 +40,10 @@ export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
 }
 export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliveryQueueId,deliveryPartIndex,signal,onPlatformSendDispatch,assertDirectAdapterHandoff,onDeliveryResult}){
  key??=deliveryQueueId?`delivery:${deliveryQueueId}:${deliveryPartIndex??0}`:randomUUID();
- const a=account(cfg);ownerTarget(to,a);
+ const a=account(cfg),target=ownerTarget(to,a);
+ const mediaAccount=target===a.ownerId?a:{...a,mediaRoot:path.join(a.mediaRoot,'subjects',target)};
  if(replyToId!=null&&!/^-?[1-9]\d*$/.test(String(replyToId)))throw Error('Invalid reply id');
- const media=mediaUrl?localImage(mediaUrl,a):null;
+ const media=mediaUrl?localImage(mediaUrl,mediaAccount):null;
  const {pieces,paced}=presentForQQ(text,a.chunkLimit??1200,a.naturalSegments!==false);
  if(!pieces.length&&media)pieces.push('');
  let last;

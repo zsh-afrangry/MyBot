@@ -96,7 +96,7 @@ export function createMailPlugin({ registry } = {}) {
           properties: { probe: { type: "boolean", description: "Also connect and authenticate to the SMTP server." } },
         },
         async execute(callId, args, signal) {
-          assertOwnerContext(ctx);
+          assertOwnerContext(ctx, api.config, "mail.status");
           ctx.assertInvocationCurrent?.();
           const config = readMailConfig();
           const allowedRecipients = allowlistOf(api);
@@ -178,7 +178,7 @@ export function createMailPlugin({ registry } = {}) {
           },
         },
         async execute(callId, args, signal) {
-          assertOwnerContext(ctx);
+          assertOwnerContext(ctx, api.config, "mail.draft");
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           const scope = requireConfirmationScope(ctx);
@@ -210,7 +210,7 @@ export function createMailPlugin({ registry } = {}) {
           },
         },
         async execute(callId, args, signal) {
-          assertOwnerContext(ctx);
+          assertOwnerContext(ctx, api.config, "mail.send");
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           const scope = requireConfirmationScope(ctx);
@@ -246,7 +246,7 @@ export function createMailPlugin({ registry } = {}) {
           },
         },
         async execute(callId, args, signal) {
-          assertOwnerContext(ctx);
+          assertOwnerContext(ctx, api.config, "mail.history");
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           return json(withStore((store) => {

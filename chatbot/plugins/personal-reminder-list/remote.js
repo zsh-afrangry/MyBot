@@ -100,7 +100,7 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
     const request = inbound.current();
     return {...declaration, async execute(callId, args = {}, signal) {
       const config = ctx.getRuntimeConfig?.() ?? api.config;
-      if (!ownerAuthorized(ctx, config)) return {content: [{type: 'text', text: JSON.stringify({ok: false, error: {code: 'forbidden_context', message: '只支持本人QQ私聊'}})}]};
+      if (!ownerAuthorized(ctx, config, declaration.name==='personal_reminder_list_get'?'reminder-list.read':['schedule','pause','resume'].includes(args.action)?'reminder-list.schedule':'reminder-list.manage')) return {content: [{type: 'text', text: JSON.stringify({ok: false, error: {code: 'forbidden_context', message: '只支持本人QQ私聊'}})}]};
       try {
         ctx.assertInvocationCurrent(); signal?.throwIfAborted();
         const runId = trace.resolve(ctx, callId, declaration.name);

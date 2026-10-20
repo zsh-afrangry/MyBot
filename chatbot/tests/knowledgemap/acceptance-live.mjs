@@ -1,3 +1,4 @@
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
 // Real model/production API/MySQL/browser + one owner QQ digest. Explicit --live --qq required.
@@ -21,7 +22,7 @@ import {buildJob} from '../../plugins/personal-reminder-list/scheduler.js';
 
 assert.ok(process.argv.includes('--live')&&process.argv.includes('--qq'),'--live --qq acknowledges production writes/model/restarts and owner-only QQ delivery');
 const repo=resolve(fileURLToPath(new URL('../../../',import.meta.url))),state='/home/afrangry/.openclaw-fusion';
-const configFile=join(repo,'config/runtime.config.json'),original=fs.readFileSync(configFile,'utf8'),cfg=JSON.parse(original);
+const configFile=join(repo,'config/runtime.config.json'),original=fs.readFileSync(configFile,'utf8'),cfg=compileAccessConfig(JSON.parse(original),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json'))));
 const owner=cfg.channels['kurumi-qq'].ownerId;assert.equal(owner,'365999865');assert.equal(cfg.channels['kurumi-qq'].testIngress,false);
 const bridge=cfg.plugins.entries['kurumi-knowledgemap'].config,client=new KnowledgeMapClient({...bridge,trace(){}});
 const marker='[doc23-'+Date.now().toString(36)+']',billIds=new Set(),taskIds=new Set(),started=Date.now();

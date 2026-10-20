@@ -1,3 +1,4 @@
+import {withAccess} from '../access-control/fixtures.mjs';
 // Offline document and QQ file boundaries. Temporary directories and mocked HTTP only. docs/22.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -11,7 +12,7 @@ import {pdf} from './fixtures.mjs';
 const inspect = async () => ({pages: 1});
 function setup(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-pdf-test-')); t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
-  const cfg = {channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:'http://127.0.0.1:1',wsUrl:'ws://127.0.0.1:2',stateDir:path.join(root,'channel'),dailySendLimit:20}},plugins:{entries:{'kurumi-papers':{config:{root:path.join(root,'documents')}}}}};
+  const cfg = withAccess({channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:'http://127.0.0.1:1',wsUrl:'ws://127.0.0.1:2',stateDir:path.join(root,'channel'),dailySendLimit:20}},plugins:{entries:{'kurumi-papers':{config:{root:path.join(root,'documents')}}}}});
   return {root, cfg, docs: new Documents(path.join(root,'documents'))};
 }
 test('Real PDF inspection, portable catalog and byte integrity survive reopen', async t => {

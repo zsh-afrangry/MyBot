@@ -1,3 +1,4 @@
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
 // Real configured model + actual v2 factories + isolated FastAPI/SQLite. No QQ/production writes.
@@ -17,7 +18,7 @@ const km = process.env.KM_TEST_REPO ?? '/home/afrangry/repository';
 const outIndex = process.argv.indexOf('--out');
 if (outIndex < 0 || !process.argv[outIndex + 1]) throw Error('--out required; never overwrite an earlier report implicitly');
 const out = resolve(process.argv[outIndex + 1]); fs.mkdirSync(out, {recursive: true});
-const cfg = JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json')));
+const cfg = compileAccessConfig(JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json'))));
 const [providerId, model] = cfg.agents.entries.main.model.primary.split('/'), provider = cfg.models.providers[providerId];
 const secrets = JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
 const key = secrets[provider.apiKey.id];

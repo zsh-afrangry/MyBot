@@ -1,3 +1,4 @@
+import {withAccess} from '../access-control/fixtures.mjs';
 // Offline lifecycle tests: injected worker, no real model or delivery. Contract: docs/22.
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -164,7 +165,7 @@ test('Worker failure retains bounded structural diagnostics before removing its 
 });
 test('Registered tools reject non-owner, keep generic filesystem tools absent',async t=>{
   const {service}=await setup(t), tools=[],services=[];
-  createPaperPlugin({serviceFactory:()=>service}).register({pluginConfig:service.config,config:{},registerTool:tool=>tools.push(tool),registerService:s=>services.push(s)});
+  createPaperPlugin({serviceFactory:()=>service}).register({pluginConfig:service.config,config:withAccess({}),registerTool:tool=>tools.push(tool),registerService:s=>services.push(s)});
   assert.deepEqual(tools.map(t=>t.create({}).name),['kurumi_document','kurumi_translate','kurumi_document_send']);
-  for(const tool of tools)await assert.rejects(tool.create({getRuntimeConfig:()=>({channels:{'kurumi-qq':{ownerId:'365999865'}}}),senderIsOwner:false}).execute('id',{action:'list'}),/owner/);
+  for(const tool of tools)await assert.rejects(tool.create({getRuntimeConfig:()=>({channels:{'kurumi-qq':{ownerId:'365999865'}}}),senderIsOwner:false}).execute('id',{action:'list'}),/untrusted_identity_context/);
 });

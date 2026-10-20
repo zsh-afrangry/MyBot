@@ -1,3 +1,4 @@
+import {withAccess} from '../access-control/fixtures.mjs';
 // Offline plugin adapter tests: actual v2 factories/hooks, temporary state only.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -16,7 +17,7 @@ function setup(t) {
   process.env.OPENCLAW_STATE_DIR = root;
   t.after(() => {if (previous === undefined) delete process.env.OPENCLAW_STATE_DIR; else process.env.OPENCLAW_STATE_DIR = previous; rmSync(root, {recursive: true, force: true});});
   const hooks = {}, factories = {}, services = [];
-  const cfg = {channels: {'kurumi-qq': {ownerId: owner}}, gateway: {port: 18890}};
+  const cfg = withAccess({channels: {'kurumi-qq': {ownerId: owner}}, gateway: {port: 18890}});
   plugin.register({config: cfg, registrationMode: 'full', pluginConfig: {backendRoot: fileURLToPath(new URL('../../', import.meta.url))}, logger: {warn() {}}, on: (name, fn) => hooks[name] = fn, registerTool: (fn, meta) => factories[meta.name] = fn, registerService: service => services.push(service)});
   const ctx = {senderIsOwner: true, requesterSenderId: owner, messageChannel: 'kurumi-qq', sessionKey: session, sessionId: 'plugin-test-session', runId: 'test-run', getRuntimeConfig: () => cfg, assertInvocationCurrent() {}};
   const event = (text, id = '1') => ({ctx: {RawBody: text, MessageSid: id, Timestamp: Date.now(), ChatType: 'direct', CommandAuthorized: true, SenderId: owner, SessionKey: session, OriginatingChannel: 'kurumi-qq', OriginatingTo: `user:${owner}`}});

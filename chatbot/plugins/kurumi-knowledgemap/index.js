@@ -45,7 +45,7 @@ export function createKnowledgeMapPlugin({clientFactory = options => new Knowled
       const request = inbound.current();
       return {...declaration, async execute(callId, args = {}, signal) {
         const config = ctx.getRuntimeConfig?.() ?? api.config;
-        if (!ownerAuthorized(ctx, config)) return json({ok: false, error: {code: 'forbidden_context', message: '只支持本人QQ私聊'}});
+        if (!ownerAuthorized(ctx, config, declaration.name==='knowledge_bills_get'?'bills.read':'bills.manage')) return json({ok: false, error: {code: 'forbidden_context', message: '只支持本人QQ私聊'}});
         ctx.assertInvocationCurrent(); signal?.throwIfAborted();
         try {
           const runId = trace.resolve(ctx, callId, declaration.name);

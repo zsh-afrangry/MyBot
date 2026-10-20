@@ -15,9 +15,9 @@ import { scopeFromToolContext } from "@kurumi/confirmation-core";
  *
  * @returns the resolved runtime config, so callers do not re-resolve it differently.
  */
-export function assertOwnerContext(ctx, config) {
+export function assertOwnerContext(ctx, config, permission) {
   const resolved = ctx?.getRuntimeConfig?.() ?? config;
-  if (!ownerAuthorized(ctx, resolved)) {
+  if (!ownerAuthorized(ctx, resolved, permission)) {
     const error = new Error("Mail tools are available in the owner's private chat only");
     error.code = "unauthorized_owner_context";
     throw error;

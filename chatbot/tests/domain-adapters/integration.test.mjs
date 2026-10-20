@@ -1,3 +1,4 @@
+import {withAccess} from '../access-control/fixtures.mjs';
 // Offline real plugin factories + alternate policies/stores. Only /tmp state.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
@@ -22,7 +23,7 @@ function temp(t) {const root = mkdtempSync(join(tmpdir(), 'kurumi-adapters-')); 
 function request(raw = '原始请求') {return {raw, at: Date.now(), actions: new Set(), messageId: 'message', sessionKey: session};}
 function harness(plugin, root, pluginConfig) {
   let sequence = 0;
-  const hooks = {}, tools = {}, services = [], config = {channels: {'kurumi-qq': {ownerId: owner}}, agents: {entries: {main: {workspace: root}}}};
+  const hooks = {}, tools = {}, services = [], config = withAccess({channels: {'kurumi-qq': {ownerId: owner}}, agents: {entries: {main: {workspace: root}}}});
   plugin.register({config, pluginConfig, registrationMode: 'full', on: (name, fn) => hooks[name] = fn,
     registerTool: (factory, meta) => tools[meta.name] = factory, registerService: s => services.push(s)});
   const ctx = {senderIsOwner: true, requesterSenderId: owner, messageChannel: 'kurumi-qq', sessionKey: session, sessionId: 'real-host-uuid', assertInvocationCurrent() {}};

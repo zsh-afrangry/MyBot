@@ -19,10 +19,10 @@ export async function stageImage(segment,a){
  const saved=await saveRemoteMedia({url,requireHttps:true,maxRedirects:0,maxBytes:8*1024*1024,timeoutMs:15000,subdir:'inbound'});
  if(!saved.contentType?.startsWith('image/'))throw Error('Not image media');return saved;
 }
-export async function quoteText(id,a,selfId){
+export async function quoteText(id,a,selfId,peerId=a.ownerId){
  if(!/^-?[1-9]\d*$/.test(String(id)))return null;
  const m=await onebot(a,'get_msg',{message_id:Number(id)});
  const from=String(m.sender?.user_id??m.user_id),to=String(m.target_id);
- if(m.message_type!=='private'||!((from===a.ownerId&&to===String(selfId))||(from===String(selfId)&&to===a.ownerId)))return null;
+ if(m.message_type!=='private'||!((from===peerId&&to===String(selfId))||(from===String(selfId)&&to===peerId)))return null;
  return (m.message??[]).filter(x=>x.type==='text').map(x=>String(x.data?.text??'')).join('').slice(0,4000);
 }

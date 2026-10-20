@@ -21,15 +21,22 @@ export function normalizePages(value, pages, maxPages = 30) {
   return [...selected].sort((a,b) => a-b).join(',');
 }
 export class PaperService {
-  constructor(config, {runner = runTranslation, sendFile, notify, trace = () => {}, inspect, download = downloadScholarlyPdf} = {}) {
+  constructor(config, {runner = runTranslation, sendFile, notify, trace = () => {}, inspect, documentsFor, ownerBinding, authorize, download = downloadScholarlyPdf} = {}) {
     this.config = config; this.documents = new Documents(config.root);
+    this.documentsFor = documentsFor ?? (() => this.documents); this.ownerBinding = ownerBinding; this.authorize = authorize;
     this.download = download; this.runner = runner; this.sendFile = sendFile; this.notify = notify; this.trace = trace; this.inspect = inspect;
     this.queue = []; this.active = null; this.online = false;
   }
   file(id) { if (!JOB_ID.test(id ?? '')) throw Error('Invalid translation job ID'); return path.join(this.documents.root, 'jobs', id + '.json'); }
   get(id) { const file = this.file(id); if (fs.lstatSync(file).isSymbolicLink()) throw Error('Invalid job file'); const data = JSON.parse(fs.readFileSync(file)); if (data.id !== id) throw Error('Job identity mismatch'); return data; }
-  status(id) {
-    const job = this.get(id), usage = path.join(this.documents.root, 'work', id, 'usage.json');
+  binding(job) { return job.requester ?? this.ownerBinding; }
+  check(job, permission) { this.authorize?.(this.binding(job), permission); }
+  scopedGet(id, requester) {
+    try { const job=this.get(id); if(this.authorize && (!requester || this.binding(job)?.subjectId!==requester.subjectId))throw Error('not_owned'); return job; }
+    catch {throw Object.assign(Error('paper_resource_not_found'),{code:'paper_resource_not_found'});}
+  }
+  status(id, requester) {
+    const job = this.scopedGet(id,requester), usage = path.join(this.documents.root, 'work', id, 'usage.json');
     if (job.status === 'running' && fs.existsSync(usage) && !fs.lstatSync(usage).isSymbolicLink()) {
       try { job.usage = JSON.parse(fs.readFileSync(usage)); } catch {}
     }
@@ -40,7 +47,7 @@ export class PaperService {
     return job;
   }
   save(job) { job.updatedAt = new Date().toISOString(); atomicJson(this.file(job.id), job); this.trace({kind: 'paper.job', correlation: {taskId: job.id, ...job.correlation}, data: {status: job.status, documentId: job.documentId, profile: job.profile, error: job.error ?? null, delivery: job.delivery ?? null}}); return job; }
-  list() { return fs.readdirSync(path.join(this.documents.root, 'jobs')).filter(n => /^job_[a-f0-9]{24}\.json$/.test(n)).map(n => this.get(n.slice(0,-5))).sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,20); }
+  list(requester) { return fs.readdirSync(path.join(this.documents.root, 'jobs')).filter(n => /^job_[a-f0-9]{24}\.json$/.test(n)).map(n => this.get(n.slice(0,-5))).filter(job=>!this.authorize||(requester && this.binding(job)?.subjectId===requester.subjectId)).sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,20); }
   start() {
     for (const name of fs.readdirSync(path.join(this.documents.root, 'jobs'))) {
       if (!/^job_[a-f0-9]{24}\.json$/.test(name)) continue;
@@ -55,25 +62,32 @@ export class PaperService {
     for (const id of this.queue.splice(0)) { const job = this.get(id); job.status = 'interrupted'; this.save(job); }
     this.active?.controller.abort(); await this.active?.promise;
   }
-  async fetch(url, {signal} = {}) {
-    const cache = path.join(this.documents.root, 'cache');
+  async fetch(url, {signal,requester} = {}) {
+    const check=()=>this.authorize?.(requester,'papers.import');check();
+    const documents=this.documentsFor(requester?.subjectId);
+    const cache = path.join(documents.root, 'cache');
     const paper = await this.download(cache, url, {signal});
-    return this.documents.add(fs.readFileSync(paper.pdfPath), {filename: `paper-${paper.id}.pdf`, source: {type: 'scholarly', url: paper.url}}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
+    check();
+    return documents.add(fs.readFileSync(paper.pdfPath), {filename: `paper-${paper.id}.pdf`, source: {type: 'scholarly', url: paper.url}}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
   }
-  submit(args, {key, correlation = {}} = {}) {
+  submit(args, {key, correlation = {}, requester} = {}) {
     if (!this.online) throw Error('Translation job service is not running');
     if (this.config.liveTranslationEnabled !== true) throw Error('Live translation awaits budget approval; document acquisition and offline tests remain available');
     if (!key || typeof key !== 'string') throw Error('Trusted invocation key required');
-    const doc = this.documents.describe(args.documentId), profile = resolveProfile(args);
+    this.authorize?.(requester,'papers.translate');
+    const doc = this.documentsFor(requester?.subjectId).describe(args.documentId), profile = resolveProfile(args);
     const pages = normalizePages(args.pages, doc.pages, this.config.maxPages ?? 30);
     const sourceLang = args.sourceLang ?? 'en', targetLang = args.targetLang ?? 'zh';
     for (const lang of [sourceLang, targetLang]) if (!['en','zh','zh-cn','zh-tw','ja','de','fr','es','ru'].includes(lang)) throw Error('Unsupported translation language');
     const delivery = args.delivery ?? 'qq'; if (!['qq','none'].includes(delivery)) throw Error('Translation delivery must be qq or none; email uses the confirmed mail draft tools');
     const deliveryKind = args.output ?? 'dual'; selectedOutputs(deliveryKind);
-    const parameters = {documentId: doc.id, profile, pages, sourceLang, targetLang, deliveryTarget: delivery, deliveryKind};
+    if(delivery==='qq')this.authorize?.(requester,'qq.file.reply');
+    const parameters = {...(requester?{requester:structuredClone(requester)}:{}),documentId: doc.id, profile, pages, sourceLang, targetLang, deliveryTarget: delivery, deliveryKind};
     const digest = createHash('sha256').update(JSON.stringify(parameters)).digest('hex');
-    const id = 'job_' + createHash('sha256').update(key).digest('hex').slice(0,24);
-    if (fs.existsSync(this.file(id))) { const existing = this.get(id); if (existing.requestHash !== digest) throw Error('Invocation key reused with different parameters'); return existing; }
+    const id = 'job_' + createHash('sha256').update(requester && requester.subjectId!==this.ownerBinding?.subjectId?requester.subjectId+':'+key:key).digest('hex').slice(0,24);
+    if (fs.existsSync(this.file(id))) { const existing = this.scopedGet(id,requester); const {requester:ignored,...legacyParameters}=parameters;
+      const legacyDigest=createHash('sha256').update(JSON.stringify(legacyParameters)).digest('hex');
+      if (existing.requestHash !== digest && !(this.ownerBinding && !existing.requester && existing.requestHash===legacyDigest)) throw Error('Invocation key reused with different parameters'); return existing; }
     if (this.queue.length >= 5) throw Error('Translation queue is full (maximum 5 waiting jobs)');
     const job = this.save({id, ...parameters, requestHash: digest, status: 'queued', correlation, createdAt: new Date().toISOString(), artifacts: {}});
     this.queue.push(id); this.scheduleDrain(); return job;
@@ -88,23 +102,30 @@ export class PaperService {
   async drain() {
     if (!this.online || this.active || !this.queue.length) return;
     const id = this.queue.shift(), controller = new AbortController();
+    const job=this.get(id);
+    // One shared queue across users. Check permission before starting and while work is active.
+    const timer=this.authorize?setInterval(()=>{try{this.check(job,'papers.translate');}catch{controller.abort();}},500):undefined;
+    timer?.unref();
     const promise = this.execute(id, controller.signal);
     this.active = {id, controller, promise};
-    try { await promise; } finally { this.active = null; this.scheduleDrain(); }
+    try { await promise; } finally { clearInterval(timer); this.active = null; this.scheduleDrain(); }
   }
   async execute(id, signal) {
     const job = this.get(id), work = path.join(this.documents.root, 'work', id);
     try {
+      this.check(job,'papers.translate');
+      const documents=this.documentsFor(this.binding(job)?.subjectId);
       fs.mkdirSync(work, {mode: 0o700});
-      fs.writeFileSync(path.join(work, 'input.pdf'), this.documents.get(job.documentId).content, {mode: 0o600, flag: 'wx'});
+      fs.writeFileSync(path.join(work, 'input.pdf'), documents.get(job.documentId).content, {mode: 0o600, flag: 'wx'});
       job.status = 'running'; job.execution = {...executionSettings(this.config), ...reliabilitySettings(this.config)}; this.save(job);
-      const result = await this.runner({config: this.config, work, cache: path.join(this.documents.root, 'cache'), profile: job.profile, pages: job.pages, sourceLang: job.sourceLang, targetLang: job.targetLang, outputKind: job.deliveryKind, signal});
+      const result = await this.runner({config: this.config, work, cache: path.join(documents.root, 'cache'), profile: job.profile, pages: job.pages, sourceLang: job.sourceLang, targetLang: job.targetLang, outputKind: job.deliveryKind, signal});
       signal.throwIfAborted();
+      this.check(job,'papers.translate');
       job.usage = result.usage;
       for (const kind of selectedOutputs(job.deliveryKind)) {
         try {
           if (typeof result[kind] !== 'string') throw Object.assign(Error('missing_selected_pdf_output'), {code: 'missing_selected_pdf_output'});
-          const record = await this.documents.add(fs.readFileSync(result[kind]), {kind: 'artifact', filename: this.documents.describe(job.documentId).filename.replace(/\.pdf$/i, `${job.pages ? '-pages-' + job.pages : ''}-${kind}.pdf`), source: {type: 'translation', inputId: job.documentId}, jobId: id}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
+          const record = await documents.add(fs.readFileSync(result[kind]), {kind: 'artifact', filename: documents.describe(job.documentId).filename.replace(/\.pdf$/i, `${job.pages ? '-pages-' + job.pages : ''}-${kind}.pdf`), source: {type: 'translation', inputId: job.documentId}, jobId: id}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
           job.artifacts[kind] = record.id;
         } catch (error) {
           const code = /^[a-zA-Z0-9_]+$/.test(error.code ?? '') ? error.code : 'pdf_artifact_registration_failed';
@@ -117,7 +138,8 @@ export class PaperService {
         job.delivery = {status: 'dispatching', receipts: []}; this.save(job);
         for (const kind of selectedOutputs(job.deliveryKind)) {
           signal.throwIfAborted();
-          const receipt = await this.sendFile(job.artifacts[kind], id + ':' + kind, signal);
+          this.check(job,'qq.file.reply');
+          const receipt = await this.sendFile(job.artifacts[kind], id + ':' + kind, signal, this.binding(job));
           job.delivery.receipts.push(receipt); this.save(job);
         }
         job.delivery.status = 'platform_accepted'; this.save(job);
@@ -125,7 +147,7 @@ export class PaperService {
     } catch (error) {
       if (job.status === 'succeeded') { job.delivery.status = 'failed_or_unknown'; this.save(job); }
       else { job.status = signal.aborted ? (this.online ? 'cancelled' : 'interrupted') : 'failed'; job.error = /^[a-zA-Z0-9_]+$/.test(error.code ?? '') ? error.code : 'translation_failed'; this.save(job); }
-      try { if (this.online && !signal.aborted) await this.notify?.(`论文翻译任务 ${id}：${job.status === 'succeeded' ? '译文已生成，但文件投递未确认，可查询任务后重新安排投递。' : '未完成（' + job.error + '），可查询详情。'}`, id); } catch {}
+      try { this.check(job,'qq.notify'); if (this.online && !signal.aborted) await this.notify?.(`论文翻译任务 ${id}：${job.status === 'succeeded' ? '译文已生成，但文件投递未确认，可查询任务后重新安排投递。' : '未完成（' + job.error + '），可查询详情。'}`, id, this.binding(job)); } catch {}
     } finally {
       // Keep bounded usage evidence even on cancellation; remove duplicated input/intermediate PDFs.
       const usageFile = path.join(work, 'usage.json');
@@ -137,8 +159,9 @@ export class PaperService {
       fs.rmSync(work, {recursive: true, force: true});
     }
   }
-  async cancel(id) {
-    const job = this.get(id);
+  async cancel(id,requester) {
+    const job = this.scopedGet(id,requester);
+    this.authorize?.(requester,'papers.cancel');
     if (job.status === 'queued') { this.queue = this.queue.filter(x => x !== id); job.status = 'cancelled'; this.save(job); }
     else if (job.status === 'running' && this.active?.id === id) { this.active.controller.abort(); await this.active.promise; }
     return this.get(id);

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash, randomUUID} from 'node:crypto';
 import {runSandbox} from '../sandbox/index.js';
+import {activeSubject, primaryOwner} from '../access-control/index.js';
 
 export const MAX_PDF_BYTES = 25 * 1024 * 1024;
 // Dual PDFs include the original and translated resources; the worker caps each output at 100 MiB.
@@ -11,10 +12,12 @@ export const MAX_ARTIFACT_PDF_BYTES = 100 * 1024 * 1024;
 const byteLimit = kind => kind === 'artifact' ? MAX_ARTIFACT_PDF_BYTES : MAX_PDF_BYTES;
 export const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 export const validId = id => /^(?:doc|pdf)_[a-f0-9]{32}$/.test(String(id));
-export function documentRoot(cfg) {
+export function documentRoot(cfg, subjectId) {
   const root = cfg?.plugins?.entries?.['kurumi-papers']?.config?.root;
   if (!path.isAbsolute(root ?? '')) throw Error('Managed document root is not configured');
-  return root;
+  if (!subjectId) return root; // Internal owner-only mail/diagnostic callers retain the legacy root.
+  activeSubject(cfg, subjectId, 'papers.read');
+  return subjectId === primaryOwner(cfg).qq ? root : path.join(root, 'subjects', subjectId);
 }
 export function safeName(value) {
   const name = String(value ?? 'document.pdf').normalize('NFC').replace(/[\x00-\x1f\x7f/\\]/g, '_').slice(0, 160);

@@ -1,16 +1,19 @@
-// Owner-private PDF ingress/egress, sharing the managed document catalog. Contract: docs/22.
+// Authorized private PDF ingress/egress, sharing the managed document catalog. Contract: docs/22.
 import {Documents, documentRoot, MAX_PDF_BYTES, inspectPdf} from '../../../packages/documents/index.js';
-import {account, ownerTarget} from './config.js';
+import {account} from './config.js';
 import {onebot} from './transport.js';
 import {Ledger} from './ledger.js';
 import {createTraceSink} from '../../../packages/observability/index.js';
 import {isIP} from 'node:net';
 import https from 'node:https';
 import {Readable} from 'node:stream';
+import {activeSubject, targetSubject} from '../../../packages/access-control/index.js';
 
 export function traceFile(cfg, event) {
   try { createTraceSink(documentRoot(cfg) + '/events.jsonl').emit({source: 'papers', ...event}); } catch {}
 }
+
+const receiveError = (code, message) => Object.assign(Error(message), {code});
 
 // CDN download addresses are data from the authenticated OneBot result, not arbitrary user URLs.
 export function qqFileUrl(value) {
@@ -42,9 +45,10 @@ async function fetchQqFile(url, options) {
     req.once('error', reject);
   });
 }
-const receiveError = (code, message) => Object.assign(Error(message), {code});
-export async function stagePdf(segment, cfg, {signal, apiCall = onebot, fetcher = fetchQqFile, inspect} = {}) {
+export async function stagePdf(segment, cfg, {subjectId, signal, apiCall = onebot, fetcher = fetchQqFile, inspect} = {}) {
   const a = account(cfg), data = segment.data ?? segment;
+  subjectId ??= a.ownerId;
+  activeSubject(cfg, subjectId, 'papers.import');
   const filename = String(data.name ?? data.file_name ?? data.file ?? '');
   if (!/\.pdf$/i.test(filename)) throw receiveError('unsupported_file_type', 'Only PDF uploads are accepted');
   if (/[\x00-\x1f]/.test(filename)) throw receiveError('invalid_file_metadata', 'Invalid QQ file name');
@@ -53,7 +57,7 @@ export async function stagePdf(segment, cfg, {signal, apiCall = onebot, fetcher 
   if (!fileId || fileId.length > 512 || /[\x00-\x1f]/.test(fileId)) throw receiveError('missing_qq_file_id', 'Missing QQ file ID');
   let size = 0; const chunks = [];
   try {
-    const r = await apiCall(a, 'get_private_file_url', {user_id: Number(a.ownerId), file_id: fileId, file_hash: String(data.file_hash ?? '')}, signal);
+    const r = await apiCall(a, 'get_private_file_url', {user_id: Number(subjectId), file_id: fileId, file_hash: String(data.file_hash ?? '')}, signal);
     const url = qqFileUrl(r?.url);
     const stop = signal ? AbortSignal.any([signal, AbortSignal.timeout(60000)]) : AbortSignal.timeout(60000);
     const response = await fetcher(url, {redirect: 'manual', signal: stop});
@@ -62,10 +66,12 @@ export async function stagePdf(segment, cfg, {signal, apiCall = onebot, fetcher 
     for await (const part of response.body) { size += part.length; if (size > MAX_PDF_BYTES) throw receiveError('pdf_size_limit_exceeded', 'PDF exceeds 25 MiB'); chunks.push(Buffer.from(part)); }
   } catch (error) {
     signal?.throwIfAborted();
+    // Do not expose signed URLs, platform errors or response bodies in the model-facing result.
     if (error?.code === 'pdf_size_limit_exceeded') throw error;
     throw receiveError('pdf_download_failed', 'QQ PDF download failed');
   }
-  return new Documents(documentRoot(cfg)).add(Buffer.concat(chunks), {filename, source: {type: 'qq', fileId}}, {signal,
+  activeSubject(cfg, subjectId, 'papers.import');
+  return new Documents(documentRoot(cfg,subjectId)).add(Buffer.concat(chunks), {filename, source: {type: 'qq', fileId}}, {signal,
     inspect: async (...args) => {
       try {
         const details = await (inspect ?? inspectPdf)(...args);
@@ -79,25 +85,27 @@ export async function stagePdf(segment, cfg, {signal, apiCall = onebot, fetcher 
   });
 }
 export async function sendDocument({cfg, to, documentId, key, signal, apiCall = onebot}) {
-  const a = account(cfg); ownerTarget(to, a); signal?.throwIfAborted();
-  const doc = new Documents(documentRoot(cfg)).get(documentId);
+  const a = account(cfg),target=targetSubject(to,cfg,'qq.file.reply').qq; signal?.throwIfAborted();
+  const doc = new Documents(documentRoot(cfg,target)).get(documentId);
   if (!key || typeof key !== 'string') throw Error('Stable file delivery key required');
   const ledger = new Ledger(a.stateDir);
   try {
-    const prior = ledger.reserve('pdf:' + key, a.sendLimit, a.dailySendLimit ?? 120);
+    const deliveryKey = target===a.ownerId ? 'pdf:' + key : 'pdf:subject:' + target + ':' + key;
+    const prior = ledger.reserve(deliveryKey, a.sendLimit, a.dailySendLimit ?? 120);
     if (prior) {
       if (prior.status === 'sent') return {...JSON.parse(prior.message_id), duplicate: true};
       throw Error('Previous PDF delivery unresolved/failed; manual reconciliation required');
     }
     try {
       signal?.throwIfAborted();
-      const r = await apiCall(a, 'upload_private_file', {user_id: Number(a.ownerId), file: doc.path, name: doc.filename}, signal, {timeoutMs:120000});
+      targetSubject(to,cfg,'qq.file.reply');
+      const r = await apiCall(a, 'upload_private_file', {user_id: Number(target), file: doc.path, name: doc.filename}, signal, {timeoutMs:120000});
       // OneBot upload success often returns null, without a QQ message ID. Do not invent one.
       const receipt = {channel: 'kurumi-qq', status: 'platform_accepted', documentId, fileId: r?.file_id ?? null};
-      ledger.sent('pdf:' + key, JSON.stringify(receipt));
+      ledger.sent(deliveryKey, JSON.stringify(receipt));
       traceFile(cfg, {kind: 'paper.qq_upload', data: receipt}); return receipt;
     } catch (e) {
-      if (e.rejected) ledger.failed('pdf:' + key);
+      if (e.rejected) ledger.failed(deliveryKey);
       traceFile(cfg, {kind: 'paper.qq_upload', data: {documentId, status: e.rejected ? 'rejected' : 'unknown'}});
       throw e;
     }

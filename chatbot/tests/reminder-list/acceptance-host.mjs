@@ -1,3 +1,4 @@
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 // Authorized live OpenClaw + primary-model integration in a separate /tmp
 // runtime and process. Mock OneBot HTTP/WS only, no real QQ network or sends.
 // All chat/domain/Cron state is isolated; source and credentials are read only.
@@ -40,7 +41,7 @@ server.listen(0, '127.0.0.1'); await once(server, 'listening');
 const onebotPort = server.address().port, ws = new WebSocketServer({server});
 const portProbe = net.createServer(); portProbe.listen(0, '127.0.0.1'); await once(portProbe, 'listening');
 const port = portProbe.address().port; await new Promise(r => portProbe.close(r));
-const cfg = JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json')));
+const cfg = compileAccessConfig(JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json'))));
 delete cfg._managed;
 cfg.gateway = {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}};
 cfg.agents.defaults.workspace = join(root, 'workspace');
@@ -53,7 +54,7 @@ cfg.plugins = {allow: ['kurumi-qq', 'personal-reminder-list'], load: {paths: [jo
 if (natural) {
   for (const id of ['personal-weather', 'personal-confirmation']) {
     cfg.plugins.allow.push(id); cfg.plugins.load.paths.push(join(repo, 'chatbot/plugins', id));
-    cfg.plugins.entries[id] = JSON.parse(JSON.stringify(JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))).plugins.entries[id]));
+    cfg.plugins.entries[id] = JSON.parse(JSON.stringify(compileAccessConfig(JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json')))).plugins.entries[id]));
   }
   cfg.plugins.entries['personal-weather'].config.apiHost = secrets.QWEATHER_API_HOST;
 }

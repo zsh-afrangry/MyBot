@@ -1,3 +1,4 @@
+import {withAccess} from '../access-control/fixtures.mjs';
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
 // Offline: real factories/current-request guard, temporary SQLite, controlled HTTP.
 import {test} from 'node:test';
@@ -28,7 +29,7 @@ function client(t, fetchImpl, extra = {}) {
 const response = (value, status = 200) => new Response(JSON.stringify(value), {status, headers: {'content-type': 'application/json'}});
 const event = (text, id = '123') => ({ctx: {RawBody: text, MessageSid: id, Timestamp: Date.now(), ChatType: 'direct', CommandAuthorized: true,
   SenderId: owner, SessionKey: sessionKey, OriginatingChannel: 'kurumi-qq', OriginatingTo: `user:${owner}`}});
-const config = {channels: {'kurumi-qq': {ownerId: owner}}, gateway: {port: 18890}};
+const config = withAccess({channels: {'kurumi-qq': {ownerId: owner}}, gateway: {port: 18890}});
 const ctx = () => ({senderIsOwner: true, requesterSenderId: owner, messageChannel: 'kurumi-qq', sessionKey,
   sessionId: 'test-session', runId: 'test-run', getRuntimeConfig: () => config, assertInvocationCurrent() {}});
 const run = async (tool, args) => JSON.parse((await tool.execute('call', args)).content[0].text);

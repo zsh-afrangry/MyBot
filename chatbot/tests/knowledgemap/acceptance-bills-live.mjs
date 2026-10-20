@@ -1,3 +1,4 @@
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「第二轮开发与验收」。
 // Real model/host, production API/MySQL/browser and weather; synthetic owner ingress.
@@ -18,7 +19,7 @@ assert.ok(outArg >= 0 && process.argv[outArg + 1], '--out is required');
 const out = resolve(process.argv[outArg + 1]); assert.ok(!fs.existsSync(out), 'refuses overwriting evidence');
 fs.mkdirSync(resolve(out, '..'), {recursive: true});
 const repo = resolve(fileURLToPath(new URL('../../../', import.meta.url))), state = '/home/afrangry/.openclaw-fusion';
-const configFile = join(repo, 'config/runtime.config.json'), config = JSON.parse(fs.readFileSync(configFile));
+const configFile = join(repo, 'config/runtime.config.json'), config = compileAccessConfig(JSON.parse(fs.readFileSync(configFile)),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json'))));
 const owner = config.channels['kurumi-qq'].ownerId;
 assert.equal(owner, '365999865'); assert.equal(config.channels['kurumi-qq'].testIngress, false);
 const {rpc, ready} = await import('../../../scripts/fusion/rpc.mjs');

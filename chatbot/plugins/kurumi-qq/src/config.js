@@ -1,11 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import {accessPolicy, authorizedOwner, targetSubject} from '../../../packages/access-control/index.js';
 export const CHANNEL='kurumi-qq';
 export function account(cfg, id='default') {
  if(id&&id!=='default')throw Error('Unknown QQ account');
  const s=cfg.channels?.[CHANNEL];
  if(!s?.enabled)throw Error('QQ channel disabled');
  if(!/^\d{5,12}$/.test(s.ownerId))throw Error('Missing owner');
+ accessPolicy(s);
  for(const [key,protocol] of [['httpUrl','http:'],['wsUrl','ws:']]){
   const u=new URL(s[key]);if(u.hostname!=='127.0.0.1'||u.protocol!==protocol||u.username||u.password||u.search)throw Error('Only loopback OneBot endpoints allowed');
  }
@@ -13,8 +15,7 @@ export function account(cfg, id='default') {
  return {...s,accountId:'default'};
 }
 export function ownerTarget(to,a){
- const id=String(to??'').replace(/^kurumi-qq:/,'').replace(/^user:/,'');
- if(id!==a.ownerId)throw Error('QQ target is not the authorized owner');return id;
+ return targetSubject(to,a).qq;
 }
 export function token(a,kind){
  const file=kind==='ws'?a.wsTokenFile:a.httpTokenFile;
@@ -23,7 +24,6 @@ export function token(a,kind){
  const value=fs.readFileSync(file,'utf8').trim();if(!value)throw Error('Missing OneBot credential');return value;
 }
 
-export function ownerAuthorized(ctx,cfg){
- const owner=cfg.channels?.[CHANNEL]?.ownerId;
- return ctx.senderIsOwner===true&&ctx.requesterSenderId===owner&&ctx.messageChannel===CHANNEL&&ctx.sessionKey===`agent:main:${CHANNEL}:direct:${owner}`;
+export function ownerAuthorized(ctx,cfg,permission){
+ return authorizedOwner(ctx,cfg,permission);
 }

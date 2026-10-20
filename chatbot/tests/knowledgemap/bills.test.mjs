@@ -1,3 +1,4 @@
+import {withAccess} from '../access-control/fixtures.mjs';
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「第二轮开发与验收」。
 // Offline: real plugin factories and host-shaped hooks, no model/API/QQ or private state.
 import {test} from 'node:test';
@@ -14,7 +15,7 @@ function fixture() {
   const hooks = {}, factories = {}, calls = [];
   const fire = (name, e, c = {}) => hooks[name]?.forEach(fn => fn(e, c));
   createKnowledgeMapPlugin({clientFactory: () => ({async request(path, options) {calls.push({path, options}); return {ok: true, items: [{id: 5, version: 2}], item: {id: 5, version: 3}};}})}).register({
-    config: {channels: {'kurumi-qq': {ownerId: owner}}}, on: (name, fn) => (hooks[name] ??= []).push(fn),
+    config: withAccess({channels: {'kurumi-qq': {ownerId: owner}}}), on: (name, fn) => (hooks[name] ??= []).push(fn),
     registerTool: (f, m) => factories[m.name] = f,
   });
   return {fire, calls, tool: name => factories[name].create(ctx)};

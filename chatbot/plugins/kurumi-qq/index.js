@@ -1,18 +1,20 @@
+import {allowedMembers,toolPolicyDecision,accessPolicy,toolPermission} from '../../packages/access-control/index.js';
+import {createTraceSink} from '../../packages/observability/index.js';
 import WebSocket from 'ws';
 import {registerAcceptanceTools} from './src/acceptance.js';
-import {account,CHANNEL,token,ownerTarget} from './src/config.js';
+import {account,CHANNEL,token} from './src/config.js';
 import {onebot,sendPayload} from './src/transport.js';
 import {handleInbound} from './src/inbound.js';
 import {registerStickerTool} from './src/stickers.js';
 let runtime;
 export const plugin={
- id:CHANNEL,meta:{id:CHANNEL,label:'Kurumi QQ',selectionLabel:'Kurumi QQ (OneBot)',docsPath:'/channels/kurumi-qq',blurb:'Owner-only QQ channel'},
+ id:CHANNEL,meta:{id:CHANNEL,label:'Kurumi QQ',selectionLabel:'Kurumi QQ (OneBot)',docsPath:'/channels/kurumi-qq',blurb:'QQ private channel with explicit identity permissions'},
  capabilities:{chatTypes:['direct'],media:true,threads:false,reactions:false},
- config:{listAccountIds:()=>['default'],resolveAccount:account,inspectAccount:cfg=>({enabled:cfg.channels?.[CHANNEL]?.enabled===true,configured:!!cfg.channels?.[CHANNEL]?.httpTokenFile}),isEnabled:a=>a.enabled,isConfigured:a=>!!a.httpTokenFile,resolveAllowFrom:({cfg})=>[account(cfg).ownerId]},
+ config:{listAccountIds:()=>['default'],resolveAccount:account,inspectAccount:cfg=>({enabled:cfg.channels?.[CHANNEL]?.enabled===true,configured:!!cfg.channels?.[CHANNEL]?.httpTokenFile}),isEnabled:a=>a.enabled,isConfigured:a=>!!a.httpTokenFile,resolveAllowFrom:({cfg})=>allowedMembers(account(cfg)).map(row=>row.qq)},
  reload:{configPrefixes:[`channels.${CHANNEL}`]},
- messaging:{normalizeTarget:raw=>String(raw).replace(/^kurumi-qq:/,''),targetResolver:{looksLikeId:raw=>/^(?:user:)?\d+$/.test(raw),hint:'user:<owner QQ>'}},
+ messaging:{normalizeTarget:raw=>String(raw).replace(/^kurumi-qq:/,''),targetResolver:{looksLikeId:raw=>/^(?:user:)?\d+$/.test(raw),hint:'user:<authorized QQ>'}},
  agentPrompt:{inboundFormattingHints:()=>['使用自然中文和适合 QQ 的简短段落。不要输出内部工具日志。任务未实际完成时不要声称已完成。']},
- outbound:{deliveryMode:'direct',textChunkLimit:4000,resolveTarget:({to})=>to?{ok:true,to}:{ok:false,error:Error('Owner target required')},sendText:args=>sendPayload(args),sendMedia:args=>sendPayload(args)},
+ outbound:{deliveryMode:'direct',textChunkLimit:4000,resolveTarget:({to})=>to?{ok:true,to}:{ok:false,error:Error('Authorized target required')},sendText:args=>sendPayload(args),sendMedia:args=>sendPayload(args)},
  gateway:{startAccount:async ctx=>{
   const a=ctx.account;const login=await onebot(a,'get_login_info',{});const selfId=String(login.user_id);
   if(selfId===a.ownerId)throw Error('Bot identity must differ from owner');
@@ -35,7 +37,13 @@ export const plugin={
   await Promise.allSettled(pending);
  }}
 };
-export default {id:CHANNEL,name:'Kurumi QQ',description:'Isolated owner-only OneBot channel',register(api){runtime=api.runtime;api.registerChannel({plugin});
+export default {id:CHANNEL,name:'Kurumi QQ',description:'Isolated identity-scoped OneBot channel',register(api){runtime=api.runtime;api.registerChannel({plugin});
+ if(typeof api.registerTrustedToolPolicy!=='function')throw Error('Trusted tool policy host API required');
+ api.registerTrustedToolPolicy({id:'kurumi-access-control',description:'Identity capability and trusted session authorization',evaluate(event,ctx){
+  const result=toolPolicyDecision(event,ctx,api.config);
+  try{createTraceSink(api.config.channels[CHANNEL].stateDir+'/access-events.jsonl').emit({source:'access-control',kind:'access.tool',correlation:{sessionKey:ctx.sessionKey,runId:ctx.runId,toolCallId:ctx.toolCallId},data:{subjectId:ctx.requester?.senderId??'system',requesterChannel:ctx.requester?.channel,requesterAccount:ctx.requester?.accountId,requesterIsOwner:ctx.requester?.senderIsOwner,tool:event.toolName,permission:toolPermission(event.toolName,event.params)??null,revision:accessPolicy(api.config).revision,decision:result?'deny':'allow',code:result?.blockReason??'allowed'}});}catch{}
+  return result;
+ }});
  registerStickerTool(api);
  if(api.config.channels?.[CHANNEL]?.testIngress===true){
   registerAcceptanceTools(api);

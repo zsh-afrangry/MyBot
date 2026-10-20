@@ -52,7 +52,7 @@ export function createReminderListPlugin({registry} = {}) {
         return {...declaration,
           async execute(_callId, args, signal) {
             const cfg = ctx.getRuntimeConfig?.() ?? api.config;
-            if (!ownerAuthorized(ctx, cfg)) return json({ok: false, error: {code: 'forbidden_context', message: '只支持本人 QQ 私聊'}});
+            if (!ownerAuthorized(ctx, cfg, name==='personal_reminder_list_get'?'reminder-list.read':['schedule','pause','resume'].includes(args.action)?'reminder-list.schedule':'reminder-list.manage')) return json({ok: false, error: {code: 'forbidden_context', message: '只支持本人 QQ 私聊'}});
             ctx.assertInvocationCurrent(); signal?.throwIfAborted();
             let store;
             try {

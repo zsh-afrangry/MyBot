@@ -1,3 +1,4 @@
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 // Authorized real OpenClaw + main-model acceptance. Mock translation worker and OneBot only.
 // Separate /tmp runtime; no real translation API request, QQ/mail delivery or production write.
 // Development owner: docs/22; evidence: docs/verification/paper-translation-2026-10-17/ (explicit --out).
@@ -45,7 +46,7 @@ import {PaperService} from ${JSON.stringify(pathToFileURL(path.join(repo,'chatbo
 import {pdf} from ${JSON.stringify(pathToFileURL(path.join(repo,'chatbot/tests/papers/fixtures.mjs')).href)};
 export default createPaperPlugin({serviceFactory:(config,deps)=>new PaperService(config,{...deps,runner:async({work,outputKind})=>{const result={usage:{requests:0,fixture:true}};for(const kind of outputKind==='both'?['dual','mono']:[outputKind]){result[kind]=path.join(work,kind+'.pdf');fs.writeFileSync(result[kind],pdf('Fixture '+kind+' output, not a real translation.'));}return result;}})});
 `);
-const cfg=JSON.parse(fs.readFileSync(path.join(repo,'config/runtime.config.json')));delete cfg._managed;
+const cfg=compileAccessConfig(JSON.parse(fs.readFileSync(path.join(repo,'config/runtime.config.json'))),JSON.parse(fs.readFileSync(path.join(repo,'config/access-control.json'))));delete cfg._managed;
 cfg.gateway={mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}};
 cfg.agents.defaults.workspace=path.join(root,'workspace');
 cfg.agents.entries={main:{...cfg.agents.entries.main,workspace:path.join(root,'workspace'),tools:{profile:'messaging',alsoAllow:['kurumi_document','kurumi_translate','kurumi_document_send'],deny:['read','write','edit','exec','process','message','sessions_spawn','automations']}}};

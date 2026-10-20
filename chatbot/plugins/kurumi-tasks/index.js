@@ -8,7 +8,7 @@ import {runSandbox} from '../../packages/sandbox/index.js';
 const json=result=>({content:[{type:'text',text:JSON.stringify(result)}]});
 export default {id:'kurumi-tasks',name:'Kurumi native task sessions',register(api){
  api.registerTool({contextVersion:2,create:ctx=>({name:'kurumi_task',label:'Background project task',description:'列出已注册项目或在独立项目副本启动后台代码工作或论文研究（kind=research）。主聊天可继续；Host完成后回到本人QQ。只接受项目ID和任务说明，无任意路径或命令。list也列最近任务，status/cancel使用返回的真实runId/sessionKey。',parameters:{type:'object',additionalProperties:false,required:['action'],properties:{action:{type:'string',enum:['list','start','status','cancel']},projectId:{type:'string'},kind:{type:'string',enum:['code','research']},task:{type:'string'},sessionKey:{type:'string'},runId:{type:'string'}}},async execute(callId,args,signal){
-  const cfg=ctx.getRuntimeConfig?.()??api.config;if(!authorized(ctx,cfg))throw Error('Task requires trusted owner private context');ctx.assertInvocationCurrent();signal?.throwIfAborted();
+  const cfg=ctx.getRuntimeConfig?.()??api.config;if(!authorized(ctx,cfg,args.action==='start'?(args.kind==='research'?'tasks.research':'tasks.code'):'tasks.read'))throw Error('Task requires trusted owner private context');ctx.assertInvocationCurrent();signal?.throwIfAborted();
   const receiptFile=cfg.channels['kurumi-qq'].stateDir+'/task-receipts.jsonl';
   const saved=fs.existsSync(receiptFile)?fs.readFileSync(receiptFile,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
   const call=(m,p)=>{ctx.assertInvocationCurrent();return callGatewayTool(m,{timeoutMs:15000},p,{signal,dispatchAuthority:{version:2,kind:'run',assertCurrent:ctx.assertInvocationCurrent}});};
