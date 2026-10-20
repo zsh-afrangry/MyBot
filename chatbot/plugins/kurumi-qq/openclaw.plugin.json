@@ -4,6 +4,8 @@
     "kurumi-qq"
   ],
   "name": "Kurumi QQ",
+  "description": "Isolated identity-scoped OneBot channel",
+  "version": "0.1.0",
   "configSchema": {
     "type": "object",
     "properties": {},

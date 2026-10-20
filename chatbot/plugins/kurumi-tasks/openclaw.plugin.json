@@ -1,6 +1,8 @@
 {
   "id": "kurumi-tasks",
   "name": "Kurumi native task sessions",
+  "description": "Registered-project background code and research tasks in isolated copies.",
+  "version": "0.1.0",
   "configSchema": {
     "type": "object",
     "properties": {},

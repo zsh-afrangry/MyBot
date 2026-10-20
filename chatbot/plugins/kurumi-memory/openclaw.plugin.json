@@ -1,6 +1,9 @@
 {
   "id": "kurumi-memory",
   "name": "Kurumi personal memory",
+  "description": "Owner long-term facts, conversation continuity summaries and the KURUMI_PERSONAL_MEMORY_V2 prompt block.",
+  "version": "0.1.0",
+  "activation": {"onStartup": true},
   "configSchema": {
     "type": "object",
     "properties": {
