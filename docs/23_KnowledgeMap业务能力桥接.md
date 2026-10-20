@@ -205,7 +205,7 @@ flowchart LR
 | `chatbot/plugins/personal-reminder-list/{remote,data-source}.js` | 共享业务与本地播报控制、持久切换保护 |
 | `chatbot/packages/personal-domains/src/knowledgemap-client.ts` | 天气/默认城市的API适配，保留解析/逐小时/预警能力；天气与Profile独立插件的装配归属见文档21 |
 | `chatbot/scripts/import-knowledgemap-list.mjs` | 只读来源/默认预览；apply写共享库，activate写私密切换标记 |
-| `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线用例，含失败/防重/设置竞态/旧runner防旧写/共享模式工具声明 |
+| `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线用例，含播报失败/防重/设置竞态/非到期时刻与暂停不查询/空列表只记skipped/播报文本格式与中性措辞/旧runner防旧写/共享模式工具声明 |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 本机真实HTTP→独立FastAPI/SQLite，两入口数据一致 |
 | `chatbot/tests/knowledgemap/acceptance-model.mjs` | 真实模型对话组+实际工具，合成可信钩子与隔离API，不证明完整宿主 |
 | `chatbot/tests/knowledgemap/acceptance-host.mjs` | 真实模型+独立OpenClaw+mockOneBot+临时API；默认跑第一轮用例，`--bills-round2`跑第二轮账单用例，不发QQ |

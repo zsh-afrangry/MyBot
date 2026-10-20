@@ -149,6 +149,27 @@ test('digest queries API, preserves overdue/noDDL, and deduplicates slot', async
   assert.match(output, /越快越好/); assert.match(output, /2020-01-01/); assert.match(output, /未设 DDL/);
   const first = output; await runRemoteDigest(options, api, '08:00', x => output += x); assert.equal(output, first);
 });
+test('digest skips API outside due slot and records an empty shared list without announcing', async t => {
+  const root = temp(t); let calls = 0, output = '';
+  const api = {allTasks: async () => {calls++; return [];}}, at = s => () => Date.parse(`2026-10-17T${s}+08:00`);
+  // Not a configured time, or past the 120 s grace window: no query, no slot.
+  await runRemoteDigest({root, ownerId: owner, now: at('09:00:05')}, api, '09:00', x => output += x);
+  await runRemoteDigest({root, ownerId: owner, now: at('08:02:01')}, api, '08:00', x => output += x);
+  assert.equal(calls, 0);
+  await runRemoteDigest({root, ownerId: owner, now: at('08:00:05')}, api, '08:00', x => output += x);
+  assert.equal(calls, 1); assert.equal(output, '');
+  const store = new ListControlStore({root, ownerId: owner});
+  assert.deepEqual(store.db.prepare('SELECT slot_key, status FROM deliveries').all().map(r => ({...r})), [{slot_key: '2026-10-17T08:00', status: 'skipped'}]);
+  store.changeSchedule({action: 'pause'}, {}); store.close();
+  await runRemoteDigest({root, ownerId: owner, now: at('12:00:05')}, api, '12:00', x => output += x);
+  assert.equal(calls, 1, 'paused schedule never queries the shared list');
+});
+test('shared digest text is neutral and keeps km IDs, content and note', async t => {
+  const root = temp(t), now = () => Date.parse('2026-10-17T18:00:05+08:00'); let output = '';
+  await runRemoteDigest({root, ownerId: owner, now}, {allTasks: async () => [row(7, {detail: '带身份证', event_date: '2026-10-18', event_time: '09:30:00'})]}, '18:00', x => output += x);
+  assert.match(output, /^提醒列表 · 2026-10-17 18:00（Asia\/Shanghai）\n未完成 1 项：\n1\. 查党员材料〔km:7〕\n   DDL：2026-10-18 09:30\n   内容：带身份证\n   备注：越快越好\n$/);
+  assert.doesNotMatch(output, /主人/);
+});
 test('digest outage neither claims slot nor announces stale list; schedule race drops result', async t => {
   const root = temp(t), options = {root, ownerId: owner, now: () => Date.parse('2026-10-17T08:00:05+08:00')};
   await assert.rejects(runRemoteDigest(options, {allTasks: async () => {throw Error('offline');}}, '08:00'));
