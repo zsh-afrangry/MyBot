@@ -98,7 +98,7 @@ flowchart LR
 
 ### 默认资源与用量限制
 
-仓库配置意图：单任务最多30页、300次API尝试、300000个已报告tokens、1800秒worker执行期限（不含排队）、日常单篇最多4个API在途请求/每秒启动1个；操作者源码允许并发1–6、QPS1–4，模型不能传并发参数，六并发仅隔离测试。选页超限须明确指定范围，不悄悄截页。未提供token预算键时插件的保守缺省仍为150000；请求数schema/runner/Python缺省统一300。整篇执行期限缺省与最大值均1800秒；单请求有效正文空闲默认100秒（`requestIdleTimeoutSeconds`，整数1–600），独立于固定600秒总时限。只有非空白正文增量重置空闲计时，完整终态响应仍是译文与用量唯一依据。无正文超时先取消HTTP进程，再按既有规则切渠道/有限恢复，仅重试当前批次。验收脚本沿用生产预算。
+仓库配置意图：单任务最多30页、300次API尝试、300000个已报告tokens、1800秒worker执行期限（不含排队）、日常单篇最多4个API在途请求/每秒启动1个；日常4并发只来自`config/runtime.config.json`的`apiConcurrency`；未配置时插件manifest和`runner.js`的缺省均为1（QPS缺省也是1）。操作者源码允许并发1–6、QPS1–4，模型不能传并发参数，六并发仅隔离测试。选页超限须明确指定范围，不悄悄截页。未提供token预算键时插件的保守缺省仍为150000；请求数schema/runner/Python缺省统一300。整篇执行期限缺省与最大值均1800秒；单请求有效正文空闲默认100秒（`requestIdleTimeoutSeconds`，整数1–600），独立于固定600秒总时限。只有非空白正文增量重置空闲计时，完整终态响应仍是译文与用量唯一依据。无正文超时先取消HTTP进程，再按既有规则切渠道/有限恢复，仅重试当前批次。验收脚本沿用生产预算。
 
 固定 worker 只挂载系统文件、只读 Python/适配器、单任务目录与缓存；清空宿主环境，凭据只经 stdin 传入，不在 argv。限制地址空间 12 GiB、单文件 100 MiB、CPU 1200 秒；取消/超时终止整个进程组。翻译允许出站网络以调用固定 API、下载布局模型和字体；不能据此声称网络也已隔离。无需 GPU/CUDA，本轮未验 GPU。
 
@@ -151,7 +151,7 @@ python3 chatbot/tests/papers/reliability_test.py
 node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js scripts/fusion/test/log-query.test.mjs
 ```
 
-附件修复轮Node相关回归**191/191**（含附件专项26项），见[本轮证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。涵盖论文、QQ、统一权限、邮件和统一查询；未改Python翻译器，未因附件修复重跑付费翻译。前一轮Node36、Responses20、并发11、安装引擎15、可靠性28合计**110/110**的时点回执保留于[正文空闲超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)，不重复累计或冒称本轮重跑。离线通过不替代实际论文质量、真人入站或邮箱到信。
+附件修复轮Node相关回归**191/191**（含附件专项26项），见[本轮证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。涵盖论文、QQ、统一权限、邮件和统一查询；未改Python翻译器，未因附件修复重跑付费翻译。实现提交`5fe6f8a`在插件拆分后的基线`8937cae`上另做了独立离线复验，见[拆分后复验](verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md)。前一轮Node36、Responses20、并发11、安装引擎15、可靠性28合计**110/110**的时点回执保留于[正文空闲超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)，不重复累计或冒称本轮重跑。离线通过不替代实际论文质量、真人入站或邮箱到信。
 
 明确授权的真实验收脚本（不要混进离线批量命令）：
 
