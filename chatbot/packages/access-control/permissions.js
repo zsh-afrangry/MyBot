@@ -33,7 +33,7 @@ export function toolPermission(name, args = {}) {
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';
   if (name === 'kurumi_task') return args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read';
   if (name === 'automations') return ['list', 'get', 'status', 'runs'].includes(args.action) ? 'automations.read' : 'automations.manage';
-  if (name === 'kurumi_document') return args.action==='fetch'?'papers.import':['list','get'].includes(args.action)?'papers.read':undefined;
+  if (name === 'kurumi_document') return args.action==='fetch'?'papers.import':['list','get','find'].includes(args.action)?'papers.read':undefined;
   if (name === 'kurumi_translate') return ({start: 'papers.translate', status: 'papers.read', list: 'papers.read', cancel: 'papers.cancel'})[args.action];
   if (name === 'kurumi_document_send') return 'qq.file.reply';
   return undefined;

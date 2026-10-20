@@ -50,6 +50,18 @@ test('Catalog namespaces prevent list/get/file disclosure including identical by
  assert.equal((await sendDocument({cfg,to:'user:'+MEMBER,documentId:b.id,key:'file'})).status,'platform_accepted');
  assert.equal(calls[0].args.user_id,Number(MEMBER));assert(calls[0].args.file.includes('/subjects/'+MEMBER+'/'));
 });
+test('Name lookup and explicit resend stay inside the requester namespace',async t=>{
+ const {docs,run,calls,policy}=await setup(t);
+ await docs(OWNER).add(pdf('owner copy'),{filename:'Shared Title.pdf'},{inspect});
+ const mine=await docs(MEMBER).add(pdf('member copy'),{filename:'Shared Title.pdf'},{inspect});
+ assert.deepEqual((await run(MEMBER,'kurumi_document',{action:'find',query:'shared title'})).documents.map(d=>d.id),[mine.id]);
+ assert.equal((await run(MEMBER,'kurumi_document',{action:'find',query:'!!'})).code,'invalid_document_query');
+ const sent=await run(MEMBER,'kurumi_document_send',{documentId:mine.id},'resend');
+ assert.equal(sent.status,'platform_accepted');assert.equal(calls.length,1);
+ assert.equal(calls[0].args.user_id,Number(MEMBER));assert(calls[0].args.file.includes('/subjects/'+MEMBER+'/'));
+ policy.subjects[1].permissions['papers.read']=false;
+ await assert.rejects(run(MEMBER,'kurumi_document',{action:'find',query:'shared title'}),{code:'capability_not_allowed'});
+});
 test('Actual file URL lookup uses sender identity, never the owner, and respects import denial',async t=>{
  const {cfg,docs,policy}=await setup(t);let called=0;
  const options={subjectId:MEMBER,inspect,apiCall:async(a,action,args)=>{called++;assert.equal(args.user_id,Number(MEMBER));return {url:'https://multimedia.nt.qq.com/file'};},fetcher:async()=>new Response(pdf('member upload'))};

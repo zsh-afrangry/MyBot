@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
-import {Documents, atomicJson} from '../../packages/documents/index.js';
+import {Documents, atomicJson, paperTitle} from '../../packages/documents/index.js';
 import {downloadScholarlyPdf} from '../../packages/scholarly-source/index.js';
 import {resolveProfile} from './profiles.js';
 import {runTranslation,executionSettings,reliabilitySettings} from './runner.js';
@@ -62,13 +62,13 @@ export class PaperService {
     for (const id of this.queue.splice(0)) { const job = this.get(id); job.status = 'interrupted'; this.save(job); }
     this.active?.controller.abort(); await this.active?.promise;
   }
-  async fetch(url, {signal,requester} = {}) {
+  async fetch(url, {signal,requester,title} = {}) {
     const check=()=>this.authorize?.(requester,'papers.import');check();
     const documents=this.documentsFor(requester?.subjectId);
     const cache = path.join(documents.root, 'cache');
     const paper = await this.download(cache, url, {signal});
     check();
-    return documents.add(fs.readFileSync(paper.pdfPath), {filename: `paper-${paper.id}.pdf`, source: {type: 'scholarly', url: paper.url}}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
+    return documents.add(fs.readFileSync(paper.pdfPath), {filename: `paper-${paper.id}.pdf`, source: {type: 'scholarly', url: paper.url, ...(paperTitle(title) ? {title: paperTitle(title)} : {})}}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
   }
   submit(args, {key, correlation = {}, requester} = {}) {
     if (!this.online) throw Error('Translation job service is not running');

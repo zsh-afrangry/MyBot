@@ -23,6 +23,15 @@ export function safeName(value) {
   const name = String(value ?? 'document.pdf').normalize('NFC').replace(/[\x00-\x1f\x7f/\\]/g, '_').slice(0, 160);
   return name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
 }
+const boundedLimit = limit => Math.min(50, Math.max(1, Number.isInteger(limit) ? limit : 20));
+// Case/width/punctuation-insensitive form used for name lookup; keeps letters and digits of any script.
+export const searchText = value => String(value ?? '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+// Model- or source-supplied paper title: stored as untrusted display/search metadata only.
+export function paperTitle(value) {
+  if (value == null) return undefined;
+  const title = String(value).normalize('NFC').replace(/[\x00-\x1f\x7f\s]+/g, ' ').trim().slice(0, 300);
+  return title || undefined;
+}
 export function atomicJson(file, value) {
   const temp = file + '.' + randomUUID() + '.tmp';
   fs.writeFileSync(temp, JSON.stringify(value, null, 2), {mode: 0o600, flag: 'wx'});
@@ -55,10 +64,20 @@ export class Documents {
     return {...data, path: file, content: bytes};
   }
   describe(id) { const {path: ignored, content, ...data} = this.get(id); return data; }
-  list({kind, limit = 20} = {}) {
+  records(kind) {
     return fs.readdirSync(path.join(this.root, 'records')).filter(n => /^(doc|pdf)_[a-f0-9]{32}\.json$/.test(n))
       .map(n => this.describe(n.slice(0, -5))).filter(d => !kind || d.kind === kind)
-      .sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0, Math.min(50, Math.max(1, limit)));
+      .sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+  }
+  list({kind, limit = 20} = {}) { return this.records(kind).slice(0, boundedLimit(limit)); }
+  // Name lookup over record metadata only (filename, recorded title, source URL); PDF text is never read.
+  find(query, {kind, limit = 10} = {}) {
+    const terms = typeof query === 'string' && query.length <= 300 ? searchText(query).split(' ').filter(Boolean) : [];
+    if (!terms.length || terms.length > 20) throw Object.assign(Error('Invalid document query'), {code: 'invalid_document_query'});
+    return this.records(kind).filter(d => {
+      const text = searchText([d.filename, d.source?.title, d.source?.url].join(' '));
+      return terms.every(term => text.includes(term));
+    }).slice(0, boundedLimit(limit));
   }
   async add(bytes, {filename, source = {}, kind = 'input', jobId} = {}, {inspect = inspectPdf, signal} = {}) {
     if (!['input', 'artifact'].includes(kind)) throw Error('Invalid document kind');

@@ -1,6 +1,6 @@
 # 论文 PDF 翻译与文件投递
 
-状态：**非PDF附件入口修复与100秒空闲切换已部署；新成员冷启动与渠道冷却优化待开发。** 现行默认与限制见下文，验收结论见[文档16](16_验收与测试总表.md#分领域验收摘要)。更新于 2026-10-21（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
+状态：**非PDF附件入口修复与100秒空闲切换已部署；按论文名查找已离线实现、待复验（未重启生效）；新成员冷启动与渠道冷却优化待开发。** 现行默认与限制见下文，验收结论见[文档16](16_验收与测试总表.md#分领域验收摘要)。更新于 2026-10-21（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
 
 ## 术语
 
@@ -23,6 +23,7 @@
 | 六并发对比 | 只做单篇隔离对比，不改变日常4并发/QPS1；有缓存/渠道波动与尾请求等待边界，见[六并发](verification/paper-translation-2026-10-17/concurrency-six/README.md) |
 | 100秒有效正文空闲 | 独立于600秒请求总期限；只有非空白正文重置、先取消再有界切换；阶段回归及部署通过，真人QQ全流程待复验，见[空闲期限](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md) |
 | 附件入口 | 准确类型/状态与纯失败确定性分流，Node回归及真实隔离模型场景通过，23:48部署；翻译/OneBot模拟。原MD事件是旧稿误重发、无新翻译，见[调查](verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md)与[修复](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。并行人格同步的初次非零回执保留，后续对齐归文档25 |
+| 按论文名查找（待复验） | `kurumi_document` 的 `find` 只查本人受管 PDF 的文件名、记录题名和来源 URL，规范化多词匹配，全目录扫描、最多50条；`fetch` 可记录 `title`。同轮修正 `kurumi_document_send` 在 QQ 对外入口改造后漏改的调用。离线测试通过，未重启 Gateway、未做真人QQ复验 |
 | 生命周期/下载 | 显式stop等待清理、不重放；下载/阅读分离、生产受控加载见[生命周期](verification/plugin-lifecycle-2026-10-19/README.md)及[结构整理](verification/capability-decoupling-2026-10-20/README.md) |
 
 完整任务ID、产物hash、缓存来源、故障/修复与逐次回执由上述报告维护；各组有重叠，不累计成总通过数。样稿/抽样可读不代表全文逐字、逐公式校对或长期成功率保证。
@@ -80,7 +81,7 @@ flowchart LR
 
 | 工具/边界 | 功能 |
 | --- | --- |
-| `kurumi_document` | list/get 返回受管 PDF/产物摘要；fetch 复用公开论文下载器。仅有题名时模型先检索准确 URL |
+| `kurumi_document` | list/get 返回受管 PDF/产物摘要；find 按 `query` 查本人已有 PDF 的文件名/记录题名/来源 URL（含 arXiv 编号），不读正文；fetch 复用公开论文下载器，可带模型查到的 `title`。只有题名时先 find，无命中再检索准确 URL 后 fetch |
 | `kurumi_translate` | start/status/list/cancel，使用真实 documentId/jobId；返回排队不代表完成，生成与投递分状态 |
 | `kurumi_document_send` | 只接受受管文档/产物 ID，投递可信请求人自身 QQ；不接收任意路径、URL 或模型指定的其它收件人 |
 | QQ 入站 | 校验已登记身份与机器人私聊元数据；file 消息和 offline_file 通知。附件逐项提供类型/状态/错误码，成功PDF另有受管ID/页数；纯失败无文字/引用/有效媒体时直接反馈，其余保留当前文字交模型 |
@@ -158,6 +159,8 @@ python3 chatbot/tests/papers/reliability_test.py
 /home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py
 node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js scripts/fusion/test/log-query.test.mjs
 ```
+
+按名查找轮（2026-10-21，待复验）：新增 `lookup.test.mjs` 4项与隔离用例1项，Node 全量离线回归通过；未调用真实下载、模型或QQ。
 
 附件修复轮Node相关回归（含附件专项）全部通过，数量见[本轮证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。涵盖论文、QQ、统一权限、邮件和统一查询；未改Python翻译器，未因附件修复重跑付费翻译。实现提交`5fe6f8a`在插件拆分后的基线`8937cae`上另做了独立离线复验，见[拆分后复验](verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md)。前一轮Node、Responses、并发、安装引擎、可靠性各组的时点回执保留于[正文空闲超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)，不重复累计或冒称本轮重跑。离线通过不替代实际论文质量、真人入站或邮箱到信。
 

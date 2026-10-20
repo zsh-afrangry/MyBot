@@ -74,6 +74,7 @@ const TABLE = {
   'chatbot/tests/papers/mail.test.mjs': ['离线', '受管附件快照、确认、完整性、大小限制及本地 TLS SMTP', {testDir: 1}, 'header'],
   'chatbot/tests/papers/mime-parse.py': ['库', '标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin', {readonly: 1}, 'header'],
   'chatbot/tests/papers/worker.test.mjs': ['离线', '实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭', {testDir: 1}, 'header'],
+  'chatbot/tests/papers/lookup.test.mjs': ['离线', '按题名/文件名/arXiv编号查本人受管PDF：仅元数据、规范化多词匹配、全目录有界结果与fetch题名记录', {testDir: 1}, 'header'],
   'chatbot/tests/papers/log-query.test.mjs': ['离线', '论文事件接入只读统一查询与可信消息/任务关联', {testDir: 1}, 'header'],
   'chatbot/tests/web-deepseek/providers.test.mjs': ['离线', 'DeepSeek Search/Fetch provider契约：注入fetch，参数/错误码/取消/并发/URL拒绝/凭据权限/包装/缓存/日志不泄露；无网络请求', {testDir: 1}, 'header'],
   'chatbot/tests/web-deepseek/log-query.test.mjs': ['离线', 'DeepSeek provider调用事件接入只读统一查询，不含query/Key', {testDir: 1}, 'header'],
