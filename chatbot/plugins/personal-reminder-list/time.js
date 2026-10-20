@@ -1,4 +1,5 @@
-// Domain time is Asia/Shanghai. A date-only DDL expires at the next midnight.
+// Domain time is Asia/Shanghai. A date-only DDL ends at the next midnight: SQLite mode
+// marks it expired; shared KnowledgeMap mode has no expired state and leaves it active.
 export const TIMEZONE = 'Asia/Shanghai';
 export const DEFAULT_TIMES = ['00:00', '08:00', '12:00', '18:00'];
 export function localTime(ms) { return new Date(ms + 8 * 3600000).toISOString().slice(0, 19); }

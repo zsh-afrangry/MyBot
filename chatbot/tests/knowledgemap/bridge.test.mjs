@@ -11,7 +11,7 @@ import {KnowledgeMapClient, requestKey} from '../../packages/knowledgemap-client
 import {createBridgeInbound} from '../../packages/knowledgemap-client/inbound.js';
 import {ListStore} from '../../plugins/personal-reminder-list/store.js';
 import {ListControlStore, manageRemoteList, taskItem, runRemoteDigest, registerRemoteList} from '../../plugins/personal-reminder-list/remote.js';
-import {manageParameters, getParameters} from '../../plugins/personal-reminder-list/index.js';
+import {manageParameters, getParameters, sharedToolDeclarations, createReminderListPlugin} from '../../plugins/personal-reminder-list/index.js';
 import {createKnowledgeMapPlugin} from '../../plugins/kurumi-knowledgemap/index.js';
 import {collectEvents} from '../../../scripts/fusion/log-query.mjs';
 import {sourceFile} from '../../plugins/personal-reminder-list/data-source.js';
@@ -207,4 +207,18 @@ test('persisted cutover prevents old fixed jobs and local tools from using legac
   await runnerMain(['run', '--slot', '08:00'], {env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: owner}, now, write: x => output += x});
   assert.match(output, /API共享项/); assert.doesNotMatch(output, /不应读写的旧项/);
   assert.deepEqual(legacy.db.prepare('SELECT * FROM items').all(), before); legacy.close();
+});
+test('shared-mode tools describe only shared states and km IDs', t => {
+  const root = temp(t), tokenFile = join(root, 'token'), before = process.env.OPENCLAW_STATE_DIR;
+  writeFileSync(tokenFile, 'd'.repeat(64), {mode: 0o600}); process.env.OPENCLAW_STATE_DIR = root;
+  t.after(() => {if (before === undefined) delete process.env.OPENCLAW_STATE_DIR; else process.env.OPENCLAW_STATE_DIR = before;});
+  const tools = {};
+  createReminderListPlugin().register({config, pluginConfig: {dataSource: 'knowledgemap', bridgeBaseUrl: 'http://127.0.0.1:3086', bridgeTokenFile: tokenFile,
+    backendRoot: fileURLToPath(new URL('../../', import.meta.url))},
+    registrationMode: 'tool-discovery', on() {}, registerService() {}, registerTool: (f, m) => tools[m.name] = f.create(ctx()).parameters});
+  assert.doesNotMatch(tools.personal_reminder_list_get.properties.history.description, /过期/);
+  const id = new RegExp(tools.personal_reminder_list_manage.properties.id.pattern);
+  assert(id.test('km:6') && !id.test('0123456789ab'));
+  assert.match(getParameters.properties.history.description, /过期/, 'SQLite mode keeps its expired history');
+  assert.deepEqual(sharedToolDeclarations.map(d => d.name).sort(), Object.keys(tools).sort());
 });

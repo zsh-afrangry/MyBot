@@ -28,9 +28,17 @@ const toolDeclarations = [
   {name: 'personal_reminder_list_manage', label: '维护提醒列表', parameters: manageParameters,
     description: '本人明确提醒列表维护可直接保存，无需带码确认，一条消息一项。结合对话理解当前真实维护请求；查询能力、引用、假设、否定不执行维护。update/complete/void/reopen不要求当前原文重复列表名、完整标题或特定动词；删了/删掉等删除意图转void，保留历史。第几条依据此前向用户展示的列表确定真实id，再get核对该id与version；不能按最新列表顺序改选目标，没有明确的列表或多候选先澄清，不要求用户改用工具关键词。已开启的短时连续录入只授权add。标题/内容/备注取本次原文，越快越好和活动结束后等条件须保留；无DDL必须null。失败须澄清，不能转一次性提案或批量确认。schedule完整替换每日时刻；pause/resume暂停恢复播报。现有一次性提醒仍走personal_reminder提案确认，不混用。'},
 ];
+// Shared KnowledgeMap mode has no expired state and only km: IDs; the SQLite mode keeps the original schema.
+const sharedParameters = {
+  personal_reminder_list_get: {...getParameters, properties: {...getParameters.properties,
+    history: {type: 'boolean', description: '包含已完成、作废历史；默认只列有效待办'}}},
+  personal_reminder_list_manage: {...manageParameters, properties: {...manageParameters.properties,
+    id: {type: 'string', pattern: '^km:[1-9]\\d*$'}}},
+};
+export const sharedToolDeclarations = toolDeclarations.map(d => ({...d, parameters: sharedParameters[d.name]}));
 export function createReminderListPlugin({registry} = {}) {
   const plugin = {id: 'personal-reminder-list', name: 'Personal reminder list', register(api) {
-    if (api.pluginConfig?.dataSource === 'knowledgemap') return registerRemoteList(api, toolDeclarations);
+    if (api.pluginConfig?.dataSource === 'knowledgemap') return registerRemoteList(api, sharedToolDeclarations);
     const application = createListApplication({registry, policyAdapter: api.pluginConfig?.policyAdapter, storeAdapter: api.pluginConfig?.storeAdapter});
     const ownerId = api.config.channels?.['kurumi-qq']?.ownerId;
     const options = {root: stateRoot(), ownerId, repo: api.pluginConfig?.backendRoot, defaultTimes: api.pluginConfig?.defaultTimes, port: api.config.gateway?.port ?? 18890, logger: api.logger,

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Fixed native-Cron runner. Writes list expiry/digest claims to the configured
-// private state; stdout is announced by OpenClaw to the configured owner QQ.
+// Fixed native-Cron runner. Writes digest claims (plus expiry in SQLite mode) to
+// the configured private state; stdout is announced by OpenClaw to the configured owner QQ.
 // No model, shell, arbitrary recipient, or user-controlled executable.
 import {pathToFileURL} from 'node:url';
 import {createListApplication, stateRoot} from '../plugins/personal-reminder-list/application.js';
