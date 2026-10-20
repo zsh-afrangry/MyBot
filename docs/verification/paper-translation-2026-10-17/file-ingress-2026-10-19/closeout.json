@@ -1,0 +1,110 @@
+{
+  "at": "2026-10-19T15:53:19.921983+00:00",
+  "scope": "Attachment ingress repair only; parallel access-control/KnowledgeMap/persona work preserved",
+  "sourceHead": "9c88003136216d082417290676027b01a40aab69",
+  "nodeTests": {
+    "passed": 191,
+    "failed": 0,
+    "specializedIncluded": 26
+  },
+  "isolatedModel": {
+    "cases": 13,
+    "passed": true,
+    "translation": "fixture",
+    "onebot": "mock",
+    "strengthenedArtifactAssertions": true
+  },
+  "committed": false,
+  "pushed": false,
+  "evidence-index": {
+    "exitCode": 0,
+    "scripts": 179,
+    "boundaryDeclarations": 46,
+    "attachmentEntries": [
+      {
+        "path": "chatbot/tests/papers/acceptance-file-ingress.mjs",
+        "basis": "boundary",
+        "contradictions": []
+      },
+      {
+        "path": "chatbot/tests/papers/file-ingress.test.mjs",
+        "basis": "header",
+        "contradictions": []
+      }
+    ]
+  },
+  "evidence-coverage": {
+    "exitCode": 0,
+    "summary": "evidence coverage\n  历史领域验收: 84\n  当前有效: 335\n  total: 419\nOK: every file is classified by a named rule."
+  },
+  "sourceHashes": {
+    "chatbot/plugins/kurumi-qq/src/attachments.js": "b822fe6145b9456b028e1bf40d598306edc9c56a9de1c5547132ba7dd0075354",
+    "chatbot/plugins/kurumi-qq/src/files.js": "e842882106a12a941edd310515477b8ca39eee5f044d0b4cf1ec7c16be937aa9",
+    "chatbot/plugins/kurumi-qq/src/inbound.js": "cbb1047f1e8cd7d1bba3c71eaa5dc543fc776dacd81d02da1bd11cabb33ff19a",
+    "chatbot/tests/papers/file-ingress.test.mjs": "2f5bb7d0b1a36041d6a8f3941c352439445bdc12ec5ac85a33a71fee1d5f1889",
+    "chatbot/tests/papers/acceptance-file-ingress.mjs": "7c5c6a053dae89e05040cf0f63ec113973d86565d64a8726ace9b010803177a2",
+    "scripts/fusion/templates/AGENTS.md": "f906020c606987ab05a8e61c54625b9da917b67fcaea365eae3380a5f7115642",
+    "scripts/fusion/templates/MEMBER_AGENTS.md": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+    "scripts/fusion/evidence-index.mjs": "25837414f1db6b65e172b88392f6ad5b45a7428400af9e5a433e87a430cd2fe0"
+  },
+  "markdown": {
+    "localLinksChecked": 134,
+    "broken": [],
+    "unpairedFences": []
+  },
+  "gitDiffCheck": {
+    "exitCode": 0,
+    "diagnostics": ""
+  },
+  "secretScan": {
+    "knownValuesChecked": 7,
+    "filesChecked": 25,
+    "matches": []
+  },
+  "parallelPersona": {
+    "fullSyncInitialDriftFiles": 6,
+    "fullSyncRepeated": false,
+    "document": "docs/25_人格、记忆与会话连续性.md",
+    "notCountedAsFullFourCheckPass": true,
+    "attachmentAgentsMatch": 3,
+    "finalReadOnlyCheckExitCode": 1,
+    "finalDriftFiles": 6
+  },
+  "finalCheckedAt": "2026-10-19T15:55:04.896864+00:00",
+  "evidence-index-final": {
+    "exitCode": 0,
+    "scripts": 179,
+    "boundaryDeclarations": 46,
+    "attachmentEntries": [
+      {
+        "path": "chatbot/tests/papers/acceptance-file-ingress.mjs",
+        "contradictions": []
+      },
+      {
+        "path": "chatbot/tests/papers/file-ingress.test.mjs",
+        "contradictions": []
+      }
+    ]
+  },
+  "evidence-coverage-final": {
+    "exitCode": 1,
+    "summary": "evidence coverage\n  历史领域验收: 84\n  当前有效: 337\n  total: 422\n\ndirectories with no named rule:\n  plugin-lifecycle-2026-10-19/\n\nunclassified files (add a named rule and register it in INDEX.md):\n  plugin-lifecycle-2026-10-19/README.md\n\nFAILED: docs/verification is not fully classified by named rules."
+  },
+  "ownEvidenceAllClassified": true,
+  "finalEvidenceFiles": [
+    "README.md",
+    "closeout.json",
+    "config-check.txt",
+    "dependencies.txt",
+    "deployment.json",
+    "evidence-coverage-final.txt",
+    "health.json",
+    "host-recheck.json",
+    "host.json",
+    "node-tests.txt",
+    "persona-apply.txt",
+    "persona-check-final.txt",
+    "persona-check-initial.txt",
+    "runtime-before.json"
+  ]
+}

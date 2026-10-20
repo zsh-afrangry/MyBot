@@ -1,12 +1,6 @@
 # 论文 PDF 翻译与文件投递
 
-状态：**有效正文空闲100秒切换已开发、部署并通过离线/生产捕获检查，待本人QQ全流程测试。** 先前可靠性修复已有 GPT/high 的23页和19页各一次提交整篇成功、本人QQ收件及“没有错位、翻译较准确”的反馈；不替代本轮策略的真实验收或逐字/逐公式校对。日常默认 high、30分钟、单篇四并发，多篇逐篇投递；六并发仅单篇对比，Grok 不在需求范围。更新于 2026-10-20（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
-
-## QQ附件失败分流（2026-10-20）
-
-频道先记录每个文件的扩展名和接收结果。非PDF不下载、不读取；只有附件失败且消息没有文字、引用或成功媒体时，由频道通过现有发送账本说明失败并跳过模型派发，避免模型把当前附件失败接续成历史PDF的翻译或重发。带文字、引用、有效图片或已登记PDF的消息仍进入模型回合；只有本次成功登记的真实文档ID代表当前上传文件。该边界不解析自然语言意图，也不阻止用户明确要求重发历史产物。
-
-独立基线回归覆盖纯Markdown附件不触发模型、PDF下载/校验失败、混合附件、当前PDF ID、引用/图片对话、重复消息、文件数量上限和日志/上下文中的文件名清理：[附件分流证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md)。无真实QQ或翻译API调用。
+状态：**非PDF附件入口已修复并部署；100秒空闲切换已部署，新成员冷启动与渠道冷却优化待开发。** 先前可靠性修复已有 GPT/high 的23页和19页各一次提交整篇成功、本人QQ收件及“没有错位、翻译较准确”的反馈；不替代逐字/逐公式校对或长期性能保证。日常默认 high、30分钟、单篇四并发，多篇逐篇投递；六并发仅单篇对比，Grok 不在需求范围。更新于 2026-10-20（Asia/Shanghai）。唯一阅读入口：[README.md](README.md)。
 
 ## 任务服务停止与下载边界（2026-10-20，已加载）
 
@@ -14,7 +8,44 @@
 
 公开学术PDF获取由 `chatbot/packages/scholarly-source/index.js` 唯一实现，研究阅读与翻译共同消费；研究插件自己负责全文/页图，翻译下载不再依赖阅读解析成功。来源白名单、大小/TLS/取消/缓存完整性沿用既有约束；显式阅读缓存、独立插件与本轮部署/回归统一见[文档26](26_基础能力插件边界整理与检索接入设计.md)，不将本轮隔离结果扩大为新的付费翻译或真人投递验收。
 
-## 正文无进展100秒切换（已部署，QQ待复验，2026-10-19）
+## 附件入口修复（已部署，2026-10-19）
+
+主人已同意采用“准确附件状态 + 纯失败附件确定性分流 + 有文字/引用/有效媒体交给模型”的方案。本轮只改附件接收、入站编排、主人/成员提示词与测试，不实施下方性能优化，不增加后端自然语言动作正则、不扩大文件/命令权限。开发起点 `9c88003`，工作区已有文档24等并行修改，保留其内容；不整仓提交/推送。数据库无需迁移。服务重载前先核实没有活动翻译/投递，避免中断本人或成员任务。
+
+- [x] 实现独立附件结果模块：安全文件名、类型、接收状态、失败码、成功后的真实文档ID；不把非PDF伪装成PDF接收失败，不暴露下载URL/正文。
+- [x] 消息只有失败/不支持附件，且无文字、引用或有效媒体时，直接通过现有QQ发送账本反馈，不启动模型业务回合；重复入站不重复回复。混合成功/失败附件保留每项结果。
+- [x] 主人和成员规则一致：不能用旧文档替代当前失败附件，明确的待续翻译使用本次成功登记ID；用途不明确先问，真实重发意图仍可使用已有产物。
+- [x] 附件专项26项、论文/QQ/权限/邮件/统一查询相关Node回归191/191通过；真实隔离OpenClaw/聊天模型13场景通过。独立合成产物及来源ID/投递hash断言复验仍13/13；翻译/OneBot均模拟，零翻译API、零真实QQ/邮件外发，保留首轮回执与夹具边界。
+- [x] 23:48无活动翻译/投递时重载Fusion；捕获的inbound/files/attachments三文件与源码相同，主人及两成员AGENTS的附件规则逐字对齐。健康、依赖、配置检查通过，QQ在线、testIngress=false，生产任务总数11不变。全套人格检查受并行文档25开发影响，不计为四项全过，处理见下方及证据报告。
+
+实现与验收证据：[附件入口修复](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。纯失败分流是确定性边界；带自然语言的用途与重发意图仍由模型判断，不能据一次宿主测试承诺永不误判。原后台任务完成后的自动文件投递不受此入站分支控制。
+
+并行部署记录：本轮先审阅到仅3份AGENTS变化，但整套`sync-persona --apply`执行时读入了“人格和记忆”任务正在修改的配置，写入10份文件，包含其世凪人格。已核实该任务由本人另行授权；没有回退其源码/运行文件，停止再次整套同步。后续6份SOUL/USER差异由文档25继续对齐，初次非零回执保留，不能冒称全套人格已验收。附件规则本身在3个工作区均与当前投影一致。
+
+## 日常运行调查与待修复项（2026-10-19）
+
+调查轮按主人要求记录耗时问题、原因和计划，并核实仅发送 Markdown 文件后收到旧译稿的问题。性能优化尚未实施；附件修复状态以上方本轮记录为准。调查轮没有修改业务代码/配置、重启服务、重跑付费翻译或外发消息。时间均为 Asia/Shanghai，脱敏事实、调用顺序与证据边界统一见[运行调查报告](verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md)。
+
+### 30页翻译耗时
+
+新成员任务 `job_8b890510d73a3d339edc3c29` 于22:02:42开始，首条API请求到22:08:38才发出，约5分55秒用于API前初始化/处理；实际补下载了公共模型、字体和tokenizer。22:15查询时，正文翻译阶段仅24.21%，引擎加权总体49.88%；“刚过半”不能解释为已翻过半页数或还需同样时间。22:17按主人要求停止服务并终止任务，最终保留 `failed/pdf_worker_failed`，不能把人为停止算作新渠道失败或推断整篇必然超过30分钟。
+
+33次API尝试中22成功、6渠道故障、1校验失败、4在途被停止；34354已报告tokens、10次用量未知。两次无正文进展100秒取消真实生效，本轮没有600秒超时。单次临时故障触发渠道冷却300秒，三渠道相继冷却，存在117.422秒完全没有在途API的区间；冷却等待又占并发槽。API前近6分钟与冷却是已定位的瓶颈，现有日志不能将全部初始化时间细分到下载/版面分析。
+
+计划（均待开发/验收）：
+
+- [ ] 新身份部署时预热或只读共享公共模型、字体、tokenizer；个人PDF、译文缓存/数据库与凭据继续隔离，不复制主人缓存库。
+- [ ] 按故障类别和连续失败细分冷却，减少一次断连造成全渠道长时间等待；保留014优先、同模型切换、有界重试和单路恢复探测，避免恢复后并发集中回冲014。
+- [ ] 补初始化、公共资源、解析、翻译、排版、投递的阶段计时；进度同时说明当前阶段及阶段内百分比，不用静态总体权重推算剩余时间。
+- [ ] 先保持high、4并发/QPS1、30分钟和既有预算，消除无效等待后，再按相同论文/配置分别验证首次资源准备与预热场景；付费复测需沿用实际授权，不自动重跑。
+
+### Markdown文件引起旧译稿重发
+
+22:41:57主人只上传一个 `.md` 文件，入口因仅支持PDF而拒绝，未下载或读取该文件。模型实际只收到统一的“PDF文件接收失败”提示，文件名、扩展名和明确的“不支持类型”状态均未保留。随后调用依次为 `kurumi_translate status` → `kurumi_document get` → `kurumi_document_send`，指向20:06已完成并投递的15页旧译稿；**没有 `kurumi_translate start`、没有新建翻译任务**。这是文件入口信息丢失与模型错误接续旧任务导致的重发，不是后端将Markdown自动翻译，也不是该文件内容改变了人格。现有发送工具核验身份/文档归属与投递幂等，但不证明本次用户要求重发。
+
+本次授权后的实现与验收只在顶部“附件入口修复”维护，调查证据保留原时点，不将“已定位”当成已修复。
+
+## 正文无进展100秒切换（开发与部署记录，2026-10-19）
 
 主人同意：请求开始后或最后一次有效正文增量后，连续100秒没有有效正文则取消当前HTTP进程，按既有有限规则重试当前批次并切渠道；心跳、`response.created`、思考事件和纯空白不重置计时。正常持续输出仍受单请求600秒总期限约束；整篇30分钟、300请求/30万已报告tokens、默认high、日常4并发/QPS1与校验/渠道恢复次数保持。隐藏思考也可能被此规则中止，未知用量不记0，不保证上游停止计费。
 
@@ -23,7 +54,8 @@
 - [x] 配置/schema → Node固定worker → Python客户端 → HTTP监督进程贯通，默认100秒，可由操作者调整1–600秒。
 - [x] 本机HTTP验证无响应/心跳/空白无法续命、实际正文重置、正文后停滞仍超时、600秒总期限独立、当前批次有界切换及未知用量/取消。论文回归110/110（Node36、Responses20、并发11、安装引擎15、可靠性28），使用缩短期限的本机合成流验证实际取消/切换，无付费调用。
 - [x] 无活动翻译/投递时仅同步新增100秒配置并重载；捕获的Node与Python源码hash一致，实际Bubblewrap导入和100秒配置检查通过，日常4/QPS1、high/显式MAX、预算与重试次数保持；四项自检通过、QQ在线、testIngress=false。
-- [ ] 本人QQ全流程复验：是否成功、整篇耗时、超时/降级/冷却回执和未知用量；本轮没有付费翻译或QQ/SMTP外发，不能宣称已验证实际提速。
+- [x] 后续日常任务已有整篇成功：15页298.183秒、19页575.524秒，15页QQ投递平台受理；30页成员任务实际触发两次100秒空闲取消与三渠道切换。详见顶部运行调查，均不是本轮开发者代发的验收任务。
+- [ ] 性能稳定性仍待复验：上述日常成功不是严格同论文冷/热缓存对照；30页已人为停止，冷启动和300秒冷却问题尚未优化，不能宣称普遍提速或长期稳定。
 
 证据归属：[正文无进展超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)。
 
@@ -191,18 +223,21 @@ flowchart LR
 | `kurumi_document` | list/get 返回受管 PDF/产物摘要；fetch 复用公开论文下载器。仅有题名时模型先检索准确 URL |
 | `kurumi_translate` | start/status/list/cancel，使用真实 documentId/jobId；返回排队不代表完成，生成与投递分状态 |
 | `kurumi_document_send` | 只接受受管文档/产物 ID，投递当前本人 QQ；不接收任意路径、URL 或其它收件人 |
-| QQ 入站 | 实际本人/机器人私聊元数据校验；file 消息和 offline_file 通知；文件内容经受控 URL 下载并登记，模型只得到 ID/文件名/页数 |
+| QQ 入站 | 校验已登记身份与机器人私聊元数据；file 消息和 offline_file 通知。附件逐项提供类型/状态/错误码，成功PDF另有受管ID/页数；纯失败无文字/引用/有效媒体时直接反馈，其余保留当前文字交模型 |
 | 邮件 | `attachments:[{documentId}]` 取受管文件，创建草稿时固定实际字节；确认覆盖附件 hash，不把 base64 发进模型上下文 |
 
 三份窄工具加入 main 的 alsoAllow；通用 read/write/edit/exec/process/message/sessions_spawn 等仍禁用。主人已授权本需求实现及真实本人测试，工具扩展已提前说明。论文正文、文件名、网页不是身份或授权来源；服务端参数来自受管配置，模型不能传端点、密钥或命令。
 
 ### 文件、来源和状态
 
+- 身份及功能授权按[文档24](24_统一身份与权限管理.md)：原主人文档沿用根目录，成员使用 `subjects/<QQ>/`；查询/取消/重发及自动投递绑定真实请求人，后台不默认转发给主人。共用逐篇串行队列，成员不能用邮件或读取他人文档/任务。
 - 原始 PDF 导入不超过 25 MiB；受管翻译产物不超过 100 MiB，避免双语嵌入原文与译文资源后被原文大小上限拒绝。两者均须未加密、1–500 页，并经网络隔离的 PDF 解析进程检查；失败/取消的导入不留未登记 PDF。邮件仍单附件10 MiB/总20 MiB，超过此限可通过QQ投递，不自动扩大邮件限制。
 - 输入 ID 为内容哈希导出的 `doc_…`，产物为 `pdf_…`；读取复核大小与 SHA256，拒绝路径逃逸及符号链接。工具返回摘要，不返回文件字节/绝对路径。
 - 网站沿用 `arxiv.org`、`export.arxiv.org`、`aclanthology.org`、`openreview.net`、`proceedings.mlr.press`、`proceedings.neurips.cc` 的 HTTPS 白名单，不自动登录或跟重定向。
 - QQ 文件 URL 从已鉴权 OneBot 的 get_private_file_url 取得，忽略正文/上传数据中的任意 URL；只允许已登记QQ CDN，或公开IPv4的固定`/asn.com/`路径。HTTP先升级HTTPS；IPv4保持路由地址并以固定`multimedia.nt.qq.com.cn`做SNI/证书校验，不跟重定向、不关闭TLS验证。内网/保留IP拒绝。实际回取348896字节与原SHA256一致，但不是主人上传事件。
-- 每条消息最多 3 份 PDF。收到文件只登记，不擅自开始付费翻译。
+- 每条消息最多处理前3项文件，超量明确标为未处理；只支持PDF，非PDF不下载、不读取正文。`qq_attachment_results`保留安全截断的文件名、扩展名标签和每项结果；标签为不可信数据，不是指令。状态为`registered/unsupported_type/rejected/download_failed/validation_failed/import_failed/not_processed`，仅`registered`包含本次真实文档ID。
+- 收到文件不等于请求翻译：成功PDF结合本次文字和前文明确的待续请求处理，用途未知先问；失败附件不能用历史PDF顶替。只有失败附件且无文字、引用或成功媒体时，由频道通过原发送账本直接反馈，不派发模型，未知回执不自动重发。引用未加载也保留对话路径，不以关键词正则决定业务意图。
+- 带文字或有效媒体的附件消息仍交模型；明确要求重发旧稿时可按实际ID发送。`paper.qq_receive`记录类型/状态/错误码和成功ID，`paper.qq_ingress_route`记录是否派发模型；可按QQ消息ID统一查询，不落文件名、正文或签名URL。
 - 任务状态：queued → running → succeeded / failed / cancelled / interrupted。可信会话与调用 ID 生成幂等键；同键不同参数拒绝，重放不再付费。
 - succeeded 只证明产物已登记；delivery 另记 not_requested / dispatching / platform_accepted / failed_or_unknown。中断投递不重新运行翻译，重启遗留 dispatching 标为未知，不重发。
 - QQ 文件上传接入原频道发送配额与持久账本；OneBot 上传回执没有 message_id 时不伪造。未知回执需核对后由本人明确决定是否重新投递。
@@ -230,7 +265,7 @@ GPT 批次使用原数组协议；DeepSeek 批次显式传原生 `text.format=js
 | `chatbot/plugins/kurumi-papers/{index,profiles,service,runner}.js` | 工具、配置解析、任务与固定子进程 |
 | `chatbot/plugins/kurumi-papers/python/{engine,responses,http_worker}.py`、`python/profiles.json` | 排版适配、批次验证/有界恢复、可取消的一次性HTTP与 Node/Python 共用的固定厂商注册表 |
 | `chatbot/plugins/kurumi-papers/python/requirements.lock.txt` | 固定 Python 依赖；bitstring 固定 4.3.1 |
-| `chatbot/plugins/kurumi-qq/src/{inbound,files,transport}.js` | 本人 PDF 接收与原 OneBot 文件投递 |
+| `chatbot/plugins/kurumi-qq/src/{attachments,inbound,files,transport}.js` | 逐项附件事实、纯失败分流、授权身份PDF接收与原OneBot文件投递 |
 | `chatbot/plugins/kurumi-mail/` | 受管附件快照、内容绑定、原确认/SMTP；契约见文档 20 |
 | `/home/afrangry/.openclaw-fusion/documents/` | 生产受管记录/files/jobs/work/cache/events.jsonl；不进 Git |
 | `/home/afrangry/.openclaw-fusion/paper-credentials.json` | 0600 的三份私密 GPT 凭据与 `DEEPSEEK_API_KEY`；任务只读取所选厂商的凭据，不进 Git |
@@ -285,13 +320,14 @@ python3 chatbot/tests/papers/reliability_test.py
 node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js scripts/fusion/test/log-query.test.mjs
 ```
 
-当前源码回归：Node **36/36**、Responses **20/20**、并发 **11/11**、安装引擎契约 **15/15**、可靠性 **28/28**，合计 **110/110**，回执见[正文空闲超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)。覆盖有效正文重置、无头/静默/心跳/空白/正文后停滞超时、独立总期限、当前批次切换与子进程回收；保留六路阻塞/第七路排队、局部重试0–4、冷却恢复/半开探测、安全诊断与预算、默认high/显式MAX和所选产物/缓存/凭据隔离回归。此前批次恢复轮邮件/QQ/查询 **112/112**、共享接口/后端与恢复 **54/54** 为历史回执，未重复累计。离线通过不替代实际论文质量、真人入站或邮箱到信。
+附件修复轮Node相关回归**191/191**（含附件专项26项），见[本轮证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。涵盖论文、QQ、统一权限、邮件和统一查询；未改Python翻译器，未因附件修复重跑付费翻译。前一轮Node36、Responses20、并发11、安装引擎15、可靠性28合计**110/110**的时点回执保留于[正文空闲超时](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)，不重复累计或冒称本轮重跑。离线通过不替代实际论文质量、真人入站或邮箱到信。
 
 明确授权的真实验收脚本（不要混进离线批量命令）：
 
 ```bash
 node chatbot/tests/papers/acceptance-download.mjs
 node chatbot/tests/papers/acceptance-host.mjs --out /绝对路径/新的host结果.json
+node chatbot/tests/papers/acceptance-file-ingress.mjs --out /绝对路径/新的附件入口结果.json
 node chatbot/tests/papers/acceptance.mjs --input /home/afrangry/桌面/2609.32536v1.pdf --pages 1 --out /绝对路径/证据目录
 # DeepSeek 显式加 --provider deepseek；可选 --model deepseek-v4-pro --effort high
 # 整篇去掉 --pages；--concurrency 4 或 6 --qps 1（验收脚本未指定仍为1）
@@ -299,7 +335,7 @@ node chatbot/tests/papers/acceptance.mjs --input /home/afrangry/桌面/2609.3253
 # 每次必须使用新的 --out；不自动续跑付费任务
 ```
 
-acceptance-host 启动隔离 Gateway 并调用真实主模型，翻译/OneBot 模拟；不写生产业务。acceptance-worker 需显式 --capture（当前生产捕获的 runner.js）和新 --out，只验证固定 Python/双厂商注册表的真实隔离进程，无凭据/API/外发。acceptance-api.py 需显式 --credentials 和新 --out，真实调用合成短句或 --batch 合成批次，可指定 --provider/--model/--effort；不得作为离线回归运行。acceptance使用真实翻译API及私密验收目录，核对所选产物集合与完整页数；可用--root复用该目录缓存，或为冷译文缓存指定新的root并以--seed-resources-from仅复制公开模型/字体/tokenizer。--reuse-job只验收既有成功产物及投递，不新增付费翻译。每次新任务均是明确运行，不自动续跑旧付费调用。--send-mail按主人本轮授权程序化记录测试确认，**不代表真实QQ带码确认往返或到信**。
+acceptance-host 和 acceptance-file-ingress 启动隔离 Gateway 并调用真实聊天模型，翻译/OneBot模拟，不写生产业务；后者验证真实附件入口/PDF解析及主人、合成成员的待续/重发编排，不启用生产testIngress。acceptance-worker 需显式 --capture（当前生产捕获的 runner.js）和新 --out，只验证固定 Python/双厂商注册表的真实隔离进程，无凭据/API/外发。acceptance-api.py 需显式 --credentials 和新 --out，真实调用合成短句或 --batch 合成批次，可指定 --provider/--model/--effort；不得作为离线回归运行。acceptance使用真实翻译API及私密验收目录，核对所选产物集合与完整页数；可用--root复用该目录缓存，或为冷译文缓存指定新的root并以--seed-resources-from仅复制公开模型/字体/tokenizer。--reuse-job只验收既有成功产物及投递，不新增付费翻译。每次新任务均是明确运行，不自动续跑旧付费调用。--send-mail按主人本轮授权程序化记录测试确认，**不代表真实QQ带码确认往返或到信**。
 
 ## 未覆盖、阻塞与收尾
 

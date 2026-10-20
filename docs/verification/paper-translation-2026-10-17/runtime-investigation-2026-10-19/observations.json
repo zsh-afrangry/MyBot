@@ -1,0 +1,258 @@
+{
+  "schemaVersion": 1,
+  "investigatedOn": "2026-10-19",
+  "timezone": "Asia/Shanghai",
+  "sourceHead": "9c88003",
+  "workingTreeBoundary": "Includes existing uncommitted access-control and other parallel changes; no business/config changes by this investigation.",
+  "scope": "Read-only runtime investigation; only documentation and sanitized evidence written. No new translation, restart or outbound delivery initiated.",
+  "sources": [
+    "SnowLuma runtime/logs/snowluma-2026-10-19.log",
+    "Owner and member OpenClaw transcript_events (read-only SQLite)",
+    "Private paper job and event ledger, selected fields only",
+    "Public resource cache file metadata",
+    "Current QQ ingress, paper tool, worker and Responses implementation"
+  ],
+  "performance": {
+    "taskId": "job_8b890510d73a3d339edc3c29",
+    "pages": 30,
+    "status": "failed",
+    "terminalCode": "pdf_worker_failed",
+    "terminalCause": "Operator-requested service stop; not natural timeout.",
+    "createdAt": "2026-10-19T14:02:42.547Z",
+    "updatedAt": "2026-10-19T14:17:27.118Z",
+    "wallSeconds": 884.571,
+    "execution": {
+      "apiConcurrency": 4,
+      "apiQps": 1,
+      "batchValidationRetries": 1,
+      "channelRecoveryRetries": 1
+    },
+    "firstApiAtSecondResolution": "2026-10-19T14:08:38Z",
+    "preApiSecondsApprox": 355.453,
+    "attempts": 33,
+    "distinctBatches": 26,
+    "outcomes": {
+      "completed": 22,
+      "validation_failed": 1,
+      "channel_failed": 6,
+      "unfinished": 4
+    },
+    "reportedTokens": 34354,
+    "unknownUsageAttempts": 10,
+    "failureCodes": {
+      "api_output_idle_timed_out_unknown": 2,
+      "api_transport_unknown": 4
+    },
+    "perChannel": {
+      "014": {
+        "attempts": 15,
+        "outcomes": {
+          "completed": 8,
+          "validation_failed": 1,
+          "channel_failed": 2,
+          "unfinished": 4
+        },
+        "successLatencySeconds": {
+          "min": 7.134,
+          "median": 34.905,
+          "max": 76.812
+        }
+      },
+      "030": {
+        "attempts": 12,
+        "outcomes": {
+          "completed": 10,
+          "channel_failed": 2
+        },
+        "successLatencySeconds": {
+          "min": 12.777,
+          "median": 15.1935,
+          "max": 24.082
+        }
+      },
+      "040": {
+        "attempts": 6,
+        "outcomes": {
+          "completed": 4,
+          "channel_failed": 2
+        },
+        "successLatencySeconds": {
+          "min": 23.189,
+          "median": 24.8305,
+          "max": 27.43
+        }
+      }
+    },
+    "requestFreeGaps": [
+      {
+        "clientStartOffsetSeconds": 589.550147,
+        "clientEndOffsetSeconds": 706.972381,
+        "seconds": 117.422234
+      }
+    ],
+    "cooldownSeconds": 300,
+    "recoveryWaitCount": 7,
+    "recoveryWaitSecondsNotAdditive": [
+      244.354,
+      243.464,
+      262.36,
+      117.415,
+      19.293,
+      49.409,
+      2.928
+    ],
+    "idleTimeouts": [
+      {
+        "attempt": 5,
+        "channel": "014",
+        "elapsedSeconds": 100.003,
+        "outputStarted": false,
+        "noOutputSeconds": 100
+      },
+      {
+        "attempt": 14,
+        "channel": "040",
+        "elapsedSeconds": 157.651,
+        "outputStarted": true,
+        "noOutputSeconds": 100.001
+      }
+    ],
+    "progressAtQuery": {
+      "at": "2026-10-19T14:15:12.682Z",
+      "stage": "Translate Paragraphs",
+      "stageProgressPercent": 24.20774647887324,
+      "weightedOverallPercent": 49.877982150048865
+    },
+    "terminalProgress": {
+      "stage": "Translate Paragraphs",
+      "stageProgressPercent": 27.112676056338028,
+      "weightedOverallPercent": 51.2418643031957
+    },
+    "resourceObservations": {
+      "onnxBytes": 75324598,
+      "onnxMtime": "2026-10-19T22:02:49.676587+08:00",
+      "tokenizerBytes": 3613922,
+      "tokenizerMtime": "2026-10-19T22:07:55.616704+08:00",
+      "boundary": "File metadata corroborates new public resource preparation; phase durations not fully instrumented."
+    },
+    "comparisonTasks": [
+      {
+        "taskId": "job_345a3e197a22b4f4c48eced9",
+        "status": "succeeded",
+        "createdAt": "2026-10-19T12:01:10.734Z",
+        "updatedAt": "2026-10-19T12:06:08.917Z",
+        "wallSeconds": 298.183,
+        "attempts": 94,
+        "outcomes": {
+          "completed": 93,
+          "channel_failed": 1
+        },
+        "reportedTokens": 59044,
+        "unknownUsageAttempts": 1,
+        "recoveryWaitCount": 0,
+        "comparisonBoundary": "Different papers/accounts/resource and translation caches; not controlled A/B."
+      },
+      {
+        "taskId": "job_5d96f65c3edde5417adaf09b",
+        "status": "succeeded",
+        "createdAt": "2026-10-18T16:26:34.289Z",
+        "updatedAt": "2026-10-18T16:36:09.813Z",
+        "wallSeconds": 575.524,
+        "attempts": 108,
+        "outcomes": {
+          "completed": 103,
+          "validation_failed": 1,
+          "channel_failed": 4
+        },
+        "reportedTokens": 60523,
+        "unknownUsageAttempts": 4,
+        "recoveryWaitCount": 1,
+        "comparisonBoundary": "Different papers/accounts/resource and translation caches; not controlled A/B."
+      }
+    ]
+  },
+  "markdownIncident": {
+    "qqMessageId": "869474658",
+    "observedExtension": ".md",
+    "ownerTranscriptSeqRange": [
+      1927,
+      1943
+    ],
+    "inboundAt": "2026-10-19T14:41:57.249Z",
+    "inboundResult": {
+      "status": "failed",
+      "code": "pdf_receive_failed"
+    },
+    "agentMessage": {
+      "characters": 59,
+      "filenamePreserved": false,
+      "extensionPreserved": false,
+      "pdfRegisteredMarker": false,
+      "documentIdProvided": false,
+      "bodyRead": false,
+      "actualMeaning": "Generic PDF receive failure only; not a translation/resend request."
+    },
+    "toolCalls": [
+      {
+        "at": "2026-10-19T14:42:02.649Z",
+        "tool": "kurumi_translate",
+        "arguments": {
+          "action": "status",
+          "jobId": "job_345a3e197a22b4f4c48eced9"
+        }
+      },
+      {
+        "at": "2026-10-19T14:42:05.792Z",
+        "tool": "kurumi_document",
+        "arguments": {
+          "action": "get",
+          "documentId": "pdf_fe9331e13b7c08ca31c06fd8938eec8a",
+          "kind": "artifact"
+        }
+      },
+      {
+        "at": "2026-10-19T14:42:07.853Z",
+        "tool": "tool_describe",
+        "arguments": {
+          "id": "kurumi_document_send"
+        }
+      },
+      {
+        "at": "2026-10-19T14:42:09.617Z",
+        "tool": "kurumi_document_send",
+        "arguments": {
+          "documentId": "pdf_fe9331e13b7c08ca31c06fd8938eec8a"
+        }
+      }
+    ],
+    "uploadAt": "2026-10-19T14:42:11.739Z",
+    "uploadStatus": "platform_accepted",
+    "artifact": {
+      "id": "pdf_fe9331e13b7c08ca31c06fd8938eec8a",
+      "pages": 15,
+      "bytes": 7255856,
+      "sha256": "fe9331e13b7c08ca31c06fd8938eec8a164dade71e0cfe0762528206a0b7c739",
+      "originalDeliveryAt": "2026-10-19T12:06:08.915Z"
+    },
+    "translationStartInTurn": false,
+    "newTranslationJobInTurn": false,
+    "diagnosis": "Unsupported file metadata collapsed into generic PDF failure; model resumed an old task and sent the existing artifact without current resend intent.",
+    "fixStatus": "Not implemented; requirements and plan owned by doc22."
+  },
+  "limits": [
+    "No raw private chat or file contents copied.",
+    "No controlled performance experiment or full-paper quality acceptance performed.",
+    "A weighted progress percentage is neither page completion nor elapsed/remaining time.",
+    "Unknown API usage is not zero; operator stop may leave upstream cost unknown."
+  ],
+  "documentationChecks": {
+    "diffWhitespace": "passed",
+    "classifiedEvidenceFiles": 406,
+    "indexedScripts": 175,
+    "consistentBoundaryDeclarations": 44,
+    "markdownFilesChecked": 5,
+    "localLinkTargetsChecked": 96,
+    "brokenLocalLinks": 0,
+    "summaryConsistency": "passed"
+  }
+}

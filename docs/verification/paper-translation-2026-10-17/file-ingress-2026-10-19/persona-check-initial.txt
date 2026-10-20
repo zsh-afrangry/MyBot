@@ -1,0 +1,8 @@
+DIFFERS workspace/SOUL.md
+DIFFERS workspace/USER.md
+DIFFERS users/3311723223/workspace/SOUL.md
+DIFFERS users/3311723223/workspace/USER.md
+DIFFERS users/2752966052/workspace/SOUL.md
+DIFFERS users/2752966052/workspace/USER.md
+role card: roles/世凪.md
+persona DRIFT: 6 file(s); run --apply

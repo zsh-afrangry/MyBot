@@ -1,0 +1,12 @@
+{
+  "at": "2026-10-19T15:45:53.834136+00:00",
+  "activeJobs": [],
+  "totalJobs": 11,
+  "runtimeConfigSha256": "4bc308e0a2a2a9194315d22e9e44af55c820eb70ee3f240f321f19e00605ebe7",
+  "testIngress": false,
+  "service": [
+    "MainPID=981672",
+    "ExecMainStartTimestamp=Mon 2026-10-19 22:17:38 CST",
+    "ActiveState=active"
+  ]
+}

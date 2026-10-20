@@ -1,0 +1,12 @@
+DIFFERS workspace/SOUL.md
+DIFFERS workspace/IDENTITY.md
+DIFFERS workspace/AGENTS.md
+DIFFERS workspace/USER.md
+DIFFERS users/3311723223/workspace/SOUL.md
+DIFFERS users/3311723223/workspace/IDENTITY.md
+DIFFERS users/3311723223/workspace/AGENTS.md
+DIFFERS users/2752966052/workspace/SOUL.md
+DIFFERS users/2752966052/workspace/IDENTITY.md
+DIFFERS users/2752966052/workspace/AGENTS.md
+role card: roles/世凪.md
+persona applied: 10 files; memory/history/model/credentials untouched

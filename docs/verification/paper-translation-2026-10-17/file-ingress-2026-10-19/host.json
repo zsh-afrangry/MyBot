@@ -1,0 +1,259 @@
+{
+  "at": "2026-10-19T15:40:31.292Z",
+  "boundary": "Real isolated OpenClaw and configured chat model; actual attachment handler, PDF catalog, tools and job service. Synthetic attachment download, fixture translator and mock OneBot. No production state writes, real translation API, QQ or SMTP delivery.",
+  "cases": [
+    {
+      "label": "establish-historical-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "翻译好了，双语 PDF 已经发到你 QQ。用的是默认配置，只生成了一份中英对照版。没收到的话告诉我。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "md-with-existing-history",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "modelDispatched": false,
+        "attachmentReply": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "附件“SOUL.md”暂不支持读取，当前文件入口只接受PDF。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "duplicate-md",
+      "result": {
+        "duplicate": true,
+        "captured": []
+      }
+    },
+    {
+      "label": "member-offline-md",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+        "modelDispatched": false,
+        "attachmentReply": true,
+        "captured": [
+          {
+            "to": "user:800001",
+            "text": "附件“notes.md”暂不支持读取，当前文件入口只接受PDF。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "unavailable-pdf",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "modelDispatched": false,
+        "attachmentReply": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "附件“candidate.pdf”下载失败，未取得可用PDF；请重新上传。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "invalid-pdf",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "modelDispatched": false,
+        "attachmentReply": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "附件“candidate.pdf”校验失败；请上传未加密、内容有效且页数不超过500页的PDF。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "md-text-request-read",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "这份 MD 没收到，系统不接受该文件类型（只支持 PDF 等）。你可以直接把内容贴过来，或者转成 PDF 再发我。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "md-text-explicit-resend-old-artifact",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "再发了一次，还是之前那份双语译稿，没有重新翻译。平台已受理上传，查收一下。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "current-pdf-with-explicit-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "这次这篇也翻译好了，双语 PDF 已发到你 QQ，用的是默认配置。收到的文件名还是“本次验收论文.pdf”的译稿，确认一下。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "pdf-without-purpose",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "这份 PDF 收到了。要我翻译成中文，还是先读一下、跟你说说内容？"
+          }
+        ]
+      }
+    },
+    {
+      "label": "establish-pending-translation",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "好，等你上传。文件到了我就按默认配置翻，只做双语 PDF 发你。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "pending-translation-current-pdf-only",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:365999865",
+            "text": "这篇也翻好了，双语 PDF 已发到 QQ，默认配置，没另做纯译文。查收看看。"
+          }
+        ]
+      }
+    },
+    {
+      "label": "member-own-current-pdf",
+      "result": {
+        "ok": true,
+        "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+        "stagedImages": 0,
+        "quoteLoaded": false,
+        "modelDispatched": true,
+        "captured": [
+          {
+            "to": "user:800001",
+            "text": "开始翻了，排着队呢，双语 PDF 出来直接发你。"
+          }
+        ]
+      }
+    }
+  ],
+  "passed": true,
+  "jobs": [
+    {
+      "documentId": "doc_70be8c977a05647d16c20fe86681bc90",
+      "requester": "365999865",
+      "status": "succeeded",
+      "deliveryKind": "dual",
+      "delivery": "platform_accepted",
+      "fixtureRequests": 0
+    },
+    {
+      "documentId": "doc_7727a3f69e0a392c8ffb60174708ff95",
+      "requester": "800001",
+      "status": "succeeded",
+      "deliveryKind": "dual",
+      "delivery": "platform_accepted",
+      "fixtureRequests": 0
+    },
+    {
+      "documentId": "doc_533c0fc0184f9c6c21d52639502c8983",
+      "requester": "365999865",
+      "status": "succeeded",
+      "deliveryKind": "dual",
+      "delivery": "platform_accepted",
+      "fixtureRequests": 0
+    },
+    {
+      "documentId": "doc_8224bfd6e55c1b348f6bdcaa52e9c6f3",
+      "requester": "365999865",
+      "status": "succeeded",
+      "deliveryKind": "dual",
+      "delivery": "platform_accepted",
+      "fixtureRequests": 0
+    }
+  ],
+  "childStopped": true,
+  "mockUploads": [
+    {
+      "to": "365999865",
+      "filename": "历史验收论文-dual.pdf"
+    },
+    {
+      "to": "365999865",
+      "filename": "历史验收论文-dual.pdf"
+    },
+    {
+      "to": "365999865",
+      "filename": "历史验收论文-dual.pdf"
+    },
+    {
+      "to": "365999865",
+      "filename": "历史验收论文-dual.pdf"
+    },
+    {
+      "to": "800001",
+      "filename": "成员论文-dual.pdf"
+    }
+  ]
+}

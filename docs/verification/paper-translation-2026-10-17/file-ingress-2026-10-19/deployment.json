@@ -1,0 +1,42 @@
+{
+  "at": "2026-10-19T15:50:30.912576+00:00",
+  "attachmentFixLoaded": true,
+  "service": {
+    "MainPID": "1483348",
+    "ExecMainStartTimestamp": "Mon 2026-10-19 23:48:35 CST",
+    "ExecMainStartTimestampMonotonic": "784110130204",
+    "ActiveState": "active"
+  },
+  "captureDirectory": "/home/afrangry/.openclaw-fusion/tmp/plugin-captures/54373ffe-cc08-4f51-bcd0-fb040b35be4f/captures/openclaw-plugin-build-UENloi/package-0/node_modules/kurumi-qq/src",
+  "capturedSource": {
+    "inbound.js": {
+      "sha256": "cbb1047f1e8cd7d1bba3c71eaa5dc543fc776dacd81d02da1bd11cabb33ff19a",
+      "sourceMatches": true
+    },
+    "files.js": {
+      "sha256": "e842882106a12a941edd310515477b8ca39eee5f044d0b4cf1ec7c16be937aa9",
+      "sourceMatches": true
+    },
+    "attachments.js": {
+      "sha256": "b822fe6145b9456b028e1bf40d598306edc9c56a9de1c5547132ba7dd0075354",
+      "sourceMatches": true
+    }
+  },
+  "attachmentRulesPresent": {
+    "workspace": true,
+    "users/3311723223/workspace": true,
+    "users/2752966052/workspace": true
+  },
+  "runtimeConfigUnchanged": true,
+  "totalJobsUnchanged": 11,
+  "activeJobs": [],
+  "realQqOrMailTestSends": 0,
+  "translationApiTestCalls": 0,
+  "parallelPersona": {
+    "title": "人格和记忆",
+    "document": "docs/25_人格、记忆与会话连续性.md",
+    "userAuthorizedSeparateDevelopment": true,
+    "sourceRole": "roles/世凪.md",
+    "notice": "Full persona apply read concurrent persona configuration and wrote 10 files instead of the expected 3 AGENTS files. Further full applies stopped; do not roll back parallel work. Initial persona drift preserved separately; final full alignment belongs to document25."
+  }
+}

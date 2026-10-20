@@ -1,0 +1,12 @@
+evidence coverage
+  历史领域验收: 84
+  当前有效: 337
+  total: 422
+
+directories with no named rule:
+  plugin-lifecycle-2026-10-19/
+
+unclassified files (add a named rule and register it in INDEX.md):
+  plugin-lifecycle-2026-10-19/README.md
+
+FAILED: docs/verification is not fully classified by named rules.
