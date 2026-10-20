@@ -1,3 +1,4 @@
+import {withAccess} from '../../../tests/access-control/fixtures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -9,7 +10,7 @@ import {Ledger} from '../src/ledger.js';
 import {parseInbound,handleInbound} from '../src/inbound.js';
 import {sendPayload,localImage} from '../src/transport.js';
 import {splitForQQ} from '../src/vendor/md-to-plain.js';
-function fixture(){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-channel-'));fs.writeFileSync(path.join(dir,'token'),'test',{mode:0o600});const cfg={channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:'http://127.0.0.1:1',wsUrl:'ws://127.0.0.1:2',httpTokenFile:path.join(dir,'token'),wsTokenFile:path.join(dir,'token'),stateDir:dir,mediaRoot:dir,sendLimit:10}}};return {dir,cfg,a:account(cfg)};}
+function fixture(){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-channel-'));fs.writeFileSync(path.join(dir,'token'),'test',{mode:0o600});const cfg=withAccess({channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:'http://127.0.0.1:1',wsUrl:'ws://127.0.0.1:2',httpTokenFile:path.join(dir,'token'),wsTokenFile:path.join(dir,'token'),stateDir:dir,mediaRoot:dir,sendLimit:10}}});return {dir,cfg,a:account(cfg)};}
 const valid={post_type:'message',message_type:'private',self_id:123456789,user_id:365999865,message_id:789,message:[{type:'text',data:{text:'你好'}}]};
 test('Owner and endpoint validation fail closed',()=>{const {a,cfg}=fixture();assert.equal(ownerTarget('user:365999865',a),'365999865');for(const to of ['group:365999865','123456','365999865x','user:365999865:thread'])assert.throws(()=>ownerTarget(to,a));cfg.channels['kurumi-qq'].httpUrl='http://example.com';assert.throws(()=>account(cfg));});
 test('Reject group, stranger, self, wrong bot, malformed event',()=>{const {a}=fixture();assert.equal(parseInbound(valid,a,'123456789').text,'你好');for(const patch of [{message_type:'group'},{user_id:777777},{self_id:999999},{message_id:0},{message:'[CQ:at,qq=all]'}])assert.equal(parseInbound({...valid,...patch},a,'123456789'),null);});

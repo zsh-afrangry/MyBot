@@ -1,3 +1,4 @@
+import {withAccess} from '../../../tests/access-control/fixtures.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
@@ -21,6 +22,6 @@ test('rolling quota preserves old attempts, failed/unknown reservations and idem
 test('cancelling during natural pacing stops remaining physical sends',async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-pacing-'));fs.writeFileSync(path.join(dir,'token'),'test',{mode:0o600});let count=0;const controller=new AbortController();
  const server=http.createServer((req,res)=>{count++;res.end(JSON.stringify({status:'ok',retcode:0,data:{message_id:count}}));});await new Promise(r=>server.listen(0,'127.0.0.1',r));
- const cfg={channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:`http://127.0.0.1:${server.address().port}`,wsUrl:'ws://127.0.0.1:2',httpTokenFile:path.join(dir,'token'),stateDir:dir,mediaRoot:dir,sendLimit:10,segmentDelayMs:1000}}};
+ const cfg=withAccess({channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:`http://127.0.0.1:${server.address().port}`,wsUrl:'ws://127.0.0.1:2',httpTokenFile:path.join(dir,'token'),stateDir:dir,mediaRoot:dir,sendLimit:10,segmentDelayMs:1000}}});
  try{await assert.rejects(sendPayload({cfg,to:'user:365999865',text:'第一段🐋\n\n第二段',signal:controller.signal,onDeliveryResult:()=>controller.abort()}));assert.equal(count,1);}finally{await new Promise(r=>server.close(r));fs.rmSync(dir,{recursive:true,force:true});}
 });
