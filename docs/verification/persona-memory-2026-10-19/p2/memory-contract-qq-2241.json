@@ -1,0 +1,206 @@
+{
+  "at": "2026-10-20T14:45:16.631Z",
+  "sourceCommit": "2ba0308aa01cb2a0773e2bf48be94b6544e3d0c6",
+  "window": {
+    "from": "2026-10-20T22:41:03+08:00",
+    "to": "2026-10-20T22:42:14+08:00"
+  },
+  "passed": true,
+  "checks": {
+    "newDescriptionLoaded": true,
+    "firstAttemptRejectedMissingRevision": true,
+    "failedAttemptNoCommit": true,
+    "automaticRetryInSameMessage": true,
+    "saved": true,
+    "correctedSameId": true,
+    "deletedSameId": true,
+    "readBlueAfterReset": true,
+    "readGreenAfterReset": true,
+    "searchEmptyAfterForget": true,
+    "replyUnknownAfterForget": true,
+    "originalFactsUnchanged": true,
+    "bookmarkAbsentInCurrentState": true,
+    "threePostWriteResetCommands": true
+  },
+  "toolCalls": [
+    {
+      "seq": 2230,
+      "at": "2026-10-20T14:41:25.668Z",
+      "tool": "kurumi_memory",
+      "action": "upsert",
+      "argumentFields": [
+        "action",
+        "text",
+        "evidence"
+      ]
+    },
+    {
+      "seq": 2234,
+      "at": "2026-10-20T14:41:27.078Z",
+      "tool": "kurumi_memory",
+      "action": "list",
+      "argumentFields": [
+        "action"
+      ]
+    },
+    {
+      "seq": 2238,
+      "at": "2026-10-20T14:41:28.297Z",
+      "tool": "kurumi_memory",
+      "action": "upsert",
+      "argumentFields": [
+        "action",
+        "evidence",
+        "expectedRevision",
+        "text"
+      ],
+      "expectedRevision": 10
+    },
+    {
+      "seq": 2250,
+      "at": "2026-10-20T14:41:46.451Z",
+      "tool": "kurumi_memory",
+      "action": "upsert",
+      "argumentFields": [
+        "action",
+        "id",
+        "expectedRevision",
+        "text",
+        "evidence",
+        "kind"
+      ],
+      "id": "2be4ae6e05be",
+      "expectedRevision": 11
+    },
+    {
+      "seq": 2259,
+      "at": "2026-10-20T14:42:04.678Z",
+      "tool": "kurumi_memory",
+      "action": "delete",
+      "argumentFields": [
+        "action",
+        "id",
+        "expectedRevision"
+      ],
+      "id": "2be4ae6e05be",
+      "expectedRevision": 12
+    },
+    {
+      "seq": 2266,
+      "at": "2026-10-20T14:42:12.395Z",
+      "tool": "kurumi_memory",
+      "action": "search",
+      "argumentFields": [
+        "action",
+        "query"
+      ]
+    }
+  ],
+  "rejectedCalls": [
+    {
+      "seq": 2232,
+      "at": "2026-10-20T14:41:25.693Z",
+      "reason": "missing_expectedRevision",
+      "committed": false,
+      "recoveredWithoutUserRephrase": true
+    }
+  ],
+  "commits": [
+    {
+      "seq": 2240,
+      "at": "2026-10-20T14:41:28.330Z",
+      "action": "upsert",
+      "revision": 11,
+      "id": "2be4ae6e05be"
+    },
+    {
+      "seq": 2252,
+      "at": "2026-10-20T14:41:46.481Z",
+      "action": "upsert",
+      "revision": 12,
+      "id": "2be4ae6e05be"
+    },
+    {
+      "seq": 2261,
+      "at": "2026-10-20T14:42:04.713Z",
+      "action": "delete",
+      "revision": 13,
+      "id": "2be4ae6e05be"
+    }
+  ],
+  "replies": [
+    {
+      "seq": 2245,
+      "at": "2026-10-20T14:41:37.082Z",
+      "outcome": "blue",
+      "snowlumaLines": [
+        471
+      ]
+    },
+    {
+      "seq": 2257,
+      "at": "2026-10-20T14:42:00.426Z",
+      "outcome": "green",
+      "snowlumaLines": [
+        492
+      ]
+    },
+    {
+      "seq": 2270,
+      "at": "2026-10-20T14:42:13.230Z",
+      "outcome": "unknown",
+      "snowlumaLines": [
+        513,
+        515
+      ]
+    }
+  ],
+  "memory": {
+    "beforeRevision": 10,
+    "afterRevision": 13,
+    "afterGeneration": 5,
+    "facts": 6,
+    "summaries": 0,
+    "originalFactsSha256": "0dd6a35ffe4f594c57871a2877e0a34384bfd7609228271e28f0dc8b00850141"
+  },
+  "sources": {
+    "transcript": {
+      "path": "/home/afrangry/.openclaw-fusion/agents/main/agent/openclaw-agent.sqlite",
+      "table": "transcript_events",
+      "sessionId": "3bf745c3-b119-4015-9097-81931d0e7d7b",
+      "seq": [
+        2229,
+        2270
+      ]
+    },
+    "snowluma": {
+      "path": "/home/afrangry/snowluma/runtime/logs/snowluma-2026-10-20.log",
+      "lines": [
+        438,
+        515
+      ]
+    },
+    "memory": "/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite"
+  },
+  "boundary": "Read-only verification of user-initiated real QQ acceptance. No chat bodies, private facts or credentials copied. No model/QQ/mail calls, state mutation, restart or configuration change. This case covers explicit save/correct/forget and reset/read, not new automatic observation, compaction or long-term persona quality.",
+  "reviewChecks": {
+    "evidenceCoverage": {
+      "files": 511,
+      "unclassified": 0
+    },
+    "scriptIndex": {
+      "scripts": 187,
+      "contradictions": 0
+    },
+    "changedMarkdown": {
+      "localTargets": 245,
+      "missing": 0,
+      "fenceErrors": 0,
+      "externalUrlsAndFragmentAnchorsChecked": false
+    },
+    "privacy": {
+      "exactRuntimeSecretsAndSixExistingFactsMatched": 0
+    },
+    "diffCheck": true
+  }
+}
