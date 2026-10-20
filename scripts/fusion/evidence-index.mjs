@@ -30,14 +30,21 @@
 //   node scripts/fusion/evidence-index.mjs             # human summary
 //   node scripts/fusion/evidence-index.mjs --json
 //   node scripts/fusion/evidence-index.mjs --markdown  # table for docs/verification/SCRIPTS.md
+//   node scripts/fusion/evidence-index.mjs --check-markdown  # verify the saved generated table
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {loadDocumentationMap, ownerFor, discoverMaintenanceSources} from './lib/documentation-map.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'scripts/fusion/lib/documentation-map.mjs': ['库', '只读文档归属、命名分组及维护源码发现；不执行扫描到的文件', {readonly: 1}, 'header'],
+  'scripts/fusion/test/documentation-map.test.mjs': ['离线', '文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库', {testDir: 1}, 'header'],
+  'chatbot/plugins/kurumi-mail/test/helpers/mock-smtp.js': ['库', '邮件测试的本地TLS/SMTP服务器及故障夹具，无公网外发', {readonly: 1}, 'header'],
+  'chatbot/plugins/kurumi-mail/test/helpers/owner-context.js': ['库', '邮件测试的可信主人上下文与确认scope夹具，不产生生产授权', {readonly: 1}, 'header'],
+  'chatbot/packages/personal-domains/src/test-fixtures.ts': ['库', '默认领域的离线QWeather/GeoAPI数据夹具', {readonly: 1}, 'code'],
   'chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs': ['验收', '真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/scripts/build-personal-plugins.mjs': ['构建', '构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作', {writesRepo: 1}, 'header'],
   'chatbot/tests/backend-boundaries/capabilities.test.mjs': ['离线', '共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口', {testDir: 1}, 'header'],
@@ -242,44 +249,6 @@ const TABLE = {
   'chatbot/tests/acceptance/verify-restart.mjs': ['遗留验收', '在新进程里重开测试目录并验证幂等；不重启任何服务', {readonly: 1, testDir: 1}, 'header'],
 };
 
-function discover() {
-  const out = [];
-  const skipDir = new Set(['node_modules', 'dist']);
-  const walk = (dir, filter) => {
-    if (!fs.existsSync(dir)) return;
-    for (const entry of fs.readdirSync(dir, {withFileTypes: true})) {
-      const abs = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
-        if (skipDir.has(entry.name)) continue;
-        walk(abs, filter);
-      } else if (filter(entry.name)) out.push(path.relative(ROOT, abs));
-    }
-  };
-  // Whole scripts/fusion tree (including lib/, launchers/, test/, fixtures/).
-  walk(path.join(ROOT, 'scripts/fusion'), (n) => /\.(mjs|sh|py)$/.test(n));
-  // Backend scripts and tests (including legacy acceptance and new domains).
-  walk(path.join(ROOT, 'chatbot/scripts'), (n) => /\.(mjs|sh|py)$/.test(n));
-  walk(path.join(ROOT, 'chatbot/tests'), (n) => /\.(mjs|py)$/.test(n));
-  // Plugin and package tests, both the JS test dirs and the TypeScript sources.
-  for (const parent of ['chatbot/plugins', 'chatbot/packages']) {
-    for (const dir of fs.readdirSync(path.join(ROOT, parent))) {
-      const testDir = path.join(ROOT, parent, dir, 'test');
-      if (fs.existsSync(testDir)) {
-        for (const f of fs.readdirSync(testDir, {withFileTypes: true})) {
-          if (f.isFile() && /\.test\.js$/.test(f.name)) out.push(`${parent}/${dir}/test/${f.name}`);
-        }
-      }
-      const srcDir = path.join(ROOT, parent, dir, 'src');
-      if (fs.existsSync(srcDir)) {
-        for (const f of fs.readdirSync(srcDir, {withFileTypes: true})) {
-          if (f.isFile() && /\.test\.ts$/.test(f.name)) out.push(`${parent}/${dir}/src/${f.name}`);
-        }
-      }
-    }
-  }
-  return [...new Set(out)].sort();
-}
-
 /** First contiguous comment block at the top of a file (// or # style). */
 function firstHeader(text) {
   const out = [];
@@ -334,7 +303,14 @@ function contradictions(rel, flags, boundary) {
   return bad;
 }
 
-const files = discover();
+const ownership = loadDocumentationMap(ROOT);
+const sourceFiles = discoverMaintenanceSources(ROOT);
+const files = sourceFiles.filter((rel) => {
+  const runtime = ownerFor(rel, ownership.runtimeSources);
+  const archived = ownerFor(rel, ownership.archivedScripts);
+  if (runtime && archived) throw new Error(`Source marked both runtime and archived: ${rel}`);
+  return !runtime && !archived;
+});
 const missing = files.filter((f) => !TABLE[f]);
 const stale = Object.keys(TABLE).filter((f) => !files.includes(f));
 if (missing.length || stale.length) {
@@ -345,11 +321,14 @@ if (missing.length || stale.length) {
 }
 
 const rows = files.map((rel) => {
+  const owner = ownerFor(rel, ownership.scriptOwners);
+  if (!owner) throw new Error(`No document ownership for script: ${rel}`);
   const [group, purpose, flags, basis] = TABLE[rel];
   const text = fs.readFileSync(path.join(ROOT, rel), 'utf8');
   const boundary = boundaryOf(text);
   const bad = contradictions(rel, flags, boundary);
-  return {path: rel, group, ...flags, purpose, basis, boundary, header: firstHeader(text), evidence: evidence(text), lines: text.split('\n').length, contradictions: bad};
+  // Explicit evidence replaces heuristic source extraction (e.g. temporary paths in checker tests).
+  return {path: rel, group, ...flags, purpose, basis, documents: owner.documents, boundary, header: firstHeader(text), evidence: [...new Set(owner.evidence ?? evidence(text))].sort(), lines: text.split('\n').length, contradictions: bad};
 });
 
 const problems = rows.filter((r) => r.contradictions.length);
@@ -372,26 +351,50 @@ const EFFECT_LABEL = {
 };
 const effectsOf = (r) => Object.entries(EFFECT_LABEL).filter(([k]) => r[k]).map(([, v]) => v).join('、') || '无（离线）';
 
-if (process.argv.includes('--json')) console.log(JSON.stringify(rows, null, 2));
-else if (process.argv.includes('--markdown')) {
-  console.log('| 脚本 | 分组 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |');
-  console.log('| --- | --- | --- | --- | --- | --- | --- |');
-  const groups = [...new Set(rows.map((r) => r.group))];
-  for (const g of groups) {
-    for (const r of rows.filter((x) => x.group === g)) {
-      console.log(`| \`${r.path}\` | ${r.group} | ${r.purpose} | ${effectsOf(r)} | ${r.auth ? '是' : '否'} | ${r.basis} | ${r.evidence.length ? r.evidence.map((e) => `\`${e}\``).join('<br>') : '—'} |`);
+const documentLink = (ref) => `[${path.basename(ref).split('_')[0]}](${path.posix.relative('docs/verification', ref)})`;
+function markdown() {
+  const lines = [
+    '| 脚本 | 分组 | 归属文档 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+  ];
+  for (const group of new Set(rows.map((r) => r.group))) {
+    for (const r of rows.filter((item) => item.group === group)) {
+      const cells = [`\`${r.path}\``, r.group, r.documents.map(documentLink).join('、'), r.purpose, effectsOf(r), r.auth ? '是' : '否', r.basis,
+        r.evidence.length ? r.evidence.map((e) => `\`${e}\``).join('<br>') : '—'];
+      lines.push(`| ${cells.map((cell) => cell.replaceAll('|', '\\|')).join(' | ')} |`);
     }
   }
+  return lines.join('\n');
+}
+
+if (process.argv.includes('--check-markdown')) {
+  const saved = fs.readFileSync(path.join(ROOT, 'docs/verification/SCRIPTS.md'), 'utf8');
+  const begin = '<!-- BEGIN GENERATED SCRIPT INDEX -->';
+  const end = '<!-- END GENERATED SCRIPT INDEX -->';
+  const [, generated, after] = saved.split(new RegExp(`${begin}|${end}`));
+  if (after === undefined || saved.split(begin).length !== 2 || saved.split(end).length !== 2
+    || saved.indexOf(begin) >= saved.indexOf(end) || generated.trim() !== markdown()) {
+    console.error('SCRIPTS.md generated table is out of date; regenerate with evidence-index.mjs --markdown.');
+    process.exit(1);
+  }
+  console.log(`OK: SCRIPTS.md matches ${rows.length} classified, document-owned entries.`);
+  process.exit(0);
+}
+
+if (process.argv.includes('--json')) console.log(JSON.stringify(rows, null, 2));
+else if (process.argv.includes('--markdown')) {
+  console.log(markdown());
 } else {
   const byGroup = {};
   for (const r of rows) (byGroup[r.group] ??= []).push(r);
   for (const [g, list] of Object.entries(byGroup)) {
     console.log(`\n## ${g} (${list.length})`);
-    for (const r of list) console.log(`- ${r.path}\n    用途: ${r.purpose}\n    副作用: ${effectsOf(r)}${r.auth ? '（需授权）' : ''}\n    依据: ${r.basis}${r.boundary ? ` — boundary: ${r.boundary.slice(0, 120)}` : ''}`);
+    for (const r of list) console.log(`- ${r.path}\n    归属: ${r.documents.join('、')}\n    用途: ${r.purpose}\n    副作用: ${effectsOf(r)}${r.auth ? '（需授权）' : ''}\n    依据: ${r.basis}${r.boundary ? ` — boundary: ${r.boundary.slice(0, 120)}` : ''}`);
   }
   const byBasis = {};
   for (const r of rows) byBasis[r.basis] = (byBasis[r.basis] ?? 0) + 1;
   console.log(`\ntotal ${rows.length}: 需授权 ${rows.filter((r) => r.auth).length}，可离线/只读 ${rows.filter((r) => !r.auth).length}`);
   console.log(`依据分布: ${Object.entries(byBasis).map(([k, v]) => `${k}=${v}`).join(', ')}`);
   console.log(`boundary 声明交叉校验: ${rows.filter((r) => r.boundary).length} 个脚本有声明，全部与分类一致`);
+  console.log(`文档归属全部有效；另显式排除运行源码 ${sourceFiles.filter((f) => ownerFor(f, ownership.runtimeSources)).length}、退役脚本 ${sourceFiles.filter((f) => ownerFor(f, ownership.archivedScripts)).length}，不执行扫描到的文件。`);
 }

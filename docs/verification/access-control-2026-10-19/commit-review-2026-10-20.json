@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-20",
+  "timezone": "Asia/Shanghai",
+  "documents": [
+    "docs/24_统一身份与权限管理.md#8-提交审查发现与补验2026-10-20",
+    "docs/16_验收与测试总表.md"
+  ],
+  "purpose": "记录前次已提交代码审查发现，并对已进入本地历史的修复做定向复验；不是新提交全集的推送批准。",
+  "originalReview": {
+    "fusionHead": "542b6f9791761672a40b8e52fdd04a998def57e1",
+    "fusionAhead": 31,
+    "knowledgeMapHead": "31e3ce66576af267105c3dd862f57306e5c6f2cb",
+    "knowledgeMapAhead": 5,
+    "includedUncommittedChanges": false,
+    "findings": [
+      {
+        "id": "CR-K01",
+        "priority": "P1",
+        "summary": "KnowledgeMap开发Vite/API代理网络暴露",
+        "status": "待处理",
+        "ownerDocument": "/home/afrangry/repository/docs/15_开发启动脚本方案.md#10.3",
+        "taskId": "D13"
+      },
+      {
+        "id": "CR-F01",
+        "priority": "P1",
+        "summary": "账单工具入口遗漏显式功能授权，宿主策略未接线",
+        "fixCommit": "db5afec",
+        "status": "本次定向已验收"
+      },
+      {
+        "id": "CR-F02",
+        "priority": "P2",
+        "summary": "提交测试夹具缺少新授权配置",
+        "fixCommit": "427a4e9",
+        "originalResults": {
+          "bridgeAndPolicy": {
+            "pass": 26,
+            "total": 29
+          },
+          "backendBoundaries": {
+            "pass": 19,
+            "total": 20
+          }
+        },
+        "status": "本次定向已验收"
+      }
+    ]
+  },
+  "recheck": {
+    "fusionHead": "2ba0308aa01cb2a0773e2bf48be94b6544e3d0c6",
+    "node": "v26.10.0",
+    "isolation": "固定提交的临时detached worktree；所有源码未修改；复用已安装依赖，构建产物仅写副本。测试用临时状态及合成身份，结束后移除副本。",
+    "preparation": [
+      "为副本链接已安装OpenClaw/TypeScript等依赖；@kurumi/confirmation-core解析到副本的源码构建结果",
+      "npm --prefix chatbot/packages/confirmation-core run build",
+      "npm --prefix chatbot/packages/personal-domains run build",
+      "node chatbot/scripts/build-personal-plugins.mjs"
+    ],
+    "tests": [
+      {
+        "command": "node --test chatbot/tests/access-control/policy.test.mjs chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/bills.test.mjs",
+        "exitCode": 0,
+        "total": 37,
+        "pass": 37,
+        "fail": 0,
+        "note": "相较前次权限/桥接组合另含8项账单用例"
+      },
+      {
+        "command": "node --test chatbot/tests/backend-boundaries/*.test.mjs",
+        "exitCode": 0,
+        "total": 23,
+        "pass": 23,
+        "fail": 0,
+        "note": "相较原20项另含3项已提交生命周期用例"
+      }
+    ],
+    "permissionProbe": {
+      "method": "导入已提交createKnowledgeMapPlugin和withAccess；100001合成owner；真实工具工厂配注入客户端，先允许一次读取，再将bills.read和bills.manage置false",
+      "enabledReadReachedClient": true,
+      "revokedTools": [
+        "knowledge_bills_get",
+        "knowledge_bill_add",
+        "knowledge_bill_manage"
+      ],
+      "allRevokedToolsReturned": {
+        "ok": false,
+        "code": "forbidden_context"
+      },
+      "additionalClientRequestsAfterRevocation": 0,
+      "hostPolicyWired": "chatbot/plugins/kurumi-qq/index.js调用registerTrustedToolPolicy，并委托toolPolicyDecision",
+      "exitCode": 0
+    },
+    "preparationFailure": {
+      "sequence": "第一次后端组补验在生成旧CLI入口、补充确认包链接前执行",
+      "result": {
+        "exitCode": 1,
+        "total": 21,
+        "pass": 19,
+        "fail": 2
+      },
+      "failures": [
+        "personal-weather/dist/cli.js未生成",
+        "kurumi-mail无法解析@kurumi/confirmation-core"
+      ],
+      "resolution": "补齐副本依赖链接并执行build-personal-plugins.mjs后，同一源码重跑23/23；不是生产缺陷或源代码修复"
+    },
+    "boundaries": {
+      "fullOriginal262Of292SuiteRerun": false,
+      "newCommitsAfterFrozenBaselineFullyReviewed": false,
+      "liveBusinessApiCalled": false,
+      "productionDatabaseWritten": false,
+      "realMessagesSent": false,
+      "serviceRestarted": false,
+      "gitPushed": false
+    }
+  }
+}

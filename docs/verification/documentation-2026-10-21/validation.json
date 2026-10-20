@@ -1,0 +1,166 @@
+{
+  "date": "2026-10-21",
+  "checks": [
+    {
+      "name": "script-index",
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "exitCode": 0,
+      "output": "OK: SCRIPTS.md matches 192 classified, document-owned entries.\n"
+    },
+    {
+      "name": "evidence-coverage",
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exitCode": 0,
+      "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 436\n  total: 519\nOK: every file belongs to exactly one named group with valid documents.\n"
+    },
+    {
+      "name": "checker-regression",
+      "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+      "exitCode": 0,
+      "output": "✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (4.659453ms)\n✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (3.482356ms)\n▶ CLI verifies ownership and saved Markdown without touching the real repository\n  ✔ saved table and both P2 evidence overrides survive generation (139.073177ms)\n  ✔ unknown source fails even inside a known suite (41.637546ms)\n  ✔ missing document and invalid/duplicate selectors fail (91.087277ms)\n  ✔ an existing classified script without a document owner fails (43.161239ms)\n  ✔ stale generated table or reversed markers fail (97.632758ms)\n  ✔ new receipts inherit a named suite; unknown evidence directory fails (74.173073ms)\n✔ CLI verifies ownership and saved Markdown without touching the real repository (551.011074ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 616.508412\n"
+    },
+    {
+      "name": "diff-check",
+      "command": "git diff --check",
+      "exitCode": 0,
+      "output": ""
+    }
+  ],
+  "completedAt": "2026-10-21T00:28:45.357124+08:00",
+  "scope": "documentation and ownership/index tooling only; no business/runtime changes, model/API calls, service operations, real delivery or remote writes",
+  "git": {
+    "head": "072a327e6d4104c01417a8db3064a4eed7a1ee9a",
+    "branch": "main",
+    "aheadOfCachedOriginMain": 41,
+    "remoteRefreshed": false,
+    "stagedChanges": false,
+    "committed": false,
+    "pushed": false,
+    "changedFilesIncludingInitialChanges": [
+      "AGENTS.md",
+      "README_FUSION.md",
+      "chatbot/plugins/kurumi-mail/README.md",
+      "config/README.md",
+      "docs/10_融合助手运行维护.md",
+      "docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md",
+      "docs/16_验收与测试总表.md",
+      "docs/18_跨模块链路日志查询.md",
+      "docs/20_邮件能力与横切扩展.md",
+      "docs/21_后端职责分层与代码整理.md",
+      "docs/22_论文PDF翻译与文件投递.md",
+      "docs/23_KnowledgeMap业务能力桥接.md",
+      "docs/24_统一身份与权限管理.md",
+      "docs/25_人格、记忆与会话连续性.md",
+      "docs/26_基础能力插件边界整理与检索接入设计.md",
+      "docs/9_QQ融合助手架构与开发计划.md",
+      "docs/README.md",
+      "docs/verification/INDEX.md",
+      "docs/verification/SCRIPTS.md",
+      "docs/verification/access-control-2026-10-19/README.md",
+      "docs/verification/access-control-2026-10-19/commit-review-2026-10-20.json",
+      "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "docs/verification/deepseek-whale/README.md",
+      "docs/verification/documentation-2026-10-21/README.md",
+      "docs/verification/documentation-2026-10-21/checker-tests.txt",
+      "docs/verification/documentation-2026-10-21/initial-checker-tests.txt",
+      "docs/verification/documentation-2026-10-21/links.json",
+      "docs/verification/documentation-2026-10-21/validation.json",
+      "docs/verification/mail-2026-10-16/README.md",
+      "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "roles/README.md",
+      "scripts/fusion/documentation-map.json",
+      "scripts/fusion/evidence-coverage.mjs",
+      "scripts/fusion/evidence-index.mjs",
+      "scripts/fusion/lib/documentation-map.mjs",
+      "scripts/fusion/test/documentation-map.test.mjs"
+    ],
+    "initialChanges": [
+      " M docs/16_验收与测试总表.md",
+      " M docs/24_统一身份与权限管理.md",
+      " M docs/README.md",
+      " M docs/verification/INDEX.md",
+      " M docs/verification/access-control-2026-10-19/README.md",
+      "?? docs/verification/access-control-2026-10-19/commit-review-2026-10-20.json"
+    ]
+  },
+  "documents": {
+    "currentNumbered": 14,
+    "beforeNumbered": 15,
+    "currentNumberedBytes": 249376,
+    "beforeNumberedBytes": 346829,
+    "entry": "docs/README.md",
+    "removed": "docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md",
+    "historicalNumberedUnchanged": 7
+  },
+  "scripts": {
+    "classified": 192,
+    "boundaryDeclarations": 49,
+    "existingRowsRetained": 187,
+    "missingDocumentOwners": 0,
+    "missingExtractedEvidencePaths": [],
+    "explicitRuntimeSources": 5,
+    "explicitArchivedScripts": 2,
+    "addedRows": [
+      "chatbot/packages/personal-domains/src/test-fixtures.ts",
+      "chatbot/plugins/kurumi-mail/test/helpers/mock-smtp.js",
+      "chatbot/plugins/kurumi-mail/test/helpers/owner-context.js",
+      "scripts/fusion/lib/documentation-map.mjs",
+      "scripts/fusion/test/documentation-map.test.mjs"
+    ]
+  },
+  "evidence": {
+    "total": 519,
+    "counts": {
+      "历史领域验收": 83,
+      "当前有效": 436
+    },
+    "unmatched": []
+  },
+  "localMarkdown": {
+    "scope": "当前Markdown规则/入口与verification下所有Markdown；不改写历史txt或归档，不查外部URL",
+    "files": 58,
+    "localLinks": 1059,
+    "anchorLinks": 50,
+    "brokenLinks": [],
+    "unclosedFences": []
+  },
+  "protected": [
+    {
+      "path": "docs/example.md",
+      "sha256": "a6dda07da465218fdba20e9e4d47d7165f963fb21d80449b4ae9d9f443e43a9f",
+      "unchanged": true,
+      "basis": "pre-edit manifest"
+    },
+    {
+      "path": "docs/kurimi.png",
+      "sha256": "2611effbf46a7fc39931b43908e9b63062d245d9ba43af73d9f2f9181f26e78a",
+      "unchanged": true,
+      "basis": "HEAD (clean at initial status)"
+    },
+    {
+      "path": "docs/tp.txt",
+      "sha256": "b3de765d98e8f1161dd1850bb445af37f3ced2fdaf25f763b1ac0b2049767e57",
+      "unchanged": true,
+      "basis": "HEAD (clean at initial status)"
+    },
+    {
+      "path": "docs/tp2.txt",
+      "sha256": "067fb1ae6283a59d362d7e8cdb89bc3e68bb54b50e2aaa6c74dce61be7f580ee",
+      "unchanged": true,
+      "basis": "HEAD (clean at initial status)"
+    }
+  ],
+  "preservedPriorReview": [
+    "docs/24_统一身份与权限管理.md",
+    "docs/verification/access-control-2026-10-19/README.md",
+    "docs/verification/access-control-2026-10-19/commit-review-2026-10-20.json"
+  ],
+  "notCovered": [
+    "external URLs",
+    "historical txt/archive link validity",
+    "business-wide regression",
+    "live model/QQ/SMTP/API validation",
+    "production stop/restore",
+    "remote synchronization"
+  ]
+}

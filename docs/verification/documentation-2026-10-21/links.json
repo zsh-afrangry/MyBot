@@ -1,0 +1,5365 @@
+{
+  "scope": "当前Markdown规则/入口与verification下所有Markdown；不改写历史txt或归档，不查外部URL",
+  "files": 58,
+  "localLinks": 1059,
+  "anchorLinks": 50,
+  "brokenLinks": [],
+  "unclosedFences": [],
+  "checkedFiles": [
+    "AGENTS.md",
+    "README_FUSION.md",
+    "config/README.md",
+    "roles/README.md",
+    "chatbot/plugins/kurumi-mail/README.md",
+    "docs/10_融合助手运行维护.md",
+    "docs/12_目录资产与Git备份整理.md",
+    "docs/15_旧系统回退.md",
+    "docs/16_验收与测试总表.md",
+    "docs/18_跨模块链路日志查询.md",
+    "docs/19_提醒列表与定时汇总.md",
+    "docs/20_邮件能力与横切扩展.md",
+    "docs/21_后端职责分层与代码整理.md",
+    "docs/22_论文PDF翻译与文件投递.md",
+    "docs/23_KnowledgeMap业务能力桥接.md",
+    "docs/24_统一身份与权限管理.md",
+    "docs/25_人格、记忆与会话连续性.md",
+    "docs/26_基础能力插件边界整理与检索接入设计.md",
+    "docs/9_QQ融合助手架构与开发计划.md",
+    "docs/README.md",
+    "docs/verification/2026-10-04_检索与QQ插件现状复核.md",
+    "docs/verification/2026-10-05_融合前基线收尾.md",
+    "docs/verification/2026-10-10_projects-fusion-sync.md",
+    "docs/verification/2026-10-11_projects-fusion-sync.md",
+    "docs/verification/INDEX.md",
+    "docs/verification/SCRIPTS.md",
+    "docs/verification/access-control-2026-10-19/README.md",
+    "docs/verification/backend-refactor-2026-10-16/README.md",
+    "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+    "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+    "docs/verification/backend-refactor-2026-10-16/structured-items/README.md",
+    "docs/verification/capability-decoupling-2026-10-20/README.md",
+    "docs/verification/deepseek-whale/README.md",
+    "docs/verification/documentation-2026-10-21/README.md",
+    "docs/verification/knowledgemap-bills-round2-2026-10-17/README.md",
+    "docs/verification/knowledgemap-bridge-2026-10-17/README.md",
+    "docs/verification/mail-2026-10-16/README.md",
+    "docs/verification/paper-api-2026-10-17/README.md",
+    "docs/verification/paper-translation-2026-10-17/README.md",
+    "docs/verification/paper-translation-2026-10-17/batch-recovery/README.md",
+    "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+    "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+    "docs/verification/paper-translation-2026-10-17/concurrency-six/README.md",
+    "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+    "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+    "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md",
+    "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+    "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+    "docs/verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md",
+    "docs/verification/persona-memory-2026-10-19/README.md",
+    "docs/verification/persona-memory-2026-10-19/p2/README.md",
+    "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+    "docs/verification/recovery-2026-10-06/README.md",
+    "docs/verification/recovery-2026-10-10/README.md",
+    "docs/verification/recovery-2026-10-10-final/README.md",
+    "docs/verification/reminder-list-2026-10-11/README.md",
+    "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+    "docs/verification/step6-2026-10-05/README.md"
+  ],
+  "links": [
+    {
+      "file": "AGENTS.md",
+      "line": 4,
+      "target": "docs/README.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 4,
+      "target": "docs/verification/INDEX.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 4,
+      "target": "docs/24_统一身份与权限管理.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 5,
+      "target": "docs/25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 13,
+      "target": "config/README.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 62,
+      "target": "docs/16_验收与测试总表.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 64,
+      "target": "docs/20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 66,
+      "target": "docs/16_验收与测试总表.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 70,
+      "target": "docs/21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 70,
+      "target": "docs/26_基础能力插件边界整理与检索接入设计.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 75,
+      "target": "docs/21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "AGENTS.md",
+      "line": 92,
+      "target": "docs/README.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 6,
+      "target": "docs/README.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 13,
+      "target": "docs/12_目录资产与Git备份整理.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 14,
+      "target": "config/README.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 15,
+      "target": "docs/15_旧系统回退.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 16,
+      "target": "docs/16_验收与测试总表.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 17,
+      "target": "docs/10_融合助手运行维护.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 31,
+      "target": "config/README.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 33,
+      "target": "docs/16_验收与测试总表.md#日常自检"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 34,
+      "target": "docs/16_验收与测试总表.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 35,
+      "target": "docs/24_统一身份与权限管理.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 38,
+      "target": "docs/verification/SCRIPTS.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 44,
+      "target": "docs/README.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 45,
+      "target": "docs/verification/SCRIPTS.md"
+    },
+    {
+      "file": "README_FUSION.md",
+      "line": 46,
+      "target": "docs/16_验收与测试总表.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 8,
+      "target": "../docs/verification/deepseek-whale/README.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 9,
+      "target": "../docs/25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 56,
+      "target": "../docs/23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 56,
+      "target": "../docs/19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 58,
+      "target": "../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期"
+    },
+    {
+      "file": "config/README.md",
+      "line": 60,
+      "target": "../docs/24_统一身份与权限管理.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 62,
+      "target": "../docs/21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 74,
+      "target": "../docs/22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 86,
+      "target": "../docs/verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 128,
+      "target": "../docs/25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 159,
+      "target": "../docs/16_验收与测试总表.md"
+    },
+    {
+      "file": "config/README.md",
+      "line": 161,
+      "target": "../docs/README.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 5,
+      "target": "世凪.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 5,
+      "target": "relationships/本人恋人.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 5,
+      "target": "relationships/普通朋友.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 6,
+      "target": "../config/persona.json"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 6,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 6,
+      "target": "../docs/25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 7,
+      "target": "LICENSE.openclaw-persona-template"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 20,
+      "target": "../config/persona.json"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 22,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 22,
+      "target": "../docs/10_融合助手运行维护.md"
+    },
+    {
+      "file": "roles/README.md",
+      "line": 25,
+      "target": "../docs/verification/deepseek-whale/README.md"
+    },
+    {
+      "file": "chatbot/plugins/kurumi-mail/README.md",
+      "line": 3,
+      "target": "../../../docs/20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "chatbot/plugins/kurumi-mail/README.md",
+      "line": 3,
+      "target": "../../../docs/24_统一身份与权限管理.md"
+    },
+    {
+      "file": "chatbot/plugins/kurumi-mail/README.md",
+      "line": 14,
+      "target": "../../../docs/verification/SCRIPTS.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 46,
+      "target": "21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 48,
+      "target": "21_后端职责分层与代码整理.md#共享代码与插件生命周期"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 50,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 54,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 56,
+      "target": "verification/INDEX.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 62,
+      "target": "verification/deepseek-whale/README.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 68,
+      "target": "../scripts/fusion/log-query.mjs"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 75,
+      "target": "18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 77,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 128,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 137,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 149,
+      "target": "verification/2026-10-11_projects-fusion-sync.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 149,
+      "target": "verification/2026-10-10_projects-fusion-sync.md#变更方式与理由"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 178,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 200,
+      "target": "10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 211,
+      "target": "10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 222,
+      "target": "19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 222,
+      "target": "verification/SCRIPTS.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 230,
+      "target": "22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 230,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 238,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 240,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 240,
+      "target": "25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 241,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 242,
+      "target": "15_旧系统回退.md"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 281,
+      "target": "verification/deepseek-whale/stack-lifecycle.json"
+    },
+    {
+      "file": "docs/10_融合助手运行维护.md",
+      "line": 281,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/12_目录资产与Git备份整理.md",
+      "line": 41,
+      "target": "23_KnowledgeMap业务能力桥接.md#备份与恢复演练"
+    },
+    {
+      "file": "docs/12_目录资产与Git备份整理.md",
+      "line": 41,
+      "target": "verification/knowledgemap-bridge-2026-10-17/recovery.json"
+    },
+    {
+      "file": "docs/12_目录资产与Git备份整理.md",
+      "line": 41,
+      "target": "verification/recovery-2026-10-10-final/README.md"
+    },
+    {
+      "file": "docs/12_目录资产与Git备份整理.md",
+      "line": 43,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/12_目录资产与Git备份整理.md",
+      "line": 52,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/12_目录资产与Git备份整理.md",
+      "line": 57,
+      "target": "15_旧系统回退.md"
+    },
+    {
+      "file": "docs/12_目录资产与Git备份整理.md",
+      "line": 74,
+      "target": "10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 3,
+      "target": "verification/INDEX.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 15,
+      "target": "24_统一身份与权限管理.md#8-提交审查发现与补验2026-10-20"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 15,
+      "target": "verification/access-control-2026-10-19/commit-review-2026-10-20.json"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 26,
+      "target": "9_QQ融合助手架构与开发计划.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 26,
+      "target": "verification/fusion/"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 26,
+      "target": "verification/step6-2026-10-05/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 27,
+      "target": "10_融合助手运行维护.md#qq图片与引用"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 27,
+      "target": "verification/deepseek-whale/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 28,
+      "target": "18_跨模块链路日志查询.md#验证结果"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 29,
+      "target": "19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 29,
+      "target": "verification/reminder-list-2026-10-11/natural-input/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 30,
+      "target": "21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 30,
+      "target": "verification/backend-refactor-2026-10-16/adapters/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 30,
+      "target": "verification/backend-refactor-2026-10-16/adapter-contracts/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 31,
+      "target": "21_后端职责分层与代码整理.md#共享代码与插件生命周期"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 31,
+      "target": "verification/plugin-lifecycle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 31,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 32,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 32,
+      "target": "verification/knowledgemap-bridge-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 33,
+      "target": "23_KnowledgeMap业务能力桥接.md#10-第二轮账单完整维护与调用链优化"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 33,
+      "target": "verification/knowledgemap-bills-round2-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 34,
+      "target": "20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 34,
+      "target": "verification/mail-2026-10-16/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 34,
+      "target": "verification/paper-translation-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 35,
+      "target": "22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 35,
+      "target": "verification/paper-translation-2026-10-17/batch-recovery/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 35,
+      "target": "verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 35,
+      "target": "verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 36,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 36,
+      "target": "verification/access-control-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 37,
+      "target": "25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 37,
+      "target": "verification/persona-memory-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 37,
+      "target": "verification/persona-memory-2026-10-19/p2/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 45,
+      "target": "21_后端职责分层与代码整理.md#确认契约与已知待办"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 46,
+      "target": "10_融合助手运行维护.md#qq图片与引用"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 47,
+      "target": "verification/step6-2026-10-05/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 48,
+      "target": "10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 49,
+      "target": "15_旧系统回退.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 50,
+      "target": "12_目录资产与Git备份整理.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 67,
+      "target": "10_融合助手运行维护.md#开发与验证"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 73,
+      "target": "verification/recovery-2026-10-10-final/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 74,
+      "target": "23_KnowledgeMap业务能力桥接.md#备份与恢复演练"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 76,
+      "target": "verification/persona-memory-2026-10-19/p2/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 77,
+      "target": "verification/recovery-2026-10-10/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 77,
+      "target": "verification/recovery-2026-10-06/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 110,
+      "target": "../scripts/fusion/documentation-map.json"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 122,
+      "target": "verification/documentation-2026-10-21/README.md"
+    },
+    {
+      "file": "docs/16_验收与测试总表.md",
+      "line": 124,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 3,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 34,
+      "target": "21_后端职责分层与代码整理.md#共享代码与插件生命周期"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 67,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 71,
+      "target": "verification/knowledgemap-bills-round2-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 77,
+      "target": "22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 77,
+      "target": "verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 88,
+      "target": "19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 88,
+      "target": "22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 100,
+      "target": "../scripts/fusion/log-query.mjs"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 100,
+      "target": "../chatbot/packages/observability/index.js"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 100,
+      "target": "../scripts/fusion/test/log-query.test.mjs"
+    },
+    {
+      "file": "docs/18_跨模块链路日志查询.md",
+      "line": 100,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/19_提醒列表与定时汇总.md",
+      "line": 3,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/19_提醒列表与定时汇总.md",
+      "line": 20,
+      "target": "21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/19_提醒列表与定时汇总.md",
+      "line": 33,
+      "target": "23_KnowledgeMap业务能力桥接.md#测试计划"
+    },
+    {
+      "file": "docs/19_提醒列表与定时汇总.md",
+      "line": 39,
+      "target": "verification/reminder-list-2026-10-11/README.md"
+    },
+    {
+      "file": "docs/19_提醒列表与定时汇总.md",
+      "line": 39,
+      "target": "verification/reminder-list-2026-10-11/natural-input/README.md"
+    },
+    {
+      "file": "docs/19_提醒列表与定时汇总.md",
+      "line": 41,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/19_提醒列表与定时汇总.md",
+      "line": 43,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 3,
+      "target": "21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 3,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 23,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 38,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 42,
+      "target": "22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 54,
+      "target": "../AGENTS.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 58,
+      "target": "verification/mail-2026-10-16/README.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 65,
+      "target": "verification/SCRIPTS.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 65,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/20_邮件能力与横切扩展.md",
+      "line": 67,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 21,
+      "target": "19_提醒列表与定时汇总.md#当前规则"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 23,
+      "target": "verification/backend-refactor-2026-10-16/structured-items/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 27,
+      "target": "25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 27,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 87,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 87,
+      "target": "../config/README.md#同步契约"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 87,
+      "target": "26_基础能力插件边界整理与检索接入设计.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 91,
+      "target": "../chatbot/packages/domain-adapters/index.js"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 91,
+      "target": "../chatbot/packages/domain-adapters/index.d.ts"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 95,
+      "target": "../chatbot/plugins/personal-reminder-list/contracts.d.ts"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 95,
+      "target": "../chatbot/plugins/personal-reminder-list/application.js"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 95,
+      "target": "../chatbot/plugins/personal-reminder-list/adapters.js"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 96,
+      "target": "../chatbot/plugins/kurumi-memory/contracts.d.ts"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 96,
+      "target": "../chatbot/plugins/kurumi-memory/application.js"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 96,
+      "target": "../chatbot/plugins/kurumi-memory/adapters.js"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 100,
+      "target": "../chatbot/packages/domain-adapters/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 102,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 118,
+      "target": "verification/deepseek-whale/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 147,
+      "target": "verification/plugin-lifecycle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 149,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 149,
+      "target": "16_验收与测试总表.md#git工作线归档2026-10-20"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 159,
+      "target": "verification/backend-refactor-2026-10-16/adapter-contracts/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 167,
+      "target": "verification/backend-refactor-2026-10-16/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 168,
+      "target": "verification/backend-refactor-2026-10-16/structured-items/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 169,
+      "target": "verification/backend-refactor-2026-10-16/adapters/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 170,
+      "target": "verification/backend-refactor-2026-10-16/adapter-contracts/README.md"
+    },
+    {
+      "file": "docs/21_后端职责分层与代码整理.md",
+      "line": 178,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 7,
+      "target": "21_后端职责分层与代码整理.md#共享代码与插件生命周期"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 11,
+      "target": "verification/paper-translation-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 11,
+      "target": "verification/paper-translation-2026-10-17/observations.json"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 12,
+      "target": "verification/paper-translation-2026-10-17/channel-upgrade/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 12,
+      "target": "verification/paper-api-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 13,
+      "target": "verification/paper-translation-2026-10-17/concurrency-four/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 14,
+      "target": "verification/paper-translation-2026-10-17/deepseek-max-default/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 14,
+      "target": "verification/paper-translation-2026-10-17/high-dual-fix/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 15,
+      "target": "verification/paper-translation-2026-10-17/batch-recovery/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 16,
+      "target": "verification/paper-translation-2026-10-17/concurrency-six/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 17,
+      "target": "verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 18,
+      "target": "verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 18,
+      "target": "verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 19,
+      "target": "verification/plugin-lifecycle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 19,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 34,
+      "target": "1_bot基础功能开发备忘录.txt"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 86,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 143,
+      "target": "verification/paper-translation-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 154,
+      "target": "verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 154,
+      "target": "verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 174,
+      "target": "verification/paper-translation-2026-10-17/observations.json"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 179,
+      "target": "16_验收与测试总表.md#恢复点与证明范围"
+    },
+    {
+      "file": "docs/22_论文PDF翻译与文件投递.md",
+      "line": 181,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 3,
+      "target": "19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 34,
+      "target": "tp2.txt"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 82,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 84,
+      "target": "18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 90,
+      "target": "19_提醒列表与定时汇总.md#当前规则"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 216,
+      "target": "10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 256,
+      "target": "verification/knowledgemap-bills-round2-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/23_KnowledgeMap业务能力桥接.md",
+      "line": 274,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 5,
+      "target": "verification/access-control-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 5,
+      "target": "tp2.txt"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 31,
+      "target": "../config/access-control.json"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 47,
+      "target": "../chatbot/scripts/access-control.mjs"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 59,
+      "target": "../chatbot/packages/access-control/permissions.js"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 70,
+      "target": "../chatbot/packages/access-control/"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 93,
+      "target": "../scripts/fusion/templates/MEMBER_AGENTS.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 93,
+      "target": "25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 102,
+      "target": "18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 120,
+      "target": "16_验收与测试总表.md#git工作线归档2026-10-20"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 128,
+      "target": "verification/access-control-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 130,
+      "target": "verification/access-control-2026-10-19/member-deployment.json"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 131,
+      "target": "verification/access-control-2026-10-19/member-2752966052-deployment.json"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 140,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 140,
+      "target": "verification/INDEX.md"
+    },
+    {
+      "file": "docs/24_统一身份与权限管理.md",
+      "line": 151,
+      "target": "verification/access-control-2026-10-19/commit-review-2026-10-20.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 28,
+      "target": "../config/README.md#人格投影契约"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 28,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 36,
+      "target": "../config/persona.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 37,
+      "target": "../chatbot/packages/access-control/workspaces.js"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 38,
+      "target": "../scripts/fusion/sync-persona.mjs"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 39,
+      "target": "../chatbot/plugins/kurumi-memory/index.js"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 40,
+      "target": "../chatbot/plugins/kurumi-memory/continuity/store.js"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 47,
+      "target": "../chatbot/plugins/kurumi-memory/continuity/schema.sql"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 51,
+      "target": "../roles/LICENSE.openclaw-persona-template"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 159,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 159,
+      "target": "../AGENTS.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 164,
+      "target": "verification/persona-memory-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 172,
+      "target": "16_验收与测试总表.md#git工作线归档2026-10-20"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 189,
+      "target": "../roles/世凪.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 189,
+      "target": "../roles/relationships/本人恋人.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 189,
+      "target": "../roles/relationships/普通朋友.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 189,
+      "target": "../roles/LICENSE.openclaw-persona-template"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 190,
+      "target": "../chatbot/packages/access-control/workspaces.js"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 190,
+      "target": "../config/README.md#人格投影契约"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 191,
+      "target": "verification/persona-memory-2026-10-19/node-tests.txt"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 192,
+      "target": "verification/persona-memory-2026-10-19/host-fixture-fixed.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 193,
+      "target": "verification/persona-memory-2026-10-19/host-live.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 194,
+      "target": "verification/persona-memory-2026-10-19/deployment.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 195,
+      "target": "verification/persona-memory-2026-10-19/selfchecks.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 197,
+      "target": "../chatbot/tests/persona/projection.test.mjs"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 197,
+      "target": "../chatbot/tests/persona/acceptance-host.mjs"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 197,
+      "target": "verification/SCRIPTS.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 197,
+      "target": "verification/persona-memory-2026-10-19/host-fixture.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 216,
+      "target": "21_后端职责分层与代码整理.md#确认契约与已知待办"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 245,
+      "target": "verification/persona-memory-2026-10-19/p2/recovery-verify.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 249,
+      "target": "verification/persona-memory-2026-10-19/p2/README.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 288,
+      "target": "../chatbot/plugins/kurumi-memory/continuity/tool-contract.js"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 290,
+      "target": "../chatbot/plugins/kurumi-memory/continuity/plugin.js"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 290,
+      "target": "../chatbot/plugins/kurumi-memory/continuity/application.js"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 290,
+      "target": "../chatbot/plugins/kurumi-memory/continuity/contracts.d.ts"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 292,
+      "target": "../scripts/fusion/templates/AGENTS.md"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 296,
+      "target": "../chatbot/tests/persona/memory.test.mjs"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 296,
+      "target": "../chatbot/tests/persona/memory-continuity-host.mjs"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 300,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-before.tap"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 301,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-after.tap"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 301,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-regression.tap"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 301,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-host.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 302,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-live.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 302,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-live-verified.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 303,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-live-natural.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 304,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-live-final.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 305,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-final-regression.tap"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 306,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-host-final.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 307,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-live-closeout.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 315,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-preflight.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 315,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-reload.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 315,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-deployment.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 315,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-selfchecks.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 319,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-deployment-initial.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 321,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-validation.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 325,
+      "target": "verification/persona-memory-2026-10-19/p2/memory-contract-qq-2241.json"
+    },
+    {
+      "file": "docs/25_人格、记忆与会话连续性.md",
+      "line": 341,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/26_基础能力插件边界整理与检索接入设计.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/26_基础能力插件边界整理与检索接入设计.md",
+      "line": 9,
+      "target": "21_后端职责分层与代码整理.md#共享代码与插件生命周期"
+    },
+    {
+      "file": "docs/26_基础能力插件边界整理与检索接入设计.md",
+      "line": 14,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/26_基础能力插件边界整理与检索接入设计.md",
+      "line": 67,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 3,
+      "target": "README.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 3,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 43,
+      "target": "15_旧系统回退.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 47,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 48,
+      "target": "25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 48,
+      "target": "../config/README.md#主模型与人格切换"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 48,
+      "target": "10_融合助手运行维护.md#qq图片与引用"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 49,
+      "target": "21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 49,
+      "target": "26_基础能力插件边界整理与检索接入设计.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 50,
+      "target": "19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 50,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 63,
+      "target": "15_旧系统回退.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 69,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 69,
+      "target": "12_目录资产与Git备份整理.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 69,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/9_QQ融合助手架构与开发计划.md",
+      "line": 69,
+      "target": "15_旧系统回退.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 4,
+      "target": "verification/INDEX.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 4,
+      "target": "verification/SCRIPTS.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 6,
+      "target": "../AGENTS.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 7,
+      "target": "../README_FUSION.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 11,
+      "target": "9_QQ融合助手架构与开发计划.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 12,
+      "target": "10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 12,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 13,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 21,
+      "target": "9_QQ融合助手架构与开发计划.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 22,
+      "target": "10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 23,
+      "target": "12_目录资产与Git备份整理.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 24,
+      "target": "15_旧系统回退.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 25,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 26,
+      "target": "18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 27,
+      "target": "19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 28,
+      "target": "20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 29,
+      "target": "21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 30,
+      "target": "22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 31,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 32,
+      "target": "24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 33,
+      "target": "25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 34,
+      "target": "26_基础能力插件边界整理与检索接入设计.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 36,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 37,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 37,
+      "target": "12_目录资产与Git备份整理.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 39,
+      "target": "10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 41,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 41,
+      "target": "12_目录资产与Git备份整理.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 43,
+      "target": "19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 43,
+      "target": "23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 45,
+      "target": "verification/deepseek-whale/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 51,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 52,
+      "target": "verification/INDEX.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 53,
+      "target": "verification/SCRIPTS.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 54,
+      "target": "verification/"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 54,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 58,
+      "target": "verification/persona-memory-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 58,
+      "target": "verification/persona-memory-2026-10-19/p2/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 59,
+      "target": "verification/documentation-2026-10-21/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 60,
+      "target": "verification/capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 61,
+      "target": "verification/access-control-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 62,
+      "target": "verification/knowledgemap-bills-round2-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 63,
+      "target": "verification/knowledgemap-bridge-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 64,
+      "target": "verification/recovery-2026-10-10-final/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 65,
+      "target": "verification/recovery-2026-10-10/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 66,
+      "target": "verification/recovery-2026-10-06/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 75,
+      "target": "1_bot基础功能开发备忘录.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 76,
+      "target": "2_天气模块的开发.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 77,
+      "target": "3_个人提醒.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 78,
+      "target": "5_主模型fallback处理.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 79,
+      "target": "6_受控变更与二次确认机制.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 80,
+      "target": "7_架构偏离分析与当前卡点.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 81,
+      "target": "8_检索功能重构.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 82,
+      "target": "tp.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 83,
+      "target": "tp2.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 84,
+      "target": "archive/"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 84,
+      "target": "archive/4_受控搜索模块设计.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 91,
+      "target": "8_检索功能重构.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 92,
+      "target": "archive/4_受控搜索模块设计.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 93,
+      "target": "../config/README.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 93,
+      "target": "12_目录资产与Git备份整理.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 94,
+      "target": "10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 101,
+      "target": "example.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 102,
+      "target": "kurimi.png"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 103,
+      "target": "tp.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 103,
+      "target": "tp2.txt"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 107,
+      "target": "16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 110,
+      "target": "verification/INDEX.md"
+    },
+    {
+      "file": "docs/README.md",
+      "line": 122,
+      "target": "../scripts/fusion/documentation-map.json"
+    },
+    {
+      "file": "docs/verification/2026-10-04_检索与QQ插件现状复核.md",
+      "line": 195,
+      "target": "retrieval-review-20261004.json"
+    },
+    {
+      "file": "docs/verification/2026-10-10_projects-fusion-sync.md",
+      "line": 3,
+      "target": "../10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/verification/2026-10-10_projects-fusion-sync.md",
+      "line": 85,
+      "target": "../10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 3,
+      "target": "../README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 3,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 3,
+      "target": "../../scripts/fusion/documentation-map.json"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 3,
+      "target": "SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 9,
+      "target": "SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 10,
+      "target": "documentation-2026-10-21/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 11,
+      "target": "capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 12,
+      "target": "plugin-lifecycle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 13,
+      "target": "persona-memory-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 13,
+      "target": "persona-memory-2026-10-19/p2/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 14,
+      "target": "access-control-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 14,
+      "target": "access-control-2026-10-19/commit-review-2026-10-20.json"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 15,
+      "target": "recovery-2026-10-10-final/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 17,
+      "target": "recovery-2026-10-10/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 19,
+      "target": "recovery-2026-10-06/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 21,
+      "target": "2026-10-10_projects-fusion-sync.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 21,
+      "target": "../10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 22,
+      "target": "2026-10-11_projects-fusion-sync.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 22,
+      "target": "../10_融合助手运行维护.md#后台开发副本契约"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 24,
+      "target": "deepseek-whale/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 25,
+      "target": "mail-2026-10-16/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 26,
+      "target": "reminder-list-2026-10-11/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 27,
+      "target": "backend-refactor-2026-10-16/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 27,
+      "target": "backend-refactor-2026-10-16/adapter-contracts/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 28,
+      "target": "paper-api-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/file-ingress-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/output-idle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/concurrency-six/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/batch-recovery/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/high-dual-fix/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/channel-upgrade/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/concurrency-four/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 29,
+      "target": "paper-translation-2026-10-17/deepseek-max-default/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 30,
+      "target": "knowledgemap-bridge-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/verification/INDEX.md",
+      "line": 31,
+      "target": "knowledgemap-bills-round2-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 3,
+      "target": "INDEX.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 3,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 7,
+      "target": "../../scripts/fusion/documentation-map.json"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 8,
+      "target": "../../scripts/fusion/evidence-index.mjs"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 24,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 25,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 26,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 27,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 28,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 29,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 30,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 31,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 32,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 33,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 34,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 35,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 36,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 37,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 38,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 39,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 40,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 41,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 42,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 43,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 44,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 45,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 46,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 47,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 48,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 49,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 50,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 51,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 52,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 52,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 53,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 53,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 54,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 54,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 55,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 55,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 56,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 57,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 58,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 59,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 60,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 61,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 62,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 63,
+      "target": "../18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 63,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 64,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 65,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 66,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 67,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 68,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 69,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 70,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 71,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 72,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 73,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 74,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 75,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 76,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 77,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 78,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 79,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 80,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 81,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 82,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 83,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 84,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 85,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 86,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 87,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 88,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 89,
+      "target": "../18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 89,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 90,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 91,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 92,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 93,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 93,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 94,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 95,
+      "target": "../18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 96,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 96,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 97,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 97,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 98,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 99,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 100,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 101,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 102,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 103,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 104,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 105,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 106,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 107,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 108,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 109,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 110,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 111,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 111,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 112,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 113,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 113,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 114,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 114,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 115,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 115,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 116,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 116,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 117,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 117,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 118,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 118,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 119,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 119,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 120,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 121,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 122,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 123,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 123,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 124,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 124,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 125,
+      "target": "../18_跨模块链路日志查询.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 126,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 126,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 127,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 127,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 128,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 128,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 129,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 130,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 130,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 131,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 132,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 133,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 134,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 135,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 136,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 137,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 138,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 138,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 139,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 139,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 140,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 140,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 141,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 142,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 142,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 143,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 143,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 144,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 144,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 145,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 145,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 146,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 146,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 147,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 148,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 149,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 150,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 151,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 152,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 153,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 154,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 155,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 156,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 157,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 158,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 159,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 160,
+      "target": "../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 161,
+      "target": "../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 162,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 163,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 164,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 165,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 166,
+      "target": "../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 167,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 168,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 169,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 170,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 171,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 172,
+      "target": "../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 173,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 174,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 175,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 176,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 177,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 178,
+      "target": "../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 179,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 179,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 180,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 180,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 181,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 181,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 182,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 182,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 183,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 183,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 184,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 184,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 185,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 185,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 186,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 186,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 187,
+      "target": "../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 188,
+      "target": "../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 189,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 189,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 190,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 190,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 191,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 191,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 192,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 192,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 193,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 193,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 194,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 194,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 195,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 195,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 196,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 196,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 197,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 197,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 198,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 198,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 199,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 199,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 200,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 200,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 201,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 201,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 202,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 202,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 203,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 203,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 204,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 204,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 205,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 205,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 206,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 206,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 207,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 207,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 208,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 208,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 209,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 209,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 210,
+      "target": "../15_旧系统回退.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 211,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 211,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 212,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 212,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 213,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 213,
+      "target": "../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 214,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/SCRIPTS.md",
+      "line": 215,
+      "target": "../10_融合助手运行维护.md"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 3,
+      "target": "../../24_统一身份与权限管理.md"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 18,
+      "target": "commit-review-2026-10-20.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 19,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 20,
+      "target": "weather-tests.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 21,
+      "target": "confirmation-tests.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 22,
+      "target": "weather-build.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 23,
+      "target": "host.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 24,
+      "target": "host-initial.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 25,
+      "target": "matrix-check.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 25,
+      "target": "sync-selftest.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 26,
+      "target": "deploy-precheck.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 27,
+      "target": "config-before.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 27,
+      "target": "config-apply.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 27,
+      "target": "config-after.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 28,
+      "target": "persona.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 28,
+      "target": "dependencies.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 28,
+      "target": "health.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 29,
+      "target": "checks.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 39,
+      "target": "member-deployment.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 40,
+      "target": "member-node-tests.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 41,
+      "target": "member-persona-apply.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 41,
+      "target": "member-config-apply.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 42,
+      "target": "member-config-after.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 42,
+      "target": "member-persona-after.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 43,
+      "target": "member-dependencies.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 43,
+      "target": "member-health.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 49,
+      "target": "member-2752966052-deployment.json"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 50,
+      "target": "member-2752966052-node-tests.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 51,
+      "target": "member-2752966052-config-apply.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 51,
+      "target": "member-2752966052-config-after.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 52,
+      "target": "member-2752966052-selfchecks.txt"
+    },
+    {
+      "file": "docs/verification/access-control-2026-10-19/README.md",
+      "line": 53,
+      "target": "member-2752966052-health.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 3,
+      "target": "../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 5,
+      "target": "structured-items/README.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 5,
+      "target": "adapters/README.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 9,
+      "target": "report.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 10,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 11,
+      "target": "confirmation-core-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 12,
+      "target": "confirmation-inbound-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/README.md",
+      "line": 13,
+      "target": "weather-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 3,
+      "target": "../../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 3,
+      "target": "../../../../chatbot/packages/domain-adapters/README.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 9,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 11,
+      "target": "confirmation-core-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 11,
+      "target": "confirmation-inbound-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 11,
+      "target": "weather-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 12,
+      "target": "builds.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 13,
+      "target": "selfchecks.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 13,
+      "target": "runtime.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 14,
+      "target": "documentation.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 14,
+      "target": "report.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 22,
+      "target": "../adapters/README.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapter-contracts/README.md",
+      "line": 22,
+      "target": "../../../10_融合助手运行维护.md#开发与验证"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 3,
+      "target": "../../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 7,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 8,
+      "target": "confirmation-core-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 9,
+      "target": "confirmation-inbound-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 10,
+      "target": "weather-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 11,
+      "target": "model/model.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 12,
+      "target": "host/host.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 13,
+      "target": "report.json"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/adapters/README.md",
+      "line": 25,
+      "target": "../README.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/structured-items/README.md",
+      "line": 3,
+      "target": "../../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/structured-items/README.md",
+      "line": 5,
+      "target": "offline-tests.txt"
+    },
+    {
+      "file": "docs/verification/backend-refactor-2026-10-16/structured-items/README.md",
+      "line": 6,
+      "target": "model.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 3,
+      "target": "../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 3,
+      "target": "../../26_基础能力插件边界整理与检索接入设计.md"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 3,
+      "target": "../../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 11,
+      "target": "initial-core-build.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 11,
+      "target": "initial-confirmation-build.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 11,
+      "target": "initial-weather-build.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 11,
+      "target": "initial-lifecycle.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 12,
+      "target": "initial-loaded.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 12,
+      "target": "initial-loaded-health.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 13,
+      "target": "boundary-tests.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 14,
+      "target": "final-domain-build.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 15,
+      "target": "node-regression.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 16,
+      "target": "domain-tests.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 17,
+      "target": "core-tests.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 17,
+      "target": "confirmation-tests.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 18,
+      "target": "final-import-regression.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 19,
+      "target": "isolated-host-final.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 20,
+      "target": "sync-selftest.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 20,
+      "target": "sync-deferral-before.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 20,
+      "target": "sync-deferral-final.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 21,
+      "target": "final-preflight.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 21,
+      "target": "final-config-apply.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 21,
+      "target": "final-loaded.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 22,
+      "target": "final-health.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 22,
+      "target": "final-dependencies.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 22,
+      "target": "final-config-check.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 22,
+      "target": "final-persona-check.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 23,
+      "target": "closeout-state.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 24,
+      "target": "evidence-index.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 24,
+      "target": "evidence-coverage.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 24,
+      "target": "links.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 24,
+      "target": "diff-check.txt"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 32,
+      "target": "isolated-host.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 32,
+      "target": "isolated-host-fixed.json"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 42,
+      "target": "../../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 42,
+      "target": "../persona-memory-2026-10-19/p2/README.md"
+    },
+    {
+      "file": "docs/verification/capability-decoupling-2026-10-20/README.md",
+      "line": 69,
+      "target": "../INDEX.md"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 3,
+      "target": "../../../config/README.md#主模型与人格切换"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 3,
+      "target": "../../10_融合助手运行维护.md#qq图片与引用"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 3,
+      "target": "../../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 3,
+      "target": "../../21_后端职责分层与代码整理.md#确认契约与已知待办"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 9,
+      "target": "model-image.json"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 10,
+      "target": "channel-tests.txt"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 11,
+      "target": "stack-lifecycle.json"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 17,
+      "target": "../../../roles/README.md"
+    },
+    {
+      "file": "docs/verification/deepseek-whale/README.md",
+      "line": 24,
+      "target": "../INDEX.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 3,
+      "target": "../../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 3,
+      "target": "../../README.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 24,
+      "target": "../../../config/README.md#主模型与人格切换"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 24,
+      "target": "../../10_融合助手运行维护.md#qq图片与引用"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 24,
+      "target": "../deepseek-whale/README.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 25,
+      "target": "../../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 25,
+      "target": "../../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 26,
+      "target": "../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 26,
+      "target": "../../26_基础能力插件边界整理与检索接入设计.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 28,
+      "target": "../mail-2026-10-16/README.md"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 30,
+      "target": "../../../scripts/fusion/documentation-map.json"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 40,
+      "target": "checker-tests.txt"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 41,
+      "target": "initial-checker-tests.txt"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 52,
+      "target": "validation.json"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 52,
+      "target": "links.json"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 56,
+      "target": "../../16_验收与测试总表.md#已知未完成与批准延期"
+    },
+    {
+      "file": "docs/verification/documentation-2026-10-21/README.md",
+      "line": 62,
+      "target": "../INDEX.md"
+    },
+    {
+      "file": "docs/verification/knowledgemap-bills-round2-2026-10-17/README.md",
+      "line": 3,
+      "target": "../../23_KnowledgeMap业务能力桥接.md#10-第二轮账单完整维护与调用链优化"
+    },
+    {
+      "file": "docs/verification/knowledgemap-bills-round2-2026-10-17/README.md",
+      "line": 16,
+      "target": "../SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/knowledgemap-bills-round2-2026-10-17/README.md",
+      "line": 18,
+      "target": "../INDEX.md"
+    },
+    {
+      "file": "docs/verification/knowledgemap-bridge-2026-10-17/README.md",
+      "line": 3,
+      "target": "../../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/knowledgemap-bridge-2026-10-17/README.md",
+      "line": 19,
+      "target": "../../23_KnowledgeMap业务能力桥接.md"
+    },
+    {
+      "file": "docs/verification/mail-2026-10-16/README.md",
+      "line": 3,
+      "target": "../../20_邮件能力与横切扩展.md"
+    },
+    {
+      "file": "docs/verification/mail-2026-10-16/README.md",
+      "line": 3,
+      "target": "../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/mail-2026-10-16/README.md",
+      "line": 49,
+      "target": "../paper-translation-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/verification/mail-2026-10-16/README.md",
+      "line": 49,
+      "target": "../paper-translation-2026-10-17/observations.json"
+    },
+    {
+      "file": "docs/verification/mail-2026-10-16/README.md",
+      "line": 49,
+      "target": "../plugin-lifecycle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/mail-2026-10-16/README.md",
+      "line": 49,
+      "target": "../capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/verification/mail-2026-10-16/README.md",
+      "line": 53,
+      "target": "../INDEX.md"
+    },
+    {
+      "file": "docs/verification/paper-api-2026-10-17/README.md",
+      "line": 4,
+      "target": "../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-api-2026-10-17/README.md",
+      "line": 4,
+      "target": "api-results.json"
+    },
+    {
+      "file": "docs/verification/paper-api-2026-10-17/README.md",
+      "line": 49,
+      "target": "../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 3,
+      "target": "../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 5,
+      "target": "runtime-investigation-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 5,
+      "target": "file-ingress-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 5,
+      "target": "output-idle-2026-10-19/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 7,
+      "target": "batch-recovery/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 7,
+      "target": "concurrency-six/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 7,
+      "target": "high-dual-fix/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 7,
+      "target": "concurrency-four/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 7,
+      "target": "channel-upgrade/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 7,
+      "target": "deepseek-max-default/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 51,
+      "target": "../SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 63,
+      "target": "../paper-api-2026-10-17/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/README.md",
+      "line": 67,
+      "target": "concurrency-four/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/batch-recovery/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/batch-recovery/README.md",
+      "line": 3,
+      "target": "../../INDEX.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 5,
+      "target": "../concurrency-four/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 9,
+      "target": "../README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 13,
+      "target": "channels-api.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 14,
+      "target": "gpt-full/acceptance.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 15,
+      "target": "deepseek-api.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 15,
+      "target": "deepseek-pro-api.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 16,
+      "target": "deepseek-batch-api.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 16,
+      "target": "deepseek-structured-api.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 17,
+      "target": "deepseek-low/acceptance.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 18,
+      "target": "deepseek-layout/acceptance.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 19,
+      "target": "deepseek-final/acceptance.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 20,
+      "target": "deepseek-final/quality/checks.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 35,
+      "target": "paper-node-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 36,
+      "target": "responses-final-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 37,
+      "target": "engine-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 38,
+      "target": "host-final.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 39,
+      "target": "capture-final.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 40,
+      "target": "deployment-final.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 40,
+      "target": "health.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 41,
+      "target": "dependencies.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 41,
+      "target": "sync-config.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 41,
+      "target": "sync-persona.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 42,
+      "target": "doc-links.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 42,
+      "target": "closeout.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 46,
+      "target": "../../SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/channel-upgrade/README.md",
+      "line": 65,
+      "target": "../concurrency-four/README.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 11,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 12,
+      "target": "responses-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 13,
+      "target": "concurrency-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 14,
+      "target": "engine-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 15,
+      "target": "host.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 23,
+      "target": "cache-preparation.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 24,
+      "target": "gpt-resume/acceptance.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 25,
+      "target": "deepseek-fresh/acceptance.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 26,
+      "target": "deepseek-recheck/acceptance.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 27,
+      "target": "gpt-resume/quality/checks.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 27,
+      "target": "deepseek-recheck/quality/checks.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 31,
+      "target": "timing.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 52,
+      "target": "config-apply.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 52,
+      "target": "persona-apply.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 53,
+      "target": "capture.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 54,
+      "target": "health.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 54,
+      "target": "dependencies.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 54,
+      "target": "sync-config.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 54,
+      "target": "sync-persona.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 56,
+      "target": "closeout.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-four/README.md",
+      "line": 56,
+      "target": "doc-links.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-six/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/concurrency-six/README.md",
+      "line": 3,
+      "target": "../../INDEX.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 11,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 11,
+      "target": "responses-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 11,
+      "target": "concurrency-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 11,
+      "target": "engine-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 12,
+      "target": "api-batch.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 13,
+      "target": "host.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 14,
+      "target": "production-jobs.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 15,
+      "target": "deployment.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 15,
+      "target": "capture.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 16,
+      "target": "persona-apply.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 16,
+      "target": "dependencies.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 16,
+      "target": "sync-config.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 16,
+      "target": "sync-persona.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 16,
+      "target": "health.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 17,
+      "target": "closeout.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/deepseek-max-default/README.md",
+      "line": 18,
+      "target": "budget-300k.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 5,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 5,
+      "target": "../../INDEX.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 5,
+      "target": "../../SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 11,
+      "target": "../../../../chatbot/tests/papers/file-ingress.test.mjs"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 12,
+      "target": "../../../../chatbot/tests/papers/acceptance-file-ingress.mjs"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 18,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 19,
+      "target": "host.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 20,
+      "target": "host-recheck.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 21,
+      "target": "runtime-before.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 22,
+      "target": "persona-apply.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 23,
+      "target": "deployment.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 24,
+      "target": "health.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 25,
+      "target": "dependencies.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 25,
+      "target": "config-check.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 26,
+      "target": "persona-check-initial.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 27,
+      "target": "persona-check-final.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 28,
+      "target": "closeout.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 29,
+      "target": "evidence-coverage-final.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md",
+      "line": 31,
+      "target": "../../../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md",
+      "line": 5,
+      "target": "../../../../chatbot/tests/papers/file-ingress.test.mjs"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md",
+      "line": 7,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+      "line": 31,
+      "target": "regression.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+      "line": 33,
+      "target": "host.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+      "line": 34,
+      "target": "captured-worker.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+      "line": 34,
+      "target": "captured-worker-native-import-failed.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+      "line": 35,
+      "target": "deployment.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/high-dual-fix/README.md",
+      "line": 44,
+      "target": "production-observations.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 3,
+      "target": "../../INDEX.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 13,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 14,
+      "target": "responses-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 15,
+      "target": "concurrency-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 16,
+      "target": "engine-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 17,
+      "target": "reliability-tests.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 18,
+      "target": "deployment-before.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 19,
+      "target": "captured-worker.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 20,
+      "target": "health.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 21,
+      "target": "dependencies.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 21,
+      "target": "config-check.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 21,
+      "target": "persona-check.txt"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md",
+      "line": 22,
+      "target": "closeout.json"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md",
+      "line": 3,
+      "target": "../../../22_论文PDF翻译与文件投递.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md",
+      "line": 3,
+      "target": "../../INDEX.md"
+    },
+    {
+      "file": "docs/verification/paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md",
+      "line": 5,
+      "target": "observations.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 3,
+      "target": "../../25_人格、记忆与会话连续性.md"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 3,
+      "target": "p2/README.md"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 5,
+      "target": "p2/README.md"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 9,
+      "target": "node-tests.txt"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 10,
+      "target": "host-fixture.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 11,
+      "target": "host-fixture-fixed.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 12,
+      "target": "host-live.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 13,
+      "target": "deployment.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 14,
+      "target": "selfchecks.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/README.md",
+      "line": 20,
+      "target": "p2/"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 3,
+      "target": "../../../25_人格、记忆与会话连续性.md#10-p2记忆与会话连续性"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 3,
+      "target": "../../../25_人格、记忆与会话连续性.md#11-p2真人qq复验与工具契约补正2026-10-20"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 9,
+      "target": "hook-probe.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 10,
+      "target": "hook-probe-final.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 11,
+      "target": "hook-lifecycle.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 12,
+      "target": "hook-lifecycle-fixed.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 13,
+      "target": "preflight-checks.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 14,
+      "target": "memory-continuity-host.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 14,
+      "target": "memory-continuity-host-v2.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 15,
+      "target": "memory-continuity-host-v3.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 16,
+      "target": "memory-continuity-host-v4.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 17,
+      "target": "memory-continuity-host-v5.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 18,
+      "target": "recovery-verify.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 19,
+      "target": "memory-contract-before.tap"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 20,
+      "target": "memory-contract-after.tap"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 20,
+      "target": "memory-contract-regression.tap"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 21,
+      "target": "memory-contract-host.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 22,
+      "target": "memory-contract-live.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 23,
+      "target": "memory-contract-live-verified.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 24,
+      "target": "memory-contract-live-natural.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 25,
+      "target": "memory-contract-live-final.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 26,
+      "target": "memory-contract-final-regression.tap"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 26,
+      "target": "memory-contract-host-final.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 27,
+      "target": "memory-contract-live-closeout.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 28,
+      "target": "memory-contract-preflight.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 28,
+      "target": "memory-contract-reload.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 29,
+      "target": "memory-contract-deployment-initial.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 29,
+      "target": "memory-contract-deployment.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 30,
+      "target": "memory-contract-selfchecks.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 31,
+      "target": "memory-contract-validation.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 32,
+      "target": "memory-contract-qq-2241.json"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 38,
+      "target": "../../../../chatbot/tests/persona/memory-continuity-host.mjs"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 60,
+      "target": "../../../25_人格、记忆与会话连续性.md#11-p2真人qq复验与工具契约补正2026-10-20"
+    },
+    {
+      "file": "docs/verification/persona-memory-2026-10-19/p2/README.md",
+      "line": 72,
+      "target": "recovery-verify.json"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 3,
+      "target": "../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 5,
+      "target": "../capability-decoupling-2026-10-20/README.md"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 7,
+      "target": "../../21_后端职责分层与代码整理.md"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 7,
+      "target": "../../16_验收与测试总表.md#git工作线归档2026-10-20"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 31,
+      "target": "core-before.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 31,
+      "target": "core-after.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 32,
+      "target": "host-before.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 32,
+      "target": "host-after.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 33,
+      "target": "node-regression.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 34,
+      "target": "confirmation-tests.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 34,
+      "target": "weather-tests.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 35,
+      "target": "core-build.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 35,
+      "target": "confirmation-build.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 35,
+      "target": "weather-build.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 36,
+      "target": "health.json"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 36,
+      "target": "dependencies.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 36,
+      "target": "config.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 36,
+      "target": "persona.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 37,
+      "target": "evidence-index.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 37,
+      "target": "evidence-coverage.txt"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 37,
+      "target": "links.json"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "../../../chatbot/packages/confirmation-core/src/registry.ts"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "../../../chatbot/plugins/kurumi-papers/index.js"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "../../../chatbot/plugins/kurumi-mail/index.js"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "../../../chatbot/packages/confirmation-core/src/confirmation.test.ts"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "../../../chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "../../../chatbot/plugins/kurumi-mail/test/adapters.test.js"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "../../../chatbot/plugins/kurumi-mail/test/tool.test.js"
+    },
+    {
+      "file": "docs/verification/plugin-lifecycle-2026-10-19/README.md",
+      "line": 43,
+      "target": "sources.json"
+    },
+    {
+      "file": "docs/verification/recovery-2026-10-10/README.md",
+      "line": 3,
+      "target": "../../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/recovery-2026-10-10/README.md",
+      "line": 97,
+      "target": "../../README.md"
+    },
+    {
+      "file": "docs/verification/recovery-2026-10-10-final/README.md",
+      "line": 4,
+      "target": "../recovery-2026-10-10/README.md"
+    },
+    {
+      "file": "docs/verification/recovery-2026-10-10-final/README.md",
+      "line": 5,
+      "target": "../../16_验收与测试总表.md"
+    },
+    {
+      "file": "docs/verification/recovery-2026-10-10-final/README.md",
+      "line": 76,
+      "target": "../recovery-2026-10-10/README.md"
+    },
+    {
+      "file": "docs/verification/recovery-2026-10-10-final/README.md",
+      "line": 109,
+      "target": "../../README.md"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 3,
+      "target": "../../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 3,
+      "target": "../INDEX.md"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 3,
+      "target": "natural-input/README.md"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 7,
+      "target": "offline.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 8,
+      "target": "model.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 9,
+      "target": "host.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 10,
+      "target": "native.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 11,
+      "target": "deployment.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/README.md",
+      "line": 19,
+      "target": "../SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 3,
+      "target": "../../../19_提醒列表与定时汇总.md"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 7,
+      "target": "offline.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 8,
+      "target": "model.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 9,
+      "target": "host.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 10,
+      "target": "regression/model.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 11,
+      "target": "regression/host.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 12,
+      "target": "deployment.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 13,
+      "target": "closeout.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 15,
+      "target": "../native.json"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 17,
+      "target": "../../SCRIPTS.md"
+    },
+    {
+      "file": "docs/verification/reminder-list-2026-10-11/natural-input/README.md",
+      "line": 27,
+      "target": "../../../../chatbot/tests/reminder-list/dialogue-cases.mjs"
+    }
+  ]
+}

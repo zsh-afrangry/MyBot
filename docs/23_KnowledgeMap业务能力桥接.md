@@ -1,20 +1,10 @@
 # KnowledgeMap 业务能力桥接
 
-状态：**第一、第二轮均已验收并部署**。日期：2026-10-17。本文负责天气、待做事项、记账接入的需求、架构、决策、实施与验收记录。阅读入口：[README.md](README.md)。
+状态：**第一、第二轮均已验收并部署**。日期：2026-10-17。本文负责跨项目桥接、接口、迁移、配对恢复和记账规则；提醒列表/播报的用户规则唯一归[文档19](19_提醒列表与定时汇总.md)。阅读入口：[README.md](README.md)。
 
 用户已于 2026-10-17 确认 Q01–Q04，并要求跨两个 Git 仓库做好版本隔离与今晚基线备份。第一轮完成天气、待做及记账新增/查询/月汇总；账单修改/删除属于第二轮，共享默认城市属于后续数据库整合迭代。文档 22 的论文/PDF/文件投递开发不属于本任务。
 
-## 第一轮完成记录
-
-- [x] 读取 `tp2.txt`、两仓库开发约定，核对相关 API、数据结构与 Git 工作区。
-- [x] 写明需求、范围、推荐架构、可预见的决策与分层验收方案。
-- [x] 得到 Q01–Q04 的决定，冻结第一轮业务与切换范围。
-- [x] 保存两个仓库的今晚代码基线，建立独立开发分支/工作区。
-- [x] 开发桥接工具和必要的业务 API 增强，在隔离环境完成测试。
-- [x] 经切换检查后部署，补充真实接口、模型及两入口一致性证据。
-- [x] 更新运行、验收与脚本索引，核对本次提交范围并收尾。
-
-**当前阶段：第二轮闭环。** 14项存量及播报已切换；账单现支持增删改查/月汇总，模型工具字段和真实runId链路已改善。第二轮隔离宿主14组、真实运行10组通过，完整结果、版本与备份边界见第10节。默认城市共库继续延期，不将已测范围扩大为所有场景验收。
+**当前阶段：两轮已闭环。** 14项存量及播报已切换，账单支持增删改查/月汇总和真实runId关联。各层结果见第8/10节；共享默认城市仍待后续整合，长期真人体验不由单次冒烟推断。
 
 ## 1. 需求与交付范围
 
@@ -43,28 +33,17 @@
 
 遵循用户引用的 [tp2.txt](tp2.txt) 工作习惯：本文保留需求、当前状态、已定判断与理由、产物路径、测试结果、阻塞和必要纠错；不累积互相矛盾的旧计划。关键业务选择等待用户决定，独立方向可在获得继续开发指令后推进。
 
-Fusion 的任务记录集中在本文；KnowledgeMap 的执行状态仍以其根目录 `/home/afrangry/repository/todolist.txt` 的稳定任务 ID 为准。若后续改动该项目，为其建立本地 API/测试契约文档，由本文件引用，不复制整套进度清单。
+Fusion 的任务记录集中在本文；KnowledgeMap 的执行状态仍以其根目录 `/home/afrangry/repository/todolist.txt` 的稳定任务 ID 为准。业务API/测试契约见该库 `docs/18_助手业务接口与共享数据.md`，本文件只引用，不复制整套进度清单。
 
-## 2. 改造前基线
+## 2. 接口与运行边界
 
-以下是 **2026-10-17 开始改造时**的基线，用于解释必须调整的部分。当前实现与部署见第8节；不能把本表中的旧限制当当前规则。
+常驻专用API为`127.0.0.1:3086`，由`knowledgemap-assistant.service`运行；它读取网站同一业务数据库和后端配置。网站`localhost:3000`、开发后端默认`127.0.0.1:3085`不是助手日常依赖入口；`/api/health`只证明进程存活。
 
-| 位置 | 已有能力与限制 | 对方案的影响 |
-| --- | --- | --- |
-| `/home/afrangry/repository/backend/app/routers/bill.py` | 账单增查改删、月度汇总；标签为可空外键 | 复用业务 API；金额、日期、标签含义由业务端校验，模型不编造标签 ID |
-| 同仓库 `backend/app/schemas/bill.py` | 日期与正金额必需，支付信息等可空 | 简单记账不强迫补齐所有可选字段；金额使用十进制语义 |
-| 同仓库 `backend/app/routers/calendar.py`、`crud/calendar.py` | 待做与安排两类；完成、作废分别记录；待做查询不限日期，逾期未完成仍保留 | 与助手原列表的自动过期规则存在差异，需要明确切换规则 |
-| 同仓库 `backend/app/schemas/calendar.py` | `event_date` 必填，`event_time` 可空 | 无 DDL 不能未经说明就映射成“今天截止”；需确定兼容方案 |
-| 同仓库 `backend/app/routers/weather.py` | 和风天气、城市搜索、当前天气与未来天气摘要 | 尚不能直接替代 Fusion 的全部天气能力 |
-| `/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather/` | 已有天气简报及逐小时等组件，并承载位置、行程、一次性提醒相关能力 | 更换天气来源时应明确能力覆盖，不能整体移除插件来实现桥接 |
-| `chatbot/plugins/personal-reminder-list/` | SQLite 业务项、版本/幂等、可空 DDL、自动过期及每日汇总 | 切换必须覆盖工具、调度器和独立 runner；只换聊天入口会形成两套事实 |
-| `chatbot/packages/domain-adapters/` | 现有 Policy/Store 明确为同步契约，拒绝 Promise/thenable | HTTP 桥接需要显式异步应用边界，不能伪装成现有同步 Store |
+天气、账单、标签、日历和仪表盘能力由KnowledgeMap业务端持有，助手通过专用认证的`/api/assistant/`访问，不能取得任意HTTP/SQL工具或数据库密码。日期可空、备注、版本和幂等已按本次接口增强落实；网站同样提交版本。业务端精确路由、SQL和测试只在 `/home/afrangry/repository/docs/18_助手业务接口与共享数据.md`维护。
 
-KnowledgeMap 开发后端默认 `127.0.0.1:3085`，网站 `localhost:3000`；默认端口来自当前启动代码，开发前仍需核对实际监听。现有 `/api/health` 只表明进程存活，不证明数据库或天气上游可用。
+Fusion同步Policy/Store拒绝Promise/thenable，不能拿HTTP驱动冒充同步Store。共享待做走显式异步应用边界，本地仅保留播报/请求/投递控制，详见下节和文档19。
 
-现有可复用接口包括 `/api/bills/`、`/api/bills/summary/monthly`、`/api/tags/`、`/api/calendar-events/`、完成/作废子接口、`/api/dashboard/pending/`、`/api/weather/` 与城市搜索。**接口存在不等于已经满足桥接需要**：身份验证、写入幂等、并发版本、错误格式及数据完整性需要逐项核对和补足。
-
-## 3. 推荐架构与职责
+## 3. 架构与职责
 
 ```mermaid
 flowchart LR
@@ -96,36 +75,30 @@ flowchart LR
 5. 业务校验由个人项目统一承担；桥接可做传输契约检查，不复制另一套分类或事项状态规则。无必要字段先澄清，可空字段按业务契约留空。
 6. 沿用现有确认共享件；本轮不重新设计全局确认机制。一次性提醒的带码确认保持原规则，新增账单/维护事项的权限边界按 Q03 及业务范围落实。
 
-网络为异步调用。优先增加明确的异步应用服务与 API 适配边界，复用无 I/O 的规则；保持现有同步注册表契约有效。具体改造范围需在开发前列出，避免影响记忆、邮件等已使用该注册表的领域。
+共享网络调用由异步应用服务与API适配承接，复用无I/O规则；同步注册表契约保持不变。后续扩展仍需先列清影响范围，避免波及记忆、邮件等同步消费者。
 
 ### 权限与日志
 
-只开放本轮业务工具，不放宽 QQ 主 agent 的通用文件/命令能力。新增白名单键及具体业务写能力在实施方案中逐项列明，再按配置同步契约部署。
+业务工具按[文档24](24_统一身份与权限管理.md)逐项授权，记账/待做/天气仍owner-only；不放宽QQ主agent的通用文件/命令能力，配置只经同步契约部署。
 
-固定配置 KnowledgeMap 的服务地址，凭据仅在私密文件保存（本轮为 `~/.config/knowledgemap/assistant-token`，600）。需为助手访问定义独立认证与受限能力，不能把网站登录密钥交给模型，也不能把 CORS 当认证。沿用 [文档 18](18_跨模块链路日志查询.md) 的扩展方式关联 QQ 消息、run、工具、API 请求与业务记录 ID；日志隐藏凭据和不必要的个人正文。
+固定配置 KnowledgeMap 的服务地址，凭据仅在私密文件保存（本轮为 `~/.config/knowledgemap/assistant-token`，600）。助手访问使用独立认证与受限能力，不能把网站登录密钥交给模型，也不能把CORS当认证。沿用 [文档 18](18_跨模块链路日志查询.md) 的扩展方式关联 QQ 消息、run、工具、API 请求与业务记录 ID；日志隐藏凭据和不必要的个人正文。
 
 ## 4. 已确认决定与迭代范围
 
 | 编号 | 用户决定（2026-10-17） | 本轮落实方式 |
 | --- | --- | --- |
-| Q01 | 默认采用网站待做规则；逾期仍待做、支持无 DDL、作废可恢复，Kurumi 侧相应调整 | 业务端统一状态；无 DDL 明确保存，不虚构今天截止；需要的字段/显示兼容由本轮完成 |
+| Q01 | 默认采用网站待做规则，Kurumi侧相应调整 | 已实现，唯一业务规则见[文档19](19_提醒列表与定时汇总.md#当前规则)，本文件不维护第二份状态/DDL规范 |
 | Q02 | 同意存量切换 | 验证后迁移现存事项及状态，保留时刻、次数与暂停设置，工具与固定播报 runner 同批切换；旧库保留，不双写 |
 | Q03 | 首期新增、查询、月汇总；首轮闭环后开放修改/删除；用户进一步确认明确唯一单笔直接执行 | 第二轮已落实真实ID/version、实际删除、歧义澄清和事务幂等；不新增带码确认、批量或撤销 |
 | Q04 | 本轮不自动同步默认城市；后期整合数据库时读取同一数据库中的默认城市，可能第三轮 | 本轮共享天气查询并保留既有能力；统一偏好作为后续迭代，不默认改动当前城市 |
 
-无 DDL 和“活动结束后”仍保留含义，不依据关联活动擅自生成截止时间；真实事件依赖/条件触发不在第一轮。TradeSim、Notes 不接入。关键新决策如确需用户判断，将单独标为阻塞；目前没有等待用户回答的阻塞。
+事项字段、逾期/无DDL/活动条件和恢复规则统一引用文档19；本桥接不另定义状态语义。TradeSim、Notes不接入。关键新决策如确需用户判断，将单独标为阻塞；目前没有等待用户回答的阻塞。
 
-## 5. 实施顺序与阶段门槛
+## 5. 切换与回退约束
 
-| 阶段 | 工作 | 进入下一阶段的依据 |
-| --- | --- | --- |
-| P1 契约冻结 | 按已确认 Q01–Q04 检查真实服务、API 与数据库结构；登记 KnowledgeMap 执行任务 ID；列清字段、动作、权限、错误与迁移映射 | 文档中的规则与两端现状无冲突；阻塞项有明确范围 |
-| P2 业务 API 与客户端 | 补齐确有缺口的认证/校验/幂等/并发；开发固定地址异步客户端和窄领域工具 | 两端隔离契约测试通过，失败不会静默落入旧存储 |
-| P3 逐域联通 | 先天气只读、记账查询，再记账写入与待做维护；复用现有业务规则 | 每域都有请求到实际业务结果的证据；只读成功不替代写入验收 |
-| P4 列表与播报切换 | 迁移预览、逐项对照、切换工具和 runner；保存旧状态与映射；检查同一时刻防重复播报 | 数据数量/字段/状态可核对，全部待决映射已解决 |
-| P5 端到端与收尾 | 验证网站与助手双向操作、真实模型路由、本人 QQ 投递及异常恢复；同步文档与索引 | 满足下文验收，提交仅含本任务内容，明确尚未覆盖范围 |
+工具、调度器和独立runner必须同批切换；持久`data-source.json`约束旧Cron，不从旧SQLite业务表静默回退，设置和投递账本仍由本地维护。具体读写分工在文档19，首次操作步骤见下文“迁移与切换”。
 
-回退不能简单“重新启用旧库”：切换后新写入的事实可能只在 KnowledgeMap，回退前必须核对增量、暂停有关写入并决定保留方式。运行快照、恢复与远端推送按仓库既有授权规则执行，不纳入自动收尾。
+回退代码不能简单重新启用旧库：先暂停有关写入，备份共享状态并核对增量，再决定保留方式。完整恢复需要Fusion材料、KnowledgeMap MySQL、环境及专用token；配对备份不是同一时刻停写。运行快照、停机和远端推送按实际授权执行。
 
 ## 6. 测试、产物与完成标准
 
@@ -149,7 +122,7 @@ flowchart LR
 
 精确产物和脚本清单见文末「本轮产物登记」。归属规则：
 
-- Fusion领域脚本在 `chatbot/scripts/`，测试在 `chatbot/tests/knowledgemap/`；头部引用本文件，登记 `verification/SCRIPTS.md`。
+- Fusion领域脚本在 `chatbot/scripts/`，测试在 `chatbot/tests/knowledgemap/`；按文件或套件在 `scripts/fusion/documentation-map.json`关联本文件，登记 `verification/SCRIPTS.md`。
 - KnowledgeMap脚本、测试、SQL分别在其 `backend/scripts/`、`backend/tests/`、`backend/sql/`；反向引用该项目文档18，执行 `check_doc_refs.py`。
 - 证据放专项目录并登记INDEX和可执行分类；没有向archive或根目录投放测试文件。不执行含DROP的schema快照升级真实库。
 
@@ -163,7 +136,7 @@ flowchart LR
 
 本任务不覆盖、暂存或提交这些改动。已在仓库外保存调查起点的私有差异留档，仅用于识别已有改动；它不是业务备份或恢复点。后续优先使用独立分支/工作区隔离实现；涉及共享入口时按具体差异核对，禁止 `git add .` 将他人的内容混入提交。既有未推送提交也不能当作本任务授权远端推送的依据。
 
-今晚代码基线：`/home/afrangry/kurumi-backups/knowledgemap-bridge-2026-10-17-01-03-26/`。两个仓库各含 Git bundle、tracked/非忽略 untracked 工作树包、暂存/未暂存补丁、status 与 SHA256；bundle 验证成功，打包期间文件变化为 0。该包包含当时的文档22和账单UI未提交改动；忽略文件、凭据与业务数据另在变更前备份，不误称全量运行快照。恢复说明在该目录 README.md，必须在新目录演练，不覆盖并行开发现场。
+2026-10-17变更前代码基线：`/home/afrangry/kurumi-backups/knowledgemap-bridge-2026-10-17-01-03-26/`。两个仓库各含 Git bundle、tracked/非忽略 untracked 工作树包、暂存/未暂存补丁、status 与 SHA256；bundle 验证成功，打包期间文件变化为 0。该包包含当时的文档22和账单UI未提交改动；忽略文件、凭据与业务数据另在变更前备份，不误称全量运行快照。恢复说明在该目录 README.md，必须在新目录演练，不覆盖并行开发现场。
 
 收尾前差异留档：`/home/afrangry/kurumi-backups/knowledgemap-bridge-git-closeout-2026-10-17-02-54-28/`，保存两仓库原index、暂存/未暂存补丁与变更文件哈希包；不是数据库快照。收尾保持文档22和账单UI原有暂存/未暂存边界，不要求整个并行工作区干净。
 
@@ -174,7 +147,7 @@ flowchart LR
 - **隔离开发**：网站新增专用认证 `/api/assistant/`，复用业务服务与同一 Base/Session，具备事务幂等和版本冲突；日期可空、备注独立保存，网页入口同样提交版本。独立 loopback `3086` 服务避免日常助手依赖开发服务器。
 - **Fusion**：`chatbot/packages/knowledgemap-client/` 固定地址异步客户端；`kurumi-knowledgemap` 提供记账工具；原列表插件显式异步共享模式，SQLite仅保留设置、请求与投递账本；天气适配保留原有解析与高级能力。通用同步领域注册表不变。
 - **隔离结果**：业务API30/30、桥接23/23、本机HTTP双入口1组、恢复回归11/11（Node合计35/35）、网页6项通过；网站与天气TS构建通过，天气插件162/162；既有日历114/114、账单13/13、仪表盘55/55、天气24/24、列表/日志Node54/54通过。真实模型6/6、隔离OpenClaw宿主6/6（含实际/new及修改时刻生成2个共享Cron）；本组不访问生产库或外发QQ。
-- **数据恢复资料**：今晚基线 `private-state/` 已保存MySQL一致性导出、6个SQLite在线备份、3份私密配置和SHA256；已在临时目录恢复Git文件548+204并逐字节核对，6库quick_check通过；MySQL完整备份在唯一临时库恢复后验证定向迁移、行数保留、双会话版本冲突和并发同键只落一笔。上述是切换前恢复证据；真实切换另记录如下。
+- **数据恢复资料**：变更前基线 `private-state/` 已保存MySQL一致性导出、6个SQLite在线备份、3份私密配置和SHA256；已在临时目录恢复Git文件548+204并逐字节核对，6库quick_check通过；MySQL完整备份在唯一临时库恢复后验证定向迁移、行数保留、双会话版本冲突和并发同键只落一笔。上述是切换前恢复证据；真实切换另记录如下。
 - **真实切换**：定向DDL完成3处列调整/新增和2张助手表；原始bills/calendar/tags行数仍为0/5/37。预览无冲突后导入14项，共享历史19项、有效待做4项；逐项核对来源映射、标题/内容/备注/日期及状态14/14，旧items逻辑hash、播报设置保持一致。4份每日列表Cron均已转为共享源；API和Fusion均active/enabled。配置/人格同步及健康通过。
 - **合入边界**：Fusion实现提交 `4f26366`，KnowledgeMap实现提交 `a311fe8`；以本任务patch单独进index，55份/5份不相交并行文件逐字节保持。共享文件合并保留文档22和账单UI的已有改动，只提交本任务差异；未推送。全量配置同步保留了工作区已有文档22的配置意图，未执行任何付费翻译。
 - **真实入口7/7**：真实模型创建14元账单→网站、网站新增3.50元→模型、无DDL事项→真实网页编辑→模型语义作废、共享天气及原生Cron本人QQ投递回读均通过。播报包含全部4项，同slot再次运行无输出。测试账单2笔/事项1条按精确ID清理，保留请求和投递回执；临时Cron已撤销，`testIngress=false`。入站为合成本人消息，未冒称真人手机发送。
@@ -186,16 +159,16 @@ flowchart LR
 
 ## 迁移与切换
 
-1. 验证今晚备份后，KnowledgeMap `backend/scripts/migrate_assistant.py --apply --backup-dir <今晚基线>` 只修改日期可空并添加note/version与请求/来源表；定向SQL留在 `backend/sql/assistant_bridge.sql`。MySQL DDL非事务，脚本按存在性可重跑；不改原业务行。
+1. 验证今晚备份后，KnowledgeMap `backend/scripts/migrate_assistant.py --apply --backup-dir <变更前基线绝对路径>` 只修改日期可空并添加note/version与请求/来源表；定向SQL留在 `backend/sql/assistant_bridge.sql`。MySQL DDL非事务，脚本按存在性可重跑；不改原业务行。
 2. 安装 `backend/scripts/knowledgemap-assistant.service`，专用API监听127.0.0.1:3086，token文件600；数据库和天气配置读取网站同一backend/.env。
 3. 暂停旧列表写入；CLI通过 `KURUMI_KM_BASE_URL=http://127.0.0.1:3086 KURUMI_KM_TOKEN_FILE=/home/afrangry/.config/knowledgemap/assistant-token OPENCLAW_STATE_DIR=/home/afrangry/.openclaw-fusion` 指定连接和来源目录。运行 `chatbot/scripts/import-knowledgemap-list.mjs --source <旧列表绝对库路径>` 默认预览。来源hash和网站冲突均需核对，不能相似标题自动合并；重复来源ID不重复建行。
-4. `--apply --expect-source-hash <预览hash> --backup-dir <今晚基线> --activate` 保存来源映射，核对源数据未变后原子写入 `state/personal-reminder-list/data-source.json`。旧expired/void保持归档，completed保留完成；原始字段和版本保存在来源表，业务行使用网站版本。
+4. `--apply --expect-source-hash <预览hash> --backup-dir <变更前基线绝对路径> --activate` 保存来源映射，核对源数据未变后原子写入 `state/personal-reminder-list/data-source.json`。旧expired/void保持归档，completed保留完成；原始字段和版本保存在来源表，业务行使用网站版本。
 5. 持久标记保证旧Cron即使没有新环境变量也走共享API；SQLite旧items读写拒绝。再同步配置/人格并启动Fusion，调度器将原声明更新为共享runner；相同slot的历史投递账本不重置。
 6. 核对14项映射、两入口、设置与声明、旧项逻辑hash、API失败不旧库回退、本人私聊投递和四项自检。若导入发现真实歧义，阻塞那条迁移，不猜测。
 
 ## 备份与恢复演练
 
-恢复测试：`node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <今晚基线>`；MySQL恢复与并发在网站 `backend/tests/assistant_mysql_cases.py --backup-dir ... --env-file ...`。只在独立目录/唯一临时库操作，生产库不DROP。压缩包SHA256针对gzip字节，另验证解压完整性。
+恢复测试：`node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <变更前基线绝对路径>`；MySQL恢复与并发在网站 `backend/tests/assistant_mysql_cases.py --backup-dir ... --env-file ...`。只在独立目录/唯一临时库操作，生产库不DROP。压缩包SHA256针对gzip字节，另验证解压完整性。
 
 切换后资料配对保留（不是跨系统同一时刻停写快照）：
 
@@ -208,7 +181,7 @@ flowchart LR
 
 切换后的代码收尾包含查询runId关联、恢复装配修复、脚本索引和本文件结论，晚于上述备份；从Git中的本任务收尾提交恢复这些工具。备份本身不改写为“最新提交、跨库全静止”。原始演练目录仅是私密临时产物，持久证据见专项目录`recovery.json`和README。
 
-回退代码与数据分开：先暂停桥接写入并保存切换后的共享库/状态；今晚Git bundle+工作树包可恢复两端代码及当时未提交工作。添加的兼容列/表可以保留；恢复旧列表前核对KnowledgeMap新增/修改的事项增量，不能仅删除切换标记或把旧备份覆盖新业务事实。token、backend/.env、运行配置需私密备份。远端不推送。
+回退代码与数据分开：先暂停桥接写入并保存切换后的共享库/状态；上述Git bundle+工作树包可恢复两端代码及当时未提交工作。添加的兼容列/表可以保留；恢复旧列表前核对KnowledgeMap新增/修改的事项增量，不能仅删除切换标记或把旧备份覆盖新业务事实。token、backend/.env、运行配置需私密备份。远端不推送。
 
 ## 后续迭代与未覆盖范围
 
@@ -225,7 +198,7 @@ flowchart LR
 | `chatbot/plugins/kurumi-knowledgemap/` | `knowledge_bills_get`、`knowledge_bill_add`、`knowledge_bill_manage`，增查改删三工具及manifest声明一致 |
 | `chatbot/packages/knowledgemap-client/tool-trace.{js,d.ts}` | 会话/调用精确关联真实宿主runId，三领域复用，不参与授权 |
 | `chatbot/plugins/personal-reminder-list/{remote,data-source}.js` | 共享业务与本地播报控制、持久切换保护 |
-| `chatbot/packages/personal-domains/src/knowledgemap-client.ts` | 天气/默认城市的API适配，保留解析/逐小时/预警能力；天气与Profile独立插件的装配归属见文档26 |
+| `chatbot/packages/personal-domains/src/knowledgemap-client.ts` | 天气/默认城市的API适配，保留解析/逐小时/预警能力；天气与Profile独立插件的装配归属见文档21 |
 | `chatbot/scripts/import-knowledgemap-list.mjs` | 只读来源/默认预览；apply写共享库，activate写私密切换标记 |
 | `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线23项，含失败/防重/设置竞态/旧runner防旧写 |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 本机真实HTTP→独立FastAPI/SQLite，两入口数据一致 |
@@ -238,16 +211,9 @@ flowchart LR
 | 网站 `backend/tests/assistant_*`、`backend/scripts/{migrate_assistant,serve_assistant}.py` | 精确命令/边界见网站文档18「测试与脚本」，本文件不重复清单 |
 | `docs/verification/knowledgemap-bridge-2026-10-17/` | 本轮证据，README说明边界；登记INDEX/SCRIPTS与分类脚本 |
 
-## 9. 第一轮文档复核（2026-10-17）
+## 9. 维护与版本查询
 
-以下是第一轮文档收尾时的采集记录，早于第二轮；当前实现和Git收尾见第10节。该次重新读取两个仓库、后台副本、服务状态和Fusion自检结果：
-
-- Fusion `/home/afrangry/kurumi-fusion` 的 `main` 当前提交以 `git rev-parse HEAD` 为准；本次复核观察到 `origin/main` 为 `d717965f`，领先数量以 `git rev-list --count origin/main..HEAD` 实时查询，工作区干净。
-- KnowledgeMap `/home/afrangry/repository` 的 `master` 为 `27f4519`，`origin/master` 为 `2889e62`，本地领先 3 个提交；账单视觉开发的 6 个文件仍保持原有未提交状态，本轮没有暂存、提交、覆盖或清理它们。
-- `/home/afrangry/.openclaw-fusion/projects/fusion` 当前为 `a4e7487`，分支 `kurumi/main-sync-2026-10-10`，工作区干净、无 remote；其最后内容同步仍是主仓库 `2c234af` 经 `0ada63a` 合入，尚未追平 Fusion 当前主仓库。下一次后台代码任务开始前必须重新审阅并同步。
-- `kurumi-fusion.service`、`knowledgemap-assistant.service`、`snowluma.service`、`snowluma-qq.service` 当前 active/enabled；旧 `openclaw-gateway.service` 和 `qq-bridge.service` inactive/masked。用户级 `dsh-web.service` 当前不存在；本轮没有改动系统级 DSH 单元。
-- `evidence-coverage.mjs`、`evidence-index.mjs`、`health.mjs`、`sync-config.mjs --diff`、`sync-persona.mjs --diff`、`verify-dependencies.mjs` 和 `git diff --check` 全部通过。
-- 本轮只更新 Fusion 的文档 10、12、16、23，未新增业务测试、未修改文档 22、未修改 KnowledgeMap 代码、未向任何远端推送。上述备份目录仍按本文第 7、8 节的“配对资料、非同一时刻停写快照”定义保留。
+首次/第二轮实现提交分别在第8/10节登记；当前HEAD、工作区与远端以两仓库Git查询为准，不把2026-10-17的并行工作树状态当永久结论。后台副本在新任务前按[文档10](10_融合助手运行维护.md#后台开发副本契约)审阅和同步，不能从本文件历史检查表推断已追平。取证阶段、独立工作树与未提交依赖继续从专项报告和Git历史追溯。
 
 ## 10. 第二轮：账单完整维护与调用链优化
 

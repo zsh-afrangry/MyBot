@@ -3,6 +3,12 @@
 融合系统的配置分两层：**仓库是意图（intent），运行目录是事实与私密状态**。
 本目录只保存可公开、无凭据的那一层。
 
+## 主模型与人格切换
+
+- 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。历史实测见[模型与图片证据](../docs/verification/deepseek-whale/README.md)。
+- 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
+- `configure-deepseek-persona.mjs`是2026-10-05的一次性迁移脚本，**不是日常人格切换入口**。它会重写provider、默认模型、`runtime-env.json`并删除`OPENAI_API_KEY`，还会写四份工作区文件。迁移私密材料位于 `.openclaw-fusion/migration/before-deepseek-whale-2026-10-05/`，只代表当时状态，不是当前完整回退点。改配置与回退先按本文及文档16的契约核对，不删除运行目录或业务状态。
+
 ## 目录分工
 
 | 位置 | 内容 | 是否进 Git |
@@ -49,7 +55,7 @@
 
 提醒列表的设置/投递状态在 `state/personal-reminder-list/list.sqlite`，事项唯一事实在KnowledgeMap。`dataSource=knowledgemap`、`bridgeBaseUrl` 和 `bridgeTokenFile` 同时用于工具及runner，持久切换标记也约束旧任务；步骤与回退边界见[文档23](../docs/23_KnowledgeMap业务能力桥接.md)。`plugins.entries.personal-reminder-list.config.defaultTimes` 仅用于首次建库；主人通过工具修改的时刻/暂停状态由领域库持有，配置同步不覆盖它。`backendRoot` 明确指向持久后端目录 `/home/afrangry/kurumi-fusion/chatbot`，用于固定 Cron runner；不能从 OpenClaw 的插件捕获临时目录推导。具体契约见[文档 19](../docs/19_提醒列表与定时汇总.md)。
 
-天气、Profile、行程、一次性提醒分别配置 `plugins.entries.personal-{weather,profile,planning,reminders}` 并独立登记allow/load/开关。天气条目只持有天气API参数；Profile持有地理解析及默认城市桥接配置；行程与一次性提醒只装配自身领域，一次性提醒的 `reminderRunnerRoot` 指向持久 `chatbot/plugins/personal-reminders`。共享实现不改变历史数据归属：Profile/行程仍使用 `state/personal-weather/weather.sqlite`，提醒仍使用 `state/personal-reminders/`。旧Cron的 `personal-weather/dist/reminder-cli.js` 由集中构建生成转发入口，不因配置拆分自动重写既有任务。`kurumi-research.config.cacheRoot` 显式指定阅读/源缓存，不再从QQ频道路径推导。完整代码和兼容边界见[文档26](../docs/26_基础能力插件边界整理与检索接入设计.md)。
+天气、Profile、行程、一次性提醒分别配置 `plugins.entries.personal-{weather,profile,planning,reminders}` 并独立登记allow/load/开关。天气条目只持有天气API参数；Profile持有地理解析及默认城市桥接配置；行程与一次性提醒只装配自身领域，一次性提醒的 `reminderRunnerRoot` 指向持久 `chatbot/plugins/personal-reminders`。共享实现不改变历史数据归属：Profile/行程仍使用 `state/personal-weather/weather.sqlite`，提醒仍使用 `state/personal-reminders/`。旧Cron的 `personal-weather/dist/reminder-cli.js` 由集中构建生成转发入口，不因配置拆分自动重写既有任务。`kurumi-research.config.cacheRoot` 显式指定阅读/源缓存，不再从QQ频道路径推导。完整代码和兼容边界见[文档21](../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期)。
 
 `sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
 
@@ -63,7 +69,7 @@ node chatbot/scripts/memory-migrate.mjs --apply \
   --backup-root /home/afrangry/.openclaw-fusion/migration
 ```
 
-迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。当前生产迁移结果为revision=4、6条事实，原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。`/new`只清原生聊天上下文，仍注入有效长期事实和未过期摘要；明确更正/遗忘才推进记忆代际并清理本域摘要。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
+迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。`/new`只清原生聊天上下文，仍注入有效长期事实和未过期摘要；明确更正/遗忘才推进记忆代际并清理本域摘要。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
 
 论文插件的 `root/python/credentialsFile`、`apiConcurrency/apiQps`（日常最多4个在途请求、每秒启动1个；操作者可配置并发1–6、QPS1–4）和页数、请求次数、用量、运行时限在 `plugins.entries.kurumi-papers.config` 管理。`liveTranslationEnabled` 是实际付费调用开关，插件缺省关闭；本机仓库意图已按用户授权设为 `true`。三份窄工具加入 `main.tools.alsoAllow`，已登记成员的独立 Agent 仅开放首期工具，不开放通用文件或命令。成员文件在 `root/subjects/<QQ>/`，任务共用串行队列并绑定真实请求人；任务、产物与归属需随私有状态备份，Python 环境用锁文件重建。详细契约与证据见[文档22](../docs/22_论文PDF翻译与文件投递.md)、身份边界见文档24。
 
@@ -77,7 +83,7 @@ node scripts/fusion/sync-config.mjs --diff     # 逐项差异 + 删除项 + 运�
 node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配置
 ```
 
-并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。10项自检、曾发现的allow成员检查遗漏及修复结果见文档26。
+并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。10项自检、allow成员检查补正及原回执见[结构整理报告](../docs/verification/capability-decoupling-2026-10-20/README.md)。
 
 ### 仓库全权管理 vs 宿主自行维护
 

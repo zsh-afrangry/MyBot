@@ -1,0 +1,45 @@
+✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (5.122634ms)
+✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (3.254379ms)
+▶ CLI verifies ownership and saved Markdown without touching the real repository
+  ✖ saved table and both P2 evidence overrides survive generation (56.399718ms)
+  ✔ unknown source fails even inside a known suite (39.768961ms)
+  ✔ missing document and invalid/duplicate selectors fail (89.901891ms)
+  ✔ an existing classified script without a document owner fails (45.389764ms)
+  ✔ stale generated table fails (50.266309ms)
+  ✔ new receipts inherit a named suite; unknown evidence directory fails (72.468306ms)
+✖ CLI verifies ownership and saved Markdown without touching the real repository (414.868084ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 7
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 486.219257
+
+✖ failing tests:
+
+test at scripts/fusion/test/documentation-map.test.mjs:57:11
+✖ saved table and both P2 evidence overrides survive generation (56.399718ms)
+  AssertionError [ERR_ASSERTION]: SCRIPTS.md generated table is out of date; regenerate with evidence-index.mjs --markdown.
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/scripts/fusion/test/documentation-map.test.mjs:59:12)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.start (node:internal/test_runner/test:1262:17)
+      at TestContext.test (node:internal/test_runner/test:400:20)
+      at TestContext.<anonymous> (file:///home/afrangry/kurumi-fusion/scripts/fusion/test/documentation-map.test.mjs:57:11)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,799 @@
+{
+  "version": 1,
+  "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
+  "scriptOwners": [
+    {
+      "prefix": "scripts/fusion/",
+      "documents": [
+        "docs/10_融合助手运行维护.md",
+        "docs/16_验收与测试总表.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/packages/confirmation-core/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/packages/personal-domains/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/plugins/personal-confirmation/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/plugins/kurumi-mail/test/",
+      "documents": [
+        "docs/20_邮件能力与横切扩展.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/plugins/kurumi-memory/test/",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/plugins/kurumi-qq/test/",
+      "documents": [
+        "docs/10_融合助手运行维护.md",
+        "docs/24_统一身份与权限管理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/plugins/kurumi-research/test/",
+      "documents": [
+        "docs/10_融合助手运行维护.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/plugins/kurumi-tasks/test/",
+      "documents": [
+        "docs/10_融合助手运行维护.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/acceptance/",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/access-control/",
+      "documents": [
+        "docs/24_统一身份与权限管理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/backend-boundaries/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/domain-adapters/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/knowledgemap/",
+      "documents": [
+        "docs/23_KnowledgeMap业务能力桥接.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/papers/",
+      "documents": [
+        "docs/22_论文PDF翻译与文件投递.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/persona/",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/reminder-list/",
+      "documents": [
+        "docs/19_提醒列表与定时汇总.md"
+      ]
+    },
+    {
+      "prefix": "scripts/fusion/launchers/",
+      "documents": [
+        "docs/10_融合助手运行维护.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/access-control.mjs",
+      "documents": [
+        "docs/24_统一身份与权限管理.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/build-personal-plugins.mjs",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/backup-knowledgemap-code.mjs",
+      "documents": [
+        "docs/23_KnowledgeMap业务能力桥接.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/import-knowledgemap-list.mjs",
+      "documents": [
+        "docs/23_KnowledgeMap业务能力桥接.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/import-paper-credentials.mjs",
+      "documents": [
+        "docs/22_论文PDF翻译与文件投递.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/setup-paper-translation.sh",
+      "documents": [
+        "docs/22_论文PDF翻译与文件投递.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/memory-migrate.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/reminder-list.mjs",
+      "documents": [
+        "docs/19_提醒列表与定时汇总.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/log-query.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/test/log-query.test.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/test-mail-delivery.mjs",
+      "documents": [
+        "docs/20_邮件能力与横切扩展.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/configure-deepseek-persona.mjs",
+      "documents": [
+        "docs/10_融合助手运行维护.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/configure-persona-memory.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/test-memory.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/sync-persona.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/restore-legacy.sh",
+      "documents": [
+        "docs/15_旧系统回退.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/evidence-index.mjs",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/evidence-coverage.mjs",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/lib/documentation-map.mjs",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ],
+      "evidence": [
+        "docs/verification/documentation-2026-10-21/README.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/test/documentation-map.test.mjs",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ],
+      "evidence": [
+        "docs/verification/documentation-2026-10-21/README.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/reminder-list/log-query.test.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md",
+        "docs/19_提醒列表与定时汇总.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/access-control/log-query.test.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md",
+        "docs/24_统一身份与权限管理.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/persona/memory.test.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ],
+      "evidence": [
+        "docs/verification/persona-memory-2026-10-19/p2/README.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/persona/memory-continuity-host.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ],
+      "evidence": [
+        "docs/verification/persona-memory-2026-10-19/p2/README.md"
+      ]
+    }
+  ],
+  "runtimeSources": [
+    {
+      "prefix": "chatbot/plugins/kurumi-papers/python/",
+      "documents": [
+        "docs/22_论文PDF翻译与文件投递.md"
+      ],
+      "note": "固定翻译运行源码，不是运维或验收入口。"
+    },
+    {
+      "path": "chatbot/packages/personal-domains/src/cli.ts",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "note": "领域运行CLI；通过集中构建部署，不作为验收脚本。"
+    },
+    {
+      "path": "chatbot/packages/personal-domains/src/reminder-cli.ts",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "note": "固定一次性提醒runner运行源码，含旧Cron兼容入口。"
+    }
+  ],
+  "archivedScripts": [
+    {
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "evidence": [
+        "docs/archive/personal-search-tests/README.txt"
+      ],
+      "note": "两份已退役搜索探查入口；不属于当前验收集合。",
+      "path": "docs/archive/personal-search-tests/run-agent-errors.mjs"
+    },
+    {
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "evidence": [
+        "docs/archive/personal-search-tests/README.txt"
+      ],
+      "note": "两份已退役搜索探查入口；不属于当前验收集合。",
+      "path": "docs/archive/personal-search-tests/run-search-provider.mjs"
+    }
+  ],
+  "evidenceOwners": [
+    {
+      "prefix": "recovery-2026-10-06/",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "recovery-2026-10-10/",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "recovery-2026-10-10-final/",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "fusion/",
+      "documents": [
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/10_融合助手运行维护.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "deepseek-whale/",
+      "documents": [
+        "docs/10_融合助手运行维护.md",
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "reminder-list-2026-10-11/",
+      "documents": [
+        "docs/19_提醒列表与定时汇总.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "backend-refactor-2026-10-16/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "paper-api-2026-10-17/",
+      "documents": [
+        "docs/22_论文PDF翻译与文件投递.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "paper-translation-2026-10-17/",
+      "documents": [
+        "docs/22_论文PDF翻译与文件投递.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "knowledgemap-bridge-2026-10-17/",
+      "documents": [
+        "docs/23_KnowledgeMap业务能力桥接.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "knowledgemap-bills-round2-2026-10-17/",
+      "documents": [
+        "docs/23_KnowledgeMap业务能力桥接.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "access-control-2026-10-19/",
+      "documents": [
+        "docs/24_统一身份与权限管理.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "persona-memory-2026-10-19/",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "plugin-lifecycle-2026-10-19/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "capability-decoupling-2026-10-20/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/26_基础能力插件边界整理与检索接入设计.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "documentation-2026-10-21/",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "mail-2026-10-16/",
+      "documents": [
+        "docs/20_邮件能力与横切扩展.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "migration/",
+      "documents": [
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "prefix": "step6-2026-10-05/",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-09-10_文档与现状复核.txt",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-09-26_搜索实验AB重新测试.txt",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-09-30_Codex与OpenClaw原生搜索对照.txt",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-09-30_OpenClaw联网故障根因与修复.txt",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-10-01_A组改造记录.txt",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-10-01_OpenClaw升级与A3删除记录.txt",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-10-04_检索与QQ插件现状复核.md",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-10-05_融合前基线收尾.md",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "2026-10-10_projects-fusion-sync.md",
+      "documents": [
+        "docs/10_融合助手运行维护.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "path": "2026-10-11_projects-fusion-sync.md",
+      "documents": [
+        "docs/10_融合助手运行维护.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "path": "INDEX.md",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "path": "SCRIPTS.md",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "path": "agent-confirmation-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "agent-errors-acceptance.json",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "clarification-gate-deployment.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "confirmation-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "confirmation-instruction-planning-acceptance.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "confirmation-instruction-reminder-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "confirmation-instruction-reminder-initial.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "controlled-reply-planning-acceptance.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "controlled-reply-reminder-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "controlled-reply-reminder-fixed.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "d16-d21-deployment.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "natural-language-reminder-a.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "planning-capability-acceptance.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "planning-capability-initial.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "planning-title-acceptance.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "profile-geo-agent-acceptance.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "profile-geo-deployment.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "profile-geo-domain-acceptance.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "profile-geo-natural-fixed.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "profile-geo-natural-initial.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "profile-geo-provider-probe.json",
+      "documents": [
+        "docs/2_天气模块的开发.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "proposal-expiry-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "public-id-redaction-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "qq-confirmation-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "real-cron-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "reminder-expiry-acceptance.json",
+      "documents": [
+        "docs/3_个人提醒.txt",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "retrieval-review-20261004.json",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "search-agent-acceptance.json",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "search-context-acceptance.json",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "search-error-agent-acceptance.json",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "search-error-attribution-acceptance.json",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    },
+    {
+      "path": "search-provider-acceptance.json",
+      "documents": [
+        "docs/8_检索功能重构.txt"
+      ],
+      "category": "历史领域验收"
+    }
+  ]
+}
