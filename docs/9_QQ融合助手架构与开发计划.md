@@ -9,21 +9,32 @@
 ```mermaid
 flowchart TD
   Q[已登记身份的 QQ 私聊] <--> S[SnowLuma / OneBot]
-  S <--> C[Kurumi QQ 频道\n身份 / 图片 / 分段 / 回执]
+  S <--> C[Kurumi QQ 频道\n身份 / 图片 / 文件 / 分段 / 回执]
   C <--> O[OpenClaw\n会话 / 工具 / Cron]
-  O --> P[共享人格 / 按身份关系与记忆]
+  O --> P[共享人格 / 按身份关系]
+  O --> MEM[记忆插件\n长期事实 / 连续性摘要]
+  MEM --> MDB[(私有记忆 SQLite)]
+  O --> CF[确认入口\n高影响操作二次确认]
   O --> B[天气插件]
   O --> PF[Profile插件]
   O --> PL[行程插件]
   O --> RM[一次性提醒插件]
-  O --> K[待做与记账桥接]
-  B --> API[KnowledgeMap 天气API]
+  O --> RL[提醒列表插件\n待做 / 每日汇总]
+  O --> K[记账桥接插件]
+  B --> API[KnowledgeMap 助手API]
+  RL --> API
   K --> API
   API --> DB[(网站与助手共享业务库)]
+  O --> ML[邮件插件\n白名单收件人]
+  O --> PA[论文插件\nPDF 翻译]
+  O --> SR[web_search / web_fetch\nTavily / 宿主直取]
   O --> W[隔离代码项目]
   O --> R[研究与报告]
-  O --> D[结果投递]
+  PA --> D[结果投递]
+  W --> D
+  R --> D
   D --> C
+```
 ```
 
 不再维护第二套会话、提醒或 QQ 投递宿主。DSH 可以独立提供网页或模型服务，但启动它不应启动旧 qq-bridge，也不能成为 QQ 消费者。

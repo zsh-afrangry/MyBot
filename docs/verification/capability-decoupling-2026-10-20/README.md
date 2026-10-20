@@ -18,7 +18,7 @@
 | 最后授权import复验 | 邮件adapters/tool及并行记忆入口30/30；最后改动为等价共享授权import，不改P2行为 | [final-import-regression.txt](final-import-regression.txt) |
 | 真实隔离Gateway | 全开、逐个禁用四插件共5/5，RPC核对实际插件状态、工具目录和确认后端。没有模型/上游API/QQ或生产写入 | [isolated-host-final.json](isolated-host-final.json) |
 | 配置同步契约 | 初始9项自检通过后，新增负向用例发现未校验`plugins.allow`成员；修复后10项通过，覆盖完整live条目保留及未知/禁用/路径/allow成员变更拒绝 | [原始9项结果](sync-selftest.txt)、[补充用例失败回执](sync-deferral-before.txt)、[修复后10项结果](sync-deferral-final.txt) |
-| 最终生产加载 | 00:51:19显式延期记忆条目后同步，00:51:20重启；七插件active，四领域工具归属1/3/3/7，11个Cron声明未变，论文仍11项、无在途，搜索仍Tavily | [final-preflight.json](final-preflight.json)、[final-config-apply.txt](final-config-apply.txt)、[final-loaded.json](final-loaded.json) |
+| 最终生产加载 | 00:51:19显式延期记忆条目后同步，00:51:20重启；本轮核对的七个相关插件（邮件、论文、确认入口和四个领域插件）均active，这不是生产插件总数；四领域工具归属1/3/3/7，11个Cron声明未变，论文仍11项、无在途，搜索仍Tavily | [final-preflight.json](final-preflight.json)、[final-config-apply.txt](final-config-apply.txt)、[final-loaded.json](final-loaded.json) |
 | 四项最终检查 | 退出码均0；QQ在线、testIngress=false、依赖自持、完整配置对齐、12份人格文件对齐 | [final-health.json](final-health.json)、[final-dependencies.txt](final-dependencies.txt)、[final-config-check.txt](final-config-check.txt)、[final-persona-check.txt](final-persona-check.txt) |
 | 收尾元数据 | HEAD、混合工作树、服务启动时间、15个已记录源码/构建指纹仍匹配；不是新停写恢复点 | [closeout-state.json](closeout-state.json) |
 | 索引与文档 | 脚本分类/boundary双向一致、证据全归类；当前规则/本轮报告本地链接及diff格式通过 | [evidence-index.txt](evidence-index.txt)、[evidence-coverage.txt](evidence-coverage.txt)、[links.json](links.json)、[diff-check.txt](diff-check.txt) |
@@ -27,7 +27,7 @@
 
 ## 夹具修正与证据限制
 
-- 初轮夹具曾错误假设“相同所在地一定生成新提案”、拒绝错误码及CLI的usage输出流；按真实契约修正夹具，未放宽业务/授权断言。最终回归均通过。三处夹具修正分别为：相同所在地不一定产生新提案、身份拒绝应按实际错误码、提醒CLI的usage在stderr；未放宽实现迎合夹具。
+- 初轮夹具曾错误假设“相同所在地一定生成新提案”、拒绝错误码及CLI的usage输出流；按真实契约修正夹具，未放宽业务/授权断言。最终回归均通过，未放宽实现迎合夹具。
 - 配置同步收尾复核新增“延期目标必须在`plugins.allow`内”的负向用例。该用例在原实现上失败并保存为`sync-deferral-before.txt`；修复后10项同步自检全部通过，当前代码会拒绝未登记插件。`sync-selftest.txt`保留首次9项回执，不代表修复后的最终状态。
 - 第一次隔离Gateway探针未声明启动激活，RPC不存在；第二次错误地只接受SDK状态`disabled`，实际为`unloaded`。失败原回执为[isolated-host.json](isolated-host.json)、[isolated-host-fixed.json](isolated-host-fixed.json)。最终接受宿主两种非活动状态，但仍要求禁用插件工具与对应确认后端实际消失，兄弟插件仍可用；最终报告5/5。
 - `initial-loaded.json` 的 `registrationLogs` 为空，其note提到registered backends不构成注册证据；该文件只证明记录的启动时间与源码哈希。确认后端实际ID通过**隔离Gateway**的RPC核对；生产没有加探针，不宣称在生产直接枚举了确认后端。
