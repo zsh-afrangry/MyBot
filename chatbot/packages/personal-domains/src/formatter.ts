@@ -31,7 +31,7 @@ export function formatWeatherBrief(
 ): string {
   const lines: string[] = [];
   if (options.greeting ?? false) {
-    lines.push("早上好，主人～");
+    lines.push("早上好。");
   }
 
   const currentParts = [

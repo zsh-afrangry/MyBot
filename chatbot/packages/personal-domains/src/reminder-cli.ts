@@ -28,7 +28,7 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     // Cancelled, duplicated, or prematurely fired jobs deliberately produce no
     // message. A second delivery must never be created from this process.
     if (!reminder) return 0;
-    process.stdout.write(`主人，提醒时间到了：${reminder.content}\n`);
+    process.stdout.write(`提醒时间到了：${reminder.content}\n`);
     return 0;
   } finally {
     store.close();

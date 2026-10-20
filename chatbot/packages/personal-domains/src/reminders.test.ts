@@ -459,7 +459,9 @@ describe("personal reminders", () => {
         expect(await reminderCliMain(["deliver", "--id", scheduled.reminder.reminderId])).toBe(0);
         expect(await reminderCliMain(["deliver", "--id", scheduled.reminder.reminderId])).toBe(0);
         expect(output).toHaveBeenCalledTimes(1);
-        expect(output).toHaveBeenCalledWith("主人，提醒时间到了：起身活动\n");
+        expect(output).toHaveBeenCalledWith("提醒时间到了：起身活动\n");
+        // Fixed runner text must stay neutral; addressing belongs to the persona layer.
+        expect(String(output.mock.calls[0]?.[0])).not.toContain("主人");
         Date.now = originalNow;
       } finally {
         output.mockRestore();

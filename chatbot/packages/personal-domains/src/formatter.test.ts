@@ -56,7 +56,8 @@ function baseBrief(): WeatherBrief {
 describe("formatWeatherBrief", () => {
   it("formats a deterministic Chinese daily brief", () => {
     const text = formatWeatherBrief(baseBrief(), { greeting: true });
-    expect(text).toContain("早上好，主人～");
+    expect(text).toContain("早上好。");
+    expect(text).not.toContain("主人");
     expect(text).toContain("广州天河：现在多云，32°C，体感34°C，湿度69%，西南风3级。");
     expect(text).toContain("最高降雨概率64%");
     expect(text).toContain("出门建议带伞");
