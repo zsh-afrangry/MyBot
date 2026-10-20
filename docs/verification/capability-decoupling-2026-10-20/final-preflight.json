@@ -1,0 +1,54 @@
+{
+  "at": "2026-10-19T16:51:09.579Z",
+  "paperJobs": 11,
+  "activePaperJobs": [],
+  "cronTotal": 11,
+  "cronHasMore": false,
+  "cronFingerprints": [
+    {
+      "id": "17a026c2-0a57-4176-985d-8f474294f37f",
+      "sha256": "4bb8c26629f80f6f154a57be18af3f180b863659aebc3bd8788b7e8cca01174a"
+    },
+    {
+      "id": "2bd8e62c-2bf0-4a45-b231-34e39d2ee400",
+      "sha256": "dd0460f1792453b714f2a17946f08e26b5db0543c1abda686386fa07447df3ff"
+    },
+    {
+      "id": "23c06aa8-96f2-47c7-9adf-9a6f1291bb28",
+      "sha256": "cb506f5c688af7ab6e77337cf588f36fb34d1178ee3999a12d839bb5f284b6c8"
+    },
+    {
+      "id": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+      "sha256": "a8e9e0ab45c037995818f836c994278f5b0e17b1af8b34f5b68ba5ee6971ec33"
+    },
+    {
+      "id": "1ad1bb0e-e393-4fe1-874a-f659b9187721",
+      "sha256": "9f9c0666479268763f6db4cfbc260ed30c6b7b7a7ef68847007ea32635921940"
+    },
+    {
+      "id": "0a794dfc-bfb3-4037-8258-834cff1c3e76",
+      "sha256": "dcb93acc49b82d776a2f519e09e6d2500d3a93048842d39b52c5eb77f60e6816"
+    },
+    {
+      "id": "2d61b8f2-744a-438d-be99-a2796f05d5fd",
+      "sha256": "44c12329c0a1880130bf299072282a37ea99b1d90d640a0bcbcb2b36d06418de"
+    },
+    {
+      "id": "428bf628-20d2-4c99-a889-38782ece05a7",
+      "sha256": "6c3b2ec5b139c7243624cfd0c4ebec3c056aacf3a92e4e52744120eaa2d676ec"
+    },
+    {
+      "id": "53286346-7fed-4e0e-a381-9ee815014f01",
+      "sha256": "d7840fc73197ac0bb6616b20e3ddf56760460cfe7e5d4d7a6d967e6d6188db03"
+    },
+    {
+      "id": "86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3",
+      "sha256": "5934ec9764d265bc4d5c4aae8f81ddeeac2a4840875beb2f599ed2e0d0b1f4fe"
+    },
+    {
+      "id": "a0b45e30-9e1c-4b33-ba36-5bf1ca6d50dc",
+      "sha256": "6ff31d6d11b61cc23e9314f26b205a341e6ef08d24936048d2d32af348f50d23"
+    }
+  ],
+  "deferredMemoryEntrySHA256": "26b3426b2593763c96d0890b4a77a0bbf66d13fc512b0c6b138a23c290f30a2a"
+}

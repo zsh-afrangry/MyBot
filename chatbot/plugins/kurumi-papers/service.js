@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {Documents, atomicJson} from '../../packages/documents/index.js';
-import {downloadPaper} from '../kurumi-research/papers.js';
+import {downloadScholarlyPdf} from '../../packages/scholarly-source/index.js';
 import {resolveProfile} from './profiles.js';
 import {runTranslation,executionSettings,reliabilitySettings} from './runner.js';
 import {selectedOutputs} from './outputs.js';
@@ -21,9 +21,9 @@ export function normalizePages(value, pages, maxPages = 30) {
   return [...selected].sort((a,b) => a-b).join(',');
 }
 export class PaperService {
-  constructor(config, {runner = runTranslation, sendFile, notify, trace = () => {}, inspect} = {}) {
+  constructor(config, {runner = runTranslation, sendFile, notify, trace = () => {}, inspect, download = downloadScholarlyPdf} = {}) {
     this.config = config; this.documents = new Documents(config.root);
-    this.runner = runner; this.sendFile = sendFile; this.notify = notify; this.trace = trace; this.inspect = inspect;
+    this.download = download; this.runner = runner; this.sendFile = sendFile; this.notify = notify; this.trace = trace; this.inspect = inspect;
     this.queue = []; this.active = null; this.online = false;
   }
   file(id) { if (!JOB_ID.test(id ?? '')) throw Error('Invalid translation job ID'); return path.join(this.documents.root, 'jobs', id + '.json'); }
@@ -57,7 +57,7 @@ export class PaperService {
   }
   async fetch(url, {signal} = {}) {
     const cache = path.join(this.documents.root, 'cache');
-    const paper = await downloadPaper(cache, url, {signal});
+    const paper = await this.download(cache, url, {signal});
     return this.documents.add(fs.readFileSync(paper.pdfPath), {filename: `paper-${paper.id}.pdf`, source: {type: 'scholarly', url: paper.url}}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
   }
   submit(args, {key, correlation = {}} = {}) {

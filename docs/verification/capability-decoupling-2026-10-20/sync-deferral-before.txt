@@ -1,0 +1,12 @@
+  PASS  whole managed block deleted from repo  (changed=0 want=0, deleted=[tools] want=[tools])
+  PASS  subkey deleted inside a managed block  (changed=0 want=0, deleted=[tools.web] want=[tools.web])
+  PASS  managed block differs  (changed=1 want=1, deleted=[] want=[])
+  PASS  in sync  (changed=0 want=0, deleted=[] want=[])
+  PASS  host-maintained key preserved
+  PASS  explicit plugin deferral keeps live entry without modifying intent
+  PASS  plugin deferral rejects unknown
+  PASS  plugin deferral rejects disabled
+  PASS  plugin deferral rejects path
+  FAIL  plugin deferral rejects unlisted
+
+selftest FAILED (1)

@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {collectEvents,filterEvents} from '../../../scripts/fusion/log-query.mjs';
-import {createTraceSink} from '../../../scripts/fusion/lib/trace-events.mjs';
+import {createTraceSink} from '../../packages/observability/index.js';
 test('Configured paper trace source joins job and QQ message without including credentials',t=>{
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-paper-log-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const documents=path.join(root,'managed-pdfs');fs.mkdirSync(documents);

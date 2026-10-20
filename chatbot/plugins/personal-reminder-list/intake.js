@@ -1,4 +1,4 @@
-import {trustedText} from './inbound.js';
+import {trustedText} from '../../packages/trusted-inbound/index.js';
 
 export const SESSION_TTL_MS = 600000;
 export const SESSION_MAX_MS = 1800000;

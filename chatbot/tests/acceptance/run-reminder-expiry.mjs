@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { createHostDriver } from "./host-driver.mjs";
 import { createDomainFixture } from "./domain-fixture.mjs";
 import { createModelDriver } from "./model-driver.mjs";
-import { formatDateTime } from "../../plugins/personal-weather/dist/time-display.js";
+import { formatDateTime } from "../../packages/personal-domains/dist/time-display.js";
 
 // A real-model display check; no commit tool, production DB, Cron, or QQ delivery.
 const driver = await createHostDriver(), fixture = await createDomainFixture(driver);

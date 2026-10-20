@@ -66,7 +66,7 @@ try{
  const status=await callGatewayFromCli('channels.status',{url:'ws://127.0.0.1:18891',token:process.env.OPENCLAW_GATEWAY_TOKEN,timeout:'3000',json:true},{});
  assert(status.channelAccounts['kurumi-qq'][0].connected,'Restored channel must connect to isolated OneBot');
  const {projectCatalog}=await import('file://'+repo+'/chatbot/plugins/kurumi-tasks/projects.js');
- const {runSandbox}=await import('file://'+repo+'/chatbot/plugins/kurumi-tasks/sandbox.js');
+ const {runSandbox}=await import('file://'+repo+'/chatbot/packages/sandbox/index.js');
  let projectChecks=0;
  for(const project of projectCatalog(cfg))for(const check of project.checks){
   const result=await runSandbox(project,check.argv,{timeoutMs:check.timeoutMs});

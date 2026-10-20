@@ -7,6 +7,7 @@
 | 路径 | 用途 |
 | --- | --- |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
+| [`capability-decoupling-2026-10-20/README.md`](capability-decoupling-2026-10-20/README.md) 及同目录全部文件 | 文档26三项前置：受控加载、共享代码/论文下载边界、四个个人领域插件；533项回归、5组真实隔离Gateway、配置延期9项初始结果及allow成员检查补正后的10项结果、生产RPC与四项自检；新检索API仅设计 |
 | [`recovery-2026-10-10-final/README.md`](recovery-2026-10-10-final/README.md) | 此前停写恢复点（`2026-10-10-12-36-17-final-closeout`，quiesced，对应 `0f2255a2`，24/24）；不包含新增共享业务，最新配对资料见文档23 |
 | `recovery-2026-10-10-final/*` | 上述报告的原始证据：`verification.json`、`isolation-result.json`、`gateway-probe.log`、备份 `EXPECTED.json` 与 `meta` |
 | [`recovery-2026-10-10/README.md`](recovery-2026-10-10/README.md) | 上一恢复点（`584b3a0`，含 4547 字节补丁）与 25/25 验证，保留作为历史对照 |

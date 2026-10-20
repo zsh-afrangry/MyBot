@@ -1,0 +1,13 @@
+✔ OpenClaw forwards paper stop and waits for asynchronous cleanup (13.649263ms)
+[plugins] plugin service failed (kurumi-mail-confirmation-backend, plugin=kurumi-mail-confirmation-backend, root=unknown): Confirmation backend already registered: kurumi-mail
+[plugins] plugin service failed (kurumi-mail-confirmation-backend, plugin=kurumi-mail-confirmation-backend, root=unknown): synthetic startup failure
+✔ OpenClaw stop interrupts paper workers and queued jobs without sending or replaying (9.868762ms)
+✔ OpenClaw stops mail confirmation registration and supports restart and failed startup cleanup (6.8024ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 576.880392

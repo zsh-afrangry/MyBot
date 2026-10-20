@@ -1,0 +1,22 @@
+{
+  "name": "@kurumi/personal-domains",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run --config ./vitest.config.ts"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "typebox": "^1.1.38",
+    "@kurumi/confirmation-core": "file:../confirmation-core"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  }
+}

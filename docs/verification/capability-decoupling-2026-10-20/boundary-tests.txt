@@ -1,0 +1,28 @@
+[plugins] personal-weather reminder reconciler started (interval=60000ms)
+[plugins] personal-weather reminder reconciler stopped
+✔ shared packages have no runtime imports into plugins or deployment scripts (3.881755ms)
+✔ four independently discovered entries register exactly their manifest tools (1.577809ms)
+✔ installed Host starts/stops each domain independently without removing sibling registrations (33.612583ms)
+✔ shared historical DB proposals survive the split while disabled domains cannot issue grants (43.764767ms)
+✔ recording cannot bypass the per-domain candidate filter (0.2994ms)
+✔ owner authorization is unchanged across all split tool factories (2.830199ms)
+✔ old Cron CLI addresses and new reminder CLI execute the same implementation in isolation (1341.534799ms)
+✔ shared package preserves its complete runtime public API without leaking split helpers (1.152885ms)
+✔ grant consumption can roll back with a business transaction and then commit exactly once (4.409ms)
+✔ a domain registers exactly its own backend and cleans it up on stop (0.613326ms)
+✔ a partial backend-registration failure removes only the registrations it owns (0.454158ms)
+✔ composed interaction hooks block only the intended tool/run and never register confirmation backends (0.682977ms)
+✔ text extraction failure retains a valid source that translation imports without running the reader (41.738281ms)
+✔ reader separately prepares full text from the same cached source (2.775998ms)
+✔ legacy reader cache is reusable by source-only consumers without parsing or network (1.451993ms)
+✔ cache corruption and cache symlinks fail closed (1.601032ms)
+✔ source rejects redirects, non-PDF bytes and excessive declared/streamed sizes (43.228156ms)
+✔ cancellation is isolated and never publishes partial bytes (2.892617ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 18
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3640.634445

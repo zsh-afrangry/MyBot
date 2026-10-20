@@ -1,1 +1,27 @@
-{"id":"kurumi-research","name":"Kurumi scholarly PDF reader","configSchema":{"type":"object","properties":{},"additionalProperties":false},"contracts":{"tools":["kurumi_paper"]},"toolMetadata":{"kurumi_paper":{"optional":true}}}
+{
+  "id": "kurumi-research",
+  "name": "Kurumi scholarly PDF reader",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "cacheRoot"
+    ],
+    "properties": {
+      "cacheRoot": {
+        "type": "string",
+        "pattern": "^/"
+      }
+    }
+  },
+  "contracts": {
+    "tools": [
+      "kurumi_paper"
+    ]
+  },
+  "toolMetadata": {
+    "kurumi_paper": {
+      "optional": true
+    }
+  }
+}

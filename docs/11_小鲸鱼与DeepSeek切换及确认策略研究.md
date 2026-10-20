@@ -57,7 +57,7 @@ SOUL使用完整角色卡，IDENTITY为小鲸鱼；AGENTS明确 Kurumi 是项目
 
 当前一次性提醒仍保留带码确认。“提醒列表”采用本人当前请求直接维护；已有项的动作和对话指代由模型转换为真实 ID/版本，默认新增字段原文规则及幂等范围见[文档 19](19_提醒列表与定时汇总.md)。以下研究建议没有作为一次性提醒的新规则上线。
 
-一次性提醒固定 runner `chatbot/plugins/personal-weather/src/reminder-cli.ts` 仍含“主人”称呼，后续单独调整；新增提醒列表采用中性正文，当前人格不会被该正文写死。
+一次性提醒固定 runner 的实现 `chatbot/packages/personal-domains/src/reminder-cli.ts` 仍含“主人”称呼，后续单独调整；旧任务的天气CLI地址仅作兼容转发，见[文档26](26_基础能力插件边界整理与检索接入设计.md)。新增提醒列表采用中性正文，当前人格不会被该正文写死。
 
 实际确认失败发生在`chatbot/packages/confirmation-core/src/protocol.ts`：只解析“确认 <12位码>”或旧完整ID/hash格式。15:31的模型理解了用户“确认”并尝试提交，但后端拒绝。提案24小时有效期也与几分钟后的提醒时间是两回事，展示时容易让用户误会。
 

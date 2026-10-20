@@ -1,6 +1,6 @@
 // Follow-up acceptance for explicit commit scope after the original repair exposed add-all pollution.
 import fs from 'node:fs';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';
-import {rpc,ready} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';import {projectCatalog} from '../../chatbot/plugins/kurumi-tasks/projects.js';import {runSandbox} from '../../chatbot/plugins/kurumi-tasks/sandbox.js';
+import {rpc,ready} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';import {projectCatalog} from '../../chatbot/plugins/kurumi-tasks/projects.js';import {runSandbox} from '../../chatbot/packages/sandbox/index.js';
 await ready();const cfg=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/openclaw.json')),a=account(cfg),p=projectCatalog(cfg)[0],login=await onebot(a,'get_login_info',{}),started=Date.now();
 const git=(...args)=>spawnSync('/usr/bin/git',args,{cwd:p.root,encoding:'utf8'}).stdout.trim();const report={boundary:'Real main and worker, explicit file-scoped local Git commit, OS-isolated independent regression, actual owner-only final delivery.',before:git('rev-parse','HEAD')};
 try{

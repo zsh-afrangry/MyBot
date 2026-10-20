@@ -1,0 +1,59 @@
+{
+  "id": "personal-reminders",
+  "name": "personal-reminders",
+  "description": "Independent reminder capability",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "reminderBackend": {
+        "type": "string",
+        "enum": [
+          "native-service"
+        ],
+        "description": "Trusted installed native service for typed, approved owner reminder records only."
+      },
+      "reminderRunnerRoot": {
+        "type": "string"
+      }
+    }
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "personal_reminder_state_get",
+      "personal_reminder_propose",
+      "personal_reminder_commit",
+      "personal_reminder_change_propose",
+      "personal_reminder_change_commit",
+      "personal_reminder_cancel_propose",
+      "personal_reminder_cancel_commit"
+    ]
+  },
+  "toolMetadata": {
+    "personal_reminder_state_get": {
+      "optional": true
+    },
+    "personal_reminder_propose": {
+      "optional": true
+    },
+    "personal_reminder_commit": {
+      "optional": true
+    },
+    "personal_reminder_change_propose": {
+      "optional": true
+    },
+    "personal_reminder_change_commit": {
+      "optional": true
+    },
+    "personal_reminder_cancel_propose": {
+      "optional": true
+    },
+    "personal_reminder_cancel_commit": {
+      "optional": true
+    }
+  }
+}

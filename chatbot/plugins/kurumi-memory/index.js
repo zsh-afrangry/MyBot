@@ -1,4 +1,4 @@
-import {ownerAuthorized} from '../kurumi-qq/src/config.js';
+import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/index.js';
 import {createMemoryApplication} from './application.js';
 import {trustedMemoryText} from './inbound.js';
 import {normalize} from './model.js';

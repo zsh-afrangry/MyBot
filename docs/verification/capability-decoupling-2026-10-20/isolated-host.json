@@ -1,0 +1,9 @@
+{
+  "at": "2026-10-19T16:44:27.158Z",
+  "boundary": "Real isolated Gateway and plugin/tool RPC catalogs. No model provider, external API, QQ network or production write.",
+  "stages": [],
+  "passed": false,
+  "error": "GatewayClientRequestError: unknown method: capability-probe.backends\n    at Object.createRequestError (file:///home/afrangry/.npm-global/lib/node_modules/openclaw/dist/client-nkyTFQ4I.mjs:958:35)\n    at GatewayPendingRequests.handleResponse (file:///home/afrangry/.npm-global/lib/node_modules/openclaw/dist/client-nkyTFQ4I.mjs:382:47)\n    at GatewayProtocolClient.handleMessage (file:///home/afrangry/.npm-global/lib/node_modules/openclaw/dist/client-nkyTFQ4I.mjs:746:17)\n    at Object.message (file:///home/afrangry/.npm-global/lib/node_modules/openclaw/dist/client-nkyTFQ4I.mjs:549:29)\n    at WebSocket.<anonymous> (file:///home/afrangry/.npm-global/lib/node_modules/openclaw/dist/client-nkyTFQ4I.mjs:1124:39)\n    at WebSocket.emit (node:events:514:20)\n    at Receiver.receiverOnMessage (/home/afrangry/.npm-global/lib/node_modules/openclaw/node_modules/ws/lib/websocket.js:1239:20)\n    at Receiver.emit (node:events:514:20)\n    at Receiver.dataMessage (/home/afrangry/.npm-global/lib/node_modules/openclaw/node_modules/ws/lib/receiver.js:633:14)\n    at Receiver.getData (/home/afrangry/.npm-global/lib/node_modules/openclaw/node_modules/ws/lib/receiver.js:532:10)",
+  "finishedAt": "2026-10-19T16:44:49.337Z",
+  "diagnosticDirectory": "/tmp/kurumi-capabilities-host-sLsnC7"
+}

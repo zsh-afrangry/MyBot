@@ -38,6 +38,10 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs': ['验收', '真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/scripts/build-personal-plugins.mjs': ['构建', '构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作', {writesRepo: 1}, 'header'],
+  'chatbot/tests/backend-boundaries/capabilities.test.mjs': ['离线', '共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口', {testDir: 1}, 'header'],
+  'chatbot/tests/papers/source-boundary.test.mjs': ['离线', '下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查', {testDir: 1}, 'header'],
   'chatbot/tests/knowledgemap/bills.test.mjs': ['离线', '账单声明一致、真实钩子runId映射、当前请求隔离和消息幂等键', {readonly: 1}, 'header'],
   'chatbot/scripts/backup-knowledgemap-code.mjs': ['领域运维', '只读两个主工作树，保存bundle/index/工作树包到新私密备份目录，不含数据库', {auth: 1, writesState: 1}, 'header'],
   'chatbot/tests/knowledgemap/acceptance-bills-live.mjs': ['验收', '第二轮真实模型/生产API/MySQL/网页增改删查、歧义及天气runId；合成入站不发QQ', {auth: 1, model: 1, externalApi: 1, restart: 1, writesState: 1, writesRepo: 1}, 'header'],
@@ -109,24 +113,24 @@ const TABLE = {
   'chatbot/packages/confirmation-core/src/public-id.test.ts': ['离线', '公开 ID 脱敏与冲突规避', {readonly: 1}, 'offline'],
   'chatbot/plugins/personal-confirmation/src/inbound.test.ts': ['离线', '确认入站插件：身份绑定与重放拒绝', {readonly: 1}, 'offline'],
   'chatbot/plugins/personal-confirmation/src/index.test.ts': ['离线', '确认入站插件装配与工具暴露', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/clarification-gate.test.ts': ['离线', '地点歧义澄清闸门', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/config.test.ts': ['离线', '插件配置解析与默认值', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/confirmation-gate.test.ts': ['离线', '领域确认闸门', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/controlled-replies.test.ts': ['离线', '受控回复与原文交付', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/formatter.test.ts': ['离线', '天气输出格式与地点保真', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/index.test.ts': ['离线', '天气插件工具注册与装配', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/native-reminder-scheduler.test.ts': ['离线', '原生提醒调度适配', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/parsers.test.ts': ['离线', '自然语言时间与地点解析', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/planning.test.ts': ['离线', '行程提案与事务提交', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/profile.test.ts': ['离线', 'Profile 当前所在地读写', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/qweather-client.test.ts': ['离线', 'QWeather 客户端请求构造与拒绝规则', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/reminder-gateway.test.ts': ['离线', '提醒与 Gateway 对账', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/reminder-reconciler-service.test.ts': ['离线', '提醒 reconciler 服务循环', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/reminder-reconciler.test.ts': ['离线', '提醒 reconciler 判定与退避', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/reminders.test.ts': ['离线', '提醒提案、修改与取消', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/store.test.ts': ['离线', '领域 SQLite 存储与迁移', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/weather-location.test.ts': ['离线', '天气地点解析与叶子名保留', {readonly: 1}, 'offline'],
-  'chatbot/plugins/personal-weather/src/weather-service.test.ts': ['离线', '天气服务聚合与失败语义', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/clarification-gate.test.ts': ['离线', '地点歧义澄清闸门', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/config.test.ts': ['离线', '插件配置解析与默认值', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/confirmation-gate.test.ts': ['离线', '领域确认闸门', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/controlled-replies.test.ts': ['离线', '受控回复与原文交付', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/formatter.test.ts': ['离线', '天气输出格式与地点保真', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/index.test.ts': ['离线', '天气插件工具注册与装配', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/native-reminder-scheduler.test.ts': ['离线', '原生提醒调度适配', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/parsers.test.ts': ['离线', '自然语言时间与地点解析', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/planning.test.ts': ['离线', '行程提案与事务提交', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/profile.test.ts': ['离线', 'Profile 当前所在地读写', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/qweather-client.test.ts': ['离线', 'QWeather 客户端请求构造与拒绝规则', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/reminder-gateway.test.ts': ['离线', '提醒与 Gateway 对账', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/reminder-reconciler-service.test.ts': ['离线', '提醒 reconciler 服务循环', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/reminder-reconciler.test.ts': ['离线', '提醒 reconciler 判定与退避', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/reminders.test.ts': ['离线', '提醒提案、修改与取消', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/store.test.ts': ['离线', '领域 SQLite 存储与迁移', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/weather-location.test.ts': ['离线', '天气地点解析与叶子名保留', {readonly: 1}, 'offline'],
+  'chatbot/packages/personal-domains/src/weather-service.test.ts': ['离线', '天气服务聚合与失败语义', {readonly: 1}, 'offline'],
 
   // ---- 只读运维与库：不写状态、不外发 ----
   'scripts/fusion/health.mjs': ['只读运维', '服务、QQ、频道、Cron、数据库健康', {readonly: 1}, 'header'],
@@ -142,7 +146,6 @@ const TABLE = {
   'scripts/fusion/rpc.mjs': ['库', 'Gateway RPC 客户端库（被其他脚本导入）', {readonly: 1}, 'code'],
   'scripts/fusion/lib/fresh-id.mjs': ['库', '生成不重复的 message id', {readonly: 1}, 'header'],
   'scripts/fusion/lib/package-manifests.mjs': ['库', '只读发现仓库自有锁文件包及构建声明，供依赖检查与隔离恢复共同使用', {readonly: 1}, 'header'],
-  'scripts/fusion/lib/trace-events.mjs': ['库', '统一链路事件契约、脱敏与可选私有 JSONL sink（调用 emit 时写文件）', {writesState: 1}, 'code'],
   'scripts/fusion/lib/plugins.mjs': ['库', '第三方插件声明（纯数据，导入无 I/O）', {readonly: 1}, 'header'],
   'scripts/fusion/lib/recovery-isolation.mjs': ['库', '隔离恢复的路径、凭据与共享业务禁用改写，仅写恢复副本', {testDir: 1}, 'header'],
   'scripts/fusion/lib/working-tree-backup.mjs': ['库', '已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar', {writesState: 1}, 'code'],
@@ -302,7 +305,8 @@ function contradictions(rel, flags, boundary) {
   const declaresNoModel = says(/no model|no model provider|model provider\.|deterministic cognition/i) && !says(/real (configured )?model|real-model/i);
   const declaresNoQQ = says(/no QQ network|no QQ send|no QQ delivery|no QQ output|not.*QQ transport/i);
   const declaresModel = says(/real (configured )?model|real-model|real model/i);
-  const declaresExternalApi = says(/tavily|qweather|geoapi|real api|real http|external api|web_search|web_fetch|paper/i);
+  const declaresNoExternalApi = says(/no (?:[^.]{0,80})?external api|no (?:[^.]{0,80})?network calls?/i);
+  const declaresExternalApi = !declaresNoExternalApi && says(/tavily|qweather|geoapi|real api|real http|external api|web_search|web_fetch|paper/i);
   if (declaresNoModel && flags.model) bad.push('声明无模型，但表中标了真实模型');
   if (declaresNoQQ && flags.qq) bad.push('声明无 QQ 网络/发送，但表中标了真实 QQ 外发');
   if (declaresModel && !flags.model) bad.push('声明有真实模型，但表中漏标（V03 类）');

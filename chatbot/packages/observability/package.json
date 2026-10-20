@@ -1,0 +1,6 @@
+{
+  "name": "@kurumi/observability",
+  "private": true,
+  "type": "module",
+  "exports": "./index.js"
+}

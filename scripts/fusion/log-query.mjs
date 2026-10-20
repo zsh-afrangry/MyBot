@@ -6,7 +6,7 @@
  * Sources are deliberately adapters: SnowLuma and OpenClaw keep their own
  * native logs, while this command presents a stable event envelope. A future
  * module can either add an adapter here or emit the same envelope through
- * lib/trace-events.mjs; no business operation is performed by this command.
+ * chatbot/packages/observability/index.js; no business operation is performed by this command.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -19,7 +19,7 @@ import {
   normalizeTraceEvent,
   redactValue,
   summarizeText,
-} from './lib/trace-events.mjs';
+} from '../../chatbot/packages/observability/index.js';
 
 export const DEFAULT_RUNTIME_ROOT = '/home/afrangry/.openclaw-fusion';
 export const DEFAULT_SNOWLUMA_ROOT = '/home/afrangry/snowluma';

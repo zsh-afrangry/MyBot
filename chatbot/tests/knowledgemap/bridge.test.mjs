@@ -38,6 +38,7 @@ test('restored config and persisted old runners cannot reach shared production A
     'kurumi-knowledgemap':{enabled:true,config:{baseUrl:'http://127.0.0.1:3086',tokenFile:'/home/afrangry/.config/knowledgemap/assistant-token'}},
     'personal-reminder-list':{enabled:true,config:{dataSource:'knowledgemap',bridgeBaseUrl:'http://127.0.0.1:3086'}},
     'personal-weather':{enabled:true,config:{weatherBackend:'knowledgemap',bridgeBaseUrl:'http://127.0.0.1:3086'}},
+    'personal-profile':{enabled:true,config:{weatherBackend:'knowledgemap',bridgeBaseUrl:'http://127.0.0.1:3086'}},
   }}};
   mkdirSync(join(root,'state/personal-reminder-list'),{recursive:true});
   writeFileSync(sourceFile(root),JSON.stringify({dataSource:'knowledgemap',baseUrl:'http://127.0.0.1:3086',tokenFile:'/private/real'}));

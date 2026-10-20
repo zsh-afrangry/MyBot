@@ -1,0 +1,38 @@
+✔ the host's inbound router reaches the SELECTED store, not a privately built one (3.165699ms)
+✔ the tools operate on the selected store too (2.991796ms)
+✔ a replacement policy changes admission but cannot mint owner identity (1.430616ms)
+✔ an unknown adapter id fails loudly instead of falling back (0.247752ms)
+✔ pluginConfig can select an implementation by id (1.053494ms)
+✔ the shipped registry registers exactly one default policy and one sqlite store (0.365691ms)
+✔ registries are per-composition, so two hosts do not share selections (0.20978ms)
+✔ email_draft accepts the exact arguments that failed in production (60.076524ms)
+✔ email_draft answers a missing field with a fixable message instead of a schema error (55.839558ms)
+✔ email_draft still refuses a recipient outside the allowlist (54.415694ms)
+✔ email_outbox lists drafts when called with no arguments (48.809496ms)
+✔ email_outbox reports an unknown action without throwing (51.632858ms)
+✔ a non-owner context cannot use any mail tool (2.024713ms)
+✔ email_status reports the allowlist and the confirmation backend registration (0.831499ms)
+✔ email_status explains what to configure when mail is not set up yet (0.683194ms)
+✔ email_send accepts the exact arguments that failed in production (48.095525ms)
+✔ email_send explains a missing draft id instead of failing schema validation (58.873542ms)
+✔ explicit migration preserves IDs and revision, saves private originals, and leaves one writer (53.954434ms)
+✔ unmanaged legacy notes, symlink workspaces and symlink state cannot be silently imported (51.334171ms)
+✔ a partially completed import can finish; unrelated canonical data is never overwritten (94.980755ms)
+✔ automatic batch binds original evidence, persists provenance and replays exactly once (64.249171ms)
+✔ non-current sources, credentials, stale requests and unknown owners fail without committing (46.427146ms)
+✔ credential markers are rejected across long summary boundaries (0.431634ms)
+✔ correction and forgetting clear all active summaries and fence stale sources and replays (110.569116ms)
+✔ summary TTL is enforced on read/context and expired summaries are removed on next commit (45.962249ms)
+✔ real SQLite CAS and failed validation roll back; process exit before commit is recovered (58.275618ms)
+✔ bounded summaries and context do not silently evict facts (1881.913069ms)
+✔ alternate policy/store are composition-local; async methods fail without success receipts (28.679971ms)
+✔ plugin binds raw ingress, actual run/call, and current owner authority before writes (38.838843ms)
+✔ member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes (27.020818ms)
+ℹ tests 30
+ℹ suites 0
+ℹ pass 30
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2589.732526

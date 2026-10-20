@@ -41,7 +41,7 @@ export function disableKnowledgeMapRecovery(cfg,runtime){
  const token=path.join(runtime,'knowledgemap-recovery-disabled-token');
  if(fs.lstatSync(token,{throwIfNoEntry:false})?.isSymbolicLink())throw Error('Recovery token must not be a symlink');
  fs.writeFileSync(token,'recovery-disabled',{mode:0o600});fs.chmodSync(token,0o600);
- for(const name of ['kurumi-knowledgemap','personal-reminder-list','personal-weather']){
+ for(const name of ['kurumi-knowledgemap','personal-reminder-list','personal-weather','personal-profile']){
   const entry=cfg.plugins?.entries?.[name],config=entry?.config;
   if(!config)continue;
   if(name==='kurumi-knowledgemap'){

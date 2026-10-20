@@ -16,7 +16,7 @@ import plugin from '../../plugins/personal-reminder-list/index.js';
 import {dialogue} from './dialogue-cases.mjs';
 import {productionSnapshot as guardedSnapshot} from './production-guard.mjs';
 import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
-import weather from '../../plugins/personal-weather/dist/index.js';
+import weather from '../../plugins/personal-weather/index.js';
 
 const repo = resolve(fileURLToPath(new URL('../../../', import.meta.url)));
 const natural = process.argv.includes('--natural');

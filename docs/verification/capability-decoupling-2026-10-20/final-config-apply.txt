@@ -1,0 +1,27 @@
+  DEFERRED plugins.entries.kurumi-memory: keep complete live entry; normal --check still compares full repo intent
+  DIFFERS  plugins.allow
+            repo    : ["kurumi-qq","kurumi-tasks","tavily","personal-confirmation","personal-weather","personal-reminder-list","kurumi-memory","kurumi-research","kurumi-mail","kurumi-papers","kurumi-knowledgemap","personal-profile","personal-planning","personal-reminders"]
+            runtime : ["kurumi-qq","kurumi-tasks","tavily","personal-confirmation","personal-weather","personal-reminder-list","kurumi-memory","kurumi-research","kurumi-mail","kurumi-papers","kurumi-knowledgemap"]
+  DIFFERS  plugins.load.paths
+            repo    : ["/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-qq","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-tasks","/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-mail","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-papers","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-knowledgemap","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-profile","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-planning","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders"]
+            runtime : ["/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-qq","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-tasks","/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather","/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-mail","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-papers","/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-knowledgemap"]
+  MISSING  plugins.entries.kurumi-research.config
+            repo    : {"cacheRoot":"/home/afrangry/.openclaw-fusion/research-cache"}
+  MISSING  plugins.entries.personal-profile
+            repo    : {"enabled":true,"config":{"apiHost":"${QWEATHER_API_HOST}","apiKey":{"source":"env","provider":"default","id":"QWEATHER_API_KEY"},"weatherBackend":"knowledgemap","bridgeBaseUrl":"http://127.0.0.1:3086","bridgeTokenFile":"/home/afrangry/.config/knowledgemap/assistant-token"}}
+  MISSING  plugins.entries.personal-planning
+            repo    : {"enabled":true,"config":{}}
+  MISSING  plugins.entries.personal-reminders
+            repo    : {"enabled":true,"config":{"reminderBackend":"native-service","reminderRunnerRoot":"/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders"}}
+  DELETED  plugins.entries.personal-weather.config.reminderBackend
+            runtime : "native-service"   (removed from repo -> --apply removes it)
+  DELETED  plugins.entries.personal-weather.config.reminderRunnerRoot
+            runtime : "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather"   (removed from repo -> --apply removes it)
+
+  repo-managed top-level keys : agents, bindings, channels, commands, discovery, gateway, logging, models, plugins, secrets, session, skills, tools
+  host-maintained keys kept   : (none)
+applied: 6 changed, 2 removed
+  backup          : /home/afrangry/.openclaw-fusion/openclaw.json.bak.2026-10-19T16-51-19-028Z
+  managed keys    : 13 replaced from repo; explicitly deferred plugin entries kept from live
+  host-maintained : 0 key(s) kept as-is
+  state untouched : state/, channel/, agents/, workspace/, media/ were not opened

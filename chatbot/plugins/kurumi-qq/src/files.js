@@ -3,7 +3,7 @@ import {Documents, documentRoot, MAX_PDF_BYTES} from '../../../packages/document
 import {account, ownerTarget} from './config.js';
 import {onebot} from './transport.js';
 import {Ledger} from './ledger.js';
-import {createTraceSink} from '../../../../scripts/fusion/lib/trace-events.mjs';
+import {createTraceSink} from '../../../packages/observability/index.js';
 import {isIP} from 'node:net';
 import https from 'node:https';
 import {Readable} from 'node:stream';

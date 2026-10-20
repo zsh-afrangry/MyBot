@@ -1,0 +1,153 @@
+{
+  "at": "2026-10-19T17:06:03.282Z",
+  "ok": true,
+  "issues": [],
+  "gateway": true,
+  "qq": {
+    "online": true,
+    "good": true
+  },
+  "testIngress": false,
+  "channel": [
+    {
+      "running": true,
+      "connected": true
+    }
+  ],
+  "cron": {
+    "total": 11,
+    "hasMore": false,
+    "jobs": [
+      {
+        "id": "17a026c2-0a57-4176-985d-8f474294f37f",
+        "enabled": true,
+        "lastStatus": "ok",
+        "lastDeliveryStatus": "delivered",
+        "nextRunAtMs": 1792454400000
+      },
+      {
+        "id": "2bd8e62c-2bf0-4a45-b231-34e39d2ee400",
+        "enabled": true,
+        "lastStatus": "ok",
+        "lastDeliveryStatus": "delivered",
+        "nextRunAtMs": 1792463400000
+      },
+      {
+        "id": "23c06aa8-96f2-47c7-9adf-9a6f1291bb28",
+        "enabled": true,
+        "lastStatus": "ok",
+        "lastDeliveryStatus": "delivered",
+        "nextRunAtMs": 1792468800000
+      },
+      {
+        "id": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+        "enabled": true,
+        "lastStatus": "ok",
+        "lastDeliveryStatus": "delivered",
+        "nextRunAtMs": 1792490400000
+      },
+      {
+        "id": "1ad1bb0e-e393-4fe1-874a-f659b9187721",
+        "enabled": true,
+        "lastStatus": "ok",
+        "lastDeliveryStatus": "delivered",
+        "nextRunAtMs": 1792512000000
+      },
+      {
+        "id": "0a794dfc-bfb3-4037-8258-834cff1c3e76",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "2d61b8f2-744a-438d-be99-a2796f05d5fd",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "428bf628-20d2-4c99-a889-38782ece05a7",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "53286346-7fed-4e0e-a381-9ee815014f01",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      },
+      {
+        "id": "a0b45e30-9e1c-4b33-ba36-5bf1ca6d50dc",
+        "enabled": false,
+        "lastStatus": null,
+        "lastDeliveryStatus": null,
+        "nextRunAtMs": null
+      }
+    ]
+  },
+  "testMethodDisabled": true,
+  "channelDatabase": "ok",
+  "outbound": [
+    {
+      "status": "sent",
+      "count": 416
+    }
+  ],
+  "recentAttempts": 99,
+  "dailyLimit": 500,
+  "recentFailedInbound": 0,
+  "weatherDatabase": "ok",
+  "remindersDatabase": "ok",
+  "reminderListDatabase": "ok",
+  "knowledgeMap": {
+    "ok": true,
+    "contract": 1,
+    "domains": [
+      "weather",
+      "tasks",
+      "bills"
+    ]
+  },
+  "services": {
+    "kurumi-fusion": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "qq-bridge": {
+      "ActiveState": "inactive",
+      "UnitFileState": "masked"
+    },
+    "openclaw-gateway": {
+      "ActiveState": "inactive",
+      "UnitFileState": "masked"
+    },
+    "snowluma": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "snowluma-qq": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "knowledgemap-assistant": {
+      "ActiveState": "active",
+      "UnitFileState": "enabled"
+    },
+    "dsh-web": {
+      "ActiveState": "active",
+      "UnitFileState": "disabled"
+    }
+  }
+}

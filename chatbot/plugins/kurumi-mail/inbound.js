@@ -3,7 +3,7 @@
 // Transport trust only. No language rules, no allowlist decisions and no confirmation protocol live
 // here — those are policy and shared-core concerns. The split matters because a replacement policy
 // must never be able to mint owner identity, so identity is established before any policy runs.
-import { ownerAuthorized } from "../kurumi-qq/src/config.js";
+import { authorizedOwner as ownerAuthorized } from "../../packages/access-control/index.js";
 import { scopeFromToolContext } from "@kurumi/confirmation-core";
 
 /**

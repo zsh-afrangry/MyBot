@@ -2,9 +2,9 @@
 import {createHash} from 'node:crypto';
 import fs from 'node:fs';
 import {callGatewayTool} from 'openclaw/plugin-sdk/agent-harness-runtime';
-import {ownerAuthorized as authorized} from '../kurumi-qq/src/config.js';
+import {authorizedOwner as authorized} from '../../packages/access-control/index.js';
 import {projectCatalog,workerProject} from './projects.js';
-import {runSandbox} from './sandbox.js';
+import {runSandbox} from '../../packages/sandbox/index.js';
 const json=result=>({content:[{type:'text',text:JSON.stringify(result)}]});
 export default {id:'kurumi-tasks',name:'Kurumi native task sessions',register(api){
  api.registerTool({contextVersion:2,create:ctx=>({name:'kurumi_task',label:'Background project task',description:'列出已注册项目或在独立项目副本启动后台代码工作或论文研究（kind=research）。主聊天可继续；Host完成后回到本人QQ。只接受项目ID和任务说明，无任意路径或命令。list也列最近任务，status/cancel使用返回的真实runId/sessionKey。',parameters:{type:'object',additionalProperties:false,required:['action'],properties:{action:{type:'string',enum:['list','start','status','cancel']},projectId:{type:'string'},kind:{type:'string',enum:['code','research']},task:{type:'string'},sessionKey:{type:'string'},runId:{type:'string'}}},async execute(callId,args,signal){

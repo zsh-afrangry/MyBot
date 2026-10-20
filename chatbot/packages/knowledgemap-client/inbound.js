@@ -1,6 +1,6 @@
 // A current trusted owner message is the authority; no natural-language action parser.
-import {trustedText, PERMIT_TTL_MS} from '../../plugins/personal-reminder-list/inbound.js';
-import {ownerAuthorized} from '../../plugins/kurumi-qq/src/config.js';
+import {trustedText, PERMIT_TTL_MS} from '../trusted-inbound/index.js';
+import {authorizedOwner as ownerAuthorized} from '../access-control/index.js';
 
 export function createBridgeInbound(owner, now = Date.now) {
   let current;

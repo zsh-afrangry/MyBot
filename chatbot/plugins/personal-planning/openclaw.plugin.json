@@ -1,0 +1,32 @@
+{
+  "id": "personal-planning",
+  "name": "personal-planning",
+  "description": "Independent planning capability",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "personal_planning_state_get",
+      "personal_planning_change_propose",
+      "personal_planning_change_commit"
+    ]
+  },
+  "toolMetadata": {
+    "personal_planning_state_get": {
+      "optional": true
+    },
+    "personal_planning_change_propose": {
+      "optional": true
+    },
+    "personal_planning_change_commit": {
+      "optional": true
+    }
+  }
+}

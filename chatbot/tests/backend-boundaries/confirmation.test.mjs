@@ -4,8 +4,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import * as core from '../../packages/confirmation-core/dist/index.js';
-import {registerDomainConfirmationBackends} from '../../plugins/personal-weather/dist/confirmation-backends.js';
-import {registerInteractionHooks} from '../../plugins/personal-weather/dist/interaction/index.js';
+import {registerDomainBackend} from '../../packages/personal-domains/dist/confirmation-backends.js';
+import {registerInteractionHooks} from '../../packages/personal-domains/dist/interaction/index.js';
 
 test('shared package preserves its complete runtime public API without leaking split helpers', () => {
   assert.deepEqual(Object.keys(core).sort(), [
@@ -43,13 +43,16 @@ test('grant consumption can roll back with a business transaction and then commi
   assert.equal(db.prepare('SELECT COUNT(*) n FROM notes').get().n, 1);
 });
 
-test('weather deployment container registers independent backends and cleans them up on stop', () => {
+test('a domain registers exactly its own backend and cleans it up on stop', () => {
   const before = core.confirmationBackendIds(), services = [];
-  registerDomainConfirmationBackends({registerService: service => services.push(service)});
+  registerDomainBackend({registerService: service => services.push(service)}, {
+    id: 'personal-profile', domain: 'personal_profile', open() { throw Error('must not open'); },
+  });
   assert.equal(services.length, 1);
   try {
     services[0].start();
-    assert.deepEqual(core.confirmationBackendIds(), [...before, 'profile-planning', 'personal-reminder'].sort());
+    services[0].start();
+    assert.deepEqual(core.confirmationBackendIds(), [...before, 'personal-profile'].sort());
   } finally { services[0].stop(); }
   assert.deepEqual(core.confirmationBackendIds(), before);
 });
@@ -58,7 +61,9 @@ test('a partial backend-registration failure removes only the registrations it o
   const existing = core.registerConfirmationBackend({id: 'personal-reminder', open() { throw Error('must not open'); }});
   let service;
   try {
-    registerDomainConfirmationBackends({registerService: value => service = value});
+    registerDomainBackend({registerService: value => service = value}, {
+      id: 'personal-reminder', domain: 'personal_reminder', open() { throw Error('must not open'); },
+    });
     assert.throws(() => service.start(), /already registered/);
     assert.ok(!core.confirmationBackendIds().includes('profile-planning'));
     assert.ok(core.confirmationBackendIds().includes('personal-reminder'));
@@ -67,7 +72,9 @@ test('a partial backend-registration failure removes only the registrations it o
 
 test('composed interaction hooks block only the intended tool/run and never register confirmation backends', () => {
   const before = core.confirmationBackendIds(), hooks = {};
-  registerInteractionHooks({on: (name, handler) => (hooks[name] ??= []).push(handler)});
+  registerInteractionHooks({on: (name, handler) => (hooks[name] ??= []).push(handler)}, {
+    clarificationTools: ['personal_profile_change_propose'], proposalTools: ['personal_profile_change_propose'],
+  });
   const context = {runId: 'run-one', sessionKey: 'test-session'};
   const event = {toolName: 'personal_profile_change_propose', runId: context.runId,
     result: {content: [{type: 'text', text: JSON.stringify({ok: false, requiresUserInput: true})}]}};

@@ -7,7 +7,7 @@ import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
 import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
 import {projectCatalog} from '../../chatbot/plugins/kurumi-tasks/projects.js';
-import {runSandbox} from '../../chatbot/plugins/kurumi-tasks/sandbox.js';
+import {runSandbox} from '../../chatbot/packages/sandbox/index.js';
 await ready();const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(state+'/openclaw.json')),a=account(cfg),p=projectCatalog(cfg).find(p=>p.id==='fusion'),login=await onebot(a,'get_login_info',{});let id=-Date.now();
 const hash=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex'),test=p.root+'/chatbot/plugins/kurumi-memory/test/memory.test.js';
 const git=(...args)=>{const r=spawnSync('/usr/bin/git',args,{cwd:p.root,encoding:'utf8'});if(r.status!==0)throw Error(r.stderr);return r.stdout.trim();};

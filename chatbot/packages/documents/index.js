@@ -3,7 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash, randomUUID} from 'node:crypto';
-import {runSandbox} from '../../plugins/kurumi-tasks/sandbox.js';
+import {runSandbox} from '../sandbox/index.js';
 
 export const MAX_PDF_BYTES = 25 * 1024 * 1024;
 // Dual PDFs include the original and translated resources; the worker caps each output at 100 MiB.

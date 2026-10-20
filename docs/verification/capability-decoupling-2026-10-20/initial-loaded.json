@@ -1,0 +1,10 @@
+{
+  "serviceStart": "Tue 2026-10-20 00:26:58 CST",
+  "sourceSHA256": {
+    "chatbot/plugins/kurumi-papers/index.js": "dcbe7041ef643d7ac91ec45bc69aacc76509675ed29cfe026fd500859cb7bc20",
+    "chatbot/plugins/kurumi-mail/index.js": "24f3a92178ef9a3ea9b8bf92fdbfe1c2129f40558d7a741f806aaa3733dcf3e6",
+    "chatbot/packages/confirmation-core/dist/registry.js": "490352defb9d7155a57927fe9cdb96e5fac1230ea2bc66db8d7c5081401e7da8"
+  },
+  "registrationLogs": [],
+  "note": "Source/build fingerprint and post-restart registered backends; behavior also tested with installed Host service manager."
+}

@@ -1,0 +1,133 @@
+{
+  "at": "2026-10-19T16:56:22.533Z",
+  "boundary": "Production read-only RPC catalogs, declaration fingerprints and source hashes after explicitly authorized Fusion restart. No model/API/QQ message, database or Cron edits in this check.",
+  "controlledRestart": "Tue 2026-10-20 00:51:20 CST",
+  "observedServiceStart": "Tue 2026-10-20 00:51:20 CST",
+  "plugins": [
+    {
+      "id": "kurumi-mail",
+      "enabled": true,
+      "runtime": {
+        "state": "active"
+      }
+    },
+    {
+      "id": "kurumi-papers",
+      "enabled": true,
+      "runtime": {
+        "state": "active"
+      }
+    },
+    {
+      "id": "personal-confirmation",
+      "enabled": true,
+      "runtime": {
+        "state": "active"
+      }
+    },
+    {
+      "id": "personal-planning",
+      "enabled": true,
+      "runtime": {
+        "state": "active"
+      }
+    },
+    {
+      "id": "personal-profile",
+      "enabled": true,
+      "runtime": {
+        "state": "active"
+      }
+    },
+    {
+      "id": "personal-reminders",
+      "enabled": true,
+      "runtime": {
+        "state": "active"
+      }
+    },
+    {
+      "id": "personal-weather",
+      "enabled": true,
+      "runtime": {
+        "state": "active"
+      }
+    }
+  ],
+  "tools": [
+    {
+      "plugin": "personal-planning",
+      "tools": [
+        "personal_planning_change_commit",
+        "personal_planning_change_propose",
+        "personal_planning_state_get"
+      ]
+    },
+    {
+      "plugin": "personal-profile",
+      "tools": [
+        "personal_profile_change_commit",
+        "personal_profile_change_propose",
+        "personal_profile_state_get"
+      ]
+    },
+    {
+      "plugin": "personal-reminders",
+      "tools": [
+        "personal_reminder_cancel_commit",
+        "personal_reminder_cancel_propose",
+        "personal_reminder_change_commit",
+        "personal_reminder_change_propose",
+        "personal_reminder_commit",
+        "personal_reminder_propose",
+        "personal_reminder_state_get"
+      ]
+    },
+    {
+      "plugin": "personal-weather",
+      "tools": [
+        "personal_weather_get_brief"
+      ]
+    }
+  ],
+  "cron": {
+    "unchanged": true,
+    "total": 11,
+    "fingerprintKeys": [
+      "payload",
+      "schedule",
+      "delivery",
+      "enabled"
+    ]
+  },
+  "paperJobs": {
+    "unchangedCount": true,
+    "total": 11,
+    "active": 0
+  },
+  "parallelMemoryEntry": {
+    "unchangedFromPreflight": false,
+    "sha256": "3a4d3ed5fcfa9d8a49d995e97a4ab432bcc9e135ebad65aedca4400f8a04fdfa",
+    "continuityEnabled": true,
+    "note": "This task explicitly deferred the full live entry at 00:51:19; at 00:53:34 a concurrent P2 task changed it. That deployment is outside this task and must be assessed using document 25, not attributed to this refactor."
+  },
+  "searchProvider": "tavily",
+  "sourceSHA256": {
+    "chatbot/packages/confirmation-core/dist/registry.js": "490352defb9d7155a57927fe9cdb96e5fac1230ea2bc66db8d7c5081401e7da8",
+    "chatbot/packages/personal-domains/dist/weather-plugin.js": "8c042f6f5ef835bf1784166bc0f6ae6fe81f68d5e61983aad9189be2c49a40aa",
+    "chatbot/packages/personal-domains/dist/profile-plugin.js": "bf811520d29dde43c2a1538ce0e6fba834b14ff6fd46b88ea7f171d9137238fc",
+    "chatbot/packages/personal-domains/dist/planning-plugin.js": "56a52e3c22ad7de006eb7ca78e3a58f8ece3699986b106afdc5e5b62676b6899",
+    "chatbot/packages/personal-domains/dist/reminder-plugin.js": "402cf03761fa7045a291daaa125b59b53c672858145f463d15e2519b4ee5bb6f",
+    "chatbot/packages/personal-domains/dist/confirmation-backends.js": "3e9cef20f1f7b198607b48e76e842d23f25eac2581dfd2085ab543ed0e1443f0",
+    "chatbot/packages/personal-domains/dist/reminder-reconciler-service.js": "08951a226b06373435e2a28332ddc22559ebe3e4cb912e7665dc9c64c6253d3d",
+    "chatbot/packages/scholarly-source/index.js": "3792128667c92196eb679b7ba5f09bafa2f32cfab50a3957cbef49bddd0cfd9a",
+    "chatbot/packages/trusted-inbound/index.js": "6ebf49748b76662d141cc5622cb0d89387411a0a25605015016abfcc91af07ad",
+    "chatbot/packages/sandbox/index.js": "6b1f02a949d7e056d08b05c800bf2e83024b4b83e3b90109091f0617b102e4bc",
+    "chatbot/packages/observability/index.js": "a43663a01a1630c323a6c31da923e8d787b0f74ebdb72d9a7056a40c8b597541",
+    "chatbot/plugins/kurumi-papers/service.js": "5a55e5a37417d7a4d6bb54533ae920cf0f87ddb58b1a8d5d416e3b15e922ba7d",
+    "chatbot/plugins/kurumi-papers/index.js": "4c42ef7cd1d3e9b4a0f0b2da462a7157a1db267a0236b227cf8be818e632e996",
+    "chatbot/plugins/kurumi-mail/index.js": "24f3a92178ef9a3ea9b8bf92fdbfe1c2129f40558d7a741f806aaa3733dcf3e6",
+    "chatbot/plugins/kurumi-mail/inbound.js": "9c4ac88cadc7983b15d01bf3918fb31164108bb742889f73e9298ba8ba5ea425"
+  },
+  "note": "Runtime state and tool ownership observed by Gateway RPC. Source/build hashes identify the reloaded checkout. Confirmation IDs directly observed in the separate isolated-host test, not via a new production RPC."
+}

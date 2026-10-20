@@ -1,5 +1,5 @@
 import {createListApplication, stateRoot} from './application.js';
-import {ownerAuthorized} from '../kurumi-qq/src/config.js';
+import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/index.js';
 import {createListIntake} from './intake.js';
 import {createScheduler} from './scheduler.js';
 import {readFileSync} from 'node:fs';

@@ -1,0 +1,105 @@
+{
+  "id": "personal-profile",
+  "name": "personal-profile",
+  "description": "Independent profile capability",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "apiHost",
+      "apiKey"
+    ],
+    "properties": {
+      "apiHost": {
+        "type": "string",
+        "description": "QWeather dedicated API hostname without scheme or path."
+      },
+      "apiKey": {
+        "anyOf": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "required": [
+              "source",
+              "provider",
+              "id"
+            ],
+            "properties": {
+              "source": {
+                "type": "string",
+                "const": "env"
+              },
+              "provider": {
+                "type": "string",
+                "const": "default"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 200
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "weatherBackend": {
+        "type": "string",
+        "enum": [
+          "qweather",
+          "knowledgemap"
+        ]
+      },
+      "bridgeBaseUrl": {
+        "type": "string"
+      },
+      "bridgeTokenFile": {
+        "type": "string",
+        "pattern": "^/"
+      }
+    }
+  },
+  "activation": {
+    "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "personal_profile_state_get",
+      "personal_profile_change_propose",
+      "personal_profile_change_commit"
+    ]
+  },
+  "toolMetadata": {
+    "personal_profile_state_get": {
+      "optional": true
+    },
+    "personal_profile_change_propose": {
+      "optional": true
+    },
+    "personal_profile_change_commit": {
+      "optional": true
+    }
+  },
+  "configContracts": {
+    "secretInputs": {
+      "paths": [
+        {
+          "path": "apiKey",
+          "expected": "string"
+        }
+      ]
+    }
+  },
+  "uiHints": {
+    "apiHost": {
+      "label": "QWeather API host"
+    },
+    "apiKey": {
+      "label": "QWeather credential",
+      "sensitive": true
+    }
+  }
+}

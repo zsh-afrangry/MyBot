@@ -1,7 +1,7 @@
 // Existing language admission rules. Only service/intake call this module;
 // persistence never reads chat text or imports this policy.
 import {normalize} from './model.js';
-import {trustedText} from './inbound.js';
+import {trustedText} from '../../packages/trusted-inbound/index.js';
 
 const ADD = /加一(?:条|个|项)|添加|追加|新建|新增|加入|加(?:到|进|上)|记录|加紧(?:到|进)?提醒列表/u;
 const NON_ADD = /修改|更改|改成|改为|改到|改一下|更新|调整|清除|清空|做好了|做完了|已完成|完成了|作废|取消|删除|不做了|恢复|重开|暂停|停止|关闭/u;

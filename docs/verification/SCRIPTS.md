@@ -1,86 +1,8 @@
 # 脚本与证据索引
 
-本页回答两个问题：**哪个脚本会产生哪份证据**，以及**每个脚本运行时的副作用和授权要求**。
-它补充 [`INDEX.md`](INDEX.md)（按证据文件分组），不替代它；规则本身在[文档 16](../16_验收与测试总表.md)。
+本页登记可运行脚本、测试和辅助库的用途、副作用及证据位置。证据目录从[INDEX.md](INDEX.md)进入，验收边界与授权规则见[文档16](../16_验收与测试总表.md)。不要按名称批量执行acceptance或`test-*.mjs`：其中可能调用真实模型/API、外发、写状态或启停服务。
 
-覆盖检查由脚本执行，不靠人工声明：
-
-```bash
-cd /home/afrangry/kurumi-fusion
-node scripts/fusion/evidence-coverage.mjs   # 每个证据文件必须命中恰好一个分类，否则非零退出
-node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，否则非零退出
-```
-
-## 三类证据，含义不同
-
-| 类别 | 位置 | 说明 |
-| --- | --- | --- |
-| 当前有效 | 最新 `recovery-*` 报告、`fusion/*`、`deepseek-whale/*`、`reminder-list-*/*`、项目副本同步记录 | 各自版本与范围的验收和状态证据；恢复结论以最新 recovery 报告和文档 16 为准 |
-| 历史领域验收 | `migration/*`、`step6-2026-10-05/*`、顶层 `2026-*` 与 `*-acceptance.json` 等 | 旧阶段或旧频道的验收结论，只能按版本和范围追溯，不能证明当前版本 |
-| 归档证据 | `../archive/verification/`、`../archive/personal-search-tests/`、`../archive/2026-*` | 已退役实现与失败实验；要复用须在新日期目录重新产生证据 |
-
-命名约定：`*-initial`、`*-attempt`、`*-a/-b` 是**失败或首次尝试的原始记录**，`*-fixed`、`*-final` 是修正后的复验。
-失败记录保留是审计要求，不代表当前缺陷仍在；反过来，`*-fixed` 也不代表之后版本仍然通过。
-
-## 旧 harness 与当前融合测试的边界
-
-- `chatbot/tests/acceptance/`（`run.mjs`、`run-model.mjs`、`model-driver.mjs`、`run-retrieval-*` 等）是**融合前**的离线验收 harness。
-  它的系统提示词来自遗留的 [`chatbot/AGENTS.md`](../../chatbot/AGENTS.md)，测的是旧 NAICCC/`qqbot` 频道的检索与确认路径。
-- `scripts/fusion/test-*.mjs` 与 `chatbot/tests/<领域>/acceptance-*.mjs` 是**当前融合系统**的验收脚本；按各脚本边界分别验证真实模型、隔离 Host、`kurumi-qq` 或原生定时投递。
-- **旧 harness 的输出不能当作新频道的验收**。当前结论须引用当前融合脚本、领域测试与恢复探针，并分别说明模型、宿主和 QQ 是否真实；模拟入站不能证明真人 QQ 往返。
-- 大量 `*-acceptance.json`、`retrieval-review-*.json` 与 `call-analysis.test.mjs` 的断言属于旧 harness 时代，读取时应连同 `2026-09-10_文档与现状复核.txt`、`2026-10-04_检索与QQ插件现状复核.md` 一起看。
-
-## 固定输出路径与归档
-
-部分验收脚本把结果写到**固定路径**（例如 `scripts/fusion/test-background-code.mjs` 写
-`docs/verification/fusion/10-background-code.json`），重复运行会覆盖上次输出。因此：
-
-- 需要保留某次真实外发回执时，**先复制到带日期的归档路径**（如 `verification/archive-<日期>/`）再重跑，
-  不要依赖脚本自己保留历史。
-- 脚本索引表中每行的“证据位置”就是它会写入或对应的文件；`—` 表示该脚本不直接产出 `docs/verification/` 文件。
-- 需要人工修正过的历史回执（例如 `*-fixed`）不要被自动重跑覆盖；先归档再复验。
-- 提醒列表 `acceptance-model.mjs` 与 `acceptance-host.mjs` 支持 `--out <目录>`；`--natural` 默认写 `reminder-list-2026-10-11/natural-input/`。其他验收脚本的独立输出改造仍属 Q3，重跑前按固定路径规则保留旧证据。
-- 论文 `acceptance.mjs`、`acceptance-api.py`、`acceptance-host.mjs`、`acceptance-worker.mjs` 支持显式绝对 `--out` 并拒绝覆盖已有结果；整篇真实翻译可用 `--provider/--channel/--model/--effort` 选择已登记配置，未传仍为 GPT 默认。它们不因位于 tests 就成为离线测试。
-
-## 分类依据与可信度
-
-表格每行有「分类依据」，取值含义：
-
-| 依据 | 含义 |
-| --- | --- |
-| `boundary` | 脚本自己在代码里写的机器可读边界声明（`boundary: "..."`） |
-| `header` | 脚本顶部注释里明说的边界 |
-| `code` | 读源码判定（无现成声明，例如库、fixture、探测脚本） |
-| `offline` | 进程内单元测试，无外发、无真实模型 |
-
-`evidence-index.mjs` 会把 `boundary` 声明与表格做**双向交叉校验**，任一方向不符都非零退出：
-
-| 方向 | 例子（均为复验实证） |
-| --- | --- |
-| **多标**（声明没有、表里有） | `run.mjs` 声明“deterministic cognition … no QQ network or model provider”，却被标成真实模型 + QQ + 停服务；`verify-restart.mjs` 只是在新进程里重开测试目录，却被标成“重启服务” |
-| **漏标**（声明有、表里没有） | `test-research.mjs` 声明 `Real model`，表里漏了真实模型；`test-domain-read.mjs` 声明 `real model and QWeather tools`，表里漏了外部 API；`test-qq-interaction.mjs` 声明 `real model`，表里漏了真实模型 |
-
-**能力边界（不要据此认为副作用已被自动证明）**：自动校验只能比对脚本**自己写下的** `boundary` 声明；
-没有声明、或声明本身写得不全的脚本，仍依赖 `header`/`code` 人工判读。实际脚本数量与各依据的分布以
-`node scripts/fusion/evidence-index.mjs` 的本次输出为准，不用旧数量推断新增文件已经覆盖。
-
-副作用词汇区分：真实模型、真实外部 API、真实 QQ 外发、建改任务、重启停服、写运行状态、
-写仓库内文件、**写临时测试目录**、只读。
-
-**库（`lib/`）的标注语义**：按“**被调用时做什么**”标注，而不是“导入时是否无副作用”。
-例如 `working-tree-backup.mjs` 导入时无副作用，但 `captureWorkingTree` 会写补丁与 tar，因此标 `写运行状态` 而非只读。
-
-## 需要授权的脚本
-
-索引表中「需要授权」为“是”的脚本，运行前须取得用户明确同意，并在对应任务的验收记录中注明授权范围、执行结果与未覆盖范围（记录规则见[文档 16](../16_验收与测试总表.md#验收记录规则)）：真实 QQ 外发、创建或取消任务、重启服务、
-写运行状态、恢复旧系统。授权与可离线执行的数量以生成器输出为准；库的分类说明被调用时的行为，不能据「库」分组认定可直接运行。
-
-`testIngress` 保持 `false`：合成入站入口默认关闭，验收脚本需要时自行开启并在结束后用
-`scripts/fusion/close-acceptance.mjs` 关闭，且**从不重置发送账本**。
-
-## 索引表
-
-<!-- 由 node scripts/fusion/evidence-index.mjs --markdown 生成；请勿手工编辑表格内容 -->
+表格由`node scripts/fusion/evidence-index.mjs --markdown`生成，更新时仅替换下方表格，保留本说明。分类与脚本的boundary声明**双向比对**：多标或漏标真实模型、API、QQ等均非零退出；脚本新增/删除也必须同步分类表。该检查只核对声明，不从代码自动证明副作用范围；header、code、offline依据仍需人工核对。辅助库按**被调用时**的行为标注，不以导入无副作用代替运行边界。
 
 | 脚本 | 分组 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -103,24 +25,24 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `chatbot/plugins/kurumi-tasks/test/task.test.js` | 离线 | 后台任务工具的所有权与绑定 | 只读 | 否 | offline | — |
 | `chatbot/plugins/personal-confirmation/src/inbound.test.ts` | 离线 | 确认入站插件：身份绑定与重放拒绝 | 只读 | 否 | offline | — |
 | `chatbot/plugins/personal-confirmation/src/index.test.ts` | 离线 | 确认入站插件装配与工具暴露 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/clarification-gate.test.ts` | 离线 | 地点歧义澄清闸门 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/config.test.ts` | 离线 | 插件配置解析与默认值 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/confirmation-gate.test.ts` | 离线 | 领域确认闸门 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/controlled-replies.test.ts` | 离线 | 受控回复与原文交付 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/formatter.test.ts` | 离线 | 天气输出格式与地点保真 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/index.test.ts` | 离线 | 天气插件工具注册与装配 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/native-reminder-scheduler.test.ts` | 离线 | 原生提醒调度适配 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/parsers.test.ts` | 离线 | 自然语言时间与地点解析 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/planning.test.ts` | 离线 | 行程提案与事务提交 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/profile.test.ts` | 离线 | Profile 当前所在地读写 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/qweather-client.test.ts` | 离线 | QWeather 客户端请求构造与拒绝规则 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/reminder-gateway.test.ts` | 离线 | 提醒与 Gateway 对账 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/reminder-reconciler-service.test.ts` | 离线 | 提醒 reconciler 服务循环 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/reminder-reconciler.test.ts` | 离线 | 提醒 reconciler 判定与退避 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/reminders.test.ts` | 离线 | 提醒提案、修改与取消 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/store.test.ts` | 离线 | 领域 SQLite 存储与迁移 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/weather-location.test.ts` | 离线 | 天气地点解析与叶子名保留 | 只读 | 否 | offline | — |
-| `chatbot/plugins/personal-weather/src/weather-service.test.ts` | 离线 | 天气服务聚合与失败语义 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/clarification-gate.test.ts` | 离线 | 地点歧义澄清闸门 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/config.test.ts` | 离线 | 插件配置解析与默认值 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/confirmation-gate.test.ts` | 离线 | 领域确认闸门 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/controlled-replies.test.ts` | 离线 | 受控回复与原文交付 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/formatter.test.ts` | 离线 | 天气输出格式与地点保真 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/index.test.ts` | 离线 | 天气插件工具注册与装配 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/native-reminder-scheduler.test.ts` | 离线 | 原生提醒调度适配 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/parsers.test.ts` | 离线 | 自然语言时间与地点解析 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/planning.test.ts` | 离线 | 行程提案与事务提交 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/profile.test.ts` | 离线 | Profile 当前所在地读写 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/qweather-client.test.ts` | 离线 | QWeather 客户端请求构造与拒绝规则 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/reminder-gateway.test.ts` | 离线 | 提醒与 Gateway 对账 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/reminder-reconciler-service.test.ts` | 离线 | 提醒 reconciler 服务循环 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/reminder-reconciler.test.ts` | 离线 | 提醒 reconciler 判定与退避 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/reminders.test.ts` | 离线 | 提醒提案、修改与取消 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/store.test.ts` | 离线 | 领域 SQLite 存储与迁移 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/weather-location.test.ts` | 离线 | 天气地点解析与叶子名保留 | 只读 | 否 | offline | — |
+| `chatbot/packages/personal-domains/src/weather-service.test.ts` | 离线 | 天气服务聚合与失败语义 | 只读 | 否 | offline | — |
 | `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | `docs/verification/` |
 | `chatbot/tests/backend-boundaries/confirmation.test.mjs` | 离线 | 确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合 | 只读 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/domain.test.mjs` | 离线 | 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚 | 写临时测试目录 | 否 | header | — |
@@ -178,7 +100,6 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/lib/package-manifests.mjs` | 库 | 只读发现仓库自有锁文件包及构建声明，供依赖检查与隔离恢复共同使用 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/plugins.mjs` | 库 | 第三方插件声明（纯数据，导入无 I/O） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/recovery-isolation.mjs` | 库 | 隔离恢复的路径、凭据与共享业务禁用改写，仅写恢复副本 | 写临时测试目录 | 否 | header | — |
-| `scripts/fusion/lib/trace-events.mjs` | 库 | 统一链路事件契约、脱敏与可选私有 JSONL sink（调用 emit 时写文件） | 写运行状态 | 否 | code | — |
 | `scripts/fusion/lib/working-tree-backup.mjs` | 库 | 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar | 写运行状态 | 否 | code | — |
 | `scripts/fusion/rpc.mjs` | 库 | Gateway RPC 客户端库（被其他脚本导入） | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/probe-profile-geo.py` | 遗留验收 | GeoAPI provider 探测 | 真实外部API、写仓库内文件 | 是 | code | `docs/verification/profile-geo-provider-probe.json` |
@@ -253,3 +174,7 @@ node scripts/fusion/evidence-index.mjs      # 每个脚本必须有分类行，�
 | `scripts/fusion/verify-dependencies.mjs` | 只读运维 | 依赖自持、无归档树逃逸、锁文件一致 | 只读 | 否 | header | — |
 | `scripts/fusion/launchers/Start-DSH.sh` | 启停脚本 | 启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
+| `chatbot/tests/backend-boundaries/capabilities.test.mjs` | 离线 | 共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
+| `chatbot/tests/papers/source-boundary.test.mjs` | 离线 | 下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
+| `chatbot/scripts/build-personal-plugins.mjs` | 构建 | 构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作 | 写仓库内文件 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
+| `chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs` | 验收 | 真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/capability-decoupling-2026-10-20/README.md` |

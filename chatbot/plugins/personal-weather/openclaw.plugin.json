@@ -1,10 +1,11 @@
 {
   "id": "personal-weather",
-  "name": "Personal Weather",
-  "description": "Owner-only Profile, weather, travel, and reminder capabilities for kurumi.",
+  "name": "personal-weather",
+  "description": "Independent weather capability",
   "version": "0.1.0",
   "configSchema": {
     "type": "object",
+    "additionalProperties": false,
     "required": [
       "apiHost",
       "apiKey"
@@ -45,20 +46,6 @@
           }
         ]
       },
-      "reminderBackend": {
-        "type": "string",
-        "enum": [
-          "native-service"
-        ],
-        "description": "Trusted installed native service for typed, approved owner reminder records only."
-      },
-      "reminderRunnerRoot": {
-        "type": "string"
-      },
-      "scheduledOwnerId": {
-        "type": "string",
-        "pattern": "^[0-9]{5,12}$"
-      },
       "weatherBackend": {
         "type": "string",
         "enum": [
@@ -72,12 +59,26 @@
       "bridgeTokenFile": {
         "type": "string",
         "pattern": "^/"
+      },
+      "scheduledOwnerId": {
+        "type": "string",
+        "pattern": "^[0-9]{5,12}$"
       }
-    },
-    "additionalProperties": false
+    }
   },
   "activation": {
     "onStartup": true
+  },
+  "contracts": {
+    "tools": [
+      "personal_weather_get_brief"
+    ]
+  },
+  "toolMetadata": {
+    "personal_weather_get_brief": {
+      "optional": true,
+      "replaySafe": true
+    }
   },
   "configContracts": {
     "secretInputs": {
@@ -96,69 +97,6 @@
     "apiKey": {
       "label": "QWeather credential",
       "sensitive": true
-    }
-  },
-  "contracts": {
-    "tools": [
-      "personal_weather_get_brief",
-      "personal_profile_state_get",
-      "personal_profile_change_propose",
-      "personal_profile_change_commit",
-      "personal_planning_state_get",
-      "personal_planning_change_propose",
-      "personal_planning_change_commit",
-      "personal_reminder_state_get",
-      "personal_reminder_propose",
-      "personal_reminder_commit",
-      "personal_reminder_change_propose",
-      "personal_reminder_change_commit",
-      "personal_reminder_cancel_propose",
-      "personal_reminder_cancel_commit"
-    ]
-  },
-  "toolMetadata": {
-    "personal_weather_get_brief": {
-      "optional": true,
-      "replaySafe": true
-    },
-    "personal_profile_state_get": {
-      "optional": true
-    },
-    "personal_profile_change_propose": {
-      "optional": true
-    },
-    "personal_profile_change_commit": {
-      "optional": true
-    },
-    "personal_planning_state_get": {
-      "optional": true
-    },
-    "personal_planning_change_propose": {
-      "optional": true
-    },
-    "personal_planning_change_commit": {
-      "optional": true
-    },
-    "personal_reminder_state_get": {
-      "optional": true
-    },
-    "personal_reminder_propose": {
-      "optional": true
-    },
-    "personal_reminder_commit": {
-      "optional": true
-    },
-    "personal_reminder_change_propose": {
-      "optional": true
-    },
-    "personal_reminder_change_commit": {
-      "optional": true
-    },
-    "personal_reminder_cancel_propose": {
-      "optional": true
-    },
-    "personal_reminder_cancel_commit": {
-      "optional": true
     }
   }
 }

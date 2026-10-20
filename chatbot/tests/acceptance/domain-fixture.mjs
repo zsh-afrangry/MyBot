@@ -4,15 +4,19 @@ import { DatabaseSync } from "node:sqlite";
 /** Domain-specific fixture adapter. Nothing in production imports this file. */
 export async function createDomainFixture(driver) {
   const core = await import("../../packages/confirmation-core/dist/index.js");
-  const { WeatherStore } = await import("../../plugins/personal-weather/dist/store.js");
-  const { ReminderStore } = await import("../../plugins/personal-weather/dist/reminder-store.js");
-  const planning = await import("../../plugins/personal-weather/dist/planning.js");
-  const profile = await import("../../plugins/personal-weather/dist/profile.js");
-  const reminders = await import("../../plugins/personal-weather/dist/reminders.js");
-  const { default: toolEntry } = await import("../../plugins/personal-weather/dist/index.js");
+  const { WeatherStore } = await import("../../packages/personal-domains/dist/store.js");
+  const { ReminderStore } = await import("../../packages/personal-domains/dist/reminder-store.js");
+  const planning = await import("../../packages/personal-domains/dist/planning.js");
+  const profile = await import("../../packages/personal-domains/dist/profile.js");
+  const reminders = await import("../../packages/personal-domains/dist/reminders.js");
   const factories = new Map();
-  toolEntry.register({ registrationMode: "discovery", pluginConfig: {},
-    registerTool(factory, options) { factories.set(options.name, factory); } });
+  for (const name of ['personal-weather', 'personal-profile', 'personal-planning', 'personal-reminders']) {
+    const {default: toolEntry} = await import(`../../plugins/${name}/index.js`);
+    toolEntry.register({ registrationMode: "discovery", pluginConfig: {},
+      registerTool(factory, options) {
+        factories.set(options.name, context => factory.create(context));
+      } });
+  }
   const scope = core.scopeFromToolContext(driver.toolContext);
   const weatherDirectory = join(driver.directory, "state/personal-weather");
   const reminderDirectory = join(driver.directory, "state/personal-reminders");

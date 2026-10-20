@@ -2,7 +2,7 @@
 import {readFileSync, statSync, mkdirSync, appendFileSync, existsSync, renameSync} from 'node:fs';
 import {isAbsolute, join} from 'node:path';
 import {createHash} from 'node:crypto';
-import {normalizeTraceEvent} from '../../../scripts/fusion/lib/trace-events.mjs';
+import {normalizeTraceEvent} from '../observability/index.js';
 
 export class BridgeError extends Error {
   constructor(code, message, status = 0) {super(message); this.code = code; this.status = status;}

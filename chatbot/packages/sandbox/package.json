@@ -1,0 +1,6 @@
+{
+  "name": "@kurumi/sandbox",
+  "private": true,
+  "type": "module",
+  "exports": "./index.js"
+}

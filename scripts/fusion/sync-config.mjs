@@ -30,6 +30,9 @@ const LIVE = path.join(STATE_DIR, 'openclaw.json');
 const argv = new Set(process.argv.slice(2));
 const APPLY = argv.has('--apply');
 const DIFF = argv.has('--diff') || APPLY;
+const deferredPlugins = process.argv.slice(2).filter(value => value.startsWith('--defer-plugin='))
+  .map(value => value.slice('--defer-plugin='.length));
+if (deferredPlugins.length && !APPLY && !argv.has('--diff')) throw Error('--defer-plugin requires --apply or --diff; normal --check always checks full intent');
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const show = (v) => JSON.stringify(v);
@@ -77,6 +80,25 @@ function merge(canonical, live, managed) {
     else out[k] = isObj(cv) && isObj(live[k]) ? merge(cv, live[k], managed) : structuredClone(cv);
   }
   return out;
+}
+
+/** Explicit deployment deferral for a plugin being developed in parallel.
+ * Only an existing, still-enabled plugin entry may keep its complete live
+ * subtree. Inclusion/path changes cannot be hidden by this option. The normal
+ * check still compares full repository intent and will report any deferral.
+ */
+function deferPluginEntries(canonical, live, ids) {
+  const result = structuredClone(canonical);
+  for (const id of ids) {
+    if (!/^[a-z][a-z0-9-]+$/.test(id) || !canonical.plugins?.entries?.[id] || !live.plugins?.entries?.[id]) throw Error(`Cannot defer unknown plugin: ${id}`);
+    const included = cfg => cfg.plugins.allow?.includes(id) === true;
+    const locations = cfg => (cfg.plugins.load?.paths ?? []).filter(p => p.endsWith('/' + id)).sort();
+    if (!included(canonical) || !included(live)
+      || canonical.plugins.entries[id].enabled !== true || live.plugins.entries[id].enabled !== true
+      || JSON.stringify(locations(canonical)) !== JSON.stringify(locations(live))) throw Error(`Cannot defer plugin activation/path changes: ${id}`);
+    result.plugins.entries[id] = structuredClone(live.plugins.entries[id]);
+  }
+  return result;
 }
 
 /** Detect keys that live only in the runtime, splitting them into drift vs host-maintained. */
@@ -157,6 +179,21 @@ if (argv.has('--selftest')) {
   const hostKept = JSON.stringify(merged.hostCache) === JSON.stringify({ seen: 1 });
   if (!hostKept) bad++;
   console.log(`  ${hostKept ? 'PASS' : 'FAIL'}  host-maintained key preserved`);
+  const pluginConfig = {plugins: {allow: ['sample'], load: {paths: ['/repo/sample']}, entries: {sample: {enabled: true, config: {revision: 1}}}}};
+  const desired = structuredClone(pluginConfig); desired.plugins.entries.sample.config.revision = 2;
+  const deferred = deferPluginEntries(desired, pluginConfig, ['sample']);
+  const deferKept = deferred.plugins.entries.sample.config.revision === 1 && desired.plugins.entries.sample.config.revision === 2;
+  if (!deferKept) bad++;
+  console.log(`  ${deferKept ? 'PASS' : 'FAIL'}  explicit plugin deferral keeps live entry without modifying intent`);
+  for (const variant of ['unknown', 'disabled', 'path', 'unlisted']) {
+    const cfg = structuredClone(desired), fixtureLive = structuredClone(pluginConfig); let rejected = false;
+    if (variant === 'disabled') cfg.plugins.entries.sample.enabled = false;
+    if (variant === 'path') cfg.plugins.load.paths = ['/new/sample'];
+    if (variant === 'unlisted') { cfg.plugins.allow = []; fixtureLive.plugins.allow = []; }
+    try { deferPluginEntries(cfg, fixtureLive, [variant === 'unknown' ? 'missing' : 'sample']); } catch { rejected = true; }
+    if (!rejected) bad++;
+    console.log(`  ${rejected ? 'PASS' : 'FAIL'}  plugin deferral rejects ${variant}`);
+  }
   console.log(bad ? `\nselftest FAILED (${bad})` : '\nselftest passed');
   process.exit(bad ? 1 : 0);
 }
@@ -170,11 +207,13 @@ if (!Array.isArray(managedList) || !managedList.length) {
   throw new Error(`${CANONICAL} must declare "_managed": [<top-level keys the repository owns>]`);
 }
 const managed = new Set(managedList);
-const canonical = structuredClone(rawCanonical);
-delete canonical._managed;
+const intent = structuredClone(rawCanonical);
+delete intent._managed;
 
 // Report unmanaged keys actually present so the split stays visible rather than implicit.
 const live = JSON.parse(fs.readFileSync(LIVE, 'utf8'));
+const canonical = deferPluginEntries(intent, live, deferredPlugins);
+for (const id of deferredPlugins) console.log(`  DEFERRED plugins.entries.${id}: keep complete live entry; normal --check still compares full repo intent`);
 const hostMaintained = Object.keys(live).filter((k) => !managed.has(k));
 
 const { changed, onlyRuntime } = compare(canonical, live, '', managed, false);
@@ -192,13 +231,16 @@ if (DIFF) {
     console.log(`  DELETED  ${c.path}`);
     console.log(`            runtime : ${show(c.got)}   (removed from repo -> --apply removes it)`);
   }
-  for (const p of onlyRuntime) console.log(`  RUNTIME-ONLY ${p}  (preserved)`);
+  for (const p of onlyRuntime.filter(p => !deletions.some(d => p === d.path || p.startsWith(d.path + '.'))))
+    console.log(`  RUNTIME-ONLY ${p}  (preserved)`);
   console.log(`\n  repo-managed top-level keys : ${[...managed].join(', ')}`);
   console.log(`  host-maintained keys kept   : ${hostMaintained.length ? hostMaintained.join(', ') : '(none)'}`);
 }
 
 if (!changed.length && !deletions.length) {
-  console.log(`config in sync with ${CANONICAL} (${managed.size} managed key(s), ${hostMaintained.length} host-maintained kept)`);
+  console.log(deferredPlugins.length
+    ? `deployment subset in sync; ${deferredPlugins.join(', ')} deferred; normal --check still required for full intent`
+    : `config in sync with ${CANONICAL} (${managed.size} managed key(s), ${hostMaintained.length} host-maintained kept)`);
   process.exit(0);
 }
 
@@ -215,6 +257,6 @@ fs.chmodSync(backup, 0o600);
 fs.writeFileSync(LIVE, JSON.stringify(merge(canonical, live, managed), null, 2) + '\n', { mode: 0o600 });
 console.log(`applied: ${changed.length} changed, ${deletions.length} removed`);
 console.log(`  backup          : ${backup}`);
-console.log(`  managed keys    : ${managed.size} replaced from repo`);
+console.log(`  managed keys    : ${managed.size} replaced from repo${deferredPlugins.length ? '; explicitly deferred plugin entries kept from live' : ''}`);
 console.log(`  host-maintained : ${hostMaintained.length} key(s) kept as-is`);
 console.log('  state untouched : state/, channel/, agents/, workspace/, media/ were not opened');

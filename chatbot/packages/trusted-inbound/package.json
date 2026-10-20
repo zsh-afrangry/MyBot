@@ -1,0 +1,6 @@
+{
+  "name": "@kurumi/trusted-inbound",
+  "private": true,
+  "type": "module",
+  "exports": "./index.js"
+}

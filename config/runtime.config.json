@@ -209,7 +209,10 @@
       "kurumi-research",
       "kurumi-mail",
       "kurumi-papers",
-      "kurumi-knowledgemap"
+      "kurumi-knowledgemap",
+      "personal-profile",
+      "personal-planning",
+      "personal-reminders"
     ],
     "load": {
       "paths": [
@@ -223,7 +226,10 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-research",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-mail",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-papers",
-        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-knowledgemap"
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-knowledgemap",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-profile",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-planning",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders"
       ]
     },
     "entries": {
@@ -248,8 +254,6 @@
             "provider": "default",
             "id": "QWEATHER_API_KEY"
           },
-          "reminderBackend": "native-service",
-          "reminderRunnerRoot": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
           "scheduledOwnerId": "365999865",
           "weatherBackend": "knowledgemap",
           "bridgeBaseUrl": "http://127.0.0.1:3086",
@@ -275,7 +279,10 @@
         }
       },
       "kurumi-research": {
-        "enabled": true
+        "enabled": true,
+        "config": {
+          "cacheRoot": "/home/afrangry/.openclaw-fusion/research-cache"
+        }
       },
       "kurumi-mail": {
         "enabled": true,
@@ -308,6 +315,31 @@
         "config": {
           "baseUrl": "http://127.0.0.1:3086",
           "tokenFile": "/home/afrangry/.config/knowledgemap/assistant-token"
+        }
+      },
+      "personal-profile": {
+        "enabled": true,
+        "config": {
+          "apiHost": "${QWEATHER_API_HOST}",
+          "apiKey": {
+            "source": "env",
+            "provider": "default",
+            "id": "QWEATHER_API_KEY"
+          },
+          "weatherBackend": "knowledgemap",
+          "bridgeBaseUrl": "http://127.0.0.1:3086",
+          "bridgeTokenFile": "/home/afrangry/.config/knowledgemap/assistant-token"
+        }
+      },
+      "personal-planning": {
+        "enabled": true,
+        "config": {}
+      },
+      "personal-reminders": {
+        "enabled": true,
+        "config": {
+          "reminderBackend": "native-service",
+          "reminderRunnerRoot": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders"
         }
       }
     },

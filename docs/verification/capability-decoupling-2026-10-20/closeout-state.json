@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-19T17:08:40.371208+00:00",
+  "boundary": "Read-only closeout metadata; no model/API/QQ messages, service restarts, database changes, Git stage/commit or remote writes.",
+  "head": "9c88003136216d082417290676027b01a40aab69",
+  "cachedOriginAhead": 28,
+  "remoteRefreshed": false,
+  "worktreeDirty": true,
+  "service": {
+    "ActiveState": "active",
+    "ActiveEnterTimestamp": "Tue 2026-10-20 00:51:20 CST"
+  },
+  "loadedSourceFingerprints": {
+    "total": 15,
+    "mismatches": []
+  },
+  "checks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "evidence": "final-health.json"
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "evidence": "final-dependencies.txt"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs --check",
+      "exitCode": 0,
+      "evidence": "final-config-check.txt"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs --check",
+      "exitCode": 0,
+      "evidence": "final-persona-check.txt"
+    }
+  ],
+  "note": "Checks above were run at closeout; their actual output is indexed here. This does not replace document 25 P2 evidence or the separate isolated Gateway registration test."
+}

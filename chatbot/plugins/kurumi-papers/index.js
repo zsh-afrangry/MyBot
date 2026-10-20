@@ -3,7 +3,7 @@ import {ownerAuthorized} from '../kurumi-qq/src/config.js';
 import {sendDocument} from '../kurumi-qq/src/files.js';
 import {sendPayload} from '../kurumi-qq/src/transport.js';
 import {PaperService} from './service.js';
-import {createTraceSink, correlationFrom} from '../../../scripts/fusion/lib/trace-events.mjs';
+import {createTraceSink, correlationFrom} from '../../packages/observability/index.js';
 
 const json = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
 export function createPaperPlugin({serviceFactory = (config, deps) => new PaperService(config, deps)} = {}) {

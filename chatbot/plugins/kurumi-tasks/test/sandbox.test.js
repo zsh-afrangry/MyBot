@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
-import {runSandbox} from '../sandbox.js';
+import {runSandbox} from '../../../packages/sandbox/index.js';
 test('project code cannot read host-private files, write fixtures or reach host loopback',async()=>{
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'project-isolation-')),root=path.join(dir,'repo');fs.mkdirSync(root);const secret=path.join(dir,'private-marker'),fixture=path.join(dir,'fixture');fs.writeFileSync(secret,'outside-marker');fs.writeFileSync(fixture,'immutable');
  const server=http.createServer((req,res)=>res.end('host'));await new Promise(r=>server.listen(0,'127.0.0.1',r));

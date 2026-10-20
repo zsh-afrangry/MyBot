@@ -1,0 +1,774 @@
+
+## 离线 (73)
+- chatbot/packages/confirmation-core/src/confirmation.test.ts
+    用途: 确认核心：提案校验、TTL、幂等与 grant 消费
+    副作用: 只读
+    依据: offline
+- chatbot/packages/confirmation-core/src/public-id.test.ts
+    用途: 公开 ID 脱敏与冲突规避
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/clarification-gate.test.ts
+    用途: 地点歧义澄清闸门
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/config.test.ts
+    用途: 插件配置解析与默认值
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/confirmation-gate.test.ts
+    用途: 领域确认闸门
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/controlled-replies.test.ts
+    用途: 受控回复与原文交付
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/formatter.test.ts
+    用途: 天气输出格式与地点保真
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/index.test.ts
+    用途: 天气插件工具注册与装配
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/native-reminder-scheduler.test.ts
+    用途: 原生提醒调度适配
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/parsers.test.ts
+    用途: 自然语言时间与地点解析
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/planning.test.ts
+    用途: 行程提案与事务提交
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/profile.test.ts
+    用途: Profile 当前所在地读写
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/qweather-client.test.ts
+    用途: QWeather 客户端请求构造与拒绝规则
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/reminder-gateway.test.ts
+    用途: 提醒与 Gateway 对账
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/reminder-reconciler-service.test.ts
+    用途: 提醒 reconciler 服务循环
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/reminder-reconciler.test.ts
+    用途: 提醒 reconciler 判定与退避
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/reminders.test.ts
+    用途: 提醒提案、修改与取消
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/store.test.ts
+    用途: 领域 SQLite 存储与迁移
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/weather-location.test.ts
+    用途: 天气地点解析与叶子名保留
+    副作用: 只读
+    依据: offline
+- chatbot/packages/personal-domains/src/weather-service.test.ts
+    用途: 天气服务聚合与失败语义
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-mail/test/adapters.test.js
+    用途: 邮件适配器：宿主入站路由到达被选中的 store、工具消费注入实现、替换策略不能授予身份、未知 id 明确失败
+    副作用: 写临时测试目录、只读
+    依据: offline
+- chatbot/plugins/kurumi-mail/test/gate.test.js
+    用途: 邮件端到端负向核心：确认前 mock SMTP 收到 0 封；另含完整往返与失败路径
+    副作用: 写临时测试目录、只读
+    依据: offline
+- chatbot/plugins/kurumi-mail/test/mime.test.js
+    用途: 邮件 MIME：RFC 2047 主题、RFC 2231 附件名、折行、注入防护、信封发件人
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-mail/test/policy.test.js
+    用途: 邮件输入策略：单收件人字符串与 body 别名的真实失败回归、白名单、参数规整
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-mail/test/smtp.test.js
+    用途: SMTP 协议：仅连本地 mock 服务器，覆盖认证失败、收件人拒绝、超时与 dot-stuffing
+    副作用: 写临时测试目录、只读
+    依据: offline
+- chatbot/plugins/kurumi-mail/test/store.test.js
+    用途: 邮件草稿与确认闸门：提案、授权、幂等、过期、跨会话与参数校验
+    副作用: 写临时测试目录、只读
+    依据: offline
+- chatbot/plugins/kurumi-mail/test/tool.test.js
+    用途: 邮件工具层：以生产失败参数驱动真实注册工具，含非主人拒绝与凭据不泄露
+    副作用: 写临时测试目录、只读
+    依据: offline
+- chatbot/plugins/kurumi-memory/test/memory.test.js
+    用途: 长期记忆读写、版本与损坏拒绝
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-qq/test/channel.test.js
+    用途: QQ 频道分段、配额、账本与幂等
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-qq/test/presentation.test.js
+    用途: QQ 呈现与分段节奏
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-qq/test/stickers.test.js
+    用途: 表情目录与发送边界
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-research/test/papers.test.js
+    用途: 论文来源校验与拒绝规则
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-tasks/test/git.test.js
+    用途: 副本内受限 Git 提交范围
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-tasks/test/sandbox.test.js
+    用途: Bubblewrap 隔离边界与进程树终止
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/kurumi-tasks/test/task.test.js
+    用途: 后台任务工具的所有权与绑定
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/personal-confirmation/src/inbound.test.ts
+    用途: 确认入站插件：身份绑定与重放拒绝
+    副作用: 只读
+    依据: offline
+- chatbot/plugins/personal-confirmation/src/index.test.ts
+    用途: 确认入站插件装配与工具暴露
+    副作用: 只读
+    依据: offline
+- chatbot/tests/acceptance/call-analysis.test.mjs
+    用途: 旧调用分析离线断言（读取两份输入样本）
+    副作用: 只读
+    依据: offline
+- chatbot/tests/access-control/isolation.test.mjs
+    用途: 两身份实际目录/路由/任务/投递/撤权、旧账本与隔离人格；本地模拟OneBot/翻译器
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/access-control/log-query.test.mjs
+    用途: 授权审计的统一查询、run关联、拒绝原因展示与私密文件模式
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/access-control/policy.test.mjs
+    用途: 权限/schema/完整工具映射、可信身份与后台委托、配置派生及默认拒绝
+    副作用: 只读
+    依据: header
+- chatbot/tests/backend-boundaries/capabilities.test.mjs
+    用途: 共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/backend-boundaries/confirmation.test.mjs
+    用途: 确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合
+    副作用: 只读
+    依据: header
+- chatbot/tests/backend-boundaries/domain.test.mjs
+    用途: 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs
+    用途: 真实OpenClaw服务管理器验证论文异步停止/中止/不重放、邮件注销/重启/失败清理；无生产重启或外发
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/domain-adapters/integration.test.mjs
+    用途: 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/domain-adapters/registry.test.mjs
+    用途: 领域适配器注册/注销、启动选择、同步契约和失败拒绝
+    副作用: 只读
+    依据: header
+- chatbot/tests/knowledgemap/bills.test.mjs
+    用途: 账单声明一致、真实钩子runId映射、当前请求隔离和消息幂等键
+    副作用: 只读
+    依据: header
+- chatbot/tests/knowledgemap/bridge.test.mjs
+    用途: 固定API客户端、可信请求、参数映射、共享播报与切换防旧写
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/knowledgemap/http.test.mjs
+    用途: 真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/concurrency_test.py
+    用途: 网络4/6并发上限与额外请求排队、乱序回执/不可变快照、预算、终态取消、共享冷却/频率与并发原子写入；注入HTTP/临时目录
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/credentials.test.mjs
+    用途: 厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/documents.test.mjs
+    用途: PDF 受管存储、实际解析、QQ 文件身份/来源/配额和防重复边界
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/engine_test.py
+    用途: 锁定排版引擎产物/公式/批次接口、重试仅缓存有效结果；独立HOME/cache
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/file-ingress.test.mjs
+    用途: 附件类型/下载/校验事实、纯失败零模型分流、真实发送账本/未知回执、混合媒体与身份隔离
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/jobs.test.mjs
+    用途: 翻译high/显式MAX、所选产物贯通、任务幂等/取消/重启与独立投递状态
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/log-query.test.mjs
+    用途: 论文事件接入只读统一查询与可信消息/任务关联
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/mail.test.mjs
+    用途: 受管附件快照、确认、完整性、大小限制及本地 TLS SMTP
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/reliability_test.py
+    用途: 批次重试0–4次、冷却恢复/单探测/预算、本机HTTP正文空闲与总期限独立、实际取消/切渠道及安全诊断；无付费API或生产状态
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/responses_test.py
+    用途: 原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/source-boundary.test.mjs
+    用途: 下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/papers/worker.test.mjs
+    用途: 实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/persona/memory.test.mjs
+    用途: 文档25 P2记忆迁移、SQLite版本/并发、来源校验、摘要TTL、遗忘屏障、成员拒绝与可插拔存储
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/persona/projection.test.mjs
+    用途: 文档25人格/关系按身份投影、私密文件保留、非法配置/路径拒绝和旧配置兼容
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/reminder-list/intake.test.mjs
+    用途: 自然录入授权、实际会话 UUID、超时/重置/换题与跨提醒领域拒绝
+    副作用: 只读
+    依据: header
+- chatbot/tests/reminder-list/log-query.test.mjs
+    用途: 提醒列表审计接入日志查询，精确消息/slot 关联
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/reminder-list/plugin.test.mjs
+    用途: 提醒列表 v2 工具、可信原文钩子和过期上下文拒绝
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/reminder-list/scheduler.test.mjs
+    用途: 提醒列表原生 Cron 固定声明、对账、并发和失败重试
+    副作用: 写临时测试目录
+    依据: header
+- chatbot/tests/reminder-list/store.test.mjs
+    用途: 提醒列表领域状态、时间、授权、幂等、防重与固定 runner
+    副作用: 写临时测试目录
+    依据: header
+- scripts/fusion/fixtures/test_stats.py
+    用途: 固定验收 fixture：后台代码任务的 mean/moving_average 断言
+    副作用: 只读
+    依据: code
+- scripts/fusion/test/log-query.test.mjs
+    用途: 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏
+    副作用: 只读
+    依据: offline
+- scripts/fusion/test/recovery.test.mjs
+    用途: 备份/恢复工具单元与集成回归
+    副作用: 只读
+    依据: offline
+- scripts/fusion/test/register-project.test.mjs
+    用途: 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝）
+    副作用: 只读
+    依据: offline
+
+## 只读运维 (11)
+- chatbot/scripts/access-control.mjs
+    用途: 严格校验统一身份权限并输出JSON/TSV矩阵，不改运行名单
+    副作用: 只读
+    依据: header
+- scripts/fusion/evidence-coverage.mjs
+    用途: 校验证据目录分类覆盖，未分类即非零退出
+    副作用: 只读
+    依据: header
+- scripts/fusion/evidence-index.mjs
+    用途: 生成本脚本与证据索引
+    副作用: 只读
+    依据: header — boundary: string. This generator parses it // and FAILS when the table contradicts the declaration — e.g. a script that declares /
+- scripts/fusion/health.mjs
+    用途: 服务、QQ、频道、Cron、数据库健康
+    副作用: 只读
+    依据: header
+- scripts/fusion/inspect-receipts.mjs
+    用途: 查看验收回执
+    副作用: 只读
+    依据: code
+- scripts/fusion/log-query.mjs
+    用途: 跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询
+    副作用: 只读
+    依据: header
+- scripts/fusion/probe-final.mjs
+    用途: health.mjs 的兼容入口
+    副作用: 只读
+    依据: header
+- scripts/fusion/stack-summary.mjs
+    用途: 启停输出压缩显示
+    副作用: 只读
+    依据: header
+- scripts/fusion/sync-config.mjs
+    用途: 默认只报告配置漂移；--apply 才写 openclaw.json
+    副作用: 写运行状态、只读
+    依据: header
+- scripts/fusion/sync-persona.mjs
+    用途: 默认只报告人格漂移；--apply 写各已登记身份的四份受管文件，不复制记忆/历史
+    副作用: 写运行状态、只读
+    依据: header
+- scripts/fusion/verify-dependencies.mjs
+    用途: 依赖自持、无归档树逃逸、锁文件一致
+    副作用: 只读
+    依据: header
+
+## 领域运维 (3)
+- chatbot/scripts/backup-knowledgemap-code.mjs
+    用途: 只读两个主工作树，保存bundle/index/工作树包到新私密备份目录，不含数据库
+    副作用: 写运行状态（需授权）
+    依据: header — boundary: Code/index only, excludes ignored files, dependencies, credentials and databases. Not a cross-system quiesced snapshot.
+- chatbot/scripts/import-paper-credentials.mjs
+    用途: 显式导入指定 GPT/DeepSeek 凭据，原子合并到私密 0600 文件；不输出密钥
+    副作用: 写运行状态（需授权）
+    依据: header
+- chatbot/scripts/setup-paper-translation.sh
+    用途: 按锁文件安装隔离 Python 翻译环境并检查实际导入；不调模型或外发
+    副作用: 真实外部API、写运行状态（需授权）
+    依据: header
+
+## 构建 (1)
+- chatbot/scripts/build-personal-plugins.mjs
+    用途: 构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作
+    副作用: 写仓库内文件
+    依据: header
+
+## 迁移工具 (12)
+- chatbot/scripts/import-knowledgemap-list.mjs
+    用途: 默认预览旧列表导入；--apply写共享业务，--activate冻结旧项并启用runner切换标记
+    副作用: 真实外部API、写运行状态（需授权）
+    依据: header
+- chatbot/scripts/memory-migrate.mjs
+    用途: 文档25显式预览或迁移主人旧 MEMORY.md 到私密连续性 SQLite；--apply写私密备份与记忆状态，不调用模型/QQ/邮件
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-deepseek-persona.mjs
+    用途: 一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口
+    副作用: 真实模型、写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-domains.mjs
+    用途: 启用主人绑定领域插件
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-fulltext-research.mjs
+    用途: 研究会话、笔记工作区与来源缓存
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-interaction.mjs
+    用途: 复制表情目录并设定迁移/每日发送预算
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-persona-memory.mjs
+    用途: 只导入稳定的主人字段进私有记忆
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-production.mjs
+    用途: 关闭仅验收能力，保留历史；需先审阅活动任务
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-projects.mjs
+    用途: 一次性首次引导：只在 id 不存在时追加登记并写运行 openclaw.json
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-research.mjs
+    用途: 配置检索 provider 与抓取路径
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/configure-worker.mjs
+    用途: 显式配置隔离代码 worker
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/prepare.mjs
+    用途: 首次引导隔离运行目录，拒绝覆盖已写内容
+    副作用: 写运行状态（需授权）
+    依据: header
+
+## 领域运行 (1)
+- chatbot/scripts/reminder-list.mjs
+    用途: 固定提醒列表 Cron 程序：按切换来源查询、slot 防重和汇总输出，OpenClaw 投递本人
+    副作用: 写运行状态（需授权）
+    依据: header
+
+## 库 (18)
+- chatbot/tests/acceptance/call-analysis.mjs
+    用途: 旧验收调用观察工具（只观察，不证明写入）
+    副作用: 只读
+    依据: header
+- chatbot/tests/acceptance/domain-fixture.mjs
+    用途: 旧验收领域夹具与工具定义
+    副作用: 只读
+    依据: code
+- chatbot/tests/acceptance/host-driver.mjs
+    用途: 旧 harness Host 驱动，只开测试状态目录
+    副作用: 写临时测试目录、只读
+    依据: code
+- chatbot/tests/acceptance/model-driver.mjs
+    用途: 旧 harness 模型驱动（构造模型客户端，读取遗留 AGENTS）
+    副作用: 真实模型
+    依据: code
+- chatbot/tests/acceptance/retrieval-config.mjs
+    用途: 旧验收检索输出预算配置
+    副作用: 只读
+    依据: header
+- chatbot/tests/access-control/fixtures.mjs
+    用途: 构造合成QQ身份/显式权限与可信上下文，不导入生产名单
+    副作用: 只读
+    依据: header
+- chatbot/tests/papers/fixtures.mjs
+    用途: 生成最小有效 PDF 测试字节，不读生产文件
+    副作用: 只读
+    依据: header
+- chatbot/tests/papers/mime-parse.py
+    用途: 标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin
+    副作用: 只读
+    依据: header
+- chatbot/tests/reminder-list/dialogue-cases.mjs
+    用途: 用户七句验收样例与字段期望（纯数据，无生产导入）
+    副作用: 只读
+    依据: header
+- chatbot/tests/reminder-list/production-guard.mjs
+    用途: 只读比较生产列表与一次性提案/提醒逻辑数据，不输出私有记录
+    副作用: 只读
+    依据: header
+- scripts/fusion/lib/backup-service.mjs
+    用途: 备份期间停写并恢复服务
+    副作用: 重启或停服务
+    依据: header
+- scripts/fusion/lib/fresh-id.mjs
+    用途: 生成不重复的 message id
+    副作用: 只读
+    依据: header
+- scripts/fusion/lib/legacy-source.mjs
+    用途: 解析旧 OpenClaw 源树路径（仅迁移脚本用）
+    副作用: 只读
+    依据: header
+- scripts/fusion/lib/package-manifests.mjs
+    用途: 只读发现仓库自有锁文件包及构建声明，供依赖检查与隔离恢复共同使用
+    副作用: 只读
+    依据: header
+- scripts/fusion/lib/plugins.mjs
+    用途: 第三方插件声明（纯数据，导入无 I/O）
+    副作用: 只读
+    依据: header
+- scripts/fusion/lib/recovery-isolation.mjs
+    用途: 隔离恢复的路径、凭据与共享业务禁用改写，仅写恢复副本
+    副作用: 写临时测试目录
+    依据: header
+- scripts/fusion/lib/working-tree-backup.mjs
+    用途: 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar
+    副作用: 写运行状态
+    依据: code
+- scripts/fusion/rpc.mjs
+    用途: Gateway RPC 客户端库（被其他脚本导入）
+    副作用: 只读
+    依据: code
+
+## 遗留验收 (12)
+- chatbot/tests/acceptance/probe-profile-geo.py
+    用途: GeoAPI provider 探测
+    副作用: 真实外部API、写仓库内文件（需授权）
+    依据: code
+- chatbot/tests/acceptance/run-fallback-failover.mjs
+    用途: 主模型指向必然失败地址、fallback 用真实 deepseek
+    副作用: 真实模型、写临时测试目录（需授权）
+    依据: header
+- chatbot/tests/acceptance/run-model.mjs
+    用途: 真实主模型 + 有界工具循环；合成 QQ 身份，无 QQ 传输
+    副作用: 真实模型、写临时测试目录（需授权）
+    依据: boundary — boundary: Real configured primary model via provider SDK and bounded test tool loop; real Host dispatcher, confirmation plugin, to
+- chatbot/tests/acceptance/run-profile-geo.mjs
+    用途: 真实 GeoAPI + 隔离 Profile 库；无生产确认、无 QQ 投递
+    副作用: 真实外部API、写临时测试目录（需授权）
+    依据: header
+- chatbot/tests/acceptance/run-real-cron.mjs
+    用途: 隔离 Gateway 的真实 Cron 存储与确认钩子；确定性认知，无模型、无 QQ 网络
+    副作用: 建/改任务或提醒、写临时测试目录（需授权）
+    依据: boundary — boundary: Real isolated Gateway RPC/Cron storage, actual domain transactions and confirmation hook; deterministic cognition; no mo
+- chatbot/tests/acceptance/run-reminder-expiry.mjs
+    用途: 真实主模型有界循环 + 提醒提案工具 + 隔离库；非生产 Agent/QQ 验收
+    副作用: 真实模型、建/改任务或提醒、写临时测试目录（需授权）
+    依据: boundary — boundary: Configured primary model in bounded test loop; synthetic QQ input, real reminder proposal tool and isolated SQLite. Not
+- chatbot/tests/acceptance/run-retrieval-host.mjs
+    用途: 全新 Host 状态 + 原生工具 + 真实 API；无 QQ 发送、不碰生产库
+    副作用: 真实模型、真实外部API、写临时测试目录（需授权）
+    依据: boundary — boundary: Fresh Host state, synthetic QQ owner, native Host tools, real API calls; no QQ send, no production DB, no running plugin
+- chatbot/tests/acceptance/run-retrieval-smoke.mjs
+    用途: 检索注册冒烟：不启动 Gateway/频道，凭据为合成值
+    副作用: 真实外部API、写临时测试目录（需授权）
+    依据: header
+- chatbot/tests/acceptance/run-retrieval-t2.mjs
+    用途: 真实 Tavily API（生产凭据）；无模型、无 Host、无 QQ 投递、不写生产库
+    副作用: 真实外部API（需授权）
+    依据: boundary — boundary: Real Tavily API via the installed plugin client with the production credential. No model, no Host, no QQ delivery, no pr
+- chatbot/tests/acceptance/run-retrieval-t3.mjs
+    用途: 真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置
+    副作用: 真实模型、真实外部API（需授权）
+    依据: boundary — boundary: Real configured model, real Tavily API, real HTTP fetch. No Host, no QQ delivery, no production database or config chang
+- chatbot/tests/acceptance/run.mjs
+    用途: 旧 harness 总入口：真实 Host 调度 + 合成 QQ 输入 + 确定性认知 + 假调度
+    副作用: 写仓库内文件、写临时测试目录（需授权）
+    依据: boundary — boundary: Real Host dispatcher, confirmation plugin, domain services and SQLite; synthetic QQ input, deterministic cognition, fake
+- chatbot/tests/acceptance/verify-restart.mjs
+    用途: 在新进程里重开测试目录并验证幂等；不重启任何服务
+    副作用: 写临时测试目录、只读
+    依据: header
+
+## 验收 (42)
+- chatbot/tests/access-control/acceptance-host.mjs
+    用途: 真实隔离OpenClaw、本地确定性模型与模拟OneBot/翻译器：双身份、强制策略及后台交接；无真实API/QQ/邮件
+    副作用: 重启或停服务、写仓库内文件、写临时测试目录
+    依据: boundary — boundary: Real isolated OpenClaw; local deterministic model/OneBot and fixture translator; temporary state only. No QQ network, no
+- chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs
+    用途: 真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入
+    副作用: 重启或停服务、写仓库内文件、写临时测试目录
+    依据: boundary — boundary: Real isolated Gateway and plugin/tool RPC catalogs. No model provider, external API, QQ network or production write.
+- chatbot/tests/knowledgemap/acceptance-bills-live.mjs
+    用途: 第二轮真实模型/生产API/MySQL/网页增改删查、歧义及天气runId；合成入站不发QQ
+    副作用: 真实模型、真实外部API、重启或停服务、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Real model/production OpenClaw/API/MySQL/browser/weather; synthetic owner inbound captured without QQ delivery; exact te
+- chatbot/tests/knowledgemap/acceptance-host.mjs
+    用途: 真实模型与隔离OpenClaw/原生调度、临时HTTP业务库、模拟OneBot
+    副作用: 真实模型、重启或停服务、写仓库内文件、写临时测试目录（需授权）
+    依据: header — boundary: Real model and real OpenClaw inbound/v2 tool catalog/native Cron + real isolated API/SQLite; mock OneBot, no real QQ/pro
+- chatbot/tests/knowledgemap/acceptance-live.mjs
+    用途: 真实模型/生产API/MySQL/网页与一次本人QQ播报；短暂测试入口、精确测试行清理并保留回执
+    副作用: 真实模型、真实外部API、真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Real configured model and production OpenClaw/API/MySQL + actual website/browser; synthetic owner inbound, one native QQ
+- chatbot/tests/knowledgemap/acceptance-model.mjs
+    用途: 真实模型、实际v2工具及临时HTTP/SQLite，无QQ/生产写入
+    副作用: 真实模型、写仓库内文件、写临时测试目录（需授权）
+    依据: header — boundary: Real configured model + actual v2 factories and synthetic trusted owner hooks; real isolated FastAPI HTTP/SQLite; no ful
+- chatbot/tests/knowledgemap/recovery.mjs
+    用途: 今晚Git工作树和SQLite备份的临时目录恢复，不启动旧服务
+    副作用: 写临时测试目录（需授权）
+    依据: header
+- chatbot/tests/papers/acceptance-api.py
+    用途: 合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发
+    副作用: 真实模型、真实外部API、写仓库内文件（需授权）
+    依据: header
+- chatbot/tests/papers/acceptance-download.mjs
+    用途: 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录
+    副作用: 真实外部API、写运行状态、写仓库内文件（需授权）
+    依据: boundary — boundary: Actual public arXiv PDF download and networkless PDF inspection; private acceptance catalog only. No model/QQ/mail call.
+- chatbot/tests/papers/acceptance-file-ingress.mjs
+    用途: 真实隔离OpenClaw/聊天模型、附件入站与双身份论文编排；合成下载/翻译/OneBot，无生产写入或真实外发
+    副作用: 真实模型、重启或停服务、写仓库内文件、写临时测试目录（需授权）
+    依据: boundary — boundary: Real isolated OpenClaw and configured chat model; actual attachment handler, PDF catalog, tools and job service. Synthet
+- chatbot/tests/papers/acceptance-host.mjs
+    用途: 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件
+    副作用: 真实模型、重启或停服务、写仓库内文件、写临时测试目录（需授权）
+    依据: boundary — boundary: Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated
+- chatbot/tests/papers/acceptance-worker.mjs
+    用途: 生产捕获源码、正文空闲/重试配置与可取消HTTP子进程在真实隔离Python检查，无模型/外发
+    副作用: 写仓库内文件、写临时测试目录
+    依据: boundary — boundary: Actual production plugin-captured code and fixed Python inside real Bubblewrap; only temporary sandbox and explicit evid
+- chatbot/tests/papers/acceptance.mjs
+    用途: 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认
+    副作用: 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件（需授权）
+    依据: boundary — boundary: Real translation model/API; private runtime acceptance state. Actual QQ/SMTP only when explicitly flagged; programmatic
+- chatbot/tests/persona/acceptance-host.mjs
+    用途: 文档25真实隔离OpenClaw/模拟OneBot的实际人格注入；默认本地模型，--live使用官方DeepSeek，无真实QQ外发
+    副作用: 真实模型、重启或停服务、写仓库内文件、写临时测试目录（需授权）
+    依据: boundary — boundary: Real isolated OpenClaw and simulated OneBot; optional real model API with --live. Temporary state and explicit evidence
+- chatbot/tests/persona/continuity-host.mjs
+    用途: 文档25 P2真实隔离OpenClaw授权钩子、/new历史清理、手动压缩与临时宿主重启；确定性模型和模拟OneBot，无真实API或QQ
+    副作用: 重启或停服务、写仓库内文件、写临时测试目录
+    依据: boundary — boundary: Real isolated OpenClaw, deterministic local model and simulated OneBot. Temporary state and explicit evidence only; no m
+- chatbot/tests/persona/memory-continuity-host.mjs
+    用途: 文档25 P2真实隔离OpenClaw连续性插件；确定性模型、模拟OneBot和临时状态，验证本人自动记忆、/new后注入及成员隔离，无真实API/QQ/邮件或生产写入
+    副作用: 重启或停服务、写仓库内文件、写临时测试目录
+    依据: boundary — boundary: Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model and simulated OneBot. Temporary sta
+- chatbot/tests/reminder-list/acceptance-host.mjs
+    用途: 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录
+    副作用: 真实模型、重启或停服务、写仓库内文件、写临时测试目录（需授权）
+    依据: header — boundary: Real configured model and real OpenClaw inbound dispatch/v2 tool/deferred catalog/native scheduler; isolated runtime/pro
+- chatbot/tests/reminder-list/acceptance-model.mjs
+    用途: 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录
+    副作用: 真实模型、写仓库内文件、写临时测试目录（需授权）
+    依据: header — boundary: Real configured model, actual plugin v2 tool factories with synthetic trusted owner hooks; temporary domain SQLite only;
+- chatbot/tests/reminder-list/acceptance-native.mjs
+    用途: 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务
+    副作用: 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录（需授权）
+    依据: header — boundary: Native deterministic command through OpenClaw Cron and real owner kurumi-qq delivery across a service restart; synthetic
+- scripts/fusion/test-background-code.mjs
+    用途: 后台代码任务登记检查与终态
+    副作用: 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic owner to real main model/task tool, ordinary worker session restricted to code fixture. Captured main acknowle
+- scripts/fusion/test-domain-due.mjs
+    用途: 提醒到点投递（跨重启）
+    副作用: 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic owner creates/confirms through real model. One actual owner QQ message. Restart before due then inspect native
+- scripts/fusion/test-domain-planning.mjs
+    用途: 行程提案与确认写入（隔离库）
+    副作用: 真实模型、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic owner and real model, original confirmation, one tagged test trip in fusion copy only, captured replies. Opera
+- scripts/fusion/test-domain-read.mjs
+    用途: 领域只读自然语言验收：真实模型 + QWeather 工具；不发 QQ、不写偏好
+    副作用: 真实模型、真实外部API、写仓库内文件（需授权）
+    依据: boundary — boundary: Synthetic trusted owner, real model and QWeather tools, captured reply; unchanged preferences/trips required.
+- scripts/fusion/test-domain-reminder.mjs
+    用途: 提醒 CRUD 与确认口令，回复本地捕获
+    副作用: 真实模型、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic owner, real model and native domain confirmation. CRUD scheduled tomorrow, captured acknowledgements, no actua
+- scripts/fusion/test-fulltext-research.mjs
+    用途: 论文全文研究任务
+    副作用: 真实模型、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: code — boundary: Real owner main starts native researcher, cached real-source PDF full text and selected visual pages, concurrent main ch
+- scripts/fusion/test-live-inbound.mjs
+    用途: 合成入站 → 真实模型 → 本人 QQ 外发
+    副作用: 真实模型、真实QQ外发、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic owner event via operator.admin test RPC; real installed Gateway, model and real QQ output; not live human inbo
+- scripts/fusion/test-live-media.mjs
+    用途: 合成图片入站与真实外发
+    副作用: 真实模型、真实QQ外发、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic quoted/image input -> real model; staged local image. Real QQ output, not live human image upload.
+- scripts/fusion/test-mail-delivery.mjs
+    用途: 邮件真实投递：真实授权码与真实 SMTP；确认由脚本按宿主路由同一调用记录，不含 QQ 入站与到信确认
+    副作用: 真实外部API、写运行状态（需授权）
+    依据: boundary — boundary: Real SMTP delivery with the real authorization code. The confirmation was recorded
+- scripts/fusion/test-memory.mjs
+    用途: 真实模型记忆 CRUD（合成事实）
+    副作用: 真实模型、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic owner, real model/tools, captured output. Only synthetic memory facts recorded in evidence.
+- scripts/fusion/test-native-concurrency.mjs
+    用途: 两个原生会话并发；不发 QQ
+    副作用: 真实模型、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Real Host/model in two ordinary sessions, test-only wait tool, deliver=false; not yet QQ main-to-background delegation
+- scripts/fusion/test-native-cron.mjs
+    用途: 原生 Cron CRUD 与频道投递
+    副作用: 真实QQ外发、建/改任务或提醒、重启或停服务、写仓库内文件（需授权）
+    依据: header — boundary: Native isolated Cron and native kurumi-qq outbound; operator-created deterministic command
+- scripts/fusion/test-profile-confirmation.mjs
+    用途: Profile 变更确认后恢复原值
+    副作用: 真实模型、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic owner and real model on fusion copy; temporarily set Panyu in isolated copy, negative commit without approval,
+- scripts/fusion/test-project-maintenance.mjs
+    用途: 真实 QQ → 项目 worker → 隔离检查 → 本地提交
+    副作用: 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Real main model starts ordinary project worker in independent clone. Bubblewrap checks, immutable external fixture, loca
+- scripts/fusion/test-project-scoped-commit.mjs
+    用途: 提交范围只含指定文件
+    副作用: 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Real main and worker, explicit file-scoped local Git commit, OS-isolated independent regression, actual owner-only final
+- scripts/fusion/test-qq-interaction.mjs
+    用途: 合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发
+    副作用: 真实模型、真实QQ外发、写运行状态、写仓库内文件（需授权）
+    依据: boundary — boundary: Synthetic owner, real model. Two physical paragraph messages and one sticker to owner only; sticker final acknowledgemen
+- scripts/fusion/test-recurring-weather.mjs
+    用途: 周期天气 automations
+    副作用: 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: code — boundary: Real main model creates/updates/removes a native recurring weather job; operator triggers one actual run for owner-only
+- scripts/fusion/test-reminder-delivery.mjs
+    用途: 自然语言 → automations → 到点外发
+    副作用: 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic trusted owner, actual native automations creation and due agentTurn. Main acknowledgement captured; one actual
+- scripts/fusion/test-reminder-tool.mjs
+    用途: 提醒工具 CRUD（须先取消未来任务）
+    副作用: 真实模型、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Synthetic trusted owner turn, real model and reminder tool, native Cron. Final reply captured locally (no QQ send); temp
+- scripts/fusion/test-research-cancel.mjs
+    用途: 研究任务查询与取消
+    副作用: 真实模型、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Real main model invokes task adapter with trusted synthetic owner; captured acknowledgement, ordinary worker, real Host
+- scripts/fusion/test-research.mjs
+    用途: 公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入
+    副作用: 真实模型、真实外部API、写运行状态、写仓库内文件（需授权）
+    依据: boundary — boundary: Real model web_search + web_fetch, public paper metadata/abstract only, authenticated synthetic owner, captured reply. D
+- scripts/fusion/test-service-recovery.mjs
+    用途: 服务故障注入与恢复；不发 QQ、不调模型
+    副作用: 重启或停服务、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: SIGKILL only verified fusion Gateway; systemd restarts it. Restart only SnowLuma transport, preserving its source/config
+- scripts/fusion/test-task-control.mjs
+    用途: 任务查询与取消
+    副作用: 真实模型、建/改任务或提醒、写运行状态、写仓库内文件（需授权）
+    依据: header — boundary: Real main model invokes task adapter with trusted synthetic owner; captured acknowledgement, ordinary worker, real Host
+
+## 运维写状态 (12)
+- scripts/fusion/backup-state.mjs
+    用途: 制作备份；--quiesce 会短暂停写并恢复服务
+    副作用: 重启或停服务、写运行状态（需授权）
+    依据: header
+- scripts/fusion/close-acceptance.mjs
+    用途: 验收结束后关闭 testIngress，不重置发送账本
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/copy-domain-state.py
+    用途: 迁移领域状态库（迁移工具，不是日常命令）
+    副作用: 写运行状态（需授权）
+    依据: code
+- scripts/fusion/install-plugins.mjs
+    用途: 按锁文件安装受控第三方插件
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/install-service.mjs
+    用途: 首次切换 systemd 单元到融合服务
+    副作用: 重启或停服务（需授权）
+    依据: header
+- scripts/fusion/link-dependencies.mjs
+    用途: 固定并链接本地 SDK 只读依赖
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/recovery-probe.mjs
+    用途: 仅供 restore-verify 在沙箱内启动 Gateway
+    副作用: 写临时测试目录（需授权）
+    依据: header
+- scripts/fusion/register-project.mjs
+    用途: 维护 projects.json 登记（默认只预览，--apply 才写）
+    副作用: 写运行状态（需授权）
+    依据: header
+- scripts/fusion/restore-legacy.sh
+    用途: 按 A/B 方案把旧系统复制回原路径（不自动启动）
+    副作用: 重启或停服务（需授权）
+    依据: header
+- scripts/fusion/restore-verify.mjs
+    用途: 隔离恢复演练（只写新建 /tmp 目标）
+    副作用: 写临时测试目录（需授权）
+    依据: header
+- scripts/fusion/run-gateway.mjs
+    用途: 前台生产入口；日常只由 systemd 启动
+    副作用: 真实模型、重启或停服务、写运行状态（需授权）
+    依据: header
+- scripts/fusion/stop-gateway.mjs
+    用途: 按环境证明停止隔离 Gateway
+    副作用: 重启或停服务（需授权）
+    依据: header
+
+## 启停脚本 (2)
+- scripts/fusion/launchers/Start-DSH.sh
+    用途: 启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉
+    副作用: 重启或停服务（需授权）
+    依据: header
+- scripts/fusion/launchers/Stop-DSH.sh
+    用途: 停止融合助手与 DSH Web；不停止 QQ 传输
+    副作用: 重启或停服务（需授权）
+    依据: header
+
+total 187: 需授权 78，可离线/只读 109
+依据分布: offline=41, header=114, code=11, boundary=21
+boundary 声明交叉校验: 49 个脚本有声明，全部与分类一致

@@ -6,7 +6,7 @@ import {createScheduler} from './scheduler.js';
 import {stateRoot} from './application.js';
 import {parseDeadline, localTime, dueSlot} from './time.js';
 import {formatDigest} from './formatter.js';
-import {ownerAuthorized} from '../kurumi-qq/src/config.js';
+import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/index.js';
 import {KnowledgeMapClient, BridgeError, requestKey} from '../../packages/knowledgemap-client/client.js';
 import {createBridgeInbound} from '../../packages/knowledgemap-client/inbound.js';
 import {createToolTrace} from '../../packages/knowledgemap-client/tool-trace.js';

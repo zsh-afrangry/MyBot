@@ -8,8 +8,8 @@ if (!basename(directory).startsWith("kurumi-acceptance-")) throw Error("Refusing
 process.env.OPENCLAW_STATE_DIR = directory;
 process.env.OPENCLAW_CONFIG_PATH = join(directory, "openclaw.json");
 const checkpoint = JSON.parse(readFileSync(join(directory, "restart-checkpoint.json"), "utf8"));
-const { WeatherStore } = await import("../../plugins/personal-weather/dist/store.js");
-const { commitPlanningProposal } = await import("../../plugins/personal-weather/dist/planning.js");
+const { WeatherStore } = await import("../../packages/personal-domains/dist/store.js");
+const { commitPlanningProposal } = await import("../../packages/personal-domains/dist/planning.js");
 const store = new WeatherStore({ stateDirectory: join(directory, "state/personal-weather") });
 try {
   const before = store.listTripSummaries().length;

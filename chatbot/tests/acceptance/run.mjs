@@ -98,7 +98,7 @@ try {
       assert.equal(result.ok, true); assert.equal(fixture.snapshot().profilePlanning.trips, 2);
     });
     await check("B15: Profile confirmation does not authorize pending Planning or Reminder", async () => {
-      const { geoLookupFixture } = await import("../../plugins/personal-weather/dist/test-fixtures.js");
+      const { geoLookupFixture } = await import("../../packages/personal-domains/dist/test-fixtures.js");
       const client = { lookupPlace: async () => ({ ...geoLookupFixture, location: [{ ...geoLookupFixture.location[0],
         name: "扬中", id: "101190704", lat: "32.2373", lon: "119.8281", adm1: "江苏省", adm2: "镇江市", type: "city" }] }) };
       const profile = await fixture.profile.proposeProfileChange(fixture.weather, client, { schema_version: 1,
