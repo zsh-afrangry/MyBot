@@ -1,0 +1,54 @@
+✔ Catalog namespaces prevent list/get/file disclosure including identical bytes with independent names (81.282611ms)
+✔ Actual file URL lookup uses sender identity, never the owner, and respects import denial (6.6144ms)
+✔ Single serial queue, requester binding, own list/status/cancel and self-only automatic upload (107.875217ms)
+✔ Queued revocation does not start paid worker and never redirects notices/files to owner (12.270686ms)
+✔ Running revocation aborts injected worker within bounded poll; no following send (507.722012ms)
+✔ Revoking file permission during translation keeps successful artifact but blocks upload without owner fallback (44.528532ms)
+✔ Legacy unbound owner job remains owner-only and replay preserves its old invocation key/hash (5.352728ms)
+✔ Transport recipient namespaces preserve owner legacy keys, fence media and refuse revoked delivery (85.527004ms)
+✔ Ingress routes real sender, rejects admin slash/group/wrong route and retains raw text (72.403529ms)
+✔ Persona generation shares character only; member does not inherit owner USER/MEMORY or arbitrary symlink paths (5.545418ms)
+✔ Authorization audit joins by real run and shows decision/reason without tool parameters (18.589546ms)
+✔ Strict version, unknown permission, duplicate, owner/group and unsupported member grants fail closed (3.732869ms)
+✔ A role is not an implicit permission; disabled, expired and unknown identities are refused (1.749632ms)
+✔ Trusted sender, owner bit, agent, account, session and target must agree; text cannot elevate (0.495233ms)
+✔ Every current main tool is mapped; new tools and dangerous native/member operations are denied (4.212543ms)
+✔ Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs (1.09435ms)
+✔ Background lanes are limited to configured owner tasks and read-only weather; no absent-requester main bypass (1.259297ms)
+✔ Shared identity is identical; owner relationship and private facts never enter member payloads (6.438864ms)
+✔ Applying projection preserves memories, histories and unrelated files and writes private modes (7.030526ms)
+✔ Only enabled chat identities receive persona files (2.368345ms)
+✔ Legacy persona without relationshipFiles remains compatible (3.302156ms)
+▶ Incomplete, unknown and non-object relationship configurations fail before any write
+  ✔ null (3.7491ms)
+  ✔ [] (3.506147ms)
+  ✔ {} (3.694307ms)
+  ✔ {"owner":"roles/relationships/本人恋人.md"} (3.120027ms)
+  ✔ {"owner":"roles/relationships/本人恋人.md","member":"roles/relationships/普通朋友.md","unknown":"roles/世凪.md"} (2.292954ms)
+✔ Incomplete, unknown and non-object relationship configurations fail before any write (17.746274ms)
+▶ Source traversal and symlink escape are rejected
+  ✔ /tmp/role.md (2.14541ms)
+  ✔ roles/../private.md (1.923416ms)
+  ✔ config/persona.json (1.710489ms)
+  ✔ roles\role.md (1.720468ms)
+  ✔ symlink to an external relationship (1.970453ms)
+✔ Source traversal and symlink escape are rejected (10.01984ms)
+▶ Unresolved placeholders and empty relationship content fail before projection
+  ✔ "{{用户名}}是我的朋友" (1.883462ms)
+  ✔ "   \n" (1.86113ms)
+✔ Unresolved placeholders and empty relationship content fail before projection (3.99599ms)
+▶ Owner template drift is explicit and replacement text is literal
+  ✔ NO_EXPECTED_HEADER (3.973538ms)
+  ✔ 你是 Kurumi，用户的中文个人助手。 (2.51043ms)
+  ✔ literal dollar replacement (2.487337ms)
+✔ Owner template drift is explicit and replacement text is literal (9.359939ms)
+✔ Current sources fit native per-file budgets and owner identity is no longer Kurumi/whale (3.081695ms)
+✔ Projection destination symlinks cannot redirect persona writes (3.77619ms)
+ℹ tests 42
+ℹ suites 0
+ℹ pass 42
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1029.180522

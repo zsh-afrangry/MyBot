@@ -1,0 +1,613 @@
+{
+  "at": "2026-10-19T16:12:12.430Z",
+  "live": false,
+  "model": "local/deterministic",
+  "boundary": "Real isolated OpenClaw, deterministic local model and simulated OneBot. Temporary state and explicit evidence only; no real model API, QQ network, mail, production writes or production service restart.",
+  "cases": [
+    {
+      "label": "owner-first-turn",
+      "identity": "owner",
+      "prompt": "测试本人新回合",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    },
+    {
+      "label": "member-first-turn",
+      "identity": "member",
+      "prompt": "测试成员新回合",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    },
+    {
+      "label": "owner-continuation",
+      "identity": "owner",
+      "prompt": "继续本人对话",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    },
+    {
+      "label": "other-member-turn",
+      "identity": "member",
+      "prompt": "测试另一成员",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    },
+    {
+      "label": "member-after-new",
+      "identity": "member",
+      "prompt": "测试成员重开会话",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    },
+    {
+      "label": "member-prompt-refresh",
+      "identity": "member",
+      "prompt": "测试同会话提示词刷新",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    },
+    {
+      "label": "owner-after-new",
+      "identity": "owner",
+      "prompt": "测试本人重开会话",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    },
+    {
+      "label": "owner-resumed-turn",
+      "identity": "owner",
+      "prompt": "测试本人继续",
+      "reply": "PERSONA_HOST_FIXTURE_OK",
+      "passed": true
+    }
+  ],
+  "promptChecks": [
+    {
+      "case": "owner-first-turn",
+      "owner": true,
+      "chars": 17480,
+      "sha256": "bb9fbd285f121f4e615469124c46d2cc2655a9592c7ac968944e5b76351a4f6e",
+      "fullCore": true,
+      "ownerRelationship": true,
+      "memberRelationship": false,
+      "ownerPrivateMemory": true,
+      "refreshed": false,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "case": "member-first-turn",
+      "owner": false,
+      "chars": 13727,
+      "sha256": "fc29179c43e4398552900404253f100edac3c0743b847235c7769ab796b7bec4",
+      "fullCore": true,
+      "ownerRelationship": false,
+      "memberRelationship": true,
+      "ownerPrivateMemory": false,
+      "refreshed": false,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "case": "owner-continuation",
+      "owner": true,
+      "chars": 17480,
+      "sha256": "bb9fbd285f121f4e615469124c46d2cc2655a9592c7ac968944e5b76351a4f6e",
+      "fullCore": true,
+      "ownerRelationship": true,
+      "memberRelationship": false,
+      "ownerPrivateMemory": true,
+      "refreshed": false,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "case": "other-member-turn",
+      "owner": false,
+      "chars": 13727,
+      "sha256": "a7e1ba7ec413f1183f5e720ef3eed76c669bf61dc614047e1b8f2cfba746fdab",
+      "fullCore": true,
+      "ownerRelationship": false,
+      "memberRelationship": true,
+      "ownerPrivateMemory": false,
+      "refreshed": false,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "case": "member-after-new",
+      "owner": false,
+      "chars": 13727,
+      "sha256": "fc29179c43e4398552900404253f100edac3c0743b847235c7769ab796b7bec4",
+      "fullCore": true,
+      "ownerRelationship": false,
+      "memberRelationship": true,
+      "ownerPrivateMemory": false,
+      "refreshed": false,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "case": "member-prompt-refresh",
+      "owner": false,
+      "chars": 13765,
+      "sha256": "b37501c8a29930cf9bcaa4055d363c07bd233245caab400cc4b1ac0bd8860d0d",
+      "fullCore": true,
+      "ownerRelationship": false,
+      "memberRelationship": true,
+      "ownerPrivateMemory": false,
+      "refreshed": true,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "case": "owner-after-new",
+      "owner": true,
+      "chars": 17480,
+      "sha256": "bb9fbd285f121f4e615469124c46d2cc2655a9592c7ac968944e5b76351a4f6e",
+      "fullCore": true,
+      "ownerRelationship": true,
+      "memberRelationship": false,
+      "ownerPrivateMemory": true,
+      "refreshed": false,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    },
+    {
+      "case": "owner-resumed-turn",
+      "owner": true,
+      "chars": 17480,
+      "sha256": "bb9fbd285f121f4e615469124c46d2cc2655a9592c7ac968944e5b76351a4f6e",
+      "fullCore": true,
+      "ownerRelationship": true,
+      "memberRelationship": false,
+      "ownerPrivateMemory": true,
+      "refreshed": false,
+      "promptHookInjected": true,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    }
+  ],
+  "hookObservations": [
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "senderId": "365999865",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "3bc2c0a0-368f-4f88-a487-3fb57cc876d4",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 0
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "3bc2c0a0-368f-4f88-a487-3fb57cc876d4",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2,
+      "success": true
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "senderId": "800001",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "runId": "d114cd52-d26f-411b-ba0f-2974b46649a2",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800001/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800001",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 0
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "runId": "d114cd52-d26f-411b-ba0f-2974b46649a2",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800001/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800001",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2,
+      "success": true
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "senderId": "365999865",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "ed3edaea-875c-4cfb-8b65-b93a6a2eebd0",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "ed3edaea-875c-4cfb-8b65-b93a6a2eebd0",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 4,
+      "success": true
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:qq-user-800002:kurumi-qq:direct:800002",
+      "senderId": "800002",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "qq-user-800002",
+      "sessionKey": "agent:qq-user-800002:kurumi-qq:direct:800002",
+      "sessionId": "1ab00172-66c7-4932-a6cd-176d05dc6024",
+      "runId": "6cf9a682-2a2c-4de1-b692-086bb893d6d7",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800002/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800002",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 0
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "qq-user-800002",
+      "sessionKey": "agent:qq-user-800002:kurumi-qq:direct:800002",
+      "sessionId": "1ab00172-66c7-4932-a6cd-176d05dc6024",
+      "runId": "6cf9a682-2a2c-4de1-b692-086bb893d6d7",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800002/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800002",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2,
+      "success": true
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "senderId": "800001",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "session_end",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "reason": "new"
+    },
+    {
+      "hook": "session_start",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_reset",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800001/workspace",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2,
+      "reason": "new"
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "senderId": "800001",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "runId": "95c5e488-dd16-412e-99e4-96f23d921195",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800001/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800001",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 0
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "runId": "95c5e488-dd16-412e-99e4-96f23d921195",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800001/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800001",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2,
+      "success": true
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "senderId": "800001",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "runId": "330ede56-9b6f-4f44-8a77-0e4d519aeceb",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800001/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800001",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "qq-user-800001",
+      "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+      "sessionId": "1f912c2b-b0c0-4626-bbb9-321268bf5f86",
+      "runId": "330ede56-9b6f-4f44-8a77-0e4d519aeceb",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/users/800001/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "800001",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 4,
+      "success": true
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "senderId": "365999865",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "session_end",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "reason": "new"
+    },
+    {
+      "hook": "session_start",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_reset",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 4,
+      "reason": "new"
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "senderId": "365999865",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "3358f562-ec89-416b-b9b8-00f17a668c86",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 0
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "3358f562-ec89-416b-b9b8-00f17a668c86",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2,
+      "success": true
+    },
+    {
+      "hook": "reply_dispatch",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "senderId": "365999865",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false
+    },
+    {
+      "hook": "before_prompt_build",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "3d5da6ed-7af9-4aa9-abc2-eae134031906",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": true,
+      "allowsSessionStatus": true,
+      "hasCurrentUserMessage": false,
+      "messageCount": 2
+    },
+    {
+      "hook": "agent_end",
+      "agentId": "main",
+      "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+      "sessionId": "08dfacac-cb87-43cb-9c7b-83675721f8f0",
+      "runId": "3d5da6ed-7af9-4aa9-abc2-eae134031906",
+      "workspaceDir": "/tmp/kurumi-continuity-host-EEr7yT/workspace",
+      "channel": "kurumi-qq",
+      "messageProvider": "kurumi-qq",
+      "accountId": "default",
+      "senderId": "365999865",
+      "trigger": "user",
+      "hasToolAuthority": false,
+      "hasCurrentUserMessage": false,
+      "messageCount": 4,
+      "success": true
+    }
+  ],
+  "requests": 8,
+  "usage": {
+    "promptTokens": 0,
+    "completionTokens": 0
+  },
+  "passed": true,
+  "childStopped": true,
+  "sourceHashes": {
+    "persona": "209d64af3ce3d90fe66cd0c159372c233022518e02e37707f49a3b47863a0961",
+    "soul": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26"
+  }
+}

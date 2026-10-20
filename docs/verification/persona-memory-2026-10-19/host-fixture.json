@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-19T15:52:41.807Z",
+  "live": false,
+  "model": "local/deterministic",
+  "boundary": "Real isolated OpenClaw and simulated OneBot; optional real model API with --live. Temporary state and explicit evidence only; no QQ network, mail, production writes or production service restart.",
+  "cases": [],
+  "promptChecks": [],
+  "requests": 0,
+  "usage": {
+    "promptTokens": 0,
+    "completionTokens": 0
+  },
+  "passed": false,
+  "error": "isolated_gateway_exited",
+  "diagnosticsRoot": "/tmp/kurumi-persona-host-56oDci",
+  "childStopped": true,
+  "sourceHashes": {
+    "persona": "209d64af3ce3d90fe66cd0c159372c233022518e02e37707f49a3b47863a0961",
+    "soul": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26"
+  }
+}

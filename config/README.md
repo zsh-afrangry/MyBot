@@ -8,14 +8,17 @@
 | 位置 | 内容 | 是否进 Git |
 |---|---|---|
 | `config/runtime.config.json` | 运行配置的**权威副本**：模型、agent、插件、频道、工具策略、日志 | ✅ |
-| `config/persona.json` | 当前角色声明（角色卡文件、身份名、AGENTS 替换） | ✅ |
+| `config/access-control.json` | QQ 身份/显式功能权限/邮件目标的唯一编辑来源；同步时编译到运行配置 | ✅ 无凭据，含已授权 QQ 与目标邮箱 |
+| `config/persona.json` | 当前角色声明（共享角色卡、按可信角色选择的关系素材、身份名、AGENTS 替换） | ✅ |
 | `config/plugins.package.json` + `config/plugins.package-lock.json` | 第三方插件清单与锁文件 | ✅ |
 | `roles/` | 角色卡（人格来源） | ✅ |
 | `scripts/fusion/` | 部署、配置同步、备份与恢复 | ✅ |
 | `docs/` | 运维与历史说明 | ✅ |
 | `.openclaw-fusion/runtime-env.json` | **凭据平面**：API Key、网关 token、代理 | ❌ 仅私有备份 |
 | `.openclaw-fusion/{http,ws}-token` | SnowLuma 会话令牌 | ❌ 仅私有备份 |
-| `.openclaw-fusion/workspace/` | **长期记忆 `MEMORY.md`**、`SOUL.md`、`IDENTITY.md`、`AGENTS.md`、`USER.md` | ❌ 仅私有备份 |
+| `.openclaw-fusion/workspace/` | **人格/规则文件与 `MEMORY.md` 说明文件**、`SOUL.md`、`IDENTITY.md`、`AGENTS.md`、`USER.md` | ❌ 仅私有备份 |
+| `.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` | 主人连续性记忆唯一事实：长期事实、7天（可配置1–30天）近期摘要、来源、版本与遗忘屏障 | ❌ 仅私有备份；由备份脚本做 SQLite 一致快照 |
+| `.openclaw-fusion/users/<QQ>/workspace/` | 成员独立 Agent 的四份受管人格/规则文件及个人会话环境，不复制主人记忆/资料 | ❌ 仅私有备份 |
 | `.openclaw-fusion/state/` | 一次性提醒、天气、Profile、行程；共享列表的设置/投递账本及冻结旧事项（SQLite） | ❌ 仅私有备份 |
 | `.openclaw-fusion/channel/` | 频道账本、贴纸目录、发送回执 | ❌ 仅私有备份 |
 | `.openclaw-fusion/agents/` | 会话记录（JSONL）与 agent 库 | ❌ 仅私有备份 |
@@ -26,9 +29,10 @@
 | `.openclaw-fusion/venvs/paper-translation/` | 按锁文件重建的 Python 3.12 翻译环境 | ❌ 可重建 |
 | `.openclaw-fusion/paper-acceptance/` | 明确授权的真实 PDF 验收状态与缓存，归属文档 22 | ❌ 私有验收资料 |
 
-> **记忆不在 `state/` 里。** 长期记忆是 `workspace/MEMORY.md`（由 `kurumi-memory` 插件读写），
-> `state/personal-weather/weather.sqlite` 存的是 Profile/行程，`state/personal-reminders/` 存提醒。
-> 备份应包含整个运行目录的必需内容，仅备份 `state/` 会遗漏记忆。
+> **业务记忆不在 `state/` 里。** 连续性模式下 `workspace/.kurumi-memory/state.sqlite` 是唯一事实，
+> `workspace/MEMORY.md` 只保留迁移说明；当前连续性模式不允许旧写入接口把它当作第二事实源。
+> `state/personal-weather/weather.sqlite` 存 Profile/行程，`state/personal-reminders/` 存提醒。
+> 备份必须包含整个运行目录；仅备份 `state/` 会遗漏人格和主人记忆。
 
 `runtime.config.json` **不含任何真实凭据**。其凭据来源包含运行目录和业务服务的专用私密文件：
 
@@ -46,6 +50,16 @@
 提醒列表的设置/投递状态在 `state/personal-reminder-list/list.sqlite`，事项唯一事实在KnowledgeMap。`dataSource=knowledgemap`、`bridgeBaseUrl` 和 `bridgeTokenFile` 同时用于工具及runner，持久切换标记也约束旧任务；步骤与回退边界见[文档23](../docs/23_KnowledgeMap业务能力桥接.md)。`plugins.entries.personal-reminder-list.config.defaultTimes` 仅用于首次建库；主人通过工具修改的时刻/暂停状态由领域库持有，配置同步不覆盖它。`backendRoot` 明确指向持久后端目录 `/home/afrangry/kurumi-fusion/chatbot`，用于固定 Cron runner；不能从 OpenClaw 的插件捕获临时目录推导。具体契约见[文档 19](../docs/19_提醒列表与定时汇总.md)。
 
 天气、Profile、行程、一次性提醒分别配置 `plugins.entries.personal-{weather,profile,planning,reminders}` 并独立登记allow/load/开关。天气条目只持有天气API参数；Profile持有地理解析及默认城市桥接配置；行程与一次性提醒只装配自身领域，一次性提醒的 `reminderRunnerRoot` 指向持久 `chatbot/plugins/personal-reminders`。共享实现不改变历史数据归属：Profile/行程仍使用 `state/personal-weather/weather.sqlite`，提醒仍使用 `state/personal-reminders/`。旧Cron的 `personal-weather/dist/reminder-cli.js` 由集中构建生成转发入口，不因配置拆分自动重写既有任务。`kurumi-research.config.cacheRoot` 显式指定阅读/源缓存，不再从QQ频道路径推导。完整代码和兼容边界见[文档26](../docs/26_基础能力插件边界整理与检索接入设计.md)。
+
+主人连续性由 `plugins.entries.kurumi-memory.config.continuity.enabled` 开启；`summaryTtlDays` 为近期摘要保留天数（1–30，默认7），`maxContextChars` 为注入上限（2000–12000，默认6000）。连续性模式使用 `continuityPolicyAdapter=current-owner`、`continuityStoreAdapter=sqlite`，不与旧 `policyAdapter/storeAdapter` 混用。生产当前已启用这组配置；首次迁移仍按下面的预览→私密备份→应用流程，后续只读预览用于核对：
+
+```bash
+node chatbot/scripts/memory-migrate.mjs                 # 只读预览
+node chatbot/scripts/memory-migrate.mjs --apply \
+  --backup-root /home/afrangry/.openclaw-fusion/migration
+```
+
+迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。当前生产迁移结果为revision=4、6条事实，原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。`/new`只清原生聊天上下文，仍注入有效长期事实和未过期摘要；明确更正/遗忘才推进记忆代际并清理本域摘要。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
 
 `sync-config.mjs` 是唯一的运行配置同步入口。
 
@@ -101,6 +115,16 @@ node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配�
 > **不要用 `configure-deepseek-persona.mjs` 改人格。** 它是一次性迁移脚本，除了角色卡还会重写
 > `models.providers`、默认模型、`runtime-env.json`（并删掉 `OPENAI_API_KEY`）以及四份工作区文件。
 > 脚本开头已加警告。
+
+### 人格投影契约
+
+`config/persona.json` 的 `roleFile` 指向共享角色卡，`identityName` 指定角色名；SOUL/IDENTITY对每个已启用聊天身份相同。`relationshipFiles` 可省略以兼容旧配置；一旦配置，必须且只能包含 `owner`、`member` 两项，指向 `roles/` 下的非空 Markdown。当前分别为世凪共享性格、本人恋人和成员普通朋友背景，素材与边界见[文档25](../docs/25_人格、记忆与会话连续性.md)。
+
+投影依据 `access-control.json` 校验后的可信角色选关系：本人 USER 为 `userFile` 加本人关系，成员 USER 为独立用户说明加成员关系；不把本人 USER、MEMORY或会话复制给成员。本人 AGENTS 沿用模板并要求替换源恰好出现一次，成员使用专用模板。关系不改变权限或成员工具上限。
+
+角色/关系素材只接受 `roles/` 下的普通 `.md` 文件，拒绝路径穿越、符号链接、空内容和未替换的 `{{...}}` 占位符；身份名须为非空单行。同步前完整计算并校验投影，错误配置不写文件；每个目标文件分别原子替换且权限0600，多个文件不是一个事务。同步失败后重新检查漂移再处理，不宣称整组自动回滚。
+
+本机 OpenClaw `2026.9.7` 每回合重新核对 bootstrap 文件；文档25的真实隔离宿主已验证同一会话 SOUL 更新生效。因此只同步这四份人格文件无需重启服务。新增身份/路由、工具或运行配置变更仍按各自契约同步并重启。旧聊天不重置，既有历史可能影响表达；人格同步不等于新增长期记忆或情绪持久化。
 
 ## 自检
 

@@ -1,5 +1,14 @@
 # 角色扮演文件（人格卡）
 
+## 融合系统当前素材
+
+- [世凪](世凪.md) 是共享性格和内在背景；[本人恋人](relationships/本人恋人.md)与[普通朋友](relationships/普通朋友.md)仅按可信身份进入各自 USER.md。
+- 选择来源为 [config/persona.json](../config/persona.json)，使用 `node scripts/fusion/sync-persona.mjs --diff` 审阅后 `--apply`。当前 OpenClaw 2026.9.7 下一回合加载更新；角色关系不改变权限，不复制记忆。契约见[配置说明](../config/README.md)，开发及验收见[文档25](../docs/25_人格、记忆与会话连续性.md)。
+- 世凪素材改编自 [Candy-A-Mine/openclaw-persona-template](https://github.com/Candy-A-Mine/openclaw-persona-template/tree/ee7465c63550f9803f6f861580c33861ae4bf81b)，保留原版权及 [MIT许可](LICENSE.openclaw-persona-template)。用户提供的 SOUL.md 与该固定版本相同；没有导入其自动日记、情绪维护或主动联系配置。
+- `小鲸鱼.md`、`傲娇助手.md` 保留为可选择的旧角色原件，未被本次修改。
+
+## 旧 bridge 说明原件
+
 > **来源与适用范围（2026-10-10 补充）**
 >
 > 本文件是**旧 qq-bridge 的角色目录说明原件**，随 `小鲸鱼.md`、`傲娇助手.md` 一起从
@@ -9,11 +18,11 @@
 > “保存后下一条消息即生效”都属于**旧 bridge 机制，不是融合系统的当前行为**。
 >
 > 融合系统的角色切换只有一条路径：改 [`config/persona.json`](../config/persona.json) 的 `roleFile`，
-> 再运行 `node scripts/fusion/sync-persona.mjs --apply` 并重启 `kurumi-fusion.service`；
+> 再运行 `node scripts/fusion/sync-persona.mjs --apply`；当前宿主按上述契约下一回合加载；
 > 契约见 [`config/README.md`](../config/README.md) 与[文档 10](../docs/10_融合助手运行维护.md)。
 >
 > 下面两节「人格卡只写人设」和「推荐结构」仍然是有效写作指导；涉及控制台、群聊命令和热生效的段落按旧机制阅读。
-> 两份额角色卡 `小鲸鱼.md`、`傲娇助手.md` 仍与归档原件逐字一致（SHA256 分别以 `237dce15…`、`12d09202…` 开头，小鲸鱼完整值见[文档 11](../docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md)）；
+> 两份角色卡 `小鲸鱼.md`、`傲娇助手.md` 仍与归档原件逐字一致（SHA256 分别以 `237dce15…`、`12d09202…` 开头，小鲸鱼完整值见[文档 11](../docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md)）；
 > 本 `README.md` 自 2026-10-10 起增加了本说明块，因此与原件不再逐字一致，原件保留在
 > `/home/afrangry/kurumi-archive/qq-bridge/roles/README.md`。改动只加说明，不改旧机制正文。
 

@@ -2,6 +2,7 @@ import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/
 import {createMemoryApplication} from './application.js';
 import {trustedMemoryText} from './inbound.js';
 import {normalize} from './model.js';
+import {registerContinuity} from './continuity/plugin.js';
 
 const declaration = {
   name: 'kurumi_memory',
@@ -18,9 +19,13 @@ const declaration = {
   },
 };
 
-export function createMemoryPlugin({registry} = {}) {return {
+export function createMemoryPlugin({registry, continuityRegistry} = {}) {return {
   id: 'kurumi-memory', name: 'Kurumi explicit memory',
   register(api) {
+    if (api.pluginConfig?.continuity?.enabled === true) {
+      if (api.pluginConfig.policyAdapter || api.pluginConfig.storeAdapter) throw Error('Continuity mode cannot select legacy memory adapters');
+      return registerContinuity(api, {registry: continuityRegistry});
+    }
     const application = createMemoryApplication({registry, policyAdapter: api.pluginConfig?.policyAdapter, storeAdapter: api.pluginConfig?.storeAdapter});
     const permits = new Map();
     api.on('reply_dispatch', event => {
@@ -38,7 +43,7 @@ export function createMemoryPlugin({registry} = {}) {return {
       return {...declaration,
         async execute(_callId, args, signal) {
           const cfg = ctx.getRuntimeConfig?.() ?? api.config;
-          if (!ownerAuthorized(ctx, cfg)) throw Error('Memory requires owner private context');
+          if (!ownerAuthorized(ctx, cfg, ['list','search'].includes(args.action)?'memory.read':'memory.manage')) throw Error('Memory requires owner private context');
           ctx.assertInvocationCurrent();
           signal?.throwIfAborted();
           const workspace = cfg.agents.entries.main.workspace;

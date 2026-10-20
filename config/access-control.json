@@ -1,0 +1,93 @@
+{
+  "version": 1,
+  "revision": 3,
+  "subjects": [
+    {
+      "qq": "365999865",
+      "kind": "user",
+      "role": "owner",
+      "enabled": true,
+      "permissions": {
+        "chat.use": true,
+        "commands.basic": true,
+        "commands.admin": true,
+        "access.manage": true,
+        "search.use": true,
+        "qq.reply": true,
+        "qq.file.reply": true,
+        "qq.notify": true,
+        "papers.import": true,
+        "papers.read": true,
+        "papers.translate": true,
+        "papers.cancel": true,
+        "stickers.use": true,
+        "mail.status": true,
+        "mail.draft": true,
+        "mail.send": true,
+        "mail.history": true,
+        "weather.read": true,
+        "profile.read": true,
+        "profile.manage": true,
+        "planning.read": true,
+        "planning.manage": true,
+        "reminders.read": true,
+        "reminders.manage": true,
+        "reminder-list.read": true,
+        "reminder-list.manage": true,
+        "reminder-list.schedule": true,
+        "memory.read": true,
+        "memory.manage": true,
+        "bills.read": true,
+        "bills.manage": true,
+        "tasks.code": true,
+        "tasks.research": true,
+        "tasks.read": true,
+        "automations.read": true,
+        "automations.manage": true,
+        "sessions.read": true
+      },
+      "mailRecipients": ["365999865@qq.com"],
+      "note": "原主人；保留现有能力。新增QQ由操作者另行登记。"
+    },
+    {
+      "qq": "3311723223",
+      "kind": "user",
+      "role": "member",
+      "enabled": true,
+      "permissions": {
+        "chat.use": true,
+        "commands.basic": true,
+        "search.use": true,
+        "qq.reply": true,
+        "qq.file.reply": true,
+        "qq.notify": true,
+        "papers.import": true,
+        "papers.read": true,
+        "papers.translate": true,
+        "papers.cancel": true
+      },
+      "mailRecipients": [],
+      "note": "用户明确授权：仅一般聊天与自身论文检索、导入、翻译、取消及QQ文件回传；独立成员，不共享主人数据。"
+    },
+    {
+      "qq": "2752966052",
+      "kind": "user",
+      "role": "member",
+      "enabled": true,
+      "permissions": {
+        "chat.use": true,
+        "commands.basic": true,
+        "search.use": true,
+        "qq.reply": true,
+        "qq.file.reply": true,
+        "qq.notify": true,
+        "papers.import": true,
+        "papers.read": true,
+        "papers.translate": true,
+        "papers.cancel": true
+      },
+      "mailRecipients": [],
+      "note": "用户明确授权：与3311723223相同，仅一般聊天与自身论文检索、导入、翻译、取消及QQ文件回传；独立成员，不共享其他身份数据。"
+    }
+  ]
+}

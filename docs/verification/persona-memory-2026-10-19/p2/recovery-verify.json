@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-10-20T01:05:51+08:00",
+  "command": "node scripts/fusion/restore-verify.mjs --backup /home/afrangry/kurumi-backups/2026-10-19-17-02-19-p2-memory-closeout --target /tmp/kurumi-memory-restore-p2-final-20261020 --skip-deps",
+  "backup": "/home/afrangry/kurumi-backups/2026-10-19-17-02-19-p2-memory-closeout",
+  "target": "/tmp/kurumi-memory-restore-p2-final-20261020",
+  "mode": "materials-only (--skip-deps)",
+  "exitCode": 0,
+  "signal": null,
+  "result": "passed",
+  "checks": [
+    { "name": "manifest", "ok": true, "detail": "43,335 files; all match" },
+    { "name": "required content", "ok": true, "detail": "16 entries; all present" },
+    { "name": "expected databases", "ok": true, "detail": "15 present" },
+    { "name": "bundle kurumi-fusion valid", "ok": true },
+    { "name": "kurumi-fusion refs match", "ok": true, "detail": "HEAD 9c880031; 5 branches; 2 tags" },
+    { "name": "bundle legacy-openclaw valid", "ok": true },
+    { "name": "legacy-openclaw refs match", "ok": true, "detail": "HEAD f8319c11; 1 branch; 1 tag" },
+    { "name": "bundle qq-bridge valid", "ok": true },
+    { "name": "qq-bridge refs match", "ok": true, "detail": "HEAD d64a4d22; 2 branches; 7 tags" },
+    { "name": "uncommitted patch applies", "ok": true, "detail": "kurumi-fusion" },
+    { "name": "untracked archive restores", "ok": true, "detail": "229 files restored" },
+    { "name": "database snapshots", "ok": true, "detail": "15 healthy" },
+    { "name": "runtime directories assembled", "ok": true, "detail": "46 entries" },
+    { "name": "databases placed at runtime paths", "ok": true, "detail": "15 databases" },
+    { "name": "runtime config loads", "ok": true, "detail": "13 top-level keys" },
+    { "name": "token and credential files present", "ok": true, "detail": "runtime-env.json, http-token, ws-token" },
+    { "name": "active configuration roots remapped", "ok": true, "detail": "all roots isolated; delivery disabled" },
+    { "name": "restored memory readable", "ok": true, "detail": "revision 4; 6 entries; restored repository source" },
+    { "name": "assembled databases open", "ok": true, "detail": "15 opened in place" }
+  ],
+  "checkCount": "19/19",
+  "skipped": [
+    "plugin installation",
+    "dependency installation and build",
+    "Gateway sandbox boot"
+  ],
+  "quiesced": false,
+  "notes": [
+    "This is material-only recovery verification, not a runnable recovery or cross-database point-in-time guarantee.",
+    "No production service was changed and no real QQ delivery occurred.",
+    "The fresh recovery target is /tmp/kurumi-memory-restore-p2-final-20261020."
+  ]
+}

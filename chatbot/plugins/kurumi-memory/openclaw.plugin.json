@@ -1,1 +1,21 @@
-{"id":"kurumi-memory","name":"Kurumi explicit memory","configSchema":{"type":"object","properties":{"policyAdapter":{"type":"string","pattern":"^[a-z][a-z0-9-]{0,47}$","description":"Startup policy ID; default: explicit"},"storeAdapter":{"type":"string","pattern":"^[a-z][a-z0-9-]{0,47}$","description":"Startup storage ID; default: memory-file"}},"additionalProperties":false},"contracts":{"tools":["kurumi_memory"]},"toolMetadata":{"kurumi_memory":{"optional":true}}}
+{
+  "id": "kurumi-memory",
+  "name": "Kurumi personal memory",
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "policyAdapter": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$", "description": "Legacy explicit mode policy; default explicit"},
+      "storeAdapter": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$", "description": "Legacy explicit mode store; default memory-file"},
+      "continuity": {"type": "object", "additionalProperties": false, "properties": {
+        "enabled": {"type": "boolean"},
+        "summaryTtlDays": {"type": "integer", "minimum": 1, "maximum": 30},
+        "maxContextChars": {"type": "integer", "minimum": 2000, "maximum": 12000}
+      }},
+      "continuityPolicyAdapter": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$"},
+      "continuityStoreAdapter": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$"}
+    },
+    "additionalProperties": false
+  },
+  "contracts": {"tools": ["kurumi_memory"]},
+  "toolMetadata": {"kurumi_memory": {"optional": true}}
+}

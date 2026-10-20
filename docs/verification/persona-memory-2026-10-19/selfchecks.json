@@ -1,0 +1,235 @@
+{
+  "at": "2026-10-19T16:01:39.185Z",
+  "boundary": "P1 persona deployment checks only. No service restart, real QQ or SMTP testing, repository commit or push.",
+  "finalValidation": {
+    "scriptIndex": {
+      "exitCode": 0,
+      "result": {
+        "scripts": 180,
+        "boundaryDeclarations": 46,
+        "contradictions": 0,
+        "personaScripts": [
+          "chatbot/tests/persona/acceptance-host.mjs",
+          "chatbot/tests/persona/projection.test.mjs"
+        ]
+      }
+    },
+    "evidenceCoverage": {
+      "exitCode": 0,
+      "result": "evidence coverage\n  历史领域验收: 84\n  当前有效: 362\n  total: 446\nOK: every file is classified by a named rule."
+    },
+    "diffWhitespace": {
+      "exitCode": 0,
+      "result": ""
+    },
+    "documentation": {
+      "exitCode": 0,
+      "result": {
+        "files": 12,
+        "localLinks": 246,
+        "missing": [],
+        "unclosedFences": [],
+        "scope": "local link file targets and paired code fences only; no remote URLs or fragment anchors"
+      }
+    },
+    "personaAlignment": {
+      "exitCode": 0,
+      "result": "persona in sync with roles/世凪.md (12 workspace file(s) match)"
+    }
+  },
+  "passed": true,
+  "checks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "output": {
+        "at": "2026-10-19T15:58:33.105Z",
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "channel": [
+          {
+            "running": true,
+            "connected": true
+          }
+        ],
+        "cron": {
+          "total": 11,
+          "hasMore": false,
+          "jobs": [
+            {
+              "id": "1ad1bb0e-e393-4fe1-874a-f659b9187721",
+              "enabled": true,
+              "lastStatus": "ok",
+              "lastDeliveryStatus": "delivered",
+              "nextRunAtMs": 1792425600000
+            },
+            {
+              "id": "17a026c2-0a57-4176-985d-8f474294f37f",
+              "enabled": true,
+              "lastStatus": "ok",
+              "lastDeliveryStatus": "delivered",
+              "nextRunAtMs": 1792454400000
+            },
+            {
+              "id": "2bd8e62c-2bf0-4a45-b231-34e39d2ee400",
+              "enabled": true,
+              "lastStatus": "ok",
+              "lastDeliveryStatus": "delivered",
+              "nextRunAtMs": 1792463400000
+            },
+            {
+              "id": "23c06aa8-96f2-47c7-9adf-9a6f1291bb28",
+              "enabled": true,
+              "lastStatus": "ok",
+              "lastDeliveryStatus": "delivered",
+              "nextRunAtMs": 1792468800000
+            },
+            {
+              "id": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+              "enabled": true,
+              "lastStatus": "ok",
+              "lastDeliveryStatus": "delivered",
+              "nextRunAtMs": 1792490400000
+            },
+            {
+              "id": "0a794dfc-bfb3-4037-8258-834cff1c3e76",
+              "enabled": false,
+              "lastStatus": null,
+              "lastDeliveryStatus": null,
+              "nextRunAtMs": null
+            },
+            {
+              "id": "2d61b8f2-744a-438d-be99-a2796f05d5fd",
+              "enabled": false,
+              "lastStatus": null,
+              "lastDeliveryStatus": null,
+              "nextRunAtMs": null
+            },
+            {
+              "id": "428bf628-20d2-4c99-a889-38782ece05a7",
+              "enabled": false,
+              "lastStatus": null,
+              "lastDeliveryStatus": null,
+              "nextRunAtMs": null
+            },
+            {
+              "id": "53286346-7fed-4e0e-a381-9ee815014f01",
+              "enabled": false,
+              "lastStatus": null,
+              "lastDeliveryStatus": null,
+              "nextRunAtMs": null
+            },
+            {
+              "id": "86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3",
+              "enabled": false,
+              "lastStatus": null,
+              "lastDeliveryStatus": null,
+              "nextRunAtMs": null
+            },
+            {
+              "id": "a0b45e30-9e1c-4b33-ba36-5bf1ca6d50dc",
+              "enabled": false,
+              "lastStatus": null,
+              "lastDeliveryStatus": null,
+              "nextRunAtMs": null
+            }
+          ]
+        },
+        "testMethodDisabled": true,
+        "channelDatabase": "ok",
+        "outbound": [
+          {
+            "status": "sent",
+            "count": 412
+          }
+        ],
+        "recentAttempts": 105,
+        "dailyLimit": 500,
+        "recentFailedInbound": 0,
+        "weatherDatabase": "ok",
+        "remindersDatabase": "ok",
+        "reminderListDatabase": "ok",
+        "knowledgeMap": {
+          "ok": true,
+          "contract": 1,
+          "domains": [
+            "weather",
+            "tasks",
+            "bills"
+          ]
+        },
+        "services": {
+          "kurumi-fusion": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "qq-bridge": {
+            "ActiveState": "inactive",
+            "UnitFileState": "masked"
+          },
+          "openclaw-gateway": {
+            "ActiveState": "inactive",
+            "UnitFileState": "masked"
+          },
+          "snowluma": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "snowluma-qq": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "knowledgemap-assistant": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "dsh-web": {
+            "ActiveState": "active",
+            "UnitFileState": "disabled"
+          }
+        }
+      }
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "output": "ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "exitCode": 0,
+      "output": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exitCode": 0,
+      "output": "persona in sync with roles/世凪.md (12 workspace file(s) match)"
+    }
+  ],
+  "sourceHashesAtCloseout": {
+    "config/persona.json": "209d64af3ce3d90fe66cd0c159372c233022518e02e37707f49a3b47863a0961",
+    "config/access-control.json": "5a0c6e910d2d52afd542d523fbbfaebbcef84214e5d3ce2e3baca53382da052b",
+    "config/runtime.config.json": "3bbddd5bb1e07f63d9b4bbad193e2b6515c53f1eebe7a48a9dcbac8f7c493ea3",
+    "chatbot/packages/access-control/workspaces.js": "0315c572ae77bbaf0376e3482df5a043a36ad85a3f73f971f03c2cb16a533161",
+    "roles/世凪.md": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26",
+    "roles/relationships/本人恋人.md": "34e0e1040a73a05ed05cb71a5d46a4636ab5a94750b1d16728d948523553a6d4",
+    "roles/relationships/普通朋友.md": "24c30a1b93258891ecd3e668b1314a1791656c47d90e60e94803bb69435318ac",
+    "roles/LICENSE.openclaw-persona-template": "e987b91c204231a057878ee887d20b37bcd2194ac22e1dcf6ae6bc969a79fdcd",
+    "scripts/fusion/templates/AGENTS.md": "f906020c606987ab05a8e61c54625b9da917b67fcaea365eae3380a5f7115642",
+    "scripts/fusion/templates/MEMBER_AGENTS.md": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+    "scripts/fusion/sync-persona.mjs": "707bb27462e714e07b928e6ca071439e0d02ae85c929de786427a9b2eea4b4bf",
+    "chatbot/tests/persona/projection.test.mjs": "06e69d0c56c89e9bff5b3b9ec7e4ce2a6aa70f34dad25dd868d95b15d98b8d8e",
+    "chatbot/tests/persona/acceptance-host.mjs": "b954a17e6e39483d30d7125b04a6862a9e0c3f44478584f9f04860028c8afbfb"
+  },
+  "git": {
+    "head": "9c88003136216d082417290676027b01a40aab69",
+    "stagedPaths": [],
+    "worktree": "Existing mixed changes preserved; persona task did not stage, commit or push."
+  }
+}

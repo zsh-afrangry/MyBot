@@ -44,6 +44,7 @@
 | `chatbot/packages/personal-domains/src/weather-location.test.ts` | 离线 | 天气地点解析与叶子名保留 | 只读 | 否 | offline | — |
 | `chatbot/packages/personal-domains/src/weather-service.test.ts` | 离线 | 天气服务聚合与失败语义 | 只读 | 否 | offline | — |
 | `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | `docs/verification/` |
+| `chatbot/tests/access-control/policy.test.mjs` | 离线 | 身份权限schema、可信上下文、工具映射与默认拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/confirmation.test.mjs` | 离线 | 确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合 | 只读 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/domain.test.mjs` | 离线 | 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/domain-adapters/integration.test.mjs` | 离线 | 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退 | 写临时测试目录 | 否 | header | — |
@@ -62,6 +63,8 @@
 | `chatbot/tests/papers/reliability_test.py` | 离线 | 批次重试0–4次、冷却恢复/单探测/预算、本机HTTP正文空闲与总期限独立、实际取消/切渠道及安全诊断；无付费API或生产状态 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/responses_test.py` | 离线 | 原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/worker.test.mjs` | 离线 | 实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/persona/memory.test.mjs` | 离线 | 文档25 P2记忆迁移、SQLite版本/并发、来源校验、摘要TTL、遗忘屏障、成员拒绝与可插拔存储 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/persona/projection.test.mjs` | 离线 | 文档25人格/关系按身份投影、私密文件保留、非法配置/路径拒绝和旧配置兼容 | 写临时测试目录 | 否 | header | `docs/verification/persona-memory-2026-10-19/node-tests.txt` |
 | `chatbot/tests/reminder-list/intake.test.mjs` | 离线 | 自然录入授权、实际会话 UUID、超时/重置/换题与跨提醒领域拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/log-query.test.mjs` | 离线 | 提醒列表审计接入日志查询，精确消息/slot 关联 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/reminder-list/plugin.test.mjs` | 离线 | 提醒列表 v2 工具、可信原文钩子和过期上下文拒绝 | 写临时测试目录 | 否 | header | — |
@@ -73,6 +76,7 @@
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
 | `chatbot/scripts/import-knowledgemap-list.mjs` | 迁移工具 | 默认预览旧列表导入；--apply写共享业务，--activate冻结旧项并启用runner切换标记 | 真实外部API、写运行状态 | 是 | header | — |
 | `chatbot/scripts/backup-knowledgemap-code.mjs` | 领域运维 | 只读两个主工作树、bundle/index/工作树包保存到新私密备份目录；不含数据库/忽略文件 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/memory-migrate.mjs` | 迁移工具 | 预览或显式迁移主人旧 MEMORY.md 到私密连续性 SQLite；--apply写私密备份与记忆状态，不调用模型/QQ/邮件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-deepseek-persona.mjs` | 迁移工具 | 一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口 | 真实模型、写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-domains.mjs` | 迁移工具 | 启用主人绑定领域插件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-fulltext-research.mjs` | 迁移工具 | 研究会话、笔记工作区与来源缓存 | 写运行状态 | 是 | header | — |
@@ -88,6 +92,7 @@
 | `chatbot/scripts/reminder-list.mjs` | 领域运行 | 固定提醒列表 Cron 程序：按切换来源查询、slot 防重和汇总输出，OpenClaw 投递本人 | 写运行状态 | 是 | header | — |
 | `chatbot/tests/acceptance/call-analysis.mjs` | 库 | 旧验收调用观察工具（只观察，不证明写入） | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/domain-fixture.mjs` | 库 | 旧验收领域夹具与工具定义 | 只读 | 否 | code | — |
+| `chatbot/tests/access-control/fixtures.mjs` | 库 | 构造合成QQ身份与可信上下文，不导入生产名单 | 只读 | 否 | header | — |
 | `chatbot/tests/acceptance/host-driver.mjs` | 库 | 旧 harness Host 驱动，只开测试状态目录 | 写临时测试目录、只读 | 否 | code | — |
 | `chatbot/tests/acceptance/model-driver.mjs` | 库 | 旧 harness 模型驱动（构造模型客户端，读取遗留 AGENTS） | 真实模型 | 否 | code | — |
 | `chatbot/tests/acceptance/retrieval-config.mjs` | 库 | 旧验收检索输出预算配置 | 只读 | 否 | header | — |
@@ -125,6 +130,9 @@
 | `chatbot/tests/papers/acceptance-host.mjs` | 验收 | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/`<br>`docs/verification/paper-translation-2026-10-17/host.json` |
 | `chatbot/tests/papers/acceptance-worker.mjs` | 验收 | 生产捕获源码、正文空闲/重试配置与可取消HTTP子进程在真实隔离Python检查，无模型/外发 | 写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/paper-translation-2026-10-17/` |
 | `chatbot/tests/papers/acceptance.mjs` | 验收 | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/.` |
+| `chatbot/tests/persona/acceptance-host.mjs` | 验收 | 隔离OpenClaw人格投影与实际模型输入；默认确定性模型，可选官方DeepSeek，无真实QQ外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/.` |
+| `chatbot/tests/persona/continuity-host.mjs` | 验收 | 文档25 P2宿主生命周期调查：本人/成员`/new`、手动压缩与临时宿主重启；本地模型和模拟OneBot | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/persona-memory-2026-10-19/p2/.` |
+| `chatbot/tests/persona/memory-continuity-host.mjs` | 验收 | 文档25 P2隔离OpenClaw连续性插件：主人自动记忆、`/new`后注入与成员隔离；确定性模型/模拟OneBot | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/persona-memory-2026-10-19/p2/.` |
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
 | `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
 | `chatbot/tests/reminder-list/acceptance-native.mjs` | 验收 | 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务 | 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/native.json` |
@@ -171,7 +179,7 @@
 | `scripts/fusion/probe-final.mjs` | 只读运维 | health.mjs 的兼容入口 | 只读 | 否 | header | — |
 | `scripts/fusion/stack-summary.mjs` | 只读运维 | 启停输出压缩显示 | 只读 | 否 | header | — |
 | `scripts/fusion/sync-config.mjs` | 只读运维 | 默认只报告配置漂移；--apply 才写 openclaw.json | 写运行状态、只读 | 否 | header | — |
-| `scripts/fusion/sync-persona.mjs` | 只读运维 | 默认只报告人格漂移；--apply 才写 workspace 四份文件 | 写运行状态、只读 | 否 | header | — |
+| `scripts/fusion/sync-persona.mjs` | 只读运维 | 默认只报告人格漂移；--apply 写所有已登记身份的四份受管文件，不复制记忆/历史 | 写运行状态、只读 | 否 | header | — |
 | `scripts/fusion/verify-dependencies.mjs` | 只读运维 | 依赖自持、无归档树逃逸、锁文件一致 | 只读 | 否 | header | — |
 | `scripts/fusion/launchers/Start-DSH.sh` | 启停脚本 | 启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |

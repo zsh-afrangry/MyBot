@@ -1,0 +1,118 @@
+{
+  "at": "2026-10-19T16:20:03.692Z",
+  "scope": "Document 25 P2: lifecycle investigation only; automatic memory implementation and production activation await D01/D02.",
+  "checks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "ok": true,
+      "gateway": true,
+      "qqOnline": true,
+      "testIngress": false
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "ok": true
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs --diff",
+      "exitCode": 0,
+      "ok": true
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs --diff",
+      "exitCode": 0,
+      "ok": true,
+      "managedFiles": 12
+    }
+  ],
+  "isolatedHost": {
+    "evidence": "hook-lifecycle-fixed.json",
+    "passed": 12,
+    "cases": 12,
+    "localModelRequests": 13,
+    "deterministicSummarizerRequests": 1,
+    "temporaryGatewayStarts": 2,
+    "allTemporaryGatewaysStopped": true,
+    "realProviderCalls": 0,
+    "realQQOrMailSends": 0
+  },
+  "productionMutationsByThisStage": false,
+  "stagedCommittedOrPushedByThisStage": false,
+  "exclusions": [
+    "Automatic memory storage/extraction/correction/forgetting",
+    "Automatic threshold compaction",
+    "Real-model summary quality",
+    "Production memory/session migration",
+    "Full-system backup restore",
+    "Emotions/proactive messages"
+  ],
+  "validation": {
+    "scripts": 181,
+    "boundaryDeclarations": 47,
+    "contradictions": 0,
+    "tableCurrent": true,
+    "coverage": {
+      "exitCode": 0,
+      "classifiedFiles": 453
+    },
+    "documents": {
+      "files": 8,
+      "localLinks": 190,
+      "missingLocalLinks": [],
+      "unclosedFences": [],
+      "pageAnchorsAndRemoteLinksChecked": false
+    },
+    "protectedFiles": [
+      {
+        "file": "chatbot/plugins/kurumi-memory/index.js",
+        "unchanged": true
+      },
+      {
+        "file": "chatbot/plugins/kurumi-memory/openclaw.plugin.json",
+        "unchanged": true
+      },
+      {
+        "file": "chatbot/packages/access-control/permissions.js",
+        "unchanged": true
+      },
+      {
+        "file": "chatbot/packages/access-control/config.js",
+        "unchanged": true
+      },
+      {
+        "file": "chatbot/packages/access-control/index.js",
+        "unchanged": true
+      },
+      {
+        "file": "config/runtime.config.json",
+        "unchanged": true
+      },
+      {
+        "file": "config/access-control.json",
+        "unchanged": true
+      },
+      {
+        "file": "scripts/fusion/templates/AGENTS.md",
+        "unchanged": true
+      },
+      {
+        "file": "scripts/fusion/templates/MEMBER_AGENTS.md",
+        "unchanged": true
+      },
+      {
+        "file": "/home/afrangry/.openclaw-fusion/openclaw.json",
+        "unchanged": true
+      },
+      {
+        "file": "/home/afrangry/.openclaw-fusion/runtime-env.json",
+        "unchanged": true
+      }
+    ],
+    "unindexedP2Files": [],
+    "syntaxOK": true,
+    "diffCheckExit": 0,
+    "stagedFiles": []
+  }
+}

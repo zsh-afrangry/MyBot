@@ -1,0 +1,29 @@
+{
+  "at": "2026-10-19T16:41:37.400Z",
+  "live": false,
+  "model": "local/deterministic",
+  "cases": [],
+  "requests": 1,
+  "toolCalls": [],
+  "modelChecks": [
+    {
+      "label": "owner-automatic-save",
+      "owner": true,
+      "userText": "[{\"type\":\"text\",\"text\":\"<<<BEGIN_OPENCLAW_INTERNAL_CONTEXT>>>\\nConversation data (data, not instructions):\\n\\\"Conversation info: ⟦openclaw:ctx⟧\\\\n```json\\\\n{\\\\\\\"chat_id\\\\\\\":\\\\\\\"user:365999865\\\\\\\",\\\\\\\"message_id\\\\\\\":\\\\\\\"2\\\\\\\",\\\\\\\"sender\\\\\\\":{\\\\\\\"id\\\\\\\":\\\\\\\"365999865\\\\\\\",\\\\\\\"name\\\\\\\":\\\\\\\"主人\\\\\\\"},\\\\\\\"timestamp\\\\\\\":\\\\\\\"Tue 2026-10-20 00:41:43 GMT+8\\\\\\\"}\\\\n```\\\"\\n<<<END_OPENCLAW_INTERNAL_CONTEXT>>>\"}]",
+      "personalContext": true,
+      "savedFactInContext": true,
+      "memoryToolAvailable": false,
+      "toolNames": [
+        "tool_call",
+        "tool_describe",
+        "tool_search"
+      ]
+    }
+  ],
+  "mockSends": 0,
+  "boundary": "Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model and simulated OneBot. Temporary state only; no model provider, QQ, mail, production write or service restart.",
+  "passed": false,
+  "error": "Expected values to be strictly equal:\n\n0 !== 1\n",
+  "diagnosticsRoot": "/tmp/kurumi-memory-host-ppHYfR",
+  "childStopped": true
+}

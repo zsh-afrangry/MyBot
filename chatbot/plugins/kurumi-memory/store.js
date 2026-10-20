@@ -3,6 +3,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {validateFact} from './model.js';
+import {MEMORY_NOTICE} from './continuity/model.js';
+import {openContinuityStore} from './continuity/store.js';
 
 const marker = '<!-- KURUMI_MEMORY_JSON -->\n';
 
@@ -17,7 +19,7 @@ function fileAt(workspace) {
   return file;
 }
 
-export function readMemory(workspace) {
+export function readLegacyMemory(workspace) {
   const file = fileAt(workspace);
   if (!fs.existsSync(file)) return {version: 1, revision: 0, entries: []};
   const raw = fs.readFileSync(file, 'utf8');
@@ -31,8 +33,19 @@ export function readMemory(workspace) {
   return data;
 }
 
+// Compatibility read for recovery probes and existing callers; never a second writer.
+export function readMemory(workspace) {
+  const file = fileAt(workspace);
+  if (fs.existsSync(file) && fs.readFileSync(file, 'utf8') === MEMORY_NOTICE) {
+    const store = openContinuityStore({workspace, readonly: true});
+    try {const data = store.read(); return {version: 1, revision: data.revision, entries: data.facts};} finally {store.close();}
+  }
+  return readLegacyMemory(workspace);
+}
+
 export function writeMemory(workspace, data, expectedRevision) {
   const file = fileAt(workspace), lock = file + '.lock';
+  if (fs.existsSync(file) && fs.readFileSync(file, 'utf8') === MEMORY_NOTICE) throw Error('Continuity memory requires the selected SQLite adapter; legacy writes are disabled');
   let fd;
   try { fd = fs.openSync(lock, 'wx', 0o600); }
   catch { throw Error('记忆正在写入，请稍后重试'); }

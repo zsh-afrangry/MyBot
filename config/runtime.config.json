@@ -254,14 +254,25 @@
             "provider": "default",
             "id": "QWEATHER_API_KEY"
           },
-          "scheduledOwnerId": "365999865",
           "weatherBackend": "knowledgemap",
           "bridgeBaseUrl": "http://127.0.0.1:3086",
           "bridgeTokenFile": "/home/afrangry/.config/knowledgemap/assistant-token"
         }
       },
       "kurumi-memory": {
-        "enabled": true
+        "enabled": true,
+        "config": {
+          "continuity": {
+            "enabled": true,
+            "summaryTtlDays": 7,
+            "maxContextChars": 6000
+          },
+          "continuityPolicyAdapter": "current-owner",
+          "continuityStoreAdapter": "sqlite"
+        },
+        "hooks": {
+          "allowConversationAccess": true
+        }
       },
       "personal-reminder-list": {
         "enabled": true,
@@ -286,11 +297,7 @@
       },
       "kurumi-mail": {
         "enabled": true,
-        "config": {
-          "allowedRecipients": [
-            "365999865@qq.com"
-          ]
-        }
+        "config": {}
       },
       "kurumi-papers": {
         "enabled": true,
@@ -350,7 +357,6 @@
   "channels": {
     "kurumi-qq": {
       "enabled": true,
-      "ownerId": "365999865",
       "httpUrl": "http://127.0.0.1:3083",
       "wsUrl": "ws://127.0.0.1:3084",
       "httpTokenFile": "/home/afrangry/.openclaw-fusion/http-token",
@@ -392,11 +398,7 @@
   "logging": {
     "file": "/home/afrangry/.openclaw-fusion/runtime.log"
   },
-  "commands": {
-    "ownerAllowFrom": [
-      "kurumi-qq:365999865"
-    ]
-  },
+  "commands": {},
   "bindings": [
     {
       "agentId": "main",

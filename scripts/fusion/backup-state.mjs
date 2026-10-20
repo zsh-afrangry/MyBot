@@ -118,6 +118,7 @@ const copies = [
   [`${STATE_DIR}/plugins/package.json`, 'plugins.package.json'],
   [`${STATE_DIR}/plugins/package-lock.json`, 'plugins.package-lock.json'],
   [`${REPO_ROOT}/config/runtime.config.json`, 'repo-runtime.config.json'],
+  [`${REPO_ROOT}/config/access-control.json`, 'repo-access-control.json'],
   ...(externalBusiness?[[sharedBusiness.bridgeTokenFile,'knowledgemap-assistant-token']]:[])
 ];
 if(externalBusiness&&!externalBusiness.tokenCaptured)fail('KnowledgeMap credential','configured token file missing');
@@ -227,6 +228,7 @@ const REQUIRED = [
   ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-weather/weather.sqlite', 'weather/Profile database'],
   ['state/runtime/home/afrangry/.openclaw-fusion/channel/channel.sqlite', 'channel ledger'],
   ['state/runtime/home/afrangry/.openclaw-fusion/agents/main/agent/openclaw-agent.sqlite', 'main agent database'],
+  ['state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite', 'personal memory continuity database'],
   ['state/workspace/MEMORY.md', 'long-term memory'],
   ['state/workspace/SOUL.md', 'persona'],
   ['state/workspace/AGENTS.md', 'behaviour rules'],

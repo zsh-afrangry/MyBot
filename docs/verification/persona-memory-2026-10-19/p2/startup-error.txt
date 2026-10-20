@@ -1,0 +1,10 @@
+OpenClaw config is invalid
+File: /tmp/kurumi-continuity-host-LdhpOq/openclaw.json
+Problem:
+  - openclaw.json:1 — agents.defaults.compaction: Unrecognized key: "reserveTokens"
+Legacy config keys detected:
+  - : Numeric runtime tuning knobs were retired and now use built-in defaults. Run "openclaw doctor --fix".
+
+Inspect: openclaw config validate
+Audit, status, health, logs, and doctor commands still run with invalid config.
+Run "openclaw doctor --fix" to repair the config, then retry.

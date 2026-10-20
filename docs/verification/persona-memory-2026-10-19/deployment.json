@@ -1,0 +1,158 @@
+{
+  "at": "2026-10-19T15:58:15.889Z",
+  "backupRoot": "/home/afrangry/.openclaw-fusion/migration/before-yonagi-p1-2026-10-19T15-57-58-046Z",
+  "boundary": "docs/25 P1 managed persona files only; no service restart or config/permission/history/memory writes",
+  "serviceRestarted": false,
+  "servicePidUnchanged": true,
+  "managedFiles": 12,
+  "changedFiles": 6,
+  "files": [
+    {
+      "relative": "workspace/SOUL.md",
+      "beforeSha256": "ee4bd2b184c057f0a14145521659ae1b00ff89ec29fd597bd374d15ea1bb0d0e",
+      "desiredSha256": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26",
+      "willChange": true,
+      "actualSha256": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26",
+      "mode": "600"
+    },
+    {
+      "relative": "workspace/IDENTITY.md",
+      "beforeSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "desiredSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "willChange": false,
+      "actualSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "mode": "600"
+    },
+    {
+      "relative": "workspace/AGENTS.md",
+      "beforeSha256": "2e14b08dd70e9516b2e1506f3ae28bc4d4be83f8a6ead5a478e5cd5a6a375bf8",
+      "desiredSha256": "2e14b08dd70e9516b2e1506f3ae28bc4d4be83f8a6ead5a478e5cd5a6a375bf8",
+      "willChange": false,
+      "actualSha256": "2e14b08dd70e9516b2e1506f3ae28bc4d4be83f8a6ead5a478e5cd5a6a375bf8",
+      "mode": "600"
+    },
+    {
+      "relative": "workspace/USER.md",
+      "beforeSha256": "9a46725631e1c449f386ec05a5f456bf748c3b68d9e2913393a1d12ab5882019",
+      "desiredSha256": "bc76748988f1bd4d9eb13a8e62a76b201f84e654668f8b1acd3e4158e89816b3",
+      "willChange": true,
+      "actualSha256": "bc76748988f1bd4d9eb13a8e62a76b201f84e654668f8b1acd3e4158e89816b3",
+      "mode": "600"
+    },
+    {
+      "relative": "users/3311723223/workspace/SOUL.md",
+      "beforeSha256": "ee4bd2b184c057f0a14145521659ae1b00ff89ec29fd597bd374d15ea1bb0d0e",
+      "desiredSha256": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26",
+      "willChange": true,
+      "actualSha256": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26",
+      "mode": "600"
+    },
+    {
+      "relative": "users/3311723223/workspace/IDENTITY.md",
+      "beforeSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "desiredSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "willChange": false,
+      "actualSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "mode": "600"
+    },
+    {
+      "relative": "users/3311723223/workspace/AGENTS.md",
+      "beforeSha256": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+      "desiredSha256": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+      "willChange": false,
+      "actualSha256": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+      "mode": "600"
+    },
+    {
+      "relative": "users/3311723223/workspace/USER.md",
+      "beforeSha256": "e249c3ab227d8cffa1968e12a2b99ac07cd53dd00400787f02110592e8a0d4ca",
+      "desiredSha256": "aeb1654c26269afa35501d1046704d5fa1023b738e79edf009ac8245ce404e8c",
+      "willChange": true,
+      "actualSha256": "aeb1654c26269afa35501d1046704d5fa1023b738e79edf009ac8245ce404e8c",
+      "mode": "600"
+    },
+    {
+      "relative": "users/2752966052/workspace/SOUL.md",
+      "beforeSha256": "ee4bd2b184c057f0a14145521659ae1b00ff89ec29fd597bd374d15ea1bb0d0e",
+      "desiredSha256": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26",
+      "willChange": true,
+      "actualSha256": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26",
+      "mode": "600"
+    },
+    {
+      "relative": "users/2752966052/workspace/IDENTITY.md",
+      "beforeSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "desiredSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "willChange": false,
+      "actualSha256": "8055c07b239fbb092f838644d6d2fe8bdb07adae5af8f8100f2434d5a9930857",
+      "mode": "600"
+    },
+    {
+      "relative": "users/2752966052/workspace/AGENTS.md",
+      "beforeSha256": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+      "desiredSha256": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+      "willChange": false,
+      "actualSha256": "1c447f49ceb82468713cc8f8982264f61f82d41fe961c85a7affefa60d193de2",
+      "mode": "600"
+    },
+    {
+      "relative": "users/2752966052/workspace/USER.md",
+      "beforeSha256": "e249c3ab227d8cffa1968e12a2b99ac07cd53dd00400787f02110592e8a0d4ca",
+      "desiredSha256": "aeb1654c26269afa35501d1046704d5fa1023b738e79edf009ac8245ce404e8c",
+      "willChange": true,
+      "actualSha256": "aeb1654c26269afa35501d1046704d5fa1023b738e79edf009ac8245ce404e8c",
+      "mode": "600"
+    }
+  ],
+  "subjects": [
+    {
+      "qq": "365999865",
+      "role": "owner",
+      "ownerRelationship": true,
+      "memberRelationship": false
+    },
+    {
+      "qq": "3311723223",
+      "role": "member",
+      "ownerRelationship": false,
+      "memberRelationship": true
+    },
+    {
+      "qq": "2752966052",
+      "role": "member",
+      "ownerRelationship": false,
+      "memberRelationship": true
+    }
+  ],
+  "protectedFiles": [
+    {
+      "file": "/home/afrangry/kurumi-fusion/config/runtime.config.json",
+      "unchanged": true
+    },
+    {
+      "file": "/home/afrangry/kurumi-fusion/config/access-control.json",
+      "unchanged": true
+    },
+    {
+      "file": "/home/afrangry/kurumi-fusion/roles/小鲸鱼.md",
+      "unchanged": true
+    },
+    {
+      "file": "/home/afrangry/kurumi-fusion/roles/傲娇助手.md",
+      "unchanged": true
+    },
+    {
+      "file": "/home/afrangry/.openclaw-fusion/openclaw.json",
+      "unchanged": true
+    },
+    {
+      "file": "/home/afrangry/.openclaw-fusion/runtime-env.json",
+      "unchanged": true
+    }
+  ],
+  "privateFilesChecked": 58,
+  "privateFilesUnchanged": true,
+  "privateFilesChanged": [],
+  "runtimeBeforeNote": "Another authorized attachment task had already synchronized an intermediate Yonagi projection; the exact pre-apply backup is not the original whale baseline. Original persona config and unchanged whale source are also kept privately.",
+  "passed": true
+}

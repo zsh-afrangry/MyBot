@@ -396,7 +396,17 @@ if (!fs.existsSync(memPath)) {
     const { readMemory } = await import(`file://${restoredStore}`);
     const mem = readMemory(path.join(runtime, 'workspace'));
     const src = fs.readFileSync(memPath, 'utf8');
-    const srcRevision = Number(/(?:"revision"\s*:\s*)(\d+)/.exec(src)?.[1] ?? -1);
+    // Legacy MEMORY.md embeds its revision in JSON. Continuity mode deliberately replaces
+    // that file with a fixed notice and keeps the revision in the restored SQLite state.
+    let srcRevision = Number(/(?:"revision"\s*:\s*)(\d+)/.exec(src)?.[1] ?? -1);
+    if (srcRevision < 0) {
+      const continuityDb = path.join(runtime, 'workspace/.kurumi-memory/state.sqlite');
+      if (fs.existsSync(continuityDb)) {
+        const db = new DatabaseSync(continuityDb, { readOnly: true });
+        srcRevision = Number(db.prepare('SELECT revision FROM memory_state WHERE singleton = 1').get()?.revision ?? -1);
+        db.close();
+      }
+    }
     check('load: restored memory readable via restored source', mem.revision === srcRevision && Array.isArray(mem.entries), `revision ${mem.revision}, ${mem.entries?.length ?? 0} entr(ies), source ${path.relative(target, restoredStore)}`);
   } catch (e) {
     check('load: restored memory readable via restored source', false, e.message);

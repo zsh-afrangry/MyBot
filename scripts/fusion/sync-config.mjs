@@ -23,6 +23,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { STATE_DIR, REPO_ROOT } from './lib/legacy-source.mjs';
+import {compileAccessConfig} from '../../chatbot/packages/access-control/config.js';
 
 const CANONICAL = path.join(REPO_ROOT, 'config/runtime.config.json');
 const LIVE = path.join(STATE_DIR, 'openclaw.json');
@@ -201,7 +202,8 @@ if (argv.has('--selftest')) {
 if (!fs.existsSync(CANONICAL)) throw new Error(`Missing canonical config: ${CANONICAL}`);
 if (!fs.existsSync(LIVE)) throw new Error(`Missing runtime config: ${LIVE} (is the fusion runtime initialised?)`);
 
-const rawCanonical = JSON.parse(fs.readFileSync(CANONICAL, 'utf8'));
+const rawCanonical = compileAccessConfig(JSON.parse(fs.readFileSync(CANONICAL, 'utf8')),
+  JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config/access-control.json'), 'utf8')));
 const managedList = rawCanonical._managed;
 if (!Array.isArray(managedList) || !managedList.length) {
   throw new Error(`${CANONICAL} must declare "_managed": [<top-level keys the repository owns>]`);
@@ -214,6 +216,7 @@ delete intent._managed;
 const live = JSON.parse(fs.readFileSync(LIVE, 'utf8'));
 const canonical = deferPluginEntries(intent, live, deferredPlugins);
 for (const id of deferredPlugins) console.log(`  DEFERRED plugins.entries.${id}: keep complete live entry; normal --check still compares full repo intent`);
+if(live.channels?.['kurumi-qq']?.ownerId && live.channels['kurumi-qq'].ownerId!==canonical.channels['kurumi-qq'].ownerId)throw Error('owner_change_requires_explicit_data_migration');
 const hostMaintained = Object.keys(live).filter((k) => !managed.has(k));
 
 const { changed, onlyRuntime } = compare(canonical, live, '', managed, false);
@@ -254,7 +257,11 @@ const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 const backup = `${LIVE}.bak.${stamp}`;
 fs.copyFileSync(LIVE, backup);
 fs.chmodSync(backup, 0o600);
-fs.writeFileSync(LIVE, JSON.stringify(merge(canonical, live, managed), null, 2) + '\n', { mode: 0o600 });
+const temporary = `${LIVE}.tmp.${process.pid}`;
+try {
+  fs.writeFileSync(temporary, JSON.stringify(merge(canonical, live, managed), null, 2) + '\n', { mode: 0o600, flag: 'wx' });
+  fs.renameSync(temporary, LIVE);
+} finally { fs.rmSync(temporary, {force:true}); }
 console.log(`applied: ${changed.length} changed, ${deletions.length} removed`);
 console.log(`  backup          : ${backup}`);
 console.log(`  managed keys    : ${managed.size} replaced from repo${deferredPlugins.length ? '; explicitly deferred plugin entries kept from live' : ''}`);
