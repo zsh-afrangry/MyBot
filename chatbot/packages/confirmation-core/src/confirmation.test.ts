@@ -111,6 +111,35 @@ describe("domain-independent confirmation governance", () => {
     } finally { unregister(); }
     expect(confirmationBackendIds()).not.toContain("test-notes");
   });
+  it("a stale unregister handle cannot remove a new registration of the same provider", () => {
+    const f = fixture();
+    const provider = { id: "test-reused-notes", open: () => f.backend };
+    const old = registerConfirmationBackend(provider);
+    let current: (() => void) | undefined;
+    try {
+      old();
+      current = registerConfirmationBackend(provider);
+      old(); old();
+      expect(confirmationBackendIds()).toContain(provider.id);
+      expect(() => registerConfirmationBackend(provider)).toThrow(/already registered/);
+      const report = vi.fn();
+      expect(recordRegisteredConfirmation(event, report)).toBe("recorded");
+      expect(report).toHaveBeenCalledWith({ outcome: "recorded", backend: provider.id });
+      expect(f.record).toHaveBeenCalledOnce();
+      current(); current();
+      expect(confirmationBackendIds()).not.toContain(provider.id);
+    } finally { current?.(); old(); f.db.close(); }
+  });
+  it("registered providers keep their original receiver when opening storage", () => {
+    const f = fixture();
+    const provider = { id: "test-provider-receiver", backend: f.backend,
+      open() { return this.backend; } };
+    const unregister = registerConfirmationBackend(provider);
+    try {
+      expect(recordRegisteredConfirmation(event, vi.fn())).toBe("recorded");
+      expect(f.close).toHaveBeenCalledOnce();
+    } finally { unregister(); f.db.close(); }
+  });
 });
 
 describe('Fusion channel confirmation scope', () => {

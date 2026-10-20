@@ -21,9 +21,13 @@ function registry(): Map<string, ConfirmationBackendProvider> {
   return host[key] ??= new Map();
 }
 export function registerConfirmationBackend(provider: ConfirmationBackendProvider): () => void {
-  if (registry().has(provider.id)) throw new Error(`Confirmation backend already registered: ${provider.id}`);
-  registry().set(provider.id, provider);
-  return () => { if (registry().get(provider.id) === provider) registry().delete(provider.id); };
+  const id = provider.id;
+  if (registry().has(id)) throw new Error(`Confirmation backend already registered: ${id}`);
+  // Ownership belongs to this registration, even when a caller reuses a provider
+  // object. Keep the shared map's provider shape for other host-loaded copies.
+  const registration = { id, open: provider.open.bind(provider) };
+  registry().set(id, registration);
+  return () => { if (registry().get(id) === registration) registry().delete(id); };
 }
 export function confirmationBackendIds(): string[] { return [...registry().keys()].sort(); }
 

@@ -1,3 +1,4 @@
+import {withAccess} from '../../../tests/access-control/fixtures.mjs';
 // Tool-layer tests: the entry point that actually failed.
 //
 // The 2026-10-16 failure happened before any of the lower layers ran — the host rejected the call
@@ -27,7 +28,7 @@ function harness({ allowedRecipients = [ALLOWED], stateDirectory, t } = {}) {
   const tools = new Map();
   const services = [];
   const api = {
-    config: { channels: { "kurumi-qq": { ownerId: OWNER } } },
+    config: withAccess({ channels: { "kurumi-qq": { ownerId: OWNER } } }),
     pluginConfig: { allowedRecipients },
     logger: { info() {}, warn() {}, error() {} },
     registerService(service) { services.push(service); return () => {}; },
@@ -38,12 +39,8 @@ function harness({ allowedRecipients = [ALLOWED], stateDirectory, t } = {}) {
     },
   };
   plugin.register(api);
-  const unregisters = [];
-  for (const service of services) {
-    const result = service.start?.();
-    if (typeof result === "function") unregisters.push(result);
-  }
-  t?.after(() => { for (const unregister of unregisters) unregister(); });
+  for (const service of services) service.start();
+  t?.after(async () => { for (const service of [...services].reverse()) await service.stop?.(); });
   return { tools, services, api };
 }
 
@@ -54,7 +51,7 @@ function ownerContext(overrides = {}) {
     requesterSenderId: OWNER,
     senderIsOwner: true,
     sessionKey: SESSION,
-    getRuntimeConfig: () => ({ channels: { "kurumi-qq": { ownerId: OWNER } } }),
+    getRuntimeConfig: () => (withAccess({ channels: { "kurumi-qq": { ownerId: OWNER } } })),
     assertInvocationCurrent() {},
     ...overrides,
   };
@@ -130,7 +127,7 @@ test("a non-owner context cannot use any mail tool", async (t) => {
   const { state } = workspace(t);
   const tools = new Map();
   const api = {
-    config: { channels: { "kurumi-qq": { ownerId: OWNER } } },
+    config: withAccess({ channels: { "kurumi-qq": { ownerId: OWNER } } }),
     pluginConfig: { allowedRecipients: [ALLOWED] },
     registerService() { return () => {}; },
     registerTool(definition) { const tool = definition.create(ownerContext({ senderIsOwner: false })); tools.set(tool.name, tool); return () => {}; },

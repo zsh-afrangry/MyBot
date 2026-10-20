@@ -15,7 +15,11 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
       notify: (text, key) => sendPayload({cfg: cfg(), to: 'user:' + cfg().channels['kurumi-qq'].ownerId, text, key: 'paper-notice:' + key}),
       trace: event => createTraceSink(config.root + '/events.jsonl').emit({source: 'papers', ...event}),
     });
-    api.registerService({id: 'kurumi-papers-jobs', start() { service.start(); return () => service.stop(); }});
+    api.registerService({
+      id: 'kurumi-papers-jobs',
+      start() { return service.start(); },
+      stop() { return service.stop(); },
+    });
     const register = (name, description, properties, execute) => api.registerTool({contextVersion: 2, create: ctx => ({
       name, label: name, description,
       parameters: {type: 'object', additionalProperties: false, required: [name === 'kurumi_document_send' ? 'documentId' : 'action'], properties},

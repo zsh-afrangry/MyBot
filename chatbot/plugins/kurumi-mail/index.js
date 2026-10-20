@@ -55,10 +55,11 @@ export function createMailPlugin({ registry } = {}) {
     // The host routes the owner's "确认 <code>" message to registered backends only, so this
     // registration is what makes confirmation reachable at all. The backend opens the SELECTED store,
     // so a replacement store is picked up here without editing this file.
+    let unregisterBackend;
     api.registerService({
       id: "kurumi-mail-confirmation-backend",
       start() {
-        const unregister = registerConfirmationBackend({
+        unregisterBackend = registerConfirmationBackend({
           id: BACKEND_ID,
           open: () => application.openStore(storeOptions()),
         });
@@ -72,7 +73,11 @@ export function createMailPlugin({ registry } = {}) {
           policyAdapter: application.policyId,
           storeAdapter: application.storeId,
         }));
-        return () => unregister();
+      },
+      stop() {
+        const unregister = unregisterBackend;
+        unregisterBackend = undefined;
+        unregister?.();
       },
     });
 

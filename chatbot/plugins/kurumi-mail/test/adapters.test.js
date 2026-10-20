@@ -1,3 +1,4 @@
+import {withAccess} from '../../../tests/access-control/fixtures.mjs';
 // Adapter-layer tests for kurumi-mail.
 //
 // The point of these is injectability, and the case that matters most is the confirmation path: the
@@ -77,18 +78,19 @@ function harness({ store = fakeStore(), policy = defaultMailPolicy, pluginConfig
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "kurumi-mail-adapters-"));
   process.env.OPENCLAW_STATE_DIR = dir;
   const tools = new Map();
-  const unregisters = [];
+  const services = [];
   const api = {
-    config: { channels: { "kurumi-qq": { ownerId: OWNER } } },
+    config: withAccess({ channels: { "kurumi-qq": { ownerId: OWNER } } }),
     pluginConfig,
     logger: { info() {}, warn() {}, error() {} },
-    registerService(service) { const stop = service.start?.(); if (typeof stop === "function") unregisters.push(stop); return () => {}; },
+    registerService(service) { services.push(service); return () => {}; },
     registerTool(definition) { const tool = definition.create(ownerContext()); tools.set(tool.name, tool); return () => {}; },
   };
   createMailPlugin({ registry }).register(api);
+  for (const service of services) service.start();
   return {
     store, tools, registry,
-    cleanup() { for (const unregister of unregisters) unregister(); fs.rmSync(dir, { recursive: true, force: true }); },
+    cleanup() { for (const service of [...services].reverse()) service.stop?.(); fs.rmSync(dir, { recursive: true, force: true }); },
     run: async (name, args) => JSON.parse((await tools.get(name).execute("call", args, undefined)).content[0].text),
   };
 }
@@ -100,7 +102,7 @@ function ownerContext(overrides = {}) {
     requesterSenderId: OWNER,
     senderIsOwner: true,
     sessionKey: SESSION,
-    getRuntimeConfig: () => ({ channels: { "kurumi-qq": { ownerId: OWNER } } }),
+    getRuntimeConfig: () => (withAccess({ channels: { "kurumi-qq": { ownerId: OWNER } } })),
     assertInvocationCurrent() {},
     ...overrides,
   };
@@ -169,7 +171,7 @@ test("a replacement policy changes admission but cannot mint owner identity", as
   process.env.OPENCLAW_STATE_DIR = dir;
   const permissive = Object.freeze({ ...defaultMailPolicy, normalizeDraft: (args) => ({ to: args.to, cc: [], subject: "s", text: "t" }) });
   createMailPlugin({ registry: registryWith(fakeStore(), permissive) }).register({
-    config: { channels: { "kurumi-qq": { ownerId: OWNER } } },
+    config: withAccess({ channels: { "kurumi-qq": { ownerId: OWNER } } }),
     pluginConfig: { allowedRecipients: [ALLOWED] },
     registerService() { return () => {}; },
     registerTool(definition) { const tool = definition.create(ownerContext({ senderIsOwner: false })); tools.set(tool.name, tool); return () => {}; },
@@ -192,7 +194,7 @@ test("pluginConfig can select an implementation by id", async (t) => {
   process.env.OPENCLAW_STATE_DIR = dir;
   const tools = new Map();
   createMailPlugin({ registry }).register({
-    config: { channels: { "kurumi-qq": { ownerId: OWNER } } },
+    config: withAccess({ channels: { "kurumi-qq": { ownerId: OWNER } } }),
     pluginConfig: { allowedRecipients: [ALLOWED], policyAdapter: "alt", storeAdapter: "alt" },
     registerService() { return () => {}; },
     registerTool(definition) { const tool = definition.create(ownerContext()); tools.set(tool.name, tool); return () => {}; },
