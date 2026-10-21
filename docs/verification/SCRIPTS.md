@@ -126,6 +126,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/health.mjs` | 只读运维 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 服务、QQ、频道、Cron、数据库健康 | 只读 | 否 | header | — |
 | `scripts/fusion/inspect-receipts.mjs` | 只读运维 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 查看验收回执 | 只读 | 否 | code | `docs/verification/fusion/receipts.json` |
 | `scripts/fusion/log-query.mjs` | 只读运维 | [18](../18_跨模块链路日志查询.md) | 跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询 | 只读 | 否 | header | — |
+| `scripts/fusion/openclaw-update-guard.sh` | 只读运维 | [10](../10_融合助手运行维护.md) | A4：由主人在shell rc里source，定义拦截openclaw update的函数；本身不改环境 | 只读 | 否 | header | — |
 | `scripts/fusion/probe-final.mjs` | 只读运维 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | health.mjs 的兼容入口 | 只读 | 否 | header | — |
 | `scripts/fusion/stack-summary.mjs` | 只读运维 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 启停输出压缩显示 | 只读 | 否 | header | — |
 | `scripts/fusion/sync-config.mjs` | 只读运维 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 默认只报告配置漂移；--apply 才写 openclaw.json | 写运行状态、只读 | 否 | header | — |
@@ -173,6 +174,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/papers/acceptance-worker.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 生产捕获源码、正文空闲/重试配置与可取消HTTP子进程在真实隔离Python检查，无模型/外发 | 写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/paper-translation-2026-10-17/README.md` |
 | `chatbot/tests/papers/acceptance.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md` |
 | `chatbot/tests/persona/acceptance-host.mjs` | 验收 | [25](../25_人格、记忆与会话连续性.md) | 文档25真实隔离OpenClaw/模拟OneBot的实际人格注入；默认本地模型，--live使用官方DeepSeek，无真实QQ外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/README.md` |
+| `chatbot/tests/persona/compaction-host.mjs` | 验收 | [25](../25_人格、记忆与会话连续性.md) | 文档25 P2/E1真实隔离OpenClaw宿主自动压缩：token/transcript字节阈值、memoryFlush对照、默认与safeguard模式畸形摘要、临时宿主重启；确定性模型和模拟OneBot，无真实API或QQ | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | header | — |
 | `chatbot/tests/persona/continuity-host.mjs` | 验收 | [25](../25_人格、记忆与会话连续性.md) | 文档25 P2真实隔离OpenClaw授权钩子、/new历史清理、手动压缩与临时宿主重启；确定性模型和模拟OneBot，无真实API或QQ | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/persona-memory-2026-10-19/p2/README.md` |
 | `chatbot/tests/persona/memory-continuity-host.mjs` | 验收 | [25](../25_人格、记忆与会话连续性.md) | 文档25 P2真实隔离OpenClaw；默认确定性模型，--live官方DeepSeek最多40请求/每次1200输出tokens；临时状态和模拟OneBot，验证自动/显式保存、更正/遗忘、/new、成员隔离和契约，无真实QQ/邮件或生产写入 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/p2/README.md` |
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | [19](../19_提醒列表与定时汇总.md) | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |

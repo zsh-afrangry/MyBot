@@ -26,6 +26,11 @@
       },
       "systemAgent": {
         "agentId": "main"
+      },
+      "compaction": {
+        "memoryFlush": {
+          "enabled": false
+        }
       }
     },
     "entries": {

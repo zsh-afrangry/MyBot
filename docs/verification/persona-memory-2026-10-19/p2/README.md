@@ -30,6 +30,7 @@
 | [memory-contract-selfchecks.json](memory-contract-selfchecks.json) | 补正加载及主人AGENTS同步后的健康、依赖、配置、人格四项自检全过，QQ在线、testIngress=false。 |
 | [memory-contract-validation.json](memory-contract-validation.json) | 本轮收录前的证据分类、脚本boundary、修改Markdown本地目标/围栏、私密值泄漏及diff格式检查；不包含远端URL和页内锚点核验。 |
 | [memory-contract-qq-2241.json](memory-contract-qq-2241.json) | `2ba0308`修复版22:41:03–22:42:14真人QQ显式保存/同ID更正/遗忘及三次重开问答通过；首次漏版本被拒后模型自行读取重试成功。最终13/5、原6条完整事实不变，测试条目已删除。仅原生日志定位和脱敏结论，无聊天正文。 |
+| [compaction-host.json](compaction-host.json) | E1宿主自动压缩 **6/6** 变体通过（确定性模型、隔离状态，待复验）：A/A2 token阈值触发、摘要进入后续输入、同sessionId、临时重启后保留、个人记忆不变且成员隔离、flush请求0；A3加载memory-core时flush被派发但messaging工具策略下无写工具而失败；B transcript字节阈值触发；C生产默认模式无质量守卫、畸形摘要原样被采用；C2 safeguard模式守卫重试后取消，之后主人回合无回复。 |
 
 TAP证据仅规范行尾空白以通过Git格式检查（修复前回执4行），不改变测试结论、断言或诊断内容。
 
@@ -72,6 +73,7 @@ node --test chatbot/plugins/kurumi-memory/test/*.test.js \
 - 已完成：`backup-state.mjs`生成非停写材料 `/home/afrangry/kurumi-backups/2026-10-19-17-02-19-p2-memory-closeout/`，15/15 SQLite快照包含连续性库；`quiesced=false`，不表示跨库同一瞬间停写。该最新材料的隔离恢复 **19/19** 通过，报告见[recovery-verify.json](recovery-verify.json)。
 - 恢复验收器曾把迁移后的固定说明文本误报为缺少revision（18/19）；现已补充从恢复副本`memory_state`读取revision，并在本次最新材料上复验为19/19。修复只改验收器，不改生产记忆。
 - 工具契约补正已按上述回执热重载，主人AGENTS定向同步；最终真实模型合成样本10/10通过。部署时生产6条事实和完整状态指纹未变，没有真实QQ/邮件外发或生产记忆写入；随后用户本人22:41实测产生3次合法提交，现revision=13/generation=5。显式闭环及版本缺失后的自动恢复均核实，原6条完整事实未变；19:59/21:08两轮仍为补正前证据，不混同计数。
-- 仍未验证宿主自动阈值压缩、长期自动归纳/陪伴体感或生产停写恢复；22:41的显式用例不替代新的普通陈述observe验收。成员仍没有主人记忆，P3持久情绪、P4日记/主动联系未实施。未重打备份，19/19恢复只证明原材料版本，不包含本轮代码补正。
+- 宿主自动阈值压缩已由[compaction-host.mjs](../../../../chatbot/tests/persona/compaction-host.mjs)在隔离宿主覆盖（见上表，待复验）；生产真实长会话触发仍未观察。
+- 仍未验证长期自动归纳/陪伴体感或生产停写恢复；22:41的显式用例不替代新的普通陈述observe验收。成员仍没有主人记忆，P3持久情绪、P4日记/主动联系未实施。未重打备份，19/19恢复只证明原材料版本，不包含本轮代码补正。
 
 这些限制是当前验收边界，不把12/12或4/4扩展解释为生产功能全量通过。

@@ -1,0 +1,3312 @@
+{
+  "at": "2026-10-21T10:38:20.303Z",
+  "model": "local/deterministic",
+  "contextWindow": 32768,
+  "preflightThreshold": 24576,
+  "fillUsage": 30000,
+  "variants": [
+    {
+      "variant": "A",
+      "config": {
+        "memorySlot": "none",
+        "trigger": "tokens",
+        "restart": true
+      },
+      "requests": 7,
+      "requestKinds": [
+        {
+          "turn": "owner-seed",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-fill",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "kind": "reply"
+        },
+        {
+          "turn": "member-turn",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-restart",
+          "kind": "reply"
+        }
+      ],
+      "summaryRequests": [
+        {
+          "turn": "owner-after-threshold",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        }
+      ],
+      "flushRequests": [],
+      "promptChecks": [
+        {
+          "turn": "owner-seed",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-fill",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-threshold",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-compaction",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "member-turn",
+          "owner": false,
+          "toolNames": [
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": false,
+          "seededFact": false,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-restart",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        }
+      ],
+      "replies": [
+        {
+          "turn": "owner-seed",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-fill",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-threshold",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-compaction",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "member-turn",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-restart",
+          "ok": true,
+          "delivered": true
+        }
+      ],
+      "platformWrites": [],
+      "healthAfter": true,
+      "hooks": [
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "f9d800a4-ba05-4a0c-bea4-9c73ee08064d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 0
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 394,
+          "runId": "f9d800a4-ba05-4a0c-bea4-9c73ee08064d",
+          "ctx": {
+            "runId": "f9d800a4-ba05-4a0c-bea4-9c73ee08064d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "24670552-8eb5-4d59-8de8-cd9b9ed2fdfd",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 57,
+          "runId": "24670552-8eb5-4d59-8de8-cd9b9ed2fdfd",
+          "ctx": {
+            "runId": "24670552-8eb5-4d59-8de8-cd9b9ed2fdfd",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 4,
+          "tokenCount": 30000,
+          "ctx": {
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace"
+          }
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 4,
+          "tokenCount": 30020,
+          "ctx": {
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 2,
+          "tokenCount": 188,
+          "compactedCount": 2,
+          "sessionFile": "sqlite:main:95d91732-add2-41f7-8f12-6fa7824471b4:/tmp/kurumi-compaction-A-nywcge/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "49547894-b5ef-43b3-9aff-67a53a23c941",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 59,
+          "runId": "49547894-b5ef-43b3-9aff-67a53a23c941",
+          "ctx": {
+            "runId": "49547894-b5ef-43b3-9aff-67a53a23c941",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "ad8c1272-8d93-43a4-8052-126a60c085da",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 44,
+          "runId": "ad8c1272-8d93-43a4-8052-126a60c085da",
+          "ctx": {
+            "runId": "ad8c1272-8d93-43a4-8052-126a60c085da",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 46,
+          "runId": "d9fd64b1-4204-4115-a712-d1b0d2fde97f",
+          "ctx": {
+            "runId": "d9fd64b1-4204-4115-a712-d1b0d2fde97f",
+            "agentId": "qq-user-800001",
+            "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+            "sessionId": "11f532a0-c17b-4791-a2cb-7a7a311ccbcd",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/users/800001/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "800001",
+            "senderId": "800001",
+            "chatId": "800001"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "5751a9e3-ee2e-4b64-b568-2892fe79b386",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 425,
+          "runId": "5751a9e3-ee2e-4b64-b568-2892fe79b386",
+          "ctx": {
+            "runId": "5751a9e3-ee2e-4b64-b568-2892fe79b386",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "95d91732-add2-41f7-8f12-6fa7824471b4",
+            "workspaceDir": "/tmp/kurumi-compaction-A-nywcge/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 8
+        }
+      ],
+      "memory": {
+        "revisionBefore": 1,
+        "revisionAfter": 1,
+        "factsUnchanged": true
+      },
+      "observed": {
+        "summaryAttempts": 1,
+        "flushRequests": 0,
+        "beforeCompaction": 2,
+        "afterCompaction": 1,
+        "ownerSessionIds": [
+          "95d91732-add2-41f7-8f12-6fa7824471b4"
+        ],
+        "summaryInLaterInput": true,
+        "allRepliesDelivered": true,
+        "bytesTriggerLogged": false
+      },
+      "passed": true,
+      "routineCheckLines": 13,
+      "logLines": [
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30000 threshold=24576 trigger=tokens activeTranscriptBytes=undefined maxActiveTranscriptBytes=undefined",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30020 threshold=24576 trigger=tokens activeTranscriptBytes=2726 maxActiveTranscriptBytes=undefined"
+      ],
+      "childStopped": true
+    },
+    {
+      "variant": "A2",
+      "config": {
+        "memorySlot": "none",
+        "trigger": "tokens",
+        "flushDisabled": true
+      },
+      "requests": 6,
+      "requestKinds": [
+        {
+          "turn": "owner-seed",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-fill",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "kind": "reply"
+        },
+        {
+          "turn": "member-turn",
+          "kind": "reply"
+        }
+      ],
+      "summaryRequests": [
+        {
+          "turn": "owner-after-threshold",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        }
+      ],
+      "flushRequests": [],
+      "promptChecks": [
+        {
+          "turn": "owner-seed",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-fill",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-threshold",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-compaction",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "member-turn",
+          "owner": false,
+          "toolNames": [
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": false,
+          "seededFact": false,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        }
+      ],
+      "replies": [
+        {
+          "turn": "owner-seed",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-fill",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-threshold",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-compaction",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "member-turn",
+          "ok": true,
+          "delivered": true
+        }
+      ],
+      "platformWrites": [],
+      "healthAfter": true,
+      "hooks": [
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "c2797601-9f9b-4c9f-88c9-ea9c533e075f",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 0
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 400,
+          "runId": "c2797601-9f9b-4c9f-88c9-ea9c533e075f",
+          "ctx": {
+            "runId": "c2797601-9f9b-4c9f-88c9-ea9c533e075f",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "2eaea588-2572-4969-b508-b4470622d807",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 55,
+          "runId": "2eaea588-2572-4969-b508-b4470622d807",
+          "ctx": {
+            "runId": "2eaea588-2572-4969-b508-b4470622d807",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 4,
+          "tokenCount": 30000,
+          "ctx": {
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace"
+          }
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 4,
+          "tokenCount": 30020,
+          "ctx": {
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 2,
+          "tokenCount": 188,
+          "compactedCount": 2,
+          "sessionFile": "sqlite:main:9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814:/tmp/kurumi-compaction-A2-RjrOaL/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "9b43930b-f466-431d-b234-d60ea9d80b64",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 51,
+          "runId": "9b43930b-f466-431d-b234-d60ea9d80b64",
+          "ctx": {
+            "runId": "9b43930b-f466-431d-b234-d60ea9d80b64",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "9286b3bb-c972-45c6-9289-daafdfe81588",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 46,
+          "runId": "9286b3bb-c972-45c6-9289-daafdfe81588",
+          "ctx": {
+            "runId": "9286b3bb-c972-45c6-9289-daafdfe81588",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 43,
+          "runId": "c6e626e9-fbf7-4c44-ac8a-b48c4ad8a532",
+          "ctx": {
+            "runId": "c6e626e9-fbf7-4c44-ac8a-b48c4ad8a532",
+            "agentId": "qq-user-800001",
+            "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+            "sessionId": "8ccbb50e-b5aa-4a9f-8b21-ad25fab0a7fc",
+            "workspaceDir": "/tmp/kurumi-compaction-A2-RjrOaL/users/800001/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "800001",
+            "senderId": "800001",
+            "chatId": "800001"
+          },
+          "messageCount": 2
+        }
+      ],
+      "memory": {
+        "revisionBefore": 1,
+        "revisionAfter": 1,
+        "factsUnchanged": true
+      },
+      "observed": {
+        "summaryAttempts": 1,
+        "flushRequests": 0,
+        "beforeCompaction": 2,
+        "afterCompaction": 1,
+        "ownerSessionIds": [
+          "9e8bf0a3-83c7-42d7-8bda-a8a24a0fc814"
+        ],
+        "summaryInLaterInput": true,
+        "allRepliesDelivered": true,
+        "bytesTriggerLogged": false
+      },
+      "passed": true,
+      "routineCheckLines": 11,
+      "logLines": [
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30000 threshold=24576 trigger=tokens activeTranscriptBytes=undefined maxActiveTranscriptBytes=undefined",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30020 threshold=24576 trigger=tokens activeTranscriptBytes=2726 maxActiveTranscriptBytes=undefined"
+      ],
+      "childStopped": true
+    },
+    {
+      "variant": "A3",
+      "config": {
+        "memorySlot": "memory-core",
+        "trigger": "tokens",
+        "control": true
+      },
+      "requests": 6,
+      "requestKinds": [
+        {
+          "turn": "owner-seed",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-fill",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "kind": "reply"
+        },
+        {
+          "turn": "member-turn",
+          "kind": "reply"
+        }
+      ],
+      "summaryRequests": [
+        {
+          "turn": "owner-after-threshold",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        }
+      ],
+      "flushRequests": [],
+      "promptChecks": [
+        {
+          "turn": "owner-seed",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-fill",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-threshold",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-compaction",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "member-turn",
+          "owner": false,
+          "toolNames": [
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": false,
+          "seededFact": false,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        }
+      ],
+      "replies": [
+        {
+          "turn": "owner-seed",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-fill",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-threshold",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-compaction",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "member-turn",
+          "ok": true,
+          "delivered": true
+        }
+      ],
+      "platformWrites": [],
+      "healthAfter": true,
+      "hooks": [
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "eec7034e-c06e-4821-b98d-c1b9658607d8",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 0
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 413,
+          "runId": "eec7034e-c06e-4821-b98d-c1b9658607d8",
+          "ctx": {
+            "runId": "eec7034e-c06e-4821-b98d-c1b9658607d8",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "8461aeb7-78cd-49cd-8c3d-49c4f4941ba1",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 56,
+          "runId": "8461aeb7-78cd-49cd-8c3d-49c4f4941ba1",
+          "ctx": {
+            "runId": "8461aeb7-78cd-49cd-8c3d-49c4f4941ba1",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 4,
+          "tokenCount": 30020,
+          "ctx": {
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 2,
+          "tokenCount": 188,
+          "compactedCount": 2,
+          "sessionFile": "sqlite:main:c20cc768-04cc-402c-a942-b92c13ec136e:/tmp/kurumi-compaction-A3-wz8Q2j/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "bc0019c0-90bf-4df9-a957-2e052411391b",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 52,
+          "runId": "bc0019c0-90bf-4df9-a957-2e052411391b",
+          "ctx": {
+            "runId": "bc0019c0-90bf-4df9-a957-2e052411391b",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "06e0840f-d322-44d6-88fb-e70c3ae2f4f7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 45,
+          "runId": "06e0840f-d322-44d6-88fb-e70c3ae2f4f7",
+          "ctx": {
+            "runId": "06e0840f-d322-44d6-88fb-e70c3ae2f4f7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "c20cc768-04cc-402c-a942-b92c13ec136e",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 46,
+          "runId": "a37eb5e5-ac35-4393-9f18-945e764dbed6",
+          "ctx": {
+            "runId": "a37eb5e5-ac35-4393-9f18-945e764dbed6",
+            "agentId": "qq-user-800001",
+            "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+            "sessionId": "42062ea9-ef47-4359-ab71-cd646dca21a5",
+            "workspaceDir": "/tmp/kurumi-compaction-A3-wz8Q2j/users/800001/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "800001",
+            "senderId": "800001",
+            "chatId": "800001"
+          },
+          "messageCount": 2
+        }
+      ],
+      "memory": {
+        "revisionBefore": 1,
+        "revisionAfter": 1,
+        "factsUnchanged": true
+      },
+      "observed": {
+        "summaryAttempts": 1,
+        "flushRequests": 0,
+        "beforeCompaction": 1,
+        "afterCompaction": 1,
+        "ownerSessionIds": [
+          "c20cc768-04cc-402c-a942-b92c13ec136e"
+        ],
+        "summaryInLaterInput": true,
+        "allRepliesDelivered": true,
+        "bytesTriggerLogged": false
+      },
+      "controlFinding": "flush_dispatched_but_no_write_tool_under_messaging_profile",
+      "passed": true,
+      "routineCheckLines": 16,
+      "logLines": [
+        "gateway.log: 2026-10-21T18:39:12.083+08:00 memory flush cannot persist memory/2026-10-21.md: no write tool survived this agent's tool policy, so this run will not save anything.",
+        "runtime.log: memoryFlush triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30000 threshold=20576",
+        "runtime.log: memory flush dispatched",
+        "runtime.log: memory flush cancelled by its owner",
+        "runtime.log: memoryFlush triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30020 threshold=20576",
+        "runtime.log: memory flush dispatched",
+        "runtime.log: memory flush cannot persist memory/2026-10-21.md: no write tool survived this agent's tool policy, so this run will not save anything.",
+        "runtime.log: memory flush failed (attempt 1/3): No callable tools remain after resolving explicit tool allowlist (agents.main.tools.allow: *, kurumi_memory, session_status); no registered tools matched. Fix the allowlist or enable the plugin that …",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30020 threshold=24576 trigger=tokens activeTranscriptBytes=2726 maxActiveTranscriptBytes=undefined"
+      ],
+      "childStopped": true
+    },
+    {
+      "variant": "B",
+      "config": {
+        "memorySlot": "none",
+        "trigger": "bytes"
+      },
+      "requests": 15,
+      "requestKinds": [
+        {
+          "turn": "owner-seed",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-1",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-2",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-3",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-4",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-5",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-pad-5",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-6",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-pad-6",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-7",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-8",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-pad-8",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-pad-9",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-pad",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-pad",
+          "kind": "reply"
+        }
+      ],
+      "summaryRequests": [
+        {
+          "turn": "owner-pad-5",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-pad-6",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-pad-8",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-after-pad",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        }
+      ],
+      "flushRequests": [],
+      "promptChecks": [
+        {
+          "turn": "owner-seed",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-1",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-2",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-3",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-4",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-5",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-6",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-7",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-8",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-pad-9",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-pad",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": true,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        }
+      ],
+      "replies": [
+        {
+          "turn": "owner-seed",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-1",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-2",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-3",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-4",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-5",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-6",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-7",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-8",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-pad-9",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-pad",
+          "ok": true,
+          "delivered": true
+        }
+      ],
+      "platformWrites": [],
+      "healthAfter": true,
+      "hooks": [
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "ab01f628-bf56-4454-affd-341ac793ed5a",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 0
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 384,
+          "runId": "ab01f628-bf56-4454-affd-341ac793ed5a",
+          "ctx": {
+            "runId": "ab01f628-bf56-4454-affd-341ac793ed5a",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "badd0e4c-1301-44ef-916a-04341da38f0f",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 58,
+          "runId": "badd0e4c-1301-44ef-916a-04341da38f0f",
+          "ctx": {
+            "runId": "badd0e4c-1301-44ef-916a-04341da38f0f",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "f89cfe36-6004-45dd-aae0-5e566eb7bae6",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 53,
+          "runId": "f89cfe36-6004-45dd-aae0-5e566eb7bae6",
+          "ctx": {
+            "runId": "f89cfe36-6004-45dd-aae0-5e566eb7bae6",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "b670eecd-e8ac-4982-b809-f5de9fac80f2",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 48,
+          "runId": "b670eecd-e8ac-4982-b809-f5de9fac80f2",
+          "ctx": {
+            "runId": "b670eecd-e8ac-4982-b809-f5de9fac80f2",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 8
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "7703860f-219c-48fb-be29-c782303cba89",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 8
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 45,
+          "runId": "7703860f-219c-48fb-be29-c782303cba89",
+          "ctx": {
+            "runId": "7703860f-219c-48fb-be29-c782303cba89",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 10
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 10,
+          "tokenCount": 1,
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 3,
+          "tokenCount": 20538,
+          "compactedCount": 7,
+          "sessionFile": "sqlite:main:cd9203cc-9769-469b-b02b-101b6fcc622d:/tmp/kurumi-compaction-B-YgFnIs/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "a8bbb802-5099-4aaa-89ee-4c05161f9095",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 3
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 48,
+          "runId": "a8bbb802-5099-4aaa-89ee-4c05161f9095",
+          "ctx": {
+            "runId": "a8bbb802-5099-4aaa-89ee-4c05161f9095",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 5
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 5,
+          "tokenCount": 1,
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 3,
+          "tokenCount": 19099,
+          "compactedCount": 2,
+          "sessionFile": "sqlite:main:cd9203cc-9769-469b-b02b-101b6fcc622d:/tmp/kurumi-compaction-B-YgFnIs/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "f8a0bb5c-8cd0-43a2-b87a-b1da8e26f5c7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 3
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 46,
+          "runId": "f8a0bb5c-8cd0-43a2-b87a-b1da8e26f5c7",
+          "ctx": {
+            "runId": "f8a0bb5c-8cd0-43a2-b87a-b1da8e26f5c7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 5
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "2dcff25f-6fea-468a-87fd-3e9753eb2fb4",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 5
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 49,
+          "runId": "2dcff25f-6fea-468a-87fd-3e9753eb2fb4",
+          "ctx": {
+            "runId": "2dcff25f-6fea-468a-87fd-3e9753eb2fb4",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 7
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 7,
+          "tokenCount": 1,
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 3,
+          "tokenCount": 19818,
+          "compactedCount": 4,
+          "sessionFile": "sqlite:main:cd9203cc-9769-469b-b02b-101b6fcc622d:/tmp/kurumi-compaction-B-YgFnIs/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "90145cca-9276-4efc-bca3-3481b3e02916",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 3
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 47,
+          "runId": "90145cca-9276-4efc-bca3-3481b3e02916",
+          "ctx": {
+            "runId": "90145cca-9276-4efc-bca3-3481b3e02916",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 5
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "68a48c8a-1ff6-4d6d-a8e0-43fc113a90fc",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 5
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 47,
+          "runId": "68a48c8a-1ff6-4d6d-a8e0-43fc113a90fc",
+          "ctx": {
+            "runId": "68a48c8a-1ff6-4d6d-a8e0-43fc113a90fc",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 7
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 7,
+          "tokenCount": 1,
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 3,
+          "tokenCount": 19818,
+          "compactedCount": 4,
+          "sessionFile": "sqlite:main:cd9203cc-9769-469b-b02b-101b6fcc622d:/tmp/kurumi-compaction-B-YgFnIs/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "70c069e1-97a9-4015-94ea-2968e24d0df7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 3
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 43,
+          "runId": "70c069e1-97a9-4015-94ea-2968e24d0df7",
+          "ctx": {
+            "runId": "70c069e1-97a9-4015-94ea-2968e24d0df7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "cd9203cc-9769-469b-b02b-101b6fcc622d",
+            "workspaceDir": "/tmp/kurumi-compaction-B-YgFnIs/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 5
+        }
+      ],
+      "memory": {
+        "revisionBefore": 1,
+        "revisionAfter": 1,
+        "factsUnchanged": true
+      },
+      "observed": {
+        "summaryAttempts": 4,
+        "flushRequests": 0,
+        "beforeCompaction": 4,
+        "afterCompaction": 4,
+        "ownerSessionIds": [
+          "cd9203cc-9769-469b-b02b-101b6fcc622d"
+        ],
+        "summaryInLaterInput": true,
+        "allRepliesDelivered": true,
+        "bytesTriggerLogged": true
+      },
+      "passed": true,
+      "routineCheckLines": 22,
+      "logLines": [
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=1 threshold=24576 trigger=transcript_bytes activeTranscriptBytes=27145 maxActiveTranscriptBytes=24576",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=1 threshold=24576 trigger=transcript_bytes activeTranscriptBytes=25445 maxActiveTranscriptBytes=24576",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=1 threshold=24576 trigger=transcript_bytes activeTranscriptBytes=28196 maxActiveTranscriptBytes=24576",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=1 threshold=24576 trigger=transcript_bytes activeTranscriptBytes=30017 maxActiveTranscriptBytes=24576"
+      ],
+      "childStopped": true
+    },
+    {
+      "variant": "C",
+      "config": {
+        "memorySlot": "none",
+        "trigger": "tokens",
+        "malformedSummary": true
+      },
+      "requests": 6,
+      "requestKinds": [
+        {
+          "turn": "owner-seed",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-fill",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "kind": "reply"
+        },
+        {
+          "turn": "member-turn",
+          "kind": "reply"
+        }
+      ],
+      "summaryRequests": [
+        {
+          "turn": "owner-after-threshold",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        }
+      ],
+      "flushRequests": [],
+      "promptChecks": [
+        {
+          "turn": "owner-seed",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-fill",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-threshold",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": true,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-after-compaction",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": true,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "member-turn",
+          "owner": false,
+          "toolNames": [
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": false,
+          "seededFact": false,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        }
+      ],
+      "replies": [
+        {
+          "turn": "owner-seed",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-fill",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-threshold",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-compaction",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "member-turn",
+          "ok": true,
+          "delivered": true
+        }
+      ],
+      "platformWrites": [],
+      "healthAfter": true,
+      "hooks": [
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "1aef128f-dcc2-4dfd-8a97-8dd7d44011b7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 0
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 384,
+          "runId": "1aef128f-dcc2-4dfd-8a97-8dd7d44011b7",
+          "ctx": {
+            "runId": "1aef128f-dcc2-4dfd-8a97-8dd7d44011b7",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "9a40b112-471e-484c-9cad-d6bed5aa8873",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 51,
+          "runId": "9a40b112-471e-484c-9cad-d6bed5aa8873",
+          "ctx": {
+            "runId": "9a40b112-471e-484c-9cad-d6bed5aa8873",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 4,
+          "tokenCount": 30000,
+          "ctx": {
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace"
+          }
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 4,
+          "tokenCount": 30020,
+          "ctx": {
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace"
+          }
+        },
+        {
+          "hook": "after_compaction",
+          "messageCount": 2,
+          "tokenCount": 137,
+          "compactedCount": 2,
+          "sessionFile": "sqlite:main:3c61da39-17dc-4c3f-b592-f1b05cdbe909:/tmp/kurumi-compaction-C-14drAQ/agents/main/sessions/sessions.json",
+          "ctx": {
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace"
+          }
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "1afb2320-7aa2-44a1-92a7-b6aac0191452",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 51,
+          "runId": "1afb2320-7aa2-44a1-92a7-b6aac0191452",
+          "ctx": {
+            "runId": "1afb2320-7aa2-44a1-92a7-b6aac0191452",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "46cd0d1d-d5d9-4616-ba52-118db63119eb",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 46,
+          "runId": "46cd0d1d-d5d9-4616-ba52-118db63119eb",
+          "ctx": {
+            "runId": "46cd0d1d-d5d9-4616-ba52-118db63119eb",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "3c61da39-17dc-4c3f-b592-f1b05cdbe909",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 46,
+          "runId": "54badaad-e7b5-4174-8986-4c7f56c30f7c",
+          "ctx": {
+            "runId": "54badaad-e7b5-4174-8986-4c7f56c30f7c",
+            "agentId": "qq-user-800001",
+            "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+            "sessionId": "1b4182b3-2b4f-4c61-81cf-c25c27dc3266",
+            "workspaceDir": "/tmp/kurumi-compaction-C-14drAQ/users/800001/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "800001",
+            "senderId": "800001",
+            "chatId": "800001"
+          },
+          "messageCount": 2
+        }
+      ],
+      "memory": {
+        "revisionBefore": 1,
+        "revisionAfter": 1,
+        "factsUnchanged": true
+      },
+      "observed": {
+        "summaryAttempts": 1,
+        "flushRequests": 0,
+        "beforeCompaction": 2,
+        "afterCompaction": 1,
+        "ownerSessionIds": [
+          "3c61da39-17dc-4c3f-b592-f1b05cdbe909"
+        ],
+        "summaryInLaterInput": false,
+        "allRepliesDelivered": true,
+        "bytesTriggerLogged": false
+      },
+      "defaultModeFinding": "malformed_summary_accepted_without_quality_guard",
+      "passed": true,
+      "routineCheckLines": 11,
+      "logLines": [
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30000 threshold=24576 trigger=tokens activeTranscriptBytes=undefined maxActiveTranscriptBytes=undefined",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30020 threshold=24576 trigger=tokens activeTranscriptBytes=2726 maxActiveTranscriptBytes=undefined"
+      ],
+      "childStopped": true
+    },
+    {
+      "variant": "C2",
+      "config": {
+        "memorySlot": "none",
+        "trigger": "tokens",
+        "malformedSummary": true,
+        "safeguard": true,
+        "warmup": true
+      },
+      "requests": 15,
+      "requestKinds": [
+        {
+          "turn": "owner-seed",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-warm-1",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-warm-2",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-warm-3",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-warm-4",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-warm-5",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-warm-6",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-fill",
+          "kind": "reply"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "kind": "summary"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "kind": "summary"
+        },
+        {
+          "turn": "member-turn",
+          "kind": "reply"
+        }
+      ],
+      "summaryRequests": [
+        {
+          "turn": "owner-after-threshold",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "feedback": "missing_section:## Decisions, missing_section:## Open TODOs, missing_section:## Constraints/Rules, missing_section:## Pending user asks, missing_section:## Exact identifiers",
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-after-threshold",
+          "feedback": "missing_section:## Decisions, missing_section:## Open TODOs, missing_section:## Constraints/Rules, missing_section:## Pending user asks, missing_section:## Exact identifiers",
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "feedback": null,
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        },
+        {
+          "turn": "owner-after-compaction",
+          "feedback": "missing_section:## Decisions, missing_section:## Open TODOs, missing_section:## Constraints/Rules, missing_section:## Pending user asks, missing_section:## Exact identifiers",
+          "systemHead": "You are a context summarization assistant. Your task is to read a conversation between a user and an AI assistant, then produce a structured summary following t"
+        }
+      ],
+      "flushRequests": [],
+      "promptChecks": [
+        {
+          "turn": "owner-seed",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-warm-1",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-warm-2",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-warm-3",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-warm-4",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-warm-5",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-warm-6",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "owner-fill",
+          "owner": true,
+          "toolNames": [
+            "sessions_yield",
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": true,
+          "seededFact": true,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": true,
+          "kurumiMemoryTool": false
+        },
+        {
+          "turn": "member-turn",
+          "owner": false,
+          "toolNames": [
+            "tool_call",
+            "tool_describe",
+            "tool_search"
+          ],
+          "personalContext": false,
+          "seededFact": false,
+          "summarySentinel": false,
+          "malformedSentinel": false,
+          "seedHistory": false,
+          "kurumiMemoryTool": false
+        }
+      ],
+      "replies": [
+        {
+          "turn": "owner-seed",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-warm-1",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-warm-2",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-warm-3",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-warm-4",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-warm-5",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-warm-6",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-fill",
+          "ok": true,
+          "delivered": true
+        },
+        {
+          "turn": "owner-after-threshold",
+          "ok": true,
+          "delivered": false
+        },
+        {
+          "turn": "owner-after-compaction",
+          "ok": true,
+          "delivered": false
+        },
+        {
+          "turn": "member-turn",
+          "ok": true,
+          "delivered": true
+        }
+      ],
+      "platformWrites": [],
+      "healthAfter": true,
+      "hooks": [
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "48bc0dc2-3d0a-4f07-8208-73017f806717",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 0
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 395,
+          "runId": "48bc0dc2-3d0a-4f07-8208-73017f806717",
+          "ctx": {
+            "runId": "48bc0dc2-3d0a-4f07-8208-73017f806717",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "1781a62c-febd-48c0-ad46-8f9020a4aaeb",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 2
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 53,
+          "runId": "1781a62c-febd-48c0-ad46-8f9020a4aaeb",
+          "ctx": {
+            "runId": "1781a62c-febd-48c0-ad46-8f9020a4aaeb",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "7d24fb79-29c0-4d19-a41f-cbfff74e1e4c",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 4
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 52,
+          "runId": "7d24fb79-29c0-4d19-a41f-cbfff74e1e4c",
+          "ctx": {
+            "runId": "7d24fb79-29c0-4d19-a41f-cbfff74e1e4c",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "06c1022c-d1e7-4c8e-b8ac-88422955df50",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 6
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 58,
+          "runId": "06c1022c-d1e7-4c8e-b8ac-88422955df50",
+          "ctx": {
+            "runId": "06c1022c-d1e7-4c8e-b8ac-88422955df50",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 8
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "604c9896-9279-4182-9e27-f22f8c9343d3",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 8
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 46,
+          "runId": "604c9896-9279-4182-9e27-f22f8c9343d3",
+          "ctx": {
+            "runId": "604c9896-9279-4182-9e27-f22f8c9343d3",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 10
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "4e4a2e69-0165-4f43-91cf-5a1c630cdf73",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 10
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 44,
+          "runId": "4e4a2e69-0165-4f43-91cf-5a1c630cdf73",
+          "ctx": {
+            "runId": "4e4a2e69-0165-4f43-91cf-5a1c630cdf73",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 12
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "195d1d0c-9c9b-406d-bd3e-7e883a45b995",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 12
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 48,
+          "runId": "195d1d0c-9c9b-406d-bd3e-7e883a45b995",
+          "ctx": {
+            "runId": "195d1d0c-9c9b-406d-bd3e-7e883a45b995",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 14
+        },
+        {
+          "hook": "before_prompt_build",
+          "ctx": {
+            "runId": "f0bedd96-dd99-4e64-9f12-d3b53634e449",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "trigger": "user",
+            "channel": "kurumi-qq",
+            "accountId": "default",
+            "channelId": "365999865",
+            "chatId": "365999865",
+            "senderId": "365999865",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture"
+          },
+          "messageCount": 14
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 42,
+          "runId": "f0bedd96-dd99-4e64-9f12-d3b53634e449",
+          "ctx": {
+            "runId": "f0bedd96-dd99-4e64-9f12-d3b53634e449",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "365999865",
+            "senderId": "365999865",
+            "chatId": "365999865"
+          },
+          "messageCount": 16
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 16,
+          "tokenCount": 30000,
+          "ctx": {
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace"
+          }
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 16,
+          "tokenCount": 30020,
+          "ctx": {
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace"
+          }
+        },
+        {
+          "hook": "before_compaction",
+          "messageCount": 16,
+          "tokenCount": 30017,
+          "ctx": {
+            "sessionId": "2e91d7f9-fc42-4393-a2fa-2b8d349a2543",
+            "agentId": "main",
+            "sessionKey": "agent:main:kurumi-qq:direct:365999865",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/workspace"
+          }
+        },
+        {
+          "hook": "agent_end",
+          "success": true,
+          "durationMs": 43,
+          "runId": "8faf402d-717d-4ac7-91c7-cd89fffe08ad",
+          "ctx": {
+            "runId": "8faf402d-717d-4ac7-91c7-cd89fffe08ad",
+            "agentId": "qq-user-800001",
+            "sessionKey": "agent:qq-user-800001:kurumi-qq:direct:800001",
+            "sessionId": "1353bfba-3f35-4bdc-8b8c-53604854832d",
+            "workspaceDir": "/tmp/kurumi-compaction-C2-EkhrVK/users/800001/workspace",
+            "modelProviderId": "compaction-fixture",
+            "modelId": "fixture",
+            "accountId": "default",
+            "channel": "kurumi-qq",
+            "trigger": "user",
+            "channelId": "800001",
+            "senderId": "800001",
+            "chatId": "800001"
+          },
+          "messageCount": 2
+        }
+      ],
+      "memory": {
+        "revisionBefore": 1,
+        "revisionAfter": 1,
+        "factsUnchanged": true
+      },
+      "observed": {
+        "summaryAttempts": 6,
+        "flushRequests": 0,
+        "beforeCompaction": 3,
+        "afterCompaction": 0,
+        "ownerSessionIds": [
+          "2e91d7f9-fc42-4393-a2fa-2b8d349a2543"
+        ],
+        "summaryInLaterInput": false,
+        "allRepliesDelivered": false,
+        "bytesTriggerLogged": false
+      },
+      "safeguardFinding": "owner_turns_unanswered_after_guard_cancel",
+      "passed": true,
+      "routineCheckLines": 22,
+      "logLines": [
+        "gateway.log: 2026-10-21T18:39:54.856+08:00 [compaction-safeguard] Compaction safeguard: finalized summary failed quality checks; reasonCodes=missing_section reasonCount=5",
+        "gateway.log: 2026-10-21T18:39:54.868+08:00 [agents/session-maintenance] Optional session maintenance failed: Preflight compaction required but failed: Compaction safeguard finalized summary failed quality checks.",
+        "gateway.log: 2026-10-21T18:39:54.974+08:00 [compaction-safeguard] Compaction safeguard: finalized summary failed quality checks; reasonCodes=missing_section reasonCount=5",
+        "gateway.log: 2026-10-21T18:39:55.137+08:00 [compaction-safeguard] Compaction safeguard: finalized summary failed quality checks; reasonCodes=missing_section reasonCount=5",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30000 threshold=24576 trigger=tokens activeTranscriptBytes=undefined maxActiveTranscriptBytes=undefined",
+        "runtime.log: Compaction safeguard: finalized summary failed quality checks; reasonCodes=missing_section reasonCount=5",
+        "runtime.log: preflightCompaction failed: sessionKey=agent:main:kurumi-qq:direct:365999865 reason=Compaction safeguard finalized summary failed quality checks.",
+        "runtime.log: Optional session maintenance failed: Preflight compaction required but failed: Compaction safeguard finalized summary failed quality checks.",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30020 threshold=24576 trigger=tokens activeTranscriptBytes=32594 maxActiveTranscriptBytes=undefined",
+        "runtime.log: Compaction safeguard: finalized summary failed quality checks; reasonCodes=missing_section reasonCount=5",
+        "runtime.log: preflightCompaction failed: sessionKey=agent:main:kurumi-qq:direct:365999865 reason=Compaction safeguard finalized summary failed quality checks.",
+        "runtime.log: preflightCompaction triggered: sessionKey=agent:main:kurumi-qq:direct:365999865 tokenCount=30017 threshold=24576 trigger=tokens activeTranscriptBytes=32594 maxActiveTranscriptBytes=undefined",
+        "runtime.log: Compaction safeguard: finalized summary failed quality checks; reasonCodes=missing_section reasonCount=5",
+        "runtime.log: preflightCompaction failed: sessionKey=agent:main:kurumi-qq:direct:365999865 reason=Compaction safeguard finalized summary failed quality checks."
+      ],
+      "childStopped": true
+    }
+  ],
+  "boundary": "Real isolated OpenClaw 2026.9.7 with real kurumi-memory/kurumi-qq plugins, deterministic local model and simulated OneBot. Synthetic conversations, one synthetic seeded preference and temporary state only; no real QQ, mail, paid API, production write or production service restart.",
+  "passed": true
+}

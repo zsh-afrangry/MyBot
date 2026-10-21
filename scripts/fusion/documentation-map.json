@@ -204,6 +204,12 @@
       ]
     },
     {
+      "path": "scripts/fusion/openclaw-update-guard.sh",
+      "documents": [
+        "docs/10_融合助手运行维护.md"
+      ]
+    },
+    {
       "path": "scripts/fusion/restore-legacy.sh",
       "documents": [
         "docs/15_旧系统回退.md"
