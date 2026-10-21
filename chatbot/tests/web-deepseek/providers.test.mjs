@@ -181,7 +181,8 @@ test('web_search provider wraps external text, rejects unsupported filters, cach
     assert.equal((await tool.execute({query: 'none', count: 2})).count, 0);
     assert.equal(calls.length, 3, 'empty results are not cached');
     await rejects(tool.execute({query: 'q'}, {signal: AbortSignal.abort()}), 'cancelled');
-    const raw = fs.readFileSync(h.traceFile, 'utf8');
+    // Drop ISO timestamps first: the trace `at` field contains "T1x:" between 10:00 and 19:59 UTC.
+    const raw = fs.readFileSync(h.traceFile, 'utf8').replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/gu, '');
     assert.ok(!raw.includes('秘密问题') && !raw.includes(KEY) && !raw.includes('T1'));
     assert.equal((fs.statSync(h.traceFile).mode & 0o777), 0o600);
     assert.deepEqual(h.traces().map(event => [event.source, event.data.tool, event.data.status, event.data.resultCount, event.data.queryChars]),
