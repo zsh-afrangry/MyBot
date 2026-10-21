@@ -131,6 +131,7 @@ const TABLE = {
   'scripts/fusion/test/recovery.test.mjs': ['离线', '备份/恢复工具单元与集成回归', {readonly: 1}, 'offline'],
   'scripts/fusion/test/register-project.test.mjs': ['离线', '项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝）', {readonly: 1}, 'offline'],
   'scripts/fusion/test/log-query.test.mjs': ['离线', '跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏', {readonly: 1}, 'offline'],
+  'scripts/fusion/test/log-query-views.test.mjs': ['离线', '日志查询视图合成数据回归：过滤、调用配对、回合、错误、审计、展开', {readonly: 1}, 'offline'],
   'scripts/fusion/fixtures/test_stats.py': ['离线', '固定验收 fixture：后台代码任务的 mean/moving_average 断言', {readonly: 1}, 'code'],
   'chatbot/tests/acceptance/call-analysis.test.mjs': ['离线', '旧调用分析离线断言（读取两份输入样本）', {readonly: 1}, 'offline'],
 
@@ -169,6 +170,7 @@ const TABLE = {
   'scripts/fusion/evidence-index.mjs': ['只读运维', '生成本脚本与证据索引', {readonly: 1}, 'header'],
   'scripts/fusion/evidence-coverage.mjs': ['只读运维', '校验证据目录分类覆盖，未分类即非零退出', {readonly: 1}, 'header'],
   'scripts/fusion/log-query.mjs': ['只读运维', '跨 SnowLuma/OpenClaw/提醒来源的链路事件只读查询', {readonly: 1}, 'header'],
+  'scripts/fusion/log-query-views.mjs': ['库', '日志查询的视图层（被 log-query.mjs 导入）：过滤、调用配对、回合、错误、审计', {readonly: 1}, 'header'],
   'scripts/fusion/inspect-receipts.mjs': ['只读运维', '查看验收回执', {readonly: 1}, 'code'],
   'scripts/fusion/rpc.mjs': ['库', 'Gateway RPC 客户端库（被其他脚本导入）', {readonly: 1}, 'code'],
   'scripts/fusion/lib/fresh-id.mjs': ['库', '生成不重复的 message id', {readonly: 1}, 'header'],

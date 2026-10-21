@@ -174,7 +174,19 @@
       ]
     },
     {
+      "path": "scripts/fusion/log-query-views.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md"
+      ]
+    },
+    {
       "path": "scripts/fusion/test/log-query.test.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/test/log-query-views.test.mjs",
       "documents": [
         "docs/18_跨模块链路日志查询.md"
       ]

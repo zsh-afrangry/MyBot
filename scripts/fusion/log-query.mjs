@@ -20,6 +20,23 @@ import {
   redactValue,
   summarizeText,
 } from '../../chatbot/packages/observability/index.js';
+import {
+  applyViewFilters,
+  auditTurns,
+  collectErrors,
+  deepParseJson,
+  formatAudit,
+  formatErrors,
+  formatEvent,
+  formatListing,
+  formatTurns,
+  groupTurns,
+  localTime,
+  pairCalls,
+  RAW_KINDS,
+} from './log-query-views.mjs';
+
+export {formatEvent};
 
 export const DEFAULT_RUNTIME_ROOT = '/home/afrangry/.openclaw-fusion';
 export const DEFAULT_SNOWLUMA_ROOT = '/home/afrangry/snowluma';
@@ -170,6 +187,8 @@ export function parseRuntimeLine(line, file, lineNumber) {
   const nested = parseJson(message);
   let kind = 'openclaw.log';
   const data = {subsystem, message: nested ?? message};
+  const level = record._meta?.logLevelName;
+  if (typeof level === 'string') data.level = level;
   if (nested?.component === 'personal-confirmation') kind = 'confirmation.recorded';
   else if (/personal-weather reminder reconciler:/u.test(message)) {
     kind = 'reminder.reconcile';
@@ -261,7 +280,7 @@ function toolResultSummary(content) {
   const nested = parsed?.result?.details ?? parsed?.result ?? parsed?.details ?? parsed;
   if (nested && typeof nested === 'object') {
     const summary = {};
-    for (const key of ['ok', 'status', 'error', 'proposalId', 'reminder', 'reminderId', 'confirmationInstruction', 'idempotent']) {
+    for (const key of ['ok', 'status', 'code', 'error', 'proposalId', 'reminder', 'reminderId', 'confirmationInstruction', 'idempotent']) {
       if (nested[key] !== undefined) summary[key] = nested[key];
     }
     return {summary: redactValue(summary), correlation: namedIds(parsed), textPreview: summarizeText(text)};
@@ -269,7 +288,38 @@ function toolResultSummary(content) {
   return {summary: {}, correlation: {}, textPreview: summarizeText(text)};
 }
 
-function transcriptEvents(dbFile, from, to) {
+/** Wrapped calls name the real tool in `arguments.id` (`openclaw:<plugin>:<tool>`
+ * or the bare tool name); results repeat it as `tool` (string or object). */
+function wrappedToolName(value) {
+  if (typeof value === 'string' && value.trim()) return value.split(':').at(-1);
+  if (value && typeof value === 'object' && typeof value.name === 'string') return value.name;
+  return undefined;
+}
+
+function shortError(value) {
+  if (value === undefined || value === null || value === '') return undefined;
+  if (typeof value === 'object') return redactValue({code: value.code, message: value.message === undefined ? undefined : summarizeText(value.message, 160)});
+  return summarizeText(value, 160);
+}
+
+/** User entries carry no runId; the run that answers them does. Bind each
+ * inbound to the next runId in the same session window, stopping at /new. */
+function attachInboundRun(events) {
+  const pending = new Map();
+  for (const item of events) {
+    const session = item.correlation.sessionId;
+    if (!session) continue;
+    if (item.kind === 'agent.inbound') {
+      if (!item.correlation.runId) pending.set(session, [...(pending.get(session) ?? []), item]);
+    } else if (item.kind === 'session.reset') pending.delete(session);
+    else if (item.correlation.runId && pending.has(session)) {
+      for (const inbound of pending.get(session)) inbound.correlation.runId = item.correlation.runId;
+      pending.delete(session);
+    }
+  }
+}
+
+function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
   const output = [];
   let db;
   try { db = new DatabaseSync(dbFile, {readOnly: true}); } catch { return {events: output, windows: []}; }
@@ -297,33 +347,69 @@ function transcriptEvents(dbFile, from, to) {
       const baseCorrelation = correlationFrom({
         sessionId: row.sessionId,
         sessionKey: window?.sessionKey,
-        runId: record.__openclaw?.runId ?? message.__openclaw?.runId,
+        runId: record.__openclaw?.runId ?? message.__openclaw?.runId ?? record.data?.runId,
         conversationId: window?.conversationId,
       });
+      const at = record.timestamp ?? row.createdAt;
+      const ref = sourceRef(dbFile, row.seq, {table: 'transcript_events', sessionId: row.sessionId});
+      const push = (kind, data, correlation = baseCorrelation) => output.push(event({at, source: 'openclaw-session', kind, correlation, data, sourceRef: ref}));
       const contents = Array.isArray(message.content) ? message.content : [];
+      // Session segment markers: /new keeps the sessionId, so it is only visible here.
+      if (record.type === 'reset') push('session.reset', {reason: record.reason ?? null});
+      else if (record.type === 'compaction') {
+        push('session.compaction', {tokensBefore: record.tokensBefore ?? null, tokensAfter: record.tokensAfter ?? null,
+          summaryChars: String(record.summary ?? '').length, fromHook: record.fromHook === true});
+      } else if (record.type === 'custom' && record.customType === 'openclaw:prompt-error') {
+        push('agent.prompt_error', {provider: record.data?.provider, model: record.data?.model, error: shortError(record.data?.error)});
+      } else if (record.type === 'custom_message' && record.customType === 'openclaw:turn-aborted') {
+        push('agent.turn_aborted', {});
+      }
       if (message.role === 'user') {
-        output.push(event({at: record.timestamp ?? row.createdAt, source: 'openclaw-session', kind: 'agent.inbound', correlation: baseCorrelation, data: {text: transcriptText(message.content), role: 'user'}, sourceRef: sourceRef(dbFile, row.seq, {table: 'transcript_events', sessionId: row.sessionId})}));
+        push('agent.inbound', {text: transcriptText(message.content), role: 'user'});
       } else if (message.role === 'assistant') {
+        if (message.errorMessage) push('agent.model_error', {stopReason: message.stopReason ?? null, provider: message.provider, model: message.model, error: shortError(message.errorMessage)});
         for (const part of contents) {
           if (part?.type === 'toolCall' || part?.type === 'tool_use') {
             const argumentsValue = part.arguments ?? part.input ?? {};
             const ids = namedIds(argumentsValue);
             const declared = part.name ?? part.toolName ?? 'unknown';
-            const actual = typeof argumentsValue?.id === 'string' && argumentsValue.id.startsWith('openclaw:')
-              ? argumentsValue.id.split(':').at(-1)
-              : declared;
-            output.push(event({at: record.timestamp ?? row.createdAt, source: 'openclaw-session', kind: 'agent.tool_call', correlation: {...baseCorrelation, ...correlationFrom(ids)}, data: {tool: actual, declaredTool: declared, arguments: redactValue(argumentsValue)}, sourceRef: sourceRef(dbFile, row.seq, {table: 'transcript_events', sessionId: row.sessionId})}));
+            const actual = declared === 'tool_call' ? wrappedToolName(argumentsValue?.id) ?? declared : declared;
+            push('agent.tool_call', {tool: actual, declaredTool: declared, arguments: redactValue(argumentsValue), ...(expand ? {expanded: {arguments: deepParseJson(argumentsValue)}} : {})},
+              {...baseCorrelation, ...correlationFrom(ids), ...(part.id ? {toolCallId: String(part.id)} : {})});
           } else if (part?.type === 'text' && String(part.text ?? '').trim()) {
-            output.push(event({at: record.timestamp ?? row.createdAt, source: 'openclaw-session', kind: 'agent.reply', correlation: baseCorrelation, data: {text: part.text, role: 'assistant'}, sourceRef: sourceRef(dbFile, row.seq, {table: 'transcript_events', sessionId: row.sessionId})}));
+            push('agent.reply', {text: part.text, role: 'assistant'});
           }
         }
       } else if (message.role === 'toolResult' || message.role === 'tool') {
         const summary = toolResultSummary(message.content);
         const wrapper = parseJson(transcriptText(message.content));
-        const tool = wrapper?.tool?.name ?? message.toolName ?? message.name ?? 'unknown';
-        output.push(event({at: record.timestamp ?? row.createdAt, source: 'openclaw-session', kind: 'agent.tool_result', correlation: {...baseCorrelation, ...correlationFrom(summary.correlation)}, data: {tool, ...summary}, sourceRef: sourceRef(dbFile, row.seq, {table: 'transcript_events', sessionId: row.sessionId})}));
+        const details = message.details && typeof message.details === 'object' ? message.details : {};
+        const declared = message.toolName ?? message.name ?? 'unknown';
+        const tool = wrappedToolName(wrapper?.tool) ?? wrappedToolName(details.tool) ?? declared;
+        const status = message.isError === true ? 'error' : 'ok';
+        push('agent.tool_result', {tool, ...summary, declaredTool: declared, isError: message.isError === true, status,
+          ...(details.status !== undefined ? {hostStatus: details.status} : {}),
+          ...(details.error !== undefined ? {error: shortError(details.error)} : {}),
+          ...(expand ? {expanded: {content: deepParseJson(transcriptText(message.content)), details: deepParseJson(details)}} : {})},
+        {...baseCorrelation, ...correlationFrom(summary.correlation), ...(message.toolCallId ? {toolCallId: String(message.toolCallId)} : {})});
+      } else if (message.role === 'custom' && message.customType === 'openclaw.nested-tool.v1') {
+        // One record per real tool behind a `tool_call` wrapper; the parent ID is the outer call.
+        const details = message.details ?? {};
+        const result = details.result?.details && typeof details.result.details === 'object' ? details.result.details : {};
+        const resultSummary = {};
+        for (const key of ['ok', 'status', 'code', 'proposalId', 'reminderId', 'idempotent']) if (result[key] !== undefined && typeof result[key] !== 'object') resultSummary[key] = result[key];
+        const startedAt = Number(details.startedAt);
+        const endedAt = Number(details.timestamp ?? message.timestamp);
+        push('agent.tool_nested', {tool: details.toolName ?? 'unknown', isError: details.isError === true, status: details.isError === true ? 'error' : 'ok',
+          summary: redactValue(resultSummary), ...(result.error !== undefined ? {error: shortError(result.error)} : {}),
+          ...(Number.isFinite(startedAt) && Number.isFinite(endedAt) && endedAt >= startedAt ? {durationMs: endedAt - startedAt} : {}),
+          ...(expand ? {expanded: {input: deepParseJson(details.input), result: deepParseJson(details.result)}} : {})},
+        {...baseCorrelation, ...correlationFrom({...namedIds(result), runId: details.runId ?? baseCorrelation.runId}),
+          ...(details.toolCallId ? {toolCallId: String(details.toolCallId)} : {}),
+          ...(details.parentToolCallId ? {parentToolCallId: String(details.parentToolCallId)} : {})});
       }
     }
+    attachInboundRun(output);
     return {events: output, windows};
   } finally { db.close(); }
 }
@@ -470,7 +556,7 @@ function attachRuntimeCorrelation(events) {
   }
 }
 
-export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, snowlumaRoot = DEFAULT_SNOWLUMA_ROOT, sources} = {}) {
+export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, snowlumaRoot = DEFAULT_SNOWLUMA_ROOT, sources, expand = false} = {}) {
   const wanted = sources ? new Set(sources) : undefined;
   const include = (name) => !wanted || wanted.has(name);
   const events = [];
@@ -482,7 +568,7 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   }
   if (include('openclaw-session')) {
     for (const dbFile of agentDatabases(runtimeRoot)) {
-      const result = transcriptEvents(dbFile, from, to);
+      const result = transcriptEvents(dbFile, from, to, {expand});
       events.push(...result.events); windows.push(...result.windows);
     }
   } else if (include('snowluma')) {
@@ -530,51 +616,73 @@ export function filterEvents(events, filters = {}) {
   // Correlation closure joins a QQ turn to its tool result and a reminder
   // proposal to its committed/delivered record without broadening to every
   // event in the conversation's session.
-  const keys = new Set(['qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'cronJobId', 'eventKey', 'runId', 'taskId']);
-  let changed = true;
-  while (changed) {
-    changed = false;
-    for (const candidate of events) {
-      if (selected.has(candidate)) continue;
-      const joins = [...selected].some((current) => [...keys].some((key) => current.correlation[key] && candidate.correlation[key] && current.correlation[key] === candidate.correlation[key]));
-      if (joins) { selected.add(candidate); changed = true; }
+  // A nested tool's parentToolCallId names the outer call, so both IDs share
+  // the toolCallId namespace.
+  const keys = ['qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'cronJobId', 'eventKey', 'runId', 'taskId', 'toolCallId'];
+  const namespace = (key) => key === 'parentToolCallId' ? 'toolCallId' : key;
+  const joinValues = (item) => [...keys, 'parentToolCallId'].filter((key) => item.correlation[key]).map((key) => `${namespace(key)}\u0000${item.correlation[key]}`);
+  const index = new Map();
+  for (const item of events) for (const value of joinValues(item)) index.set(value, [...(index.get(value) ?? []), item]);
+  const queue = [...seeds];
+  const seen = new Set();
+  while (queue.length) {
+    for (const value of joinValues(queue.shift())) {
+      if (seen.has(value)) continue;
+      seen.add(value);
+      for (const candidate of index.get(value) ?? []) if (!selected.has(candidate)) { selected.add(candidate); queue.push(candidate); }
     }
   }
   return events.filter((item) => selected.has(item) && (!filters.contains || containsEvent(item, filters.contains)));
 }
 
-function localTime(epoch) {
-  return new Intl.DateTimeFormat('zh-CN', {timeZone: 'Asia/Shanghai', hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'}).format(new Date(epoch)).replace(/\//gu, '-');
-}
-
-export function formatEvent(eventValue) {
-  const ids = Object.entries(eventValue.correlation).map(([key, value]) => `${key}=${value}`).join(' ');
-  const body = eventValue.source === 'access-control'
-    ? [eventValue.data.tool, eventValue.data.permission, eventValue.data.decision, eventValue.data.code].filter(Boolean).join(' ')
-    : eventValue.source === 'web-deepseek'
-    ? [eventValue.data.tool, eventValue.data.status, eventValue.data.code, eventValue.data.httpStatus, eventValue.data.resultCount ?? eventValue.data.chars, `${eventValue.data.durationMs}ms`].filter((value) => value !== undefined && value !== null && value !== '').join(' ')
-    : eventValue.data.text ?? eventValue.data.textPreview ?? eventValue.data.content ?? eventValue.data.message ?? eventValue.data.tool ?? eventValue.data.result ?? '';
-  const suffix = body ? ` | ${summarizeText(typeof body === 'string' ? body : JSON.stringify(body), 260)}` : '';
-  return `${localTime(eventValue.epochMs)} [${eventValue.kind}] ${eventValue.source}${ids ? ` (${ids})` : ''}${suffix}`;
-}
-
 function usage() {
-  return `用法：node scripts/fusion/log-query.mjs [选项]\n\n  --from <时间>       起始时间（带时区 ISO；无时区按 Asia/Shanghai）\n  --to <时间>         结束时间\n  --contains <文本>   按事件内容筛选\n  --message-id <ID>   按 QQ 消息 ID 筛选\n  --proposal-id <ID>  按提醒提案筛选\n  --run-id <ID>       按后台/模型运行 ID 筛选\n  --session-key <键>  按 OpenClaw 会话筛选\n  --reminder-id <ID>  按提醒 ID 筛选\n  --source <名称>     可重复；限制为适配器名称\n  --runtime-root <目录> 运行状态根目录\n  --snowluma-root <目录> SnowLuma 根目录\n  --json              输出统一事件 JSON\n  --limit <数量>      最多输出多少事件（默认 500）\n  --help              显示本帮助\n`;
+  return `用法：node scripts/fusion/log-query.mjs [选项]
+
+  --from <时间>       起始时间（带时区 ISO；无时区按 Asia/Shanghai）
+  --to <时间>         结束时间
+  --contains <文本>   按事件内容筛选
+  --message-id <ID>   按 QQ 消息 ID 筛选（自动带出同一链路的事件）
+  --proposal-id <ID>  按提醒提案筛选
+  --run-id <ID>       按后台/模型运行 ID 筛选
+  --session-key <键>  按 OpenClaw 会话筛选
+  --reminder-id <ID>  按提醒 ID 筛选
+  --source <名称>     可重复；限制为适配器名称
+  --exclude-source <名称> 可重复；排除适配器
+  --kind <前缀>       可重复；只看这些事件类型，前缀匹配（如 agent.tool_）
+  --exclude-kind <前缀> 可重复；排除事件类型，前缀匹配
+  --raw               显示未分类的原生日志行（openclaw.log、snowluma.log，默认隐藏）
+  --expand, --full    展开完整工具参数与结果、不截断文本（可能含聊天原文）
+  --turns             按回合汇总：用户说 → 工具 → 回复，/new 与压缩显示为分段
+  --errors            只看错误与拒绝，并按错误码计数
+  --audit             每回合被拒绝的工具与同一工具的连续重试
+  --runtime-root <目录> 运行状态根目录
+  --snowluma-root <目录> SnowLuma 根目录
+  --json              输出 JSON（默认视图另含 calls 与 hiddenRaw）
+  --limit <数量>      最多输出多少条（默认 500）
+  --help              显示本帮助
+
+默认文本视图把同一次工具调用的调用、访问决定、真实工具和结果合并为一行 [tool.call]。
+`;
 }
+
+const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit'];
+const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds'};
+const BOOLEAN_FLAGS = {'--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit'};
 
 function parseArgs(argv) {
-  const result = {sources: []};
+  const result = {sources: [], excludeSources: [], kinds: [], excludeKinds: []};
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--help') return {...result, help: true};
-    if (arg === '--json') { result.json = true; continue; }
+    if (BOOLEAN_FLAGS[arg]) { result[BOOLEAN_FLAGS[arg]] = true; continue; }
     const [flag, inline] = String(arg).split('=', 2);
-    if (!['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--runtime-root', '--snowluma-root', '--limit'].includes(flag)) throw new Error(`未知参数：${arg}`);
+    if (!VALUE_FLAGS.includes(flag)) throw new Error(`未知参数：${arg}`);
     const value = inline ?? argv[++index];
     if (value === undefined) throw new Error(`缺少参数值：${flag}`);
     const key = flag.slice(2).replace(/-([a-z])/gu, (_, letter) => letter.toUpperCase());
-    if (flag === '--source') result.sources.push(value); else result[key] = value;
+    if (LIST_FLAGS[flag]) result[LIST_FLAGS[flag]].push(value); else result[key] = value;
   }
+  if (['turns', 'errors', 'audit'].filter((name) => result[name]).length > 1) throw new Error('--turns、--errors、--audit 只能选一个');
   return result;
 }
 
@@ -584,16 +692,60 @@ export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   const from = parseQueryInstant(args.from, now - 60 * 60 * 1000);
   const to = parseQueryInstant(args.to, now);
   if (!Number.isFinite(from) || !Number.isFinite(to) || from > to) throw new Error('时间范围无效');
-  const values = filterEvents(collectEvents({from, to, runtimeRoot: args.runtimeRoot ?? DEFAULT_RUNTIME_ROOT, snowlumaRoot: args.snowlumaRoot ?? DEFAULT_SNOWLUMA_ROOT, sources: args.sources.length ? args.sources : undefined}), args);
-  const requestedLimit = Number(args.limit ?? 500);
-  const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(5000, Math.floor(requestedLimit))) : 500;
-  const selected = values.slice(0, limit);
-  if (args.json) console.log(JSON.stringify({schemaVersion: 1, from: new Date(from).toISOString(), to: new Date(to).toISOString(), total: values.length, shown: selected.length, events: selected}, null, 2));
-  else {
-    console.log(`链路事件 ${selected.length}/${values.length}（${localTime(from)} 至 ${localTime(to)}）`);
-    for (const item of selected) console.log(formatEvent(item));
-  }
+  const events = collectEvents({from, to, runtimeRoot: args.runtimeRoot ?? DEFAULT_RUNTIME_ROOT, snowlumaRoot: args.snowlumaRoot ?? DEFAULT_SNOWLUMA_ROOT, sources: args.sources.length ? args.sources : undefined, expand: Boolean(args.expand)});
+  const rendered = renderQuery(events, {...args, from, to});
+  console.log(args.json ? JSON.stringify(rendered.json, null, 2) : rendered.lines.join('\n'));
   return 0;
+}
+
+/**
+ * Pure rendering for the CLI: correlation filters, then view filters, then the
+ * selected view. The default JSON keeps schemaVersion 1 fields and only adds
+ * `hiddenRaw` and `calls`; view modes add a `view` field with their own data.
+ */
+export function renderQuery(events, options = {}) {
+  const {from, to, limit: rawLimit, raw = false, expand = false, turns, errors, audit} = options;
+  const correlated = filterEvents(events, options);
+  const viewFilters = {kinds: options.kinds ?? [], excludeKinds: options.excludeKinds ?? [], excludeSources: options.excludeSources ?? []};
+  // --errors keeps native WARN/ERROR lines; they are often the only trace of a host failure.
+  const values = applyViewFilters(correlated, {...viewFilters, raw: raw || Boolean(errors)});
+  const hiddenRaw = applyViewFilters(correlated, {...viewFilters, raw: true}).filter((item) => RAW_KINDS.has(item.kind)).length
+    - values.filter((item) => RAW_KINDS.has(item.kind)).length;
+  const requestedLimit = Number(rawLimit ?? 500);
+  const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(5000, Math.floor(requestedLimit))) : 500;
+  const range = {from: new Date(from).toISOString(), to: new Date(to).toISOString()};
+  const window = `（${localTime(from)} 至 ${localTime(to)}）`;
+  const rawNote = hiddenRaw ? `，已隐藏原生日志 ${hiddenRaw} 行（--raw 显示）` : '';
+  if (turns || audit) {
+    const grouped = groupTurns(values);
+    if (audit) {
+      const rows = auditTurns(grouped.turns);
+      const flagged = rows.filter((row) => row.flagged);
+      return {
+        json: {schemaVersion: 1, view: 'audit', ...range, total: rows.length, flagged: flagged.length, shown: Math.min(limit, rows.length), turns: rows.slice(0, limit)},
+        lines: formatAudit(rows, {limit}).map((line, index) => index ? line : `审计 ${line}${window}`),
+      };
+    }
+    const timeline = grouped.timeline.slice(0, limit);
+    return {
+      json: {schemaVersion: 1, view: 'turns', ...range, total: grouped.turns.length, shown: timeline.filter((item) => item.kind === 'turn').length, hiddenRaw, orphanEvents: grouped.orphanEvents, timeline},
+      lines: [`回合 ${grouped.turns.length}${window}${rawNote}`, ...formatTurns({timeline, orphanEvents: grouped.orphanEvents}, {full: expand})],
+    };
+  }
+  if (errors) {
+    const found = collectErrors(values);
+    const items = found.items.slice(0, limit);
+    return {
+      json: {schemaVersion: 1, view: 'errors', ...range, total: found.items.length, shown: items.length, counts: found.counts, items},
+      lines: [`错误与拒绝 ${items.length}/${found.items.length}${window}`, ...formatErrors({items, counts: found.counts})],
+    };
+  }
+  const selected = values.slice(0, limit);
+  const calls = pairCalls(selected);
+  return {
+    json: {schemaVersion: 1, ...range, total: values.length, shown: selected.length, hiddenRaw, events: selected, calls},
+    lines: [`链路事件 ${selected.length}/${values.length}${window}${rawNote}`, ...formatListing(selected, {expand, calls})],
+  };
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -95,6 +95,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/web-deepseek/providers.test.mjs` | 离线 | [26](../26_基础能力插件边界整理与检索接入设计.md) | DeepSeek Search/Fetch provider契约：注入fetch，参数/错误码/取消/并发/URL拒绝/凭据权限/包装/缓存/日志不泄露；无网络请求 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/fixtures/test_stats.py` | 离线 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 固定验收 fixture：后台代码任务的 mean/moving_average 断言 | 只读 | 否 | code | — |
 | `scripts/fusion/test/documentation-map.test.mjs` | 离线 | [16](../16_验收与测试总表.md) | 文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库 | 写临时测试目录 | 否 | header | `docs/verification/documentation-2026-10-21/README.md` |
+| `scripts/fusion/test/log-query-views.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 日志查询视图合成数据回归：过滤、调用配对、回合、错误、审计、展开 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/log-query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
@@ -119,6 +120,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/lib/plugins.mjs` | 库 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 第三方插件声明（纯数据，导入无 I/O） | 只读 | 否 | header | — |
 | `scripts/fusion/lib/recovery-isolation.mjs` | 库 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 隔离恢复的路径、凭据与共享业务禁用改写，仅写恢复副本 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/lib/working-tree-backup.mjs` | 库 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar | 写运行状态 | 否 | code | — |
+| `scripts/fusion/log-query-views.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 日志查询的视图层（被 log-query.mjs 导入）：过滤、调用配对、回合、错误、审计 | 只读 | 否 | header | — |
 | `scripts/fusion/rpc.mjs` | 库 | [10](../10_融合助手运行维护.md)、[16](../16_验收与测试总表.md) | Gateway RPC 客户端库（被其他脚本导入） | 只读 | 否 | code | — |
 | `chatbot/scripts/access-control.mjs` | 只读运维 | [24](../24_统一身份与权限管理.md) | 严格校验统一身份权限并输出JSON/TSV矩阵，不改运行名单 | 只读 | 否 | header | — |
 | `scripts/fusion/evidence-coverage.mjs` | 只读运维 | [16](../16_验收与测试总表.md) | 校验证据目录分类覆盖，未分类即非零退出 | 只读 | 否 | header | — |
