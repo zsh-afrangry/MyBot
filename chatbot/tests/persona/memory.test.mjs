@@ -115,6 +115,60 @@ test('explicit correction preserves the ID; reopened context uses the new fact a
   assert.equal(f.app.context(f,'我的合成书签是什么颜色').facts.length,0);
   assert.equal(snapshot(f).receipts.length,3);
 });
+test('one forget message removes several facts in a single all-or-nothing commit (N5)',t=>{
+  const f=active(t),texts=['我喜欢合成红茶','我喜欢合成绿茶','我喜欢合成白茶'];
+  const saved=f.change({action:'observe',facts:texts.map(fact)},texts.join('，'));
+  const before=snapshot(f),request=f.request('把红茶和绿茶都忘掉');
+  for(const [args,error] of [
+    [{action:'delete',expectedRevision:1},/缺少id或ids/u],
+    [{action:'delete',expectedRevision:1,id:saved.ids[0],ids:[saved.ids[1]]},/二选一/u],
+    [{action:'delete',expectedRevision:1,ids:[]},/1至8项/u],
+    [{action:'delete',expectedRevision:1,ids:[saved.ids[0],saved.ids[0]]},/重复/u],
+    [{action:'delete',expectedRevision:1,ids:[saved.ids[0],'NOT-AN-ID']},/ID格式/u],
+    [{action:'delete',expectedRevision:1,ids:[saved.ids[0],'0000000000ff']},/0000000000ff.*不存在.*未提交/u],
+  ]){
+    assert.throws(()=>f.app.change(f,args,request),error);
+    assert.deepEqual(snapshot(f),before,'a rejected batch must not remove any fact');
+  }
+  const args={action:'delete',expectedRevision:1,ids:saved.ids.slice(0,2)},result=f.app.change(f,args,request);
+  assert.deepEqual(result.ids,saved.ids.slice(0,2));assert.equal(result.revision,2);
+  const data=snapshot(f);
+  assert.deepEqual(data.facts.map(e=>e.text),[texts[2]]);
+  assert.equal(data.generation,before.generation+1);assert.equal(data.barriers.length,before.barriers.length+2);
+  assert.equal(data.receipts.length,before.receipts.length+1);
+  assert.equal(f.app.change(f,args,request).replayed,true);
+  // Forgotten facts stay fenced from automatic re-observation.
+  assert.equal(f.change({action:'observe',facts:[fact(texts[0])]},texts[0]).suppressed,true);
+});
+test('an id correction may stitch old-record and current-message pieces but not invent content (G2)',t=>{
+  const f=active(t),old='我养的合成猫叫小白',saved=f.change({action:'upsert',text:old,evidence:old},'请记住：'+old);
+  const raw='不对，是小黑',before=snapshot(f),id=saved.ids[0];
+  for(const [args,error] of [
+    [{action:'upsert',expectedRevision:1,id,text:'我养的合成猫叫小黑和小花',evidence:'是小黑'},/片段.*不加入/u],
+    [{action:'upsert',expectedRevision:1,id,text:'我养的合成猫',evidence:'是小黑'},/至少一段来自本次原话/u],
+    [{action:'upsert',expectedRevision:1,id,text:'我养的合成猫叫小黑'},/本次本人/u],
+    [{action:'upsert',expectedRevision:1,text:'我养的合成猫叫小黑',evidence:'是小黑'},/原话/u],
+  ]){
+    assert.throws(()=>f.app.change(f,args,f.request(raw)),error);
+    assert.deepEqual(snapshot(f),before);
+  }
+  const corrected=f.change({action:'upsert',id,text:'我养的合成猫叫小黑',evidence:'是小黑'},raw);
+  assert.deepEqual(corrected.ids,[id]);
+  const entry=f.app.read(f).entries[0];
+  assert.equal(entry.text,'我养的合成猫叫小黑');assert.equal(entry.source.evidence,'是小黑');assert.equal(f.app.read(f).generation,1);
+});
+test('fact policy keeps verbatim checks without a previous record and needs two-character pieces',()=>{
+  assert.equal(continuityPolicy.fact('合成猫叫小黑','合成猫叫小黑吧'),'合成猫叫小黑');
+  assert.throws(()=>continuityPolicy.fact('合成猫叫小黑','是小黑'),/当前来源中的原话/u);
+  assert.equal(continuityPolicy.fact('合成猫叫小黑','是小黑','合成猫叫小白'),'合成猫叫小黑');
+  // "黑" alone is one character, so it cannot bridge the old record and the current message.
+  assert.throws(()=>continuityPolicy.fact('合成猫叫小黑','黑色','合成猫叫小白'),/每段至少2字/u);
+  assert.equal(continuityPolicy.fact('合成 猫叫 小黑','是小黑','合成猫叫小白'),'合成 猫叫 小黑');
+});
+test('one missing-field error lists every required field and points at the injected revision',t=>{
+  const f=active(t),request=f.request('请记住：我的合成书签是蓝色的');
+  assert.throws(()=>f.app.change(f,{action:'upsert'},request),/缺少expectedRevision,text.*本回合记忆参考里的revision/u);
+});
 test('non-current sources, credentials, stale requests and unknown owners fail without committing',t=>{
   const f=active(t),base={action:'observe',expectedRevision:0,facts:[fact('我喜欢咖啡')]};
   assert.throws(()=>f.app.change(f,base,f.request('看看引用内容')),/本次本人/);

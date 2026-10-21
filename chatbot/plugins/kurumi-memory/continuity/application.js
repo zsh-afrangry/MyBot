@@ -6,6 +6,7 @@ import {continuityPolicy} from './policy.js';
 import {openContinuityStore} from './store.js';
 import {digest, factDigest, canonical, limits, options, validateState} from './model.js';
 import {assertContinuityArgs} from './tool-contract.js';
+const missingId = id => {throw Error(`记忆ID ${id} 不存在，请按本回合记忆参考或list核对真实ID；本次未提交`);};
 export function createContinuityRegistry() {
   const registry = createAdapterRegistry({domain: 'memory-continuity', policyMethods: ['evidence','fact','summary'], storeMethods: ['read','write','close']});
   registry.registerPolicy('current-owner', continuityPolicy); registry.registerStore('sqlite', openContinuityStore);
@@ -34,7 +35,8 @@ export function createContinuityApplication({registry = createContinuityRegistry
     next.summaries = next.summaries.filter(e => Date.parse(e.expiresAt) > at);
     let summarySaved = false, suppressed = false;
     const put = (item, explicit, target) => {
-      const evidence = selected.policy.evidence(item.evidence ?? item.text, request), text = selected.policy.fact(item.text, evidence);
+      const evidence = selected.policy.evidence(item.evidence ?? item.text, request);
+      const text = selected.policy.fact(item.text, evidence, ...(target ? [target.text] : []));
       const hashed = factDigest(text);
       if (!explicit && next.barriers.some(b => b.hash === hashed)) {suppressed = true; return;}
       if (!['fact','preference'].includes(item.kind ?? 'fact')) throw Error('未知事实类型');
@@ -53,15 +55,20 @@ export function createContinuityApplication({registry = createContinuityRegistry
           expiresAt: new Date(at + cfg.summaryTtlDays * 86400000).toISOString(), source: source(request, evidence)});
         next.summaries = next.summaries.slice(-limits.summaries); summarySaved = true;
       }
-    } else if (['upsert','delete'].includes(args.action)) {
-      const existing = args.id && next.facts.find(e => e.id === args.id);
-      if (args.id && !existing) throw Error('记忆ID不存在，请先查询真实ID');
-      if (args.action === 'delete' || (existing && normalize(existing.text) !== normalize(args.text))) {
+    } else if (args.action === 'delete') {
+      // N5: one forget request may name several facts; all must exist before anything changes.
+      const targets = (args.ids ?? [args.id]).map(id => next.facts.find(e => e.id === id) ?? missingId(id));
+      next.generation++; next.summaries = [];
+      const hashes = targets.map(e => factDigest(e.text));
+      next.barriers = [...next.barriers.filter(b => !hashes.includes(b.hash)), ...hashes.map(hash => ({hash, at: stamp}))].slice(-limits.barriers);
+      for (const entry of targets) {next.facts.splice(next.facts.indexOf(entry), 1); ids.push(entry.id);}
+    } else if (args.action === 'upsert') {
+      const existing = args.id && (next.facts.find(e => e.id === args.id) ?? missingId(args.id));
+      if (existing && normalize(existing.text) !== normalize(args.text)) {
         next.generation++; next.summaries = [];
         next.barriers = [...next.barriers.filter(b => b.hash !== factDigest(existing.text)), {hash: factDigest(existing.text), at: stamp}].slice(-limits.barriers);
       }
-      if (args.action === 'delete') {next.facts.splice(next.facts.indexOf(existing), 1); ids.push(existing.id);}
-      else put(args, true, existing);
+      put(args, true, existing || undefined);
     } else throw Error('未知记忆写入动作');
     if (next.facts.length > limits.facts) throw Error('长期记忆已满，请先合并或遗忘，不会静默淘汰');
     const result = {ok: true, action: args.action, revision: before.revision + 1, ids, summarySaved, suppressed};
