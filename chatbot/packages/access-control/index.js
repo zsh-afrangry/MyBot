@@ -101,7 +101,12 @@ export function toolPolicyDecision(event, ctx, cfg) {
       if(tools.includes(event.toolName)||['tool_search','tool_describe','tool_call'].includes(event.toolName))return;
       deny('unmapped_background_tool');
     }
-    if (ctx.agentId === 'main' && /^agent:main:cron:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}(?::run:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})?$/.test(ctx.sessionKey ?? '') && delegatedRequester
+    // OpenClaw Cron runs carry only the delivery channel/account, no sender fields
+    // (2026-10-20 weather denials). That bare context counts as the system call in
+    // the weather lane only; any sender id or owner flag still needs delegation.
+    const cronDelivery = requester != null && requester.channel === CHANNEL && requester.senderId == null
+      && requester.senderIsOwner == null && (!requester.accountId || requester.accountId === 'default');
+    if (ctx.agentId === 'main' && /^agent:main:cron:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}(?::run:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})?$/.test(ctx.sessionKey ?? '') && (delegatedRequester || cronDelivery)
       && ['personal_weather_get_brief','tool_search','tool_describe','tool_call'].includes(event.toolName)) {
       activeSubject(cfg,owner.qq,'chat.use');activeSubject(cfg,owner.qq,'weather.read');return;
     }

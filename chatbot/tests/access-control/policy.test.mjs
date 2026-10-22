@@ -62,10 +62,19 @@ test('Background lanes are limited to configured owner tasks and read-only weath
  const task={agentId:'researcher',sessionKey:'agent:researcher:kurumi-task-'+'a'.repeat(24)};
  for(const lane of [cron,task]){
   const toolName=lane===cron?'personal_weather_get_brief':'web_fetch';
-  for(const requester of [{},{senderId:OWNER},{senderIsOwner:true},{channel:'kurumi-qq',accountId:'default'},{channel:'telegram',senderId:OWNER,senderIsOwner:true},{channel:'kurumi-qq',senderId:MEMBER,senderIsOwner:false},{channel:'kurumi-qq',senderId:MEMBER,senderIsOwner:true},{channel:'kurumi-qq',senderId:OWNER,senderIsOwner:true,accountId:'other'}])assert(toolPolicyDecision({toolName},{...lane,requester},c));
+  for(const requester of [{},{senderId:OWNER},{senderIsOwner:true},{channel:'telegram',senderId:OWNER,senderIsOwner:true},{channel:'kurumi-qq',senderId:MEMBER,senderIsOwner:false},{channel:'kurumi-qq',senderId:MEMBER,senderIsOwner:true},{channel:'kurumi-qq',senderId:OWNER,senderIsOwner:true,accountId:'other'},{channel:'kurumi-qq',accountId:'other'},{channel:'kurumi-qq',accountId:'default',senderIsOwner:false},{channel:'kurumi-qq',accountId:'default',senderId:MEMBER}])assert(toolPolicyDecision({toolName},{...lane,requester},c));
   assert.equal(toolPolicyDecision({toolName},{...lane,requester:{channel:'kurumi-qq',senderId:OWNER,senderIsOwner:true,accountId:'default'}},c),undefined);
   assert.equal(toolPolicyDecision({toolName},{...lane,requester:{channel:'kurumi-qq',senderIsOwner:true,accountId:'default'}},c),undefined);
  }
+ // OpenClaw Cron runs pass only the delivery channel/account (2026-10-20..22 denials).
+ const delivery={channel:'kurumi-qq',accountId:'default'};
+ const cronRun={...cron,sessionKey:cron.sessionKey+':run:87654321-4321-4321-4321-cba987654321'};
+ for(const toolName of ['personal_weather_get_brief','tool_call','tool_describe','tool_search'])assert.equal(toolPolicyDecision({toolName},{...cronRun,requester:delivery},c),undefined);
+ assert.equal(toolPolicyDecision({toolName:'personal_weather_get_brief'},{...cron,requester:{channel:'kurumi-qq'}},c),undefined);
+ assert(toolPolicyDecision({toolName:'email_send'},{...cronRun,requester:delivery},c));
+ assert(toolPolicyDecision({toolName:'web_fetch'},{...task,requester:delivery},c));
+ assert(toolPolicyDecision({toolName:'personal_weather_get_brief'},{...cronRun,agentId:'qq-user-'+MEMBER,requester:delivery},c));
+ assert(toolPolicyDecision({toolName:'personal_weather_get_brief'},{agentId:'main',sessionKey:'agent:main:cron:not-a-uuid',requester:delivery},c));
  assert(toolPolicyDecision({toolName:'personal_weather_get_brief'},{...cron,agentId:'qq-user-'+MEMBER},c));
  assert(toolPolicyDecision({toolName:'web_fetch'},{sessionKey:context(policy().subjects[0]).sessionKey},c));
  assert(PERMISSIONS.length>30);
