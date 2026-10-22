@@ -537,23 +537,30 @@ export function attachTurnCorrelation(events) {
   }
 }
 
+const RUNTIME_WINDOW_MS = 120_000;
+
 /** Runtime text logs usually have trace/span IDs but no QQ MessageSid. Add a
  * clearly documented time-window link so a message query can show adjacent
- * confirmation/Cron/warning records. Native session events remain authoritative. */
-function attachRuntimeCorrelation(events) {
-  const turns = events.filter((item) => item.kind === 'agent.inbound' && item.correlation.sessionKey);
-  for (const turn of turns) {
-    const next = turns.filter((candidate) => candidate.correlation.sessionKey === turn.correlation.sessionKey && candidate.epochMs > turn.epochMs + 1)
-      .sort((a, b) => a.epochMs - b.epochMs)[0];
-    const end = next?.epochMs ?? turn.epochMs + 120_000;
-    for (const candidate of events) {
-      if (candidate.source !== 'openclaw-runtime' || candidate.epochMs < turn.epochMs || candidate.epochMs >= end) continue;
-      if (!candidate.correlation.sessionKey) {
-        Object.assign(candidate.correlation, {sessionKey: turn.correlation.sessionKey, qqMessageId: turn.correlation.qqMessageId});
-        candidate.data.correlationQuality = 'time-window';
-      }
-    }
+ * confirmation/Cron/warning records. Native session events remain authoritative.
+ * Each unkeyed line goes to the nearest preceding turn, at most 120s back: a
+ * daily Cron turn must not absorb a day of other jobs' runtime lines. */
+export function attachRuntimeCorrelation(events) {
+  const byTime = (a, b) => a.epochMs - b.epochMs;
+  const turns = events.filter((item) => item.kind === 'agent.inbound' && item.correlation.sessionKey).sort(byTime);
+  const runtime = events.filter((item) => item.source === 'openclaw-runtime' && !item.correlation.sessionKey).sort(byTime);
+  let index = -1;
+  for (const candidate of runtime) {
+    while (index + 1 < turns.length && turns[index + 1].epochMs <= candidate.epochMs) index += 1;
+    const turn = turns[index];
+    if (!turn || candidate.epochMs >= turn.epochMs + RUNTIME_WINDOW_MS) continue;
+    Object.assign(candidate.correlation, {sessionKey: turn.correlation.sessionKey, qqMessageId: turn.correlation.qqMessageId});
+    candidate.data.correlationQuality = 'time-window';
   }
+}
+
+/** Spread-free append: `push(...list)` overflows the call stack once a source yields ~100k rows. */
+function append(target, items) {
+  for (const item of items) target.push(item);
 }
 
 export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, snowlumaRoot = DEFAULT_SNOWLUMA_ROOT, sources, expand = false} = {}) {
@@ -561,40 +568,40 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   const include = (name) => !wanted || wanted.has(name);
   const events = [];
   const windows = [];
-  if (include('snowluma')) events.push(...readSnowLumaLogs(snowlumaRoot, from, to));
-  if (include('openclaw-runtime')) events.push(...readRuntimeLog(path.join(runtimeRoot, 'runtime.log'), from, to));
+  if (include('snowluma')) append(events, readSnowLumaLogs(snowlumaRoot, from, to));
+  if (include('openclaw-runtime')) append(events, readRuntimeLog(path.join(runtimeRoot, 'runtime.log'), from, to));
   if (include('openclaw-receipt')) {
-    for (const name of ['task-receipts.jsonl', 'reminder-receipts.jsonl', 'native-tool-receipts.jsonl']) events.push(...readReceiptFile(path.join(runtimeRoot, 'channel', name), from, to));
+    for (const name of ['task-receipts.jsonl', 'reminder-receipts.jsonl', 'native-tool-receipts.jsonl']) append(events, readReceiptFile(path.join(runtimeRoot, 'channel', name), from, to));
   }
   if (include('openclaw-session')) {
     for (const dbFile of agentDatabases(runtimeRoot)) {
       const result = transcriptEvents(dbFile, from, to, {expand});
-      events.push(...result.events); windows.push(...result.windows);
+      append(events, result.events); append(windows, result.windows);
     }
   } else if (include('snowluma')) {
     // QQ events still benefit from a session key when only the QQ source was requested.
     const mainDb = path.join(runtimeRoot, 'agents', 'main', 'agent', 'openclaw-agent.sqlite');
     const result = transcriptEvents(mainDb, from, to);
-    windows.push(...result.windows);
+    append(windows, result.windows);
   }
-  if (include('personal-reminders')) events.push(...readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to));
-  if (include('personal-reminder-list')) events.push(...readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to));
-  if (include('trace-events')) events.push(...readTraceFile(path.join(runtimeRoot, 'channel', 'trace-events.jsonl'), from, to));
-  if (include('access-control')) events.push(...readTraceFile(path.join(runtimeRoot,'channel','access-events.jsonl'),from,to));
+  if (include('personal-reminders')) append(events, readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to));
+  if (include('personal-reminder-list')) append(events, readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to));
+  if (include('trace-events')) append(events, readTraceFile(path.join(runtimeRoot, 'channel', 'trace-events.jsonl'), from, to));
+  if (include('access-control')) append(events, readTraceFile(path.join(runtimeRoot,'channel','access-events.jsonl'),from,to));
   if (include('papers')) {
     // Configured managed root, with a portable default for isolated tests/restores.
     let root = path.join(runtimeRoot, 'documents');
     try { root = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-papers'].config.root ?? root; } catch {}
-    events.push(...readTraceFile(path.join(root, 'events.jsonl'), from, to));
+    append(events, readTraceFile(path.join(root, 'events.jsonl'), from, to));
   }
   if (include('web-deepseek')) {
     // Only a configured trace file exists; the provider writes nothing by default.
     let file;
     try { file = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-web-deepseek'].config.traceFile; } catch {}
-    if (typeof file === 'string' && path.isAbsolute(file)) events.push(...readTraceFile(file, from, to));
+    if (typeof file === 'string' && path.isAbsolute(file)) append(events, readTraceFile(file, from, to));
   }
   if (include('knowledgemap')) {
-    for (const file of ['trace.jsonl.1', 'trace.jsonl']) events.push(...readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to));
+    for (const file of ['trace.jsonl.1', 'trace.jsonl']) append(events, readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to));
   }
   attachSessionCorrelation(events, windows);
   attachTurnCorrelation(events);

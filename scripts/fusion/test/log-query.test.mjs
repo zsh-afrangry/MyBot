@@ -4,7 +4,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {
+  attachRuntimeCorrelation,
   attachTurnCorrelation,
+  collectEvents,
   filterEvents,
   parseQueryInstant,
   parseReceiptLine,
@@ -64,6 +66,40 @@ test('time-window correlation binds matching message text and never steals a nea
   assert.equal(events[2].correlation.qqMessageId, 'm1');
   assert.equal(events[4].correlation.qqMessageId, 'm2');
   assert.equal(events[5].correlation.qqMessageId, 'm2');
+});
+
+test('runtime time-window stops at 120s and at a nearer turn, so a daily Cron run absorbs nothing else', () => {
+  const cron = 'agent:main:cron:12345678-1234-1234-1234-123456789abc';
+  const direct = 'agent:main:kurumi-qq:direct:1';
+  const day = 86_400_000;
+  const t0 = 1_000_000_000_000;
+  const turn = (at, sessionKey) => normalizeTraceEvent({at, source: 'openclaw-session', kind: 'agent.inbound', correlation: {sessionKey}, data: {}});
+  const line = (at, correlation = {}) => normalizeTraceEvent({at, source: 'openclaw-runtime', kind: 'openclaw.log', correlation, data: {}});
+  const events = [
+    turn(t0, cron), line(t0 + 5_000), line(t0 + 3_600_000, {cronJobId: 'other-job'}),
+    turn(t0 + 7_200_000, direct), line(t0 + 7_210_000), turn(t0 + 7_220_000, cron), line(t0 + 7_225_000),
+    turn(t0 + day, cron),
+  ];
+  attachRuntimeCorrelation(events);
+  assert.equal(events[1].correlation.sessionKey, cron);
+  assert.equal(events[1].data.correlationQuality, 'time-window');
+  assert.equal(events[2].correlation.sessionKey, undefined);
+  assert.equal(events[4].correlation.sessionKey, direct);
+  assert.equal(events[6].correlation.sessionKey, cron);
+  const selected = filterEvents(events, {sessionKey: cron});
+  assert(!selected.includes(events[2]) && !selected.includes(events[3]) && !selected.includes(events[4]));
+});
+
+test('collectEvents handles a source larger than the spread-argument limit', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'log-query-large-'));
+  try {
+    const at = Date.parse('2026-10-11T00:00:00+08:00');
+    const rows = 160_000;
+    const line = (i) => JSON.stringify({'0': '{"module":"cron"}', '1': {jobId: `job-${i}`}, '2': 'cron: job added', time: new Date(at + i).toISOString()});
+    fs.writeFileSync(path.join(root, 'runtime.log'), Array.from({length: rows}, (_, i) => line(i)).join('\n') + '\n');
+    const events = collectEvents({from: at - 1, to: at + rows, runtimeRoot: root, snowlumaRoot: path.join(root, 'none'), sources: ['openclaw-runtime']});
+    assert.equal(events.length, rows);
+  } finally { fs.rmSync(root, {recursive: true, force: true}); }
 });
 
 test('message filtering follows proposal and reminder correlation closure', () => {
