@@ -1,0 +1,210 @@
+{
+  "at": "2026-10-23T14:58:14.927478+00:00",
+  "ok": true,
+  "baselineHead": "c3f395330eeff40afdd060823ee6b02abd1de44d",
+  "baselineMethod": "本轮开始时1022个Git tracked/untracked非忽略文件的SHA256；开始前已有首次整理稿，未以HEAD覆盖",
+  "baselineFiles": 1022,
+  "changedExisting": [
+    "config/README.md",
+    "docs/10_融合助手运行维护.md",
+    "docs/16_验收与测试总表.md",
+    "docs/18_跨模块链路日志查询.md",
+    "docs/20_邮件能力与横切扩展.md",
+    "docs/21_后端职责分层与代码整理.md",
+    "docs/22_论文PDF翻译与文件投递.md",
+    "docs/23_KnowledgeMap业务能力桥接.md",
+    "docs/24_统一身份与权限管理.md",
+    "docs/25_人格、记忆与会话连续性.md",
+    "docs/README.md",
+    "docs/verification/INDEX.md",
+    "docs/待办清单.md",
+    "scripts/fusion/documentation-map.json"
+  ],
+  "newFiles": [
+    "docs/verification/documentation-reorder-2026-10-23/README.md",
+    "docs/verification/documentation-reorder-2026-10-23/anchors.json",
+    "docs/verification/documentation-reorder-2026-10-23/changes.diff",
+    "docs/verification/documentation-reorder-2026-10-23/changes.json",
+    "docs/verification/documentation-reorder-2026-10-23/checker-tests.txt",
+    "docs/verification/documentation-reorder-2026-10-23/checks.json",
+    "docs/verification/documentation-reorder-2026-10-23/code-correspondence.json",
+    "docs/verification/documentation-reorder-2026-10-23/links.json",
+    "docs/verification/documentation-reorder-2026-10-23/preliminary-check.json",
+    "docs/verification/documentation-reorder-2026-10-23/preservation.json"
+  ],
+  "scopeViolations": [],
+  "missingBaselineFiles": [],
+  "protectedOriginals": {
+    "count": 4,
+    "unchanged": true,
+    "changed": []
+  },
+  "historicalDocsAndArchives": {
+    "count": 36,
+    "unchanged": true,
+    "changed": []
+  },
+  "priorVerification": {
+    "count": 525,
+    "unchanged": true,
+    "changed": []
+  },
+  "structureHeldDocuments": {
+    "count": 5,
+    "unchanged": true,
+    "changed": []
+  },
+  "implementationAndBehaviorSources": {
+    "count": 427,
+    "unchanged": true,
+    "changed": []
+  },
+  "acceptanceConclusions": [
+    {
+      "domain": "基础融合",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "固定提醒措辞",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "模型与图片",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "日志查询",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "提醒列表初版",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "后端可插拔",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "生命周期与插件边界",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "共享业务第一轮",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "账单第二轮",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "邮件",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "论文翻译",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "统一身份权限",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    },
+    {
+      "domain": "人格与记忆",
+      "conclusionLimitAndEvidenceUnchanged": true,
+      "dateUnchanged": true
+    }
+  ],
+  "taskCheckboxes": {
+    "originalCount": 32,
+    "changes": [],
+    "newIds": [
+      "N11",
+      "N12",
+      "N13",
+      "N14",
+      "N15",
+      "N16",
+      "N17",
+      "N18",
+      "N19"
+    ],
+    "newIdsMeaning": "N11—N19只为既有缺口建立追踪，未新增业务范围",
+    "completionRecordsUnchangedExceptIntroWording": true
+  },
+  "oldAnchors": [
+    {
+      "document": "config/README.md",
+      "originalAnchors": 10,
+      "missing": []
+    },
+    {
+      "document": "docs/10_融合助手运行维护.md",
+      "originalAnchors": 19,
+      "missing": []
+    },
+    {
+      "document": "docs/16_验收与测试总表.md",
+      "originalAnchors": 13,
+      "missing": []
+    },
+    {
+      "document": "docs/18_跨模块链路日志查询.md",
+      "originalAnchors": 15,
+      "missing": []
+    },
+    {
+      "document": "docs/20_邮件能力与横切扩展.md",
+      "originalAnchors": 8,
+      "missing": []
+    },
+    {
+      "document": "docs/21_后端职责分层与代码整理.md",
+      "originalAnchors": 12,
+      "missing": []
+    },
+    {
+      "document": "docs/22_论文PDF翻译与文件投递.md",
+      "originalAnchors": 10,
+      "missing": []
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "originalAnchors": 25,
+      "missing": []
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "originalAnchors": 10,
+      "missing": []
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "originalAnchors": 36,
+      "missing": []
+    },
+    {
+      "document": "docs/README.md",
+      "originalAnchors": 10,
+      "missing": []
+    },
+    {
+      "document": "docs/待办清单.md",
+      "originalAnchors": 24,
+      "missing": []
+    }
+  ],
+  "headUnchanged": true,
+  "stagedFiles": []
+}

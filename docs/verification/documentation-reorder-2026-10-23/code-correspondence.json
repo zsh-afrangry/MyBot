@@ -1,0 +1,211 @@
+{
+  "method": "只记录已核对源码位置/指纹，不读取私密运行原文或凭据",
+  "files": [
+    {
+      "path": "chatbot/plugins/kurumi-papers/openclaw.plugin.json",
+      "sha256": "1b3d94e6017aa83750dc7873b94e4b8b4f0ace863c818ff90d6f9c831e71daa3",
+      "locations": {
+        "maxReportedTokens": [
+          16
+        ],
+        "apiConcurrency": [
+          17
+        ],
+        "requestIdleTimeoutSeconds": [
+          21
+        ]
+      }
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/runner.js",
+      "sha256": "342b96f2e6c6cb99194ff4ae14f09a00c84455989f7e876b8173c6ed1fda25d4",
+      "locations": {
+        "translationTimeoutSeconds": [
+          9,
+          63
+        ],
+        "executionSettings": [
+          21,
+          62
+        ],
+        "reliabilitySettings": [
+          30,
+          70
+        ]
+      }
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/service.js",
+      "sha256": "e0290686fa07a0c91cbc3f8736450ddc0a39041f8896ca682dd2891f3891896c",
+      "locations": {
+        "normalizePages": [
+          12,
+          79
+        ],
+        "this.queue.length": [
+          91,
+          103
+        ]
+      }
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/python/responses.py",
+      "sha256": "c8ffe1ee5155ff56193be8e429dc747e9cb44cf1ede81e6e8928605d8cfa079a",
+      "locations": {
+        "timeout=600": [
+          324
+        ],
+        "batch_validation_retries": [
+          326,
+          337,
+          340,
+          386,
+          481,
+          488,
+          490
+        ],
+        "_complete_reply": [
+          696,
+          726
+        ]
+      }
+    },
+    {
+      "path": "config/runtime.config.json",
+      "sha256": "b2336bad5d67ce9ab4b2a661ce4143c164c8e8bce8d5d684db9c411781d9db08",
+      "locations": {
+        "maxReportedTokens": [
+          316
+        ],
+        "apiConcurrency": [
+          317
+        ],
+        "summaryTtlDays": [
+          272
+        ]
+      }
+    },
+    {
+      "path": "chatbot/plugins/kurumi-mail/store.js",
+      "sha256": "1ed003e933561bdbe7ce81fc9dc9ec57b16f2eb4c919ae631f36a54c01e4da21",
+      "locations": {
+        "MAX_ATTACHMENTS": [
+          41,
+          181
+        ],
+        "MAX_ATTACHMENT_BYTES": [
+          42,
+          188
+        ],
+        "MAX_TOTAL_ATTACHMENT_BYTES": [
+          43,
+          191
+        ],
+        "draftPayloadHash": [
+          75,
+          194,
+          316
+        ],
+        "readAttachments": [
+          257,
+          316
+        ]
+      }
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/application.js",
+      "sha256": "f9d4c96ccbd03f93178d45e8bad10c21157f4ce0eca5d230c3ebfcd404ff640e",
+      "locations": {
+        "createContinuityRegistry": [
+          10,
+          15
+        ],
+        "expectedRevision": [
+          33
+        ],
+        "generation": [
+          29,
+          32,
+          61,
+          68,
+          75,
+          83,
+          94
+        ]
+      }
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/tool-contract.js",
+      "sha256": "3b9e485434fd0c4156ebf2df6a502c0909972ce829d94443b38e14153767ab8e",
+      "locations": {
+        "ids": [
+          15,
+          33,
+          34,
+          46,
+          48,
+          86,
+          91
+        ],
+        "expectedRevision": [
+          13,
+          29,
+          31,
+          33,
+          34,
+          43,
+          44,
+          45,
+          46,
+          88
+        ]
+      }
+    },
+    {
+      "path": "chatbot/packages/knowledgemap-client/tool-trace.js",
+      "sha256": "c105a6c4c4f37fc24bd1a3fc5a4e320389f9882db97e6d28f05e960e927b8ab5",
+      "locations": {
+        "runId": [
+          1,
+          2,
+          14,
+          15,
+          18,
+          34
+        ],
+        "before_tool_call": [
+          12
+        ],
+        "after_tool_call": [
+          20
+        ]
+      }
+    },
+    {
+      "path": "scripts/fusion/log-query.mjs",
+      "sha256": "1c29cdb3d2f00536a45adf9212060b8f0d83c11930ded8ed04d5f1d0d73ec54d",
+      "locations": {
+        "--turns": [
+          662,
+          677,
+          692
+        ],
+        "--errors": [
+          663,
+          677,
+          692,
+          717
+        ],
+        "--audit": [
+          664,
+          677,
+          692
+        ],
+        "--limit": [
+          668,
+          675
+        ]
+      }
+    }
+  ]
+}

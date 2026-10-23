@@ -1,0 +1,252 @@
+{
+  "date": "2026-10-23 Asia/Shanghai",
+  "at": "2026-10-23T15:00:22.832882+00:00",
+  "sourceHead": "c3f395330eeff40afdd060823ee6b02abd1de44d",
+  "scope": "批准的文档/导航/引用/归属元数据工作，不作业务重新验收",
+  "documentChecks": [
+    {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:58:14.848488+00:00",
+      "exitCode": 0,
+      "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 453\n  total: 536\nOK: every file belongs to exactly one named group with valid documents.\n"
+    },
+    {
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:58:14.848919+00:00",
+      "exitCode": 0,
+      "output": "OK: SCRIPTS.md matches 198 classified, document-owned entries.\n"
+    },
+    {
+      "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:53:22.829376+00:00",
+      "exitCode": 0,
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "outputFile": "checker-tests.txt"
+    },
+    {
+      "command": "temporary local Markdown/link checker",
+      "exitCode": 0,
+      "checkedLinks": 1457,
+      "unclosedFences": [],
+      "failures": [],
+      "outputFile": "links.json"
+    },
+    {
+      "command": "temporary baseline/contract preservation checker",
+      "exitCode": 0,
+      "baselineFiles": 1022,
+      "scopeViolations": [],
+      "outputFile": "preservation.json"
+    },
+    {
+      "command": "Markdown table column check",
+      "tables": 63,
+      "errors": [],
+      "ok": true
+    },
+    {
+      "command": "document-code locations/fingerprints check",
+      "files": 10,
+      "errors": [],
+      "ok": true,
+      "outputFile": "code-correspondence.json"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "output": ""
+    },
+    {
+      "command": "new evidence file whitespace check",
+      "checked": 9,
+      "results": [
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/README.md",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/anchors.json",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/changes.json",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/checker-tests.txt",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/checks.json",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/code-correspondence.json",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/links.json",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/preliminary-check.json",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        },
+        {
+          "command": "git diff --no-index --check /dev/null docs/verification/documentation-reorder-2026-10-23/preservation.json",
+          "exitCode": 1,
+          "output": "",
+          "ok": true
+        }
+      ],
+      "patchNote": "changes.diff含合法的统一差异上下文行，不按新增正文做空白检查；补丁适用性另检"
+    },
+    {
+      "command": "git apply --reverse --check docs/verification/documentation-reorder-2026-10-23/changes.diff",
+      "exitCode": 0,
+      "output": "",
+      "scope": "只校验补丁能对应当前文件；未执行apply"
+    },
+    {
+      "command": "review patch/source fingerprint check",
+      "files": 14,
+      "errors": [],
+      "ok": true,
+      "patchSha256": "dc293984e3546b69395ad44424652794330edc866a2a0b97122185fb4545776a",
+      "outputFile": "changes.json"
+    }
+  ],
+  "runtimeChecks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:53:22.825848+00:00",
+      "exitCode": 1,
+      "output": "node:internal/modules/package_json_reader:343\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\n        ^\n\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'openclaw' imported from /home/afrangry/.codex/worktrees/89f2/kurumi-fusion/scripts/fusion/rpc.mjs\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:343:9)\n    at packageResolve (node:internal/modules/esm/resolve:751:25)\n    at moduleResolve (node:internal/modules/esm/resolve:840:18)\n    at defaultResolve (node:internal/modules/esm/resolve:973:11)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:766:56)\n    at #resolve (node:internal/modules/esm/loader:690:17)\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:610:35)\n    at node:internal/modules/esm/loader:639:32 {\n  code: 'ERR_MODULE_NOT_FOUND'\n}\n\nNode.js v26.12.1\n"
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:53:22.825830+00:00",
+      "exitCode": 0,
+      "output": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:53:22.827198+00:00",
+      "exitCode": 0,
+      "output": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:53:22.841132+00:00",
+      "exitCode": 0,
+      "output": "persona in sync with roles/世凪.md (12 workspace file(s) match)\n"
+    },
+    {
+      "command": "node /home/afrangry/kurumi-fusion/scripts/fusion/health.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "at": "2026-10-23T14:53:26.136749+00:00",
+      "entryEquivalence": [
+        {
+          "path": "scripts/fusion/health.mjs",
+          "same": true,
+          "sha256": "c6c111d1b4cb69a6425abcb2e81498ff29c22bc484931c4bb545b5eeddd2e17d"
+        },
+        {
+          "path": "scripts/fusion/rpc.mjs",
+          "same": true,
+          "sha256": "0a1ef9953c4fa7232e1a9b85dc95feb206e23efca9f921f520a51d62c7435acc"
+        },
+        {
+          "path": "scripts/fusion/lib/legacy-source.mjs",
+          "same": true,
+          "sha256": "e9206f084ba8ab2306741a0b2cb77e67df54c0e5a608601b454d5cf993fd4c5d"
+        },
+        {
+          "path": "chatbot/plugins/kurumi-qq/src/config.js",
+          "same": true,
+          "sha256": "324ec193dd3eb7a2b278e1028d5b12d1445a04fb89ff7ae007b021d40d3548ff"
+        },
+        {
+          "path": "chatbot/plugins/kurumi-qq/src/transport.js",
+          "same": true,
+          "sha256": "2968ae2d8f93f068064bc22cc2ed82e0ac7b99b9c68c0947ece401f60074894d"
+        },
+        {
+          "path": "chatbot/packages/knowledgemap-client/client.js",
+          "same": true,
+          "sha256": "d3f50305d197af9805143aa9c123b36af15cbe79d6817d8d85302a0c499535c4"
+        },
+        {
+          "path": "chatbot/plugins/personal-reminder-list/data-source.js",
+          "same": true,
+          "sha256": "049dfd12d29181915bfcd6ece733867f99c07210a60a2f4149d9a79b200a6886"
+        }
+      ],
+      "exitCode": 0,
+      "summary": {
+        "at": "2026-10-23T14:53:26.787Z",
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "databases": {
+          "channelDatabase": "ok",
+          "weatherDatabase": "ok",
+          "remindersDatabase": "ok",
+          "reminderListDatabase": "ok"
+        },
+        "knowledgeMap": {
+          "ok": true,
+          "contract": 1,
+          "domains": [
+            "weather",
+            "tasks",
+            "bills"
+          ]
+        }
+      },
+      "scope": "只保存健康摘要；省略Cron、投递账本与会话内容"
+    }
+  ],
+  "runtimeConclusion": "三项对齐/依赖检查通过；worktree健康检查缺SDK而未开始探测，核对7份入口模块一致后从规范源码执行健康检查通过；未修改工作树依赖",
+  "notPerformed": [
+    "业务回归或付费模型/API",
+    "QQ/邮件外发",
+    "同步apply或服务启停",
+    "停写快照/备份恢复",
+    "运行数据库清理",
+    "Git提交或远端写入"
+  ],
+  "preliminaryRepairs": "初稿错误与补正保留在preliminary-check.json，最终文档检查均已通过",
+  "pending": "N9待主人阅读复核；所有原业务任务状态不变",
+  "okWithinRecordedEnvironmentLimit": true
+}

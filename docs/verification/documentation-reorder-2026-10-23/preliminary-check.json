@@ -1,0 +1,28 @@
+{
+  "phase": "首轮链接与空白检查",
+  "checkedLinks": 1447,
+  "unclosedFences": [],
+  "findings": [
+    {
+      "path": "docs/25_人格、记忆与会话连续性.md",
+      "issue": "新增链接指向原过程摘录中不存在的第6节",
+      "repair": "原决策表改按明确Git来源追溯，有效规则保留于当前正文，历史材料不改写"
+    },
+    {
+      "path": "config/README.md",
+      "issue": "文件末尾多余空行",
+      "repair": "保留单一末尾换行"
+    }
+  ],
+  "businessTestsRun": false,
+  "manualReviewRepairs": [
+    {
+      "issue": "配置README首次迁移预览命令的注释前缺少空格",
+      "repair": "恢复mjs与#之间的空格；命令未执行"
+    },
+    {
+      "issue": "重排文档23时未承接原runner/slot术语定义",
+      "repair": "在接口与运行边界补回定义并保留原术语锚点"
+    }
+  ]
+}

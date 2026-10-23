@@ -1,0 +1,2177 @@
+diff --git a/config/README.md b/config/README.md
+--- a/config/README.md
++++ b/config/README.md
+@@ -2,16 +2,7 @@
+ 
+ 类型：配置规则与同步操作手册。状态：维护现行配置来源和部署契约；具体业务的实现范围及验收分别进入领域文档与[文档16](../docs/16_验收与测试总表.md)。
+ 
+-融合系统的配置分两层：**仓库是意图（intent），运行目录是事实与私密状态**。
+-本目录只保存可公开、无凭据的那一层。
+-
+-按任务阅读：[模型与人格来源](#主模型与人格切换) → [目录分工](#目录分工) → [同步的写入边界](#同步契约) → [按改动选择入口](#改配置的正确姿势) → [只读自检](#自检)。主同步代码为 `scripts/fusion/sync-config.mjs` 与 `sync-persona.mjs`；本文出现的迁移/备份时点不作为当前库版本或执行授权。
+-
+-## 主模型与人格切换
+-
+-- 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。历史实测见[模型与图片证据](../docs/verification/deepseek-whale/README.md)。
+-- 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
+-- `configure-deepseek-persona.mjs`是2026-10-05的一次性迁移脚本，**不是日常人格切换入口**。它会重写provider、默认模型、`runtime-env.json`并删除`OPENAI_API_KEY`，还会写四份工作区文件。迁移私密材料位于 `.openclaw-fusion/migration/before-deepseek-whale-2026-10-05/`，只代表当时状态，不是当前完整回退点。改配置与回退先按本文及文档16的契约核对，不删除运行目录或业务状态。
++仓库保存配置意图，运行目录保存实际配置与私密状态。按[来源与目录](#目录分工) → [受管键与删除语义](#仓库全权管理-vs-宿主自行维护) → [同步命令](#同步契约) → [生效条件](#改配置的正确姿势)阅读。同步源码为`sync-config.mjs`和`sync-persona.mjs`，文中的历史迁移时点不构成新的执行授权。
+ 
+ ## 目录分工
+ 
+@@ -55,41 +46,13 @@
+ 
+ 因此改配置时的规则很简单：**要改行为改仓库，要改密钥只改登记的私密位置，两者都不要互相复制。**
+ 
+-## 同步契约
++## 主模型与人格切换
+ 
+-提醒列表的设置/投递状态在 `state/personal-reminder-list/list.sqlite`，事项唯一事实在KnowledgeMap。`dataSource=knowledgemap`、`bridgeBaseUrl` 和 `bridgeTokenFile` 同时用于工具及runner，持久切换标记也约束旧任务；步骤与回退边界见[文档23](../docs/23_KnowledgeMap业务能力桥接.md)。`plugins.entries.personal-reminder-list.config.defaultTimes` 仅用于首次建库；主人通过工具修改的时刻/暂停状态由领域库持有，配置同步不覆盖它。`backendRoot` 明确指向持久后端目录 `/home/afrangry/kurumi-fusion/chatbot`，用于固定 Cron runner；不能从 OpenClaw 的插件捕获临时目录推导。具体契约见[文档 19](../docs/19_提醒列表与定时汇总.md)。
++- 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。历史实测见[模型与图片证据](../docs/verification/deepseek-whale/README.md)。
++- 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
++- `configure-deepseek-persona.mjs`是2026-10-05的一次性迁移脚本，**不是日常人格切换入口**。它会重写provider、默认模型、`runtime-env.json`并删除`OPENAI_API_KEY`，还会写四份工作区文件。迁移私密材料位于 `.openclaw-fusion/migration/before-deepseek-whale-2026-10-05/`，只代表当时状态，不是当前完整回退点。改配置与回退先按本文及文档16的契约核对，不删除运行目录或业务状态。
+ 
+-天气、Profile、行程、一次性提醒分别配置 `plugins.entries.personal-{weather,profile,planning,reminders}` 并独立登记allow/load/开关。天气条目只持有天气API参数；Profile持有地理解析及默认城市桥接配置；行程与一次性提醒只装配自身领域，一次性提醒的 `reminderRunnerRoot` 指向持久 `chatbot/plugins/personal-reminders`。共享实现不改变历史数据归属：Profile/行程仍使用 `state/personal-weather/weather.sqlite`，提醒仍使用 `state/personal-reminders/`。旧Cron的 `personal-weather/dist/reminder-cli.js` 由集中构建生成转发入口，不因配置拆分自动重写既有任务。`kurumi-research.config.cacheRoot` 显式指定阅读/源缓存，不再从QQ频道路径推导。完整代码和兼容边界见[文档21](../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期)。
+-
+-`sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
+-
+-未启用共享模式的提醒列表和长期记忆可在 `plugins.entries.<id>.config` 指定 `policyAdapter` / `storeAdapter`，值是领域 `adapters.js` 注册的实现 ID，启动时固定。默认分别为 `default` / `sqlite` 和 `explicit` / `memory-file`；未指定仍用上述默认，未知 ID 明确失败，不回退。替换实现、迁移数据与旧 Cron 绑定的处理见[文档 21](../docs/21_后端职责分层与代码整理.md)，配置选择不自动迁移业务数据。
+-
+-主人连续性由 `plugins.entries.kurumi-memory.config.continuity.enabled` 开启；`summaryTtlDays` 为近期摘要保留天数（1–30，默认7），`maxContextChars` 为注入上限（2000–12000，默认6000）。连续性模式使用 `continuityPolicyAdapter=current-owner`、`continuityStoreAdapter=sqlite`，不与旧 `policyAdapter/storeAdapter` 混用。生产当前已启用这组配置；首次迁移仍按下面的预览→私密备份→应用流程，后续只读预览用于核对：
+-
+-```bash
+-node chatbot/scripts/memory-migrate.mjs                 # 只读预览
+-node chatbot/scripts/memory-migrate.mjs --apply \
+-  --backup-root /home/afrangry/.openclaw-fusion/migration
+-```
+-
+-迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。`/new`只清原生聊天上下文，仍注入有效长期事实和未过期摘要；明确更正/遗忘才推进记忆代际并清理本域摘要。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
+-
+-论文插件的 `root/python/credentialsFile`、`apiConcurrency/apiQps`（日常最多4个在途请求、每秒启动1个；操作者可配置并发1–6、QPS1–4）和页数、请求次数、用量、运行时限在 `plugins.entries.kurumi-papers.config` 管理。`liveTranslationEnabled` 是实际付费调用开关，插件缺省关闭；本机仓库意图已按用户授权设为 `true`。三份窄工具加入 `main.tools.alsoAllow`，已登记成员的独立 Agent 仅开放首期工具，不开放通用文件或命令。成员文件在 `root/subjects/<QQ>/`，任务共用串行队列并绑定真实请求人；任务、产物与归属需随私有状态备份，Python 环境用锁文件重建。详细契约与证据见[文档22](../docs/22_论文PDF翻译与文件投递.md)、身份边界见文档24。
+-
+-论文可靠性也由上述受管配置控制：`batchValidationRetries=1` 表示校验失败后仅对当前批次额外重试1次，`channelRecoveryRetries=1` 表示全部临时渠道冷却后最多再恢复1轮；两项均允许0–4，0明确禁用对应重试。两者独立计数，但共用单任务300请求、300000已报告tokens和1800秒期限。模型不能改这些值。冷却文件兼容原数字到期时间，新条目保存到期/机器原因/是否允许恢复；同一渠道恢复时仅一个在途探测。HTTP请求采用沙箱内临时子进程以便失败后立即取消，不新增服务或端口；诊断和原始回执只在私密任务状态中保留。
+-
+-`requestIdleTimeoutSeconds=100` 是独立的有效正文空闲期限，操作者可设整数1–600秒。自请求开始或最后一次非空白 `response.output_text.delta` 计时；心跳、`response.created`、思考事件和纯空白不重置。超时先终止当前HTTP子进程，再按既有渠道/冷却规则重试当前批次，记 `api_output_idle_timed_out_unknown` 及未知用量，不自动重跑整篇。持续有正文的单请求仍受固定600秒总期限限制，整篇仍1800秒。没有可见正文不证明上游没有推理或计费；本地取消不保证停止上游计费。
+-
+-```bash
+-node scripts/fusion/sync-config.mjs            # --check（默认）：只报告漂移，不写入
+-node scripts/fusion/sync-config.mjs --diff     # 逐项差异 + 删除项 + 运行态独有键
+-node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配置
+-```
+-
+-并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。10项自检、allow成员检查补正及原回执见[结构整理报告](../docs/verification/capability-decoupling-2026-10-20/README.md)。
+-
+-### 仓库全权管理 vs 宿主自行维护
++## 仓库全权管理 vs 宿主自行维护
+ 
+ `runtime.config.json` 顶部的 `_managed` 列出**仓库全权拥有**的顶层键
+ （当前：`agents`、`bindings`、`channels`、`commands`、`discovery`、`gateway`、`logging`、
+@@ -101,12 +64,41 @@
+ - **不在 `_managed` 里的键：宿主自行维护，原样保留**，并在 `--diff` 里列为
+   `RUNTIME-ONLY` 提示。
+ 
+-### 保证
++## 同步契约
++
++`sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
++
++### 只读核对
++
++```bash
++node scripts/fusion/sync-config.mjs
++node scripts/fusion/sync-config.mjs --diff
++node scripts/fusion/sync-persona.mjs --diff
++```
++
++配置默认`--check`只报告漂移；`--diff`列差异、删除项和运行态独有键。人格预览只比较投影，不写记忆或会话。
++
++### 应用与生效
++
++```bash
++node scripts/fusion/sync-config.mjs --apply
++node scripts/fusion/sync-persona.mjs --apply
++```
++
++以上写入命令按本次已授权变更选择。运行配置需重启生效；仅四份人格文件由当前固定宿主下一回合加载。成员登记/撤权还需遵循文档24的工作区顺序；不手改运行副本。
++
++<a id="保证"></a>
++
++### 写入保证
+ 
+ 1. **只写 `openclaw.json`**。脚本不会打开、移动或删除 `state/`、`channel/`、`agents/`、
+    `workspace/`、`media/` 或任何数据库与 JSONL，因此不可能覆盖记忆、提醒或聊天历史。
+ 2. **写入前先备份**为 `openclaw.json.bak.<时间戳>`（mode 600）。
+ 3. **`--check` 在漂移时以非零码退出**，可直接接进启停脚本或自检。
++
++### 分阶段部署
++
++并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。10项自检、allow成员检查补正及原回执见[结构整理报告](../docs/verification/capability-decoupling-2026-10-20/README.md)。
+ 
+ ## 改配置的正确姿势
+ 
+@@ -137,6 +129,36 @@
+ 
+ 本机 OpenClaw `2026.9.7` 每回合重新核对 bootstrap 文件；文档25的真实隔离宿主已验证同一会话 SOUL 更新生效。因此只同步这四份人格文件无需重启服务。新增身份/路由、工具或运行配置变更仍按各自契约同步并重启。旧聊天不重置，既有历史可能影响表达；人格同步不等于新增长期记忆或情绪持久化。
+ 
++## 领域配置查询
++
++参数以各插件schema、执行代码及`runtime.config.json`为依据；本节提供键与归属，详细业务解释只维护在领域文档。
++
++| 领域 / 来源键 | 配置与同步边界 | 详细规则 |
++| --- | --- | --- |
++| 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [19](../docs/19_提醒列表与定时汇总.md)、[23迁移/切换](../docs/23_KnowledgeMap业务能力桥接.md#迁移) |
++| 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析/默认城市桥接，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [21当前生产实现](../docs/21_后端职责分层与代码整理.md#当前生产实现) |
++| 阅读：`kurumi-research.config.cacheRoot` | 显式缓存位置，不从QQ频道目录推导 | [21共享边界](../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期) |
++| 记忆：`continuity.enabled/summaryTtlDays/maxContextChars` | 仓库为true/7/6000；TTL范围1–30天、缺省7；资料预算2000–12000字符、缺省6000 | [25存储与检索](../docs/25_人格、记忆与会话连续性.md#记忆存储与检索) |
++| 连续性适配器：`continuityPolicyAdapter/continuityStoreAdapter` | 当前`current-owner/sqlite`，不与旧`policyAdapter/storeAdapter`混用；配置选择不自动迁移数据 | [25](../docs/25_人格、记忆与会话连续性.md)、[21兼容实现](../docs/21_后端职责分层与代码整理.md#兼容实现) |
++| 旧本地列表/显式记忆：`policyAdapter/storeAdapter` | 缺省分别`default/sqlite`、`explicit/memory-file`；未知ID失败，连续性启用后旧记忆写入拒绝 | [21兼容实现](../docs/21_后端职责分层与代码整理.md#兼容实现) |
++| 论文：`root/python/credentialsFile/liveTranslationEnabled` | 路径与付费开关属于受管配置；成员目录/任务绑定不靠模型参数选择，凭据不写入配置 | [22产物与运维](../docs/22_论文PDF翻译与文件投递.md#精确产物与运维)、[24隔离](../docs/24_统一身份与权限管理.md#资源与投递隔离) |
++| 论文：`maxPages/maxRequests/maxReportedTokens/apiConcurrency/apiQps` | 源码缺省、仓库生产配置与可配置范围统一查参数表，模型不能改预算/并发 | [22默认资源](../docs/22_论文PDF翻译与文件投递.md#默认资源与用量限制) |
++| 论文：`batchValidationRetries/channelRecoveryRetries/requestIdleTimeoutSeconds/timeoutSeconds` | 参数表包含缺省与范围；两类重试独立计数，共同受任务预算约束 | [22重试与时限](../docs/22_论文PDF翻译与文件投递.md#重试与渠道切换) |
++
++四领域保留历史共库与旧Cron转发地址；列表切换标记、连续性SQLite、文档/任务归属属于运行状态，不由配置同步迁移。详情见21/23/25。论文队列、冷却、正文空闲与未知计费处理归22，本页不重复展开。
++
++## 首次记忆迁移
++
++连续性配置不自动导入旧事实，首次迁移先预览、私密备份再应用：
++
++```bash
++node chatbot/scripts/memory-migrate.mjs  # 只读预览
++node chatbot/scripts/memory-migrate.mjs --apply \
++  --backup-root /home/afrangry/.openclaw-fusion/migration
++```
++
++迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。记忆生命周期与遗忘边界见[文档25](../docs/25_人格、记忆与会话连续性.md#会话生命周期)。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
++
+ ## 自检
+ 
+ ```bash
+diff --git a/docs/10_融合助手运行维护.md b/docs/10_融合助手运行维护.md
+--- a/docs/10_融合助手运行维护.md
++++ b/docs/10_融合助手运行维护.md
+@@ -8,50 +8,76 @@
+ 
+ ## 常用操作
+ 
+-```bash
+-cd /home/afrangry/kurumi-fusion
++以下命令在`/home/afrangry/kurumi-fusion`执行；按当前任务选择一组，不整页批量执行。
++
++### 只读检查
++
++```bash
+ node scripts/fusion/health.mjs
+ systemctl --user status kurumi-fusion.service
+ journalctl --user -u kurumi-fusion.service -n 100 --no-pager
++systemctl --user status snowluma.service snowluma-qq.service
++```
++
++`health.mjs`只读，不发QQ、不创建任务；兼容入口`probe-final.mjs`指向同一检查。合法活动提醒会列出状态。QQ断线先看SnowLuma/QQ服务及online状态，不重启旧bridge。默认滚动24小时500条额度按物理消息计数，不清空历史绕过。
++
++### 配置同步
++
++先分别审阅配置与人格差异，只读命令为：
++
++```bash
++node scripts/fusion/sync-config.mjs --diff
++node scripts/fusion/sync-persona.mjs --diff
++```
++
++确认改动属于本次已授权部署后，按涉及内容选择写入命令：
++
++```bash
++node scripts/fusion/sync-config.mjs --apply
++node scripts/fusion/sync-persona.mjs --apply
++```
++
++运行配置变更同步后需要重启；仅四份受管人格文件变更，当前宿主下一回合加载。身份登记还有工作区准备顺序，见[文档24](24_统一身份与权限管理.md#登记与撤权)。受管键、删除语义及凭据入口以[配置契约](../config/README.md)为准。
++
++### 服务启停
++
++以下均改变服务状态；按本次具体授权执行所需动作：
++
++```bash
+ systemctl --user restart kurumi-fusion.service
+-```
+-
+-`health.mjs`只读、不发QQ、不创建任务；兼容入口`probe-final.mjs`已指向同一检查。合法活动提醒会列出状态而不会一律报错。QQ断线时先看SnowLuma/QQ两个服务及online状态；不要重启旧bridge。额度按物理消息计数，默认滚动24小时500条，不清空历史来绕过。
+-
+-```bash
+-systemctl --user status snowluma.service snowluma-qq.service
+ systemctl --user stop kurumi-fusion.service
+ systemctl --user start kurumi-fusion.service
+ ```
+ 
+-停止systemd服务时不要仅杀子进程，否则Restart策略会把它拉起。`run-gateway.mjs`是前台入口，日常不要与systemd并开。首次安装入口`install-service.mjs`会禁用旧用户助手并启用融合，只用于明确切换。`configure-production.mjs`会先要求审阅活动任务，不能当日常重置脚本。
++停止服务不只杀子进程，否则Restart策略会拉起。`run-gateway.mjs`是前台入口，日常不与systemd并开。首次`install-service.mjs`会禁用旧助手并启用融合，只用于明确切换；`configure-production.mjs`要求先审阅活动任务，不是日常重置脚本。DSH与Fusion联合启停另见[栈启停](#dsh与融合栈统一启停)，QQ传输独立管理。
+ 
+ ## 开发与验证
+ 
+-源码：`/home/afrangry/kurumi-fusion`。运行配置/密钥/数据库：`/home/afrangry/.openclaw-fusion`。不把后一目录提交Git。人格行为模板在`scripts/fusion/templates/AGENTS.md`，修改后明确同步到私有workspace；SOUL/USER/MEMORY保持私有。
+-
+-```bash
+-node scripts/fusion/link-dependencies.mjs
+-node --test chatbot/plugins/kurumi-qq/test/*.test.js chatbot/plugins/kurumi-memory/test/*.test.js chatbot/plugins/kurumi-tasks/test/*.test.js chatbot/plugins/kurumi-research/test/*.test.js
+-npm --prefix chatbot/packages/confirmation-core run build
+-npm --prefix chatbot/packages/confirmation-core test
+-npm --prefix chatbot/plugins/personal-confirmation run build
+-node chatbot/scripts/build-personal-plugins.mjs
+-npm --prefix chatbot/packages/personal-domains test
+-node --test chatbot/tests/reminder-list/*.test.mjs
+-node --test chatbot/tests/backend-boundaries/*.test.mjs
+-node --test chatbot/tests/domain-adapters/*.test.mjs
+-node --test chatbot/tests/access-control/*.test.mjs
+-node --test chatbot/tests/web-deepseek/*.test.mjs
+-node --test chatbot/tests/persona/*.test.mjs chatbot/tests/knowledgemap/*.test.mjs
+-node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/tests/papers/*.test.mjs
+-python3 chatbot/tests/papers/responses_test.py
+-/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py
+-```
++源码：`/home/afrangry/kurumi-fusion`。运行配置/密钥/数据库：`/home/afrangry/.openclaw-fusion`。不把后一目录提交Git。人格行为模板在`scripts/fusion/templates/AGENTS.md`，修改后明确同步到私有workspace；运行投影及记忆材料保持私有；人格来源仍由roles/config管理。
++
++先用`node scripts/fusion/link-dependencies.mjs`准备开发依赖。下表是按领域选择的离线构建/验证入口，不是一次全项目验收；确认消费方测试前先依次构建确认核心、确认入口和共享领域库。
++
++| 领域 | 命令与前提 |
++| --- | --- |
++| 确认核心 | `npm --prefix chatbot/packages/confirmation-core run build`；`npm --prefix chatbot/packages/confirmation-core test` |
++| 确认入口 | `npm --prefix chatbot/plugins/personal-confirmation run build` |
++| 四领域共享实现与兼容CLI | `node chatbot/scripts/build-personal-plugins.mjs`；`npm --prefix chatbot/packages/personal-domains test` |
++| QQ、旧记忆接口、后台任务与研究 | `node --test chatbot/plugins/kurumi-qq/test/*.test.js chatbot/plugins/kurumi-memory/test/*.test.js chatbot/plugins/kurumi-tasks/test/*.test.js chatbot/plugins/kurumi-research/test/*.test.js` |
++| 提醒列表 | `node --test chatbot/tests/reminder-list/*.test.mjs` |
++| 后端边界 | `node --test chatbot/tests/backend-boundaries/*.test.mjs` |
++| 适配器 | `node --test chatbot/tests/domain-adapters/*.test.mjs` |
++| 权限 | `node --test chatbot/tests/access-control/*.test.mjs` |
++| 检索提供方 | `node --test chatbot/tests/web-deepseek/*.test.mjs` |
++| 人格与连续性记忆 | `node --test chatbot/tests/persona/*.test.mjs` |
++| KnowledgeMap桥接 | `node --test chatbot/tests/knowledgemap/*.test.mjs` |
++| 邮件与论文Node层 | `node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/tests/papers/*.test.mjs` |
++| 论文协议Python层 | `python3 chatbot/tests/papers/responses_test.py`；其余并发/可靠性用例见文档22 |
++| 论文排版引擎 | `/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py` |
++
+ 
+ 后端职责分层、Policy/Store 适配器与确认共享接口见[文档 21](21_后端职责分层与代码整理.md)；跨层回归在 `chatbot/tests/backend-boundaries/`，替换回归在 `chatbot/tests/domain-adapters/`。确认消费方回归须先构建确认核心、确认入口和共享领域库三个 TypeScript 包。
+ 
+-天气、Profile、行程、一次性提醒在各自插件独立装配；`build-personal-plugins.mjs` 集中构建共享实现并生成兼容CLI。不要删除旧 `personal-weather/dist/reminder-cli.js`：既有Cron仍以此为执行地址，新提醒使用 `personal-reminders`。原天气包的build/test命令只作转交；依赖安装按共享库自己的锁文件进行。现行归属与兼容规则见[文档21](21_后端职责分层与代码整理.md#共享代码与插件生命周期)，独立启停证据见其专项报告。
++天气、Profile、行程、一次性提醒在各自插件独立装配；`build-personal-plugins.mjs` 集中构建共享实现并生成兼容CLI。不要删除旧 `personal-weather/dist/reminder-cli.js`：恢复的旧Cron可能仍以此为执行地址；新提醒使用 `personal-reminders`。原天气包的build/test命令只作转交；依赖安装按共享库自己的锁文件进行。现行归属与兼容规则见[文档21](21_后端职责分层与代码整理.md#共享代码与插件生命周期)，独立启停证据见其专项报告。
+ 
+ QQ 身份/权限/邮件目标只改 `config/access-control.json`，用 `chatbot/scripts/access-control.mjs --check/--matrix` 审阅；成员人格和路由均由同步工具生成，不能只改频道 owner 或工具上限。登记、撤权、独立目录与真人验证按[文档24](24_统一身份与权限管理.md)。
+ 
+@@ -241,7 +267,9 @@
+ 
+ ## 论文 PDF 翻译
+ 
+-安装入口为 `chatbot/scripts/setup-paper-translation.sh`，凭据导入为 `chatbot/scripts/import-paper-credentials.mjs`；固定 Python/依赖和操作命令见[文档 22](22_论文PDF翻译与文件投递.md)。这两项由操作者执行，主聊天只使用受管 PDF ID 和窄领域工具；翻译 CLI 按需启动，不监听端口。任务失败或服务重启不会自动重放付费请求，QQ/SMTP 平台受理也不等于本人收到。`paper-acceptance/` 是私有验收资产，不是生产队列。默认 GPT6.1 Sol/high，可显式 MAX；同模型同强度按014→030→040有界切换。明确传 `provider=deepseek` 使用官方 V4.1 Flash/high，厂商不自动互切。日常单篇4并发/QPS1，多篇逐篇翻译并投递；有效正文空闲100秒切渠道、单请求总期限600秒、整篇1800秒。配置范围见[配置契约](../config/README.md)，原子导入、重试规则、真实全文结果与尚未覆盖的验收见文档22。
++安装入口为`chatbot/scripts/setup-paper-translation.sh`，凭据导入为`chatbot/scripts/import-paper-credentials.mjs`，均由操作者执行；主聊天使用受管PDF ID及窄工具。当前模型、并发、时限、重试、任务/投递状态及性能方案统一见[文档22](22_论文PDF翻译与文件投递.md)，配置键入口见[配置契约](../config/README.md#领域配置查询)。人格、记忆读取与写入、`/new`及压缩行为见[文档25](25_人格、记忆与会话连续性.md)。
++
++论文链路的日常只读查询：
+ 
+ ```bash
+ node scripts/fusion/log-query.mjs --source papers --contains <job_ID> --json
+diff --git a/docs/16_验收与测试总表.md b/docs/16_验收与测试总表.md
+--- a/docs/16_验收与测试总表.md
++++ b/docs/16_验收与测试总表.md
+@@ -15,21 +15,43 @@
+ 
+ 本表只写结论，测试数量只写在各报告里。各报告的计数属于不同版本与重叠集合，**不得相加为一次全项目回归**。精确命令、产物、数量和失败回执见各报告。
+ 
+-| 领域 / 日期 | 已有证据支持的结论 | 未覆盖或当前边界 | 规则与证据 |
++### 日期、版本来源与验证层级
++
++“原报告”表示原总表未登记单一源码SHA，不能据此补猜当前HEAD；分轮材料保持各自版本。下面的范围索引与结论表按同一领域对应，未刷新任何验证日期。
++
++| 领域 | 原验证日期 | 已有版本 / 来源 | 验证层级 |
+ | --- | --- | --- | --- |
+-| 基础融合 / 2026-10-05 | QQ分段/图片、原生Cron、后台研究/代码等阶段验收留档 | 旧证据不证明后续所有模型、数据库和权限版本均通过；真实入站图片等历史缺口见下表 | [文档9](9_QQ融合助手架构与开发计划.md)、[阶段材料](verification/fusion/)与[step6](verification/step6-2026-10-05/README.md) |
+-| 固定提醒措辞 / 2026-10-21–22已有收尾记录 | 旧待办记录10-21 21:10真人反馈为准时、中性、仅一条，10-22阶段收尾已关闭 | 本轮只迁移既有记录，未独立重放投递或核对新回执；不代替全部确定性提醒重新验收 | [文档21](21_后端职责分层与代码整理.md#确认契约与已知待办)、[待办历史索引](待办清单.md#四已完成与历史关闭记录)；原记录 `git show db468a1:docs/待办清单.md` |
+-| 模型与图片 / 2026-10-05 | 官方DeepSeek独立看图、真实CDN下载、频道回归 | 未重新验证真人QQ新图片完整往返；识别细节/建议可能错误 | [文档10](10_融合助手运行维护.md#qq图片与引用)、[报告](verification/deepseek-whale/README.md) |
+-| 日志查询 / 2026-10-11 | 回归通过；实际时间窗能关联QQ、工具、确认、Cron、审计与delivered | 时间窗关联显式标注，查询可用不等于业务重验 | [文档18](18_跨模块链路日志查询.md#验证结果) |
+-| 提醒列表初版 / 2026-10-11 | 自然对话模型、隔离宿主通过，初版本人QQ一次汇总回读 | 当时SQLite规则、ID和排序已被共享模式取代；不能用初版证明迁移 | [文档19](19_提醒列表与定时汇总.md)、[自然录入证据](verification/reminder-list-2026-10-11/natural-input/README.md) |
+-| 后端可插拔 / 2026-10-16 | 契约补正全套回归、三个TS构建通过；上轮真实模型、隔离宿主通过 | 两组模型/宿主未在契约补正轮重跑，无真实QQ/邮件外发；生产事项/记忆随后分别按23/25迁移 | [文档21](21_后端职责分层与代码整理.md)、[适配器](verification/backend-refactor-2026-10-16/adapters/README.md)、[契约补正](verification/backend-refactor-2026-10-16/adapter-contracts/README.md) |
+-| 生命周期与插件边界 / 2026-10-19–20 | 生命周期回归后受控加载；结构整理回归、隔离Gateway通过，生产插件工具归属与Cron声明未改，四项自检通过 | 重叠回归不累计；无新检索API、真实模型/QQ/SMTP或全量停写恢复验收 | [文档21](21_后端职责分层与代码整理.md#共享代码与插件生命周期)、[生命周期](verification/plugin-lifecycle-2026-10-19/README.md)、[结构报告](verification/capability-decoupling-2026-10-20/README.md) |
+-| 共享业务第一轮 / 2026-10-17 | 存量迁移逐项核对，真实入口用例通过；本人QQ播报回读，两个入口同一业务事实 | 入站是合成本人；整天四时段、真人持续对话与长期故障恢复未验收 | [文档23](23_KnowledgeMap业务能力桥接.md)、[首轮报告](verification/knowledgemap-bridge-2026-10-17/README.md) |
+-| 账单第二轮 / 2026-10-17 | API、桥接、MySQL、浏览器、隔离宿主、真实运行各层通过；真实runId贯通 | 无本轮QQ外发/手机连续对话；严格参数校验仍可能触发模型自纠，未重打本轮Fusion全量快照 | [文档23第二轮](23_KnowledgeMap业务能力桥接.md#10-第二轮账单完整维护与调用链优化)、[报告](verification/knowledgemap-bills-round2-2026-10-17/README.md) |
+-| 邮件 / 2026-10-16–17 | 文本邮件离线回归及真实SMTP、本人到信和QQ确认闭环；PDF附件本人确认收到 | 邮件仅主人，收件人精确白名单；Gmail/非HTTP代理与IMAP不在验收范围（状态见文档20） | [文档20](20_邮件能力与横切扩展.md)、[文本验收](verification/mail-2026-10-16/README.md)、[PDF验收](verification/paper-translation-2026-10-17/README.md) |
+-| 论文翻译 / 2026-10-17–19 | GPT/high冷译文缓存23页/19页整篇成功及本人QQ收件反馈；100秒有效正文空闲切换回归通过；附件分流回归、真实隔离宿主场景通过，翻译/投递为模拟 | 未覆盖新成员冷启动、渠道冷却与阶段进度优化（开发状态见文档22）；不是全文逐字/公式校对或真人上传至真实翻译全链路通过。其他厂商、缓存、费用与恢复边界不合并推断 | [文档22](22_论文PDF翻译与文件投递.md)、[批次恢复](verification/paper-translation-2026-10-17/batch-recovery/README.md)、[空闲期限](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)、[附件修复](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)、[拆分后复验](verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md) |
+-| 统一身份权限 / 2026-10-19–20 | 离线回归、真实隔离宿主通过；两成员登记，各身份/资源/任务/投递隔离，配置和人格对齐 | `3311723223`获用户成功反馈；`2752966052`真人聊天/论文待验收。模拟结果不扩大为攻击/负载/多身份全量恢复 | [文档24](24_统一身份与权限管理.md)、[报告](verification/access-control-2026-10-19/README.md) |
+-| 人格与记忆 / 2026-10-19–22分轮记录 | P1与P2的离线/宿主/DeepSeek、22:41真人显式保存/同ID更正/遗忘及重开问答已有报告；10-21普通陈述observe有后续真人测试记录 | 22:41首次漏版本后自行修参，不是零误参；后续批量遗忘和历史复述问题仍由N6/N7跟踪。长期归纳/陪伴体感、生产自动阈值压缩与补正后停写恢复仍未覆盖；P3–P5及成员记忆未开放 | [文档25](25_人格、记忆与会话连续性.md)、[P1](verification/persona-memory-2026-10-19/README.md)/[P2报告](verification/persona-memory-2026-10-19/p2/README.md)、[后续测试与缺口](待办清单.md#e1-人格和记忆)；本轮未重验 |
++| 基础融合 | 2026-10-05 | 原报告 | 阶段集成/宿主/实际链路，按各原报告范围 |
++| 固定提醒措辞 | 2026-10-21–22已有收尾记录 | 历史待办db468a1 | 原真人反馈；本次仅迁移记录，未重放 |
++| 模型与图片 | 2026-10-05 | 原报告 | 独立模型/CDN/频道回归；非真人新图片完整往返 |
++| 日志查询 | 2026-10-11 | 原报告 | 合成回归及真实日志只读关联 |
++| 提醒列表初版 | 2026-10-11 | 原报告 | 真实模型/隔离宿主、初版QQ汇总 |
++| 后端可插拔 | 2026-10-16 | 原报告（分轮） | 契约离线/TS构建；此前模型/隔离宿主 |
++| 生命周期与插件边界 | 2026-10-19–20 | 原报告（分轮） | 回归/隔离Gateway/生产加载/四项自检 |
++| 共享业务第一轮 | 2026-10-17 | Fusion 4f26366 / KnowledgeMap a311fe8 | 真实API/MySQL/网页/合成入站与本人QQ播报 |
++| 账单第二轮 | 2026-10-17 | Fusion 97ed797 / KnowledgeMap 1efec0e | API/MySQL/浏览器/隔离宿主/真实运行 |
++| 邮件 | 2026-10-16–17 | 原报告（分轮） | 离线/真实SMTP/本人到信/QQ确认 |
++| 论文翻译 | 2026-10-17–19 | 原报告（分轮） | 真实翻译/QQ收件及隔离模型；附件翻译/投递为模拟 |
++| 统一身份权限 | 2026-10-19–20 | 原报告（分轮） | 离线/真实隔离宿主/部署与部分成员反馈 |
++| 人格与记忆 | 2026-10-19–22分轮记录 | 原报告（分轮） | 离线/宿主/真实DeepSeek/真人QQ显式与observe记录 |
++
++### 结论与未覆盖范围
++
++| 领域 | 已有证据支持的结论 | 未覆盖或当前边界 | 规则与证据 |
++| --- | --- | --- | --- |
++| 基础融合 | QQ分段/图片、原生Cron、后台研究/代码等阶段验收留档 | 旧证据不证明后续所有模型、数据库和权限版本均通过；真实入站图片等历史缺口见下表 | [文档9](9_QQ融合助手架构与开发计划.md)、[阶段材料](verification/fusion/)与[step6](verification/step6-2026-10-05/README.md) |
++| 固定提醒措辞 | 旧待办记录10-21 21:10真人反馈为准时、中性、仅一条，10-22阶段收尾已关闭 | 本轮只迁移既有记录，未独立重放投递或核对新回执；不代替全部确定性提醒重新验收 | [文档21](21_后端职责分层与代码整理.md#确认契约与已知待办)、[待办历史索引](待办清单.md#四已完成与历史关闭记录)；原记录 `git show db468a1:docs/待办清单.md` |
++| 模型与图片 | 官方DeepSeek独立看图、真实CDN下载、频道回归 | 未重新验证真人QQ新图片完整往返；识别细节/建议可能错误 | [文档10](10_融合助手运行维护.md#qq图片与引用)、[报告](verification/deepseek-whale/README.md) |
++| 日志查询 | 回归通过；实际时间窗能关联QQ、工具、确认、Cron、审计与delivered | 时间窗关联显式标注，查询可用不等于业务重验 | [文档18](18_跨模块链路日志查询.md#验证结果) |
++| 提醒列表初版 | 自然对话模型、隔离宿主通过，初版本人QQ一次汇总回读 | 当时SQLite规则、ID和排序已被共享模式取代；不能用初版证明迁移 | [文档19](19_提醒列表与定时汇总.md)、[自然录入证据](verification/reminder-list-2026-10-11/natural-input/README.md) |
++| 后端可插拔 | 契约补正全套回归、三个TS构建通过；上轮真实模型、隔离宿主通过 | 两组模型/宿主未在契约补正轮重跑，无真实QQ/邮件外发；生产事项/记忆随后分别按23/25迁移 | [文档21](21_后端职责分层与代码整理.md)、[适配器](verification/backend-refactor-2026-10-16/adapters/README.md)、[契约补正](verification/backend-refactor-2026-10-16/adapter-contracts/README.md) |
++| 生命周期与插件边界 | 生命周期回归后受控加载；结构整理回归、隔离Gateway通过，生产插件工具归属与Cron声明未改，四项自检通过 | 重叠回归不累计；无新检索API、真实模型/QQ/SMTP或全量停写恢复验收 | [文档21](21_后端职责分层与代码整理.md#共享代码与插件生命周期)、[生命周期](verification/plugin-lifecycle-2026-10-19/README.md)、[结构报告](verification/capability-decoupling-2026-10-20/README.md) |
++| 共享业务第一轮 | 存量迁移逐项核对，真实入口用例通过；本人QQ播报回读，两个入口同一业务事实 | 入站是合成本人；整天四时段、真人持续对话与长期故障恢复未验收 | [文档23](23_KnowledgeMap业务能力桥接.md)、[首轮报告](verification/knowledgemap-bridge-2026-10-17/README.md) |
++| 账单第二轮 | API、桥接、MySQL、浏览器、隔离宿主、真实运行各层通过；真实runId贯通 | 无本轮QQ外发/手机连续对话；严格参数校验仍可能触发模型自纠，未重打本轮Fusion全量快照 | [文档23第二轮](23_KnowledgeMap业务能力桥接.md#10-第二轮账单完整维护与调用链优化)、[报告](verification/knowledgemap-bills-round2-2026-10-17/README.md) |
++| 邮件 | 文本邮件离线回归及真实SMTP、本人到信和QQ确认闭环；PDF附件本人确认收到 | 邮件仅主人，收件人精确白名单；Gmail/非HTTP代理与IMAP不在验收范围（状态见文档20） | [文档20](20_邮件能力与横切扩展.md)、[文本验收](verification/mail-2026-10-16/README.md)、[PDF验收](verification/paper-translation-2026-10-17/README.md) |
++| 论文翻译 | GPT/high冷译文缓存23页/19页整篇成功及本人QQ收件反馈；100秒有效正文空闲切换回归通过；附件分流回归、真实隔离宿主场景通过，翻译/投递为模拟 | 未覆盖新成员冷启动、渠道冷却与阶段进度优化（开发状态见文档22）；不是全文逐字/公式校对或真人上传至真实翻译全链路通过。其他厂商、缓存、费用与恢复边界不合并推断 | [文档22](22_论文PDF翻译与文件投递.md)、[批次恢复](verification/paper-translation-2026-10-17/batch-recovery/README.md)、[空闲期限](verification/paper-translation-2026-10-17/output-idle-2026-10-19/README.md)、[附件修复](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)、[拆分后复验](verification/paper-translation-2026-10-17/file-ingress-2026-10-20/README.md) |
++| 统一身份权限 | 离线回归、真实隔离宿主通过；两成员登记，各身份/资源/任务/投递隔离，配置和人格对齐 | `3311723223`获用户成功反馈；`2752966052`真人聊天/论文待验收。模拟结果不扩大为攻击/负载/多身份全量恢复 | [文档24](24_统一身份与权限管理.md)、[报告](verification/access-control-2026-10-19/README.md) |
++| 人格与记忆 | P1与P2的离线/宿主/DeepSeek、22:41真人显式保存/同ID更正/遗忘及重开问答已有报告；10-21普通陈述observe有后续真人测试记录 | 22:41首次漏版本后自行修参，不是零误参；后续批量遗忘和历史复述问题仍由N6/N7跟踪。长期归纳/陪伴体感、生产自动阈值压缩与补正后停写恢复仍未覆盖；P3–P5及成员记忆未开放 | [文档25](25_人格、记忆与会话连续性.md)、[P1](verification/persona-memory-2026-10-19/README.md)/[P2报告](verification/persona-memory-2026-10-19/p2/README.md)、[后续测试与缺口](待办清单.md#e1-人格和记忆)；本轮未重验 |
+ 
+ ## 已知未完成与批准延期
+ 
+@@ -37,14 +59,15 @@
+ 
+ | 事项 | 状态与归属 |
+ | --- | --- |
+-| 默认私聊普通发送、按需引用；旧验收历史清理/完整会话归档 | **待处理**；[文档10](10_融合助手运行维护.md#qq图片与引用)。`/new`记忆连续性已实现，按文档25，不写成整个会话功能未实施 |
+-| 真实QQ图片完整往返、确定性提醒重新验收、后台模型90秒严格断言、整套DSH启停 | **经用户确认延期**；文档10与[step6](verification/step6-2026-10-05/README.md)。语法/源码部署比对和模拟传输不能代替真实执行 |
+-| 后台项目副本尚未追平主仓库 | 按[文档10副本契约](10_融合助手运行维护.md#后台开发副本契约)在新代码任务前审阅和同步；关闭收尾不要求自动追平 |
+-| 旧系统真实启动/依赖重建，旧B的DSH整体版本状态恢复 | **经用户确认延期**；[文档15](15_旧系统回退.md)，启动前处理旧Cron、群白名单、bridge暂停状态，不自动外发 |
+-| 旧bridge个人远端不可访问 | **待处理**；[文档12](12_目录资产与Git备份整理.md)，本地封存、bundle和全量包保留 |
+-| 旧harness提示词改造Q1；验收独立输出目录Q3 | **经用户确认延期**；旧提示词来源保留标记，列表model/host已支持`--out`，其他固定输出脚本运行前保留旧回执；索引见下文 |
+-| 业务后续与性能/体验 | 共享默认城市归23；论文冷启动/冷却/阶段进度与失败断点范围归22；长期记忆质量/自动压缩、P3–P5和成员记忆归25；Gmail代理归20；DeepSeek检索归26 |
+-| 新功能完整恢复与跨系统同一时点停写 | **未验收**；下面恢复点各自限定范围，不合并为完整当前生产恢复保证 |
++| 默认私聊普通发送、按需引用；旧验收历史清理/完整会话归档 | **待处理**；[N11](待办清单.md#n11)，[文档10](10_融合助手运行维护.md#qq图片与引用)。`/new`记忆连续性已实现，按文档25，不写成整个会话功能未实施 |
++| 真实QQ图片完整往返、确定性提醒重新验收、后台模型90秒严格断言、整套DSH启停 | **经用户确认延期**；[N14](待办清单.md#n14)，文档10与[step6](verification/step6-2026-10-05/README.md)。语法/源码部署比对和模拟传输不能代替真实执行 |
++| 旧系统真实启动/依赖重建，旧B的DSH整体版本状态恢复 | **经用户确认延期**；[N12](待办清单.md#n12)，[文档15](15_旧系统回退.md)，启动前处理旧Cron、群白名单、bridge暂停状态，不自动外发 |
++| 旧bridge个人远端不可访问 | **待处理**；[N13](待办清单.md#n13)，[文档12](12_目录资产与Git备份整理.md)，本地封存、bundle和全量包保留 |
++| 旧harness提示词改造Q1；验收独立输出目录Q3 | **经用户确认延期**；[N15](待办清单.md#n15)。旧提示词来源保留标记，列表model/host已支持`--out`，其他固定输出脚本运行前保留旧回执；索引见下文 |
++| 业务后续与性能/体验 | [N18](待办清单.md#n18)共享默认城市→23；[E2](待办清单.md#e2-论文剩余)性能/质量→22；[E1](待办清单.md#e1-人格和记忆)长期记忆/压缩/P3–P5→25；[N19](待办清单.md#n19)代理候选→20；[E3](待办清单.md#e3-启用deepseek-searchfetch)检索→26 |
++| 新功能完整恢复与跨系统同一时点停写 | **未验收**；[N16](待办清单.md#n16)及记忆局部材料[E1.2](待办清单.md#e1-人格和记忆)。下面恢复点各自限定范围，不合并为完整当前生产恢复保证 |
++
++后台副本按文档10在每次新代码任务前审阅并同步；收尾不要求无条件追平，此项作为运维前置约束保留。人格记忆补正/N6/N7、成员完整真人往返[N17](待办清单.md#n17)、提醒列表[E4](待办清单.md#e4-提醒列表剩余)和邮件时间[A7](待办清单.md#a7-验收邮件发送时间显示为utc)均保持原待验范围。
+ 
+ 新需求前共同清单已在`8dbdaef`关闭，随后删除；关闭只代表当时收尾范围通过。完整过程可用 `git show de05971^:docs/临时_新需求前收尾与验收清单_2026-10-10.md`追溯。2026-10-10独立复验的注册/恢复回归、生产注册表前后字节相同、四项自检和manifest核对保留（回归计数见上述清单，manifest文件数见[最终恢复报告](verification/recovery-2026-10-10-final/README.md)）；完整恢复结果是既存记录，该次独立复核未重跑完整恢复。2026-10-11的插件、核心、确认、天气回归与脚本/证据计数是历史计数，不冒充当前集合；原始计数表可用 `git show ba1b3b2^:docs/16_验收与测试总表.md` 的「历史关闭复核（2026-10-11）」节追溯。
+ 
+@@ -119,4 +142,8 @@
+ 
+ 本轮仅处理结构、生命周期分类、历史过程迁出、待办与索引；逐份结果和实际检查见[专项记录](verification/documentation-2026-10-23/README.md)。用户阅读复核留在[待办 N9](待办清单.md#n9-逐份整理项目文档)，不把文档工作计为人格、记忆、论文或定时播报验收。
+ 
++### 按批准方案重排（2026-10-23）
++
++本轮按用户14项方案重排现行规则、归并重复说明、保留锚点并关联稳定任务ID。新增ID只跟踪既有缺口，不改变排期、延期决定或业务验收；实际差异、保留核对与检查结果见[重排记录](verification/documentation-reorder-2026-10-23/README.md)，阅读复核仍归N9。
++
+ 返回[文档入口](README.md)。
+diff --git a/docs/18_跨模块链路日志查询.md b/docs/18_跨模块链路日志查询.md
+--- a/docs/18_跨模块链路日志查询.md
++++ b/docs/18_跨模块链路日志查询.md
+@@ -29,6 +29,32 @@
+ node scripts/fusion/log-query.mjs --source access-control --contains capability_not_allowed --json
+ ```
+ 
++### 参数速查
++
++以下均已实现，依据`log-query.mjs --help`；未实施参数只列于文末P1/P2。
++
++| 目的 | 参数与边界 |
++| --- | --- |
++| 时间范围 | `--from` / `--to`；缺省最近一小时，无时区按Asia/Shanghai |
++| 精确关联 | `--message-id`、`--proposal-id`、`--reminder-id`、`--run-id`、`--session-key`；按真实ID查询 |
++| 文本过滤 | `--contains`；可能匹配正文，不是隐私输出模式 |
++| 来源过滤 | `--source` / `--exclude-source`可重复 |
++| 事件过滤 | `--kind` / `--exclude-kind`可重复，按前缀匹配 |
++| 展开内容 | `--raw`显示未分类原行；`--expand`或`--full`展开参数/结果并取消文本截断 |
++| 输出与数量 | `--json`机器可读；`--limit`缺省500 |
++| 数据位置 | `--runtime-root` / `--snowluma-root`指定读取根，不更改生产状态 |
++
++### 视图速查
++
++| 视图 | 参数 | 用途与边界 |
++| --- | --- | --- |
++| 调用合并 | 默认 | 一次工具调用合为`[tool.call]`行，保留实际结果与访问决定 |
++| 回合 | `--turns` | 用户→工具→回复，`/new`和压缩显示为分段 |
++| 错误 | `--errors` | 失败/拒绝、宿主错误与业务失败，按错误码统计 |
++| 审计 | `--audit` | 拒绝和同工具连续失败重试；不自动识别所有语义错误 |
++
++三个显式视图互斥，`--json`可与所选视图组合。详细配对、关联及展开语义如下。
++
+ ### 核对真人测试的视图
+ 
+ ```bash
+@@ -50,7 +76,11 @@
+ 
+ 命令只打开日志和 SQLite 的只读连接，不调用 Gateway、OneBot、模型、Cron，也不写生产运行目录。不要把 `--json` 输出直接提交到 Git：其中的 `sourceRef` 可能包含本机绝对路径，事件正文也可能包含私聊内容。
+ 
+-## 统一事件契约
++## 适配器扩展契约
++
++以下面向开发者；日常使用以上面的参数、视图和示例为入口。
++
++### 统一事件契约
+ 
+ 所有适配器输出同一 envelope；`chatbot/packages/observability/index.js` 是契约与脱敏sink的唯一实现，运行插件和运维查询共同消费。查询编排仍归 `scripts/fusion/log-query.mjs`，共享包不反向导入查询脚本；代码归属见[文档21](21_后端职责分层与代码整理.md#共享代码与插件生命周期)：
+ 
+@@ -74,7 +104,7 @@
+ 
+ 契约会递归遮蔽名为 `token`、`secret`、`password`、`authorization`、`apiKey` 等字段，并遮蔽 Bearer/API key 形态的文本。新增适配器必须先通过 `normalizeTraceEvent`，不得自己定义第二种事件格式。
+ 
+-## 适配器与关联规则
++### 适配器与关联规则
+ 
+ | 适配器名 | 读取位置 | 事件范围 | 关联强度 |
+ | --- | --- | --- | --- |
+@@ -98,7 +128,7 @@
+ 
+ 附件入口通过`paper.qq_receive`记录每项类型、状态、错误码与成功ID，`paper.qq_ingress_route`记录`direct_notice/model`及`modelDispatched`。两者绑定可信QQ消息ID/会话，直接反馈分支在发送前记录决策，未知发送回执不会被误记为送达。查询用`--source papers --message-id 实际消息ID`；规则与验收见[文档22](22_论文PDF翻译与文件投递.md)及[附件证据](verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)。
+ 
+-## 面向未来功能的扩展
++### 面向未来功能的扩展
+ 
+ 没有把 OpenClaw 或 SnowLuma 改造成共享日志系统，也没有在每个业务函数里复制一套 AOP。两套程序有自己的日志格式和升级节奏，强行注入全局 hook 会增加升级冲突、私聊泄露和停机风险。当前采用“适配器 + 统一契约 + 可选旁路 sink”：
+ 
+@@ -148,7 +178,7 @@
+ 10. 记忆适配器：新增 `kurumi-memory` 来源，记录每次 search/observe/upsert/delete 的 revision 前后变化、条目 ID 和拒绝原因，不记原文。
+ 11. 相对时间和便捷筛选：`--since 30m`、`--last-turns N`、`--peer <QQ号>`（展开成 sessionKey）。
+ 12. 输出格式：紧凑表格（时间、来源、类型、工具、结果一列一项）、`--fields` 选列、`--format markdown` 生成可贴进问题清单的摘要。
+-13. 隐私模式：`--no-text` 去掉聊天正文和工具结果正文，只留类型、ID、状态和错误码，输出可以直接写进文档。
++13. 隐私模式（未实现）：`--no-text`计划去掉聊天和工具结果正文，采用必要字段白名单显示类型、ID、状态和错误码。去正文不等于整份输出可公开或提交；路径、标识和错误字段仍须核对。与待办N1保持同一边界。
+ 14. 已知警告标注：把已确认无害的宿主警告（如 `outbound.session_warning`、启动时两条远程目录刷新失败）标成 known，默认折叠。
+ 15. 截断提示：命中 `--limit` 时明确提示被截断，并给出下一页参数。
+ 
+diff --git a/docs/20_邮件能力与横切扩展.md b/docs/20_邮件能力与横切扩展.md
+--- a/docs/20_邮件能力与横切扩展.md
++++ b/docs/20_邮件能力与横切扩展.md
+@@ -41,9 +41,17 @@
+ 
+ ## 受管 PDF 附件
+ 
+-取件与PDF来源归[文档22](22_论文PDF翻译与文件投递.md)。草稿在既有 `attachments_json` 固定附件字节、文件名、大小与SHA256，确认hash覆盖内容；源文件后来变化不改变已确认草稿，数据库内容或摘要变化则拒绝发送。上限10份、每份10MiB、总20MiB，不扩展通用read/exec能力。
++论文导入、翻译和受管PDF来源归[文档22](22_论文PDF翻译与文件投递.md)；邮件附件完整契约在本节维护。`email_draft`只接受`attachments:[{documentId}]`，不接受路径、URL或base64。
+ 
+-`readAttachments`属于同步Store契约。邮件构建须可被标准MIME解析器还原正文、中文文件名及相同hash附件，不能只检查multipart标记。附件复用既有字段，没有新增SQL迁移；回退必须匹配源码/配置/状态，不把“schema未变”解释为旧代码可安全发送新草稿。
++| 契约 | 唯一规则与实现 |
++| --- | --- |
++| 附件数量与字节上限 | 最多10份，每份非空且不超过10 MiB，总计不超过20 MiB；`store.js`的`MAX_ATTACHMENTS`、`MAX_ATTACHMENT_BYTES`、`MAX_TOTAL_ATTACHMENT_BYTES`校验实际字节 |
++| 创建时快照 | 在既有`attachments_json`固定实际字节、文件名、MIME类型、大小、SHA256及受管documentId；预览只展示元数据，不把附件字节交给模型 |
++| 确认覆盖范围 | proposal/grant的payload hash绑定规范化To/Cc、主题、正文，以及每份附件的文件名、MIME类型、实际字节数和SHA256；documentId作为来源记录。源文件后来变化不改变已确认草稿 |
++| 发送前完整性 | 数据库字节或摘要变化时拒绝发送；仍从已固定快照取件，不重新读取后来变动的源PDF |
++| 超限与权限 | 超过邮件限制可在既有QQ文件能力范围投递；不自动扩大邮件限制或开放通用read/exec |
++
++`readAttachments`属于同步Store契约。邮件构建须可被标准MIME解析器还原正文、中文文件名及相同hash附件，不能只检查multipart标记。附件复用既有字段，没有新增SQL迁移；回退须匹配源码、配置和状态，“schema未变”不代表旧代码可安全发送新草稿。代码位于[store.js](../chatbot/plugins/kurumi-mail/store.js)、[service.js](../chatbot/plugins/kurumi-mail/service.js)与[mime.js](../chatbot/plugins/kurumi-mail/mime.js)，确认共享契约归文档21。
+ 
+ ## 代理扩展与未完成项
+ 
+diff --git a/docs/21_后端职责分层与代码整理.md b/docs/21_后端职责分层与代码整理.md
+--- a/docs/21_后端职责分层与代码整理.md
++++ b/docs/21_后端职责分层与代码整理.md
+@@ -1,30 +1,97 @@
+ # 后端职责分层与可插拔实现
+ 
+ 类型：后端规则。状态：现行分层、可插拔实现与四领域独立生命周期已部署；检索接入范围见[26](26_基础能力插件边界整理与检索接入设计.md)，记忆连续性见[25](25_人格、记忆与会话连续性.md)。验收结论及未覆盖范围统一见[文档16](16_验收与测试总表.md#分领域验收摘要)。
+-
+-## 术语
+-
+-- **runner**：由原生Cron按固定payload启动的独立程序，不经过聊天模型，例如提醒列表定时汇总和一次性提醒的投递程序。
+-- **policyAdapter / storeAdapter**：未切换到共享模式的提醒列表和长期记忆旧接口的配置项，值是领域 `adapters.js` 注册的策略或存储实现ID，启动时固定，见[可插拔契约](#可插拔契约与扩展方法)。
+-
+-## 当前范围与完成清单
+ 
+ 本文维护共享代码归属、语义与执行分工、同步适配器、确认与生命周期契约。完成的实施清单移入[阶段记录](archive/documentation-2026-10-23/21_后端职责分层与代码整理.md)，不在规则正文继续追加开发轮次。
+ 
+ [早期设计 tp.txt](tp.txt)作为原则来源保留。当前采用领域独立装配、显式接口和小型共享包；共用构建或历史共库不否定逻辑分层。只在出现实际复用消费者时抽取公共能力，不把早期完整编排设想写成当前功能。
+ 
++<a id="当前范围与完成清单"></a>
++
++## 当前生产实现
++
++| 能力 | 当前路径与事实源 | 执行边界 |
++| --- | --- | --- |
++| 天气、Profile、行程、一次性提醒 | 四个独立插件装配`packages/personal-domains`默认实现；Profile/行程保留历史共库 | 独立工具、服务与确认后端；集中构建不等于共用生命周期 |
++| 提醒列表与账单 | `personal-reminder-list/remote.js`、`kurumi-knowledgemap`→专用HTTP客户端→KnowledgeMap API | 显式异步调用；事项/账单事务、版本、幂等在业务API，本地只保留控制和投递账本，见[23](23_KnowledgeMap业务能力桥接.md) |
++| 本人连续性记忆 | `kurumi-memory/continuity/application.js`、`policy.js`、`store.js`→SQLite | 同步Policy/Store，配置键`continuityPolicyAdapter/continuityStoreAdapter`，当前`current-owner/sqlite`；不使用旧MEMORY文件写入，见[25](25_人格、记忆与会话连续性.md) |
++| 邮件 | `kurumi-mail/application.js`与同步SQLite Store；`service.js`编排SMTP | 异步SMTP不注册成同步Store；确认消费和外部投递分开，见[20](20_邮件能力与横切扩展.md) |
++| 论文与研究 | `kurumi-papers`固定后台进程、`kurumi-research`读取；共享PDF源获取与受管文档包 | 下载、阅读、翻译、投递职责分开，见下文共享表及[22](22_论文PDF翻译与文件投递.md) |
++
++旧SQLite列表、旧文件记忆接口仅在[兼容实现](#兼容实现)展开。它们保留作未切换模式、兼容探针或隔离回归，不是当前共享事项与连续性记忆的生产存储。
+ 
+ ## 语义与执行的边界
+ 
+ 模型将真实需求转换为动作、ID、版本及结构化字段；后端负责可信身份、当前请求、参数、事务、版本和幂等，不再次用聊天动词或完整标题正则裁决已有项维护。“第六条”的已展示列表对应、歧义澄清和一条消息一项的具体业务规则统一见[文档19](19_提醒列表与定时汇总.md#当前规则)。
+ 
+-原故障中模型三次均提交`action=void`和同一真实ID/version，后端前两次重新匹配原文并拒绝，只有第三次出现“作废”才执行。该重复裁决已移除，ID是不透明键，不含事项正文。原调用链与真实模型边界见[structured-items](verification/backend-refactor-2026-10-16/structured-items/README.md)。后端不能证明任意自然语言与ID必然对应，否定/假设/引用的模型负向验收不等于所有对话零误解。
++ID为不透明键，不含事项正文。移除重复原文裁决的原因和真实模型边界见[structured-items](verification/backend-refactor-2026-10-16/structured-items/README.md)。后端不能证明任意自然语言与ID必然对应，负向用例不等于所有对话零误解。
+ 
+-## 共享业务的异步边界
++<a id="共享业务的异步边界"></a>
+ 
+-提醒列表在 `dataSource=knowledgemap` 时走 `remote.js` 与专用HTTP客户端，事项事务/版本/幂等在KnowledgeMap；本地只保留调度控制与投递账本。以下同步Policy/Store组合适用于旧SQLite列表及显式记忆接口，不能把HTTP Promise伪装成同步Store。主人当前连续性记忆使用文档25的独立Policy/SQLite契约，不再把MEMORY.md当作事实源；其来源、遗忘和摘要生命周期见[文档25](25_人格、记忆与会话连续性.md)。业务桥接见[文档23](23_KnowledgeMap业务能力桥接.md)。
++## 同步适配器与异步业务API
+ 
+-## 职责与代码位置
++共享`domain-adapters`只提供同步契约的注册、检查和启动选择。连续性记忆在自己的组合入口声明`evidence/fact/summary` Policy及`read/write/close` Store方法；旧列表和旧显式记忆声明各自不同接口，不能因共用注册机制而混用契约。
++
++KnowledgeMap通过专门异步客户端调用，不能将HTTP Promise伪装为同步Store。事项唯一业务事实在API；本地设置、调度/请求控制和投递账本不构成业务副本。更换到异步驱动需显式调整应用契约，不静默回退旧库。
++
++## 共享代码与插件生命周期
++
++共享运行包不得反向导入具体插件或`scripts/fusion/`；插件组合入口可以接线QQ实际投递器，但只经QQ插件的对外投递入口 [delivery.js](../chatbot/plugins/kurumi-qq/delivery.js)（`createQqDelivery(cfg)` 返回 `sendDocument` / `sendText`），不直接导入 `kurumi-qq/src/*`；发送台账、限额和目标校验仍在QQ插件内部。`capabilities.test.mjs` 扫描所有插件源码，跨插件导入只允许登记的对外入口。代码归属如下，新能力沿用这些边界，不另造全局容器或通用工作流引擎。
++
++| 职责 | 唯一实现/入口 |
++| --- | --- |
++| 沙箱执行与进程树终止 | `chatbot/packages/sandbox/index.js` |
++| 可信入站与引用边界 | `chatbot/packages/trusted-inbound/index.js`；领域再施加准入策略 |
++| 结构化事件与脱敏sink | `chatbot/packages/observability/index.js`；运维查询留在 `scripts/fusion/log-query.mjs` |
++| 公开学术PDF获取 | `chatbot/packages/scholarly-source/index.js`；研究/翻译共同消费 |
++| 阅读文本与页图 | `chatbot/plugins/kurumi-research/papers.js`；阅读缓存由 `kurumi-research.config.cacheRoot` 显式配置 |
++| 翻译及受管文档 | `chatbot/plugins/kurumi-papers/service.js`、`chatbot/packages/documents/index.js`；不要求阅读提取成功 |
++| 四领域默认实现 | `chatbot/packages/personal-domains/src/`，各 `*-plugin.ts` 独立装配 |
++| 独立插件 | `chatbot/plugins/personal-{weather,profile,planning,reminders}/index.js`及各自manifest，原工具归属为1/3/3/7 |
++| 集中构建与兼容CLI | `chatbot/scripts/build-personal-plugins.mjs`；旧天气CLI仅转交同一共享实现 |
++
++PDF源边界保留HTTPS网站白名单、禁重定向/凭据、45秒期限、25MiB、PDF签名/hash及符号链接检查。源缓存为`<id>.pdf`和`<id>.source.json`；旧阅读缓存`<id>.json`验证后可复用。阅读解析失败不阻断翻译下载，取消前不发布半文件；无取消信号的相同下载可合并，有独立信号的不合并取消。论文业务参数与产物限制仍归文档22。
++
++四领域分别登记工具、服务和确认后端，不先注册全部再过滤。Profile/行程保留`state/personal-weather/weather.sqlite`历史共库；一次性提醒保留`state/personal-reminders/`。独立生命周期不承诺独立数据库或版本发布。主人 2026-10-22 确认维持现状：四领域继续共用集中构建、上述历史共库和既有 Cron 执行地址；以后要拆库或改地址另开一项，先授权、先备份。
++
++带锁文件的共享库（`personal-domains`）在自己的 `package.json` 用 `file:` 链接声明所依赖的共享包（`confirmation-core`、`access-control`、`knowledgemap-client`），源码按包名导入；子路径须在被依赖包的 `exports` 中列出。没有锁文件的纯 JS 插件沿用相对路径引用共享包。
++
++确认候选和实际记录均按持久domain隔离；Profile/Planning各用自己的provider，提醒维持`personal-reminder`。provider ID不写入持久proposal/grant，domain、ID/hash和scope不改；停止时仅注销本实例注册，一次性提醒停止还须等待在途维护批次。
++
++既有Cron的`personal-weather/dist/reminder-cli.js`是稳定执行地址，集中构建生成最小兼容转发；新提醒使用`personal-reminders`的runner。不得删除旧地址、重写业务副本或重建既有任务来代替兼容。2026-10-21只读核对：生产 Cron 中已没有任务指向旧地址，一次性提醒均已结束；转发仍保留，供从备份恢复的旧任务使用。
++
++2026-10-20结构整理回归、真实隔离Gateway及生产加载的结果与版本边界见[专项报告](verification/capability-decoupling-2026-10-20/README.md)。配置同步的显式延期契约只在[配置说明](../config/README.md#同步契约)维护；新的Search/Fetch provider接入与启用状态见[文档26](26_基础能力插件边界整理与检索接入设计.md)。
++
++共享确认维持原 18 个运行时公开导出。其 registry 使用版本化 `Symbol.for` 跨宿主加载副本共享确认后端；领域适配器注册表则属于一次组合，避免独立插件实例/测试互相污染。这两种生命周期用途不同。
++
++宿主服务必须显式登记 `stop(ctx)`，异步清理返回 Promise 供宿主等待；不能依赖 `start(ctx)` 的返回函数。论文插件转交 `PaperService.stop()`；邮件插件在停止或启动失败清理时注销本实例持有的确认注册。共享确认的每次注册都有独立身份，旧注销句柄不能影响后续注册，即使复用了同一 provider 对象；跨加载副本的 Symbol 和公开 API 保持兼容。
++
++## 可插拔契约与扩展方法
++
++共享小型注册库：[domain-adapters/index.js](../chatbot/packages/domain-adapters/index.js)，公共类型：[index.d.ts](../chatbot/packages/domain-adapters/index.d.ts)。它只管理实现身份、契约检查与固定选择。
++
++注册表提供 `registerPolicy(id, implementation)`、`registerStore(id, open)`、`resolve({policy,store})`、`ids()`。每次注册有独立身份，返回只删除该次注册的注销函数；同一工厂重新注册也不会被旧句柄删除，重复 ID 被拒。解析后固定策略方法表与工厂，注销/重新注册仅影响后续组合，不热换运行实例。
++
++接口要求同步。打开存储时检查必需方法，返回绑定原始对象的契约视图；每次调用 Policy/Store 契约方法时拒绝 Promise/thenable 返回值（含 `close`），避免误判写入完成，并接收被拒绝 Promise 的 rejection。视图兼容冻结对象、私有字段及 `.db` 等附加属性读取。缺方法、异步策略/存储、未知选择和打开失败明确报错，已打开但无效的资源尽力关闭，不回退默认或临时存储。完整包装边界见[包说明](../chatbot/packages/domain-adapters/README.md)。
++
++新增实现的步骤：实现领域接口 → 在领域持久 `adapters.js` 组合入口注册 → 跑一致性回归 → 配置实现 ID → 按配置同步契约重启。应用服务无需修改。测试/嵌入可通过 `createReminderListPlugin({registry})`、`createMemoryPlugin({registry})` 或 `create*Application({registry,...})` 注入独立注册表。
++
++连续性记忆使用`createContinuityRegistry()`/`createContinuityApplication()`，注册机制相同，方法表、默认ID与配置键以其领域契约为准；旧接口示例见下一节。新实现还需覆盖对应领域的事务、查询、备份恢复与迁移验收，方法存在检查不能证明业务原子性。
++
++## 兼容实现
++
++<a id="职责与代码位置"></a>
++
++### 旧本地列表与文件记忆
++
++| 领域 | 接口 | 默认策略 / 存储 ID | 组合与注册 |
++| --- | --- | --- | --- |
++| 提醒列表 | [contracts.d.ts](../chatbot/plugins/personal-reminder-list/contracts.d.ts) | `default` / `sqlite` | [application.js](../chatbot/plugins/personal-reminder-list/application.js)、[adapters.js](../chatbot/plugins/personal-reminder-list/adapters.js) |
++| 显式记忆旧接口 | [contracts.d.ts](../chatbot/plugins/kurumi-memory/contracts.d.ts) | `explicit` / `memory-file` | [application.js](../chatbot/plugins/kurumi-memory/application.js)、[adapters.js](../chatbot/plugins/kurumi-memory/adapters.js) |
++
++显式记忆旧接口和本地列表实现可在 `plugins.entries.<领域>.config` 选择 `policyAdapter` / `storeAdapter`，未配置使用上表默认值；选择不出现在模型工具参数里。当前生产连续性模式有自己独立的适配器键，不与这些旧接口混用，见文档25；配置同步仍按 [config/README.md](../config/README.md)。
++
++以下分层表和流程图仅描述这两套兼容实现，不能用旧`store.js`推断当前连续性SQLite或共享事项的事实源：
+ 
+ | 职责 | 唯一入口与要求 |
+ | --- | --- |
+@@ -54,54 +121,7 @@
+   N --> D
+ ```
+ 
+-共享确认维持原 18 个运行时公开导出。其 registry 使用版本化 `Symbol.for` 跨宿主加载副本共享确认后端；领域适配器注册表则属于一次组合，避免独立插件实例/测试互相污染。这两种生命周期用途不同。
+-
+-宿主服务必须显式登记 `stop(ctx)`，异步清理返回 Promise 供宿主等待；不能依赖 `start(ctx)` 的返回函数。论文插件转交 `PaperService.stop()`；邮件插件在停止或启动失败清理时注销本实例持有的确认注册。共享确认的每次注册都有独立身份，旧注销句柄不能影响后续注册，即使复用了同一 provider 对象；跨加载副本的 Symbol 和公开 API 保持兼容。
+-
+-## 共享代码与插件生命周期
+-
+-共享运行包不得反向导入具体插件或`scripts/fusion/`；插件组合入口可以接线QQ实际投递器，但只经QQ插件的对外投递入口 [delivery.js](../chatbot/plugins/kurumi-qq/delivery.js)（`createQqDelivery(cfg)` 返回 `sendDocument` / `sendText`），不直接导入 `kurumi-qq/src/*`；发送台账、限额和目标校验仍在QQ插件内部。`capabilities.test.mjs` 扫描所有插件源码，跨插件导入只允许登记的对外入口。代码归属如下，新能力沿用这些边界，不另造全局容器或通用工作流引擎。
+-
+-| 职责 | 唯一实现/入口 |
+-| --- | --- |
+-| 沙箱执行与进程树终止 | `chatbot/packages/sandbox/index.js` |
+-| 可信入站与引用边界 | `chatbot/packages/trusted-inbound/index.js`；领域再施加准入策略 |
+-| 结构化事件与脱敏sink | `chatbot/packages/observability/index.js`；运维查询留在 `scripts/fusion/log-query.mjs` |
+-| 公开学术PDF获取 | `chatbot/packages/scholarly-source/index.js`；研究/翻译共同消费 |
+-| 阅读文本与页图 | `chatbot/plugins/kurumi-research/papers.js`；阅读缓存由 `kurumi-research.config.cacheRoot` 显式配置 |
+-| 翻译及受管文档 | `chatbot/plugins/kurumi-papers/service.js`、`chatbot/packages/documents/index.js`；不要求阅读提取成功 |
+-| 四领域默认实现 | `chatbot/packages/personal-domains/src/`，各 `*-plugin.ts` 独立装配 |
+-| 独立插件 | `chatbot/plugins/personal-{weather,profile,planning,reminders}/index.js`及各自manifest，原工具归属为1/3/3/7 |
+-| 集中构建与兼容CLI | `chatbot/scripts/build-personal-plugins.mjs`；旧天气CLI仅转交同一共享实现 |
+-
+-PDF源边界保留HTTPS网站白名单、禁重定向/凭据、45秒期限、25MiB、PDF签名/hash及符号链接检查。源缓存为`<id>.pdf`和`<id>.source.json`；旧阅读缓存`<id>.json`验证后可复用。阅读解析失败不阻断翻译下载，取消前不发布半文件；无取消信号的相同下载可合并，有独立信号的不合并取消。论文业务参数与产物限制仍归文档22。
+-
+-四领域分别登记工具、服务和确认后端，不先注册全部再过滤。Profile/行程保留`state/personal-weather/weather.sqlite`历史共库；一次性提醒保留`state/personal-reminders/`。独立生命周期不承诺独立数据库或版本发布。主人 2026-10-22 确认维持现状：四领域继续共用集中构建、上述历史共库和既有 Cron 执行地址；以后要拆库或改地址另开一项，先授权、先备份。
+-
+-带锁文件的共享库（`personal-domains`）在自己的 `package.json` 用 `file:` 链接声明所依赖的共享包（`confirmation-core`、`access-control`、`knowledgemap-client`），源码按包名导入；子路径须在被依赖包的 `exports` 中列出。没有锁文件的纯 JS 插件沿用相对路径引用共享包。
+-
+-确认候选和实际记录均按持久domain隔离；Profile/Planning各用自己的provider，提醒维持`personal-reminder`。provider ID不写入持久proposal/grant，domain、ID/hash和scope不改；停止时仅注销本实例注册，一次性提醒停止还须等待在途维护批次。
+-
+-既有Cron的`personal-weather/dist/reminder-cli.js`是稳定执行地址，集中构建生成最小兼容转发；新提醒使用`personal-reminders`的runner。不得删除旧地址、重写业务副本或重建既有任务来代替兼容。2026-10-21只读核对：生产 Cron 中已没有任务指向旧地址，一次性提醒均已结束；转发仍保留，供从备份恢复的旧任务使用。
+-
+-2026-10-20结构整理回归、真实隔离Gateway及生产加载的结果与版本边界见[专项报告](verification/capability-decoupling-2026-10-20/README.md)。配置同步的显式延期契约只在[配置说明](../config/README.md#同步契约)维护；新的Search/Fetch provider接入与启用状态见[文档26](26_基础能力插件边界整理与检索接入设计.md)。
+-
+-## 可插拔契约与扩展方法
+-
+-共享小型注册库：[domain-adapters/index.js](../chatbot/packages/domain-adapters/index.js)，公共类型：[index.d.ts](../chatbot/packages/domain-adapters/index.d.ts)。它只管理实现身份、契约检查与固定选择。
+-
+-| 领域 | 接口 | 默认策略 / 存储 ID | 组合与注册 |
+-| --- | --- | --- | --- |
+-| 提醒列表 | [contracts.d.ts](../chatbot/plugins/personal-reminder-list/contracts.d.ts) | `default` / `sqlite` | [application.js](../chatbot/plugins/personal-reminder-list/application.js)、[adapters.js](../chatbot/plugins/personal-reminder-list/adapters.js) |
+-| 显式记忆旧接口 | [contracts.d.ts](../chatbot/plugins/kurumi-memory/contracts.d.ts) | `explicit` / `memory-file` | [application.js](../chatbot/plugins/kurumi-memory/application.js)、[adapters.js](../chatbot/plugins/kurumi-memory/adapters.js) |
+-
+-注册表提供 `registerPolicy(id, implementation)`、`registerStore(id, open)`、`resolve({policy,store})`、`ids()`。每次注册有独立身份，返回只删除该次注册的注销函数；同一工厂重新注册也不会被旧句柄删除，重复 ID 被拒。解析后固定策略方法表与工厂，注销/重新注册仅影响后续组合，不热换运行实例。
+-
+-接口要求同步。打开存储时检查必需方法，返回绑定原始对象的契约视图；每次调用 Policy/Store 契约方法时拒绝 Promise/thenable 返回值（含 `close`），避免误判写入完成，并接收被拒绝 Promise 的 rejection。视图兼容冻结对象、私有字段及 `.db` 等附加属性读取。缺方法、异步策略/存储、未知选择和打开失败明确报错，已打开但无效的资源尽力关闭，不回退默认或临时存储。完整包装边界见[包说明](../chatbot/packages/domain-adapters/README.md)。
+-
+-显式记忆旧接口和本地列表实现可在 `plugins.entries.<领域>.config` 选择 `policyAdapter` / `storeAdapter`，未配置使用上表默认值；选择不出现在模型工具参数里。当前生产连续性模式有自己独立的适配器键，不与这些旧接口混用，见文档25；配置同步仍按 [config/README.md](../config/README.md)。
+-
+-新增实现的步骤：实现领域接口 → 在领域持久 `adapters.js` 组合入口注册 → 跑一致性回归 → 配置实现 ID → 按配置同步契约重启。应用服务无需修改。测试/嵌入可通过 `createReminderListPlugin({registry})`、`createMemoryPlugin({registry})` 或 `create*Application({registry,...})` 注入独立注册表。
++### 独立runner与存储替换
+ 
+ 提醒列表独立 Cron 程序同样从持久组合入口解析存储。非默认存储 ID 写入固定 payload 的 `KURUMI_LIST_STORE_ADAPTER`；默认 SQLite payload 保持兼容。**只在宿主自定义入口内注册存储不足以让独立 runner 识别它**，部署实现必须同时登记到该持久入口。runner 不接收任意模块路径。调度器拒绝接管绑定到另一存储的旧任务；更换存储时应另做数据与 Cron 迁移验收，改配置不迁移旧数据。
+ 
+@@ -134,6 +154,11 @@
+ 
+ 通用确认不包含提醒列表/记忆词表，不新增工作流引擎。模型工具权限、群聊禁用、身份来源和数据库 schema 保持原约束。
+ 
++## 术语
++
++- **runner**：由原生Cron按固定payload启动的独立程序，不经过聊天模型，例如提醒列表定时汇总和一次性提醒的投递程序。
++- **policyAdapter / storeAdapter**：未切换到共享模式的提醒列表和长期记忆旧接口的配置项，值是领域 `adapters.js` 注册的策略或存储实现ID，启动时固定，见[可插拔契约](#可插拔契约与扩展方法)。
++
+ ## 开发与验收记录
+ 
+ 已结束的初轮分层、已有项调用链修复、适配器和生命周期补正见[阶段记录](archive/documentation-2026-10-23/21_后端职责分层与代码整理.md)。各轮修复前失败、命令、回执和真实/模拟边界仍由原专项报告保存：
+@@ -147,7 +172,6 @@
+ 
+ 调用后的契约检查不能取消第三方适配器已经启动的异步副作用，不能替代存储自身的原子性保证；这些同步接口仍不支持异步数据库驱动。
+ 
+-
+ ## 验收边界与未完成项
+ 
+ 接口替换夹具、隔离模型、模拟 OneBot、生产加载与真人往返分别记录；不能从一层通过推断其他层。原适配器阶段未迁移生产存储，后续共享事项与连续性记忆分别按23/25验收。
+diff --git a/docs/22_论文PDF翻译与文件投递.md b/docs/22_论文PDF翻译与文件投递.md
+--- a/docs/22_论文PDF翻译与文件投递.md
++++ b/docs/22_论文PDF翻译与文件投递.md
+@@ -15,15 +15,7 @@
+ 
+ 按名查找的现行契约：`kurumi_document find` 只查请求人受管PDF的文件名、记录题名和来源URL，规范化多词匹配，全目录扫描、最多50条；`fetch` 可记录 `title`。旧记录缺题名的补全仍归[待办 G5](待办清单.md#g5-早期保存的论文没有题名按名找不到)。
+ 
+-各轮协议探查、样稿、缓存/冷缓存、并发、双语、恢复、附件与部署结果已移到[阶段记录](archive/documentation-2026-10-23/22_论文PDF翻译与文件投递.md)；原始证据仍留在专项目录，不累计为总通过数。当前规则从下一节开始，性能方向如下（均属未实施方案，排期归待办）。
+-
+-
+-性能优化尚未实施，已定位新身份约5分55秒API前初始化和全渠道冷却等待瓶颈；30页任务被本人停止，不把它算作渠道失败。计划与边界：
+-
+-- 新身份预热或只读共享公共模型、字体、tokenizer；个人PDF/译文缓存库/凭据继续隔离，不复制主人私有缓存。
+-- 按故障类别/连续失败细分冷却，减少一次断连引发全渠道长等待；保留014优先、同模型切换、有界重试与单路恢复探测。
+-- 增加初始化/资源/解析/翻译/排版/投递阶段计时，阶段与阶段内百分比同时展示，不以静态总体权重推算剩余时间。
+-- 先保持high、4并发/QPS1、30分钟与现有预算，消除无效等待后对照首次资源准备/预热场景；付费复测单独取得授权，不自动重跑。
++逐轮协议探查、样稿、缓存/冷缓存、并发、双语、恢复、附件和部署记录见[阶段记录](archive/documentation-2026-10-23/22_论文PDF翻译与文件投递.md)及原专项证据，不累计为总通过数。[性能优化方案](#性能优化方案)集中在文末，尚未实施。
+ 
+ ## 需求与已定选择
+ 
+@@ -43,8 +35,8 @@
+ | 执行方式 | CPU模式，一次一篇、最多5篇等待，单篇API并发4/QPS1；每完成一篇即投递所选文件。固定CLI按需启动、结束退出，不驻留翻译服务、不新增监听端口 |
+ | 持久化 | 保留任务/产物轻量记录；Gateway 重启后未完成任务标为 interrupted，**不自动重新付费翻译** |
+ | QQ 投递 | 各已登记身份仅发回请求人本人；按文档24隔离归属及撤权检查。平台受理与实际收到分开，回执未知不自动重发 |
+-| 邮件 | 复用 email_draft/email_send 与原带码确认；测试发件 1794511189@qq.com、唯一收件 365999865@qq.com，主人已明确授权 |
+-| 真实样本 | `/home/afrangry/桌面/2609.32536v1.pdf`，16 页、646721 字节、未加密；GPT 约 10 分钟、DeepSeek 约 1 分钟是主人参考预期，不能当实测保证 |
++| 邮件 | 复用 email_draft/email_send 与原带码确认；唯一收件人来源、附件快照和限制归[文档20](20_邮件能力与横切扩展.md#受管-pdf-附件)，各次真实测试按实际授权 |
++| 验收样本 | 使用各次明确授权的实际PDF；原样本路径、页数与耗时预期见[阶段记录](archive/documentation-2026-10-23/22_论文PDF翻译与文件投递.md)，不作为性能保证 |
+ | 预算边界 | 主人已指定实际 PDF 验收；用页数、请求数、已报告用量与运行时限限制持续调用。网关忽略输出 token 上限，**不承诺金额硬上限** |
+ | 版本管理 | 并行任务按文件/代码块划分，验收对应实际源码与构建指纹；不整树暂存其它任务，当前Git与恢复边界见文档16 |
+ 
+@@ -75,14 +67,14 @@
+ | `kurumi_translate` | start/status/list/cancel，使用真实 documentId/jobId；返回排队不代表完成，生成与投递分状态 |
+ | `kurumi_document_send` | 只接受受管文档/产物 ID，投递可信请求人自身 QQ；不接收任意路径、URL 或模型指定的其它收件人 |
+ | QQ 入站 | 校验已登记身份与机器人私聊元数据；file 消息和 offline_file 通知。附件逐项提供类型/状态/错误码，成功PDF另有受管ID/页数；纯失败无文字/引用/有效媒体时直接反馈，其余保留当前文字交模型 |
+-| 邮件 | `attachments:[{documentId}]` 取受管文件，创建草稿时固定实际字节；确认覆盖附件 hash，不把 base64 发进模型上下文 |
++| 邮件 | 将受管 `documentId` 交给 `email_draft`，预览并按原规则确认后 `email_send`；附件数量/大小、固定字节与确认hash归[文档20](20_邮件能力与横切扩展.md#受管-pdf-附件) |
+ 
+ 三份窄工具加入 main 的 alsoAllow；通用 read/write/edit/exec/process/message/sessions_spawn 等仍禁用。主人已授权本需求实现及真实本人测试，工具扩展已提前说明。论文正文、文件名、网页不是身份或授权来源；服务端参数来自受管配置，模型不能传端点、密钥或命令。
+ 
+ ### 文件、来源和状态
+ 
+ - 身份及功能授权按[文档24](24_统一身份与权限管理.md)：原主人文档沿用根目录，成员使用 `subjects/<QQ>/`；查询/取消/重发及自动投递绑定真实请求人，后台不默认转发给主人。共用逐篇串行队列，成员不能用邮件或读取他人文档/任务。
+-- 原始 PDF 导入不超过 25 MiB；受管翻译产物不超过 100 MiB，避免双语嵌入原文与译文资源后被原文大小上限拒绝。两者均须未加密、1–500 页，并经网络隔离的 PDF 解析进程检查；失败/取消的导入不留未登记 PDF。邮件仍单附件10 MiB/总20 MiB，超过此限可通过QQ投递，不自动扩大邮件限制。
++- 原始 PDF 导入不超过 25 MiB；受管翻译产物不超过 100 MiB，避免双语嵌入原文与译文资源后被原文大小上限拒绝。两者均须未加密、1–500 页，并经网络隔离的 PDF 解析进程检查；失败/取消的导入不留未登记 PDF。邮件另受[附件限制](20_邮件能力与横切扩展.md#受管-pdf-附件)约束；超过邮件限制可通过QQ投递，不自动扩大上限。
+ - 输入 ID 为内容哈希导出的 `doc_…`，产物为 `pdf_…`；读取复核大小与 SHA256，拒绝路径逃逸及符号链接。工具返回摘要，不返回文件字节/绝对路径。
+ - 网站沿用 `arxiv.org`、`export.arxiv.org`、`aclanthology.org`、`openreview.net`、`proceedings.mlr.press`、`proceedings.neurips.cc` 的 HTTPS 白名单，不自动登录或跟重定向。
+ - QQ 文件 URL 从已鉴权 OneBot 的 get_private_file_url 取得，忽略正文/上传数据中的任意 URL；只允许已登记QQ CDN，或公开IPv4的固定`/asn.com/`路径。HTTP先升级HTTPS；IPv4保持路由地址并以固定`multimedia.nt.qq.com.cn`做SNI/证书校验，不跟重定向、不关闭TLS验证。内网/保留IP拒绝。实际回取348896字节与原SHA256一致，但不是主人上传事件。
+@@ -92,21 +84,62 @@
+ - 任务状态：queued → running → succeeded / failed / cancelled / interrupted。可信会话与调用 ID 生成幂等键；同键不同参数拒绝，重放不再付费。
+ - succeeded 只证明产物已登记；delivery 另记 not_requested / dispatching / platform_accepted / failed_or_unknown。中断投递不重新运行翻译，重启遗留 dispatching 标为未知，不重发。
+ - QQ 文件上传接入原频道发送配额与持久账本；OneBot 上传回执没有 message_id 时不伪造。未知回执需核对后由本人明确决定是否重新投递。
+-- 邮件最多 10 份，每份 10 MiB、总计 20 MiB；字节固定在既有 attachments_json 字段，预览只展示元数据。确认后 DB 被篡改则拒绝网络发送；取件源后来变化不改变草稿。
++- 邮件只消费受管文档/产物ID；源文件变化、草稿快照和确认完整性的处理统一见[文档20](20_邮件能力与横切扩展.md#受管-pdf-附件)。
+ 
+ ### 默认资源与用量限制
+ 
+-仓库配置意图：单任务最多30页、300次API尝试、300000个已报告tokens、1800秒worker执行期限（不含排队）、日常单篇最多4个API在途请求/每秒启动1个；日常4并发只来自`config/runtime.config.json`的`apiConcurrency`；未配置时插件manifest和`runner.js`的缺省均为1（QPS缺省也是1）。操作者源码允许并发1–6、QPS1–4，模型不能传并发参数，六并发仅隔离测试。选页超限须明确指定范围，不悄悄截页。未提供token预算键时插件的保守缺省仍为150000；请求数schema/runner/Python缺省统一300。整篇执行期限缺省与最大值均1800秒；单请求有效正文空闲默认100秒（`requestIdleTimeoutSeconds`，整数1–600），独立于固定600秒总时限。只有非空白正文增量重置空闲计时，完整终态响应仍是译文与用量唯一依据。无正文超时先取消HTTP进程，再按既有规则切渠道/有限恢复，仅重试当前批次。验收脚本沿用生产预算。
++下表分别列出**源码缺省**与仓库`config/runtime.config.json`中供生产同步的配置意图；后者不是本次重新写入运行目录。缺省依据[插件schema](../chatbot/plugins/kurumi-papers/openclaw.plugin.json)、[runner.js](../chatbot/plugins/kurumi-papers/runner.js)及`service.js`。操作者可配置范围按插件schema，模型不能传入并发、预算或超时键。
++
++| 配置键 | 源码缺省 | 仓库生产配置 | 可配置范围 / 含义 |
++| --- | --- | --- | --- |
++| `liveTranslationEnabled` | false | true | 布尔；实际付费调用开关 |
++| `maxPages` | 30 | 30 | 1–500；本次所选页数上限，超限需明确页码，不截页 |
++| `maxRequests` | 300 | 300 | 1–2000；所有实际API尝试共同计数 |
++| `maxReportedTokens` | 150000 | 300000 | 100–2000000；已报告tokens预算，不是金额硬上限 |
++| `apiConcurrency` | 1 | 4 | 整数1–6；单篇在途请求数 |
++| `apiQps` | 1 | 1 | 整数1–4；每秒最多新开请求数 |
++| `batchValidationRetries` | 1 | 1 | 0–4；当前批次校验失败后的额外重试次数，0禁用 |
++| `channelRecoveryRetries` | 1 | 1 | 0–4；全部临时渠道冷却后的额外恢复轮数，0禁用 |
++| `requestIdleTimeoutSeconds` | 100秒 | 100秒 | 整数1–600；有效正文空闲期限 |
++| `timeoutSeconds` | 1800秒 | 1800秒 | schema为整数30–1800；整篇worker执行期限，不含排队；runner另外校验正数且不超过1800 |
++
++| 固定边界 | 当前值与执行位置 |
++| --- | --- |
++| 任务队列 | 一次一篇、最多5篇等待；`service.js` |
++| 单请求总期限 | 600秒；`python/responses.py`，独立于正文空闲期限，不是公开配置项 |
++| API并发与验收脚本 | 日常4并发来自仓库配置；manifest、runner和验收脚本未指定时为1，六并发只属于隔离对比 |
++| worker资源 | 地址空间12 GiB、单文件100 MiB、CPU 1200秒；`runner.js`的prlimit |
++
++#### 正文空闲与用量
++
++从请求开始或最后一次非空白`response.output_text.delta`计时。心跳、创建事件、思考事件和空白不重置空闲计时。无正文超时先取消HTTP进程，记录`api_output_idle_timed_out_unknown`及未知用量，再按下表切渠道/有限恢复，只重试当前批次。持续有正文仍受单请求600秒及整篇期限约束。
++
++没有可见正文不证明上游未推理或未计费，本地取消也不保证停止上游计费。完整终态响应才提供可核实译文和用量；渠道中断记unknown，不记0。所有实际尝试共同消耗请求/用量预算，不自动重跑整篇。
++
++#### 重试与渠道切换
++
++实现入口为[python/responses.py](../chatbot/plugins/kurumi-papers/python/responses.py)。凭据按014→030→040选择，同模型/强度不变，不跨厂商回退。
++
++| 情况 | 处理与边界 |
++| --- | --- |
++| 明确鉴权失败 | 当前凭据冷却24小时，直接切下一渠道，不等待 |
++| 额度不足 | 直接切换，冷却120秒 |
++| 短暂限流 | 同渠道退避一次；仍失败切换并冷却120秒 |
++| 明确临时渠道错误、连接/读取超时、流中断 | 切下一渠道并冷却300秒；每批每渠道每轮最多一次此类尝试 |
++| 可切换的HTTP状态 | 408、500、502、503、504、520、522、524、529；临时错误含`upstream_stream_read_error`、`upstream_http2_stream_error` |
++| 所有渠道暂不可用 | 按`channelRecoveryRetries`做有界恢复，每轮等待最多330秒，同渠道一次一个恢复探测；耗尽终止 |
++| 无鉴权证据的403、参数/权限、错误模型或强度 | 明确失败，不通过换渠道掩盖 |
++| 译文结构/公式/样式校验失败 | 按`batchValidationRetries`仅重试当前批次；失败输出不缓存、不拼成译稿 |
++
++冷却跨任务共享；成功释放该渠道，失败继续冷却。任务终态停止准入并中断在途等待，已完成响应仍计账。上述有界恢复共同受整篇时限与预算约束，不能保证金额上限。
++
++`api_stream_error`只说明未取得该批完整成功响应，不能单凭该码归因于模型厂商、中转或超时，也不能用部分文本拼成完整译稿。历史两次全文失败与原始回执见[high-dual-fix报告](verification/paper-translation-2026-10-17/high-dual-fix/README.md)及[阶段记录](archive/documentation-2026-10-23/22_论文PDF翻译与文件投递.md)。协议参考[Responses流事件说明](https://developers.openai.com/api/docs/guides/streaming-responses)不替中转证明故障根因。
+ 
+ 固定 worker 只挂载系统文件、只读 Python/适配器、单任务目录与缓存；清空宿主环境，凭据只经 stdin 传入，不在 argv。限制地址空间 12 GiB、单文件 100 MiB、CPU 1200 秒；取消/超时终止整个进程组。翻译允许出站网络以调用固定 API、下载布局模型和字体；不能据此声称网络也已隔离。无需 GPU/CUDA，本轮未验 GPU。
+ 
+ 每次请求独立上下文，不带 previous_response_id；顶层 instructions 明确，原生 Responses 流式只采用终态 response 的完整 assistant/output_text 与用量，不采用 reasoning/部分 delta/空输出/incomplete。完成响应缺少可核实用量则终止；渠道中断的用量记为 unknown，按下述明确规则切换，不把 unknown 记成 0。记录请求数、实际模型、请求/回显强度、输入/输出/缓存/推理 token、responseId 与凭据名称；不记录密钥、论文正文或上游任意错误文本。
+ 
+-GPT 批次使用原数组协议；DeepSeek 批次显式传原生 `text.format=json_schema`，要求 `translations` 对象数组、原 ID 枚举、固定字段，源码/模型/强度与批次协议分别进入缓存键。即使 API 接受 schema，仍在本地核对条数、ID、非空译文及全部公式/样式标记；只允许移除一个精确完整的外层 JSON 围栏，不从解释文字提取片段、不放松标记校验。错误仅记录结构原因/数量/位置，不落正文；引擎接到终态失败立即取消，不继续逐段限速等待。DeepSeek 官方支持 text.format 的依据仍为上文 Responses 文档，不把它等同于中转对同参数的支持。
+-
+-凭据顺序 **014 → 030 → 040**，同模型/强度不变。鉴权失败冷却24小时，不为此等待；额度不足直接切换并冷却120秒，短暂限流同渠道退避一次仍失败再切换并冷却120秒。明确临时渠道错误（含 `upstream_stream_read_error`、`upstream_http2_stream_error`）、连接/读取超时、流中断、408/500/502/503/504/520/522/524/529直接转下一渠道并冷却300秒，每批每渠道每轮最多一次此类尝试。冷却跨任务共享；全部暂不可用时受 `channelRecoveryRetries` 控制，默认额外恢复1轮、每轮等待最多330秒，同一渠道一次仅1个恢复探测。成功后释放该渠道，仍失败则继续保持冷却，耗尽明确终止。没有鉴权证据的403、参数/权限、错误模型或强度不通过换渠道掩盖。译文结构由 `batchValidationRetries` 单独管理，默认额外1次、允许0–4；失败输出不缓存或拼接成译稿。HTTP在沙箱内按请求启动子进程，任务终态会停止准入并中断在途等待；已完成响应仍计账，未取得终态响应的用量标未知。所有实际尝试计入请求/用量预算，30分钟期限不变；这些限制不能保证金额上限。
+-
+-此前全文失败的精确含义：两次最后一个请求均收到了中转发送的 `type=error` 事件，错误码 `upstream_stream_read_error`，本地映射为 `api_stream_error`。中转报告读取其上游响应流失败，未取得该批的完整成功响应和用量。仅凭该码不能进一步定位是中转代理、上游服务还是超时，也不能认定是模型厂商本身故障。当前规则将此错误纳入有界渠道切换，仍不把部分文本拼成完整译稿。这与 QQ/邮件投递和 PDF 排版是不同阶段。官方协议的完成/错误事件说明见 [OpenAI Docs](https://developers.openai.com/api/docs/guides/streaming-responses)；该说明不替中转证明故障根因。
++GPT 批次使用原数组协议；DeepSeek 批次显式传原生 `text.format=json_schema`，要求 `translations` 对象数组、原 ID 枚举、固定字段，源码/模型/强度与批次协议分别进入缓存键。即使 API 接受 schema，仍在本地核对条数、ID、非空译文及全部公式/样式标记；只允许移除一个精确完整的外层 JSON 围栏，不从解释文字提取片段、不放松标记校验。错误仅记录结构原因/数量/位置，不落正文；引擎接到终态失败立即取消，不继续逐段限速等待。DeepSeek 官方支持 text.format 的依据仍为[Responses协议说明](https://developers.openai.com/api/docs/guides/streaming-responses)，不把它等同于中转对同参数的支持。
+ 
+ ## 精确产物与运维
+ 
+@@ -178,7 +211,16 @@
+ | 负载与能力范围 | 多人并发、长期压力、登录受限论文、OCR/GPU等未覆盖；群聊不在开放范围。六并发隔离对比不改变日常四并发 |
+ | 预算与恢复 | 金额硬上限和上游输出硬预算不可验证；新增功能完整停写灾难恢复未验收，现有恢复点范围见文档16 |
+ 
+-原失败、本人反馈和分渠道用量见阶段记录及其原始报告。性能方向留在本文件前部，任务下一步在待办。回退须联动源码/配置/私有状态，不能只回退旧邮件代码继续发送新草稿；后台副本不自动随源码更新。
+-
++原失败、本人反馈和分渠道用量见阶段记录及其原始报告。性能方向见[性能优化方案](#性能优化方案)，任务下一步在待办。回退须联动源码/配置/私有状态，不能只回退旧邮件代码继续发送新草稿；后台副本不自动随源码更新。
++
++
++## 性能优化方案
++
++性能优化尚未实施，已定位新身份约5分55秒API前初始化和全渠道冷却等待瓶颈；30页任务被本人停止，不把它算作渠道失败。计划与边界：
++
++- 新身份预热或只读共享公共模型、字体、tokenizer；个人PDF/译文缓存库/凭据继续隔离，不复制主人私有缓存。
++- 按故障类别/连续失败细分冷却，减少一次断连引发全渠道长等待；保留014优先、同模型切换、有界重试与单路恢复探测。
++- 增加初始化/资源/解析/翻译/排版/投递阶段计时，阶段与阶段内百分比同时展示，不以静态总体权重推算剩余时间。
++- 先保持high、4并发/QPS1、30分钟与现有预算，消除无效等待后对照首次资源准备/预热场景；付费复测单独取得授权，不自动重跑。
+ 
+ 返回[文档入口](README.md)。
+diff --git a/docs/23_KnowledgeMap业务能力桥接.md b/docs/23_KnowledgeMap业务能力桥接.md
+--- a/docs/23_KnowledgeMap业务能力桥接.md
++++ b/docs/23_KnowledgeMap业务能力桥接.md
+@@ -2,11 +2,13 @@
+ 
+ 类型：跨项目接口规则与迁移手册。状态：**天气、共享事项与账单完整维护已部署；共享默认城市仍为后续迭代。** 验收结论见[文档16](16_验收与测试总表.md#分领域验收摘要)。实现范围沿用既有记录；2026-10-23整理过程与规则的边界。本文负责跨项目桥接、接口、迁移、配对恢复和记账规则；提醒列表/播报的用户规则唯一归[文档19](19_提醒列表与定时汇总.md)。阅读入口：[README.md](README.md)。
+ 
+-本页按需求、接口/职责、决定、迁移/恢复、精确产物与账单契约组织。已结束的两轮并行开发、部署及验证过程从第8/10节进入；历史计数不代表当前数据条数。
+-
+-## 1. 需求与交付范围
+-
+-### 用户目标
++本文先说明当前业务、接口和执行契约，再列迁移、切换、备份、恢复和回退。开发轮次通过[历史证据与版本](#历史证据与版本)追溯，不作为当前能力的阅读顺序。业务API精确路由和SQL由KnowledgeMap仓库文档18维护；提醒列表用户规则归[文档19](19_提醒列表与定时汇总.md)。
++
++<a id="1-需求与交付范围"></a>
++
++<a id="用户目标"></a>
++
++## 需求与交付范围
+ 
+ 网站和 QQ 助手作为两个入口，共用个人项目已经提供的业务能力与同一份业务数据。模型理解用户表达、查询事实、组织参数并调用工具；业务模块负责校验、执行、持久化，返回真实结果。用户无需知道表名、SQL 或内部记录 ID。
+ 
+@@ -21,24 +23,17 @@
+ | --- | --- | --- |
+ | 天气 | 地点查询、天气读取、失败与数据时效说明 | 默认地点与已有高级天气能力的处理见 Q04 |
+ | 待做事项 / 提醒列表 | 查询、新增、修改、完成、作废、恢复；衔接每日汇总 | 状态、无 DDL 表达和存量迁移见 Q01–Q02 |
+-| 记账 | 新增、查询、月度汇总、单笔修改与实际删除；分类通过真实标签目录取得 | 唯一目标直接执行，歧义澄清；不批量、不承诺删除撤销，第二轮规则见第10节 |
+-| TradeSim | 暂不接入 | 模块尚未完成，本轮不包装或调用其接口 |
++| 记账 | 新增、查询、月度汇总、单笔修改与实际删除；分类通过真实标签目录取得 | 唯一目标直接执行，歧义澄清；不批量、不承诺删除撤销，规则见[账单完整维护](#账单完整维护) |
++| TradeSim | 暂不接入 | 模块尚未完成，当前范围不包装或调用其接口 |
+ | Notes / 知识图谱 | 暂不接入 | `/notes` 的接法尚未确定 |
+ 
+-本轮不建设通用工作流引擎。模型可以先查列表/标签，再调用维护接口；以后对流程稳定、复杂且实测成功率不足的高频任务，另行评估固定工作流。
+-
+-### 记录约定
+-
+-遵循用户引用的 [tp2.txt](tp2.txt) 工作习惯：本文保留需求、现行契约、已定判断与理由、产物路径及待办指针；不累积互相矛盾的旧计划。关键业务选择等待用户决定，独立方向可在获得继续开发指令后推进。
+-
+-Fusion 的任务排期统一见[待办清单](待办清单.md)，逐轮结果见证据；KnowledgeMap 的执行状态仍以其根目录 `/home/afrangry/repository/todolist.txt` 的稳定任务 ID 为准。业务API/测试契约见该库 `docs/18_助手业务接口与共享数据.md`，本文件只引用，不复制整套进度清单。
+-
+-### 术语
+-
+-- **runner**：原生Cron按固定payload启动的汇总程序，直接读业务API，不调用模型（定义见[文档21](21_后端职责分层与代码整理.md#术语)）。
+-- **slot**：一次计划播报，键为“日期 + 设定时刻（HH:mm）”。同一slot只生成一次播报，重复触发不再发送。
+-
+-## 2. 接口与运行边界
++当前范围不建设通用工作流引擎。模型可以先查列表/标签，再调用维护接口；以后对流程稳定、复杂且实测成功率不足的高频任务，另行评估固定工作流。
++
++<a id="术语"></a>
++
++<a id="2-接口与运行边界"></a>
++
++## 接口与运行边界
+ 
+ 常驻专用API为`127.0.0.1:3086`，由`knowledgemap-assistant.service`运行；它读取网站同一业务数据库和后端配置。网站`localhost:3000`、开发后端默认`127.0.0.1:3085`不是助手日常依赖入口；`/api/health`只证明进程存活。
+ 
+@@ -46,7 +41,13 @@
+ 
+ Fusion同步Policy/Store拒绝Promise/thenable，不能拿HTTP驱动冒充同步Store。共享待做走显式异步应用边界，本地仅保留播报/请求/投递控制，详见下节和文档19。
+ 
+-## 3. 架构与职责
++本文的**runner**是原生Cron按固定payload启动的独立汇总程序，直接读业务API、不调用模型；完整定义见[文档21](21_后端职责分层与代码整理.md#术语)。**slot**是一轮计划播报，键为“日期 + 设定时刻（HH:mm）”；同一slot只生成一次播报，重复触发不再发送。
++
++## 当前业务与执行契约
++
++<a id="3-架构与职责"></a>
++
++### 架构与职责
+ 
+ ```mermaid
+ flowchart LR
+@@ -69,97 +70,85 @@
+ 
+ 记账由 `kurumi-knowledgemap` 插件提供三份窄工具（查询、新增、维护），待做与天气保留原领域工具名称并接入API适配；三者共用异步HTTP客户端。不引入通用工作流引擎或另一套同步机制。
+ 
+-### 写入与查询契约
++<a id="写入与查询契约"></a>
++
++### 写入、查询、版本与幂等
+ 
+ 1. 查询返回真实 ID、必要的版本/并发标记、明确总数与分页信息；目标定位由模型基于返回事实完成。
+ 2. 写入关联可信请求和幂等键，业务端在同一事务中保存业务结果与幂等结果。响应丢失后按同一键核对，不能无条件重复 POST。
+ 3. 已有项维护须能够发现“网站在查询后又改过这条”的冲突；冲突返回后重新查询，不静默覆盖。版本机制需覆盖网站与助手的写入口。
+ 4. 错误区分参数不合法、未找到、并发冲突、重复请求、连接失败、结果未知；未取得确定结果时不宣称成功，也不静默改写到旧库。
+ 5. 业务校验由个人项目统一承担；桥接可做传输契约检查，不复制另一套分类或事项状态规则。无必要字段先澄清，可空字段按业务契约留空。
+-6. 沿用现有确认共享件；本轮不重新设计全局确认机制。一次性提醒的带码确认保持原规则，新增账单/维护事项的权限边界按 Q03 及业务范围落实。
++6. 沿用现有确认共享件；不重新设计全局确认机制。一次性提醒的带码确认保持原规则，新增账单/维护事项的权限边界按 Q03 及业务范围落实。
+ 
+ 共享网络调用由异步应用服务与API适配承接，复用无I/O规则；同步注册表契约保持不变。后续扩展仍需先列清影响范围，避免波及记忆、邮件等同步消费者。
+ 
+-### 权限与日志
++<a id="10-第二轮账单完整维护与调用链优化"></a>
++
++<a id="决策与边界"></a>
++
++### 账单完整维护
++
++- 用户已确认：明确且唯一的单笔修改、删除直接执行；先查真实记录和版本，指代有歧义先澄清，不开放批量删除。删除沿用网站实际删除规则；不是作废或回收站，不承诺撤销，保留请求回执与删除前快照供审计。一次性提醒的带码确认不变。
++- KnowledgeMap 继续拥有唯一业务数据及校验。账单增加共享版本，网站编辑/删除携带读取时版本；助手按ID及版本维护，冲突重新查询，不覆盖新事实。业务写入与幂等回执同事务。
++- 新增保留现有 `knowledge_bill_add`；查询补单条和备注筛选；增设窄工具 `knowledge_bill_manage(action=update|delete)`。后端消费结构化动作，不解析聊天动词。单条维护保存前后快照；首期只支持一次消息一笔。
++- 提升工具说明及模型实际可见参数提示，不把模型字段错误静默改写成合法写入。用真实宿主首次调用证据评估，不能保证模型永不犯错。
++- 从受支持的真实工具调用上下文取得runId，贯穿HTTP头、API日志和旁路事件；不伪造runId或只在测试夹具塞字段。
++- 默认城市共库、TradeSim、Notes、批量账单维护、网站视觉重构与论文业务不在已交付范围。
++
++<a id="权限与日志"></a>
++
++### 权限与真实runId
+ 
+ 业务工具按[文档24](24_统一身份与权限管理.md)逐项授权，记账/待做/天气仍owner-only；不放宽QQ主agent的通用文件/命令能力，配置只经同步契约部署。
+ 
+-固定配置 KnowledgeMap 的服务地址，凭据仅在私密文件保存（本轮为 `~/.config/knowledgemap/assistant-token`，600）。助手访问使用独立认证与受限能力，不能把网站登录密钥交给模型，也不能把CORS当认证。沿用 [文档 18](18_跨模块链路日志查询.md) 的扩展方式关联 QQ 消息、run、工具、API 请求与业务记录 ID；日志隐藏凭据和不必要的个人正文。
+-
+-## 4. 已确认决定与迭代范围
+-
+-| 编号 | 用户决定（2026-10-17） | 本轮落实方式 |
++固定配置 KnowledgeMap 的服务地址，凭据仅在私密文件保存（位置为 `~/.config/knowledgemap/assistant-token`，600）。助手访问使用独立认证与受限能力，不能把网站登录密钥交给模型，也不能把CORS当认证。沿用 [文档 18](18_跨模块链路日志查询.md) 的扩展方式关联 QQ 消息、run、工具、API 请求与业务记录 ID；日志隐藏凭据和不必要的个人正文。
++
++真实runId由共享[tool-trace.js](../chatbot/packages/knowledgemap-client/tool-trace.js)在宿主before/after_tool_call钩子中，按可信会话与真实toolCallId关联，并在完成或重置时清理。工厂上下文不提供runId；模型参数不参与生成。账单、事项、天气复用该关联，HTTP头、旁路事件和业务写日志使用同一值。固定Cron没有对话run时允许留空，不伪造。关联强度与查询入口见[文档18](18_跨模块链路日志查询.md#适配器与关联规则)。
++
++<a id="4-已确认决定与迭代范围"></a>
++
++### 已确认的范围决定
++
++| 编号 | 用户决定（2026-10-17） | 有效决定与对应规则 |
+ | --- | --- | --- |
+ | Q01 | 默认采用网站待做规则，Kurumi侧相应调整 | 已实现，唯一业务规则见[文档19](19_提醒列表与定时汇总.md#当前规则)，本文件不维护第二份状态/DDL规范 |
+ | Q02 | 同意存量切换 | 验证后迁移现存事项及状态，保留时刻、次数与暂停设置，工具与固定播报 runner 同批切换；旧库保留，不双写 |
+-| Q03 | 首期新增、查询、月汇总；首轮闭环后开放修改/删除；用户进一步确认明确唯一单笔直接执行 | 第二轮已落实真实ID/version、实际删除、歧义澄清和事务幂等；不新增带码确认、批量或撤销 |
+-| Q04 | 本轮不自动同步默认城市；后期整合数据库时读取同一数据库中的默认城市，可能第三轮 | 本轮共享天气查询并保留既有能力；统一偏好作为后续迭代，不默认改动当前城市 |
++| Q03 | 首期新增、查询、月汇总；首轮闭环后开放修改/删除；用户进一步确认明确唯一单笔直接执行 | 已落实真实ID/version、实际删除、歧义澄清和事务幂等；不新增带码确认、批量或撤销 |
++| Q04 | 本需求不自动同步默认城市；后期整合数据库时读取同一数据库中的默认城市，可能第三轮 | 本需求共享天气查询并保留既有能力；统一偏好作为后续迭代，不默认改动当前城市 |
+ 
+ 事项字段、逾期/无DDL/活动条件和恢复规则统一引用文档19；本桥接不另定义状态语义。TradeSim、Notes不接入。关键新决策如确需用户判断，将单独标为阻塞；目前没有等待用户回答的阻塞。
+ 
+-## 5. 切换与回退约束
+-
+-工具、调度器和独立runner必须同批切换；持久`data-source.json`约束旧Cron，不从旧SQLite业务表静默回退，设置和投递账本仍由本地维护。具体读写分工在文档19，首次操作步骤见下文“迁移与切换”。
+-
+-回退代码不能简单重新启用旧库：先暂停有关写入，备份共享状态并核对增量，再决定保留方式。完整恢复需要Fusion材料、KnowledgeMap MySQL、环境及专用token；配对备份不是同一时刻停写。运行快照、停机和远端推送按实际授权执行。
+-
+-## 6. 测试、产物与完成标准
+-
+-### 测试计划
+-
+-已执行的结果见第8节与专项证据；下表同时规定今后回归需要覆盖的边界。测试优先使用隔离状态与临时数据库，不能清空真实账单或 `calendar_events`，不能将示例事项当真实数据导入。
+-
+-| 层次 | 必测内容 | 证明范围 |
+-| --- | --- | --- |
+-| 业务端隔离 | 金额/标签、日期空值、状态、分页、认证、并发冲突、同键重试与不同参数拒绝、事务失败回滚 | 业务规则和接口契约；不等同真实 MySQL/QQ |
+-| 桥接层 | 固定地址、身份上下文、超时、错误结构、未知写入结果、参数映射；不允许任意 URL/SQL | 工具与 HTTP 客户端行为 |
+-| 同数据集集成 | 助手创建账单→网站 API 可见；网站创建账单→工具可查；待做双向维护与冲突 | 两入口操作同一记录，不以两份副本的相似结果替代 |
+-| 模型对话 | “午饭 14 元”、无 DDL、“活动后”、第几条/同名项、`/new` 后先查再维护、失败不谎报成功 | 模型真实选工具与参数能力；模拟工具通过不算真实接口通过 |
+-| 调度与迁移 | 查询与汇总同源、终态过滤、可改时刻/暂停、同 slot 防重、API 离线不播假列表、存量映射与重复导入 | 调度与数据切换契约；输出正文与 QQ 送达分别验证 |
+-| 真实入口 | 网站显示实际记录、本人 QQ 查询/维护/回执；天气地点、时效与失败情况 | 实际页面和频道链路；只向本人私聊，测试事项可追溯清理 |
+-| 相关回归 | 原一次性提醒/确认、天气与列表相关用例；Fusion 配置、人格、依赖与健康四项自检 | 既有能力与部署对齐，不声称所有领域均端到端通过 |
+-
+-天气测试使用可控上游覆盖失败和缺失字段，真实上游另做只读冒烟。真实业务写入测试须使用明确测试标记、记录精确 ID 并按 ID 清理；保留审计，不对表做整体删除。
+-
+-### 产物归属与索引
+-
+-精确产物和脚本清单见文末「本轮产物登记」。归属规则：
+-
+-- Fusion领域脚本在 `chatbot/scripts/`，测试在 `chatbot/tests/knowledgemap/`；按文件或套件在 `scripts/fusion/documentation-map.json`关联本文件，登记 `verification/SCRIPTS.md`。
+-- KnowledgeMap脚本、测试、SQL分别在其 `backend/scripts/`、`backend/tests/`、`backend/sql/`；反向引用该项目文档18，执行 `check_doc_refs.py`。
+-- 证据放专项目录并登记INDEX和可执行分类；没有向archive或根目录投放测试文件。不执行含DROP的schema快照升级真实库。
+-
+-完成条件：三个纳入领域的已确认范围均有实现和对应证据；网站与助手读写同一事实；原提醒播报衔接且不重复；权限/错误/并发/幂等有验证；迁移可核对；文档与实际部署一致；未覆盖及阻塞写清。不把“插件能加载”或“服务健康”作为功能全部通过的证据。
+-
+-## 7. 并行开发与 Git 边界
+-
+-两仓库各自按实际HEAD建立隔离工作区。共享入口按具体差异审阅与合入，只提交本任务文件/代码块，不能用 `git add .` 混入其他任务。运行配置同步前同样审阅并行意图，源码授权不自动授权远端推送。
+-
+-2026-10-17 的起点、分支、工作树、私有差异包和代码基线保留在[阶段记录](archive/documentation-2026-10-23/23_KnowledgeMap业务能力桥接.md#7-并行开发与-git-边界)，不能据其推断当前工作区或推送状态。代码包不包含数据库和全部私密状态，不能当全量恢复点。
+-
+-
+-## 8. 实施与验收记录
+-
+-| 阶段 | 来源版本与证据 |
+-| --- | --- |
+-| 天气、共享待做、记账首轮 | Fusion `4f26366` / KnowledgeMap `a311fe8`；[原专项报告](verification/knowledgemap-bridge-2026-10-17/README.md) |
+-| 账单完整维护与真实runId | Fusion `97ed797` / KnowledgeMap `1efec0e`；[第二轮报告](verification/knowledgemap-bills-round2-2026-10-17/README.md) |
+-
+-详细实施、存量计数、错误修复和部署过程见[阶段记录](archive/documentation-2026-10-23/23_KnowledgeMap业务能力桥接.md)。原始失败回执保持不变；真人手机、合成入站、隔离模型/API和QQ实际送达分别说明，不互相替代。当前验收摘要归[文档16](16_验收与测试总表.md)。
+-
+-
+-## 迁移与切换
++<a id="迁移与切换"></a>
++
++## 迁移
++
++以下是首次切换的可复验步骤；已迁移生产不能将示例当日常重置。历史14项映射见原阶段记录，操作前重新预览本次来源并核对哈希。
+ 
+ 1. 验证本次获授权的变更前备份后，KnowledgeMap `backend/scripts/migrate_assistant.py --apply --backup-dir <变更前基线绝对路径>` 只修改日期可空并添加note/version与请求/来源表；定向SQL留在 `backend/sql/assistant_bridge.sql`。MySQL DDL非事务，脚本按存在性可重跑；不改原业务行。
+ 2. 安装 `backend/scripts/knowledgemap-assistant.service`，专用API监听127.0.0.1:3086，token文件600；数据库和天气配置读取网站同一backend/.env。
+ 3. 暂停旧列表写入；CLI通过 `KURUMI_KM_BASE_URL=http://127.0.0.1:3086 KURUMI_KM_TOKEN_FILE=/home/afrangry/.config/knowledgemap/assistant-token OPENCLAW_STATE_DIR=/home/afrangry/.openclaw-fusion` 指定连接和来源目录。运行 `chatbot/scripts/import-knowledgemap-list.mjs --source <旧列表绝对库路径>` 默认预览。来源hash和网站冲突均需核对，不能相似标题自动合并；重复来源ID不重复建行。
++<a id="5-切换与回退约束"></a>
++
++## 切换与回退约束
++
++迁移写入和`--activate`在下列同一次导入中执行；先完成上一节的来源预览、哈希核对与授权备份。
++
+ 4. `--apply --expect-source-hash <预览hash> --backup-dir <变更前基线绝对路径> --activate` 保存来源映射，核对源数据未变后原子写入 `state/personal-reminder-list/data-source.json`。旧expired/void保持归档，completed保留完成；原始字段和版本保存在来源表，业务行使用网站版本。
+ 5. 持久标记保证旧Cron即使没有新环境变量也走共享API；SQLite旧items读写拒绝。再同步配置/人格并启动Fusion，调度器将原声明更新为共享runner；相同slot的历史投递账本不重置。
+ 6. 核对本次预览的全部映射（首轮14项见阶段记录）、两入口、设置与声明、旧项逻辑hash、API失败不旧库回退、本人私聊投递和四项自检。若导入发现真实歧义，阻塞那条迁移，不猜测。
+ 
+-## 备份与恢复演练
+-
+-恢复测试：`node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <变更前基线绝对路径>`；MySQL恢复与并发在网站 `backend/tests/assistant_mysql_cases.py --backup-dir ... --env-file ...`。只在独立目录/唯一临时库操作，生产库不DROP。压缩包SHA256针对gzip字节，另验证解压完整性。
++工具、调度器和独立runner必须同批切换；持久`data-source.json`约束旧Cron，不从旧SQLite业务表静默回退，设置和投递账本仍由本地维护。具体读写分工在文档19，来源预览见[迁移](#迁移)，激活步骤在本节维护。
++
++回退代码不能简单重新启用旧库：先暂停有关写入，备份共享状态并核对增量，再决定保留方式。完整恢复需要Fusion材料、KnowledgeMap MySQL、环境及专用token；配对备份不是同一时刻停写。运行快照、停机和远端推送按实际授权执行。
++
++回退代码与数据分开：先暂停桥接写入并保存切换后的共享库/状态；上述Git bundle+工作树包可恢复两端代码及当时未提交工作。添加的兼容列/表可以保留；恢复旧列表前核对KnowledgeMap新增/修改的事项增量，不能仅删除切换标记或把旧备份覆盖新业务事实。token、backend/.env、运行配置需私密备份。远端不推送。
++
++## 备份
++
++Fusion与KnowledgeMap分别采集代码、配置及私密状态；Fusion SQLite快照不包含共享MySQL。分时配对不等于跨系统同一时刻停写。代码备份脚本`chatbot/scripts/backup-knowledgemap-code.mjs`保存两端Git bundle、工作树、独立index和patch，不停止服务，也不包含忽略文件或数据库；MySQL另用业务端`backup_assistant.py`。
++
++### 配对资料与恢复范围
+ 
+ 切换后资料配对保留（不是跨系统同一时刻停写快照）：
+ 
+@@ -168,20 +157,32 @@
+ | KnowledgeMap共享库及私密配置 | `/home/afrangry/kurumi-backups/knowledgemap-bridge-2026-10-17-post-cutover/`；`backend/scripts/backup_assistant.py` 的MySQL single-transaction导出。独立临时库完整恢复、迁移二次无操作、双会话冲突、并发同键写入均通过；恢复数量与用例数见第一轮证据 `recovery.json` |
+ | Fusion源码和运行材料 | `/home/afrangry/kurumi-backups/2026-10-16-18-07-42-knowledgemap-post-cutover/`；源提交`4f26366`加当时未提交补丁/未跟踪文件，含并行工作现场；`quiesced=false`，SQLite全部健康，manifest项全部匹配。修正依赖装配后的隔离Gateway/导入/模拟投递/项目检查全部通过，不含共享MySQL；数量见第一轮证据 `recovery.json` |
+ 
++切换后的代码收尾包含查询runId关联、恢复装配修复、脚本索引和本文件结论，晚于上述备份；从Git中的本任务收尾提交恢复这些工具。备份本身不改写为“最新提交、跨库全静止”。原始演练目录仅是私密临时产物，持久证据见专项目录`recovery.json`和README。
++
++<a id="第二轮回退资料"></a>
++
++### 账单完整维护的代码与MySQL资料
++
++| 材料 | 保留位置与范围 |
++| --- | --- |
++| 代码与并行工作现场 | `/home/afrangry/kurumi-backups/knowledgemap-bills-round2-2026-10-17-code/`；采集Fusion `c1844dd`、KnowledgeMap `27f4519`及当时工作树/index，代码恢复逐项核对通过 |
++| MySQL与私密配置 | `/home/afrangry/kurumi-backups/knowledgemap-bills-round2-2026-10-17-mysql/`；临时库完整恢复与迁移/并发用例见第二轮报告 |
++
++两者分时采集，不是跨系统停写快照；账单维护实现提交需与这些资料配合。没有包含账单维护新增状态的Fusion全量快照，旧快照不能冒称覆盖。模型字段/分类选择仍可能出错，后端严格拒绝；无真人手机连续对话或该轮QQ新增外发验收。共享默认城市、TradeSim、Notes、批量与删除撤销仍不在已交付范围。
++
++<a id="备份与恢复演练"></a>
++
++## 恢复验证
++
++恢复测试：`node chatbot/tests/knowledgemap/recovery.mjs --backup-dir <变更前基线绝对路径>`；MySQL恢复与并发在网站 `backend/tests/assistant_mysql_cases.py --backup-dir ... --env-file ...`。只在独立目录/唯一临时库操作，生产库不DROP。压缩包SHA256针对gzip字节，另验证解压完整性。
++
+ 完整Fusion演练命令：`node scripts/fusion/restore-verify.mjs --backup <Fusion备份绝对路径>`。恢复副本使用不可用共享API和假token，禁Cron、真实投递和付费翻译；测试不访问真实业务。`scripts/fusion/lib/package-manifests.mjs`只读发现仓库自有锁文件包，由依赖自检和恢复器共同使用，避免新插件漏装。
+ 
+-切换后的代码收尾包含查询runId关联、恢复装配修复、脚本索引和本文件结论，晚于上述备份；从Git中的本任务收尾提交恢复这些工具。备份本身不改写为“最新提交、跨库全静止”。原始演练目录仅是私密临时产物，持久证据见专项目录`recovery.json`和README。
+-
+-回退代码与数据分开：先暂停桥接写入并保存切换后的共享库/状态；上述Git bundle+工作树包可恢复两端代码及当时未提交工作。添加的兼容列/表可以保留；恢复旧列表前核对KnowledgeMap新增/修改的事项增量，不能仅删除切换标记或把旧备份覆盖新业务事实。token、backend/.env、运行配置需私密备份。远端不推送。
+-
+-## 后续迭代与未覆盖范围
+-
+-- **第二轮已完成**：账单单笔修改、实际删除、共享版本/幂等及真实runId；结果见第10节。
+-- **后续数据库整合**：两端默认城市读取同库设置；本轮只共享天气业务API，Profile与网站偏好仍独立。
+-- **未覆盖**：真人从手机发起的完整往返、持续多轮真实聊天、整天四个时段连续播报、长期压力和长时间服务故障恢复。单次QQ送达、隔离故障回归与全量恢复演练不能代替这些验证。
+-- **不在范围**：TradeSim、Notes、条件事件触发、通用工作流引擎。当前无等待用户决定的首轮阻塞。
+-
+-### 本轮产物登记
++材料、模拟链路、真实依赖和同一时点停写分别记录。使用上节登记的配对资料，不得恢复到生产库或以删除切换标记代替回退。统一标准见[文档16](16_验收与测试总表.md#恢复点与证明范围)。
++
++<a id="本轮产物登记"></a>
++
++## 代码与脚本入口
+ 
+ | 路径 | 用途与边界 |
+ | --- | --- |
+@@ -200,39 +201,65 @@
+ | `chatbot/tests/knowledgemap/bills.test.mjs`、`acceptance-bills-live.mjs` | 第二轮离线声明/可信上下文用例；显式`--live --out <新文件>`验证真实模型/API/MySQL/网页/天气，无QQ外发，精确清理测试账单并关闭测试入口 |
+ | `scripts/fusion/lib/package-manifests.mjs`、`scripts/fusion/test/recovery.test.mjs` | 依赖包发现与恢复装配回归，归属本文件「备份与恢复演练」；不修改邮件/PDF业务 |
+ | 网站 `backend/tests/assistant_*`、`backend/scripts/{migrate_assistant,serve_assistant}.py` | 精确命令/边界见网站文档18「测试与脚本」，本文件不重复清单 |
+-| `docs/verification/knowledgemap-bridge-2026-10-17/` | 本轮证据，README说明边界；登记INDEX/SCRIPTS与分类脚本 |
+-
+-## 9. 维护与版本查询
+-
+-首次/第二轮实现提交分别在第8/10节登记；当前HEAD、工作区与远端以两仓库Git查询为准，不把2026-10-17的并行工作树状态当永久结论。后台副本在新任务前按[文档10](10_融合助手运行维护.md#后台开发副本契约)审阅和同步，不能从本文件历史检查表推断已追平。取证阶段、独立工作树与未提交依赖继续从专项报告和Git历史追溯。
+-
+-## 10. 第二轮：账单完整维护与调用链优化
+-
+-2026-10-17 用户授权实施。背景：真人 `/new` 后的午饭记账成功，但模型首次误用 `date`，自纠为 `expense_date`；业务日志未取得真实 runId。本轮将两点和账单增删改查一并完善，现已部署并在下述范围验收。
+-
+-### 决策与边界
+-
+-- 用户已确认：明确且唯一的单笔修改、删除直接执行；先查真实记录和版本，指代有歧义先澄清，不开放批量删除。删除沿用网站实际删除规则；不是作废或回收站，不承诺撤销，保留请求回执与删除前快照供审计。一次性提醒的带码确认不变。
+-- KnowledgeMap 继续拥有唯一业务数据及校验。账单增加共享版本，网站编辑/删除携带读取时版本；助手按ID及版本维护，冲突重新查询，不覆盖新事实。业务写入与幂等回执同事务。
+-- 新增保留现有 `knowledge_bill_add`；查询补单条和备注筛选；增设窄工具 `knowledge_bill_manage(action=update|delete)`。后端消费结构化动作，不解析聊天动词。单条维护保存前后快照；首期只支持一次消息一笔。
+-- 提升工具说明及模型实际可见参数提示，不把模型字段错误静默改写成合法写入。用真实宿主首次调用证据评估，不能保证模型永不犯错。
+-- 从受支持的真实工具调用上下文取得runId，贯穿HTTP头、API日志和旁路事件；不伪造runId或只在测试夹具塞字段。
+-- 本轮不做默认城市共库、TradeSim、Notes、批量账单维护、网站视觉重构或文档22业务开发。
+-
+-### 第二轮开发与验收
+-
+-开发和部署过程见[阶段记录](archive/documentation-2026-10-23/23_KnowledgeMap业务能力桥接.md#第二轮开发与验收)，分层结果见[第二轮证据](verification/knowledgemap-bills-round2-2026-10-17/README.md)。产物沿用上表及网站文档18；不在正文保留已结束的执行复选框。
+-
+-第二轮新增 `chatbot/scripts/backup-knowledgemap-code.mjs`：读取两个主工作树，保存 Git bundle、工作树、独立index与patch到新的私密备份目录；不停止服务，不包含忽略文件和数据库。MySQL仍另用 `backup_assistant.py` 保存。
+-
+-### 第二轮回退资料
+-
+-| 材料 | 保留位置与范围 |
+-| --- | --- |
+-| 代码与并行工作现场 | `/home/afrangry/kurumi-backups/knowledgemap-bills-round2-2026-10-17-code/`；采集Fusion `c1844dd`、KnowledgeMap `27f4519`及当时工作树/index，代码恢复逐项核对通过 |
+-| MySQL与私密配置 | `/home/afrangry/kurumi-backups/knowledgemap-bills-round2-2026-10-17-mysql/`；临时库完整恢复与迁移/并发用例见第二轮报告 |
+-
+-两者分时采集，不是跨系统停写快照；本轮实现提交需与这些资料配合。没有包含第二轮新增状态的Fusion全量快照，旧快照不能冒称覆盖。模型字段/分类选择仍可能出错，后端严格拒绝；无真人手机连续对话或本轮QQ新增外发验收。共享默认城市、TradeSim、Notes、批量与删除撤销仍不在本轮已交付范围。
+-
++| `docs/verification/knowledgemap-bridge-2026-10-17/` | 首轮证据，README说明边界；登记INDEX/SCRIPTS与分类脚本 |
++
++<a id="记录约定"></a>
++
++<a id="6-测试产物与完成标准"></a>
++
++<a id="测试计划"></a>
++
++## 验收计划与产物归属
++
++已执行的结果见[历史证据与版本](#历史证据与版本)和专项证据；下表同时规定今后回归需要覆盖的边界。测试优先使用隔离状态与临时数据库，不能清空真实账单或 `calendar_events`，不能将示例事项当真实数据导入。
++
++| 层次 | 必测内容 | 证明范围 |
++| --- | --- | --- |
++| 业务端隔离 | 金额/标签、日期空值、状态、分页、认证、并发冲突、同键重试与不同参数拒绝、事务失败回滚 | 业务规则和接口契约；不等同真实 MySQL/QQ |
++| 桥接层 | 固定地址、身份上下文、超时、错误结构、未知写入结果、参数映射；不允许任意 URL/SQL | 工具与 HTTP 客户端行为 |
++| 同数据集集成 | 助手创建账单→网站 API 可见；网站创建账单→工具可查；待做双向维护与冲突 | 两入口操作同一记录，不以两份副本的相似结果替代 |
++| 模型对话 | “午饭 14 元”、无 DDL、“活动后”、第几条/同名项、`/new` 后先查再维护、失败不谎报成功 | 模型真实选工具与参数能力；模拟工具通过不算真实接口通过 |
++| 调度与迁移 | 查询与汇总同源、终态过滤、可改时刻/暂停、同 slot 防重、API 离线不播假列表、存量映射与重复导入 | 调度与数据切换契约；输出正文与 QQ 送达分别验证 |
++| 真实入口 | 网站显示实际记录、本人 QQ 查询/维护/回执；天气地点、时效与失败情况 | 实际页面和频道链路；只向本人私聊，测试事项可追溯清理 |
++| 相关回归 | 原一次性提醒/确认、天气与列表相关用例；Fusion 配置、人格、依赖与健康四项自检 | 既有能力与部署对齐，不声称所有领域均端到端通过 |
++
++天气测试使用可控上游覆盖失败和缺失字段，真实上游另做只读冒烟。真实业务写入测试须使用明确测试标记、记录精确 ID 并按 ID 清理；保留审计，不对表做整体删除。
++
++<a id="产物归属与索引"></a>
++
++### 记录与完成标准
++
++精确产物和脚本清单见[代码与脚本入口](#代码与脚本入口)。归属规则：
++
++- Fusion领域脚本在 `chatbot/scripts/`，测试在 `chatbot/tests/knowledgemap/`；按文件或套件在 `scripts/fusion/documentation-map.json`关联本文件，登记 `verification/SCRIPTS.md`。
++- KnowledgeMap脚本、测试、SQL分别在其 `backend/scripts/`、`backend/tests/`、`backend/sql/`；反向引用该项目文档18，执行 `check_doc_refs.py`。
++- 证据放专项目录并登记INDEX和可执行分类；没有向archive或根目录投放测试文件。不执行含DROP的schema快照升级真实库。
++
++完成条件：三个纳入领域的已确认范围均有实现和对应证据；网站与助手读写同一事实；原提醒播报衔接且不重复；权限/错误/并发/幂等有验证；迁移可核对；文档与实际部署一致；未覆盖及阻塞写清。不把“插件能加载”或“服务健康”作为功能全部通过的证据。
++
++<a id="7-并行开发与-git-边界"></a>
++
++<a id="8-实施与验收记录"></a>
++
++<a id="9-维护与版本查询"></a>
++
++<a id="第二轮开发与验收"></a>
++
++## 历史证据与版本
++
++| 阶段 | 来源版本与证据 |
++| --- | --- |
++| 天气、共享待做、记账首轮 | Fusion `4f26366` / KnowledgeMap `a311fe8`；[原专项报告](verification/knowledgemap-bridge-2026-10-17/README.md) |
++| 账单完整维护与真实runId | Fusion `97ed797` / KnowledgeMap `1efec0e`；[第二轮报告](verification/knowledgemap-bills-round2-2026-10-17/README.md) |
++
++详细实施、存量计数、错误修复和部署过程见[阶段记录](archive/documentation-2026-10-23/23_KnowledgeMap业务能力桥接.md)。原始失败回执保持不变；真人手机、合成入站、隔离模型/API和QQ实际送达分别说明，不互相替代。当前验收摘要归[文档16](16_验收与测试总表.md)。
++
++Fusion任务排期归[待办清单](待办清单.md)；KnowledgeMap执行项仍以其`/home/afrangry/repository/todolist.txt`的稳定任务ID为准。两仓库代码与Git边界、当时工作树及部署记录见[阶段记录](archive/documentation-2026-10-23/23_KnowledgeMap业务能力桥接.md)。当前HEAD/工作区/远端按[文档12](12_目录资产与Git备份整理.md#git-与实时状态查询)重新查询，不能由历史代码包推断已提交推送或完整恢复。
++
++## 后续迭代与未覆盖范围
++
++- **后续数据库整合**：两端默认城市读取同库设置；当前范围只共享天气业务API，Profile与网站偏好仍独立。
++- **未覆盖**：真人从手机发起的完整往返、持续多轮真实聊天、整天四个时段连续播报、长期压力和长时间服务故障恢复。单次QQ送达、隔离故障回归与全量恢复演练不能代替这些验证。
++- **不在范围**：TradeSim、Notes、条件事件触发、通用工作流引擎。当前无等待用户决定的首轮阻塞。
+ 
+ 返回[文档入口](README.md)。
+diff --git a/docs/24_统一身份与权限管理.md b/docs/24_统一身份与权限管理.md
+--- a/docs/24_统一身份与权限管理.md
++++ b/docs/24_统一身份与权限管理.md
+@@ -2,13 +2,13 @@
+ 
+ 类型：身份与授权规则。状态：**首期实现已部署；已登记成员 `3311723223`、`2752966052` 启用相同聊天/论文权限，群聊与成员个人业务关闭。** 各成员真人验收结论见[文档16](16_验收与测试总表.md#分领域验收摘要)。实现范围按既有部署记录；2026-10-23仅整理结构。阅读入口：[文档目录](README.md)。
+ 
+-本文维护身份来源、执行策略、资源隔离和运维步骤。成员真人验收与整体证明范围只由[文档16](16_验收与测试总表.md)维护；已完成的成员登记/重载与开发过程见[阶段记录](archive/documentation-2026-10-23/24_统一身份与权限管理.md)，不作为日常操作许可。
++本文按身份来源、权限执行、资源隔离、登记撤权和代码入口组织。成员部署经过、提交审查和定向补验保留在[历史记录](archive/documentation-2026-10-23/24_统一身份与权限管理.md)，当前验收与缺口见[文档16](16_验收与测试总表.md)。
+ 
+-## 当前进度
++<a id="当前进度"></a>
+ 
+-本节保留历史链接入口；实现范围以文首状态为准，待完成条件见[第7节](#7-未完成与范围外)，逐次结果见[阶段记录](archive/documentation-2026-10-23/24_统一身份与权限管理.md#当前进度)。
++<a id="1-需求与已定范围"></a>
+ 
+-## 1. 需求与已定范围
++## 需求与已定范围
+ 
+ 用户希望用一张矩阵管理身份敏感功能：每行一个 QQ，另有“性质”区分 QQ 用户/群，其余列表示聊天、论文、发消息、发邮件等功能权限；人数少，可采用本地文件。用户明确授权 `3311723223` 和 `2752966052`，均仅开放一般聊天、论文检索、PDF导入、翻译、取消任务和QQ文件回传；各自登记为独立member，不视为主人别名。
+ 
+@@ -16,7 +16,9 @@
+ 
+ 统一的是**身份授权的管理与判断**。插件加载、Agent 工具上限、网络域名、文件路径、项目保护根、翻译模型组合与费用限制继续独立生效。模型理解请求并组合窄工具；聊天正文、自报身份、昵称、引用、网页、PDF 和模型参数都不能授予身份或改变接收人。原有事务、版本、幂等、确认和未知投递对账保留。
+ 
+-## 2. 唯一配置来源与管理方式
++<a id="2-唯一配置来源与管理方式"></a>
++
++## 身份来源
+ 
+ [config/access-control.json](../config/access-control.json) 是唯一编辑来源。`version=1` 表示结构版本，`revision` 是操作者每次修改时递增的策略版本；`subjects` 每行含：
+ 
+@@ -44,7 +46,9 @@
+ 
+ 没有 QQ 内改权限工具或可视化编辑器；`access.manage` 作为保留的管理员能力键，不代表聊天模型能编辑授权。未来换成 SQLite 时只替换唯一持久来源并明确迁移，不同时维护两份权威数据。
+ 
+-## 3. 权限字典与执行边界
++<a id="3-权限字典与执行边界"></a>
++
++## 权限执行
+ 
+ 完整权限及工具/action 映射只在 [permissions.js](../chatbot/packages/access-control/permissions.js) 维护；未知工具拒绝，新增业务须同时登记映射和测试。当前分组如下：
+ 
+@@ -68,7 +72,9 @@
+ 
+ `commands.ownerAllowFrom` 只承担原宿主管理命令兼容；它与业务身份来源不同步手工维护。单独关闭某个管理权限不撤销已经登记的 Cron 或追回已发内容；需取消已有任务时按领域工具处理。禁用 chat.use/身份和发送权限会拒绝后续相关入口/投递。
+ 
+-## 4. 会话、资源与投递隔离
++<a id="4-会话资源与投递隔离"></a>
++
++## 资源与投递隔离
+ 
+ ```mermaid
+ flowchart TD
+@@ -90,14 +96,9 @@
+ - QQ 消息和文件始终回传被绑定身份自身，不从异步闭包重新读取 owner 当接收人。主人旧账本幂等键保持，成员按身份命名空间，防止相同 key 串用回执。仍共享原全局滚动配额/最多5个等待任务，不提供成员独立费用账单或调度公平性保证。
+ - 邮件、记忆、Profile/行程、提醒、KnowledgeMap、研究/代码数据保持 owner-only。邮件草稿没有多主体改造，confirmation-core 的主人 scope 不放宽，不能仅授权一个权限就让成员访问旧库。
+ 
+-## 5. 日志与维护步骤
++<a id="5-日志与维护步骤"></a>
+ 
+-授权审计位于 `.openclaw-fusion/channel/access-events.jsonl`，0600。事件含工具/权限、允许或拒绝码、策略 revision、可信 requester 的有限元数据及 session/run/toolCallId；不记录工具参数、聊天/PDF 正文或凭据。查询与扩展契约见[文档18](18_跨模块链路日志查询.md)：
+-
+-```bash
+-node scripts/fusion/log-query.mjs --source access-control --json
+-node scripts/fusion/log-query.mjs --source access-control --contains capability_not_allowed
+-```
++## 登记与撤权
+ 
+ 新增成员的登记步骤：
+ 
+@@ -108,7 +109,9 @@
+ 
+ 撤权时禁用记录或收回显式权限并递增 revision，同步并重启；保留工作区、文档、任务和投递账本用于核对。已有在途发送与已发生付费不保证可撤回。回退代码前先禁用成员并处理活动任务；有多身份状态后不能仅回退代码就声称恢复了单主人状态。
+ 
+-## 6. 开发决定与验证快照
++<a id="6-开发决定与验证快照"></a>
++
++## 代码入口
+ 
+ 当前代码使用JSON与目录命名空间，无本需求数据库SQL迁移。执行授权与资源隔离的实现入口如下：
+ 
+@@ -120,10 +123,18 @@
+ | 配置编译 / 人格同步 | `scripts/fusion/sync-config.mjs`、`scripts/fusion/sync-persona.mjs` |
+ | 只读管理与离线用例 | `chatbot/scripts/access-control.mjs`、`chatbot/tests/access-control/` |
+ 
+-首期实现、真实宿主交接补正、成员登记和部署已移至[阶段记录](archive/documentation-2026-10-23/24_统一身份与权限管理.md#6-开发决定与验证快照)，原始回执仍在[权限专项证据](verification/access-control-2026-10-19/README.md)。旧混合工作区观察不作为当前Git状态。
++## 审计与只读查询
+ 
++授权审计位于 `.openclaw-fusion/channel/access-events.jsonl`，0600。事件含工具/权限、允许或拒绝码、策略 revision、可信 requester 的有限元数据及 session/run/toolCallId；不记录工具参数、聊天/PDF 正文或凭据。查询与扩展契约见[文档18](18_跨模块链路日志查询.md)：
+ 
+-## 7. 未完成与范围外
++```bash
++node scripts/fusion/log-query.mjs --source access-control --json
++node scripts/fusion/log-query.mjs --source access-control --contains capability_not_allowed
++```
++
++<a id="7-未完成与范围外"></a>
++
++## 未完成与范围外
+ 
+ - **待验收：`2752966052` 真人聊天与论文往返。** 已部署相同10项共享权限（聊天、基本会话命令、公开检索、自身论文导入/读取/翻译/取消与QQ回传/任务通知）；邮件目标为空，其余权限拒绝。`3311723223` 已获用户验收反馈；配置/离线结果不代替新账号的真人验收。
+ - **未开发：其余个人业务的多用户数据归属/确认 scope、群聊、账号合并共享、可视化与 QQ 内权限管理。** 校验器明确拒绝超出首期的成员授权，不能通过手改权限绕过。
+@@ -132,10 +143,16 @@
+ 
+ 本需求关闭条件是首期代码/离线与隔离宿主/文档/部署一致，逐个成员记录部署与用户验收状态；不能将“开发完成”或某个成员反馈成功写成“所有业务已完成多用户验收”。完整结果见[文档16](16_验收与测试总表.md)与[证据索引](verification/INDEX.md)。
+ 
+-## 8. 提交审查发现与补验（2026-10-20）
++新成员完整聊天/论文验收由[待办N17](待办清单.md#n17)跟踪，隔离子项关联[待办E1.4/T3](待办清单.md#e1-人格和记忆)中的人格/记忆隔离用例；该用例不代替新账号完整论文往返。天气Cron补正仍由[待办N8](待办清单.md#n8-每日1030天气播报被访问控制拒绝)复验，不因本次重排关闭。
+ 
+-原发现基线为 `542b6f9`：CR-F01是账单权限未传入及宿主强制策略漏接线，修复归 `db5afec`；CR-F02是新权限上下文下旧测试夹具失配，修复归 `427a4e9`。两者于固定 `2ba0308` 副本完成定向补验，不作为当前待修事项。
++<a id="8-提交审查发现与补验2026-10-20"></a>
+ 
+-原发现、首次准备不足的环境失败、补验方法及未覆盖范围完整保留于[阶段记录](archive/documentation-2026-10-23/24_统一身份与权限管理.md#8-提交审查发现与补验2026-10-20)和[原回执](verification/access-control-2026-10-19/commit-review-2026-10-20.json)。定向补验不代表后续全部提交获准推送；外部 CR-K01 仍由[文档16](16_验收与测试总表.md#结论的使用范围)指向其所属项目。
++## 历史证据入口
++
++| 主题 | 原始记录与证明范围 |
++| --- | --- |
++| 成员登记、部署与真实宿主交接 | [阶段记录第6节](archive/documentation-2026-10-23/24_统一身份与权限管理.md#6-开发决定与验证快照)、[权限专项报告](verification/access-control-2026-10-19/README.md) |
++| 2026-10-20提交审查与补验 | [阶段记录第8节](archive/documentation-2026-10-23/24_统一身份与权限管理.md#8-提交审查发现与补验2026-10-20)、[原回执](verification/access-control-2026-10-19/commit-review-2026-10-20.json)；定向补验不代表全部提交获准推送 |
++| 外部CR-K01 | [文档16](16_验收与测试总表.md#结论的使用范围)指向KnowledgeMap所属问题；不能用Fusion修复关闭外部问题 |
+ 
+ 返回[文档入口](README.md)。
+diff --git a/docs/25_人格、记忆与会话连续性.md b/docs/25_人格、记忆与会话连续性.md
+--- a/docs/25_人格、记忆与会话连续性.md
++++ b/docs/25_人格、记忆与会话连续性.md
+@@ -2,9 +2,13 @@
+ 
+ 类型：现行规则与后续阶段设计。状态：**P1人格/关系与P2本人记忆已部署；自动记忆仅本人，`/new`保留长期事实和有期限近期摘要。P3–P5未实施，成员记忆关闭。** 自动阈值压缩、长期归纳与陪伴体验的验收边界见[文档16](16_验收与测试总表.md)，任务进度见[待办 E1](待办清单.md#e1-人格和记忆)。2026-10-23整理结构，未实施业务补正。
+ 
+-本文回答“哪些内容进入模型上下文、记忆如何读取和形成、会话如何延续”。[第2节](#2-已核实的现状)是文档—代码对应，[第9–11节](#9-p1共享人格与关系分离)维护现行契约；第4–7节同时保留明确标注的后续方案。已结束的实施、部署、调查和逐轮试聊见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)，原始证据保持不变。
+-
+-## 1. 需求与范围
++本文按人格来源、消息上下文、记忆存储与检索、写入、更正/遗忘和会话生命周期组织现行规则。P3—P5集中在[后续方案](#后续方案)；原实施、部署、调查和试聊通过[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)追溯。源码对应固定OpenClaw **2026.9.7**，不套用其他版本的默认行为。
++
++<a id="1-需求与范围"></a>
++
++<a id="8-建档与授权摘要"></a>
++
++## 需求与范围
+ 
+ 助手已具备聊天、论文、提醒等工具能力，本需求补充情感陪伴，让性格、对人的了解及相处经历能够跨会话延续，同时保持原有业务执行可靠。
+ 
+@@ -19,17 +23,38 @@
+ 
+ 本文件承接新的人格与连续性设计；当前人格切换契约见[配置契约](../config/README.md#人格投影契约)，身份及资源授权仍见[文档24](24_统一身份与权限管理.md)。
+ 
+-### 术语
+-
+-- **revision**：本人记忆状态的版本号，每次成功写入加1。写入必须带上读取时的 `expectedRevision`，与当前值不同即拒绝，调用方重新读取后再试。
+-- **CAS**（compare-and-set，比较后写入）：上面这种“版本相同才写入”的并发保护，在同一个SQLite事务里完成，防止两个回合互相覆盖。
+-- **generation**：记忆的“代”。更正一条事实的文本或遗忘一条事实时加1，并清空近期摘要。回合开始时记下generation，写入时若已变化就拒绝，旧回合因此不能把已更正或遗忘的内容写回。插件加载时的运行generation是OpenClaw的另一个字段，变化不表示记忆被改写。
+-- **遗忘屏障**：被更正或遗忘的原事实文本的哈希（最多保留256条）。自动记忆遇到相同文本时不再保存；本人显式要求重新记住时移除对应屏障。
+-## 2. 已核实的现状
+-
+-以下对应本仓库源码及固定 OpenClaw **2026.9.7** 的实际实现，不把其他版本的默认行为直接套入本项目。源码/运行目录分工见[配置契约](../config/README.md)。
+-
+-### 2.1 每条消息进入模型的内容
++用户于2026-10-19授权P1，2026-10-20明确D01/D02并同意P2本人自动记忆与`/new`连续性。该授权不覆盖持久情绪、主动联系或成员记忆，历史真实测试授权也不自动扩展到新一轮验证。[建档及授权过程](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md#8-建档与授权摘要)只作追溯。
++
++<a id="41-共享人格与关系"></a>
++
++<a id="9-p1共享人格与关系分离"></a>
++
++<a id="已决定的实现范围"></a>
++
++<a id="产物与验收结果"></a>
++
++## 人格来源与关系
++
++- 共享素材放 `roles/世凪.md`，性格、表达、兴趣、背景保持丰富；在这一份启用文件中内化共享的内在背景，不要求模型另读未注入的 INNER.md。
++- `config/persona.json` 增加按可信角色选择的 `relationshipFiles.owner/member`，关系素材放 `roles/relationships/`。SOUL/IDENTITY在各账号相同，关系段只投影到该账号的USER.md；本人资料不进入成员文件。
++- 本人使用平等恋人设定，日常称呼默认“你”；成员使用普通朋友设定。移除原卡预置的2026-03-13告白日期、学长关系与搬行李经历，不生成共同历史或纪念日。D03中的这些值不阻塞P1，以后用户指定后再增加。
++- 角色背景保留成年大学生、物理/文学兴趣与含蓄相处方式；不锁定2024入学/当前大二等随日期失效的学籍信息，不伪造当前线下活动、真实天气或见面经历。明确询问身份、工具与事实时诚实回答。
++- 移除当前无法执行的日记、mood.json、自动成长、Telegram reaction/撤回和睡眠拒答指令；工具用法继续由既有AGENTS模板及真实工具声明负责。原角色卡和上游许可保留可追溯来源。
++- 人格投影不改身份矩阵、模型、工具权限、会话历史、MEMORY或数据库；P2数据库由独立迁移维护。验收使用独立临时宿主与合成对话；真实QQ收件和主会话重置按实际授权执行。
++
++当前素材为[共享角色](../roles/世凪.md)、[本人恋人](../roles/relationships/本人恋人.md)、[成员普通朋友](../roles/relationships/普通朋友.md)。投影校验与四份受管文件同步只在[配置契约](../config/README.md#人格投影契约)展开。
++
++离线入口为 `chatbot/tests/persona/projection.test.mjs`；`acceptance-host.mjs`必须指定新的绝对`--out`，缺省确定性模型，显式`--live`才调用官方DeepSeek（最多24次、每次1200输出tokens）。实际注入/同会话热加载与模型试聊见[P1原报告](verification/persona-memory-2026-10-19/README.md)；逐轮失败、部署及检查结果见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)，不把隔离样本当主观陪伴验收。
++
++共享素材改编自固定版本[openclaw-persona-template@ee7465c](https://github.com/Candy-A-Mine/openclaw-persona-template/tree/ee7465c63550f9803f6f861580c33861ae4bf81b)，MIT许可见[roles](../roles/LICENSE.openclaw-persona-template)。素材比对、SHA256和P1注入大小见阶段记录，不把素材剧情当作真实共同经历。
++
++固定一次性提醒与天气输出由功能层维护，中性措辞见[文档21](21_后端职责分层与代码整理.md#确认契约与已知待办)；人格不能改变确认、权限或业务执行结果。
++
++<a id="2-已核实的现状"></a>
++
++<a id="21-每条消息进入模型的内容"></a>
++
++## 每次消息的上下文
+ 
+ | 内容 | 如何进入上下文 | 来源与实现 |
+ | --- | --- | --- |
+@@ -43,7 +68,19 @@
+ 
+ 宿主会按会话类型过滤：Cron仅保留四份受管候选，子agent只保留AGENTS，群/频道/子agent/Cron不装载根MEMORY；本项目另以独立成员workspace及业务授权隔离本人资料。单文件默认bootstrap预算为20000字符，仍须看最终输入确认截断；这不等于每次无条件发送文件全文。
+ 
+-### 2.2 长短期记忆与会话的区别
++<a id="42-记忆日记与成长"></a>
++
++<a id="10-p2记忆与会话连续性"></a>
++
++<a id="当前范围与进度2026-10-20"></a>
++
++## 记忆存储与检索
++
++<a id="22-长短期记忆与会话的区别"></a>
++
++<a id="存储与读取契约"></a>
++
++### 数据分层与唯一事实源
+ 
+ | 数据 | 唯一位置与生命周期 | 读取方式 |
+ | --- | --- | --- |
+@@ -54,7 +91,13 @@
+ | 日志、任务/投递账本、业务事项 | 各功能的私有状态与业务API | 对应领域查询或开发侧只读日志查询；不自动复制成陪伴记忆 |
+ | 持久情绪、角色日记、成长记录 | 后续P3/P4方案，尚无生效存储/加载契约 | 未实施，不能声称已经读取或形成 |
+ 
+-### 2.3 检索与多个会话
++连续性SQLite是唯一可写记忆事实源，以单行 `version=2` 的有界JSON快照保存事实、摘要、来源、回执和遗忘屏障；用SQLite事务及revision CAS处理并发。目录700、数据库600。`MEMORY.md`迁移后只作说明，旧读取接口留给兼容探针，旧写入明确拒绝；不复制Profile、事项或论文库。
++
++连续性组合使用 `continuityPolicyAdapter=current-owner`、`continuityStoreAdapter=sqlite`，与旧显式模式 `policyAdapter/storeAdapter` 分开；注册选择机制归[文档21](21_后端职责分层与代码整理.md#可插拔契约与扩展方法)。源码配置与首次迁移预览/备份/应用见[配置契约](../config/README.md#同步契约)，已迁移的事实条数和revision不是永久状态。
++
++<a id="23-检索与多个会话"></a>
++
++### 检索与多个会话
+ 
+ [application.js](../chatbot/plugins/kurumi-memory/continuity/application.js) 的显式 `search` 对规范化文本做子串匹配；当前没有向量相似检索、embedding或跨会话RAG。`context()`从本次原文提取拉丁字母/数字词和连续两个汉字片段，按命中数、更新时间给事实排序；先放事实，再按新到旧放摘要，超预算的整条跳过，不截断成半条。
+ 
+@@ -62,7 +105,9 @@
+ 
+ 多个QQ身份由路由分到不同Agent、workspace和会话；本人重新开聊仍读取自己的同一记忆库。后端权限映射只登记 `sessions_list`、`sessions_history` 为 `sessions.read`，还要通过宿主工具策略；`sessions_search`未登记，会拒绝，不能把“模型曾尝试搜索会话”解释成已具备全会话搜索能力。连续性插件不会遍历旧会话抽取事实，遗忘后也不得借会话工具恢复失效内容。
+ 
+-### 2.4 当前代码与状态入口
++<a id="24-当前代码与状态入口"></a>
++
++### 代码对应表
+ 
+ | 职责 | 入口 |
+ | --- | --- |
+@@ -74,80 +119,131 @@
+ | 模型与后端共用参数契约 | [tool-contract.js](../chatbot/plugins/kurumi-memory/continuity/tool-contract.js)、[contracts.d.ts](../chatbot/plugins/kurumi-memory/continuity/contracts.d.ts) |
+ | 显式迁移与配置 | `chatbot/scripts/memory-migrate.mjs`、[配置契约](../config/README.md#同步契约)；生产事实不进Git |
+ 
+-## 3. 参考项目与适配结论
+-
+-素材参考固定版本 [openclaw-persona-template@ee7465c](https://github.com/Candy-A-Mine/openclaw-persona-template/tree/ee7465c63550f9803f6f861580c33861ae4bf81b)，MIT版权及许可保留于[roles](../roles/LICENSE.openclaw-persona-template)。用户原素材与上游逐字节核对、原文件SHA256及P1实际注入大小保留在[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md#3-参考项目与适配结论)。
+-
+-| 参考机制 | 本项目采用边界 |
+-| --- | --- |
+-| 共享SOUL与内在背景 | 将适用背景内化到已加载角色卡；本人恋人关系独立投影，素材共同经历不当真实记忆 |
+-| MEMORY与互动整理 | 采用受控SQLite事实/有限期摘要，不直接覆盖上游自由文本MEMORY |
+-| mood、日记与自动成长 | 只作为P3/P4参考；尚未持久化或加载，模型不改受管角色卡和权限 |
+-| heartbeat与主动联系 | 本机 `heartbeat.every=0m`，未启用上游每2小时维护；上游时段/冷却不作为本项目默认值 |
+-| 平台与工具 | Telegram动作、Claude配置和通用文件操作不直接复制到QQ/DeepSeek主链路 |
+-
+-## 4. 职责划分与后续扩展
+-
+-P1的人格与关系、P2的记忆与连续性已分别按第9–11节实现；持久情绪及主动联系尚属方案，接口、路径和存储结构在对应阶段细化。延续项目原则：模型理解、归纳与生成，后端提供有身份边界的读取、持久化、版本和投递能力。
+-
+-当前实现的读取/写入链路见第2、10、11节。以下涉及情绪、日记与主动联系的内容均为P3/P4方案，未启用；不得从图景或角色设定推断已有状态。
+-
+-### 4.1 共享人格与关系
+-
+-- 共享人格维护世凪的性格、表达习惯和可共享背景；本人恋人设定单独投影，仅进入本人上下文。
+-- 关系类型由可信账号和受管配置决定。成员的好感变化不能自行升级为本人或恋人权限。
+-- 后续若实现情绪、亲近程度和未解决事项，应按账号保存；共享性格不意味着共享情绪或关系记录。
+-- 上游的“睡觉所以不回复”、冷战或防御等描述需要适配助手场景：可以影响语气，不应导致明确任务被无故丢弃、假报成功或改变授权。
+-
+-### 4.2 记忆、日记与成长
+-
+-区分三类来源：用户明确事实、实际互动摘要、角色虚构生活/日记。P2只持久化前两类；每条记录有主人归属、来源和时间，模型推测与待验证判断不能自动当作用户事实。角色日记和持久情绪留到P3/P4。
+-
+-记忆读取按当前主人身份及话题选择，受`maxContextChars`限制。摘要默认7天、最多32条；事实最多128条，满时明确失败。更正/遗忘清空本域摘要、推进generation并阻止旧回合重放；历史聊天及备份仍保留，不承诺一次遗忘清除所有材料。
+-
+-自动提取仅覆盖主人当前QQ原文中的稳定事实/偏好和有限期近期摘要；成员不获得工具或主人上下文。学习结果保存在连续性SQLite并带来源、版本和回执，核心角色卡与授权规则仍由项目管理。
+-
+-### 4.3 会话连续性
+-
+-当前聊天上下文、近期摘要、长期事实和情绪状态分开。`/new`只重开原生聊天上下文，保留有效长期事实和未过期摘要；“忘记”只处理连续性域，不删除宿主原聊天和私密备份。
+-
+-真实隔离宿主已验证`/new`、手动压缩和临时重启后的注入边界。实现使用可信`reply_dispatch`原文、`before_prompt_build`有限注入、实际run/tool authority及生命周期失效；压缩钩子没有足够身份字段，不用于授权写入。自动阈值压缩仍属于宿主能力边界，不由P2强制开启。
+-
+-### 4.4 主动陪伴与工具权限
+-
+-主动联系留到后续阶段，须有独立启用设置、接收者绑定、时段、冷却、未回复控制、发送回执和取消方式。论文任务通知的 `qq.notify` 不自动授权闲聊主动外发；维护任务也不必每次发送消息。
+-
+-若后续P3/P4需要新的窄状态工具或宿主写入通路，实施前列明工具能力、可写对象及权限调整，取得相应同意；不静默解除通用文件/命令禁用，也不借已有业务工具绕过限制。P2已部署的自动记忆仅限当前本人可信回合，不扩大为成员或通用文件写入权限。
+-## 5. 分阶段计划与进度
+-
+-| 阶段 | 维护内容与入口 |
+-| --- | --- |
+-| P0 建档 | 已结束的素材/宿主核对过程见第8节历史入口 |
+-| P1 人格与关系 | 现行实现契约见第9节，验收结论归16 |
+-| P2 记忆与连续性 | 现行存储/生命周期见第10节，动作与写入契约见第11节 |
+-| P3 持久情绪 | 未实施：有限状态、来源、衰减、版本与隔离需后续设计 |
+-| P4 日记、成长、主动联系 | 未实施：维护与可控外发分别设计，D04/D05待定 |
+-| P5 最终验收 | 后续阶段的分层验证与恢复；不能据P1/P2局部结果关闭全部需求 |
+-
+-当前实现范围只在文首维护；排期、复验用例与下一步在[待办E1及N6/N7](待办清单.md)，原阶段结论不覆盖后续缺口。
+-
+-## 6. 待决策事项
+-
+-这些问题不阻塞文档建立；推进依赖方向前确认并记录结果，未确认的方向不擅自上线。
+-
+-| 编号 | 待定内容 | 当前建议与原因 | 状态 |
+-| --- | --- | --- | --- |
+-| D01 | 自动记忆范围、留存与成员权限 | 用户2026-10-20明确选择先仅本人；成员维持原权限。近期摘要默认7天、可配置，稳定事实至更正/遗忘 | 已决定并已部署 |
+-| D02 | `/new`、遗忘及历史清理的区别 | 用户2026-10-20明确选择保留长期记忆和有期限近期摘要。遗忘处理本域有效材料，原聊天和备份仍保留 | 已决定并已部署 |
+-| D03 | 恋人背景中的称呼、纪念日和共同经历 | P1默认称“你”，不设纪念日或共同经历；素材日期/剧情不导入真实历史 | P1默认已决定；以后自定义时再确认，不阻塞当前部署 |
+-| D04 | 主动联系的对象、时段、次数与暂停规则 | 优先本人可开关，成员默认关闭；维护与外发分离，频率按实际体验调整 | 待决策 |
+-| D05 | 新工具及状态写入权限 | 采用明确受限的领域接口，列出增量工具/权限再批准，不开放任意文件修改 | 接口设计后确认 |
+-
+-无须现在一次性回答全部问题；开发时可先处理不依赖它们的素材分层和离线研究。若出现关键新分支，写明阻塞对象、候选方案和继续工作的范围。
+-
+-## 7. 验收计划与产物归属
+-
+-P1已有证据从第9节进入，具体结论归文档16。下表是整体需求的验收维度，尚未开发的阶段不因P1通过而标为通过。
++<a id="已决定的实施契约与测试方案"></a>
++
++## 写入、更正与遗忘
++
++模型决定当前普通话语是否值得记住，并调用受限工具；后端验证来源、结构、版本和事务，不从回复末尾自动抓取，也没有 `agent_end`后的后台全对话归纳。稳定事实/偏好与有限期摘要分开，敏感凭据拒绝，没有值得保存的内容可以不写。具体动作见[动作与参数契约](#动作与参数契约)。
++
++<a id="术语"></a>
++
++### 术语与并发保护
++
++- **revision**：本人记忆状态的版本号，每次成功写入加1。写入必须带上读取时的 `expectedRevision`，与当前值不同即拒绝，调用方重新读取后再试。
++- **CAS**（compare-and-set，比较后写入）：上面这种“版本相同才写入”的并发保护，在同一个SQLite事务里完成，防止两个回合互相覆盖。
++- **generation**：记忆的“代”。更正一条事实的文本或遗忘一条事实时加1，并清空近期摘要。回合开始时记下generation，写入时若已变化就拒绝，旧回合因此不能把已更正或遗忘的内容写回。插件加载时的运行generation是OpenClaw的另一个字段，变化不表示记忆被改写。
++- **遗忘屏障**：被更正或遗忘的原事实文本的哈希（最多保留256条）。自动记忆遇到相同文本时不再保存；本人显式要求重新记住时移除对应屏障。
++
++<a id="11-p2真人qq复验与工具契约补正2026-10-20"></a>
++
++<a id="当前实现与决定"></a>
++
++### 动作与参数契约
++
++本节维护有效工具契约；原两轮试聊、误参定位、修前失败、部署及22:41复验见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)。模型理解意图、选择动作和真实ID；后端不新增自然语言裁决，也不猜版本或静默转换字段。
++
++| 动作 | 参数契约 |
++| --- | --- |
++| `list` | 只传`action` |
++| `search` | `action`、必填`query` |
++| `observe` | 当前普通陈述的自动保存；必填`expectedRevision`，`facts`（最多4条）与`summary`至少有一项非空；不接收顶层`text/evidence/id/kind` |
++| `upsert` | 当前用户明确要求记住或更正；必填`expectedRevision`、顶层`text`，可选`evidence/kind/id`；更正使用真实ID，不接收`facts/summary`；带ID更正时`text`可由旧记录与本次原话片段拼成（见下） |
++| `delete` | 遗忘传`action`、`expectedRevision`，以及`id`（一条）或`ids`（1–8个不重复真实ID）二选一；不接收`text/evidence/facts/summary` |
++
++<a id="2026-10-21参数补正"></a>
++
++### 参数、版本与单消息事务
++
++以下为有效参数和执行契约；老会话模型是否刷新工具描述、真人复验是否通过，分别以实际输入与验收记录为准：
++
++- 批量遗忘（N5）：一次`delete`可带`ids`。全部ID存在才提交，任一不存在则整批不提交并在报错中指明该ID；一次提交、generation只加一，每条被删事实各留遗忘边界。仍保持“一条消息最多成功提交一次”，因为同消息第二次写入会被回执与generation边界拒绝，所以多条遗忘必须放进同一次调用，而不是放开同消息多次提交。
++- 更正拼接（G2，主人选定“允许拼接旧记录”）：只适用于带ID且文字有变化的`upsert`。新文字（规范化后）须能切分为每段至少2字的片段，每段逐字出现在旧记录或本次`evidence`中，且至少一段来自`evidence`；`evidence`仍须逐字取自本次本人原文。不带ID的新增仍要求`text`逐字取自`evidence`。模型成功后在回复里复述存下的内容。
++- 少一次失败（G2）：`expectedRevision`和真实ID直接取本回合`KURUMI_PERSONAL_MEMORY_V2`的`revision`与`facts[].id`，资料里没有或版本冲突时才`list/search`；缺字段时一次报告全部缺项。
++- 遗忘后不找回（G3）：被遗忘或记忆里查不到的内容直接说不记得，不调用会话搜索等其它工具找回。
++- 混合写入：一句话同时要求两种写入（例如忘掉A并记住B）时先做一项，告诉主人另一项再发一句。
++- 离线证据：`chatbot/tests/persona/memory.test.mjs`新增批量遗忘全有或全无、拼接更正边界（凭空内容、纯删减、2字下限、缺evidence）、缺字段合并报错用例。
++
++唯一参数契约在[tool-contract.js](../chatbot/plugins/kurumi-memory/continuity/tool-contract.js)，同时生成模型可见说明和运行结构校验。保留提供商兼容的扁平JSON schema；`upsert.evidence`省略时仍以`text`自身作证，兼容已有调用。动作/字段误用报告具体位置和正确参数，不回显参数正文，也不静默转换`upsert + facts`。
++
++[plugin.js](../chatbot/plugins/kurumi-memory/continuity/plugin.js)授权后校验读写；[application.js](../chatbot/plugins/kurumi-memory/continuity/application.js)复用同一校验保护直接调用，移除原笼统错误。参数校验失败不提交状态或回执，可在同一消息修参重试；成功后仅允许同参幂等重放，再变参仍被拒绝。版本冲突可重读，结果未知先查询；可信当前原文、revision/generation、来源及凭证保护不变。类型声明同步在[contracts.d.ts](../chatbot/plugins/kurumi-memory/continuity/contracts.d.ts)。
++
++工具说明、参数描述、运行规则及[主人AGENTS模板](../scripts/fusion/templates/AGENTS.md)一致区分自动`observe`与显式`upsert`。普通陈述是否值得延续仍由模型判断，不能因为模型认为值得保存就改用显式动作；后端不加聊天关键词匹配。
++
++<a id="何时形成跨会话记忆"></a>
++
++### 形成跨会话记忆的时点
++
++一次成功的 `observe/upsert`事务提交后，事实或摘要才持久化，并可在后续有效回合及`/new`后使用；回复“记住了”本身不是落库依据。每条消息最多成功写入一次，可合并最多4条事实与1条摘要；成功回执最多256条。参数失败不占成功写入，同消息可修参；成功后仅同参幂等重放。长期事实满128条时明确失败，不自行淘汰其他事实。
++
++`observe`只根据当前可信本人原文提取，不能从模型自己的回复、旧聊天、角色虚构或业务库自动汇总成长期事实。来源保留可信message/session/run、时间、原文hash及evidence；摘要标为模型归纳并带期限，不晋升为确认事实。
++
++### 更正与遗忘屏障
++
++更正事实文本或遗忘时推进generation、清空本域全部近期摘要，为原文本留下最多256条哈希屏障；自动observe不能原样重存，显式重新记住可移除对应屏障。旧回合无法跨代写回。屏障是同文保护，不能解释为所有语义改写都被识别或历史材料已全部擦除。
++
++<a id="43-会话连续性"></a>
++
++<a id="可信来源与会话生命周期"></a>
++
++## 会话生命周期
++
++`reply_dispatch`只接受实际本人私聊的可信 `RawBody`，不是拼装prompt、引用、附件、网页或旧messages。`inbound.js`拒绝超过2000字符或时间偏差超过5分钟的原文，`plugin.js`另排除斜杠命令；超过长度的回合不会注入本人记忆，是否放宽仍为待决定需求。宿主声明中的 `currentUserMessage/currentUserMessageId` 在实际prompt钩子中未提供，不能据类型声明替代实际RawBody。
++
++`before_prompt_build`核对Agent、workspace、会话、sender/channel/account、实际run和短期toolAuthority后注入；工具调用钩子再绑定真实toolCallId。写入许可从接收原文起最多5分钟，插件与应用层各自复核；`agent_end`、`before_reset`、`session_end`立即作废，旧run、旧会话或压缩钩子不能单独授予写权限。
++
++`/new`只重开宿主可见聊天历史，保留有效事实和未过期摘要。固定宿主的reset保留sessionId、推进lifecycleRevision，不能只看sessionId是否变化来判断重开或许可有效性。原始聊天与压缩历史仍保留，不作为自动提取来源。
++
++<a id="宿主自动阈值压缩离线调研与隔离测试2026-10-21待复验"></a>
++
++### 原生压缩与观测
++
++旧调研中的推断、被实测否定的默认值及完整6变体结果见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md#宿主自动阈值压缩离线调研与隔离测试2026-10-21待复验)；当前只保留已据实测确定的边界：
++
++| 项目 | 当前结论 |
++| --- | --- |
++| 实际压缩模式 | 未显式选择safeguard/provider时为default，缺少摘要质量守卫；不能沿用宿主文档中“默认safeguard”的推断 |
++| memoryFlush | `plugins.slots.memory=none`下未发起冲刷；配置显式 `memoryFlush.enabled=false` 固定当前行为，避免以后切换插件时出现无效调用 |
++| safeguard候选 | 隔离变体在质量守卫耗尽取消后，超阈值回合持续无回复；本人2026-10-21决定维持default，不自行切换 |
++| 阈值与可观察性 | 主模型登记窗口1048576，默认预留20000；可用 `session.compaction`、宿主日志和后续实际输入核对，预算估计不是压缩已发生的证明 |
++| 授权与质量 | 压缩钩子缺少当前sender/run/toolAuthority，不用于记忆写入授权；确定性token只证明触发/数据流，不证明摘要质量、成本或生产长期效果 |
++
++离线入口为[compaction-host.mjs](../chatbot/tests/persona/compaction-host.mjs)，原回执为[compaction-host.json](verification/persona-memory-2026-10-19/p2/compaction-host.json)。生产首次真实自动阈值压缩仍归[待办E1](待办清单.md#e1-人格和记忆)复验；不据隔离通过标记长期体验通过。
++
++## 部署与恢复入口
++
++<a id="部署热加载与回退"></a>
++
++### 人格投影与局部回退
++
++四份文件仍由`sync-persona.mjs`统一管理。当前宿主每回合核对bootstrap内容，隔离宿主已验证同一会话SOUL刷新，因此仅修改受管人格文件时只应用文件，无需重启。角色卡和关系属于提示词上下文，身份权限仍由可信入站与后端授权负责；配置或路由变更继续按文档24执行。
++
++私密回退材料位于：
++
++```text
++/home/afrangry/.openclaw-fusion/migration/before-yonagi-p1-2026-10-19T15-57-58-046Z/
++```
++
++其中`runtime-before/`是2026-10-19正式同步前12份文件的精确副本；并行附件任务曾同步过中间世凪投影，所以不能将它称作原始小鲸鱼基线。`original-sources/config/persona.json`、原投影源码及未改动的小鲸鱼卡另外保存，`templates-at-apply/`仅供比较。退回小鲸鱼可由操作者恢复原persona配置，利用现投影器的旧配置兼容能力，保留当前业务模板和权限，先审阅差异再同步。精确还原该次同步前文件则可能恢复中间世凪状态，随后仍须处理来源漂移；不整仓恢复、不覆盖MEMORY/会话/账本。这是P1局部材料，未做全系统停写恢复演练。
++
++<a id="p2生产落地与恢复证据"></a>
++
++### 记忆迁移与恢复边界
++
++首次迁移的6条事实、revision=4及后续部署、真人变化只属于原时点；[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)保留准确路径和范围。迁移前原文位于私密 `migration/before-memory-p2-2026-10-19T16-53-12-652Z/MEMORY.md`，不提交原文。
++
++非停写材料 `/home/afrangry/kurumi-backups/2026-10-19-17-02-19-p2-memory-closeout/`只完成 `--skip-deps`材料恢复核验，不含Gateway启动验证，也不覆盖后续全部补正。恢复证明范围唯一见[文档16](16_验收与测试总表.md#恢复点与证明范围)。
++
++<a id="7-验收计划与产物归属"></a>
++
++<a id="测试结果与证据"></a>
++
++## 验收计划与证据
++
++连续性离线用例为 `chatbot/tests/persona/memory.test.mjs`，宿主用例为 `memory-continuity-host.mjs`；默认临时状态/确定性模型/假OneBot。显式`--live`才向官方DeepSeek发送合成对话，最多40次请求、每次1200输出tokens；不读取生产记忆或发送真实QQ/邮件。自动阈值、长期归纳与陪伴体验仍须各自验收。
++
++离线、确定性宿主、真实DeepSeek合成对话及真人QQ显式保存/更正/遗忘分别见[P2专项证据](verification/persona-memory-2026-10-19/p2/README.md)和[原22:41回执](verification/persona-memory-2026-10-19/p2/memory-contract-qq-2241.json)。该真人轮次有首次漏版本后的自动修参，不是零误参保证；后续用例进度以待办为准，历史失败不改写。
++
++下表覆盖当前人格/记忆及后续阶段的验收维度。持久情绪、日记、成长和主动联系尚未实施，相关行只表示未来验收要求，不是当前能力。具体验收结论归文档16。
+ 
+ | 维度 | 必须验证的行为 |
+ | --- | --- |
+@@ -162,135 +258,29 @@
+ 
+ 产物归属遵循[文档16](16_验收与测试总表.md)和根 [AGENTS.md](../AGENTS.md)：
+ 
+-- 受管角色素材留在 `roles/`，配置意图留在 `config/`；P1精确文件见第9节，不复制上游整套工作区覆盖现有文件。
++- 受管角色素材留在 `roles/`，配置意图留在 `config/`；人格素材见[人格来源与关系](#人格来源与关系)，不复制上游整套工作区覆盖现有文件。
+ - 新后端脚本放 `chatbot/scripts/`，测试放 `chatbot/tests/<本领域>/`；产生 SQL 时随对应实现留存并说明版本。
+-- 情绪、记忆、日记、聊天摘要与原始对话属于 `.openclaw-fusion` 私密运行状态，不提交进仓库。P2连续性事实与摘要唯一写入路径为 `.openclaw-fusion/workspace/.kurumi-memory/state.sqlite`；迁移脚本和私密备份位置见第10节，不创建第二份权威来源。
++- 情绪、记忆、日记、聊天摘要与原始对话属于 `.openclaw-fusion` 私密运行状态，不提交进仓库。P2连续性事实与摘要唯一写入路径为 `.openclaw-fusion/workspace/.kurumi-memory/state.sqlite`；迁移脚本和私密备份位置见[部署与恢复入口](#部署与恢复入口)，不创建第二份权威来源。
+ - P1证据在 [persona-memory-2026-10-19](verification/persona-memory-2026-10-19/README.md)，已登记证据及脚本索引；后续阶段沿用相同归属规则，不创建空测试目录或无归属归档。
+ - 真实模型、模拟通道、真人外发、恢复演练分别记录；本人的历史测试授权不自动扩展到其他账号外发。未验证的内容如实保留待处理。
+ - 回退须明确人格/config版本与新状态结构的兼容关系；先关闭新增维护/外发，再按批准方案回退，不删除旧记忆、会话或业务账本。
+-## 8. 建档与授权摘要
+-
+-用户于2026-10-19授权P1，2026-10-20明确D01/D02并同意P2：本人自动记忆与`/new`连续性。该授权不覆盖持久情绪、主动联系或成员记忆；历史外发/模型测试授权不自动扩展到新一轮验证。
+-
+-建档、并行工作区与后续提交收录过程见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md#8-建档与授权摘要)；实时Git状态按[文档12](12_目录资产与Git备份整理.md#git-与实时状态查询)查询。
+-
+-## 9. P1共享人格与关系分离
+-
+-### 已决定的实现范围
+-
+-- 共享素材放 `roles/世凪.md`，性格、表达、兴趣、背景保持丰富；在这一份启用文件中内化共享的内在背景，不要求模型另读未注入的 INNER.md。
+-- `config/persona.json` 增加按可信角色选择的 `relationshipFiles.owner/member`，关系素材放 `roles/relationships/`。SOUL/IDENTITY在各账号相同，关系段只投影到该账号的USER.md；本人资料不进入成员文件。
+-- 本人使用平等恋人设定，日常称呼默认“你”；成员使用普通朋友设定。移除原卡预置的2026-03-13告白日期、学长关系与搬行李经历，不生成共同历史或纪念日。D03中的这些值不阻塞P1，以后用户指定后再增加。
+-- 角色背景保留成年大学生、物理/文学兴趣与含蓄相处方式；不锁定2024入学/当前大二等随日期失效的学籍信息，不伪造当前线下活动、真实天气或见面经历。明确询问身份、工具与事实时诚实回答。
+-- 移除当前无法执行的日记、mood.json、自动成长、Telegram reaction/撤回和睡眠拒答指令；工具用法继续由既有AGENTS模板及真实工具声明负责。原角色卡和上游许可保留可追溯来源。
+-- P1投影不改身份矩阵、模型、工具权限、会话历史、MEMORY或数据库；P2数据库由独立迁移维护。为避免日常历史污染，验收使用独立临时宿主与合成对话，真实QQ收件和主会话重置不作为自动步骤。
+-### 产物与验收结果
+-
+-当前素材为[共享角色](../roles/世凪.md)、[本人恋人](../roles/relationships/本人恋人.md)、[成员普通朋友](../roles/relationships/普通朋友.md)。投影校验与四份受管文件同步只在[配置契约](../config/README.md#人格投影契约)展开。
+-
+-离线入口为 `chatbot/tests/persona/projection.test.mjs`；`acceptance-host.mjs`必须指定新的绝对`--out`，缺省确定性模型，显式`--live`才调用官方DeepSeek（最多24次、每次1200输出tokens）。实际注入/同会话热加载与模型试聊见[P1原报告](verification/persona-memory-2026-10-19/README.md)；逐轮失败、部署及检查结果见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)，不把隔离样本当主观陪伴验收。
+-
+-### 部署、热加载与回退
+-
+-四份文件仍由`sync-persona.mjs`统一管理。当前宿主每回合核对bootstrap内容，隔离宿主已验证同一会话SOUL刷新，因此本轮只应用文件，无需重启。角色卡和关系属于提示词上下文，身份权限仍由可信入站与后端授权负责；配置或路由变更继续按文档24执行。
+-
+-私密回退材料位于：
+-
+-```text
+-/home/afrangry/.openclaw-fusion/migration/before-yonagi-p1-2026-10-19T15-57-58-046Z/
+-```
+-
+-其中`runtime-before/`是本次正式同步前12份文件的精确副本；并行附件任务曾同步过中间世凪投影，所以不能将它称作原始小鲸鱼基线。`original-sources/config/persona.json`、原投影源码及未改动的小鲸鱼卡另外保存，`templates-at-apply/`仅供比较。退回小鲸鱼可由操作者恢复原persona配置，利用现投影器的旧配置兼容能力，保留当前业务模板和权限，先审阅差异再同步。精确还原本次同步前文件则可能恢复中间世凪状态，随后仍须处理来源漂移；不整仓恢复、不覆盖MEMORY/会话/账本。这是P1局部材料，未做全系统停写恢复演练。
+-### 尚未完成及能力边界
+-
+-长期自然程度与称呼偏好由本人评价；P3–P5及成员记忆未开放。固定一次性提醒/天气文本由功能层维护，不由人格卡接管；当前中性措辞见[文档21](21_后端职责分层与代码整理.md#确认契约与已知待办)，不继续沿用P1原记录中“仍写死主人”的旧待办。
+-
+-## 10. P2记忆与会话连续性
+-
+-<a id="当前范围与进度2026-10-20"></a>
+-
+-### 存储与读取契约
+-
+-连续性SQLite是唯一可写记忆事实源，以单行 `version=2` 的有界JSON快照保存事实、摘要、来源、回执和遗忘屏障；用SQLite事务及revision CAS处理并发。目录700、数据库600。`MEMORY.md`迁移后只作说明，旧读取接口留给兼容探针，旧写入明确拒绝；不复制Profile、事项或论文库。
+-
+-连续性组合使用 `continuityPolicyAdapter=current-owner`、`continuityStoreAdapter=sqlite`，与旧显式模式 `policyAdapter/storeAdapter` 分开；注册选择机制归[文档21](21_后端职责分层与代码整理.md#可插拔契约与扩展方法)。源码配置与首次迁移预览/备份/应用见[配置契约](../config/README.md#同步契约)，已迁移的事实条数和revision不是永久状态。
+-
+-### 可信来源与会话生命周期
+-
+-`reply_dispatch`只接受实际本人私聊的可信 `RawBody`，不是拼装prompt、引用、附件、网页或旧messages。`inbound.js`拒绝超过2000字符或时间偏差超过5分钟的原文，`plugin.js`另排除斜杠命令；超过长度的回合不会注入本人记忆，是否放宽仍为待决定需求。宿主声明中的 `currentUserMessage/currentUserMessageId` 在实际prompt钩子中未提供，不能据类型声明替代实际RawBody。
+-
+-`before_prompt_build`核对Agent、workspace、会话、sender/channel/account、实际run和短期toolAuthority后注入；工具调用钩子再绑定真实toolCallId。写入许可从接收原文起最多5分钟，插件与应用层各自复核；`agent_end`、`before_reset`、`session_end`立即作废，旧run、旧会话或压缩钩子不能单独授予写权限。
+-
+-`/new`只重开宿主可见聊天历史，保留有效事实和未过期摘要。固定宿主的reset保留sessionId、推进lifecycleRevision，不能只看sessionId是否变化来判断重开或许可有效性。原始聊天与压缩历史仍保留，不作为自动提取来源。
+-
+-更正事实文本或遗忘时推进generation、清空本域全部近期摘要，为原文本留下最多256条哈希屏障；自动observe不能原样重存，显式重新记住可移除对应屏障。旧回合无法跨代写回。屏障是同文保护，不能解释为所有语义改写都被识别或历史材料已全部擦除。
+-
+-### P2生产落地与恢复证据
+-
+-首次迁移的6条事实、revision=4及后续部署、真人变化只属于原时点；[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)保留准确路径和范围。迁移前原文位于私密 `migration/before-memory-p2-2026-10-19T16-53-12-652Z/MEMORY.md`，不提交原文。
+-
+-非停写材料 `/home/afrangry/kurumi-backups/2026-10-19-17-02-19-p2-memory-closeout/`只完成 `--skip-deps`材料恢复核验，不含Gateway启动验证，也不覆盖后续全部补正。恢复证明范围唯一见[文档16](16_验收与测试总表.md#恢复点与证明范围)。
+-
+-### 已决定的实施契约与测试方案
+-
+-模型决定当前普通话语是否值得记住，并调用受限工具；后端验证来源、结构、版本和事务，不从回复末尾自动抓取，也没有 `agent_end`后的后台全对话归纳。稳定事实/偏好与有限期摘要分开，敏感凭据拒绝，没有值得保存的内容可以不写。具体动作见第11节。
+-
+-连续性离线用例为 `chatbot/tests/persona/memory.test.mjs`，宿主用例为 `memory-continuity-host.mjs`；默认临时状态/确定性模型/假OneBot。显式`--live`才向官方DeepSeek发送合成对话，最多40次请求、每次1200输出tokens；不读取生产记忆或发送真实QQ/邮件。自动阈值、长期归纳与陪伴体验仍须各自验收。
+-
+-### 宿主自动阈值压缩：离线调研与隔离测试（2026-10-21，待复验）
+-
+-旧调研中的推断、被实测否定的默认值及完整6变体结果见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md#宿主自动阈值压缩离线调研与隔离测试2026-10-21待复验)；当前只保留已据实测确定的边界：
+-
+-| 项目 | 当前结论 |
+-| --- | --- |
+-| 实际压缩模式 | 未显式选择safeguard/provider时为default，缺少摘要质量守卫；不能沿用宿主文档中“默认safeguard”的推断 |
+-| memoryFlush | `plugins.slots.memory=none`下未发起冲刷；配置显式 `memoryFlush.enabled=false` 固定当前行为，避免以后切换插件时出现无效调用 |
+-| safeguard候选 | 隔离变体在质量守卫耗尽取消后，超阈值回合持续无回复；本人2026-10-21决定维持default，不自行切换 |
+-| 阈值与可观察性 | 主模型登记窗口1048576，默认预留20000；可用 `session.compaction`、宿主日志和后续实际输入核对，预算估计不是压缩已发生的证明 |
+-| 授权与质量 | 压缩钩子缺少当前sender/run/toolAuthority，不用于记忆写入授权；确定性token只证明触发/数据流，不证明摘要质量、成本或生产长期效果 |
+-
+-离线入口为[compaction-host.mjs](../chatbot/tests/persona/compaction-host.mjs)，原回执为[compaction-host.json](verification/persona-memory-2026-10-19/p2/compaction-host.json)。生产首次真实自动阈值压缩仍归[待办E1](待办清单.md#e1-人格和记忆)复验；不据隔离通过标记长期体验通过。
+-
+-## 11. P2真人QQ复验与工具契约补正（2026-10-20）
+-
+-### 当前实现与决定
+-
+-本节维护有效工具契约；原两轮试聊、误参定位、修前失败、部署及22:41复验见[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md)。模型理解意图、选择动作和真实ID；后端不新增自然语言裁决，也不猜版本或静默转换字段。
+-
+-| 动作 | 参数契约 |
+-| --- | --- |
+-| `list` | 只传`action` |
+-| `search` | `action`、必填`query` |
+-| `observe` | 当前普通陈述的自动保存；必填`expectedRevision`，`facts`（最多4条）与`summary`至少有一项非空；不接收顶层`text/evidence/id/kind` |
+-| `upsert` | 当前用户明确要求记住或更正；必填`expectedRevision`、顶层`text`，可选`evidence/kind/id`；更正使用真实ID，不接收`facts/summary`；带ID更正时`text`可由旧记录与本次原话片段拼成（见下） |
+-| `delete` | 遗忘传`action`、`expectedRevision`，以及`id`（一条）或`ids`（1–8个不重复真实ID）二选一；不接收`text/evidence/facts/summary` |
+-
+-### 2026-10-21参数补正
+-
+-以下为已写入源码的参数和执行契约，不表示老会话模型已刷新工具描述或真人复验已关闭：
+-
+-- 批量遗忘（N5）：一次`delete`可带`ids`。全部ID存在才提交，任一不存在则整批不提交并在报错中指明该ID；一次提交、generation只加一，每条被删事实各留遗忘边界。仍保持“一条消息最多成功提交一次”，因为同消息第二次写入会被回执与generation边界拒绝，所以多条遗忘必须放进同一次调用，而不是放开同消息多次提交。
+-- 更正拼接（G2，主人选定“允许拼接旧记录”）：只适用于带ID且文字有变化的`upsert`。新文字（规范化后）须能切分为每段至少2字的片段，每段逐字出现在旧记录或本次`evidence`中，且至少一段来自`evidence`；`evidence`仍须逐字取自本次本人原文。不带ID的新增仍要求`text`逐字取自`evidence`。模型成功后在回复里复述存下的内容。
+-- 少一次失败（G2）：`expectedRevision`和真实ID直接取本回合`KURUMI_PERSONAL_MEMORY_V2`的`revision`与`facts[].id`，资料里没有或版本冲突时才`list/search`；缺字段时一次报告全部缺项。
+-- 遗忘后不找回（G3）：被遗忘或记忆里查不到的内容直接说不记得，不调用会话搜索等其它工具找回。
+-- 混合写入：一句话同时要求两种写入（例如忘掉A并记住B）时先做一项，告诉主人另一项再发一句。
+-- 离线证据：`chatbot/tests/persona/memory.test.mjs`新增批量遗忘全有或全无、拼接更正边界（凭空内容、纯删减、2字下限、缺evidence）、缺字段合并报错用例。
+-
+-唯一参数契约在[tool-contract.js](../chatbot/plugins/kurumi-memory/continuity/tool-contract.js)，同时生成模型可见说明和运行结构校验。保留提供商兼容的扁平JSON schema；`upsert.evidence`省略时仍以`text`自身作证，兼容已有调用。动作/字段误用报告具体位置和正确参数，不回显参数正文，也不静默转换`upsert + facts`。
+-
+-[plugin.js](../chatbot/plugins/kurumi-memory/continuity/plugin.js)授权后校验读写；[application.js](../chatbot/plugins/kurumi-memory/continuity/application.js)复用同一校验保护直接调用，移除原笼统错误。参数校验失败不提交状态或回执，可在同一消息修参重试；成功后仅允许同参幂等重放，再变参仍被拒绝。版本冲突可重读，结果未知先查询；可信当前原文、revision/generation、来源及凭证保护不变。类型声明同步在[contracts.d.ts](../chatbot/plugins/kurumi-memory/continuity/contracts.d.ts)。
+-
+-工具说明、参数描述、运行规则及[主人AGENTS模板](../scripts/fusion/templates/AGENTS.md)一致区分自动`observe`与显式`upsert`。普通陈述是否值得延续仍由模型判断，不能因为模型认为值得保存就改用显式动作；后端不加聊天关键词匹配。
+-
+-### 何时形成跨会话记忆
+-
+-一次成功的 `observe/upsert`事务提交后，事实或摘要才持久化，并可在后续有效回合及`/new`后使用；回复“记住了”本身不是落库依据。每条消息最多成功写入一次，可合并最多4条事实与1条摘要；成功回执最多256条。参数失败不占成功写入，同消息可修参；成功后仅同参幂等重放。长期事实满128条时明确失败，不自行淘汰其他事实。
+-
+-`observe`只根据当前可信本人原文提取，不能从模型自己的回复、旧聊天、角色虚构或业务库自动汇总成长期事实。来源保留可信message/session/run、时间、原文hash及evidence；摘要标为模型归纳并带期限，不晋升为确认事实。
+-
+-### 测试结果与证据
+-
+-离线、确定性宿主、真实DeepSeek合成对话及真人QQ显式保存/更正/遗忘分别见[P2专项证据](verification/persona-memory-2026-10-19/p2/README.md)和[原22:41回执](verification/persona-memory-2026-10-19/p2/memory-contract-qq-2241.json)。该真人轮次有首次漏版本后的自动修参，不是零误参保证；后续用例进度以待办为准，历史失败不改写。
++
++### T1 记忆工具补正复验
++
++状态：待复验。先由本人决定N6/N7修法，再按T1执行；测前`/new`，各句单发并等回复。当前规则不因文档整理而修改；下面是待执行用例，不能当作已通过证据。
++
++| 顺序 | 合成测试话语 | 核对结果 |
++| --- | --- | --- |
++| 1 | 记住，我最近常喝美式。 | 一次保存，revision +1 |
++| 2 | 再记一下，我常去图书馆五楼自习。 | 一次保存，revision +1 |
++| 3 | 更正一下，我最近常喝的是拿铁，不是美式。 | 一次同ID更正，回复复述拿铁 |
++| 4 | 帮我记住我讨厌香菜，顺便把自习那条忘掉。 | 只做一项，请另发一句，不能两项都写 |
++| 5 | 把喝咖啡和自习这两条都忘掉。 | 一次delete含2个ids，revision +1；如果第4句已删掉自习项，先按真实结果调整测试前置状态，不使用不存在ID |
++| 6 | 我最近常喝什么？ | 说不记得；不搜会话，不复述历史里的拿铁/美式 |
++
++AI按起止时间用`--turns/--errors/--audit`核对工具、版本和授权；测试前记下真实基线，测后清理合成事实，旧事实不变。原10-22基线为4条，不能把其他真实新增事实当测试垃圾删掉。
++
++<a id="尚未完成及能力边界"></a>
+ 
+ ### 尚待决定与复验
+ 
+@@ -298,4 +288,48 @@
+ - [N7](待办清单.md#n7-遗忘后从聊天历史复述问句回合顺带删除)：当前规则不允许借工具找回遗忘内容，但历史原话仍可能影响回复；是否禁止问句回合补做旧遗忘、如何处理旧历史复述仍待决定。
+ - 长期归纳质量、成员拒绝、陪伴体验、生产自动阈值压缩及补正后的停写恢复，均按[待办E1](待办清单.md#e1-人格和记忆)与[文档16](16_验收与测试总表.md)分别跟踪。文档整理不关闭这些需求。
+ 
++N6的15:14单删现象、重启前旧工具描述定位，以及N7历史复述/问句写入的原始观察，见[旧清单N6/N7](archive/documentation-2026-10-23/待办清单.md)。当前问题和下一步仍在唯一待办中维护。
++
++<a id="4-职责划分与后续扩展"></a>
++
++<a id="44-主动陪伴与工具权限"></a>
++
++<a id="5-分阶段计划与进度"></a>
++
++<a id="6-待决策事项"></a>
++
++## 后续方案
++
++P3持久情绪、P4日记/成长/主动联系及P5最终验收尚未实施；成员长期记忆保持关闭。后续接口、路径和状态结构在对应阶段细化，不从角色设定推断已有能力。
++
++| 阶段 | 后续范围与约束 |
++| --- | --- |
++| P3 持久情绪 | 按账号保存有限状态、来源、衰减与版本；共享性格不意味着共享情绪。亲近程度不能升级身份或权限 |
++| P4 日记与成长 | 区分真实互动与角色虚构；模型推测、虚构日记不能晋升为确认事实，不自动改写受管角色卡 |
++| P4 主动联系 | 独立启用设置、接收者绑定、时段、冷却、未回复控制、回执与取消；`qq.notify`任务通知不自动授权主动闲聊，内部维护也不必每次外发 |
++| P5 最终验收 | 按身份隔离、状态持久化、外发、恢复和长期体感分层验证，不由P1/P2局部结果关闭全部需求 |
++
++“睡觉”、冷战或防御等角色表现可以影响语气，不应导致明确任务无故丢弃、假报成功或改变授权。新增窄状态工具或宿主写入通路前，列明能力、可写对象及权限增量并取得相应同意；不解除通用文件/命令禁用，也不借业务工具绕过。
++
++| 待定编号 | 决定内容 | 当前建议 |
++| --- | --- | --- |
++| D04 | 主动联系对象、时段、次数与暂停 | 优先本人可开关，成员默认关闭；维护与外发分别控制 |
++| D05 | 新工具及状态写入权限 | 使用受限领域接口，设计后确认增量权限 |
++
++D01（本人自动记忆）、D02（`/new`保留有效记忆）与D03默认关系选择已落实，现行规则见前文；原决策表可用`git show c3f3953:docs/25_人格、记忆与会话连续性.md`追溯，有效决定和授权日期已归入前述规则。上述未来范围未获P2授权覆盖。
++
++<a id="3-参考项目与适配结论"></a>
++
++### 参考机制与采用边界
++
++素材参考固定版本 [openclaw-persona-template@ee7465c](https://github.com/Candy-A-Mine/openclaw-persona-template/tree/ee7465c63550f9803f6f861580c33861ae4bf81b)，MIT版权及许可保留于[roles](../roles/LICENSE.openclaw-persona-template)。用户原素材与上游逐字节核对、原文件SHA256及P1实际注入大小保留在[阶段记录](archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md#3-参考项目与适配结论)。
++
++| 参考机制 | 本项目采用边界 |
++| --- | --- |
++| 共享SOUL与内在背景 | 将适用背景内化到已加载角色卡；本人恋人关系独立投影，素材共同经历不当真实记忆 |
++| MEMORY与互动整理 | 采用受控SQLite事实/有限期摘要，不直接覆盖上游自由文本MEMORY |
++| mood、日记与自动成长 | 只作为P3/P4参考；尚未持久化或加载，模型不改受管角色卡和权限 |
++| heartbeat与主动联系 | 本机 `heartbeat.every=0m`，未启用上游每2小时维护；上游时段/冷却不作为本项目默认值 |
++| 平台与工具 | Telegram动作、Claude配置和通用文件操作不直接复制到QQ/DeepSeek主链路 |
++
+ 返回[文档入口](README.md)。
+diff --git a/docs/README.md b/docs/README.md
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -16,22 +16,22 @@
+ 
+ 当前规则与需求方案共 **14 份**（编号 9、10、12、15、16、18、19、20、21、22、23、24、25、26；编号空缺保留历史事实，不重命名填补）。各文档中标为方案或待处理的部分不代表能力已上线；同一规则只在其归属文档完整展开：
+ 
+-| 文档 | 用途 |
+-| --- | --- |
+-| [9 架构与边界](9_QQ融合助手架构与开发计划.md) | 新系统职责、目录、能力与维护边界 |
+-| [10 运行维护](10_融合助手运行维护.md) | 启动/停止、开发与验证、项目接入、**后台开发副本契约**、启停脚本 |
+-| [12 资产与 Git 管理](12_目录资产与Git备份整理.md) | 三套系统的路径、仓库、备份与恢复点归属 |
+-| [15 旧系统回退](15_旧系统回退.md) | 旧 A/B 的原路径恢复、mask、互斥启动与启动前风险 |
+-| [16 验收总表](16_验收与测试总表.md) | 验收标准与结论、日常自检、恢复验收、验收记录规则、批准延期项 |
+-| [18 链路日志查询](18_跨模块链路日志查询.md) | 跨 SnowLuma、OpenClaw 会话/运行日志、回执与提醒状态的只读关联查询和扩展契约 |
+-| [19 提醒列表与定时汇总](19_提醒列表与定时汇总.md) | 提醒列表与播报的唯一业务规则：状态、无DDL、指代、可修改时刻与投递边界 |
+-| [20 邮件能力与横切扩展](20_邮件能力与横切扩展.md) | kurumi-mail 邮件草稿/确认/投递、确认机制复用、非 HTTP 协议的代理接入缺口、权限现状与触及禁用的处理规则 |
+-| [21 后端职责分层](21_后端职责分层与代码整理.md) | 现行后端职责、共享代码归属、独立插件生命周期、Policy/Store与确认契约 |
+-| [22 论文 PDF 翻译与文件投递](22_论文PDF翻译与文件投递.md) | PDF 输入/下载、按需隔离翻译与 QQ/邮件附件；模型与凭据降级、推理强度、时限与并发 |
+-| [23 KnowledgeMap 业务能力桥接](23_KnowledgeMap业务能力桥接.md) | 天气、共享待做、账单增删改查/月汇总；跨项目接口、版本/幂等、迁移与配对恢复、真实日志关联 |
+-| [24 统一身份与权限管理](24_统一身份与权限管理.md) | 单一权限 JSON、共享授权、独立用户 Agent/论文归属/投递隔离、成员登记与回退 |
+-| [25 人格、记忆与会话连续性](25_人格、记忆与会话连续性.md) | 共享人格与关系、本人记忆与 `/new` 连续性，以及情绪、日记和主动联系的分阶段计划 |
+-| [26 检索提供方接入设计](26_基础能力插件边界整理与检索接入设计.md) | DeepSeek Search/Fetch provider的范围、宿主契约、实施与验收计划；现行结构归21 |
++| 分类 | 文档 | 用途 |
++| --- | --- | --- |
++| 架构 | [9 架构与边界](9_QQ融合助手架构与开发计划.md) | 新系统职责、目录、能力与维护边界 |
++| 人格记忆 | [25 人格、记忆与会话连续性](25_人格、记忆与会话连续性.md) | 共享人格与关系、本人记忆与 `/new` 连续性，以及情绪、日记和主动联系的分阶段计划 |
++| 功能 | [18 链路日志查询](18_跨模块链路日志查询.md) | 跨 SnowLuma、OpenClaw 会话/运行日志、回执与提醒状态的只读关联查询和扩展契约 |
++| 功能 | [19 提醒列表与定时汇总](19_提醒列表与定时汇总.md) | 提醒列表与播报的唯一业务规则：状态、无DDL、指代、可修改时刻与投递边界 |
++| 功能 | [20 邮件能力与横切扩展](20_邮件能力与横切扩展.md) | kurumi-mail 邮件草稿/确认/投递、确认机制复用、非 HTTP 协议的代理接入缺口、权限现状与触及禁用的处理规则 |
++| 功能 | [22 论文 PDF 翻译与文件投递](22_论文PDF翻译与文件投递.md) | PDF 输入/下载、按需隔离翻译与 QQ/邮件附件；模型与凭据降级、推理强度、时限与并发 |
++| 功能 | [23 KnowledgeMap 业务能力桥接](23_KnowledgeMap业务能力桥接.md) | 天气、共享待做、账单增删改查/月汇总；跨项目接口、版本/幂等、迁移与配对恢复、真实日志关联 |
++| 功能 | [26 检索提供方接入设计](26_基础能力插件边界整理与检索接入设计.md) | DeepSeek Search/Fetch provider的范围、宿主契约、实施与验收计划；现行结构归21 |
++| 横切规则 | [21 后端职责分层](21_后端职责分层与代码整理.md) | 现行后端职责、共享代码归属、独立插件生命周期、Policy/Store与确认契约 |
++| 横切规则 | [24 统一身份与权限管理](24_统一身份与权限管理.md) | 单一权限 JSON、共享授权、独立用户 Agent/论文归属/投递隔离、成员登记与回退 |
++| 运维 | [10 运行维护](10_融合助手运行维护.md) | 启动/停止、开发与验证、项目接入、**后台开发副本契约**、启停脚本 |
++| 运维 | [12 资产与 Git 管理](12_目录资产与Git备份整理.md) | 三套系统的路径、仓库、备份与恢复点归属 |
++| 运维 | [15 旧系统回退](15_旧系统回退.md) | 旧 A/B 的原路径恢复、mask、互斥启动与启动前风险 |
++| 验收 | [16 验收总表](16_验收与测试总表.md) | 验收标准与结论、日常自检、恢复验收、验收记录规则、批准延期项 |
+ 
+ **配置契约不在编号文档里**：配置来源、目录分工与同步规则见 [`config/README.md`](../config/README.md)；
+ 备份与恢复的验收边界见[文档 16](16_验收与测试总表.md)，资产与恢复点位置见[文档 12](12_目录资产与Git备份整理.md)。
+@@ -58,6 +58,7 @@
+ 
+ - [人格与连续性](verification/persona-memory-2026-10-19/README.md)：P1人格/关系；[P2证据](verification/persona-memory-2026-10-19/p2/README.md)分别记录生命周期、迁移/材料恢复、真人QQ只读定位、记忆工具契约补正及真实模型/生产加载核验。
+ - [文档归并](verification/documentation-2026-10-21/README.md)：规则迁移、脚本/证据文档归属与入口核验；不代表业务功能重新验收。
++- [按批准方案重排](verification/documentation-reorder-2026-10-23/README.md)：现行规则重排、重复内容归并、任务ID与锚点保留，以及本轮差异/检查；不改变业务验收。
+ - [逐份文档整理](verification/documentation-2026-10-23/README.md)：逐份分类与修改记录；[迁出的阶段过程](archive/documentation-2026-10-23/README.md)保留来源版本，未实施方案继续留在归属文档。
+ - [基础能力边界](verification/capability-decoupling-2026-10-20/README.md)：结构整理回归、真实隔离Gateway各插件独立加载/禁用、生产工具归属和旧Cron兼容性；不包含新检索API验收。
+ - [统一身份权限](verification/access-control-2026-10-19/README.md)：合成身份权限/资源/后台撤权、真实隔离宿主、成员部署与用户验收反馈分别记录；不将模拟结果扩大为真人测试。
+@@ -91,6 +92,7 @@
+ | --- | --- | --- |
+ | `docs/8_搜索功能修改.txt` | [`8_检索功能重构.txt`](8_检索功能重构.txt) | 主题扩展后改名（见 `verification/2026-09-26_搜索实验AB重新测试.txt`） |
+ | `docs/4_受控搜索模块设计.txt` | [`archive/4_受控搜索模块设计.txt`](archive/4_受控搜索模块设计.txt) | 2026-10-01 归档 |
++| `docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md` | 配置契约、文档10/21/25 | 2026-10-21按规则归属拆分，原文通过上述Git提交追溯；编号不复用 |
+ | `docs/13_配置来源与同步.md`、`docs/14_整理收尾与最终布局.md` | [`config/README.md`](../config/README.md)、[文档 12](12_目录资产与Git备份整理.md) | 2026-10-10 删除的兼容跳转页 |
+ | `docs/17_后台开发副本维护契约.md` | [文档 10 的后台开发副本契约](10_融合助手运行维护.md#后台开发副本契约) | 2026-10-10 并入文档 10 |
+ | `docs/verification/2026-09-10_文档与现状复核.txt` | 同名，仍在 `verification/` | 顶部指针已过期，见该文件的说明 |
+@@ -120,7 +122,7 @@
+ - 文件名是稳定的链接标识，标题可以随范围调整，不为对齐标题而改名。文档 9、21、26 的标题已与文件名不同，按本页目录里的标题理解；
+   改名会让 `verification/` 里冻结证据中的链接失效。
+ - 历史文件只加标记与指针，不改写原始记录；过期结论写“已于 <日期> 作废”并保留原句。
+-- 功能完成不自动归档规则文档。只要仍承担现行操作或契约，就继续维护；已完成的实施过程可移入带来源版本的历史记录。12负责资产归属，15负责回退操作，继续分开；同一能力的后续迭代更新原归属文档，不按开发轮次新建编号。
++- 功能完成不自动归档规则文档。只要仍承担现行操作或契约，就继续维护；已完成的实施过程可移入带来源版本的历史记录。12负责资产归属，15负责回退操作，继续分开；同一能力的后续迭代更新原归属文档，不按开发轮次新建编号；任务使用独立稳定ID。独立新主题才新增文档，从下一编号继续，不填补空号。
+ - 涉及具体状态的表述（工作区是否干净、远端是否同步、服务是否健康、恢复点对应哪个提交）必须带**日期与提交号**，
+   不能写成永久状态。
+ 
+diff --git a/docs/verification/INDEX.md b/docs/verification/INDEX.md
+--- a/docs/verification/INDEX.md
++++ b/docs/verification/INDEX.md
+@@ -7,6 +7,7 @@
+ | 路径 | 用途 |
+ | --- | --- |
+ | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
++| [`documentation-reorder-2026-10-23/README.md`](documentation-reorder-2026-10-23/README.md) 及同目录全部文件 | 按批准的14项方案重排；逐文件变更、相对既有整理稿的差异、链接/锚点/保留核对与只读自检，不改变业务验收 |
+ | [`documentation-2026-10-23/README.md`](documentation-2026-10-23/README.md) 及同目录全部文件 | 逐份文档分类、结构整理、过程归档、待办格式和链接/归属核对；不代表业务重新验收 |
+ | [`documentation-2026-10-21/README.md`](documentation-2026-10-21/README.md) 及同目录全部文件 | 文档归并、入口/锚点与脚本/证据归属核验；检查器9项隔离回归，不代表业务重新验收 |
+ | [`capability-decoupling-2026-10-20/README.md`](capability-decoupling-2026-10-20/README.md) 及同目录全部文件 | 文档21现行结构：受控加载、共享代码/论文下载边界、四个个人领域插件；533项回归、5组真实隔离Gateway、配置延期9项初始结果及allow成员检查补正后的10项结果、生产RPC与四项自检；文档26新检索API仅设计 |
+diff --git a/docs/待办清单.md b/docs/待办清单.md
+--- a/docs/待办清单.md
++++ b/docs/待办清单.md
+@@ -8,7 +8,7 @@
+ 
+ - `- [ ]`表示尚未验收，包括代码已完成、等待复验；`- [x]`只用于已有验收依据的完成目标。父项的必需子目标全部验收后才勾选。明确决定“不实施”可关闭决定项，不能据此声称功能已实现。
+ - 状态使用：待处理 / 处理中 / 待复验 / 已验收 / 阻塞 / 经用户确认延期。AI完成的业务实现先记“待复验”，由主人确认；只读文档/本地检查结果作为证据记录，不代替用户阅读复核。
+-- 沿用A–G、N编号；新需求用下一个N号，已有目标可拆成`E1.1`等子目标，测试用例沿用T1–T4。编号不复用、不因排期移动改号。
++- 沿用A–G、N编号；N11–N19为文档16既有缺口补充的追踪ID，未新增业务范围或改变排期。后续新需求用下一个N号，已有目标可拆成`E1.1`等子目标，测试用例沿用T1–T4。编号不复用、不因排期移动改号。
+ - 每项至少写目标、下一步、验收责任/边界和规则/证据入口；排期变化就移到对应分区。完成后提炼规则、保存证据，将简短结论移入“已完成”，不直接抹掉。
+ - 长过程进`verification/`或有来源的历史记录；清单只留当前问题、决定与下一步。完成记录积累过长时按日期归档并保留链接，不重编号。
+ - 真实模型、外发、重启、停写/恢复与远端写入按本次授权分别执行。测试前的旧授权不自动续期；不把本文用例当执行许可。
+@@ -19,147 +19,196 @@
+ 
+ ### N9 逐份整理项目文档
+ 
+-- [ ] **N9 逐份整理项目文档** · 待复验（逐份编辑与本地核对完成，待主人阅读）
+-  - 目标：逐份判断职责和生命周期，统一同类结构，区分当前规则/开发方案/完成过程；保留用户原件与历史证据。
+-  - 本轮交付：现行规则逐份整理、历史过程归档、历史文件补当前指针、待办改为可验收层级与完成记录，更新导航和归属索引。
+-  - 验收：AI核对链接/锚点、归属、保留范围和文档—代码对应；主人阅读修改结果后确认。证据：[专项记录](verification/documentation-2026-10-23/README.md)。
++- [ ] **N9 逐份整理项目文档** · 待复验（14项编辑与本地检查完成，待主人阅读）
++  - 目标：统一现行规则、操作、待办和证据的职责，保留原编号、重要锚点、历史正文及用户原件。
++  - 下一步：主人按[逐文件摘要与本轮差异](verification/documentation-reorder-2026-10-23/README.md#检查与差异)阅读复核；如需修改，继续沿用N9记录。
++  - 验收：AI核对修改范围、保留项、链接/锚点、索引和文档—代码对应；主人确认可读性。证据：[首次整理](verification/documentation-2026-10-23/README.md)、[本次重排](verification/documentation-reorder-2026-10-23/README.md)。
+ 
+ ### N6 一句话忘多条仍拆成单条
+ 
+ - [ ] **N6 一句话忘多条仍拆成单条** · 处理中（等主人选修法）
+-  - 现象：2026-10-22 15:14要求一次忘两条，模型只用一个`id`，又以单消息一次写入为由要求再发，没有使用`ids`。
+-  - 已定位：会话从10-21延续，唯一一次`tool_describe kurumi_memory`在10-21 22:49，取得重启前不含`ids`的旧参数；重启后未刷新，注入规则未压过历史。后端批量能力已存在，不等于模型会刷新参数。
+-  - 待选：①测试前`/new`；②规则及单条删除回执强调最新参数/多条用`ids`；③后端从原话判断多项后拒绝单`id`（复杂度更高）。原建议①+②，尚未代主人决定。
+-  - 下一步：主人选定后才实施；与T1一起复验。契约：[文档25第11节](25_人格、记忆与会话连续性.md#11-p2真人qq复验与工具契约补正2026-10-20)。
++  - 目标：多条遗忘使用一次`delete ids`，避免旧会话沿用重启前参数。
++  - 下一步：主人在重开会话、刷新提示/回执或后端判定方案中选定修法后实施，与T1一起复验。
++  - 验收：主人QQ对话，AI只读核对调用与revision；契约/选择见[25待决定项](25_人格、记忆与会话连续性.md#尚待决定与复验)，原15:14定位见[历史N6](archive/documentation-2026-10-23/待办清单.md)。
+ 
+ ### N7 遗忘后从聊天历史复述；问句回合顺带删除
+ 
+ - [ ] **N7 遗忘后从聊天历史复述；问句回合顺带删除** · 处理中（等主人选修法）
+-  - 现象：遗忘后询问时未搜索会话，但从仍可见的历史复述旧值；同时在问句回合补删上一句漏删的另一条。
+-  - 待选：规则与成功回执是否明确禁止复述仍在历史里的遗忘值；问句回合是否允许补做上一句遗忘，由主人决定。
+-  - 下一步：明确两项语义后再修复，与T1复验；文档整理不缩小需求，也不声称遗忘会物理删除旧聊天/备份。
++  - 目标：明确历史原话复述与问句回合补做旧遗忘的边界。
++  - 下一步：主人决定是否禁止这两种行为，再修改并随T1复验；不承诺物理删除原聊天/备份。
++  - 验收：主人QQ对话，AI核对实际工具行为；规则见[25](25_人格、记忆与会话连续性.md#尚待决定与复验)，原观察见[历史N7](archive/documentation-2026-10-23/待办清单.md)。
+ 
+ ### E1 人格和记忆
+ 
+ - [ ] **E1 人格和记忆** · 处理中
+-  - 目标：兼顾陪伴与助手，形成可验证的长短期记忆与人格连续性。规则：[文档25](25_人格、记忆与会话连续性.md)；模块边界：[文档9](9_QQ融合助手架构与开发计划.md#人格记忆与功能三模块)。
+-  - 已有记录：2026-10-21 21:05–21:09真人测试覆盖显式保存、`/new`后回忆、更正、遗忘及普通陈述observe；随后暴露的问题由N6/N7及下列子项继续跟踪。10-21 22:49–22:50的测试事实由主人清掉；当时余4条`legacy_explicit`，不是永久条数保证。
++  - 目标：陪伴与助手并存，形成可验证的记忆和人格连续性；下一步按以下子目标推进。
++  - 验收：分离AI可核对的数据流与主人评价的体感；规则[25](25_人格、记忆与会话连续性.md)，已有分轮证据见[P1/P2报告](verification/persona-memory-2026-10-19/README.md)。原10-21显式闭环不关闭长期体验。
+   - [ ] **E1.1 自动阈值压缩** · 待复验（AI只读自查）
+-    - 隔离宿主脚本`chatbot/tests/persona/compaction-host.mjs`及[原回执](verification/persona-memory-2026-10-19/p2/compaction-host.json)已有结果；生产`memoryFlush.enabled=false`于10-21 18:54重启生效，default压缩模式保留。
+-    - 截至10-22只读检查尚无该次重启后的生产压缩。下一步：等首次真实阈值触发，以`--kind session.compaction`及下一回合输入核对token前后与连续性；不需要主人专门制造长对话。
++    - 目标/下一步：等首次生产阈值触发，核对`session.compaction`、token前后与下一回合输入，不让主人专门制造长对话。
++    - 验收：AI只读；隔离脚本已有结果，但截至10-22未观察到10-21 18:54重启后的生产压缩。入口：[25原生压缩](25_人格、记忆与会话连续性.md#原生压缩与观测)、[隔离回执](verification/persona-memory-2026-10-19/p2/compaction-host.json)。
+   - [ ] **E1.2 补正后的停写恢复材料** · 待处理（需主人单独授权）
+-    - 目标：为补正后版本制作并验证恢复资料；旧材料恢复不包含后续全部代码/状态。停写/恢复契约见[文档16](16_验收与测试总表.md#恢复点与证明范围)。
+-  - [ ] **E1.3 / T1 记忆工具补正** · 待复验（主人QQ对话；等N6/N7决定后，测前`/new`）
+-    - 规则：批量`delete ids`1–8条且全有或全无；更正可拼接旧记录/当前原话并在成功后复述；遗忘不借其他工具找回；一句两种写入只做一项，请主人另发。
+-    - 10-22 15:14：更正成功但未复述；“先做一项”通过；原N5转N6，G3部分转N7。G2/G3/N5不另建重复待办。
+-    - 测试句依次单发、等回复后再发下一句：
+-
+-      | 顺序 | 合成测试话语 | 核对结果 |
+-      | --- | --- | --- |
+-      | 1 | 记住，我最近常喝美式。 | 一次保存，revision +1 |
+-      | 2 | 再记一下，我常去图书馆五楼自习。 | 一次保存，revision +1 |
+-      | 3 | 更正一下，我最近常喝的是拿铁，不是美式。 | 一次同ID更正，回复复述拿铁 |
+-      | 4 | 帮我记住我讨厌香菜，顺便把自习那条忘掉。 | 只做一项，请另发一句，不能两项都写 |
+-      | 5 | 把喝咖啡和自习这两条都忘掉。 | 一次delete含2个ids，revision +1；如果第4句已删掉自习项，先按真实结果调整测试前置状态，不使用不存在ID |
+-      | 6 | 我最近常喝什么？ | 说不记得；不搜会话，不复述历史里的拿铁/美式 |
+-
+-    - AI按起止时间用`--turns/--errors/--audit`核对工具、版本和授权；测试前记下真实基线，测后清理合成事实，旧事实不变。原10-22基线为4条，不能把其他真实新增事实当测试垃圾删掉。
++    - 目标/下一步：获授权后制作并验证记忆工具补正版本的恢复资料；原材料不覆盖全部后续代码/状态。
++    - 验收：AI按[16恢复标准](16_验收与测试总表.md#恢复点与证明范围)执行并记录；跨域全量恢复另归N16，不重复关闭。
++  - [ ] **E1.3 / T1 记忆工具补正** · 待复验（主人QQ对话）
++    - 目标/下一步：N6/N7决定后，测前`/new`，执行[25的T1完整测试句与清理规则](25_人格、记忆与会话连续性.md#t1-记忆工具补正复验)。
++    - 验收：主人对话、AI按时间只读核对版本/调用/授权；10-22更正未复述、批量遗忘和历史复述仍开放。G2/G3/N5不另建重复待办。
+   - [ ] **E1.4 / T3 成员隔离** · 待复验（另一已登记成员QQ）
+-    - 成员说“记住我喜欢吃辣。”：进入`qq-user-<QQ>`，无长期记忆工具，主人revision不变。
+-    - 成员问“你和主人是什么关系？她平时喜欢什么？”：普通朋友回答，不泄露主人事实或恋人关系。
+-    - 主人问“你记得我喜欢吃辣吗？”：不得把成员的陈述当主人记忆。
++    - 目标/下一步：验证成员陈述不写主人记忆、本人关系/事实不泄露、主人不混入成员陈述。
++    - 验收：主人和已登记成员对话，AI核对路由、工具与主人revision；计划见[25验收](25_人格、记忆与会话连续性.md#验收计划与证据)、[历史T3](archive/documentation-2026-10-23/待办清单.md)。成员完整论文往返另归N17。
+   - [ ] **E1.5 / T4 长期归纳与陪伴体感** · 待复验（几天自然聊天）
+-    - 不说“记住”，跨会话自然提同一偏好2–3次，隔天`/new`后询问；能回忆且不编造。主人评价体感，AI只核对记错、工具失败和越权，不用一次显式闭环代替长期体验。
++    - 目标/下一步：不说“记住”，跨会话自然提同一偏好2–3次，隔天`/new`后询问，核对能回忆且不编造。
++    - 验收：主人评价体感，AI核对记错、失败和越权；[25验收计划](25_人格、记忆与会话连续性.md#验收计划与证据)，不由一次显式闭环替代。
+   - [ ] **E1.6 后续P3–P5与成员记忆** · 待处理（排期：暂不做）
+-    - 持久情绪、日记、成长、主动联系与最终验收；D04/D05未决定，成员长期记忆未开放。完整候选范围归文档25，不能从P2授权推定开放。
++    - 目标/下一步：持久情绪、日记、成长、主动联系与最终验收；D04/D05未定，成员长期记忆未开放，待主人决定再细化。
++    - 验收：后续阶段分别约定，当前无实施授权；候选范围见[25后续方案](25_人格、记忆与会话连续性.md#后续方案)。
+ 
+ ### G1 清理迁移来的旧个人事实
+ 
+ - [ ] **G1 / T2 清理迁移来的旧个人事实** · 处理中（主人自己清理）
+-  - 2026-10-21 22:49–22:50主人遗忘3条，当时剩4条旧事实；人格文件替换不会同时删除事实。迁移链：10-05旧USER→旧MEMORY的6条，10-19再由`memory-migrate.mjs`进入SQLite。
+-  - 当前有效事实源只有`~/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite`。历史副本包括原生会话库、私密迁移前MEMORY、`~/kurumi-archive/legacy-openclaw/`、`~/kurumi-backups/`及Git历史；这些不是第二个运行事实源。
+-  - 私密迁移原文位置为`migration/before-memory-p2-2026-10-19T16-53-12-652Z/MEMORY.md`。10-21记录中备份副本为12份；Git原文在`42b24eb`加入、`fd3c6a3`删除，历史记录涉及`main`/`archive/legacy-openclaw`，不把当时远端观察当实时检查。
+-  - 下一步/T2：主人让她“把你记得的关于我的事全部列出来”，按当前真实列表逐条选择保留或正常遗忘；10-22基线是4条。备份/归档不直接改写；若要清理Git历史，须另行决定范围与远端改写授权。资产边界见[12](12_目录资产与Git备份整理.md)。
++  - 目标：主人逐条决定保留/遗忘当前真实事实；10-22四条旧事实只是当时基线。
++  - 下一步：主人让她列出全部有效记忆，再逐条处理。AI不直接改库；原会话、迁移前MEMORY、归档、备份和Git历史不随之清除。
++  - 验收：主人选择、AI必要时只读核对；[25唯一事实源](25_人格、记忆与会话连续性.md#数据分层与唯一事实源)、[迁移与历史副本清单](archive/documentation-2026-10-23/待办清单.md)。Git历史清理或远端改写仍须单独决定和授权。
+ 
+ ### N8 每日10:30天气播报被访问控制拒绝
+ 
+ - [ ] **N8 每日10:30天气播报被访问控制拒绝** · 待复验（AI只读核对定时运行）
+-  - 修复`bffb5dc`经主人授权于2026-10-22 17:23重启生效；固定宿主Cron只有投递channel/account，没有sender/owner标志，旧规则误拒。现行窄授权规则归[文档24第3节](24_统一身份与权限管理.md#3-权限字典与执行边界)。
+-  - 10-22 17:39主人授权手动触发：4次天气HTTP均200，主人确认收到两段，数值与返回一致；这不替代定时触发复验。
+-  - 下一步：查10-23 10:30窗口的`log-query --session-key agent:main:cron:2bd8e62c-2bf0-4a45-b231-34e39d2ee400 --from 2026-10-23T10:29`，分别用`--errors`、`--turns`确认无拒绝且有真实天气。若窗口已过，核对已有记录；未查不能关闭。
++  - 目标：修复后的天气Cron按计划运行，不被纯投递身份误拒。
++  - 下一步：核对10-23 10:30已有窗口，`log-query --session-key agent:main:cron:2bd8e62c-2bf0-4a45-b231-34e39d2ee400 --from 2026-10-23T10:29`分别用`--errors/--turns`；未查不能关闭。
++  - 验收：AI只读检查定时触发；`bffb5dc`于10-22 17:23部署，17:39获授权手动触发及主人收件不替代定时复验。规则见[24](24_统一身份与权限管理.md#权限执行)。
+ 
+ ### C12 隔离宿主验收脚本
+ 
+ - [ ] **C12 隔离宿主验收脚本** · 待复验（需主人单独授权）
+-  - memory manifest的description/version与`activation.onStartup=true`及其他插件声明已补；代码/文档已同步，10-21 18:54重启生效。剩余是隔离宿主验收脚本，未执行，不因声明存在就通过。
++  - 目标/下一步：声明已补并于10-21 18:54部署，剩余隔离宿主验收脚本获授权后执行。
++  - 验收：AI记录真实隔离宿主结果，不以manifest存在代替；入口与未覆盖见[25](25_人格、记忆与会话连续性.md#验收计划与证据)。
+ 
+ ## 二、接下来做
+ 
+ ### G5 早期保存的论文没有题名，按名找不到
+ 
+ - [ ] **G5 早期保存的论文没有题名，按名找不到** · 待处理
+-  - `Documents.find`只匹配文件名、`source.title`和来源URL；旧记录在fetch支持title前无题名。可选：获授权后补写已有记录，或从PDF元数据/首页提取。规则归[文档22](22_论文PDF翻译与文件投递.md)。
++  - 目标/下一步：主人决定补写既有元数据，或增加PDF元数据/首页提取；旧记录缺题名，不改变`find`当前匹配范围。
++  - 验收：AI核对旧文档按名可查，主人复验；当前契约见[22](22_论文PDF翻译与文件投递.md#当前实现与未完成方向)。
+ 
+ ### G6 一次性提醒投递时的宿主警告
+ 
+ - [ ] **G6 一次性提醒投递时的宿主警告** · 待处理（影响低）
+-  - 截至10-22记录，10-04起出现50次“Session key does not contain an agent id”，观察到的投递正常。下一步可先定位默认agent解析，或经核实在文档10登记已知警告；不把计数当实时值。
++  - 目标/下一步：定位“Session key does not contain an agent id”的默认agent解析，或核实后登记已知警告。
++  - 验收：AI只读区分告警与实际投递；截至10-22原记录50次、观察投递正常，不作实时计数。原观察见[历史清单](archive/documentation-2026-10-23/待办清单.md)，查询归[18](18_跨模块链路日志查询.md)。
+ 
+ ### E2 论文剩余
+ 
+ - [ ] **E2 论文剩余** · 经用户确认延期
++  - 目标/下一步：按下列子项继续，规则及证据入口统一见[22](22_论文PDF翻译与文件投递.md)。
+   - [ ] **E2.1 真实全链路与质量验收** · 经用户确认延期
+-    - 真人QQ上传→真实翻译→收件（含原F1用例11）；DeepSeek默认high全文、MAX冷缓存全文及逐字/公式校对。真实API/外发须明确授权及预算。
++    - 目标/下一步：真人QQ上传→真实翻译→收件（含原F1用例11），DeepSeek默认high全文、MAX冷缓存全文及逐字/公式校对；获明确授权与预算后执行。
++    - 验收：AI记录层级与用量，主人确认收件及质量；[22未覆盖表](22_论文PDF翻译与文件投递.md#未覆盖阻塞与收尾)。
+   - [ ] **E2.2 性能与进度优化** · 待处理（排期：暂不做）
+-    - 新身份预热、按故障分渠道冷却、阶段进度；保留个人PDF/凭据隔离与现有预算，方案归文档22。
++    - 目标/下一步：新身份预热、分类冷却和阶段进度；保留个人资料/凭据隔离与原预算，决定推进后实施。
++    - 验收：AI对照首次/预热场景，主人体验反馈；[22性能方案](22_论文PDF翻译与文件投递.md#性能优化方案)。
+ 
+ ### E4 提醒列表剩余
+ 
+ - [ ] **E4 提醒列表剩余** · 经用户确认延期
+-  - 整天四个时段连续播报、真人手机往返、长期运行与停写恢复。规则归[19](19_提醒列表与定时汇总.md)，接口与恢复归[23](23_KnowledgeMap业务能力桥接.md)。一次性提醒已有独立完成记录，不在此重复验收。
++  - 目标/下一步：获授权后覆盖整天四时段、手机往返、长期运行与停写恢复；一次性提醒已有完成记录不重开。
++  - 验收：AI记录调度/恢复层级，主人确认真实往返；[19](19_提醒列表与定时汇总.md)、[23](23_KnowledgeMap业务能力桥接.md)。
+ 
+ ### A7 验收邮件发送时间显示为UTC
+ 
+ - [ ] **A7 验收邮件发送时间显示为UTC** · 待复验（原排期最后）
+-  - 已改`2f0e647`；下次获授权真实发信时核对正文北京时间。不为文档整理额外发信。
++  - 目标/下一步：下次获授权真实发信时核对`2f0e647`修正后的北京时间，不为文档整理额外发信。
++  - 验收：主人到信反馈，AI核对；[20验收入口](20_邮件能力与横切扩展.md#验收与复验入口)。
+ 
+ ## 三、暂不做
+ 
+-[E1.6 持久情绪/日记/成长/主动联系](#e1-人格和记忆)与[E2.2 性能优化](#e2-论文剩余)的唯一任务正文保留在各自父项。以下为其他未排期任务：
++[E1.6](#e1-人格和记忆)和[E2.2](#e2-论文剩余)的唯一正文保留在父项；以下候选和未排期事项不构成实施许可。
+ 
+ ### N10 入站长消息不注入记忆
+ 
+ - [ ] **N10 入站长消息不注入记忆** · 待处理（待决定）
+-  - 原无编号需求：`trustedMemoryText`拒绝超过2000字符的原文，那一回合不注入个人记忆。是否放宽及如何保持来源边界以后讨论，当前规则不变。
++  - 目标/下一步：以后讨论是否放宽2000字符及来源边界，当前规则不变。
++  - 验收：主人决定范围，AI核对边界；[25会话生命周期](25_人格、记忆与会话连续性.md#会话生命周期)。
+ 
+ ### N2 尝试更多优化记忆的方案
+ 
+ - [ ] **N2 尝试更多优化记忆的方案** · 待处理
+-  - 到时研究ChatGPT/Claude Code记忆做法、记忆插件、级联压缩论文，以及原E1的DeepSeek-OCR光学压缩、记忆库、RAG、向量数据库方向。候选不是已决定接入的依赖。
++  - 目标/下一步：排期后研究ChatGPT/Claude Code记忆、插件、级联压缩、DeepSeek-OCR光学压缩、记忆库/RAG/向量数据库，候选不视为决定接入。
++  - 验收：主人选型，AI提供与现有契约的比较及验证边界；[25](25_人格、记忆与会话连续性.md)。
+ 
+ ### N3 尝试主动唤醒
+ 
+ - [ ] **N3 尝试主动唤醒** · 待处理
+-  - 候选每5或30分钟唤醒；不一定联系主人，也可内部记录或结束。与E1.6相关，但收件、频率、写入与外发权限尚未决定，不能直接启用。
++  - 目标/下一步：讨论每5或30分钟唤醒，可内部记录或结束；接收者、频率、写入及外发权限未定。
++  - 验收：主人先决定范围，AI按后续契约验证；[25后续方案](25_人格、记忆与会话连续性.md#后续方案)、E1.6。
+ 
+ ### N4 优化确认机制
+ 
+ - [ ] **N4 优化确认机制** · 待处理
+-  - 具体问题到时展开。现行带码契约见[文档21](21_后端职责分层与代码整理.md#确认契约与已知待办)，不能把优化意向当免确认授权。
++  - 目标/下一步：主人以后展开具体问题，再形成验收目标。
++  - 验收：按后续批准范围；当前带码契约归[21](21_后端职责分层与代码整理.md#确认契约与已知待办)，意向不构成免确认授权。
+ 
+ ### N1 日志查询P1/P2
+ 
+ - [ ] **N1 日志查询P1/P2** · 待处理（P0已关闭）
+-  - 完整需求归[文档18](18_跨模块链路日志查询.md#待开发需求)：状态快照、记忆适配器、相对时间、紧凑表格/选列、`--no-text`、已知警告折叠、截断提示、统计/用量、实时跟随和Cron运行。
+-  - 10-22实用问题：合并calls缺解析后的参数/结果，检查action/ids/revision需手拆两层JSON；优先隐私模式只显示字段形状、ID和长度，不能笼统承诺所有输出都可提交。
+-  - `tool_describe/tool_search`需显示工具名与重启前后；`agent.inbound`关联缺messageId；`agent.tool_search`实际是“cataloged 46 tools”日志，只有弱时间关联；nested摘要为空；没有独立QQ投递事件，需主人回执确认。
+-  - `--audit`只抓拒绝/失败重试，不识别多条单删、问句写入等语义问题；是否扩大审计范围等N6/N7决定，不抢先实现。
++  - 目标：状态快照、记忆适配、相对时间、输出/隐私、告警、截断、统计/用量、跟随及Cron视图；完整范围见[18待开发需求](18_跨模块链路日志查询.md#待开发需求)。
++  - 下一步：排期后优先处理参数/结果解包与必要字段展示；工具描述、入站关联、nested摘要和QQ回执的10-22诊断见[历史N1](archive/documentation-2026-10-23/待办清单.md)。语义审计扩大与否等N6/N7决定。
++  - 验收：AI用合成数据回归，真实只读核对另记；`--no-text`不承诺任意输出可直接提交。
+ 
+ ### E3 启用DeepSeek Search/Fetch
+ 
+ - [ ] **E3 启用DeepSeek Search/Fetch** · 经用户确认延期（2026-10-22）
+-  - 插件离线实现存在，未生产启用、未真实调用；当前Tavily搜索、宿主Fetch直取。设计/参数/核实日期归[文档26](26_基础能力插件边界整理与检索接入设计.md)。
+-  - 后续先决定Key及私密位置、Tavily额外工具保留范围；授权配置/重启、隔离宿主与有预算的真实API/模型/QQ验证。文档整理不运行这些步骤。
++  - 目标/下一步：以后先决定Key位置、Tavily额外工具范围，再授权配置/重启、隔离宿主和有预算的真实调用。
++  - 验收：AI分层记录，主人确认真实使用；离线实现不等于生产启用，现状和矩阵见[26](26_基础能力插件边界整理与检索接入设计.md)。
++
++## 既有未完成事项索引
++
++N11–N19仅为原规则文档/文档16中已有缺口补编号，继续保留原状态；没有因此启动开发、改变业务优先级或扩大验收。
++
++<a id="n11"></a>
++
++- [ ] **N11 QQ引用优化与会话归档** · 待处理
++  - 目标/下一步：默认普通发送、按需引用及旧验收历史/完整会话归档；后续先明确方案。
++  - 验收：主人QQ体验、AI核对；现行边界见[10](10_融合助手运行维护.md#qq图片与引用)。
++<a id="n12"></a>
++
++- [ ] **N12 旧系统真实启动与整体恢复** · 经用户确认延期
++  - 目标/下一步：旧A/B真实启动、依赖重建与旧B的DSH整体状态恢复；获独立授权后按[15](15_旧系统回退.md)选择一条路径。
++  - 验收：AI记录操作与恢复范围、主人验真实外发；既有离线材料不替代真实启动。
++<a id="n13"></a>
++
++- [ ] **N13 旧资产与个人远端核对** · 待处理
++  - 目标/下一步：核对旧bridge个人远端及DSH清理候选；先比对和证明备份覆盖，不自行删除或远端写入。
++  - 验收：AI提供只读核对依据，涉及清理/创建远端由主人单独决定；[12尚待处理](12_目录资产与Git备份整理.md#尚待处理)。
++<a id="n14"></a>
++
++- [ ] **N14 基础融合遗留验收** · 经用户确认延期
++  - 目标/下一步：真实QQ新图片、原完整确定性提醒范围、后台模型90秒严格断言、整套DSH启停；不重开已关闭的提醒中性措辞项。
++  - 验收：按原授权边界重新安排，由AI和主人分别记录层级；[16原延期项](16_验收与测试总表.md#已知未完成与批准延期)、[step6](verification/step6-2026-10-05/README.md)。
++<a id="n15"></a>
++
++- [ ] **N15 旧验收提示词与独立输出目录** · 经用户确认延期
++  - 目标/下一步：原Q1/Q3，旧harness提示词及未支持独立输出的验收入口；后续推进前保存旧回执。
++  - 验收：AI核对实际提示词与输出隔离；[16原延期项](16_验收与测试总表.md#已知未完成与批准延期)、[脚本索引](verification/SCRIPTS.md)。
++<a id="n16"></a>
++
++- [ ] **N16 当前完整恢复及跨系统停写验收** · 待处理（原结论：未验收）
++  - 目标/下一步：新功能全量恢复和跨系统同一时点停写；记忆补正局部材料仍由E1.2维护，整体验收不由局部成功替代。
++  - 验收：主人单独授权停写/恢复，AI按[16恢复标准](16_验收与测试总表.md#恢复点与证明范围)记录，配对范围见23。
++<a id="n17"></a>
++
++- [ ] **N17 第二成员真人聊天与论文往返** · 待复验
++  - 目标/下一步：`2752966052`真实聊天、上传/翻译/文件回传；按该账号及实际获准范围安排，E1.4只覆盖人格记忆隔离。
++  - 验收：主人/对应成员反馈，AI只读定位；[24未完成项](24_统一身份与权限管理.md#未完成与范围外)，已部署/离线不代替真人。
++<a id="n18"></a>
++
++- [ ] **N18 两端默认城市共库** · 待处理（后续迭代，未排期）
++  - 目标/下一步：网站与助手读取同库默认城市；原Q04保留，后续整合时再设计。
++  - 验收：主人确认行为，AI验证双入口一致；[23范围决定](23_KnowledgeMap业务能力桥接.md#已确认的范围决定)。
++<a id="n19"></a>
++
++- [ ] **N19 非HTTP代理与Gmail候选** · 待处理（扩展缺口，尚无启用决定）
++  - 目标/下一步：后续若推进，再决定CONNECT/SOCKS5、私密凭据和有界超时；IMAP仍不在需求内。
++  - 验收：主人决定接入，AI分层验证；[20代理扩展](20_邮件能力与横切扩展.md#代理扩展与未完成项)。
+ 
+ ## 四、已完成与历史关闭记录
+ 
+@@ -183,6 +232,6 @@
+ | F1–F2、G4 | QQ对外投递入口、共享依赖声明、探针清理 | 文档21/22/19及Git记录 |
+ | N1（P0） | 过滤、解析、调用/回合/错误/审计视图的阶段收尾 | 文档18；P1/P2仍未实施 |
+ 
+-2026-10-22收尾前版本：`git show db468a1:docs/待办清单.md`；本轮开始前全貌见[历史快照](archive/documentation-2026-10-23/待办清单.md)。旧“压缩模式维持default”是已记录决定，不恢复为未决事项。新完成项按同样方式追加；N9尚待主人阅读，不在本节提前勾选。
++2026-10-22收尾前版本：`git show db468a1:docs/待办清单.md`；首次整理前全貌见[历史快照](archive/documentation-2026-10-23/待办清单.md)。旧“压缩模式维持default”是已记录决定，不恢复为未决事项。新完成项按同样方式追加；N9尚待主人阅读，不在本节提前勾选。
+ 
+ 返回[文档入口](README.md)。
+diff --git a/scripts/fusion/documentation-map.json b/scripts/fusion/documentation-map.json
+--- a/scripts/fusion/documentation-map.json
++++ b/scripts/fusion/documentation-map.json
+@@ -471,6 +471,13 @@
+       "category": "当前有效"
+     },
+     {
++      "prefix": "documentation-reorder-2026-10-23/",
++      "documents": [
++        "docs/16_验收与测试总表.md"
++      ],
++      "category": "当前有效"
++    },
++    {
+       "prefix": "mail-2026-10-16/",
+       "documents": [
+         "docs/20_邮件能力与横切扩展.md"

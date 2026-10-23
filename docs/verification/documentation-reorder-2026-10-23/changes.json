@@ -1,0 +1,105 @@
+{
+  "baselineHead": "c3f395330eeff40afdd060823ee6b02abd1de44d",
+  "baseline": "开始时已有首次整理稿的工作树快照，非HEAD；本差异排除本轮证据文件本身，避免自包含",
+  "files": [
+    {
+      "path": "config/README.md",
+      "beforeSha256": "ac7856acd5244767b15581f5563eb5f697e6c22320a38a0da19e8f3bc81134af",
+      "afterSha256": "475a717da6fb638cda92e85a62b38681a837c3864ea0181f9660d7793acbbe1d",
+      "addedLines": 66,
+      "removedLines": 44
+    },
+    {
+      "path": "docs/10_融合助手运行维护.md",
+      "beforeSha256": "d3b0f421f9aa315a01b920bb14b9ac7300bac3200b48287bca4a37e8c82bace9",
+      "afterSha256": "e59c354742f47b5c3d3ca12906f33484eee6758041f708a1a2467668585ed090",
+      "addedLines": 59,
+      "removedLines": 31
+    },
+    {
+      "path": "docs/16_验收与测试总表.md",
+      "beforeSha256": "c974afb41789d01b70762ce1af448ced2e7b6b70e7deefdc52353fc85cd8182d",
+      "afterSha256": "d6928df2c6355fdc334c73a06c1bd6b27f7edd9e1be0badaa779e8095b44500e",
+      "addedLines": 49,
+      "removedLines": 22
+    },
+    {
+      "path": "docs/18_跨模块链路日志查询.md",
+      "beforeSha256": "a0b25160cbb34e23d13129073c95aff68fa26b79176b422dd1b92a2457a9eae6",
+      "afterSha256": "1830a5ca369e5badd6f9b8af378c29e0a42ea8ac534393bb73602815a16d02f8",
+      "addedLines": 34,
+      "removedLines": 4
+    },
+    {
+      "path": "docs/20_邮件能力与横切扩展.md",
+      "beforeSha256": "f9c135579d9d360d6ae7d7582a37cbdf08c64eab2ea76b6d5ae1b330699c6fca",
+      "afterSha256": "6b4b92a5aa5542951d89765f5f344d311c527922d4780df1c3830dc549b855a2",
+      "addedLines": 10,
+      "removedLines": 2
+    },
+    {
+      "path": "docs/21_后端职责分层与代码整理.md",
+      "beforeSha256": "1cc9213ada68a2c9a17fc8d9d018fbd0546de2ea8a261cb816ea0f571ec9ed2f",
+      "afterSha256": "74f44b30d839328220c0f99760bdac287b4d0d1a3b9367455a3d0495196b6c37",
+      "addedLines": 84,
+      "removedLines": 60
+    },
+    {
+      "path": "docs/22_论文PDF翻译与文件投递.md",
+      "beforeSha256": "9ad2f708b9876deea34f63f39744e8fe60c04e723db4aa74659c42cad1c098b5",
+      "afterSha256": "31aca97729c69f41ea1cd4d8cc90b55180d0f72e5df5713c0a7596ea1c24019d",
+      "addedLines": 64,
+      "removedLines": 22
+    },
+    {
+      "path": "docs/23_KnowledgeMap业务能力桥接.md",
+      "beforeSha256": "f6347b3caa4dfe3de4d8e77ca04944332a05a3991b5b6259b03752faf8f952c1",
+      "afterSha256": "585eea4c6acd15a73520a5767f9cf114987e4841401001502bec8124599578d0",
+      "addedLines": 160,
+      "removedLines": 133
+    },
+    {
+      "path": "docs/24_统一身份与权限管理.md",
+      "beforeSha256": "aac66cc525d62fe805d6dfe186d2f9b1e7bf4aae050bf628011ee17c56be24d3",
+      "afterSha256": "08e6ed32657bc57331c8c4f9cbbc89bdf90b9145c3a28f89fc64bae9134bf5c4",
+      "addedLines": 37,
+      "removedLines": 20
+    },
+    {
+      "path": "docs/25_人格、记忆与会话连续性.md",
+      "beforeSha256": "abdcdff57a042478c9f06dc92bd25b88f40735e8d75255d2acd28d6f03193d9e",
+      "afterSha256": "d078b79bed26dd9e06a8b68cad9885d0bb1a5ca0b0fd256a05f4aa18b4590efd",
+      "addedLines": 250,
+      "removedLines": 216
+    },
+    {
+      "path": "docs/README.md",
+      "beforeSha256": "6e2087d69f66640dcbd217878c6daa07810008c039872164492c70a79fa5fe77",
+      "afterSha256": "59a7811861131d09601540185ea384b678f977752c1ddca6b865dbd60c8279c2",
+      "addedLines": 19,
+      "removedLines": 17
+    },
+    {
+      "path": "docs/verification/INDEX.md",
+      "beforeSha256": "8c97049316b30befd8bf9518c398ae62c895d7af29d587d574843e43a4bdc980",
+      "afterSha256": "0b6fba40c6c1cd176b4f9e4148ba4b38ef301a56002f8a92ff25cf7eee8a33c4",
+      "addedLines": 1,
+      "removedLines": 0
+    },
+    {
+      "path": "docs/待办清单.md",
+      "beforeSha256": "3e6e6e3df4c3c204772199f8a79243bc9cac7903e635c88bb9671a339eb839a2",
+      "afterSha256": "03439ae55e32cdd236dd7958643eb95e8b40cc5bd6319aa78765667506aff817",
+      "addedLines": 112,
+      "removedLines": 63
+    },
+    {
+      "path": "scripts/fusion/documentation-map.json",
+      "beforeSha256": "c8a936b73075a95e789f79c35a4f72d99ceeeebbc3eaa2d05f1f75276e99242d",
+      "afterSha256": "bd21559873f76246f26b794c5bef2395ba4e9d4df4585f1d3ffe04642b26ac73",
+      "addedLines": 7,
+      "removedLines": 0
+    }
+  ],
+  "patchSha256": "dc293984e3546b69395ad44424652794330edc866a2a0b97122185fb4545776a"
+}

@@ -1,0 +1,355 @@
+{
+  "method": "保留本轮开始时所有已有标题/显式锚点，旧锚点就近跳到承接现行内容的新章节",
+  "retainedAliases": [
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "1-需求与范围",
+      "newSection": "需求与范围"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "术语",
+      "newSection": "术语与并发保护"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "2-已核实的现状",
+      "newSection": "每次消息的上下文"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "21-每条消息进入模型的内容",
+      "newSection": "每次消息的上下文"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "22-长短期记忆与会话的区别",
+      "newSection": "数据分层与唯一事实源"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "23-检索与多个会话",
+      "newSection": "检索与多个会话"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "24-当前代码与状态入口",
+      "newSection": "代码对应表"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "3-参考项目与适配结论",
+      "newSection": "参考机制与采用边界"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "4-职责划分与后续扩展",
+      "newSection": "后续方案"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "41-共享人格与关系",
+      "newSection": "人格来源与关系"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "42-记忆日记与成长",
+      "newSection": "记忆存储与检索"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "43-会话连续性",
+      "newSection": "会话生命周期"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "44-主动陪伴与工具权限",
+      "newSection": "后续方案"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "5-分阶段计划与进度",
+      "newSection": "后续方案"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "6-待决策事项",
+      "newSection": "后续方案"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "7-验收计划与产物归属",
+      "newSection": "验收计划与证据"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "8-建档与授权摘要",
+      "newSection": "需求与范围"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "9-p1共享人格与关系分离",
+      "newSection": "人格来源与关系"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "已决定的实现范围",
+      "newSection": "人格来源与关系"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "产物与验收结果",
+      "newSection": "人格来源与关系"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "部署热加载与回退",
+      "newSection": "人格投影与局部回退"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "尚未完成及能力边界",
+      "newSection": "尚待决定与复验"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "10-p2记忆与会话连续性",
+      "newSection": "记忆存储与检索"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "当前范围与进度2026-10-20",
+      "newSection": "记忆存储与检索"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "存储与读取契约",
+      "newSection": "数据分层与唯一事实源"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "可信来源与会话生命周期",
+      "newSection": "会话生命周期"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "p2生产落地与恢复证据",
+      "newSection": "记忆迁移与恢复边界"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "已决定的实施契约与测试方案",
+      "newSection": "写入、更正与遗忘"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "宿主自动阈值压缩离线调研与隔离测试2026-10-21待复验",
+      "newSection": "原生压缩与观测"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "11-p2真人qq复验与工具契约补正2026-10-20",
+      "newSection": "动作与参数契约"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "当前实现与决定",
+      "newSection": "动作与参数契约"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "2026-10-21参数补正",
+      "newSection": "参数、版本与单消息事务"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "何时形成跨会话记忆",
+      "newSection": "形成跨会话记忆的时点"
+    },
+    {
+      "document": "docs/25_人格、记忆与会话连续性.md",
+      "oldAnchor": "测试结果与证据",
+      "newSection": "验收计划与证据"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "1-需求与交付范围",
+      "newSection": "需求与交付范围"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "用户目标",
+      "newSection": "需求与交付范围"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "记录约定",
+      "newSection": "验收计划与产物归属"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "术语",
+      "newSection": "接口与运行边界"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "2-接口与运行边界",
+      "newSection": "接口与运行边界"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "3-架构与职责",
+      "newSection": "架构与职责"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "写入与查询契约",
+      "newSection": "写入、查询、版本与幂等"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "权限与日志",
+      "newSection": "权限与真实runId"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "4-已确认决定与迭代范围",
+      "newSection": "已确认的范围决定"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "5-切换与回退约束",
+      "newSection": "切换与回退约束"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "6-测试产物与完成标准",
+      "newSection": "验收计划与产物归属"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "测试计划",
+      "newSection": "验收计划与产物归属"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "产物归属与索引",
+      "newSection": "记录与完成标准"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "7-并行开发与-git-边界",
+      "newSection": "历史证据与版本"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "8-实施与验收记录",
+      "newSection": "历史证据与版本"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "迁移与切换",
+      "newSection": "迁移"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "备份与恢复演练",
+      "newSection": "恢复验证"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "本轮产物登记",
+      "newSection": "代码与脚本入口"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "9-维护与版本查询",
+      "newSection": "历史证据与版本"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "10-第二轮账单完整维护与调用链优化",
+      "newSection": "账单完整维护"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "决策与边界",
+      "newSection": "账单完整维护"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "第二轮开发与验收",
+      "newSection": "历史证据与版本"
+    },
+    {
+      "document": "docs/23_KnowledgeMap业务能力桥接.md",
+      "oldAnchor": "第二轮回退资料",
+      "newSection": "账单完整维护的代码与MySQL资料"
+    },
+    {
+      "document": "docs/21_后端职责分层与代码整理.md",
+      "oldAnchor": "当前范围与完成清单",
+      "newSection": "当前生产实现"
+    },
+    {
+      "document": "docs/21_后端职责分层与代码整理.md",
+      "oldAnchor": "共享业务的异步边界",
+      "newSection": "同步适配器与异步业务API"
+    },
+    {
+      "document": "docs/21_后端职责分层与代码整理.md",
+      "oldAnchor": "职责与代码位置",
+      "newSection": "旧本地列表与文件记忆"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "当前进度",
+      "newSection": "需求与已定范围"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "1-需求与已定范围",
+      "newSection": "需求与已定范围"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "2-唯一配置来源与管理方式",
+      "newSection": "身份来源"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "3-权限字典与执行边界",
+      "newSection": "权限执行"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "4-会话资源与投递隔离",
+      "newSection": "资源与投递隔离"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "5-日志与维护步骤",
+      "newSection": "登记与撤权"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "6-开发决定与验证快照",
+      "newSection": "代码入口"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "7-未完成与范围外",
+      "newSection": "未完成与范围外"
+    },
+    {
+      "document": "docs/24_统一身份与权限管理.md",
+      "oldAnchor": "8-提交审查发现与补验2026-10-20",
+      "newSection": "历史证据入口"
+    },
+    {
+      "document": "config/README.md",
+      "oldAnchor": "保证",
+      "newSection": "写入保证"
+    }
+  ]
+}

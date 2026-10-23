@@ -2,16 +2,7 @@
 
 类型：配置规则与同步操作手册。状态：维护现行配置来源和部署契约；具体业务的实现范围及验收分别进入领域文档与[文档16](../docs/16_验收与测试总表.md)。
 
-融合系统的配置分两层：**仓库是意图（intent），运行目录是事实与私密状态**。
-本目录只保存可公开、无凭据的那一层。
-
-按任务阅读：[模型与人格来源](#主模型与人格切换) → [目录分工](#目录分工) → [同步的写入边界](#同步契约) → [按改动选择入口](#改配置的正确姿势) → [只读自检](#自检)。主同步代码为 `scripts/fusion/sync-config.mjs` 与 `sync-persona.mjs`；本文出现的迁移/备份时点不作为当前库版本或执行授权。
-
-## 主模型与人格切换
-
-- 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。历史实测见[模型与图片证据](../docs/verification/deepseek-whale/README.md)。
-- 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
-- `configure-deepseek-persona.mjs`是2026-10-05的一次性迁移脚本，**不是日常人格切换入口**。它会重写provider、默认模型、`runtime-env.json`并删除`OPENAI_API_KEY`，还会写四份工作区文件。迁移私密材料位于 `.openclaw-fusion/migration/before-deepseek-whale-2026-10-05/`，只代表当时状态，不是当前完整回退点。改配置与回退先按本文及文档16的契约核对，不删除运行目录或业务状态。
+仓库保存配置意图，运行目录保存实际配置与私密状态。按[来源与目录](#目录分工) → [受管键与删除语义](#仓库全权管理-vs-宿主自行维护) → [同步命令](#同步契约) → [生效条件](#改配置的正确姿势)阅读。同步源码为`sync-config.mjs`和`sync-persona.mjs`，文中的历史迁移时点不构成新的执行授权。
 
 ## 目录分工
 
@@ -55,41 +46,13 @@
 
 因此改配置时的规则很简单：**要改行为改仓库，要改密钥只改登记的私密位置，两者都不要互相复制。**
 
-## 同步契约
+## 主模型与人格切换
 
-提醒列表的设置/投递状态在 `state/personal-reminder-list/list.sqlite`，事项唯一事实在KnowledgeMap。`dataSource=knowledgemap`、`bridgeBaseUrl` 和 `bridgeTokenFile` 同时用于工具及runner，持久切换标记也约束旧任务；步骤与回退边界见[文档23](../docs/23_KnowledgeMap业务能力桥接.md)。`plugins.entries.personal-reminder-list.config.defaultTimes` 仅用于首次建库；主人通过工具修改的时刻/暂停状态由领域库持有，配置同步不覆盖它。`backendRoot` 明确指向持久后端目录 `/home/afrangry/kurumi-fusion/chatbot`，用于固定 Cron runner；不能从 OpenClaw 的插件捕获临时目录推导。具体契约见[文档 19](../docs/19_提醒列表与定时汇总.md)。
+- 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。历史实测见[模型与图片证据](../docs/verification/deepseek-whale/README.md)。
+- 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
+- `configure-deepseek-persona.mjs`是2026-10-05的一次性迁移脚本，**不是日常人格切换入口**。它会重写provider、默认模型、`runtime-env.json`并删除`OPENAI_API_KEY`，还会写四份工作区文件。迁移私密材料位于 `.openclaw-fusion/migration/before-deepseek-whale-2026-10-05/`，只代表当时状态，不是当前完整回退点。改配置与回退先按本文及文档16的契约核对，不删除运行目录或业务状态。
 
-天气、Profile、行程、一次性提醒分别配置 `plugins.entries.personal-{weather,profile,planning,reminders}` 并独立登记allow/load/开关。天气条目只持有天气API参数；Profile持有地理解析及默认城市桥接配置；行程与一次性提醒只装配自身领域，一次性提醒的 `reminderRunnerRoot` 指向持久 `chatbot/plugins/personal-reminders`。共享实现不改变历史数据归属：Profile/行程仍使用 `state/personal-weather/weather.sqlite`，提醒仍使用 `state/personal-reminders/`。旧Cron的 `personal-weather/dist/reminder-cli.js` 由集中构建生成转发入口，不因配置拆分自动重写既有任务。`kurumi-research.config.cacheRoot` 显式指定阅读/源缓存，不再从QQ频道路径推导。完整代码和兼容边界见[文档21](../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期)。
-
-`sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
-
-未启用共享模式的提醒列表和长期记忆可在 `plugins.entries.<id>.config` 指定 `policyAdapter` / `storeAdapter`，值是领域 `adapters.js` 注册的实现 ID，启动时固定。默认分别为 `default` / `sqlite` 和 `explicit` / `memory-file`；未指定仍用上述默认，未知 ID 明确失败，不回退。替换实现、迁移数据与旧 Cron 绑定的处理见[文档 21](../docs/21_后端职责分层与代码整理.md)，配置选择不自动迁移业务数据。
-
-主人连续性由 `plugins.entries.kurumi-memory.config.continuity.enabled` 开启；`summaryTtlDays` 为近期摘要保留天数（1–30，默认7），`maxContextChars` 为注入上限（2000–12000，默认6000）。连续性模式使用 `continuityPolicyAdapter=current-owner`、`continuityStoreAdapter=sqlite`，不与旧 `policyAdapter/storeAdapter` 混用。生产当前已启用这组配置；首次迁移仍按下面的预览→私密备份→应用流程，后续只读预览用于核对：
-
-```bash
-node chatbot/scripts/memory-migrate.mjs                 # 只读预览
-node chatbot/scripts/memory-migrate.mjs --apply \
-  --backup-root /home/afrangry/.openclaw-fusion/migration
-```
-
-迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。`/new`只清原生聊天上下文，仍注入有效长期事实和未过期摘要；明确更正/遗忘才推进记忆代际并清理本域摘要。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
-
-论文插件的 `root/python/credentialsFile`、`apiConcurrency/apiQps`（日常最多4个在途请求、每秒启动1个；操作者可配置并发1–6、QPS1–4）和页数、请求次数、用量、运行时限在 `plugins.entries.kurumi-papers.config` 管理。`liveTranslationEnabled` 是实际付费调用开关，插件缺省关闭；本机仓库意图已按用户授权设为 `true`。三份窄工具加入 `main.tools.alsoAllow`，已登记成员的独立 Agent 仅开放首期工具，不开放通用文件或命令。成员文件在 `root/subjects/<QQ>/`，任务共用串行队列并绑定真实请求人；任务、产物与归属需随私有状态备份，Python 环境用锁文件重建。详细契约与证据见[文档22](../docs/22_论文PDF翻译与文件投递.md)、身份边界见文档24。
-
-论文可靠性也由上述受管配置控制：`batchValidationRetries=1` 表示校验失败后仅对当前批次额外重试1次，`channelRecoveryRetries=1` 表示全部临时渠道冷却后最多再恢复1轮；两项均允许0–4，0明确禁用对应重试。两者独立计数，但共用单任务300请求、300000已报告tokens和1800秒期限。模型不能改这些值。冷却文件兼容原数字到期时间，新条目保存到期/机器原因/是否允许恢复；同一渠道恢复时仅一个在途探测。HTTP请求采用沙箱内临时子进程以便失败后立即取消，不新增服务或端口；诊断和原始回执只在私密任务状态中保留。
-
-`requestIdleTimeoutSeconds=100` 是独立的有效正文空闲期限，操作者可设整数1–600秒。自请求开始或最后一次非空白 `response.output_text.delta` 计时；心跳、`response.created`、思考事件和纯空白不重置。超时先终止当前HTTP子进程，再按既有渠道/冷却规则重试当前批次，记 `api_output_idle_timed_out_unknown` 及未知用量，不自动重跑整篇。持续有正文的单请求仍受固定600秒总期限限制，整篇仍1800秒。没有可见正文不证明上游没有推理或计费；本地取消不保证停止上游计费。
-
-```bash
-node scripts/fusion/sync-config.mjs            # --check（默认）：只报告漂移，不写入
-node scripts/fusion/sync-config.mjs --diff     # 逐项差异 + 删除项 + 运行态独有键
-node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配置
-```
-
-并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。10项自检、allow成员检查补正及原回执见[结构整理报告](../docs/verification/capability-decoupling-2026-10-20/README.md)。
-
-### 仓库全权管理 vs 宿主自行维护
+## 仓库全权管理 vs 宿主自行维护
 
 `runtime.config.json` 顶部的 `_managed` 列出**仓库全权拥有**的顶层键
 （当前：`agents`、`bindings`、`channels`、`commands`、`discovery`、`gateway`、`logging`、
@@ -101,12 +64,41 @@ node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配�
 - **不在 `_managed` 里的键：宿主自行维护，原样保留**，并在 `--diff` 里列为
   `RUNTIME-ONLY` 提示。
 
-### 保证
+## 同步契约
+
+`sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
+
+### 只读核对
+
+```bash
+node scripts/fusion/sync-config.mjs
+node scripts/fusion/sync-config.mjs --diff
+node scripts/fusion/sync-persona.mjs --diff
+```
+
+配置默认`--check`只报告漂移；`--diff`列差异、删除项和运行态独有键。人格预览只比较投影，不写记忆或会话。
+
+### 应用与生效
+
+```bash
+node scripts/fusion/sync-config.mjs --apply
+node scripts/fusion/sync-persona.mjs --apply
+```
+
+以上写入命令按本次已授权变更选择。运行配置需重启生效；仅四份人格文件由当前固定宿主下一回合加载。成员登记/撤权还需遵循文档24的工作区顺序；不手改运行副本。
+
+<a id="保证"></a>
+
+### 写入保证
 
 1. **只写 `openclaw.json`**。脚本不会打开、移动或删除 `state/`、`channel/`、`agents/`、
    `workspace/`、`media/` 或任何数据库与 JSONL，因此不可能覆盖记忆、提醒或聊天历史。
 2. **写入前先备份**为 `openclaw.json.bak.<时间戳>`（mode 600）。
 3. **`--check` 在漂移时以非零码退出**，可直接接进启停脚本或自检。
+
+### 分阶段部署
+
+并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。10项自检、allow成员检查补正及原回执见[结构整理报告](../docs/verification/capability-decoupling-2026-10-20/README.md)。
 
 ## 改配置的正确姿势
 
@@ -136,6 +128,36 @@ node scripts/fusion/sync-config.mjs --apply    # 把仓库意图写入运行配�
 角色/关系素材只接受 `roles/` 下的普通 `.md` 文件，拒绝路径穿越、符号链接、空内容和未替换的 `{{...}}` 占位符；身份名须为非空单行。同步前完整计算并校验投影，错误配置不写文件；每个目标文件分别原子替换且权限0600，多个文件不是一个事务。同步失败后重新检查漂移再处理，不宣称整组自动回滚。
 
 本机 OpenClaw `2026.9.7` 每回合重新核对 bootstrap 文件；文档25的真实隔离宿主已验证同一会话 SOUL 更新生效。因此只同步这四份人格文件无需重启服务。新增身份/路由、工具或运行配置变更仍按各自契约同步并重启。旧聊天不重置，既有历史可能影响表达；人格同步不等于新增长期记忆或情绪持久化。
+
+## 领域配置查询
+
+参数以各插件schema、执行代码及`runtime.config.json`为依据；本节提供键与归属，详细业务解释只维护在领域文档。
+
+| 领域 / 来源键 | 配置与同步边界 | 详细规则 |
+| --- | --- | --- |
+| 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [19](../docs/19_提醒列表与定时汇总.md)、[23迁移/切换](../docs/23_KnowledgeMap业务能力桥接.md#迁移) |
+| 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析/默认城市桥接，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [21当前生产实现](../docs/21_后端职责分层与代码整理.md#当前生产实现) |
+| 阅读：`kurumi-research.config.cacheRoot` | 显式缓存位置，不从QQ频道目录推导 | [21共享边界](../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期) |
+| 记忆：`continuity.enabled/summaryTtlDays/maxContextChars` | 仓库为true/7/6000；TTL范围1–30天、缺省7；资料预算2000–12000字符、缺省6000 | [25存储与检索](../docs/25_人格、记忆与会话连续性.md#记忆存储与检索) |
+| 连续性适配器：`continuityPolicyAdapter/continuityStoreAdapter` | 当前`current-owner/sqlite`，不与旧`policyAdapter/storeAdapter`混用；配置选择不自动迁移数据 | [25](../docs/25_人格、记忆与会话连续性.md)、[21兼容实现](../docs/21_后端职责分层与代码整理.md#兼容实现) |
+| 旧本地列表/显式记忆：`policyAdapter/storeAdapter` | 缺省分别`default/sqlite`、`explicit/memory-file`；未知ID失败，连续性启用后旧记忆写入拒绝 | [21兼容实现](../docs/21_后端职责分层与代码整理.md#兼容实现) |
+| 论文：`root/python/credentialsFile/liveTranslationEnabled` | 路径与付费开关属于受管配置；成员目录/任务绑定不靠模型参数选择，凭据不写入配置 | [22产物与运维](../docs/22_论文PDF翻译与文件投递.md#精确产物与运维)、[24隔离](../docs/24_统一身份与权限管理.md#资源与投递隔离) |
+| 论文：`maxPages/maxRequests/maxReportedTokens/apiConcurrency/apiQps` | 源码缺省、仓库生产配置与可配置范围统一查参数表，模型不能改预算/并发 | [22默认资源](../docs/22_论文PDF翻译与文件投递.md#默认资源与用量限制) |
+| 论文：`batchValidationRetries/channelRecoveryRetries/requestIdleTimeoutSeconds/timeoutSeconds` | 参数表包含缺省与范围；两类重试独立计数，共同受任务预算约束 | [22重试与时限](../docs/22_论文PDF翻译与文件投递.md#重试与渠道切换) |
+
+四领域保留历史共库与旧Cron转发地址；列表切换标记、连续性SQLite、文档/任务归属属于运行状态，不由配置同步迁移。详情见21/23/25。论文队列、冷却、正文空闲与未知计费处理归22，本页不重复展开。
+
+## 首次记忆迁移
+
+连续性配置不自动导入旧事实，首次迁移先预览、私密备份再应用：
+
+```bash
+node chatbot/scripts/memory-migrate.mjs  # 只读预览
+node chatbot/scripts/memory-migrate.mjs --apply \
+  --backup-root /home/afrangry/.openclaw-fusion/migration
+```
+
+迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。记忆生命周期与遗忘边界见[文档25](../docs/25_人格、记忆与会话连续性.md#会话生命周期)。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
 
 ## 自检
 
