@@ -1,3 +1,5 @@
+> **2026-10-23 整理说明：历史阶段资料，正文保留。** 本文中的状态、待办与继续工作指针只属于原日期；当前规则与任务见[历史索引](README.md)及[文档入口](../README.md)。归档不表示原未完成项已修复。
+
 D22 新增真实用户失败样本与修复计划（待实施）
 样本：2026-09-10 10:45，主人报告已到重庆大学虎溪科学城校区。
 只读核对：生产会话 140263aa-6067-4a9a-9a01-84d89d9fba28.jsonl，第6～10行：先一次 personal_profile_state_get（扬中/revision2/无pending），再一次 personal_profile_change_propose；location.text=重庆大学虎溪科学城校区，administrative_area=重庆市沙坪坝区（模型补入，用户原话未提供）。工具返回 ok=false/code=UPSTREAM_UNAVAILABLE/retryable=false/message=天气服务暂时不可用。最终回复称地理服务挂了、等待恢复。

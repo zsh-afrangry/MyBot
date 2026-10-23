@@ -1,0 +1,162 @@
+{
+  "sourceHead": "c3f395330eeff40afdd060823ee6b02abd1de44d",
+  "date": "2026-10-23 Asia/Shanghai",
+  "scope": "文档整理，本地只读/离线检查；不作业务重新验收",
+  "runtimeChecks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "exitCode": 1,
+      "phase": "probe not started",
+      "result": "worktree未链接openclaw；环境导入失败，不证明服务故障",
+      "output": "node:internal/modules/package_json_reader:343\n  throw new ERR_MODULE_NOT_FOUND(packageName, fileURLToPath(base), null);\n        ^\n\nError [ERR_MODULE_NOT_FOUND]: Cannot find package 'openclaw' imported from /home/afrangry/.codex/worktrees/89f2/kurumi-fusion/scripts/fusion/rpc.mjs\n    at Object.getPackageJSONURL (node:internal/modules/package_json_reader:343:9)\n    at packageResolve (node:internal/modules/esm/resolve:751:25)\n    at moduleResolve (node:internal/modules/esm/resolve:840:18)\n    at defaultResolve (node:internal/modules/esm/resolve:973:11)\n    at #cachedDefaultResolve (node:internal/modules/esm/loader:708:20)\n    at #resolveAndMaybeBlockOnLoaderThread (node:internal/modules/esm/loader:728:38)\n    at ModuleLoader.resolveSync (node:internal/modules/esm/loader:766:56)\n    at #resolve (node:internal/modules/esm/loader:690:17)\n    at ModuleLoader.getOrCreateModuleJob (node:internal/modules/esm/loader:610:35)\n    at node:internal/modules/esm/loader:639:32 {\n  code: 'ERR_MODULE_NOT_FOUND'\n}\n\nNode.js v26.12.1\n"
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "output": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n",
+      "scope": "规范源码/运行目录的只读检查；没有apply"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "exitCode": 0,
+      "output": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n",
+      "scope": "规范源码/运行目录的只读检查；没有apply"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exitCode": 0,
+      "output": "persona in sync with roles/世凪.md (12 workspace file(s) match)\n",
+      "scope": "规范源码/运行目录的只读检查；没有apply"
+    },
+    {
+      "command": "entry equivalence check",
+      "result": [
+        {
+          "path": "scripts/fusion/health.mjs",
+          "sameAsDeployedSource": true,
+          "sha256": "c6c111d1b4cb69a6425abcb2e81498ff29c22bc484931c4bb545b5eeddd2e17d"
+        },
+        {
+          "path": "scripts/fusion/rpc.mjs",
+          "sameAsDeployedSource": true,
+          "sha256": "0a1ef9953c4fa7232e1a9b85dc95feb206e23efca9f921f520a51d62c7435acc"
+        }
+      ]
+    },
+    {
+      "command": "node /home/afrangry/kurumi-fusion/scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "summary": {
+        "at": "2026-10-22T18:45:03.535Z",
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "databases": {
+          "channelDatabase": "ok",
+          "weatherDatabase": "ok",
+          "remindersDatabase": "ok",
+          "reminderListDatabase": "ok"
+        }
+      },
+      "scope": "从规范部署源码运行；只保留健康摘要，不保存Cron/投递详情"
+    }
+  ],
+  "documentChecks": [
+    {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exitCode": 0,
+      "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 443\n  total: 526\nOK: every file belongs to exactly one named group with valid documents.\n"
+    },
+    {
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "exitCode": 0,
+      "output": "OK: SCRIPTS.md matches 198 classified, document-owned entries.\n"
+    },
+    {
+      "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+      "exitCode": 0,
+      "tests": 9,
+      "passed": 9,
+      "failed": 0,
+      "outputFile": "checker-tests.txt"
+    },
+    {
+      "command": "python3 /tmp/kurumi-doc-links.py --save",
+      "exitCode": 0,
+      "method": "遍历docs内Markdown及config/README、根README_FUSION/AGENTS；跳过代码围栏和外部URL，检查相对目标、GFM式标题锚点及显式id；失败或未闭合围栏时退出1",
+      "summary": {
+        "checkedLinks": 1339,
+        "unclosedFences": [],
+        "failures": [],
+        "introducedFailures": []
+      },
+      "outputFile": "links.json"
+    },
+    {
+      "command": "python3 /tmp/kurumi-doc-preservation.py",
+      "exitCode": 0,
+      "method": "对比sourceHead的Git blob/原文后缀；检查所有已跟踪差异及未跟踪文件的授权目录范围",
+      "summary": {
+        "ok": true,
+        "protected": 4,
+        "historicalBodies": 13,
+        "frozenVerification": 519,
+        "otherExistingArchive": 9,
+        "scopeViolations": [],
+        "currentRulesMetrics": {
+          "documents": 14,
+          "beforeChars": 149218,
+          "afterChars": 122425
+        }
+      },
+      "outputFile": "preservation.json"
+    },
+    {
+      "command": "git diff --check; git diff --no-index --check /dev/null <每个新增文件>",
+      "exitCode": 0,
+      "result": {
+        "trackedDiff": {
+          "exitCode": 0,
+          "output": ""
+        },
+        "addedFiles": {
+          "checked": 20,
+          "failures": []
+        },
+        "whitespaceCheckFixtures": {
+          "clean": {
+            "exitCode": 1,
+            "output": "",
+            "ok": true
+          },
+          "trailingWhitespace": {
+            "exitCode": 3,
+            "output": "/tmp/kurumi-whitespace-check-qcnwuyjl/bad.md:1: trailing whitespace.\n+trailing whitespace  \n",
+            "ok": false
+          }
+        },
+        "fixtureCheckOk": true,
+        "stagedFiles": [],
+        "head": "c3f395330eeff40afdd060823ee6b02abd1de44d"
+      }
+    }
+  ],
+  "notPerformed": [
+    "业务回归/真实模型或付费API",
+    "QQ/邮件外发",
+    "配置/人格apply",
+    "服务启停",
+    "备份/恢复",
+    "提交/远端推送"
+  ],
+  "preparationNotes": [
+    "links.json初次生成前，报告README的该自引用目标尚未存在；落盘后复查1339处链接全部通过，保留的links.json为最终结果。",
+    "新增文件的git diff --no-index --check可在无空白问题时返回1；核对脚本以退出码及诊断共同判断，并通过干净/尾随空白正反样本确认，未将普通文件差异当作失败。"
+  ]
+}

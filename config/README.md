@@ -1,7 +1,11 @@
 # 配置来源与同步契约
 
+类型：配置规则与同步操作手册。状态：维护现行配置来源和部署契约；具体业务的实现范围及验收分别进入领域文档与[文档16](../docs/16_验收与测试总表.md)。
+
 融合系统的配置分两层：**仓库是意图（intent），运行目录是事实与私密状态**。
 本目录只保存可公开、无凭据的那一层。
+
+按任务阅读：[模型与人格来源](#主模型与人格切换) → [目录分工](#目录分工) → [同步的写入边界](#同步契约) → [按改动选择入口](#改配置的正确姿势) → [只读自检](#自检)。主同步代码为 `scripts/fusion/sync-config.mjs` 与 `sync-persona.mjs`；本文出现的迁移/备份时点不作为当前库版本或执行授权。
 
 ## 主模型与人格切换
 
@@ -27,7 +31,7 @@
 | `.openclaw-fusion/users/<QQ>/workspace/` | 成员独立 Agent 的四份受管人格/规则文件及个人会话环境，不复制主人记忆/资料 | ❌ 仅私有备份 |
 | `.openclaw-fusion/state/` | 一次性提醒、天气、Profile、行程；共享列表的设置/投递账本及冻结旧事项（SQLite） | ❌ 仅私有备份 |
 | `.openclaw-fusion/channel/` | 频道账本、贴纸目录、发送回执 | ❌ 仅私有备份 |
-| `.openclaw-fusion/agents/` | 会话记录（JSONL）与 agent 库 | ❌ 仅私有备份 |
+| `.openclaw-fusion/agents/` | 各 Agent 的原生会话 SQLite、保留的历史 JSONL 等资料；读取归属见文档25 | ❌ 仅私有备份 |
 | `.openclaw-fusion/{code,research}-workspace/`、`project-checks/`、`research-cache/` | 后台任务与研究的隔离工作区、检查夹具、缓存 | ❌ 仅私有备份 |
 | `.openclaw-fusion/plugins/` | 受控第三方插件安装（由仓库锁文件重建） | ❌ 可重建 |
 | `.openclaw-fusion/paper-credentials.json` | 论文翻译凭据，0600；GPT 014 → 030 → 040 与独立 DeepSeek 官方 Key，按本次厂商选取 | ❌ 仅私有备份 |

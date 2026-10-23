@@ -1,0 +1,85 @@
+{
+  "sourceHead": "c3f395330eeff40afdd060823ee6b02abd1de44d",
+  "reviewDate": "2026-10-23 Asia/Shanghai",
+  "scope": "仅源码/固定SDK读取；不复制运行内容或作业务验收",
+  "sourceFiles": [
+    {
+      "path": "config/persona.json",
+      "symbol": "当前角色与关系来源",
+      "sha256": "4f3b01ad5e78b6b33e3db8bdf3a05654cdcb6bb6e589cc43bb7e824fa00f81a8"
+    },
+    {
+      "path": "chatbot/packages/access-control/workspaces.js",
+      "symbol": "personaFiles",
+      "sha256": "0315c572ae77bbaf0376e3482df5a043a36ad85a3f73f971f03c2cb16a533161"
+    },
+    {
+      "path": "scripts/fusion/sync-persona.mjs",
+      "symbol": "四份受管投影的核对/应用入口",
+      "sha256": "707bb27462e714e07b928e6ca071439e0d02ae85c929de786427a9b2eea4b4bf"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/inbound.js",
+      "symbol": "trustedMemoryText",
+      "sha256": "97c78833f213eed9359bdd62ffe24e0de4d8238a76d8711105661dbec443db91"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/plugin.js",
+      "symbol": "registerContinuity / reply_dispatch / before_prompt_build / before_tool_call / agent_end / before_reset / session_end",
+      "sha256": "de2aceb3a4008fad78d26f167cc5342603e6ed45047b68ec54d12fe7dab87484"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/application.js",
+      "symbol": "createContinuityApplication / view / context / change",
+      "sha256": "f9d4c96ccbd03f93178d45e8bad10c21157f4ce0eca5d230c3ebfcd404ff640e"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/policy.js",
+      "symbol": "continuityPolicy / composed",
+      "sha256": "b9a546f98a2c11d94a174a6f855e269ad54e5f08650f60f40ae5133127a39702"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/store.js",
+      "symbol": "openContinuityStore / read / write",
+      "sha256": "dbe6e991bc72d153496182ec73b2b9b22ff90bda91814156cc2a0e240b5bae9d"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/model.js",
+      "symbol": "limits / options / validateState",
+      "sha256": "12bf07c73d4248f83e2ec63ce9932ad9fdefbb462b72da1974e21b7f7d1c7651"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/tool-contract.js",
+      "symbol": "assertContinuityArgs / continuityParameters",
+      "sha256": "3b9e485434fd0c4156ebf2df6a502c0909972ce829d94443b38e14153767ab8e"
+    },
+    {
+      "path": "chatbot/packages/access-control/permissions.js",
+      "symbol": "toolPermission / MEMBER_TOOLS",
+      "sha256": "9510b7222d1a2349c878fa95a1c93533b74f7f55f0454bca8e02a4a1beae553d"
+    },
+    {
+      "path": "config/runtime.config.json",
+      "symbol": "main tools / session.dmScope / memory / heartbeat / compaction",
+      "sha256": "b2336bad5d67ce9ab4b2a661ce4143c164c8e8bce8d5d684db9c411781d9db08"
+    },
+    {
+      "installedPackage": "openclaw@2026.9.7",
+      "path": "/home/afrangry/.npm-global/lib/node_modules/openclaw/dist/workspace-bootstrap-policy-DaS4N8nC.mjs",
+      "symbol": "WORKSPACE_BOOTSTRAP_FILENAMES",
+      "sha256": "799c07d72d14d9795d6404bf64dc3f8b8307d5b4a3f96b76b2cebab68449cf9b"
+    },
+    {
+      "installedPackage": "openclaw@2026.9.7",
+      "path": "/home/afrangry/.npm-global/lib/node_modules/openclaw/dist/workspace-DmDIneFk.mjs",
+      "symbol": "loadWorkspaceBootstrapFiles / filterBootstrapFilesForSession",
+      "sha256": "7cba92ad28a3590986172beb12cfad76dbfb5d2b19c2dfca55cb365b77926f6f"
+    },
+    {
+      "installedPackage": "openclaw@2026.9.7",
+      "path": "/home/afrangry/.npm-global/lib/node_modules/openclaw/dist/root-memory-files-BUq0D-EI.mjs",
+      "symbol": "CANONICAL_ROOT_MEMORY_FILENAME",
+      "sha256": "809e6674000e679dd281b9e4cb1ebf98be79476cbfadf9a29c653c1bb2cb7c0e"
+    }
+  ]
+}

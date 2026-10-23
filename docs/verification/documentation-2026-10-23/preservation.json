@@ -1,0 +1,458 @@
+{
+  "sourceHead": "c3f395330eeff40afdd060823ee6b02abd1de44d",
+  "scope": "只读基线比较；旧回执/受保护材料不复制正文",
+  "checks": {
+    "protected": [
+      {
+        "path": "docs/example.md",
+        "beforeBlob": "2c68917a41a7ef898669e631872bb6e74ca38f25",
+        "afterBlob": "2c68917a41a7ef898669e631872bb6e74ca38f25",
+        "unchanged": true
+      },
+      {
+        "path": "docs/kurimi.png",
+        "beforeBlob": "4fdde09e44b65509a156cb026049face994ee4a6",
+        "afterBlob": "4fdde09e44b65509a156cb026049face994ee4a6",
+        "unchanged": true
+      },
+      {
+        "path": "docs/tp.txt",
+        "beforeBlob": "54df4adde9bc497d01995b739604331d02ba6ad4",
+        "afterBlob": "54df4adde9bc497d01995b739604331d02ba6ad4",
+        "unchanged": true
+      },
+      {
+        "path": "docs/tp2.txt",
+        "beforeBlob": "30fe064a8000ce5074fa0863114cfe9187143d29",
+        "afterBlob": "30fe064a8000ce5074fa0863114cfe9187143d29",
+        "unchanged": true
+      }
+    ],
+    "historicalBodies": [
+      {
+        "path": "docs/1_bot基础功能开发备忘录.txt",
+        "beforeSha256": "4d0fb230702de0b89b216c1c940e773874ee9a2a80463c099e29fafe7e0faa8f",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/2_天气模块的开发.txt",
+        "beforeSha256": "09f375653074559491680448f4dce728f280eaefca5365a35e050c71e336e595",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/3_个人提醒.txt",
+        "beforeSha256": "00fd4d48ad70a58987da894abd110bc031593c7709809fb0d963f86ba2d25d12",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/5_主模型fallback处理.txt",
+        "beforeSha256": "c802c41ec627519a08a24088cbf08e69a3a7abf8aa9cb1c8cbb1af1f413b9edc",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/6_受控变更与二次确认机制.txt",
+        "beforeSha256": "7ddadd130d560bfe57f758915eba36e864c5e37d2e3db69c844f5a441951ebc5",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/7_架构偏离分析与当前卡点.txt",
+        "beforeSha256": "df31de190968f60dd5b9c2d1c2183f408f1bd527316af65fbd61f4f864591371",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/8_检索功能重构.txt",
+        "beforeSha256": "40b18b72f96a18115839b0675c41d263ca5ac6acf9b75e13ccbda8bf6d3d85cc",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/archive/2026-08-30_确认机制历史回归原稿.txt",
+        "beforeSha256": "b2de72f1fcafb1d6518fffcf4db89d0481e186b68d1848ecade4ee1fcbe32b47",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/archive/2026-09-08_确认治理独立化与自动验收.txt",
+        "beforeSha256": "07c6fb67b7f250d5559187aa032dd6b6483eeadccfc64ff06dffbe813cecf6fe",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/archive/2026-09-10_D1-D12_阶段详细记录.txt",
+        "beforeSha256": "9bd1e05cb9450cf05f7af26d3d0598adc2b070e9745bbb4febfe49773cc23b96",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/archive/2026-09-10_D16-D21_阶段详细记录.txt",
+        "beforeSha256": "a88a1117fe5f084b0ccb84f9469e1d660b436c3a24044e8201414c2693f11de4",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/archive/2026-09-10_D22_地点失败排查过程.txt",
+        "beforeSha256": "6432f05ceb2477e0f61476ab2f4df4a0d6343d6f768e8849389a2dd2a1b4e2cf",
+        "originalBodyIsExactSuffix": true
+      },
+      {
+        "path": "docs/archive/4_受控搜索模块设计.txt",
+        "beforeSha256": "1f555d055879374cc9f51b8931154c8d150b4c8abc32125f9e897fd2dce3dd6a",
+        "originalBodyIsExactSuffix": true
+      }
+    ],
+    "frozenVerification": {
+      "checked": 519,
+      "changed": [],
+      "beforeDigest": "198241b6ba64df8ab206d510a23a8166f7f075a451a4228fc6d0c269cf62b682",
+      "afterDigest": "198241b6ba64df8ab206d510a23a8166f7f075a451a4228fc6d0c269cf62b682"
+    },
+    "otherExistingArchive": {
+      "checked": 9,
+      "changed": [],
+      "beforeDigest": "983f1f033926d6e0778f2e979906cb6af20bdc045513abfa432a056c7f42f553",
+      "afterDigest": "983f1f033926d6e0778f2e979906cb6af20bdc045513abfa432a056c7f42f553"
+    },
+    "scopeViolations": [],
+    "ok": true
+  },
+  "documentInventory": [
+    {
+      "path": "config/README.md",
+      "category": "配置契约",
+      "beforeBlob": "2cdb2e34433772d53ec66bf206cd13411afdccea",
+      "afterBlob": "ed350220635e04c438ffcc2f139eed23ecb78901",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/10_融合助手运行维护.md",
+      "category": "现行编号规则",
+      "beforeBlob": "1e0d597bbe79e78295c730c56d3cb8cdbbab0fe1",
+      "afterBlob": "a9f7b74bd09efcdb3325a4a2b1bd79f47e7e4220",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/12_目录资产与Git备份整理.md",
+      "category": "现行编号规则",
+      "beforeBlob": "5ca4a4c94d67a4c161e6c5ae6ce8dbf1911725a8",
+      "afterBlob": "528b17713901976a009c568ea71085623a794823",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/15_旧系统回退.md",
+      "category": "现行编号规则",
+      "beforeBlob": "b1610c10423e7ce2f08e5854ecfc39e55daf8f58",
+      "afterBlob": "1fdb535f3609fe6d8b828fc0ceff3560b0be408c",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/16_验收与测试总表.md",
+      "category": "现行编号规则",
+      "beforeBlob": "022e3b8e17ed02d84eb52d5e9f2cb56d6b2a4e7c",
+      "afterBlob": "a531b3ca6d74fb91e1db8d665b678b3378db8af2",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/18_跨模块链路日志查询.md",
+      "category": "现行编号规则",
+      "beforeBlob": "8582f836f09768a6d4bce6e669efefc133ecb7ba",
+      "afterBlob": "4e989e32c782403a4e6dfc15055b0de878a99017",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/19_提醒列表与定时汇总.md",
+      "category": "现行编号规则",
+      "beforeBlob": "1d9e11f8050f8519ff5cb8af7b7615c718e5bcc5",
+      "afterBlob": "7297f92165ac2b073905cfe67acec9c3386cde61",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/1_bot基础功能开发备忘录.txt",
+      "category": "历史正文",
+      "beforeBlob": "b721da0c70e1613eaec7f350bda2a0f8e8598b65",
+      "afterBlob": "934ec7a744cfbf04f88056ae006bef4e317a39d0",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/20_邮件能力与横切扩展.md",
+      "category": "现行编号规则",
+      "beforeBlob": "3a47107b3fb1e65915fb1263fff9c590d6b9a4e7",
+      "afterBlob": "d8b2162dfc82c45fa1983b9aadd07adf2478c694",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/21_后端职责分层与代码整理.md",
+      "category": "现行编号规则",
+      "beforeBlob": "4c28856b9dad2ae4987eb9ac04457990ca454501",
+      "afterBlob": "828bafba1eba8ed3a944acba28aea231b20f39ce",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/22_论文PDF翻译与文件投递.md",
+      "category": "现行编号规则",
+      "beforeBlob": "1a08bc691b54037b6e7c7acac097df9c97647fb3",
+      "afterBlob": "75a4b6bf61bd68bf79784e7527bd3a63a8a243f0",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/23_KnowledgeMap业务能力桥接.md",
+      "category": "现行编号规则",
+      "beforeBlob": "e43bb1d93fc1a3536384a01555fb21854e646d2a",
+      "afterBlob": "fbd906ae06d84bf9ce86d2464499ec2d7e224ca2",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/24_统一身份与权限管理.md",
+      "category": "现行编号规则",
+      "beforeBlob": "af4f28f40f9673caca11eb36f21b90f7958240b2",
+      "afterBlob": "2e314fb7c77e17af28dff5f1cc5cdee0c6e53dc9",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/25_人格、记忆与会话连续性.md",
+      "category": "现行编号规则",
+      "beforeBlob": "581fdbfcc0b7f014ecd67d7e544e444ff843b510",
+      "afterBlob": "2f54d2c29cafb2d729232cb4bc08f92b1860a1f3",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/26_基础能力插件边界整理与检索接入设计.md",
+      "category": "现行编号规则",
+      "beforeBlob": "c67f62bd8970953e3e01f76575dc538d2f3122c0",
+      "afterBlob": "e95affc3c76f8886259b2fd5e2166a4c2c32d074",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/2_天气模块的开发.txt",
+      "category": "历史正文",
+      "beforeBlob": "00a0a24be30c2cbdb674f20e2a657b3dee57f50f",
+      "afterBlob": "797efa3164c7f189f992055aa28ce87cd5064512",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/3_个人提醒.txt",
+      "category": "历史正文",
+      "beforeBlob": "612018e9f6ef1d4b25c422202a42541ea4b23053",
+      "afterBlob": "88f8e8f31e4c534f801e5739a96802b664ba4d93",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/5_主模型fallback处理.txt",
+      "category": "历史正文",
+      "beforeBlob": "0fafb4aab275c0a965123f083f62703eb241de19",
+      "afterBlob": "44789db5b663177be8ed09879d553bee90dba773",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/6_受控变更与二次确认机制.txt",
+      "category": "历史正文",
+      "beforeBlob": "da455b2fa206c0c83208abbdb4f8d2f751001528",
+      "afterBlob": "648fdbd4b3699e99cd2a19c279c39ee6fc6c0722",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/7_架构偏离分析与当前卡点.txt",
+      "category": "历史正文",
+      "beforeBlob": "0373c94adce8ef5e7e66e339b8475a71accdb9d4",
+      "afterBlob": "26b5a8632686905ba47710cce4b60ed9290408ac",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/8_检索功能重构.txt",
+      "category": "历史正文",
+      "beforeBlob": "925cb024c3ccddb355afe6e561606a330b0f1f4a",
+      "afterBlob": "64257bcb688979b86538da11d7f3a42ffdf1493a",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/9_QQ融合助手架构与开发计划.md",
+      "category": "现行编号规则",
+      "beforeBlob": "9b6fd251cb802689e42dd43bf28913bd77988e3a",
+      "afterBlob": "102b36da9cc0d32873ebfe61b576847d0441b800",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/README.md",
+      "category": "入口",
+      "beforeBlob": "d39ea124f4b6b98428bb7d1f60806db84384a9f6",
+      "afterBlob": "9969c6dad8f8e19e74e85e4531e79eb72e226d61",
+      "change": "逐份整理"
+    },
+    {
+      "path": "docs/archive/2026-08-30_确认机制历史回归原稿.txt",
+      "category": "历史正文",
+      "beforeBlob": "b52b5569571680581317170fc47042c50fa7247a",
+      "afterBlob": "c107bb1c524581ef695afc099b4ec54e669c6717",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/archive/2026-09-08_确认治理独立化与自动验收.txt",
+      "category": "历史正文",
+      "beforeBlob": "56b96931736ae52b24d7a3d9160177d1432b1b2c",
+      "afterBlob": "8aec239d948532a6668b66f3179e9dfde7f81bcf",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/archive/2026-09-10_D1-D12_阶段详细记录.txt",
+      "category": "历史正文",
+      "beforeBlob": "f3efa602dfb220a74b231d23c1d824f30df896e2",
+      "afterBlob": "72db6ff0b96f85a2006071a6d81b4be03c968d02",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/archive/2026-09-10_D16-D21_阶段详细记录.txt",
+      "category": "历史正文",
+      "beforeBlob": "f7794831705cf9315d22cbb34c61586cba6bd211",
+      "afterBlob": "11a77346229741d8065002cba2522bb81c24b19a",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/archive/2026-09-10_D22_地点失败排查过程.txt",
+      "category": "历史正文",
+      "beforeBlob": "77a6453289105faeac86faeee5d16467d00e4954",
+      "afterBlob": "d344b833996c79f24fcbd1a55f18c2166995a983",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/archive/4_受控搜索模块设计.txt",
+      "category": "历史正文",
+      "beforeBlob": "050ce32ac0c66f9e6a405074588e4bf0cec554d7",
+      "afterBlob": "75725568730099dd444a1c700960fd2182dd633e",
+      "change": "补充历史指针，原文保留"
+    },
+    {
+      "path": "docs/example.md",
+      "category": "用户原件",
+      "beforeBlob": "2c68917a41a7ef898669e631872bb6e74ca38f25",
+      "afterBlob": "2c68917a41a7ef898669e631872bb6e74ca38f25",
+      "change": "原件不改"
+    },
+    {
+      "path": "docs/kurimi.png",
+      "category": "用户原件",
+      "beforeBlob": "4fdde09e44b65509a156cb026049face994ee4a6",
+      "afterBlob": "4fdde09e44b65509a156cb026049face994ee4a6",
+      "change": "原件不改"
+    },
+    {
+      "path": "docs/tp.txt",
+      "category": "用户原件",
+      "beforeBlob": "54df4adde9bc497d01995b739604331d02ba6ad4",
+      "afterBlob": "54df4adde9bc497d01995b739604331d02ba6ad4",
+      "change": "原件不改"
+    },
+    {
+      "path": "docs/tp2.txt",
+      "category": "用户原件",
+      "beforeBlob": "30fe064a8000ce5074fa0863114cfe9187143d29",
+      "afterBlob": "30fe064a8000ce5074fa0863114cfe9187143d29",
+      "change": "原件不改"
+    },
+    {
+      "path": "docs/待办清单.md",
+      "category": "永久待办",
+      "beforeBlob": "0bd2f443b7e1fdcaa6be57147e7d2e51450b9177",
+      "afterBlob": "cf715a50aecd80eed601b8b9467d34fef5823cab",
+      "change": "逐份整理"
+    }
+  ],
+  "currentRulesMetrics": {
+    "documents": 14,
+    "beforeChars": 149218,
+    "afterChars": 122425,
+    "files": [
+      {
+        "path": "docs/10_融合助手运行维护.md",
+        "beforeChars": 16918,
+        "afterChars": 15997,
+        "beforeLines": 291,
+        "afterLines": 303
+      },
+      {
+        "path": "docs/12_目录资产与Git备份整理.md",
+        "beforeChars": 5317,
+        "afterChars": 4344,
+        "beforeLines": 74,
+        "afterLines": 79
+      },
+      {
+        "path": "docs/15_旧系统回退.md",
+        "beforeChars": 7609,
+        "afterChars": 6928,
+        "beforeLines": 228,
+        "afterLines": 217
+      },
+      {
+        "path": "docs/16_验收与测试总表.md",
+        "beforeChars": 9538,
+        "afterChars": 9382,
+        "beforeLines": 124,
+        "afterLines": 122
+      },
+      {
+        "path": "docs/18_跨模块链路日志查询.md",
+        "beforeChars": 11427,
+        "afterChars": 9921,
+        "beforeLines": 164,
+        "afterLines": 166
+      },
+      {
+        "path": "docs/19_提醒列表与定时汇总.md",
+        "beforeChars": 2411,
+        "afterChars": 2720,
+        "beforeLines": 43,
+        "afterLines": 47
+      },
+      {
+        "path": "docs/20_邮件能力与横切扩展.md",
+        "beforeChars": 3546,
+        "afterChars": 3647,
+        "beforeLines": 67,
+        "afterLines": 69
+      },
+      {
+        "path": "docs/21_后端职责分层与代码整理.md",
+        "beforeChars": 11805,
+        "afterChars": 9518,
+        "beforeLines": 185,
+        "afterLines": 157
+      },
+      {
+        "path": "docs/22_论文PDF翻译与文件投递.md",
+        "beforeChars": 15409,
+        "afterChars": 12701,
+        "beforeLines": 192,
+        "afterLines": 184
+      },
+      {
+        "path": "docs/23_KnowledgeMap业务能力桥接.md",
+        "beforeChars": 16721,
+        "afterChars": 12476,
+        "beforeLines": 279,
+        "afterLines": 238
+      },
+      {
+        "path": "docs/24_统一身份与权限管理.md",
+        "beforeChars": 10132,
+        "afterChars": 8203,
+        "beforeLines": 153,
+        "afterLines": 141
+      },
+      {
+        "path": "docs/25_人格、记忆与会话连续性.md",
+        "beforeChars": 29323,
+        "afterChars": 16960,
+        "beforeLines": 408,
+        "afterLines": 301
+      },
+      {
+        "path": "docs/26_基础能力插件边界整理与检索接入设计.md",
+        "beforeChars": 5880,
+        "afterChars": 5645,
+        "beforeLines": 86,
+        "afterLines": 85
+      },
+      {
+        "path": "docs/9_QQ融合助手架构与开发计划.md",
+        "beforeChars": 3182,
+        "afterChars": 3983,
+        "beforeLines": 80,
+        "afterLines": 97
+      }
+    ]
+  }
+}

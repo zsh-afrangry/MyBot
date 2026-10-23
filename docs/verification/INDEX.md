@@ -7,6 +7,7 @@
 | 路径 | 用途 |
 | --- | --- |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
+| [`documentation-2026-10-23/README.md`](documentation-2026-10-23/README.md) 及同目录全部文件 | 逐份文档分类、结构整理、过程归档、待办格式和链接/归属核对；不代表业务重新验收 |
 | [`documentation-2026-10-21/README.md`](documentation-2026-10-21/README.md) 及同目录全部文件 | 文档归并、入口/锚点与脚本/证据归属核验；检查器9项隔离回归，不代表业务重新验收 |
 | [`capability-decoupling-2026-10-20/README.md`](capability-decoupling-2026-10-20/README.md) 及同目录全部文件 | 文档21现行结构：受控加载、共享代码/论文下载边界、四个个人领域插件；533项回归、5组真实隔离Gateway、配置延期9项初始结果及allow成员检查补正后的10项结果、生产RPC与四项自检；文档26新检索API仅设计 |
 | [`plugin-lifecycle-2026-10-19/README.md`](plugin-lifecycle-2026-10-19/README.md) 及同目录全部文件 | 文档21论文/邮件显式停止、共享确认注销归属的先失败后修复回归、真实宿主服务管理器隔离验证；原阶段不含生产重载，后续加载见结构整理专项 |

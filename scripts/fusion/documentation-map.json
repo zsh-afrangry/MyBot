@@ -464,6 +464,13 @@
       "category": "当前有效"
     },
     {
+      "prefix": "documentation-2026-10-23/",
+      "documents": [
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "mail-2026-10-16/",
       "documents": [
         "docs/20_邮件能力与横切扩展.md"
