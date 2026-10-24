@@ -16,6 +16,8 @@
 | [memory-continuity-host-v4.json](memory-continuity-host-v4.json) | 已成功走 tool_search → tool_call 并完成写入，但断言错误地要求压缩工具列表直接包含 kurumi_memory；非产品故障。 |
 | [memory-continuity-host-v5.json](memory-continuity-host-v5.json) | 最终真实隔离宿主证据：4/4场景、6次确定性模型请求通过，工具搜索/包装调用、SQLite写入、/new后注入和成员隔离均核对。 |
 | [recovery-verify.json](recovery-verify.json) | 使用 `/home/afrangry/kurumi-backups/2026-10-19-17-02-19-p2-memory-closeout/` 的材料模式隔离恢复；manifest、15个SQLite、必需内容及连续性读取共 **19/19** 通过，无生产服务或真实QQ。 |
+| [recovery-verify-2026-10-22-quiesced.json](recovery-verify-2026-10-22-quiesced.json) | 2026-10-22 主人授权的停写点 `/home/afrangry/kurumi-backups/2026-10-22-10-57-25-e1-memory-recovery/`（`quiesced=true`，服务停约35秒后恢复）；完整模式隔离恢复 **26/26** 通过，隔离Gateway与14插件加载，恢复副本revision=29、4条事实；只含Fusion材料。 |
+| [memory-continuity-host-2026-10-22-c12.json](memory-continuity-host-2026-10-22-c12.json) | `kurumi-memory` manifest补字段后的复跑：真实隔离宿主按仓库manifest加载插件，确定性模型10/10场景、20次请求通过；无真实API/QQ。 |
 | [memory-contract-before.tap](memory-contract-before.tap) | 工具契约补正前17项中14通过、3个新增回归按预期失败：误导错误、跨action误参和读接口忽略写字段。 |
 | [memory-contract-after.tap](memory-contract-after.tap)、[memory-contract-regression.tap](memory-contract-regression.tap) | 首次修复44/44、扩展95/95；含旧显式模式、人格、权限与适配器。最终代码回归见下方补正记录，不相加计数。 |
 | [memory-contract-host.json](memory-contract-host.json) | 扩展后的真实隔离宿主10/10，20次确定性请求；包含描述、故意误参零提交、同消息修参成功、同ID更正、三次重开读取与成员隔离。 |
