@@ -1,0 +1,344 @@
+{
+  "recordedAt": "2026-10-24T02:52:01.410885+08:00",
+  "kind": "文档调研及只读自检",
+  "businessAcceptance": false,
+  "allRequiredChecksPassed": true,
+  "scopeAudit": {
+    "baselineHead": "349439597cb86b76971b50715b2f145e9e2f36a5",
+    "checkedHead": "349439597cb86b76971b50715b2f145e9e2f36a5",
+    "baselineFileCount": 1032,
+    "changedFiles": [
+      "docs/16_验收与测试总表.md",
+      "docs/25_人格、记忆与会话连续性.md",
+      "docs/README.md",
+      "docs/verification/INDEX.md",
+      "docs/verification/memory-research-2026-10-24/README.md",
+      "docs/verification/memory-research-2026-10-24/checks.json",
+      "docs/临时_记忆架构调研与设计分析.md",
+      "docs/待办清单.md",
+      "scripts/fusion/documentation-map.json"
+    ],
+    "unexpectedChanges": [],
+    "protectedFilesPreserved": true,
+    "protectedFiles": [
+      "docs/example.md",
+      "docs/kurimi.png",
+      "docs/tp.txt",
+      "docs/tp2.txt"
+    ]
+  },
+  "sourceFingerprints": [
+    {
+      "path": "roles/世凪.md",
+      "sha256": "cd637773d2b26eb4b34c8aef133161e7ccc6ab323a1426d674e662954b555d26"
+    },
+    {
+      "path": "chatbot/packages/access-control/workspaces.js",
+      "sha256": "0315c572ae77bbaf0376e3482df5a043a36ad85a3f73f971f03c2cb16a533161"
+    },
+    {
+      "path": "chatbot/packages/access-control/permissions.js",
+      "sha256": "9510b7222d1a2349c878fa95a1c93533b74f7f55f0454bca8e02a4a1beae553d"
+    },
+    {
+      "path": "scripts/fusion/sync-persona.mjs",
+      "sha256": "707bb27462e714e07b928e6ca071439e0d02ae85c929de786427a9b2eea4b4bf"
+    },
+    {
+      "path": "scripts/fusion/templates/AGENTS.md",
+      "sha256": "514f72909d947b208316e92f1929de30fa7c8e04241edf80c16f1d1256b098ad"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/model.js",
+      "sha256": "12bf07c73d4248f83e2ec63ce9932ad9fdefbb462b72da1974e21b7f7d1c7651"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/schema.sql",
+      "sha256": "10b20c438ace8401352159e4a5d4d5847dafd5c9fcbbcd05156710ef4536e657"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/store.js",
+      "sha256": "dbe6e991bc72d153496182ec73b2b9b22ff90bda91814156cc2a0e240b5bae9d"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/application.js",
+      "sha256": "f9d4c96ccbd03f93178d45e8bad10c21157f4ce0eca5d230c3ebfcd404ff640e"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/plugin.js",
+      "sha256": "de2aceb3a4008fad78d26f167cc5342603e6ed45047b68ec54d12fe7dab87484"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/policy.js",
+      "sha256": "b9a546f98a2c11d94a174a6f855e269ad54e5f08650f60f40ae5133127a39702"
+    },
+    {
+      "path": "chatbot/plugins/kurumi-memory/continuity/contracts.d.ts",
+      "sha256": "6e84dfabb2b2af0476032ae3d3204e2d09f880cd662e89cdc29342cc8cfb89ef"
+    },
+    {
+      "path": "chatbot/packages/domain-adapters/index.js",
+      "sha256": "d67ce9d2d8e6dcaf25dcdd8ed2830317487605293c2f19221eda8ca69f9254b7"
+    },
+    {
+      "path": "chatbot/plugins/personal-reminder-list/remote.js",
+      "sha256": "75af1aea7673cc918c5480b9c174b3356275363bc52fc4f69fa77c8376f4d9b3"
+    },
+    {
+      "path": "chatbot/packages/knowledgemap-client/client.js",
+      "sha256": "d3f50305d197af9805143aa9c123b36af15cbe79d6817d8d85302a0c499535c4"
+    },
+    {
+      "path": "chatbot/packages/observability/index.js",
+      "sha256": "a43663a01a1630c323a6c31da923e8d787b0f74ebdb72d9a7056a40c8b597541"
+    },
+    {
+      "path": "scripts/fusion/log-query.mjs",
+      "sha256": "1c29cdb3d2f00536a45adf9212060b8f0d83c11930ded8ed04d5f1d0d73ec54d"
+    }
+  ],
+  "healthFallbackEquivalence": {
+    "method": "比较health入口及递归相对静态导入的仓库文件SHA256；不复制或安装依赖",
+    "ok": true,
+    "files": [
+      {
+        "path": "scripts/fusion/health.mjs",
+        "sha256": "c6c111d1b4cb69a6425abcb2e81498ff29c22bc484931c4bb545b5eeddd2e17d",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/plugins/personal-reminder-list/data-source.js",
+        "sha256": "049dfd12d29181915bfcd6ece733867f99c07210a60a2f4149d9a79b200a6886",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/packages/knowledgemap-client/client.js",
+        "sha256": "d3f50305d197af9805143aa9c123b36af15cbe79d6817d8d85302a0c499535c4",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/packages/observability/index.js",
+        "sha256": "a43663a01a1630c323a6c31da923e8d787b0f74ebdb72d9a7056a40c8b597541",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/plugins/kurumi-qq/src/transport.js",
+        "sha256": "2968ae2d8f93f068064bc22cc2ed82e0ac7b99b9c68c0947ece401f60074894d",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/plugins/kurumi-qq/src/presentation.js",
+        "sha256": "b1776c102f1e8920f38e327d911e7f08c146778f8e9bb44027925092cdcc0c55",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/plugins/kurumi-qq/src/vendor/md-to-plain.js",
+        "sha256": "4315e51f49d4085a0f7b41968e9962df0ae8b4a55bf5cdb0fb55d39ce8eddda3",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/plugins/kurumi-qq/src/ledger.js",
+        "sha256": "de2a50d0b80eb9f59032317db7acc00b837ac743d835eb6c986fa3396557a6ba",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/plugins/kurumi-qq/src/config.js",
+        "sha256": "324ec193dd3eb7a2b278e1028d5b12d1445a04fb89ff7ae007b021d40d3548ff",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/packages/access-control/index.js",
+        "sha256": "5e0a094d5819dc70dcd8ae592c67705a6b3e486ace3aa28d66f5ab6454fc9657",
+        "matchesMain": true
+      },
+      {
+        "path": "chatbot/packages/access-control/permissions.js",
+        "sha256": "9510b7222d1a2349c878fa95a1c93533b74f7f55f0454bca8e02a4a1beae553d",
+        "matchesMain": true
+      },
+      {
+        "path": "scripts/fusion/rpc.mjs",
+        "sha256": "0a1ef9953c4fa7232e1a9b85dc95feb206e23efca9f921f520a51d62c7435acc",
+        "matchesMain": true
+      }
+    ],
+    "missing": []
+  },
+  "checks": [
+    {
+      "name": "config",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/sync-config.mjs"
+      ],
+      "startedAt": "2026-10-24T02:49:13.966347+08:00",
+      "durationSeconds": 0.048,
+      "exitCode": 0,
+      "stdout": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n",
+      "stderr": ""
+    },
+    {
+      "name": "coverage",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/evidence-coverage.mjs"
+      ],
+      "startedAt": "2026-10-24T02:49:13.956935+08:00",
+      "durationSeconds": 0.046,
+      "exitCode": 0,
+      "stdout": "evidence coverage\n  历史领域验收: 83\n  当前有效: 455\n  total: 538\nOK: every file belongs to exactly one named group with valid documents.\n",
+      "stderr": ""
+    },
+    {
+      "name": "dependencies",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/verify-dependencies.mjs"
+      ],
+      "startedAt": "2026-10-24T02:49:13.970448+08:00",
+      "durationSeconds": 0.079,
+      "exitCode": 0,
+      "stdout": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n",
+      "stderr": ""
+    },
+    {
+      "name": "diff_check",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "startedAt": "2026-10-24T02:51:05.281123+08:00",
+      "durationSeconds": 0.005,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "health_main",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/health.mjs"
+      ],
+      "startedAt": "2026-10-24T02:49:36.171890+08:00",
+      "durationSeconds": 0.722,
+      "exitCode": 0,
+      "summary": {
+        "at": "2026-10-23T18:49:36.761Z",
+        "ok": true,
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "testMethodDisabled": true,
+        "issues": [],
+        "databases": {
+          "channelDatabase": "ok",
+          "weatherDatabase": "ok",
+          "remindersDatabase": "ok",
+          "reminderListDatabase": "ok"
+        }
+      }
+    },
+    {
+      "name": "health_worktree",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/health.mjs"
+      ],
+      "startedAt": "2026-10-24T02:49:13.959498+08:00",
+      "durationSeconds": 0.045,
+      "exitCode": 1,
+      "summary": {
+        "moduleResolutionFailure": true,
+        "errorCode": "ERR_MODULE_NOT_FOUND"
+      }
+    },
+    {
+      "name": "index",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/evidence-index.mjs",
+        "--check-markdown"
+      ],
+      "startedAt": "2026-10-24T02:49:13.964333+08:00",
+      "durationSeconds": 0.065,
+      "exitCode": 0,
+      "stdout": "OK: SCRIPTS.md matches 198 classified, document-owned entries.\n",
+      "stderr": ""
+    },
+    {
+      "name": "links",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "python3",
+        "/tmp/kurumi-memory-research-5wsc46__/check_links.py"
+      ],
+      "startedAt": "2026-10-24T02:51:05.280642+08:00",
+      "durationSeconds": 0.049,
+      "exitCode": 0,
+      "stdout": "{\n  \"files\": 7,\n  \"localLinks\": 354,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "map_tests",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "--test",
+        "scripts/fusion/test/documentation-map.test.mjs"
+      ],
+      "startedAt": "2026-10-24T02:49:13.966348+08:00",
+      "durationSeconds": 0.601,
+      "exitCode": 0,
+      "stdout": "✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (1.565335ms)\n✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (3.257357ms)\n▶ CLI verifies ownership and saved Markdown without touching the real repository\n  ✔ saved table and both P2 evidence overrides survive generation (100.047333ms)\n  ✔ unknown source fails even inside a known suite (36.944621ms)\n  ✔ missing document and invalid/duplicate selectors fail (83.456482ms)\n  ✔ an existing classified script without a document owner fails (44.959229ms)\n  ✔ stale generated table or reversed markers fail (97.675435ms)\n  ✔ new receipts inherit a named suite; unknown evidence directory fails (73.810356ms)\n✔ CLI verifies ownership and saved Markdown without touching the real repository (502.27343ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 568.964155\n",
+      "stderr": ""
+    },
+    {
+      "name": "persona",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/sync-persona.mjs"
+      ],
+      "startedAt": "2026-10-24T02:49:13.974965+08:00",
+      "durationSeconds": 0.04,
+      "exitCode": 0,
+      "stdout": "persona in sync with roles/世凪.md (12 workspace file(s) match)\n",
+      "stderr": ""
+    },
+    {
+      "name": "tables",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "python3",
+        "/tmp/kurumi-memory-research-5wsc46__/check_tables.py"
+      ],
+      "startedAt": "2026-10-24T02:51:05.282586+08:00",
+      "durationSeconds": 0.018,
+      "exitCode": 0,
+      "stdout": "{\n  \"tables\": 9,\n  \"errors\": []\n}\n",
+      "stderr": ""
+    }
+  ],
+  "preliminaryNotes": [
+    "初次链接检查仅发现尚未生成的checks.json目标缺失；生成后最终检查通过。",
+    "初次表格核对器误将两列视为应有三列；修正核对器后通过，未据此改变文档表格。"
+  ],
+  "boundaries": [
+    "未读取生产聊天或个人记忆正文，未查询举例对应事项。",
+    "未安装候选组件、调用真实模型、外发、重启、同步apply、停写/恢复、提交或推送。",
+    "健康检查使用只读RPC、只读数据库完整性与服务状态查询；仅保存白名单摘要。",
+    "依赖、配置、人格脚本按自身常量检查主源码目录，不证明工作树已安装依赖。",
+    "外部项目的能力来自公开资料，候选在本项目上的兼容性、效果、成本和体验未验证。"
+  ]
+}

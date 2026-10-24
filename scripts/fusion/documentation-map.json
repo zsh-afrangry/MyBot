@@ -344,6 +344,14 @@
   ],
   "evidenceOwners": [
     {
+      "prefix": "memory-research-2026-10-24/",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/临时_记忆架构调研与设计分析.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "recovery-2026-10-06/",
       "documents": [
         "docs/12_目录资产与Git备份整理.md",
