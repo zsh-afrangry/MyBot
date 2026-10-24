@@ -344,6 +344,14 @@
   ],
   "evidenceOwners": [
     {
+      "prefix": "git-consolidation-2026-10-24/",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "memory-research-2026-10-24/",
       "documents": [
         "docs/25_人格、记忆与会话连续性.md",

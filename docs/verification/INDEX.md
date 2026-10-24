@@ -7,6 +7,7 @@
 | 路径 | 用途 |
 | --- | --- |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
+| [`git-consolidation-2026-10-24/README.md`](git-consolidation-2026-10-24/README.md) 及同目录全部文件 | 文档整理与主线补验的冲突合并、记忆调研保留、主线收拢与分支清理；保留各业务原证明范围 |
 | [`memory-research-2026-10-24/README.md`](memory-research-2026-10-24/README.md) 及同目录全部文件 | 记忆架构调研工作稿的资料/代码核对、文档检查和范围记录；不代表候选引擎接入或业务重新验收 |
 | [`documentation-reorder-2026-10-23/README.md`](documentation-reorder-2026-10-23/README.md) 及同目录全部文件 | 按批准的14项方案重排；逐文件变更、相对既有整理稿的差异、链接/锚点/保留核对与只读自检，不改变业务验收 |
 | [`documentation-2026-10-23/README.md`](documentation-2026-10-23/README.md) 及同目录全部文件 | 逐份文档分类、结构整理、过程归档、待办格式和链接/归属核对；不代表业务重新验收 |

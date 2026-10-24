@@ -11,7 +11,7 @@
 | Fusion 源码与配置意图 | `/home/afrangry/kurumi-fusion`，MyBot `main` | Git；远端 `git@github.com:zsh-afrangry/MyBot.git`，运行副本不作为源码主线 |
 | 私有运行状态 | `/home/afrangry/.openclaw-fusion` | 凭据、会话、记忆、业务状态和产物走私密备份；根目录不建 Git |
 | 后台项目副本 | `.openclaw-fusion/projects/fusion` | 独立代码 Git；同步、审阅和合入只按[文档10](10_融合助手运行维护.md#后台开发副本契约) |
-| 旧 A 原件 | `/home/afrangry/kurumi-archive/legacy-openclaw` | 封存版本 `f8319c1`，MyBot `archive/legacy-openclaw`；不直接启动或修改，凭据/依赖另靠私密归档 |
+| 旧 A 原件 | `/home/afrangry/kurumi-archive/legacy-openclaw` | 封存版本 `f8319c1`已包含在MyBot `main`历史中；原`archive/legacy-openclaw`分支清理不删除历史或原件；不直接启动或修改，凭据/依赖另靠私密归档 |
 | 旧 B bridge 原件 | `/home/afrangry/kurumi-archive/qq-bridge` | 独立 Git；封存 `d64a4d2`、`personal/main`、`seal/qq-bridge-personal-2026-10-05`；保留 upstream 和本地恢复资料 |
 | 旧服务单元 | `/home/afrangry/kurumi-archive/legacy-units` | 旧消费者日常 mask；只在文档15的所选回退路径中恢复 |
 | SnowLuma | `/home/afrangry/snowluma` | 发布程序、runtime 与运维文件；只版本管理自编脚本/模板，不整体 git add 登录数据和日志 |
@@ -37,6 +37,8 @@ git ls-remote origin refs/heads/main
 ```
 
 本地工作区、缓存的 `origin/main` 和实查远端是三类结果；领先数量受最近 fetch 影响。`git ls-remote` 只查远端，不授权 push。服务当前状态用 `health.mjs` 核对；文档快照不证明此刻已提交、已推送或服务健康。
+
+MyBot后续只保留`main`作为开发主线；本轮合并依据、旧分支可达性、源码备份及远端执行结果见[2026-10-24收拢记录](verification/git-consolidation-2026-10-24/README.md)。分支清理不涉及旧B独立仓库、现有标签或私密运行资料。
 
 ## 备份资产与保留规则
 

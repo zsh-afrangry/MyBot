@@ -1,0 +1,353 @@
+{
+  "recordedAt": "2026-10-24T18:03:58.182848+08:00",
+  "scope": "Git冲突合并、文档及归属元数据；业务代码未变",
+  "sourceHeadBeforeEvidenceCommit": "ab4dce41bce573d32f443d944525953f6b7017b7",
+  "mergeCommit": "7e3d5eae544bcc156b5338e827949ae4c67173ec",
+  "businessAcceptance": false,
+  "allRequiredChecksPassed": true,
+  "healthExecution": "工作树导入缺少SDK；先核对所有相对静态导入，再从主源码运行成功",
+  "checks": [
+    {
+      "name": "config",
+      "at": "2026-10-24T18:02:28.432944+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/sync-config.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.054,
+      "output": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)\n"
+    },
+    {
+      "name": "coverage",
+      "at": "2026-10-24T18:02:28.418183+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/evidence-coverage.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.11,
+      "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 460\n  total: 543\nOK: every file belongs to exactly one named group with valid documents.\n"
+    },
+    {
+      "name": "dependencies",
+      "at": "2026-10-24T18:02:28.430939+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/verify-dependencies.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.127,
+      "output": "  ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies\n"
+    },
+    {
+      "name": "health-canonical",
+      "at": "2026-10-24T18:02:28.463830+08:00",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/health.mjs"
+      ],
+      "entryEquivalence": {
+        "method": "health入口及递归相对静态导入的SHA256对照",
+        "files": [
+          {
+            "path": "chatbot/packages/access-control/index.js",
+            "sha256": "5e0a094d5819dc70dcd8ae592c67705a6b3e486ace3aa28d66f5ab6454fc9657",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/packages/access-control/permissions.js",
+            "sha256": "9510b7222d1a2349c878fa95a1c93533b74f7f55f0454bca8e02a4a1beae553d",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/packages/knowledgemap-client/client.js",
+            "sha256": "d3f50305d197af9805143aa9c123b36af15cbe79d6817d8d85302a0c499535c4",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/packages/observability/index.js",
+            "sha256": "a43663a01a1630c323a6c31da923e8d787b0f74ebdb72d9a7056a40c8b597541",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/plugins/kurumi-qq/src/config.js",
+            "sha256": "324ec193dd3eb7a2b278e1028d5b12d1445a04fb89ff7ae007b021d40d3548ff",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/plugins/kurumi-qq/src/ledger.js",
+            "sha256": "de2a50d0b80eb9f59032317db7acc00b837ac743d835eb6c986fa3396557a6ba",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/plugins/kurumi-qq/src/presentation.js",
+            "sha256": "b1776c102f1e8920f38e327d911e7f08c146778f8e9bb44027925092cdcc0c55",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/plugins/kurumi-qq/src/transport.js",
+            "sha256": "2968ae2d8f93f068064bc22cc2ed82e0ac7b99b9c68c0947ece401f60074894d",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/plugins/kurumi-qq/src/vendor/md-to-plain.js",
+            "sha256": "4315e51f49d4085a0f7b41968e9962df0ae8b4a55bf5cdb0fb55d39ce8eddda3",
+            "matchesCanonical": true
+          },
+          {
+            "path": "chatbot/plugins/personal-reminder-list/data-source.js",
+            "sha256": "049dfd12d29181915bfcd6ece733867f99c07210a60a2f4149d9a79b200a6886",
+            "matchesCanonical": true
+          },
+          {
+            "path": "scripts/fusion/health.mjs",
+            "sha256": "c6c111d1b4cb69a6425abcb2e81498ff29c22bc484931c4bb545b5eeddd2e17d",
+            "matchesCanonical": true
+          },
+          {
+            "path": "scripts/fusion/rpc.mjs",
+            "sha256": "0a1ef9953c4fa7232e1a9b85dc95feb206e23efca9f921f520a51d62c7435acc",
+            "matchesCanonical": true
+          }
+        ],
+        "ok": true
+      },
+      "exitCode": 0,
+      "durationSeconds": 0.979,
+      "summary": {
+        "at": "2026-10-24T10:02:29.264Z",
+        "ok": true,
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "testMethodDisabled": true,
+        "issues": [],
+        "databases": {
+          "channelDatabase": "ok",
+          "weatherDatabase": "ok",
+          "remindersDatabase": "ok",
+          "reminderListDatabase": "ok"
+        },
+        "knowledgeMap": {
+          "ok": true,
+          "contract": 1,
+          "domains": [
+            "weather",
+            "tasks",
+            "bills"
+          ]
+        }
+      }
+    },
+    {
+      "name": "health-worktree",
+      "at": "2026-10-24T18:02:28.432696+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/health.mjs"
+      ],
+      "exitCode": 1,
+      "durationSeconds": 0.107,
+      "summary": {
+        "errorCode": "ERR_MODULE_NOT_FOUND",
+        "missingDependency": "openclaw",
+        "phase": "import",
+        "fallback": "health-canonical"
+      }
+    },
+    {
+      "name": "index",
+      "at": "2026-10-24T18:02:28.415304+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/evidence-index.mjs",
+        "--check-markdown"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.125,
+      "output": "OK: SCRIPTS.md matches 198 classified, document-owned entries.\n"
+    },
+    {
+      "name": "links",
+      "at": "2026-10-24T18:02:28.413105+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "python3",
+        "/tmp/kurumi-doc-links.py"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.332,
+      "summary": {
+        "checkedLinks": 1530,
+        "unclosedFences": [],
+        "failures": [],
+        "introducedFailures": []
+      }
+    },
+    {
+      "name": "persona",
+      "at": "2026-10-24T18:02:28.434493+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "scripts/fusion/sync-persona.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.057,
+      "output": "persona in sync with roles/世凪.md (12 workspace file(s) match)\n"
+    },
+    {
+      "name": "preservation",
+      "at": "2026-10-24T18:02:28.418463+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "exitCode": 0,
+      "summary": {
+        "protectedFilesPreserved": [
+          "docs/example.md",
+          "docs/kurimi.png",
+          "docs/tp.txt",
+          "docs/tp2.txt"
+        ],
+        "frozenFilesByteIdentical": 563,
+        "mainReceiptsByteIdentical": [
+          "docs/verification/persona-memory-2026-10-19/p2/README.md",
+          "docs/verification/persona-memory-2026-10-19/p2/memory-continuity-host-2026-10-22-c12.json",
+          "docs/verification/persona-memory-2026-10-19/p2/recovery-verify-2026-10-22-quiesced.json"
+        ],
+        "onlyAcceptanceStatusChanges": {
+          "E1.2": [
+            " ",
+            "x"
+          ],
+          "C12": [
+            " ",
+            "x"
+          ],
+          "A7": [
+            " ",
+            "x"
+          ]
+        },
+        "researchRestoredFiles": 9,
+        "researchNewFilesByteIdentical": 3,
+        "changedFiles": [
+          "README_FUSION.md",
+          "config/README.md",
+          "docs/10_融合助手运行维护.md",
+          "docs/12_目录资产与Git备份整理.md",
+          "docs/15_旧系统回退.md",
+          "docs/16_验收与测试总表.md",
+          "docs/18_跨模块链路日志查询.md",
+          "docs/19_提醒列表与定时汇总.md",
+          "docs/1_bot基础功能开发备忘录.txt",
+          "docs/20_邮件能力与横切扩展.md",
+          "docs/21_后端职责分层与代码整理.md",
+          "docs/22_论文PDF翻译与文件投递.md",
+          "docs/23_KnowledgeMap业务能力桥接.md",
+          "docs/24_统一身份与权限管理.md",
+          "docs/25_人格、记忆与会话连续性.md",
+          "docs/26_基础能力插件边界整理与检索接入设计.md",
+          "docs/2_天气模块的开发.txt",
+          "docs/3_个人提醒.txt",
+          "docs/5_主模型fallback处理.txt",
+          "docs/6_受控变更与二次确认机制.txt",
+          "docs/7_架构偏离分析与当前卡点.txt",
+          "docs/8_检索功能重构.txt",
+          "docs/9_QQ融合助手架构与开发计划.md",
+          "docs/README.md",
+          "docs/archive/2026-08-30_确认机制历史回归原稿.txt",
+          "docs/archive/2026-09-08_确认治理独立化与自动验收.txt",
+          "docs/archive/2026-09-10_D1-D12_阶段详细记录.txt",
+          "docs/archive/2026-09-10_D16-D21_阶段详细记录.txt",
+          "docs/archive/2026-09-10_D22_地点失败排查过程.txt",
+          "docs/archive/4_受控搜索模块设计.txt",
+          "docs/archive/README.md",
+          "docs/archive/documentation-2026-10-23/10_融合助手运行维护.md",
+          "docs/archive/documentation-2026-10-23/12_目录资产与Git备份整理.md",
+          "docs/archive/documentation-2026-10-23/15_旧系统回退.md",
+          "docs/archive/documentation-2026-10-23/16_验收与测试总表.md",
+          "docs/archive/documentation-2026-10-23/18_跨模块链路日志查询.md",
+          "docs/archive/documentation-2026-10-23/21_后端职责分层与代码整理.md",
+          "docs/archive/documentation-2026-10-23/22_论文PDF翻译与文件投递.md",
+          "docs/archive/documentation-2026-10-23/23_KnowledgeMap业务能力桥接.md",
+          "docs/archive/documentation-2026-10-23/24_统一身份与权限管理.md",
+          "docs/archive/documentation-2026-10-23/25_人格、记忆与会话连续性.md",
+          "docs/archive/documentation-2026-10-23/26_基础能力插件边界整理与检索接入设计.md",
+          "docs/archive/documentation-2026-10-23/README.md",
+          "docs/archive/documentation-2026-10-23/待办清单.md",
+          "docs/verification/INDEX.md",
+          "docs/verification/documentation-2026-10-23/README.md",
+          "docs/verification/documentation-2026-10-23/checker-tests.txt",
+          "docs/verification/documentation-2026-10-23/checks.json",
+          "docs/verification/documentation-2026-10-23/code-correspondence.json",
+          "docs/verification/documentation-2026-10-23/links.json",
+          "docs/verification/documentation-2026-10-23/preservation.json",
+          "docs/verification/documentation-reorder-2026-10-23/README.md",
+          "docs/verification/documentation-reorder-2026-10-23/anchors.json",
+          "docs/verification/documentation-reorder-2026-10-23/changes.diff",
+          "docs/verification/documentation-reorder-2026-10-23/changes.json",
+          "docs/verification/documentation-reorder-2026-10-23/checker-tests.txt",
+          "docs/verification/documentation-reorder-2026-10-23/checks.json",
+          "docs/verification/documentation-reorder-2026-10-23/code-correspondence.json",
+          "docs/verification/documentation-reorder-2026-10-23/links.json",
+          "docs/verification/documentation-reorder-2026-10-23/preliminary-check.json",
+          "docs/verification/documentation-reorder-2026-10-23/preservation.json",
+          "docs/verification/git-consolidation-2026-10-24/README.md",
+          "docs/verification/git-consolidation-2026-10-24/checks.json",
+          "docs/verification/git-consolidation-2026-10-24/operations.json",
+          "docs/verification/memory-research-2026-10-24/README.md",
+          "docs/verification/memory-research-2026-10-24/checks.json",
+          "docs/临时_记忆架构调研与设计分析.md",
+          "docs/待办清单.md",
+          "scripts/fusion/documentation-map.json"
+        ],
+        "unexpectedChanges": [],
+        "conflictMarkers": 0,
+        "lostAnchors": [],
+        "legacyBranchesAlreadyReachable": true,
+        "canonicalPreexistingStatusPreserved": true,
+        "businessCodeUnchanged": true
+      }
+    },
+    {
+      "name": "regression",
+      "at": "2026-10-24T18:02:28.417073+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "node",
+        "--test",
+        "scripts/fusion/test/documentation-map.test.mjs"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.796,
+      "output": "✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (4.81958ms)\n✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (4.158398ms)\n▶ CLI verifies ownership and saved Markdown without touching the real repository\n  ✔ saved table and both P2 evidence overrides survive generation (140.893786ms)\n  ✔ unknown source fails even inside a known suite (40.003656ms)\n  ✔ missing document and invalid/duplicate selectors fail (105.062194ms)\n  ✔ an existing classified script without a document owner fails (52.188639ms)\n  ✔ stale generated table or reversed markers fail (116.242796ms)\n  ✔ new receipts inherit a named suite; unknown evidence directory fails (84.226252ms)\n✔ CLI verifies ownership and saved Markdown without touching the real repository (624.786156ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 743.19063\n"
+    },
+    {
+      "name": "whitespace",
+      "at": "2026-10-24T18:02:28.419303+08:00",
+      "cwd": "/home/afrangry/.codex/worktrees/89f2/kurumi-fusion",
+      "command": [
+        "git",
+        "diff",
+        "--check",
+        "8a62eb1",
+        "--",
+        ".",
+        ":(exclude)docs/verification/documentation-reorder-2026-10-23/changes.diff"
+      ],
+      "exitCode": 0,
+      "durationSeconds": 0.033,
+      "output": ""
+    }
+  ]
+}

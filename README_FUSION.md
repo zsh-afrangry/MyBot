@@ -23,7 +23,8 @@ OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领�
 | 分支 | 内容 |
 |---|---|
 | `main` | 当前融合项目（本仓库） |
-| `archive/legacy-openclaw` | 旧 `.openclaw` 的源码历史终点（`f8319c1`，与 `main` 共享历史） |
+
+旧 `.openclaw` 源码终点`f8319c1`已包含在`main`历史中；原`archive/legacy-openclaw`分支随本轮收拢清理，旧原件与恢复资料继续保留。分支整理的范围、检查和实际执行结果见[本轮记录](docs/verification/git-consolidation-2026-10-24/README.md)。
 
 ## 四条边界（细节全在文档里）
 
