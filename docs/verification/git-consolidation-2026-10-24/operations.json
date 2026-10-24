@@ -1,7 +1,92 @@
 {
-  "status": "prepared",
-  "remoteWritesPerformed": false,
+  "recordedAt": "2026-10-24T18:07:05.084783+08:00",
+  "status": "completed",
+  "authorization": {
+    "source": "本会话2026-10-24用户要求处理全部冲突、清理分支并仅保留一条主线",
+    "remoteScope": [
+      "main常规快进（含执行回执提交的后续同步）",
+      "删除已合入的archive/legacy-openclaw"
+    ],
+    "excluded": [
+      "其他仓库",
+      "远端标签",
+      "main历史改写",
+      "运行目录与归档原件清理"
+    ]
+  },
   "originalMain": "8a62eb1b7bcf46a5327a3b7557bcb6413ee63f9a",
   "mergeCommit": "7e3d5eae544bcc156b5338e827949ae4c67173ec",
-  "researchCommit": "ab4dce41bce573d32f443d944525953f6b7017b7"
+  "researchCommit": "ab4dce41bce573d32f443d944525953f6b7017b7",
+  "local": {
+    "at": "2026-10-24T18:05:08.328218+08:00",
+    "mainAfterFastForward": "8f53e870737906922288034508db4cbd4ae67eb8",
+    "deletedLocalBranches": [
+      {
+        "branch": "codex/docs-reorganization-2026-10-24",
+        "tip": "8f53e870737906922288034508db4cbd4ae67eb8",
+        "allCommitsReachableFromMain": true
+      },
+      {
+        "branch": "integration/onebot",
+        "tip": "d6f1a14061aef8429a6979967b891f1e5479cd87",
+        "allCommitsReachableFromMain": true
+      },
+      {
+        "branch": "archive/legacy-openclaw",
+        "tip": "f8319c11646c157b21f92d09a1ae3d3862d6c4ed",
+        "allCommitsReachableFromMain": true
+      }
+    ],
+    "currentWorktree": "detached HEAD at main",
+    "otherWorktreesPreserved": true,
+    "canonicalPreexistingStatusPreserved": true,
+    "researchStashDroppedAfterRestoration": "6b022bbd3d2d9f0f1529a11fcabd4e99e294be9f",
+    "afterIntegrationBundleVerified": true
+  },
+  "remote": {
+    "at": "2026-10-24T18:05:39.008579+08:00",
+    "command": [
+      "git",
+      "push",
+      "--atomic",
+      "--force-with-lease=refs/heads/archive/legacy-openclaw:f8319c11646c157b21f92d09a1ae3d3862d6c4ed",
+      "origin",
+      "refs/heads/main:refs/heads/main",
+      ":refs/heads/archive/legacy-openclaw"
+    ],
+    "transport": "既有SSH身份，ssh.github.com:443；单命令覆盖",
+    "mainForcePush": false,
+    "deletionGuard": "待删除旧引用必须仍指向已核实的f8319c1",
+    "before": {
+      "refs/heads/archive/legacy-openclaw": "f8319c11646c157b21f92d09a1ae3d3862d6c4ed",
+      "refs/heads/main": "8a62eb1b7bcf46a5327a3b7557bcb6413ee63f9a"
+    },
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "To github.com:zsh-afrangry/MyBot.git\n - [deleted]         archive/legacy-openclaw\n   8a62eb1..8f53e87  main -> main\n",
+    "after": {
+      "refs/heads/main": "8f53e870737906922288034508db4cbd4ae67eb8"
+    },
+    "verifiedAt": "2026-10-24T18:05:41.178918+08:00",
+    "ok": true
+  },
+  "finalObservedBranches": {
+    "local": [
+      "main"
+    ],
+    "remote": [
+      "main"
+    ],
+    "tracking": [
+      "origin/main"
+    ]
+  },
+  "allOriginalBranchTipsReachableFromMain": true,
+  "tagsPreserved": {
+    "refs/tags/baseline/pre-integration-2026-10-05": "7bb755b7ef9d7aa90112e4c7c52b23e15b927a56",
+    "refs/tags/migration/full-2026-10-05": "c930a776caee268dda3ec506f816450343179240"
+  },
+  "sourceBackup": "/home/afrangry/kurumi-backups/git-consolidation-2026-10-24-0ibew_d1",
+  "runtimeChanges": false,
+  "receiptSynchronization": "本文件随后的提交与常规main快进同步仍属上述授权范围；实时最终SHA以git及远端实查为准。"
 }
