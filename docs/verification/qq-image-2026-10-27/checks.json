@@ -1,0 +1,65 @@
+{
+  "scope": "QQ image inbound/outbound human acceptance; AI read-only verification",
+  "offline": {
+    "at": "2026-10-27T00:21:50+08:00",
+    "files": [
+      "chatbot/plugins/kurumi-qq/test/channel.test.js",
+      "chatbot/plugins/kurumi-qq/test/stickers.test.js",
+      "chatbot/plugins/kurumi-qq/test/presentation.test.js"
+    ],
+    "tests": 19,
+    "pass": 19,
+    "fail": 0
+  },
+  "baseline": {
+    "epochMs": 1793031724723,
+    "service": "active",
+    "inboundRows": 382,
+    "outboundRows": 625,
+    "accessEvents": 315,
+    "mediaInboundFiles": 15
+  },
+  "human": [
+    {
+      "step": "owner sends new image",
+      "inboundId": "1794511189:365999865:-569022561",
+      "inboundAt": "2026-10-27T00:25:11+08:00",
+      "origin": "onebot",
+      "status": "completed",
+      "blockedFetch": "https://multimedia.nt.qq.com.cn",
+      "blockReason": "resolves to private/internal/special-use IP address",
+      "newStagedFiles": 0,
+      "modelSawImage": false,
+      "degradedNoticeHonoured": true,
+      "outbound": [
+        {"id": "in:1794511189:365999865:-569022561:0:0", "status": "sent", "messageId": "1485399334"},
+        {"id": "in:1794511189:365999865:-569022561:0:1", "status": "sent", "messageId": "1824500282"}
+      ],
+      "result": "fail"
+    },
+    {
+      "step": "owner asks for sticker",
+      "inboundId": "1794511189:365999865:1502112895",
+      "inboundAt": "2026-10-27T00:25:31+08:00",
+      "runId": "3d087cd3-71ac-40f5-bbad-f87de94cc842",
+      "stickerCalls": {"total": 5, "validationError": 1, "listOk": 2, "sendError": 2},
+      "access": {"permission": "stickers.use", "decision": "allow", "count": 5, "requesterIsOwner": true},
+      "blockedFetch": "https://p.qpic.cn",
+      "outbound": [
+        {"id": "in:1794511189:365999865:1502112895:0:0", "status": "sent", "messageId": "-380894606"},
+        {"id": "in:1794511189:365999865:1502112895:0:1", "status": "sent", "messageId": "-1038340146"}
+      ],
+      "imageSent": false,
+      "result": "fail"
+    }
+  ],
+  "unrelatedInWindow": ["paper-notice:job_368efefc5cc4a0dccbe4e23f:0"],
+  "dns": {
+    "multimedia.nt.qq.com.cn": "198.18.0.38",
+    "p.qpic.cn": "198.18.0.39",
+    "assets2.e7.wiki": "198.18.0.40"
+  },
+  "firstQqBlockInRuntimeLog": "2026-10-27T00:25:11.484+08:00",
+  "precedentFix": "6faea7a (personal-weather, host-scoped fake-IP policy + trusted_env_proxy)",
+  "codeChanged": false
+}

@@ -352,6 +352,14 @@
       "category": "当前有效"
     },
     {
+      "prefix": "qq-image-2026-10-27/",
+      "documents": [
+        "docs/10_融合助手运行维护.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "git-consolidation-2026-10-24/",
       "documents": [
         "docs/12_目录资产与Git备份整理.md",

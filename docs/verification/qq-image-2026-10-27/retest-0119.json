@@ -1,0 +1,365 @@
+{
+  "schemaVersion": 1,
+  "scope": "N14.1 real QQ JPG inbound and PNG sticker outbound acceptance",
+  "recordedAt": "2026-10-27T01:42:06.256+08:00",
+  "timezone": "Asia/Shanghai",
+  "baseCommit": "57fb6c9ba0a20ed7e2e9b1e7bd1901b5daf95d7d",
+  "codeFiles": [
+    {
+      "file": "chatbot/plugins/kurumi-qq/src/media.js",
+      "sha256": "b21cb93149a639e8c6107c6a8378da40afebe182b0104b37e7f7737680bb7981"
+    },
+    {
+      "file": "chatbot/plugins/kurumi-qq/test/channel.test.js",
+      "sha256": "c70a79bf8617b058fda6be07893b5500a53b37ff22cd1d8f4fef07a9b1ade4fd"
+    }
+  ],
+  "authorization": {
+    "originalSessionId": "31d9e6d1-3b19-463f-a845-0313222a059a",
+    "codeAndOfflineTestsAuthorizedAt": "2026-10-27T00:52:54+08:00",
+    "restartAuthorizedAt": "2026-10-27T01:17:36+08:00",
+    "originalFrontendConfirmationAt": "2026-10-27T01:20:48+08:00",
+    "currentUserConfirmedExpectedReply": true,
+    "currentUserProvidedScreenshot": true,
+    "currentScope": [
+      "read-only backend acceptance",
+      "documentation updates",
+      "local git commit"
+    ],
+    "restartedByThisInspection": false,
+    "runtimeConfigChangedByThisInspection": false,
+    "aiSentMessages": false,
+    "paidModelCalls": false,
+    "remoteWrites": false
+  },
+  "service": {
+    "activeSince": "2026-10-27T01:18:34+08:00",
+    "connectedAt": "2026-10-27T01:18:52+08:00"
+  },
+  "offline": {
+    "files": [
+      "chatbot/plugins/kurumi-qq/test/channel.test.js",
+      "chatbot/plugins/kurumi-qq/test/stickers.test.js",
+      "chatbot/plugins/kurumi-qq/test/presentation.test.js"
+    ],
+    "priorRunAt": "2026-10-27T01:17:16+08:00",
+    "takeoverRerunDate": "2026-10-27",
+    "takeoverRerunObservedBy": "2026-10-27T01:37:50+08:00",
+    "tests": 20,
+    "pass": 20,
+    "fail": 0,
+    "durationMs": 851.721306
+  },
+  "window": {
+    "from": "2026-10-27T01:19:40.000+08:00",
+    "to": "2026-10-27T01:21:00.000+08:00"
+  },
+  "ledger": {
+    "inbound": [
+      {
+        "id": "1794511189:365999865:-757107336",
+        "status": "completed",
+        "origin": "onebot",
+        "at": "2026-10-27T01:19:48.985+08:00"
+      },
+      {
+        "id": "1794511189:365999865:908021903",
+        "status": "completed",
+        "origin": "onebot",
+        "at": "2026-10-27T01:19:54.375+08:00"
+      },
+      {
+        "id": "1794511189:365999865:1297237968",
+        "status": "completed",
+        "origin": "onebot",
+        "at": "2026-10-27T01:20:02.966+08:00"
+      }
+    ],
+    "outbound": [
+      {
+        "id": "in:1794511189:365999865:-757107336:0:0",
+        "status": "sent",
+        "message_id": "-1069811883",
+        "at": "2026-10-27T01:19:50.416+08:00"
+      },
+      {
+        "id": "in:1794511189:365999865:908021903:0:0",
+        "status": "sent",
+        "message_id": "-1243793489",
+        "at": "2026-10-27T01:19:59.641+08:00"
+      },
+      {
+        "id": "in:1794511189:365999865:908021903:0:1",
+        "status": "sent",
+        "message_id": "-1779812227",
+        "at": "2026-10-27T01:20:00.322+08:00"
+      },
+      {
+        "id": "sticker:3bf745c3-b119-4015-9097-81931d0e7d7b:tool_call:call_00_tYGjMXbe2jmVvlxNQC045611:kurumi_sticker:4:0",
+        "status": "sent",
+        "message_id": "1987354369",
+        "at": "2026-10-27T01:20:09.844+08:00"
+      },
+      {
+        "id": "in:1794511189:365999865:1297237968:0:0",
+        "status": "sent",
+        "message_id": "646535524",
+        "at": "2026-10-27T01:20:12.506+08:00"
+      },
+      {
+        "id": "in:1794511189:365999865:1297237968:0:1",
+        "status": "sent",
+        "message_id": "1413760186",
+        "at": "2026-10-27T01:20:13.173+08:00"
+      }
+    ]
+  },
+  "mediaFiles": [
+    {
+      "file": "1a81d6bf-f619-41d0-b91f-9db370035ce6.png",
+      "bytes": 499678,
+      "at": "2026-10-27T01:20:09.838+08:00",
+      "sha256": "eff10261d61d2757f85f995cc10d7903e2ea437732ed79e176c79b6c2f6bc5d1",
+      "type": "image/png"
+    },
+    {
+      "file": "71ace90e-52ca-4f96-9748-c58e20192084.jpg",
+      "bytes": 46431,
+      "at": "2026-10-27T01:19:54.463+08:00",
+      "sha256": "6fdd86c13bf6cf71a50364c268ec5ca9100ad2582b2497511cff4564fc2126e6",
+      "type": "image/jpeg"
+    }
+  ],
+  "stickerCalls": [
+    {
+      "at": "2026-10-27T01:20:05.188+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_YFSgU1ML6AkNwpc1lPAL0810:kurumi_sticker:1",
+      "action": "search",
+      "status": "error",
+      "isError": true,
+      "receipt": {}
+    },
+    {
+      "at": "2026-10-27T01:20:06.100+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_2GvfADh0JHulwkp7pUIb9512:kurumi_sticker:2",
+      "action": "list",
+      "status": "ok",
+      "isError": false,
+      "receipt": {}
+    },
+    {
+      "at": "2026-10-27T01:20:07.293+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_1onvuNs22jOrW4R6H3sL5050:kurumi_sticker:3",
+      "action": "list",
+      "status": "ok",
+      "isError": false,
+      "receipt": {}
+    },
+    {
+      "at": "2026-10-27T01:20:11.139+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_tYGjMXbe2jmVvlxNQC045611:kurumi_sticker:4",
+      "action": "send",
+      "status": "ok",
+      "isError": false,
+      "receipt": {
+        "ok": true,
+        "channel": "kurumi-qq",
+        "messageId": "1987354369"
+      }
+    }
+  ],
+  "stickerAccess": [
+    {
+      "at": "2026-10-27T01:20:05.176+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_YFSgU1ML6AkNwpc1lPAL0810:kurumi_sticker:1",
+      "permission": "stickers.use",
+      "decision": "allow",
+      "code": "allowed",
+      "requesterIsOwner": true
+    },
+    {
+      "at": "2026-10-27T01:20:06.095+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_2GvfADh0JHulwkp7pUIb9512:kurumi_sticker:2",
+      "permission": "stickers.use",
+      "decision": "allow",
+      "code": "allowed",
+      "requesterIsOwner": true
+    },
+    {
+      "at": "2026-10-27T01:20:07.289+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_1onvuNs22jOrW4R6H3sL5050:kurumi_sticker:3",
+      "permission": "stickers.use",
+      "decision": "allow",
+      "code": "allowed",
+      "requesterIsOwner": true
+    },
+    {
+      "at": "2026-10-27T01:20:09.409+08:00",
+      "runId": "14dbe56e-394d-4f4e-a986-6493e741a6b1",
+      "toolCallId": "tool_call:call_00_tYGjMXbe2jmVvlxNQC045611:kurumi_sticker:4",
+      "permission": "stickers.use",
+      "decision": "allow",
+      "code": "allowed",
+      "requesterIsOwner": true
+    }
+  ],
+  "model": {
+    "errors": 0,
+    "inboundPartialImageNotLoadedNotices": 0,
+    "replyCount": 2,
+    "independentModelRequestImageBytesCaptured": false
+  },
+  "transport": {
+    "blockedMediaFetches": 0,
+    "imageOutboundRecords": [
+      {
+        "at": "2026-10-27T01:20:11.000+08:00",
+        "source": "snowluma",
+        "hasImage": true
+      }
+    ],
+    "snowlumaWarnings": 0,
+    "unresolvedOutbound": 0
+  },
+  "startupWindow": {
+    "from": "2026-10-27T01:18:30+08:00",
+    "to": "2026-10-27T01:23:00+08:00",
+    "deprecationWarnings": 4,
+    "otherHostSsrfBlocks": [
+      {
+        "at": "2026-10-27T01:18:53.716+08:00",
+        "origin": "https://catalog.openclaw.ai"
+      },
+      {
+        "at": "2026-10-27T01:18:57.882+08:00",
+        "origin": "https://clawhub.ai"
+      }
+    ],
+    "modelCatalogRefreshFailures": 1,
+    "stickerValidationErrors": 1
+  },
+  "acceptance": {
+    "status": "accepted",
+    "subject": "N14.1",
+    "newImageInbound": true,
+    "stickerImageOutbound": true,
+    "ownerConfirmedFrontend": true,
+    "notCovered": [
+      "WebP/GIF",
+      "multi-image",
+      "member identities",
+      "generic image delivery",
+      "E7 data or images",
+      "remaining N14 checks"
+    ]
+  },
+  "completionChecks": [
+    {
+      "label": "health",
+      "command": "node scripts/fusion/health.mjs",
+      "at": "2026-10-27T01:42:48.522500+08:00",
+      "exitCode": 0,
+      "summary": {
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "channel": [
+          {
+            "running": true,
+            "connected": true
+          }
+        ],
+        "testMethodDisabled": true
+      }
+    },
+    {
+      "label": "dependencies",
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "at": "2026-10-27T01:42:48.524762+08:00",
+      "exitCode": 0,
+      "summary": [
+        "ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)",
+        "  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)",
+        "  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)",
+        "  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)",
+        "  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)",
+        "  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw",
+        "  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin",
+        "",
+        "dependency verification passed: project owns its dependencies"
+      ]
+    },
+    {
+      "label": "config",
+      "command": "node scripts/fusion/sync-config.mjs",
+      "at": "2026-10-27T01:42:48.522393+08:00",
+      "exitCode": 0,
+      "summary": [
+        "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+      ]
+    },
+    {
+      "label": "persona",
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "at": "2026-10-27T01:42:48.522373+08:00",
+      "exitCode": 0,
+      "summary": [
+        "persona in sync with roles/世凪.md (12 workspace file(s) match)"
+      ]
+    },
+    {
+      "label": "evidence-coverage",
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "at": "2026-10-27T01:42:48.529238+08:00",
+      "exitCode": 0,
+      "summary": [
+        "evidence coverage",
+        "  历史领域验收: 83",
+        "  当前有效: 468",
+        "  total: 551",
+        "OK: every file belongs to exactly one named group with valid documents."
+      ]
+    },
+    {
+      "label": "evidence-index",
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "at": "2026-10-27T01:42:48.524724+08:00",
+      "exitCode": 0,
+      "summary": [
+        "OK: SCRIPTS.md matches 198 classified, document-owned entries."
+      ]
+    },
+    {
+      "label": "documentation-map-tests",
+      "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+      "at": "2026-10-27T01:42:48.529910+08:00",
+      "exitCode": 0,
+      "summary": [
+        "  ✔ an existing classified script without a document owner fails (50.278449ms)",
+        "  ✔ stale generated table or reversed markers fail (104.879805ms)",
+        "  ✔ new receipts inherit a named suite; unknown evidence directory fails (75.408923ms)",
+        "✔ CLI verifies ownership and saved Markdown without touching the real repository (546.020665ms)",
+        "ℹ tests 9",
+        "ℹ suites 0",
+        "ℹ pass 9",
+        "ℹ fail 0",
+        "ℹ cancelled 0",
+        "ℹ skipped 0",
+        "ℹ todo 0",
+        "ℹ duration_ms 621.9788"
+      ]
+    }
+  ]
+}
