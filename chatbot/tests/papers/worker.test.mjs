@@ -21,7 +21,7 @@ test('Operator concurrency is validated and reaches actual sandbox stdin, never 
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   for(const name of ['work','cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
   const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
-  fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
+  fs.writeFileSync(credentialsFile,JSON.stringify({DEEPSEEK_API_KEY:'synthetic-official'}),{mode:0o600});
   const script="import json,sys,pathlib; r=json.load(sys.stdin); assert r[\"apiConcurrency\"]==6 and r[\"apiQps\"]==1; assert r[\"requestIdleTimeoutSeconds\"]==77; assert r[\"maxRequests\"]==300; assert r[\"batchValidationRetries\"]==3 and r[\"channelRecoveryRetries\"]==2 and r[\"executionTimeoutSeconds\"]==1800; assert r[\"outputKind\"]==\"dual\" and r[\"profile\"][\"effort\"]==\"high\"; p=pathlib.Path; p(\"/work/dual.pdf\").write_bytes(b\"pdf\"); p(\"/work/result.json\").write_text(json.dumps({\"ok\":True,\"dual\":\"/work/dual.pdf\",\"mono\":\"/must-not-read.pdf\",\"usage\":{\"maxConcurrency\":r[\"apiConcurrency\"],\"maxQps\":r[\"apiQps\"]}}))";
   fs.writeFileSync(python,"#!/bin/sh\nexec /usr/bin/python3 -c '"+script+"'\n",{mode:0o700});
   const result=await runTranslation({config:{python,credentialsFile,apiConcurrency:6,apiQps:1,batchValidationRetries:3,channelRecoveryRetries:2,requestIdleTimeoutSeconds:77},
@@ -60,7 +60,7 @@ test('Real sandbox propagates each output choice and rejects missing/escaped sel
   const root=fs.mkdtempSync('/var/tmp/kurumi-worker-outputs-');t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   for(const name of ['cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
   const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
-  fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
+  fs.writeFileSync(credentialsFile,JSON.stringify({DEEPSEEK_API_KEY:'synthetic-official'}),{mode:0o600});
   for(const outputKind of ['dual','mono','both']){
     const work=path.join(root,outputKind);fs.mkdirSync(work);
     fs.writeFileSync(python,`#!/usr/bin/python3
@@ -121,7 +121,7 @@ test('A real sandboxed worker stops writing when the parent wall deadline kills 
   t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   for(const name of ['work','cache','venv/bin'])fs.mkdirSync(path.join(root,name),{recursive:true});
   const python=path.join(root,'venv/bin/python'),credentialsFile=path.join(root,'keys.json');
-  fs.writeFileSync(credentialsFile,JSON.stringify({OPENAI_API_KEY1_014:'synthetic'}),{mode:0o600});
+  fs.writeFileSync(credentialsFile,JSON.stringify({DEEPSEEK_API_KEY:'synthetic-official'}),{mode:0o600});
   fs.writeFileSync(python,"#!/bin/sh\nexec /usr/bin/python3 -c 'import time; f=open(\"/work/pulse\",\"a\");\nwhile True: f.write(\".\"); f.flush(); time.sleep(0.01)'\n",{mode:0o700});
   await assert.rejects(runTranslation({config:{python,credentialsFile,timeoutSeconds:0.5},work:path.join(root,'work'),cache:path.join(root,'cache'),profile:{},pages:'1',sourceLang:'en',targetLang:'zh'}),/translation_timed_out/);
   const pulse=path.join(root,'work/pulse'),size=fs.statSync(pulse).size;

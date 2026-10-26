@@ -1,0 +1,30 @@
+{
+  "recordedAt": "2026-10-26T18:19:01.079879+00:00",
+  "scope": "既有离线回归，仅合成数据与注入传输，无付费API或生产写入",
+  "cwd": "chatbot/tests/papers",
+  "command": "python3 -m unittest -v responses_test.ResponsesTest.test_native_protocol_and_usage responses_test.ResponsesTest.test_stream_needs_completed_response_and_ignores_partial_reasoning responses_test.ResponsesTest.test_failover_respects_global_request_and_reported_token_limits concurrency_test.ConcurrencyTest.test_known_token_limit_stops_new_requests_but_retains_all_inflight_usage reliability_test.ReliabilityTest.test_validation_retry_cannot_exceed_request_or_token_budget",
+  "exitCode": 0,
+  "tests": 5,
+  "passed": 5,
+  "elapsedSeconds": 0.004,
+  "cases": [
+    "responses_test.ResponsesTest.test_native_protocol_and_usage",
+    "responses_test.ResponsesTest.test_stream_needs_completed_response_and_ignores_partial_reasoning",
+    "responses_test.ResponsesTest.test_failover_respects_global_request_and_reported_token_limits",
+    "concurrency_test.ConcurrencyTest.test_known_token_limit_stops_new_requests_but_retains_all_inflight_usage",
+    "reliability_test.ReliabilityTest.test_validation_retry_cannot_exceed_request_or_token_budget"
+  ],
+  "documentationChecks": {
+    "evidenceCoverage": {
+      "exitCode": 0,
+      "files": 556
+    },
+    "evidenceIndexCheckMarkdown": {
+      "exitCode": 0,
+      "entries": 198
+    },
+    "gitDiffCheck": {
+      "exitCode": 0
+    }
+  }
+}

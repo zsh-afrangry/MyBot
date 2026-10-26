@@ -10,7 +10,7 @@ const source = arg('source'), destination = arg('destination'), provider = arg('
 if (!['openai','deepseek'].includes(provider)) throw Error('Unsupported credential provider');
 if (!source || !destination || !path.isAbsolute(source) || !path.isAbsolute(destination)) throw Error('Explicit absolute --source and --destination are required');
 const ids = credentialIdsForProfile({provider});
-const allIds = [...credentialIdsForProfile(), ...credentialIdsForProfile({provider:'deepseek'})];
+const allIds = [...credentialIdsForProfile({provider:'openai'}), ...credentialIdsForProfile({provider:'deepseek'})];
 const privateJson = file => {try {return JSON.parse(fs.readFileSync(file, 'utf8'));} catch {throw Error('Invalid private credential JSON');}};
 let keys = {};
 let stat;

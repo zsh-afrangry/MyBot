@@ -1,5 +1,5 @@
 {
-  "defaultProvider": "openai",
+  "defaultProvider": "deepseek",
   "providers": [
     {
       "provider": "openai",

@@ -19,7 +19,7 @@ async function setup(t,deps={}) {
 }
 async function terminal(service,id) {for(let i=0;i<200;i++){const job=service.get(id);if(!['queued','running'].includes(job.status))return job;await new Promise(r=>setTimeout(r,5));}throw Error('test job timed out');}
 test('Explicit provider/model/effort; pages cannot silently truncate or execute',()=>{
-  assert.equal(resolveProfile().model,'gpt-6.1-sol');assert.equal(resolveProfile().effort,'high');
+  assert.equal(resolveProfile().provider,'deepseek');assert.equal(resolveProfile().channel,'official');assert.equal(resolveProfile().model,'deepseek-flash');assert.equal(resolveProfile().effort,'high');
   assert.equal(resolveProfile({effort:'MAX'}).effort,'max');
   assert.equal(resolveProfile({provider:'deepseek',effort:'MAX'}).effort,'max');
   for(const args of [{provider:'grok'},{model:'gpt-5.6-sol'},{channel:'other'},{effort:'ultra'}]) assert.throws(()=>resolveProfile(args));
@@ -27,17 +27,17 @@ test('Explicit provider/model/effort; pages cannot silently truncate or execute'
   for(const range of ['0','3-1','1;curl x','1-10000'])assert.throws(()=>normalizePages(range,8,3));
   assert.throws(()=>normalizePages(null,31,30));
 });
-test('DeepSeek jobs persist an explicit profile and never mutate default GPT settings',async t=>{
+test('Explicit GPT jobs keep their own profile and never mutate the default DeepSeek settings',async t=>{
   let received;
   const {service,doc}=await setup(t,{runner:async request=>{
     received=request.profile;const files={};for(const kind of ['mono','dual']){files[kind]=path.join(request.work,kind+'.pdf');fs.writeFileSync(files[kind],pdf(kind));}return files;
   }});
-  const job=service.submit({documentId:doc.id,provider:'deepseek',delivery:'none'},{key:'deepseek'});
+  const job=service.submit({documentId:doc.id,provider:'openai',delivery:'none'},{key:'deepseek'});
   assert.equal((await terminal(service,job.id)).status,'succeeded');
-  assert.deepEqual(received,resolveProfile({provider:'deepseek'}));
+  assert.deepEqual(received,resolveProfile({provider:'openai'}));
   assert.deepEqual(service.get(job.id).profile,received);
   assert.throws(()=>service.submit({documentId:doc.id,delivery:'none'},{key:'deepseek'}),/different/);
-  assert.equal(resolveProfile().provider,'openai');assert.equal(resolveProfile().effort,'high');
+  assert.equal(resolveProfile().provider,'deepseek');assert.equal(resolveProfile().effort,'high');
 });
 test('Lifecycle, immutable invocation identity and separate output/delivery state',async t=>{
   let files=0;const {service,doc,root}=await setup(t,{sendFile:async()=>{files++;return{status:'platform_accepted'};}});
@@ -178,11 +178,11 @@ test('Composition entry authorizes the job binding, then delivers only through t
   assert.equal(getter(),config);
   const owner=deps.ownerBinding,signal=new AbortController().signal;
   assert.deepEqual(await deps.sendFile('doc-1','job-1:dual',signal,owner),{status:'platform_accepted'});
-  await deps.notify('翻译完成','job-1',owner);
-  assert.deepEqual(sent,[['file',{to:owner.to,documentId:'doc-1',key:'job-1:dual',signal}],['text',{to:owner.to,text:'翻译完成',key:'paper-notice:job-1'}]]);
+  await deps.notify({jobId:'job-1',message:'翻译失败的明确中文原因'},'job-1',owner);
+  assert.deepEqual(sent,[['file',{to:owner.to,documentId:'doc-1',key:'job-1:dual',signal}],['text',{to:owner.to,text:'翻译失败的明确中文原因',key:'paper-notice:job-1',signal:undefined}]]);
   for(const forged of [{...owner,accountId:'other'},{...owner,to:'user:1'},{...owner,sessionKey:'agent:main:other'}]){
     assert.throws(()=>deps.sendFile('doc-1','x',signal,forged),/untrusted_job_binding/);
-    assert.throws(()=>deps.notify('x','x',forged),/untrusted_job_binding/);
+    await assert.rejects(deps.notify({message:'x'},'x',forged),/untrusted_job_binding/);
   }
   assert.equal(sent.length,2);
 });
