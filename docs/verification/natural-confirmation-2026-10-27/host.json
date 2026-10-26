@@ -1,6 +1,6 @@
 {
-  "at": "2026-10-26T18:56:34.827Z",
-  "boundary": "Real isolated OpenClaw hooks, tools, domain storage, Cron and loopback QQ HTTP receipts. Deterministic model; no real model API, QQ, SMTP, production writes or restart.",
+  "at": "2026-10-26T19:01:50.252Z",
+  "boundary": "Real isolated OpenClaw hooks, tools, domain storage, Cron and loopback QQ HTTP receipts. Deterministic cognition; no model provider or QQ network; no SMTP, production writes or production restart.",
   "cases": [
     {
       "label": "same-message-cannot-confirm",
@@ -48,5 +48,5 @@
   "requests": 31,
   "passed": true,
   "childStopped": true,
-  "finishedAt": "2026-10-26T18:56:49.031Z"
+  "finishedAt": "2026-10-26T19:02:04.399Z"
 }

@@ -10,10 +10,11 @@
 
 ## 实现
 
-工作树分支`codex/natural-confirmation-20261027`；基线`326eb95`，核心首次提交`d8b7366`，后续接线提交由本目录文件哈希和Git历史定位。与并行论文任务的改动在主线合并时保留，不覆盖其模型与失败提示。
+工作树分支`codex/natural-confirmation-20261027`；基线`326eb95`，核心首次提交`d8b7366`、领域/宿主接线`e0e2d4e`，后续收紧与合并提交由本目录文件哈希和Git历史定位。与并行论文任务的改动在主线合并时保留，不覆盖其模型与失败提示。
 
 - 核心新增持久预览与自然grant标记，所有后端查询成功后按真实ID/hash/domain唯一选择；历史Profile/行程共库按domain收窄。
 - 只有可信QQ发送全载荷成功回执才标记展示；模型改写由最终回复钩子替换为冻结预览。分段中途失败、仅捕获回复、同消息新建/重展示均不能授权。
+- 提案预览只接受实际领域工具结果；通用`tool_call`包装必须对应可信before-tool记录的工具名，不接受网页/任意工具文本伪造嵌套提案。
 - 原文来自可信入站，实际run/session/toolCall来自宿主钩子。模型选择目标，窄工具签发grant，领域事务消费。新消息、回合结束、重置、重启撤销未消费自然授权；最多5分钟且不越过提案截止。
 - 多项可并存；裸确认绑定最新唯一预览或可信引用目标。明确指代可选择其中一项；同一条消息不能授权第二项。语义理解仍由模型负责。
 - 邮件预览含收件人、抄送、主题、完整正文及附件摘要；取消草稿同步取消提案，消费和提案提交在同一事务，先消费再SMTP。投递失败不复用授权。
@@ -26,7 +27,7 @@
 | 命令 | 结果 | 范围 |
 | --- | --- | --- |
 | `npm --prefix chatbot/packages/confirmation-core run build` / `test` | 构建通过，46项通过 | 提案/授权、回执、裸确认/引用/歧义、失效、重复/跨域、旧协议 |
-| `npm --prefix chatbot/plugins/personal-confirmation run build` / `test` | 构建通过，23项通过 | 当前原文/实际宿主调用绑定、生命周期、嵌套结果、冻结回复和旧入口 |
+| `npm --prefix chatbot/plugins/personal-confirmation run build` / `test` | 构建通过，24项通过 | 当前原文/实际宿主调用绑定、生命周期、嵌套结果、冻结回复和旧入口 |
 | `node chatbot/scripts/build-personal-plugins.mjs`；`npm --prefix chatbot/packages/personal-domains test` | 构建通过，162项通过 | 四领域及原确认/Cron回归 |
 | `node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/access-control/*.test.mjs` | 原组合125项通过；新增回执文件另3项通过 | 领域事务、模拟SMTP、身份/动作权限与频道传输 |
 | `node --test chatbot/plugins/kurumi-qq/test/confirmation-receipts.test.js` | 3项通过 | 真实loopback HTTP全量回执、部分失败、捕获无回执；不生成grant |

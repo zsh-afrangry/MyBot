@@ -25,6 +25,7 @@ export const NATURAL_CONFIRMATION_RULES = `一次性提醒、Profile/行程和�
 export function createConfirmationRuntime(ownerId: string, now = Date.now) {
   let current: Request | undefined;
   const calls = new Map<string, Request>();
+  const wrapperCalls = new Map<string, {request: Request; target: string}>();
   const previews = new Map<string, {at: number; texts: Map<string, string>}>();
   const callKey = (ctx: Context, id: unknown) => JSON.stringify([ctx.sessionKey, ctx.sessionId, id]);
   const active = (r: Request | undefined): r is Request => !!r && current === r && now() >= r.at && now() - r.at < 300000;
@@ -34,7 +35,7 @@ export function createConfirmationRuntime(ownerId: string, now = Date.now) {
   return {
     receive(event: Parameters<typeof confirmationFromDispatch>[0]) {
       if (event.isTailDispatch || event.ctx.SessionKey !== `agent:main:kurumi-qq:direct:${ownerId}`) return;
-      current = undefined; calls.clear();
+      current = undefined; calls.clear(); wrapperCalls.clear();
       clearNaturalConfirmationRequest(`agent:main:kurumi-qq:direct:${ownerId}`);
       const inbound = confirmationFromDispatch(event, now(), 16000);
       if (inbound?.channel === 'kurumi-qq' && inbound.senderId === ownerId && !inbound.content.trimStart().startsWith('/')) {
@@ -54,17 +55,30 @@ export function createConfirmationRuntime(ownerId: string, now = Date.now) {
     beforeTool(event: {toolName: string; params?: Result; runId?: string; toolCallId?: string}, ctx: Context) {
       const target = nameOf(event.toolName === 'tool_call' ? event.params?.id : event.toolName);
       const id = ctx.toolCallId ?? event.toolCallId;
-      if (target !== 'personal_confirmation' || !id || !isCurrentRun(ctx, event.runId)) return;
-      while (calls.size >= 64) calls.delete(calls.keys().next().value!);
-      calls.set(callKey(ctx, id), current!);
+      if (!id || !isCurrentRun(ctx, event.runId) || (!proposalDomains[target!] && target !== 'personal_confirmation')) return;
+      const key = callKey(ctx, id);
+      if (event.toolName === 'tool_call') {
+        while (wrapperCalls.size >= 64) wrapperCalls.delete(wrapperCalls.keys().next().value!);
+        wrapperCalls.set(key, {request: current!, target: target!});
+      }
+      if (target === 'personal_confirmation') {
+        while (calls.size >= 64) calls.delete(calls.keys().next().value!);
+        calls.set(key, current!);
+      }
     },
     afterTool(event: {toolName: string; result?: unknown; error?: unknown; runId?: string; toolCallId?: string}, ctx: Context) {
       if (nameOf(event.toolName) === 'personal_confirmation') calls.delete(callKey(ctx, ctx.toolCallId ?? event.toolCallId));
       if (event.error || !isCurrentRun(ctx, event.runId)) return;
-      let name = nameOf(event.toolName), result = event.result;
+      const outer = nameOf(event.toolName), key = callKey(ctx, ctx.toolCallId ?? event.toolCallId);
+      const proof = wrapperCalls.get(key); wrapperCalls.delete(key);
+      if (outer === 'tool_call' && (!proof || proof.request !== current)) return;
+      const name = outer === 'tool_call' ? proof!.target : outer;
+      if (!name || (!proposalDomains[name] && name !== 'personal_confirmation')) return;
+      let result = event.result, unwrapped = false;
       for (let i = 0; i < 5 && record(result); i++) {
         if (record(result.tool) && typeof result.tool.name === 'string' && record(result.result)) {
-          name = nameOf(result.tool.name); result = result.result; continue;
+          if (outer !== 'tool_call' || unwrapped || nameOf(result.tool.name) !== name) return;
+          unwrapped = true; result = result.result; continue;
         }
         if (Array.isArray(result.content)) {
           const texts = result.content.filter((p: unknown) => record(p) && p.type === 'text');
@@ -116,13 +130,13 @@ export function createConfirmationRuntime(ownerId: string, now = Date.now) {
       if ((ctx.runId ?? event.runId) === current?.runId || (!ctx.runId && !event.runId
         && (ctx.sessionId ?? event.sessionId) === current?.sessionId)) {
         if (current?.event.sessionKey) clearNaturalConfirmationRequest(current.event.sessionKey, current.event.messageId);
-        current = undefined; calls.clear();
+        current = undefined; calls.clear(); wrapperCalls.clear();
       }
     },
     reset(event: {sessionKey?: string}, ctx: Context) {
       if ((ctx.sessionKey ?? event.sessionKey) === `agent:main:kurumi-qq:direct:${ownerId}`) {
         clearNaturalConfirmationRequest(`agent:main:kurumi-qq:direct:${ownerId}`);
-        current = undefined; calls.clear();
+        current = undefined; calls.clear(); wrapperCalls.clear();
       }
     },
   };
