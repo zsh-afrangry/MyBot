@@ -29,7 +29,7 @@
 
 | 决定 | 当前规则与原因 |
 | --- | --- |
-| 默认翻译配置 | naiccc / OpenAI / **gpt-6.1-sol / high**（可显式指定 MAX），原生 `/v1/responses`，顶层显式 `instructions`；不修改主聊天的 DeepSeek |
+| 默认翻译配置 | DeepSeek 官方 / **deepseek-flash / high**（DeepSeek V4.1 Flash），使用独立 `DEEPSEEK_API_KEY`；显式指定OpenAI时仍为naiccc/gpt-6.1-sol/high与014→030→040。2026-10-27主人要求切换默认；不自动跨厂商回退，原生Responses与顶层instructions保持 |
 | 每次可选参数 | 厂商、渠道、准确模型、强度、源/目标语言、页码、产物类型；固定到本次任务，不永久改变默认 |
 | 当前登记组合 | naiccc/OpenAI gpt-6.1-sol，low/medium/high/xhigh/max；DeepSeek/official deepseek-flash、deepseek-v4-pro，none/low/high/max。DeepSeek 默认 V4.1 Flash/high，API 标识 deepseek-flash；指定厂商、准确模型或唯一渠道可推导其默认，不继承 GPT 的字段。冲突组合与未登记模型直接拒绝，不静默替换或切 Chat。none 实测样式保留不稳，仍可按主人明确指定执行；部署与真实测试范围见顶部与证据 |
 | 厂商范围 | 仅 GPT 与 DeepSeek；主人明确不接 Grok，不列为延期或未完成需求。不会自动跨厂商回退 |
@@ -41,6 +41,14 @@
 | 验收样本 | 使用各次明确授权的实际PDF；原样本路径、页数与耗时预期见[阶段记录](archive/documentation-2026-10-23/22_论文PDF翻译与文件投递.md)，不作为性能保证 |
 | 预算边界 | 主人已指定实际 PDF 验收；用页数、请求数、已报告用量与运行时限限制持续调用。网关忽略输出 token 上限，**不承诺金额硬上限** |
 | 版本管理 | 并行任务按文件/代码块划分，验收对应实际源码与构建指纹；不整树暂存其它任务，当前Git与恢复边界见文档16 |
+
+### 后台失败说明
+
+翻译失败或译文已生成但投递失败/未知时，先读取并保存worker用量、阶段与结构诊断，再生成固定白名单的`failureSummary`，供status/list及通知共用。说明区分本地单篇token/请求上限、上游余额/配额/鉴权、渠道中断、总时限、输出校验与文件投递；`translation_budget_exhausted`不得解释成账号余额不足，未知用量不计作0。
+
+后台仅将该摘要交给实际请求人绑定的原会话/Agent，调用宿主注册插件的会话运行入口生成解释。本次说明回合禁用全部工具，不自动重译、调预算、换厂商或重发文件，不开放QQ助手原有禁用能力。运行前和发送前分别复核身份/权限，成员结果不改发给主人。模型不可用、超时或无有效回复时，用同一摘要生成中文兜底；发出兜底后为下一聊天回合注入已通知的结果，避免助手失去上下文。外发只经QQ公开投递接口及既有幂等账本；外发回执未知不另发第二条兜底。通知状态与翻译/文件投递状态分别保存，重启不自动重放。
+
+本轮实现、离线/真实隔离宿主检查与部署记录见[默认渠道与失败说明](verification/paper-translation-2026-10-17/default-deepseek-notification-2026-10-27/README.md)，真人复验归[待办N22](待办清单.md#n22-论文默认渠道与失败说明)。不把切换默认当成030用量异常已修复。
 
 ## 架构与基础工具
 

@@ -1,0 +1,21 @@
+{
+  "at": "2026-10-26T18:43:37.217Z",
+  "boundary": "真实隔离Gateway及注册插件会话运行入口，本地确定性模型与假投递器；无真实模型/API/QQ、凭据或生产写入。",
+  "passed": true,
+  "modelRequests": 2,
+  "allModelRequestsToolFree": true,
+  "notification": {
+    "mode": "assistant",
+    "status": "sent",
+    "contextQueued": false,
+    "runId": "3eb32bbf-8ca4-4f2b-8e66-66e70e12f454"
+  },
+  "sends": [
+    {
+      "to": "user:fixture",
+      "key": "paper-notice:job_aaaaaaaaaaaaaaaaaaaaaaaa",
+      "hasDiagnostic": true
+    }
+  ],
+  "chatInitialized": true
+}

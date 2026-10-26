@@ -34,13 +34,15 @@ export function reliabilitySettings(config) {
 }
 
 export function loadKeys(file, profile = {}) {
-  const stat = fs.lstatSync(file);
-  if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077)) throw Error('Translation credential file must be owner-only and regular');
+  const invalid = message => Object.assign(Error(message),{code:'translation_credentials_invalid'});
+  let stat;
+  try { stat = fs.lstatSync(file); } catch { throw Object.assign(Error('Translation credential file is unavailable'),{code:'translation_credentials_not_configured'}); }
+  if (!stat.isFile() || stat.isSymbolicLink() || (stat.mode & 0o077)) throw invalid('Translation credential file must be owner-only and regular');
   let raw;
-  try {raw = JSON.parse(fs.readFileSync(file, 'utf8'));} catch {throw Error('Invalid translation credential file');}
-  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw Error('Invalid translation credential file');
+  try {raw = JSON.parse(fs.readFileSync(file, 'utf8'));} catch {throw invalid('Invalid translation credential file');}
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw invalid('Invalid translation credential file');
   const keys = Object.fromEntries(credentialIdsForProfile(profile).filter(k => typeof raw[k] === 'string' && raw[k].trim()).map(k => [k, raw[k].trim()]));
-  if (!Object.keys(keys).length) throw Error('No translation credentials configured');
+  if (!Object.keys(keys).length) throw Object.assign(Error('No translation credentials configured'),{code:'translation_credentials_not_configured'});
   return keys;
 }
 export function workerCommand({config, work, cache}) {
