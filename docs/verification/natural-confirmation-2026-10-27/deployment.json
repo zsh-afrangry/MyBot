@@ -1,6 +1,133 @@
 {
-  "at": "2026-10-27",
-  "status": "pending",
-  "deployed": false,
-  "checks": []
+  "at": "2026-10-26T19:06:45.982266+00:00",
+  "boundary": "生产配置和工具目录只读核对；同步已授权的受管配置/人格并重启Fusion。无真实QQ/SMTP外发、模型API测试、生产测试提案、业务账本清理、停写恢复或远端写入。",
+  "authorization": "主人批准以自然语言确认具体待确认事项；实施对应窄工具、冻结预览回执及当前请求绑定。",
+  "deployed": true,
+  "sourceCommit": "fa0eeba",
+  "commits": {
+    "core": "d8b7366",
+    "integration": "e0e2d4e",
+    "trustedWrapperFix": "49973e7",
+    "mergeParallelMain": "f60f632",
+    "guidance": "fa0eeba"
+  },
+  "parallelWork": {
+    "mainWasClean": true,
+    "mergedMain": "8d42cd9",
+    "preserved": "论文DeepSeek默认及失败解释、E7角色取样文档",
+    "conflicts": "索引保留两行；提示词保留新翻译默认与自然确认两部分"
+  },
+  "installation": {
+    "personalConfirmation": "npm ci --ignore-scripts --no-audit --no-fund",
+    "qq": "npm ci --ignore-scripts --legacy-peer-deps --no-audit --no-fund",
+    "allBuildsPassed": true
+  },
+  "config": {
+    "changed": 2,
+    "removed": 0,
+    "managedKeys": 13,
+    "changes": [
+      "agents.entries.main.tools.alsoAllow adds personal_confirmation",
+      "plugins.entries.personal-confirmation.hooks.allowConversationAccess=true"
+    ]
+  },
+  "persona": {
+    "changedManagedFiles": 1,
+    "filesMatchingAfterApply": 12,
+    "memoryHistoryCredentialsUntouched": true
+  },
+  "service": {
+    "command": "systemctl --user restart kurumi-fusion.service",
+    "startedAtLocal": "2026-10-27 03:04:38 Asia/Shanghai",
+    "active": true,
+    "activePaperJobsAfterRestart": 0,
+    "newInterruptedPaperJobsSince0300": 0
+  },
+  "checks": [
+    {
+      "name": "health",
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "result": {
+        "at": "2026-10-26T19:05:13.817Z",
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "channel": [
+          {
+            "running": true,
+            "connected": true
+          }
+        ],
+        "testIngress": false,
+        "testMethodDisabled": true
+      }
+    },
+    {
+      "name": "dependencies",
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "sdk": "openclaw@2026.9.7",
+      "projectOwnsDependencies": true
+    },
+    {
+      "name": "config",
+      "command": "node scripts/fusion/sync-config.mjs",
+      "exitCode": 0,
+      "managedKeysMatching": 13
+    },
+    {
+      "name": "persona",
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exitCode": 0,
+      "workspaceFilesMatching": 12
+    }
+  ],
+  "runtimeCatalog": {
+    "at": "2026-10-26T19:05:40.917Z",
+    "plugins": [
+      {
+        "id": "kurumi-mail",
+        "state": "active"
+      },
+      {
+        "id": "kurumi-qq",
+        "state": "active"
+      },
+      {
+        "id": "personal-confirmation",
+        "state": "active"
+      },
+      {
+        "id": "personal-planning",
+        "state": "active"
+      },
+      {
+        "id": "personal-profile",
+        "state": "active"
+      },
+      {
+        "id": "personal-reminders",
+        "state": "active"
+      }
+    ],
+    "toolNames": [
+      "personal_confirmation"
+    ],
+    "hookConversationAccess": true,
+    "ownerToolAllowed": true,
+    "genericDenyUnchanged": true,
+    "testIngress": false,
+    "memberConfirmationAllowed": false
+  },
+  "acceptance": {
+    "isolatedRealHost": "passed; deterministic model and loopback QQ receipts",
+    "productionRealModelSemantics": "pending",
+    "humanQQ": "pending",
+    "realMailDelivery": "not performed"
+  }
 }
