@@ -1,0 +1,749 @@
+{
+  "schemaVersion": 1,
+  "collectedAt": "2026-10-26T18:16:33.277Z",
+  "timezone": "Asia/Shanghai",
+  "authorization": "用户要求只读分析2026-10-27 00:23论文翻译失败；未进行付费重试、真实外发、运行配置写入或服务重启。",
+  "sources": [
+    "log-query.mjs source=papers, 2026-10-27 00:00–00:30 Asia/Shanghai",
+    "documents/jobs/<jobId>.json 的固定白名单字段",
+    "documents/records/<documentId>.json 仅页数和字节数",
+    "openclaw.json 仅论文预算/执行设置",
+    "当前生产配置加载源与调查工作树的六份源码SHA256"
+  ],
+  "privacy": "未复制聊天/论文正文、文件名、身份/收件人、签名URL、凭据、responseId或任意上游错误正文。inputChars仅为input正文字符数，不含instructions或协议开销。",
+  "runtimeConfig": {
+    "maxPages": 30,
+    "maxRequests": 300,
+    "maxReportedTokens": 300000,
+    "apiConcurrency": 4,
+    "apiQps": 1,
+    "batchValidationRetries": 1,
+    "channelRecoveryRetries": 1,
+    "requestIdleTimeoutSeconds": 100,
+    "timeoutSeconds": 1800,
+    "liveTranslationEnabled": true
+  },
+  "timeline": [
+    {
+      "at": "2026-10-26T16:08:19.430Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "at": "2026-10-26T16:08:19.443Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "running",
+      "error": null
+    },
+    {
+      "at": "2026-10-26T16:08:19.480Z",
+      "kind": "paper.job",
+      "jobId": "job_368efefc5cc4a0dccbe4e23f",
+      "status": "queued",
+      "error": null
+    },
+    {
+      "at": "2026-10-26T16:15:13.038Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "succeeded",
+      "error": null,
+      "deliveryStatus": "not_requested"
+    },
+    {
+      "at": "2026-10-26T16:15:13.040Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "succeeded",
+      "error": null,
+      "deliveryStatus": "dispatching"
+    },
+    {
+      "at": "2026-10-26T16:15:17.677Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "succeeded",
+      "error": null,
+      "deliveryStatus": "dispatching"
+    },
+    {
+      "at": "2026-10-26T16:15:17.678Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "succeeded",
+      "error": null,
+      "deliveryStatus": "platform_accepted"
+    },
+    {
+      "at": "2026-10-26T16:15:17.679Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "succeeded",
+      "error": null,
+      "deliveryStatus": "platform_accepted"
+    },
+    {
+      "at": "2026-10-26T16:15:17.680Z",
+      "kind": "paper.job",
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "succeeded",
+      "error": null,
+      "deliveryStatus": "platform_accepted"
+    },
+    {
+      "at": "2026-10-26T16:15:17.717Z",
+      "kind": "paper.job",
+      "jobId": "job_368efefc5cc4a0dccbe4e23f",
+      "status": "running",
+      "error": null
+    },
+    {
+      "at": "2026-10-26T16:23:28.114Z",
+      "kind": "paper.job",
+      "jobId": "job_368efefc5cc4a0dccbe4e23f",
+      "status": "failed",
+      "error": "translation_budget_exhausted"
+    },
+    {
+      "at": "2026-10-26T16:23:28.367Z",
+      "kind": "paper.job",
+      "jobId": "job_368efefc5cc4a0dccbe4e23f",
+      "status": "failed",
+      "error": "translation_budget_exhausted"
+    },
+    {
+      "at": "2026-10-26T16:23:28.367Z",
+      "kind": "paper.job",
+      "jobId": "job_368efefc5cc4a0dccbe4e23f",
+      "status": "failed",
+      "error": "translation_budget_exhausted"
+    },
+    {
+      "at": "2026-10-26T16:23:28.368Z",
+      "kind": "paper.job",
+      "jobId": "job_368efefc5cc4a0dccbe4e23f",
+      "status": "failed",
+      "error": "translation_budget_exhausted"
+    }
+  ],
+  "jobs": [
+    {
+      "jobId": "job_9de1e0931f8930bd01d333fe",
+      "status": "succeeded",
+      "createdAt": "2026-10-26T16:08:19.430Z",
+      "updatedAt": "2026-10-26T16:15:17.679Z",
+      "pages": null,
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "deliveryKind": "dual",
+      "execution": {
+        "apiConcurrency": 4,
+        "apiQps": 1,
+        "batchValidationRetries": 1,
+        "channelRecoveryRetries": 1
+      },
+      "document": {
+        "bytes": 8840486
+      },
+      "runningAt": "2026-10-26T16:08:19.443Z",
+      "terminalAt": "2026-10-26T16:15:13.038Z",
+      "elapsedSeconds": 413.595,
+      "artifactKinds": [
+        "dual"
+      ],
+      "deliveryStatus": "platform_accepted",
+      "engineProgress": {
+        "type": "progress_end",
+        "stage": "Save PDF",
+        "stage_progress": 100,
+        "overall_progress": 100
+      },
+      "engineFailure": null,
+      "usage": {
+        "requests": 110,
+        "inputTokens": 39953,
+        "outputTokens": 60575,
+        "reportedTokens": 100528,
+        "maxRequests": 300,
+        "maxReportedTokens": 300000,
+        "requestIdleTimeoutSeconds": 100,
+        "requestTimeoutSeconds": 600,
+        "validationFailures": 3,
+        "validationRetriesScheduled": 3,
+        "channelRecoveryRetries": 1,
+        "unknownUsageAttempts": 0,
+        "channelFailures": 0,
+        "peakInFlight": 4,
+        "inFlight": 0,
+        "hardCostLimit": false,
+        "failure": null,
+        "failureDetails": {},
+        "failureDetectedOffsetSeconds": null
+      },
+      "receiptAudit": {
+        "count": 110,
+        "reportedInputTokens": 39953,
+        "reportedOutputTokens": 60575,
+        "duplicateResponseIdCount": 0
+      },
+      "byCredential": {
+        "OPENAI_API_KEY1_014": {
+          "attempts": 110,
+          "inputChars": 109536,
+          "inputTokens": 39953,
+          "outputTokens": 60575,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 29207,
+          "highInputAttempts": 0,
+          "outcomes": {
+            "completed": 107,
+            "validation_failed": 3
+          }
+        }
+      },
+      "highInput": {
+        "thresholdTokens": 10000,
+        "count": 0,
+        "inputTokens": 0,
+        "receipts": []
+      },
+      "channelFailures": [],
+      "cancelledAttempts": [],
+      "validationFailures": [
+        {
+          "attempt": 19,
+          "batchId": 19,
+          "recovered": true
+        },
+        {
+          "attempt": 45,
+          "batchId": 44,
+          "recovered": true
+        },
+        {
+          "attempt": 105,
+          "batchId": 103,
+          "recovered": true
+        }
+      ],
+      "budgetCrossing": null
+    },
+    {
+      "jobId": "job_368efefc5cc4a0dccbe4e23f",
+      "status": "failed",
+      "error": "translation_budget_exhausted",
+      "createdAt": "2026-10-26T16:08:19.480Z",
+      "updatedAt": "2026-10-26T16:23:28.367Z",
+      "pages": null,
+      "profile": {
+        "provider": "openai",
+        "channel": "naiccc",
+        "model": "gpt-6.1-sol",
+        "effort": "high",
+        "protocol": "responses",
+        "baseUrl": "https://naiccc.com/v1"
+      },
+      "deliveryKind": "dual",
+      "execution": {
+        "apiConcurrency": 4,
+        "apiQps": 1,
+        "batchValidationRetries": 1,
+        "channelRecoveryRetries": 1
+      },
+      "document": {
+        "bytes": 8144217
+      },
+      "runningAt": "2026-10-26T16:15:17.717Z",
+      "terminalAt": "2026-10-26T16:23:28.114Z",
+      "elapsedSeconds": 490.397,
+      "artifactKinds": [],
+      "deliveryStatus": null,
+      "engineProgress": {
+        "type": "progress_end",
+        "stage": "Translate Paragraphs",
+        "stage_progress": 100,
+        "overall_progress": 85.4629074185163
+      },
+      "engineFailure": {
+        "code": "translation_budget_exhausted",
+        "errorType": "TranslationFailure",
+        "frames": [
+          {
+            "file": "engine.py",
+            "function": "main",
+            "line": 267
+          },
+          {
+            "file": "engine.py",
+            "function": "translate",
+            "line": 249
+          }
+        ]
+      },
+      "usage": {
+        "requests": 74,
+        "inputTokens": 238387,
+        "outputTokens": 62576,
+        "reportedTokens": 300963,
+        "maxRequests": 300,
+        "maxReportedTokens": 300000,
+        "requestIdleTimeoutSeconds": 100,
+        "requestTimeoutSeconds": 600,
+        "validationFailures": 3,
+        "validationRetriesScheduled": 3,
+        "channelRecoveryRetries": 1,
+        "unknownUsageAttempts": 5,
+        "channelFailures": 2,
+        "peakInFlight": 4,
+        "inFlight": 0,
+        "hardCostLimit": false,
+        "failure": "translation_budget_exhausted",
+        "failureDetails": {
+          "budgetExhaustedBy": "reported_tokens"
+        },
+        "failureDetectedOffsetSeconds": 487.807508
+      },
+      "receiptAudit": {
+        "count": 74,
+        "reportedInputTokens": 238387,
+        "reportedOutputTokens": 62576,
+        "duplicateResponseIdCount": 0
+      },
+      "byCredential": {
+        "OPENAI_API_KEY1_014": {
+          "attempts": 25,
+          "inputChars": 50465,
+          "inputTokens": 16378,
+          "outputTokens": 35958,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 21812,
+          "highInputAttempts": 0,
+          "outcomes": {
+            "completed": 21,
+            "validation_failed": 3,
+            "channel_failed": 1
+          }
+        },
+        "OPENAI_API_KEY2_030": {
+          "attempts": 44,
+          "inputChars": 49358,
+          "inputTokens": 218827,
+          "outputTokens": 25367,
+          "cachedInputTokens": 90222,
+          "reasoningTokens": 12031,
+          "highInputAttempts": 9,
+          "outcomes": {
+            "completed": 43,
+            "channel_failed": 1
+          }
+        },
+        "OPENAI_API_KEY3_040": {
+          "attempts": 5,
+          "inputChars": 4378,
+          "inputTokens": 3182,
+          "outputTokens": 1251,
+          "cachedInputTokens": 0,
+          "reasoningTokens": 543,
+          "highInputAttempts": 0,
+          "outcomes": {
+            "completed": 2,
+            "cancelled": 3
+          }
+        }
+      },
+      "highInput": {
+        "thresholdTokens": 10000,
+        "count": 9,
+        "inputTokens": 205549,
+        "receipts": [
+          {
+            "attempt": 33,
+            "batchId": 25,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1956,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:20:50Z",
+            "startedOffsetSeconds": 331.286053,
+            "finishedOffsetSeconds": 369.216806,
+            "elapsedSeconds": 37.929,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 23040,
+              "output_tokens": 730,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 173
+              }
+            }
+          },
+          {
+            "attempt": 36,
+            "batchId": 32,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 926,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:20:56Z",
+            "startedOffsetSeconds": 336.684193,
+            "finishedOffsetSeconds": 358.359162,
+            "elapsedSeconds": 21.672,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22806,
+              "output_tokens": 414,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 114
+              }
+            }
+          },
+          {
+            "attempt": 39,
+            "batchId": 35,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1205,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:21:11Z",
+            "startedOffsetSeconds": 351.840558,
+            "finishedOffsetSeconds": 368.528265,
+            "elapsedSeconds": 16.686,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22899,
+              "output_tokens": 593,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 212
+              }
+            }
+          },
+          {
+            "attempt": 41,
+            "batchId": 37,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1248,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:21:21Z",
+            "startedOffsetSeconds": 362.044741,
+            "finishedOffsetSeconds": 374.561072,
+            "elapsedSeconds": 12.514,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22841,
+              "output_tokens": 408,
+              "input_tokens_details": {
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 102
+              }
+            }
+          },
+          {
+            "attempt": 44,
+            "batchId": 40,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1328,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:21:28Z",
+            "startedOffsetSeconds": 369.538077,
+            "finishedOffsetSeconds": 383.992335,
+            "elapsedSeconds": 14.452,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22838,
+              "output_tokens": 602,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 0
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 248
+              }
+            }
+          },
+          {
+            "attempt": 50,
+            "batchId": 46,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1390,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:21:44Z",
+            "startedOffsetSeconds": 385.064868,
+            "finishedOffsetSeconds": 408.359967,
+            "elapsedSeconds": 23.292,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22865,
+              "output_tokens": 668,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 22501
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 319
+              }
+            }
+          },
+          {
+            "attempt": 54,
+            "batchId": 50,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1125,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:21:55Z",
+            "startedOffsetSeconds": 395.966931,
+            "finishedOffsetSeconds": 431.721431,
+            "elapsedSeconds": 35.752,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22722,
+              "output_tokens": 407,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 22719
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 147
+              }
+            }
+          },
+          {
+            "attempt": 55,
+            "batchId": 51,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1072,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:21:57Z",
+            "startedOffsetSeconds": 397.960236,
+            "finishedOffsetSeconds": 418.586673,
+            "elapsedSeconds": 20.623,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22774,
+              "output_tokens": 385,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 22501
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 84
+              }
+            }
+          },
+          {
+            "attempt": 60,
+            "batchId": 56,
+            "credentialId": "OPENAI_API_KEY2_030",
+            "inputChars": 1005,
+            "validationAttempt": 1,
+            "startedAt": "2026-10-26T16:22:17Z",
+            "startedOffsetSeconds": 418.470033,
+            "finishedOffsetSeconds": 427.82671,
+            "elapsedSeconds": 9.354,
+            "outcome": "completed",
+            "httpStatus": 200,
+            "usageStatus": "reported",
+            "usage": {
+              "input_tokens": 22764,
+              "output_tokens": 377,
+              "input_tokens_details": {
+                "cache_write_tokens": 0,
+                "cached_tokens": 22501
+              },
+              "output_tokens_details": {
+                "reasoning_tokens": 118
+              }
+            }
+          }
+        ]
+      },
+      "channelFailures": [
+        {
+          "attempt": 18,
+          "batchId": 16,
+          "credentialId": "OPENAI_API_KEY1_014",
+          "inputChars": 2020,
+          "validationAttempt": 1,
+          "startedAt": "2026-10-26T16:18:23Z",
+          "startedOffsetSeconds": 183.968969,
+          "finishedOffsetSeconds": 283.973971,
+          "elapsedSeconds": 100.004,
+          "outcome": "channel_failed",
+          "error": "api_output_idle_timed_out_unknown",
+          "failoverReason": "api_output_idle_timed_out_unknown",
+          "usageStatus": "unknown"
+        },
+        {
+          "attempt": 67,
+          "batchId": 63,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "inputChars": 699,
+          "validationAttempt": 1,
+          "startedAt": "2026-10-26T16:22:39Z",
+          "startedOffsetSeconds": 440.198222,
+          "finishedOffsetSeconds": 455.870811,
+          "elapsedSeconds": 15.669,
+          "outcome": "channel_failed",
+          "apiErrorCode": "upstream_error",
+          "failoverReason": "upstream_error",
+          "httpStatus": 200,
+          "usageStatus": "unknown"
+        }
+      ],
+      "cancelledAttempts": [
+        {
+          "attempt": 72,
+          "batchId": 67,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "inputChars": 849,
+          "validationAttempt": 1,
+          "startedAt": "2026-10-26T16:23:09Z",
+          "startedOffsetSeconds": 470.411301,
+          "finishedOffsetSeconds": 487.855259,
+          "elapsedSeconds": 17.44,
+          "outcome": "cancelled",
+          "error": "api_request_cancelled_unknown",
+          "usageStatus": "unknown"
+        },
+        {
+          "attempt": 73,
+          "batchId": 68,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "inputChars": 687,
+          "validationAttempt": 1,
+          "startedAt": "2026-10-26T16:23:12Z",
+          "startedOffsetSeconds": 473.429037,
+          "finishedOffsetSeconds": 487.820718,
+          "elapsedSeconds": 14.388,
+          "outcome": "cancelled",
+          "error": "api_request_cancelled_unknown",
+          "usageStatus": "unknown"
+        },
+        {
+          "attempt": 74,
+          "batchId": 69,
+          "credentialId": "OPENAI_API_KEY3_040",
+          "inputChars": 814,
+          "validationAttempt": 1,
+          "startedAt": "2026-10-26T16:23:20Z",
+          "startedOffsetSeconds": 481.160916,
+          "finishedOffsetSeconds": 487.863741,
+          "elapsedSeconds": 6.7,
+          "outcome": "cancelled",
+          "error": "api_request_cancelled_unknown",
+          "usageStatus": "unknown"
+        }
+      ],
+      "validationFailures": [
+        {
+          "attempt": 3,
+          "batchId": 3,
+          "recovered": true
+        },
+        {
+          "attempt": 4,
+          "batchId": 4,
+          "recovered": true
+        },
+        {
+          "attempt": 25,
+          "batchId": 23,
+          "recovered": true
+        }
+      ],
+      "budgetCrossing": {
+        "reportedTokensBefore": 295531,
+        "reportedTokensAfter": 300963,
+        "receipt": {
+          "attempt": 61,
+          "batchId": 57,
+          "credentialId": "OPENAI_API_KEY2_030",
+          "inputChars": 1393,
+          "validationAttempt": 1,
+          "startedAt": "2026-10-26T16:22:18Z",
+          "startedOffsetSeconds": 419.470205,
+          "finishedOffsetSeconds": 487.789133,
+          "elapsedSeconds": 68.315,
+          "outcome": "completed",
+          "httpStatus": 200,
+          "usageStatus": "reported",
+          "usage": {
+            "input_tokens": 494,
+            "output_tokens": 4938,
+            "input_tokens_details": {
+              "cache_write_tokens": 0,
+              "cached_tokens": 0
+            },
+            "output_tokens_details": {
+              "reasoning_tokens": 4528
+            }
+          }
+        }
+      }
+    }
+  ],
+  "sourceFingerprints": [
+    {
+      "path": "chatbot/plugins/kurumi-papers/runner.js",
+      "sha256": "342b96f2e6c6cb99194ff4ae14f09a00c84455989f7e876b8173c6ed1fda25d4",
+      "sameAsInvestigationWorktree": true
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/service.js",
+      "sha256": "e0290686fa07a0c91cbc3f8736450ddc0a39041f8896ca682dd2891f3891896c",
+      "sameAsInvestigationWorktree": true
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/python/engine.py",
+      "sha256": "7f3ab41a532bc374d9d9b329e529602fec2886a8d857b8cca1717ef5b6100ab3",
+      "sameAsInvestigationWorktree": true
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/python/responses.py",
+      "sha256": "c8ffe1ee5155ff56193be8e429dc747e9cb44cf1ede81e6e8928605d8cfa079a",
+      "sameAsInvestigationWorktree": true
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/python/http_worker.py",
+      "sha256": "4edc7c81673856aac2d398a18aad88266bb0307d49eb71b5d46b2a055c768ee6",
+      "sameAsInvestigationWorktree": true
+    },
+    {
+      "path": "chatbot/plugins/kurumi-papers/python/profiles.json",
+      "sha256": "28043caf43c29a11edcc1d8d23644948b9fc3149c68e5c0f6066cc9e899e6f91",
+      "sameAsInvestigationWorktree": true
+    }
+  ]
+}
