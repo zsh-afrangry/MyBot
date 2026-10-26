@@ -1,9 +1,10 @@
 import { parseConfirmationText } from "./protocol.js";
 import { scopeFromInboundEvent } from "./scope.js";
-import type { ConfirmationInboundEvent, ConfirmationProposalRow } from "./types.js";
+import type { ConfirmationInboundEvent, ConfirmationProposalRow, NaturalConfirmationBackend } from "./types.js";
 
 /** Business storage stays with its domain, including grant/commit transactions. */
 export interface ConfirmationBackend {
+  natural?: NaturalConfirmationBackend;
   listInboundConfirmationCandidates(event: ConfirmationInboundEvent): ConfirmationProposalRow[];
   recordInboundConfirmation(event: ConfirmationInboundEvent, expectedProposalId: string): boolean;
   close(): void;
@@ -20,6 +21,8 @@ const host = globalThis as typeof globalThis & { [key]?: Map<string, Confirmatio
 function registry(): Map<string, ConfirmationBackendProvider> {
   return host[key] ??= new Map();
 }
+/** Internal transport/service composition, shared across host-loaded copies. */
+export function confirmationBackendProviders(): readonly ConfirmationBackendProvider[] { return [...registry().values()]; }
 export function registerConfirmationBackend(provider: ConfirmationBackendProvider): () => void {
   const id = provider.id;
   if (registry().has(id)) throw new Error(`Confirmation backend already registered: ${id}`);

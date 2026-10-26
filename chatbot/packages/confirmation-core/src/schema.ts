@@ -38,6 +38,15 @@ export const CONFIRMATION_GATE_SCHEMA_SQL = String.raw`
 
   CREATE INDEX IF NOT EXISTS approval_grants_lookup_index
     ON approval_grants(proposal_id, payload_hash, status, expires_at_utc);
+
+  CREATE TABLE IF NOT EXISTS confirmation_previews (
+    proposal_id TEXT PRIMARY KEY,
+    payload_hash TEXT NOT NULL CHECK (length(payload_hash) = 64),
+    preview_text TEXT NOT NULL CHECK (length(preview_text) BETWEEN 1 AND 120000),
+    source_message_id TEXT NOT NULL,
+    presented_at_utc INTEGER,
+    presentation_message_id TEXT
+  ) STRICT;
 `;
 
 export function ensureConfirmationGateSchema(database: DatabaseSync): void {

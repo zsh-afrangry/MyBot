@@ -46,6 +46,28 @@ export interface ConfirmationProposalRow {
   expiresAtUtc: number;
 }
 
+export interface NaturalConfirmationSelection {
+  proposalId: string;
+  payloadHash: string;
+  domain: string;
+}
+
+export interface ConfirmationPreview extends ConfirmationProposalRow {
+  previewText: string | null;
+  sourceMessageId: string | null;
+  presentedAtUtc: number | null;
+  presentationMessageId: string | null;
+}
+
+/** Domain-owned persistence; transport hooks can save previews, never approvals. */
+export interface NaturalConfirmationBackend {
+  list(event: ConfirmationInboundEvent): ConfirmationPreview[];
+  used(event: ConfirmationInboundEvent): NaturalConfirmationSelection[];
+  savePreview(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, text: string): boolean;
+  presented(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, messageId: string): boolean;
+  confirm(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection): boolean;
+}
+
 export type ConfirmationGrantCheck =
   | { ok: true; grantId: string }
   | { ok: false; code: "approval_required" | "grant_expired" | "grant_replayed" | "confirmation_context_mismatch" };
