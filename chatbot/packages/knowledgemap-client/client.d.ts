@@ -6,5 +6,5 @@ export class KnowledgeMapClient {
   request(path: string, options?: RequestOptions): Promise<any>;
   allTasks(options?: {history?: boolean; query?: string; signal?: AbortSignal; runId?: string}): Promise<any[]>;
 }
-export function requestKey(domain: string, request: {sessionKey: string; messageId: string}): string;
+export function requestKey(domain: string, request: {sessionKey: string; messageId: string}, slot?: string): string;
 export function clientFromEnvironment(env?: Record<string, string | undefined>): KnowledgeMapClient;

@@ -7,10 +7,11 @@ import {mkdtempSync, writeFileSync, chmodSync, rmSync, mkdirSync, readFileSync} 
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createHash} from 'node:crypto';
 import {KnowledgeMapClient, requestKey} from '../../packages/knowledgemap-client/client.js';
 import {createBridgeInbound} from '../../packages/knowledgemap-client/inbound.js';
 import {ListStore} from '../../plugins/personal-reminder-list/store.js';
-import {ListControlStore, manageRemoteList, taskItem, runRemoteDigest, registerRemoteList} from '../../plugins/personal-reminder-list/remote.js';
+import {ListControlStore, manageRemoteList, taskItem, runRemoteDigest, registerRemoteList, normalizeTitle, maxItemsPerMessage} from '../../plugins/personal-reminder-list/remote.js';
 import {manageParameters, getParameters, sharedToolDeclarations, createReminderListPlugin} from '../../plugins/personal-reminder-list/index.js';
 import {createKnowledgeMapPlugin} from '../../plugins/kurumi-knowledgemap/index.js';
 import {collectEvents} from '../../../scripts/fusion/log-query.mjs';
@@ -64,6 +65,42 @@ test('request keys are stable per owner message and separated per domain', () =>
   assert.equal(requestKey('tasks', request), requestKey('tasks', {...request}));
   assert.notEqual(requestKey('tasks', request), requestKey('bills', request));
   assert.notEqual(requestKey('tasks', request), requestKey('tasks', {...request, messageId: '124'}));
+  // No slot keeps the original per-message formula (bills); slots separate targets within one message.
+  assert.equal(requestKey('bills', request), 'bills:' + createHash('sha256').update(`${sessionKey}:123`).digest('hex'));
+  assert.equal(requestKey('tasks', request, 'add:a'), requestKey('tasks', {...request}, 'add:a'));
+  assert.notEqual(requestKey('tasks', request, 'add:a'), requestKey('tasks', request, 'add:b'));
+  assert.notEqual(requestKey('tasks', request, 'item:1'), requestKey('tasks', request));
+});
+test('one message keys each list target separately and caps distinct targets at 8', async () => {
+  const sent = []; const fake = {request: async (_p, o) => {sent.push(o); return {ok: true, item: row(sent.length)};}};
+  const message = {sessionKey, messageId: '123'};
+  await manageRemoteList(fake, {action: 'add', title: '离线条目甲'}, message);
+  await manageRemoteList(fake, {action: 'add', title: '离线条目乙', ddl: '2026-11-02T10:30'}, message);
+  assert.notEqual(sent[0].key, sent[1].key);
+  // Default normalization: NFKC, trim, collapsed whitespace give the same add slot; case and punctuation do not.
+  assert.equal(normalizeTitle(' 归一　 标题 '), '归一 标题');
+  assert.equal(normalizeTitle('Ａ'), 'A'); assert.notEqual(normalizeTitle('a'), normalizeTitle('A'));
+  await manageRemoteList(fake, {action: 'add', title: '归一  标题'}, message);
+  await manageRemoteList(fake, {action: 'add', title: '归一 标题'}, message);
+  assert.equal(sent[2].key, sent[3].key, 'same normalized title retries the same key');
+  await manageRemoteList(fake, {action: 'complete', id: 'km:6', expectedVersion: 1}, message);
+  await manageRemoteList(fake, {action: 'void', id: 'km:7', expectedVersion: 2}, message);
+  assert.notEqual(sent[4].key, sent[5].key);
+  assert.equal(sent[4].key, requestKey('tasks', request, 'item:6'));
+  for (const n of [1, 2, 3]) await manageRemoteList(fake, {action: 'add', title: `第${n}项`}, message);
+  assert.equal(message.listSlots.size, maxItemsPerMessage);
+  const before = sent.length;
+  await assert.rejects(manageRemoteList(fake, {action: 'add', title: '第九项'}, message), /最多维护8项/);
+  await assert.rejects(manageRemoteList(fake, {action: 'update', id: 'km:9', expectedVersion: 1, note: 'x'}, message), /最多维护8项/);
+  assert.equal(sent.length, before, 'over-limit targets never reach the API');
+  // Retrying an existing target does not consume the cap.
+  await manageRemoteList(fake, {action: 'complete', id: 'km:6', expectedVersion: 1}, message);
+  assert.equal(sent.at(-1).key, sent[4].key);
+  // A new message starts with a fresh slot set.
+  const next = {sessionKey, messageId: '124'};
+  await manageRemoteList(fake, {action: 'add', title: '第九项'}, next);
+  assert.notEqual(sent.at(-1).key, requestKey('tasks', request, 'add:第九项'));
+  await assert.rejects(manageRemoteList(fake, {action: 'add', title: '   '}, next), /新增需要标题/);
 });
 test('client sends bearer and request key but redacts bodies from traces', async t => {
   const traces = [];
@@ -205,6 +242,34 @@ test('list failure locks route without blocking read-only automations or unrelat
   assert.equal(hooks.before_tool_call({toolName: 'automations', params: {action: 'list'}}, context), undefined);
   assert.equal(hooks.before_tool_call({toolName: 'personal_reminder_propose'}, {...context, sessionId: 'other'}), undefined);
 });
+test('shared tool factories share the message cap across parallel calls and reject stale tools', async t => {
+  const root = temp(t), before = process.env.OPENCLAW_STATE_DIR;
+  process.env.OPENCLAW_STATE_DIR = root;
+  t.after(() => {if (before === undefined) delete process.env.OPENCLAW_STATE_DIR; else process.env.OPENCLAW_STATE_DIR = before;});
+  const hooks = {}, factories = {}, sent = [];
+  registerRemoteList({config, pluginConfig: {backendRoot: fileURLToPath(new URL('../../', import.meta.url))},
+    on: (name, fn) => hooks[name] = fn, registerService() {},
+    registerTool: (factory, metadata) => factories[metadata.name] = factory}, sharedToolDeclarations,
+  {clientFactory: () => ({request: async (_path, options) => {
+    sent.push(options);
+    return {ok: true, item: row(sent.length)};
+  }})});
+  hooks.reply_dispatch(event('离线多项请求'));
+  const factory = factories.personal_reminder_list_manage, context = ctx();
+  const results = await Promise.all(Array.from({length: 9}, (_, i) =>
+    run(factory.create(context), {action: 'add', title: `并行事项${i + 1}`})));
+  assert.equal(results.filter(result => result.ok).length, 8);
+  assert.match(results[8].error.message, /最多维护8项/);
+  assert.equal(sent.length, 8);
+  assert.equal(new Set(sent.map(call => call.key)).size, 8);
+  const stale = factory.create(context);
+  hooks.reply_dispatch(event('离线下一条请求', '124'));
+  assert.equal((await run(stale, {action: 'add', title: '过期工具'})).ok, false);
+  assert.equal(sent.length, 8, 'superseded tools never POST');
+  assert.equal((await run(factory.create(context), {action: 'add', title: '并行事项9'})).ok, true);
+  assert.equal(sent.length, 9);
+  assert.equal(sent.at(-1).key, requestKey('tasks', {sessionKey, messageId: '124'}, 'add:并行事项9'));
+});
 test('default trace is queryable through unified adapter and contains no body/token', async t => {
   const root = temp(t), tokenFile = join(root, 'token'), before = process.env.OPENCLAW_STATE_DIR;
   writeFileSync(tokenFile, 'a'.repeat(64), {mode: 0o600}); process.env.OPENCLAW_STATE_DIR = root;
@@ -242,4 +307,7 @@ test('shared-mode tools describe only shared states and km IDs', t => {
   assert(id.test('km:6') && !id.test('0123456789ab'));
   assert.match(getParameters.properties.history.description, /过期/, 'SQLite mode keeps its expired history');
   assert.deepEqual(sharedToolDeclarations.map(d => d.name).sort(), Object.keys(tools).sort());
+  const manage = sharedToolDeclarations.find(d => d.name === 'personal_reminder_list_manage').description;
+  assert.match(manage, /最多8个不同事项/); assert.doesNotMatch(manage, /无需带码确认，一条消息一项/);
+  assert.match(manage, /schedule\/pause\/resume一条消息一项/);
 });

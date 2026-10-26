@@ -63,5 +63,55 @@ test('two entry points share tasks and bills through actual HTTP, including conf
   assert.deepEqual(await client.request('/api/assistant/bills/manage', {method: 'POST', body: deletion, key: 'bill-http-delete-001'}), removed);
   const remaining = await client.request('/api/assistant/bills'); assert.equal(remaining.total, 1); assert.equal(remaining.items[0].amount, '2.01');
   assert.equal((await client.request('/api/assistant/bills/monthly', {query: {year: 2026, month: 10}})).expense, '2.01');
-  t.diagnostic('真实HTTP双向读写、无DDL、账单修改/实际删除、版本冲突、写入幂等、精确金额/月汇总通过；SQLite隔离。');
+
+  const multiple = {sessionKey: request.sessionKey, messageId: 'multi-1'};
+  const addA = {action: 'add', title: 'HTTP 条目甲', ddl: null};
+  const addB = {action: 'add', title: 'HTTP 条目乙', ddl: '2026-11-02T10:30'};
+  const savedA = await manageRemoteList(client, addA, multiple);
+  const savedB = await manageRemoteList(client, addB, multiple);
+  assert.notEqual(savedA.item.id, savedB.item.id);
+  assert.equal(savedB.item.ddl, '2026-11-02T10:30');
+  assert.deepEqual(await manageRemoteList(client, addA, multiple), savedA);
+  await assert.rejects(manageRemoteList(client, {...addA, note: '不同参数'}, multiple), {code: 'idempotency_conflict', status: 409});
+  await assert.rejects(manageRemoteList(client, {...addA, title: ' ＨＴＴＰ　 条目甲 '}, multiple), {code: 'idempotency_conflict', status: 409});
+  let shared = await web('calendar-events/');
+  assert.equal(shared.filter(item => item.title === addA.title).length, 1);
+  assert.equal(shared.find(item => item.title === addA.title).note, null, 'a rejected target never rolls back or changes saved items');
+
+  const completeA = {action: 'complete', id: savedA.item.id, expectedVersion: savedA.item.version};
+  const completedA = await manageRemoteList(client, completeA, multiple);
+  const voidedB = await manageRemoteList(client, {action: 'void', id: savedB.item.id, expectedVersion: savedB.item.version}, multiple);
+  assert.equal(completedA.item.status, 'completed'); assert.equal(voidedB.item.status, 'void');
+  assert.deepEqual(await manageRemoteList(client, completeA, multiple), completedA);
+  await assert.rejects(manageRemoteList(client, {...completeA, action: 'void'}, multiple), {code: 'idempotency_conflict', status: 409});
+  await assert.rejects(manageRemoteList(client, {...completeA, expectedVersion: completedA.item.version}, multiple), {code: 'idempotency_conflict', status: 409});
+  for (let i = 3; i <= 6; i++) await manageRemoteList(client, {action: 'add', title: `HTTP 条目${i}`}, multiple);
+  assert.equal(multiple.listSlots.size, 8);
+  const ninth = {action: 'add', title: 'HTTP 第九槽位'};
+  await assert.rejects(manageRemoteList(client, ninth, multiple), /最多维护8项/);
+  assert.deepEqual(await manageRemoteList(client, addA, multiple), savedA, 'a full message still replays its existing targets');
+  shared = await web('calendar-events/');
+  assert.equal(shared.length, 7, 'six new items and the original history; no duplicate or ninth slot');
+  assert.ok(!shared.some(item => item.title === ninth.title));
+  await manageRemoteList(client, ninth, {sessionKey: request.sessionKey, messageId: 'multi-2'});
+
+  // Lose a successful response after the isolated backend has committed, then retry the same target.
+  const actualFetch = client.fetchImpl; let dropped = false;
+  client.fetchImpl = async (...args) => {
+    const result = await actualFetch(...args);
+    if (!dropped && args[1].method === 'POST' && result.ok) {
+      dropped = true;
+      throw Error('simulated lost response after commit');
+    }
+    return result;
+  };
+  const uncertain = {sessionKey: request.sessionKey, messageId: 'multi-unknown'};
+  const unknownAdd = {action: 'add', title: 'HTTP 结果核对'};
+  await assert.rejects(manageRemoteList(client, unknownAdd, uncertain), {code: 'write_result_unknown'});
+  const recovered = await manageRemoteList(client, unknownAdd, uncertain);
+  assert.equal(recovered.ok, true); assert.equal(uncertain.listSlots.size, 1);
+  shared = await web('calendar-events/');
+  assert.equal(shared.filter(item => item.title === unknownAdd.title).length, 1);
+  assert.equal(shared.length, 9);
+  t.diagnostic('真实HTTP双向读写、每消息多目标/8槽位、同参重放/异参409、丢失响应后同键核对、账单维护、版本冲突、精确金额/月汇总通过；SQLite隔离，无生产或QQ写入。');
 });

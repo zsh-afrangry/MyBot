@@ -8,7 +8,9 @@ export class BridgeError extends Error {
   constructor(code, message, status = 0) {super(message); this.code = code; this.status = status;}
   toJSON() {return {ok: false, error: {code: this.code, message: this.message}};}
 }
-export const requestKey = (domain, request) => domain + ':' + createHash('sha256').update(`${request.sessionKey}:${request.messageId}`).digest('hex');
+// Without slot the key is per message (bills). A slot gives each target of one message its own key.
+export const requestKey = (domain, request, slot) => domain + ':' + createHash('sha256')
+  .update(`${request.sessionKey}:${request.messageId}` + (slot === undefined ? '' : `:${slot}`)).digest('hex');
 
 export class KnowledgeMapClient {
   constructor({baseUrl = 'http://127.0.0.1:3086', tokenFile, timeoutMs = 15000, fetchImpl = fetch, trace} = {}) {

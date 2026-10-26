@@ -40,6 +40,10 @@ export function taskItem(row) {
     version: row.version, createdAt: row.created_at, updatedAt: row.updated_at};
 }
 
+export const maxItemsPerMessage = 8;
+// Default title normalization for add slots: NFKC, trim, collapse whitespace. Case and punctuation are kept.
+export const normalizeTitle = title => typeof title === 'string' ? title.normalize('NFKC').trim().replace(/\s+/g, ' ') : '';
+
 export async function manageRemoteList(client, args, request, {runId, signal} = {}) {
   const allowed = ['action', 'id', 'query', 'expectedVersion', 'title', 'content', 'note', 'ddl', 'tone'];
   if (Object.keys(args).some(k => !allowed.includes(k)) || !['add', 'update', 'complete', 'void', 'reopen'].includes(args.action)) throw Error('未知事项参数或动作');
@@ -50,13 +54,23 @@ export async function manageRemoteList(client, args, request, {runId, signal} = 
     fields.event_date = ddl ? ddl.slice(0, 10) : null;
     fields.event_time = ddl && ddl.length > 10 ? ddl.slice(11) + ':00' : null;
   }
-  let id;
+  let id, slot;
   if (args.action !== 'add') {
     if (!/^km:[1-9]\d*$/.test(args.id ?? '')) throw Error('先查询网站共享列表的真实km:ID与version，不使用旧列表ID');
     id = Number(args.id.slice(3));
     if (!Number.isSafeInteger(id) || !Number.isSafeInteger(args.expectedVersion) || args.expectedVersion < 1) throw Error('先查询真实ID与版本');
+    slot = `item:${id}`;
   } else if (args.id !== undefined || args.expectedVersion !== undefined || args.query !== undefined) throw Error('新增不指定已有目标');
-  const result = await client.request('/api/assistant/tasks', {method: 'POST', key: requestKey('tasks', request), runId, signal,
+  else {
+    const title = normalizeTitle(args.title);
+    if (!title) throw Error('新增需要标题');
+    slot = `add:${title}`;
+  }
+  // One key per target; a retry of the same target reuses its key and does not consume the cap.
+  const slots = request.listSlots ??= new Set();
+  if (!slots.has(slot) && slots.size >= maxItemsPerMessage) throw Error(`一条消息最多维护${maxItemsPerMessage}项；其余请在下一条消息里说`);
+  slots.add(slot);
+  const result = await client.request('/api/assistant/tasks', {method: 'POST', key: requestKey('tasks', request, slot), runId, signal,
     body: {action: args.action, ...(id === undefined ? {} : {id, expected_version: args.expectedVersion}), fields}});
   if (result.ok !== true || !result.item) throw new BridgeError('write_result_unknown', '未得到确定维护结果；仅用相同参数重试核对');
   return {...result, item: taskItem(result.item), dataSource: 'knowledgemap'};
