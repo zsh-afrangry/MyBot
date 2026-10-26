@@ -4,6 +4,7 @@ import {Documents,documentRoot} from '../../packages/documents/index.js';
 import {createQqDelivery} from '../kurumi-qq/delivery.js';
 import {PaperService} from './service.js';
 import {createTraceSink, correlationFrom} from '../../packages/observability/index.js';
+import {createFailureNotifier} from './notification.js';
 
 const json = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
 export function createPaperPlugin({serviceFactory = (config, deps) => new PaperService(config, deps), deliveryFactory = createQqDelivery} = {}) {
@@ -22,7 +23,7 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
     const service = serviceFactory(config, {
       ownerBinding,authorize,documentsFor:id=>new Documents(documentRoot(cfg(),id)),
       sendFile: (id,key,signal,request) => {authorize(request,'qq.file.reply');return delivery.sendDocument({to:request.to,documentId:id,key,signal});},
-      notify: (text,key,request) => {authorize(request,'qq.notify');return delivery.sendText({to:request.to,text,key:'paper-notice:'+key});},
+      notify: createFailureNotifier({runtime:api.runtime,workflow:api.session?.workflow,config:cfg,authorize,sendText:request=>delivery.sendText(request)}),
       trace: event => createTraceSink(config.root + '/events.jsonl').emit({source: 'papers', ...event}),
     });
     api.registerService({
@@ -56,7 +57,7 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
       if (args.action === 'list') return {ok: true, documents: documents.list(args)};
       throw Error('Invalid document action');
     });
-    register('kurumi_translate', '按需翻译受管 PDF：start 返回后台任务 ID，主聊天可继续；status/list 查询结果和产物 ID，cancel 取消。未指定时用 naiccc/OpenAI gpt-6.1-sol、high（可显式指定 max）；明确要求 DeepSeek 时传 provider=deepseek，默认 official/deepseek-flash/high（DeepSeek V4.1 Flash），可选 deepseek-v4-pro、强度 none/low/high/max。none 较快但实际样式保留不稳，不能保证翻译成功。GPT 仅在014→030→040同模型同强度切换，不自动转DeepSeek。默认英文译中文、双语 PDF 发当前用户自身 QQ；纯译文用 output=mono，两份用 both。多篇分别start并排队，始终逐篇翻译，每完成一篇立即自动发送该篇，不等待整批。默认最多30页，可用 pages 选择页码；不默换模型或厂商。邮件仅主人可用，使用完成后的产物 ID 调用 email_draft，再等主人带码确认后 email_send。仅任务 succeeded 表示生成成功，投递状态另看 delivery。', {
+    register('kurumi_translate', '按需翻译受管 PDF：start 返回后台任务 ID，主聊天可继续；status/list 查询结果和产物 ID，cancel 取消。未指定时用 DeepSeek 官方 official/deepseek-flash/high（DeepSeek V4.1 Flash），可选 deepseek-v4-pro、强度 none/low/high/max；明确要求GPT时传 provider=openai，使用naiccc/gpt-6.1-sol/high（可显式指定 max）。none 较快但实际样式保留不稳，不能保证翻译成功。GPT 仅在014→030→040同模型同强度切换，不自动转DeepSeek。默认英文译中文、双语 PDF 发当前用户自身 QQ；纯译文用 output=mono，两份用 both。多篇分别start并排队，始终逐篇翻译，每完成一篇立即自动发送该篇，不等待整批。默认最多30页，可用 pages 选择页码；不默换模型或厂商。邮件仅主人可用，使用完成后的产物 ID 调用 email_draft，再等主人带码确认后 email_send。仅任务 succeeded 表示生成成功，投递状态另看 delivery；失败先读 failureSummary，按原因/阶段/用量说明，不能把本地预算上限说成账户没钱，也不自动重试。', {
       action: {type: 'string', enum: ['start','status','list','cancel']}, documentId: {type: 'string'}, jobId: {type: 'string'},
       provider: {type: 'string'}, channel: {type: 'string'}, model: {type: 'string'}, effort: {type: 'string'},
       pages: {type: 'string', maxLength: 200}, sourceLang: {type: 'string'}, targetLang: {type: 'string'},

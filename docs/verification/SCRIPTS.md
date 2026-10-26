@@ -85,6 +85,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/papers/log-query.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 论文事件接入只读统一查询与可信消息/任务关联 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/lookup.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 按题名/文件名/arXiv编号查本人受管PDF：仅元数据、规范化多词匹配、全目录有界结果与fetch题名记录 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/mail.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 受管附件快照、确认、完整性、大小限制及本地 TLS SMTP | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/notification.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 失败摘要先持久化、用量/配额区分、原会话无工具说明、中文兜底/后续上下文、撤权/取消/未知回执不重发 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/reliability_test.py` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 批次重试0–4次、冷却恢复/单探测/预算、本机HTTP正文空闲与总期限独立、实际取消/切渠道及安全诊断；无付费API或生产状态 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/responses_test.py` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/source-boundary.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
@@ -179,6 +180,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/papers/acceptance-download.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录 | 真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md`<br>`docs/verification/paper-translation-2026-10-17/download.json` |
 | `chatbot/tests/papers/acceptance-file-ingress.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实隔离OpenClaw/聊天模型、附件入站与双身份论文编排；合成下载/翻译/OneBot，无生产写入或真实外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md` |
 | `chatbot/tests/papers/acceptance-host.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实 OpenClaw/主模型调用 PDF 工具，模拟翻译/OneBot；独立临时状态，无真实 QQ/邮件 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md`<br>`docs/verification/paper-translation-2026-10-17/host.json` |
+| `chatbot/tests/papers/acceptance-notification-host.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实隔离Gateway与注册插件会话运行，本地固定模型/假投递器核对原会话说明与零工具；无真实API/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/acceptance-worker.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 生产捕获源码、正文空闲/重试配置与可取消HTTP子进程在真实隔离Python检查，无模型/外发 | 写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/paper-translation-2026-10-17/README.md` |
 | `chatbot/tests/papers/acceptance.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实指定 PDF 翻译；显式 --send-qq/--send-mail 才向本人实际投递，程序化确认不等于 QQ 确认 | 真实模型、真实外部API、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md` |
 | `chatbot/tests/persona/acceptance-host.mjs` | 验收 | [25](../25_人格、记忆与会话连续性.md) | 文档25真实隔离OpenClaw/模拟OneBot的实际人格注入；默认本地模型，--live使用官方DeepSeek，无真实QQ外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/persona-memory-2026-10-19/README.md` |

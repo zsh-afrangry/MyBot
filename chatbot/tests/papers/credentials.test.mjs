@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {loadKeys} from '../../plugins/kurumi-papers/runner.js';
 import {resolveProfile,credentialIdsForProfile} from '../../plugins/kurumi-papers/profiles.js';
-const gpt=credentialIdsForProfile(), ds='DEEPSEEK_API_KEY';
+const gpt=credentialIdsForProfile({provider:'openai'}), ds='DEEPSEEK_API_KEY';
 const script=fileURLToPath(new URL('../../scripts/import-paper-credentials.mjs',import.meta.url));
 function setup(t){const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-paper-credentials-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));return root;}
 const write=(file,data,mode=0o600)=>fs.writeFileSync(file,typeof data==='string'?data:JSON.stringify(data),{mode});
@@ -24,16 +24,17 @@ test('Provider-specific defaults are inferred only from compatible registered se
   assert.equal(resolveProfile({provider:' DEEPSEEK '}).provider,'deepseek');
   for(const args of [{provider:'openai',model:'deepseek-flash'},{provider:'deepseek',channel:'naiccc'},
     {channel:'official',model:'gpt-6.1-sol'},{provider:'deepseek',effort:'xhigh'},{provider:'deepseek',effort:'medium'},
-    {effort:'none'},{model:'__proto__'},{provider:''}]) assert.throws(()=>resolveProfile(args),{code:'unsupported_translation_profile'});
-  const altered=credentialIdsForProfile();altered.reverse();assert.equal(credentialIdsForProfile()[0],gpt[0]);
+    {provider:'openai',effort:'none'},{model:'__proto__'},{provider:''}]) assert.throws(()=>resolveProfile(args),{code:'unsupported_translation_profile'});
+  const altered=credentialIdsForProfile({provider:'openai'});altered.reverse();assert.equal(credentialIdsForProfile({provider:'openai'})[0],gpt[0]);
+  assert.deepEqual(credentialIdsForProfile(),[ds]);
 });
 test('Credential selection excludes all other providers and rejects absent/private-invalid files',t=>{
   const root=setup(t),file=path.join(root,'keys.json');
   write(file,{...Object.fromEntries(gpt.map((id,i)=>[id,'synthetic-'+i])),[ds]:' synthetic-ds ',OTHER:'must-not-forward'});
-  assert.deepEqual(Object.keys(loadKeys(file)),gpt);
+  assert.deepEqual(Object.keys(loadKeys(file,{provider:'openai'})),gpt);assert.deepEqual(Object.keys(loadKeys(file)),[ds]);
   assert.deepEqual(loadKeys(file,{provider:'deepseek'}),{[ds]:'synthetic-ds'});
   write(file,{[gpt[0]]:'gpt-only'});assert.throws(()=>loadKeys(file,{provider:'deepseek'}),/No translation credentials/);
-  write(file,{[ds]:'ds-only'});assert.throws(()=>loadKeys(file),/No translation credentials/);
+  write(file,{[ds]:'ds-only'});assert.throws(()=>loadKeys(file,{provider:'openai'}),/No translation credentials/);
   fs.chmodSync(file,0o644);assert.throws(()=>loadKeys(file,{provider:'deepseek'}),/owner-only/);
   fs.chmodSync(file,0o600);fs.symlinkSync(file,path.join(root,'link'));assert.throws(()=>loadKeys(path.join(root,'link')),/owner-only/);
   write(file,'malformed-synthetic-private-value');

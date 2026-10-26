@@ -44,6 +44,7 @@
     "chatbot/tests/backend-boundaries/confirmation.test.mjs": "8a30b9c407df4c0d1d88cdd946ccf1e240e8eaade3e8c0a1c6d4f333906409d3",
     "chatbot/tests/backend-boundaries/natural-confirmation.test.mjs": "4955fbfabb7f3b8209764451654fd40c85ca94b590c143c20523ca4bbfb1a0de",
     "config/runtime.config.json": "3f657705917e8d86178bb710a23bc0598d080e3e77f697d7a224bbef1721eec4",
-    "scripts/fusion/templates/AGENTS.md": "cf43853794ee14ea738dc24fb1b7fb8e88c3413ec2e568714311e4b7681a198b"
-  }
+    "scripts/fusion/templates/AGENTS.md": "0746560cffa7c0284247d39e01d42c62c7e7aedc83769fd73c852f6146b74e52"
+  },
+  "mergedMain": "8d42cd9"
 }
