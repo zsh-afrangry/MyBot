@@ -7,6 +7,7 @@
 | 路径 | 用途 |
 | --- | --- |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
+| [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md) 及同目录全部文件 | E7·WIKI真实公开读取接口盘点、分页/检索参数对照、字段覆盖与缓存头；固定检索/AI职责判断依据；无生产插件、模型或QQ外发 |
 | [`reminder-list-multi-item-2026-10-27/README.md`](reminder-list-multi-item-2026-10-27/README.md)、[闭合记录](reminder-list-multi-item-2026-10-27/closeout.md)及同目录全部文件 | 2026-10-27 提醒列表单消息多项的离线/隔离HTTP、人格与运行核对、01:46真人QQ及后端只读证据；文档收尾与分层证明范围 |
 | [`qq-image-2026-10-27/retest-0119.md`](qq-image-2026-10-27/retest-0119.md) 及同目录全部文件 | 2026-10-27 QQ图片初测失败与Fake-IP定向修复后复测：本人JPG入站、PNG表情外发、只读账本核对和前端确认；保留首次失败，图片子项已验收 |
 | [`git-consolidation-2026-10-24/README.md`](git-consolidation-2026-10-24/README.md) 及同目录全部文件 | 文档整理与主线补验的冲突合并、记忆调研保留、主线收拢与分支清理；保留各业务原证明范围 |

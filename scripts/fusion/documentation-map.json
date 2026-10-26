@@ -344,6 +344,14 @@
   ],
   "evidenceOwners": [
     {
+      "prefix": "e7-interface-2026-10-27/",
+      "documents": [
+        "docs/27_E7数据插件设计.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "reminder-list-multi-item-2026-10-27/",
       "documents": [
         "docs/19_提醒列表与定时汇总.md",

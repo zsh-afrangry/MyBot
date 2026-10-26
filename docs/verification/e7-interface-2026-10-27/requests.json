@@ -1,0 +1,1159 @@
+{
+  "type": "public-read-only-http-audit",
+  "date": "2026-10-27",
+  "timezone": "Asia/Shanghai",
+  "sourceBaseline": "b129a85b507da76f6dad8977eb0185e50415645f",
+  "documentationIntegrationBase": "59ade80ae12540ea3c60d2ecdc90d76d0d658cf8",
+  "authorization": "User authorized starting task 2 by checking route return values; local commits authorized. No authorization inferred for production configuration or QQ sends.",
+  "boundary": {
+    "productionPluginLoaded": false,
+    "runtimeStateWritten": false,
+    "realModelCalled": false,
+    "qqSent": false,
+    "e7ImageOrPdfDownloaded": false,
+    "remoteGitWritten": false,
+    "siteWriteEndpointsCalled": false
+  },
+  "method": "Locate methods in frontend g=GET/p=POST helpers, then sample public reads; at most two concurrent curl requests, no automatic retries; do not infer absence of server-side access logs.",
+  "totals": {
+    "requests": 58,
+    "byKind": {
+      "homepage": 3,
+      "data": 30,
+      "frontend": 25
+    },
+    "byStatus": {
+      "403": 3,
+      "200": 53,
+      "304": 2
+    },
+    "byMethod": {
+      "GET": 43,
+      "POST": 15
+    }
+  },
+  "requests": [
+    {
+      "key": "bootstrap-home-custom-ua",
+      "at": "2026-10-27T01:54:49.816130+08:00",
+      "timestampBasis": "response-file-mtime",
+      "method": "GET",
+      "url": "https://e7.wiki/",
+      "httpStatus": 403,
+      "bytes": 23682,
+      "sha256": "259d059a0d9608ba0d0b716809de5d61e85d2f290cb071121566d2b22325565a",
+      "headers": {
+        "content-type": "text/html; charset=UTF-8"
+      },
+      "elapsedSeconds": null,
+      "exitCode": null,
+      "requestHeaders": {
+        "User-Agent": "kurumi-e7-audit/2026-10-27 (personal read-only evaluation)"
+      },
+      "kind": "homepage"
+    },
+    {
+      "key": "bootstrap-home-custom-ua-direct",
+      "at": "2026-10-27T01:55:11.754855+08:00",
+      "timestampBasis": "response-file-mtime",
+      "method": "GET",
+      "url": "https://e7.wiki/",
+      "httpStatus": 403,
+      "bytes": 23682,
+      "sha256": "259d059a0d9608ba0d0b716809de5d61e85d2f290cb071121566d2b22325565a",
+      "headers": {
+        "content-type": "text/html; charset=UTF-8"
+      },
+      "elapsedSeconds": null,
+      "exitCode": null,
+      "requestHeaders": {
+        "User-Agent": "kurumi-e7-audit/2026-10-27 (personal read-only evaluation)"
+      },
+      "networkOption": "--noproxy * (same custom UA; still 403)",
+      "kind": "homepage"
+    },
+    {
+      "key": "bootstrap-home-default",
+      "at": "2026-10-27T01:55:56.073303+08:00",
+      "timestampBasis": "response-file-mtime",
+      "method": "GET",
+      "url": "https://e7.wiki/",
+      "httpStatus": 200,
+      "bytes": 26705,
+      "sha256": "c5850070dce4e2c9e362fcde578affda474dfc500b707ce529e19c2ea4ba5269",
+      "headers": {
+        "content-type": "text/html",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-6851\""
+      },
+      "elapsedSeconds": null,
+      "exitCode": null,
+      "requestHeaders": {},
+      "kind": "homepage"
+    },
+    {
+      "key": "hero-cards",
+      "at": "2026-10-27T01:55:57.207289+08:00",
+      "timestampBasis": "response-file-mtime",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+      "httpStatus": 200,
+      "bytes": 97401,
+      "sha256": "7fa2437389d8c7239a9c6154f162937fc0410316f86d1082f511acc9017d8796",
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "elapsedSeconds": null,
+      "exitCode": null,
+      "requestHeaders": {},
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "frontend-main",
+      "at": "2026-10-27T01:56:27.248915+08:00",
+      "timestampBasis": "response-file-mtime",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/index-DiEy8Jkz.js",
+      "httpStatus": 200,
+      "bytes": 236516,
+      "sha256": "6e569f7a63fccf33d167a2061c92a54f97f9d7b45122c83abba4bd5c1fe38aa2",
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-39be4\"",
+        "expires": "Mon, 02 Nov 2026 17:56:26 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "elapsedSeconds": null,
+      "exitCode": null,
+      "requestHeaders": {},
+      "kind": "frontend"
+    },
+    {
+      "key": "js-index-BPtVTwaA.js",
+      "at": "2026-10-27T01:57:35.668479+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/index-BPtVTwaA.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 40416,
+      "sha256": "77354261095e9f6879cf343cd67716c3d7d01031b56cbbfda71a4badbf446d82",
+      "elapsedSeconds": 0.888696,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-9de0\"",
+        "expires": "Mon, 02 Nov 2026 17:57:36 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-index-srUcP-RI.js",
+      "at": "2026-10-27T01:57:35.668612+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/index-srUcP-RI.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 8861,
+      "sha256": "c3e29a33896135cfbf066b935fba9126f583d556ff47fd50faa2138008ed084f",
+      "elapsedSeconds": 0.744879,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-229d\"",
+        "expires": "Mon, 02 Nov 2026 17:57:36 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-redeem-Cwp0jZet.js",
+      "at": "2026-10-27T01:57:36.420806+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/redeem-Cwp0jZet.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 185,
+      "sha256": "3058d927ab98ed6aa6dad046f85fa8e86946c628f7ac4eecacda84f1a70320fd",
+      "elapsedSeconds": 0.744687,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-b9\"",
+        "expires": "Mon, 02 Nov 2026 17:57:37 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-updates-Dy8b0von.js",
+      "at": "2026-10-27T01:57:36.565096+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/updates-Dy8b0von.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 381,
+      "sha256": "cc7b2e32d5ca250db0b5e954af3c8f0d5a6325aa0c1ce1dab7dcba79b23ca4ed",
+      "elapsedSeconds": 0.750294,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-17d\"",
+        "expires": "Mon, 02 Nov 2026 17:57:37 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-characters-Cj22n9fc.js",
+      "at": "2026-10-27T01:57:37.173291+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/characters-Cj22n9fc.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 103180,
+      "sha256": "8c98f78289f6506daee5f28ba628262dc53540865f3f110c24c8e7ab87c1dbf7",
+      "elapsedSeconds": 0.918804,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-1930c\"",
+        "expires": "Mon, 02 Nov 2026 17:57:37 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-hero_equipment_scheme-Cy_FHhTF.js",
+      "at": "2026-10-27T01:57:37.324175+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/hero_equipment_scheme-Cy_FHhTF.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 249,
+      "sha256": "c8db9fe704babd082436728823c483c4776861c1529af92708b289d2dedd2bba",
+      "elapsedSeconds": 0.741268,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-f9\"",
+        "expires": "Mon, 02 Nov 2026 17:57:37 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-character-BG0dEpOn.js",
+      "at": "2026-10-27T01:57:38.073225+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/character-BG0dEpOn.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 145,
+      "sha256": "4054d554c1f0c202eedaccb66e1d1d30f836e5536cf06f6b68354b53d4c0d130",
+      "elapsedSeconds": 0.7428,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-91\"",
+        "expires": "Mon, 02 Nov 2026 17:57:38 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-artifacts-BWV8-Ydm.js",
+      "at": "2026-10-27T01:57:38.099509+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/artifacts-BWV8-Ydm.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 13160,
+      "sha256": "67cfaa77003ecb8d5d837cb01c7c446be1c710bbc8eded2a236b8eebbc3366ea",
+      "elapsedSeconds": 0.743117,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-3368\"",
+        "expires": "Mon, 02 Nov 2026 17:57:38 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-artifact-DifTJvjW.js",
+      "at": "2026-10-27T01:57:38.824023+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/artifact-DifTJvjW.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 135,
+      "sha256": "095b004b04c1088f737da469430340a12ed8643f405d0b52b10471bb575374ab",
+      "elapsedSeconds": 0.743158,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-87\"",
+        "expires": "Mon, 02 Nov 2026 17:57:39 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-rankings-DEqluLzv.js",
+      "at": "2026-10-27T01:57:38.850194+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/rankings-DEqluLzv.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 10197,
+      "sha256": "28c93af05c6f1f75d18921a10205c54fb48266aef5897f34a2b6cea494439d45",
+      "elapsedSeconds": 0.7443,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-27d5\"",
+        "expires": "Mon, 02 Nov 2026 17:57:39 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-codes--K93nlSG.js",
+      "at": "2026-10-27T01:57:39.574743+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/codes--K93nlSG.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 4175,
+      "sha256": "ab967bd0c054843d14fa56f6cce8cb0389932bfe2f5fd2de202335b924da0474",
+      "elapsedSeconds": 0.743429,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-104f\"",
+        "expires": "Mon, 02 Nov 2026 17:57:40 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-announcements-Vq2pAXs0.js",
+      "at": "2026-10-27T01:57:39.601927+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/announcements-Vq2pAXs0.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 2296,
+      "sha256": "fe4f94a49dedee1bc2571a8cea9db71259c3df464650653c6c839afeae944e42",
+      "elapsedSeconds": 0.743212,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-8f8\"",
+        "expires": "Mon, 02 Nov 2026 17:57:40 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-game-announcements-BW-tqBW8.js",
+      "at": "2026-10-27T01:57:40.325829+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/game-announcements-BW-tqBW8.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 3159110,
+      "sha256": "82cc72715522651d7c2939b48273792265e935f462aa4c19955afd23ca8fab64",
+      "elapsedSeconds": 1.590878,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-303446\"",
+        "expires": "Mon, 02 Nov 2026 17:57:40 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-guides-Bgj4tn2I.js",
+      "at": "2026-10-27T01:57:40.353529+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/guides-Bgj4tn2I.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 10498,
+      "sha256": "179a0de5e8132058d82e9c6c23ae6c103ba4b0a26c94b63d00f8392855a2021b",
+      "elapsedSeconds": 0.746789,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-2902\"",
+        "expires": "Mon, 02 Nov 2026 17:57:40 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-faq-DnRt-3bc.js",
+      "at": "2026-10-27T01:57:41.107709+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/faq-DnRt-3bc.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 17387,
+      "sha256": "5e303673c3eefa1cbb0dc6a738a6c92890daacfeb4a5a66199b0c71598116413",
+      "elapsedSeconds": 0.759297,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-43eb\"",
+        "expires": "Mon, 02 Nov 2026 17:57:41 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-hero-reviews-z3Fk2R2w.js",
+      "at": "2026-10-27T01:57:41.874341+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/hero-reviews-z3Fk2R2w.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 24623,
+      "sha256": "1dceaa7902fa7152582a552b849c109ab743fd442ad9888ac31592b0a56db946",
+      "elapsedSeconds": 0.767788,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-602f\"",
+        "expires": "Mon, 02 Nov 2026 17:57:42 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-gvg-homework-JEYl7rN5.js",
+      "at": "2026-10-27T01:57:41.928209+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/gvg-homework-JEYl7rN5.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 24843,
+      "sha256": "dbd4015ae99a7cfbdc21ca4e9da9cb0e87b67bdff4d04c0859d221ed648c6297",
+      "elapsedSeconds": 0.758657,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-610b\"",
+        "expires": "Mon, 02 Nov 2026 17:57:42 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-chaos-fate-CCaCeCQ1.js",
+      "at": "2026-10-27T01:57:42.649411+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/chaos-fate-CCaCeCQ1.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 15105,
+      "sha256": "fb28c7c8c591c1cca04e73f818c9f72a48ab37c0b6cc5e57a87c3b2abba41e6f",
+      "elapsedSeconds": 0.756339,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-3b01\"",
+        "expires": "Mon, 02 Nov 2026 17:57:43 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-chaos-fate-recommend-Dm6IpT0Z.js",
+      "at": "2026-10-27T01:57:42.696224+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/chaos-fate-recommend-Dm6IpT0Z.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 11148,
+      "sha256": "a0a014535cc531b58204031f011fa0e993cb43c46e32e3b7d78d084f48e62531",
+      "elapsedSeconds": 0.741513,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-2b8c\"",
+        "expires": "Mon, 02 Nov 2026 17:57:43 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-about-Dk1TpFFe.js",
+      "at": "2026-10-27T01:57:43.413048+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/about-Dk1TpFFe.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 1415,
+      "sha256": "cc1653969ae4e21cee4b640fcd0759b2c1e5e0d6f4020705d56c1945a36861be",
+      "elapsedSeconds": 0.742774,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-587\"",
+        "expires": "Mon, 02 Nov 2026 17:57:44 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-chaos-fate-BWAGK5KI.js",
+      "at": "2026-10-27T01:59:02.251037+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/chaos-fate-BWAGK5KI.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 295,
+      "sha256": "420948392ac8f359616e67acef4484d966bd92765adde4b9a0a37eb31dbffe18",
+      "elapsedSeconds": 0.764239,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-127\"",
+        "expires": "Mon, 02 Nov 2026 17:59:02 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-defenseHeroes-Cs7CdMlh.js",
+      "at": "2026-10-27T01:59:03.022647+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/defenseHeroes-Cs7CdMlh.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 705,
+      "sha256": "9e2baee707669af32902222d1d12335daea6c133e4ca4d729d417fcd75afd2cf",
+      "elapsedSeconds": 0.742572,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "\"6ad5945e-2c1\"",
+        "expires": "Mon, 02 Nov 2026 17:59:03 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "hero-summary",
+      "at": "2026-10-27T02:01:37.524209+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_summary/hero-list",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 743171,
+      "sha256": "b3f64939616216f3749b2fb21ad28f83778fd4673d149685e64270329ba6ce9c",
+      "elapsedSeconds": 2.655404,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "private, must-revalidate",
+        "etag": "\"v-16-L29wZW4vZXBpY3NldmVuL2hlcm9fc3VtbWFyeS9oZXJvLWxpc3Q=\""
+      },
+      "kind": "data",
+      "jsonVerified": true
+    },
+    {
+      "key": "hero-mei-lin",
+      "at": "2026-10-27T02:01:37.524355+08:00",
+      "method": "GET",
+      "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 6173,
+      "sha256": "4a205b217299815aa6594c7aa05593589d651f44565dbf8c909ef7674704f3cc",
+      "elapsedSeconds": 0.809209,
+      "headers": {
+        "content-type": "application/json",
+        "last-modified": "Sun, 11 Oct 2026 04:47:24 GMT",
+        "etag": "\"6acb14dc-181d\""
+      },
+      "kind": "data",
+      "jsonVerified": true
+    },
+    {
+      "key": "hero-luna",
+      "at": "2026-10-27T02:01:38.341028+08:00",
+      "method": "GET",
+      "url": "https://assets2.e7.wiki/static/heroes/luna.json",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 7195,
+      "sha256": "61abd46ec2c0dfec61c5f2e103ea9e075a05373752443e37af2db8fdd14a14be",
+      "elapsedSeconds": 0.754939,
+      "headers": {
+        "content-type": "application/json",
+        "last-modified": "Sun, 11 Oct 2026 04:47:24 GMT",
+        "etag": "\"6acb14dc-1c1b\""
+      },
+      "kind": "data",
+      "jsonVerified": true
+    },
+    {
+      "key": "artifacts",
+      "at": "2026-10-27T02:01:39.103072+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/artifact/artifact-list",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 322827,
+      "sha256": "8c0102d302182de18fc3fcd11a2aed8941cf439bb6f1d7257aeb309b81f1ebd3",
+      "elapsedSeconds": 1.941874,
+      "headers": {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "private, must-revalidate",
+        "etag": "\"v-16-L29wZW4vZXBpY3NldmVuL2FydGlmYWN0L2FydGlmYWN0LWxpc3Q=\"",
+        "expires": "Tue, 27 Oct 2026 17:00:00 GMT"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "codes-latest",
+      "at": "2026-10-27T02:01:40.188076+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epic7/redeem_code/lastest?count=2",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 599,
+      "sha256": "9ebc5bd28666f91a00c11f9556087b9292d251a450698d03cdc32c78f7a998e5",
+      "elapsedSeconds": 0.749207,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "updates-latest",
+      "at": "2026-10-27T02:01:40.945737+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/updates/latest?count=2",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 764,
+      "sha256": "47ab45ab9eb338bc9311b1ddfb86d946955d544669de4d04f36f47e549ec142e",
+      "elapsedSeconds": 0.755935,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "scheme-counts",
+      "at": "2026-10-27T02:01:41.052378+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_equipment_scheme/hero-scheme-counts",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 6282,
+      "sha256": "c531976e7254d65bb4f9e347dfaca7c12c3aded07280dd0d5a5ade348de00199",
+      "elapsedSeconds": 0.77733,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "tiers",
+      "at": "2026-10-27T02:01:47.613372+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/tier/list",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 52107,
+      "sha256": "adda9a4a6c9309b363c5027d2c23202228b7a1dd8754f627d4f303f6d3925bc8",
+      "elapsedSeconds": 1.06059,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2,
+        "order": "updateTime",
+        "sort": "desc"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "guides",
+      "at": "2026-10-27T02:01:47.613530+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 33152,
+      "sha256": "ac4dc690f22ae540d5d0572d0e866afdffa09ee2f2f64108fd8236fa7f525175",
+      "elapsedSeconds": 0.963367,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "pageSize": 2
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "faq",
+      "at": "2026-10-27T02:01:48.584714+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 9039,
+      "sha256": "0022f02079391803f765121876298e252c3edb9f951e63cbdd6c5de47381ebd8",
+      "elapsedSeconds": 0.93882,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "pageSize": 2
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "reviews",
+      "at": "2026-10-27T02:01:48.681826+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_review/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 2952,
+      "sha256": "ff01f995906bd335316735890c0d74e09809f492a92a3aff254bd4406ea25503",
+      "elapsedSeconds": 0.83651,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "announcements",
+      "at": "2026-10-27T02:01:49.525168+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/announcement/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 549,
+      "sha256": "585e42f5600c3f4811e97e980021ced2f938ba290ce5bf59963884b82c5f79bf",
+      "elapsedSeconds": 0.752402,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2,
+        "order": "createTime",
+        "sort": "desc"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "gvg-homework",
+      "at": "2026-10-27T02:01:49.531495+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 22255,
+      "sha256": "cb2bb82ffce4dd370d029a05c01d11df2a25bc2bda0e619425abd8450160312f",
+      "elapsedSeconds": 0.865165,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2,
+        "searchType": "defense",
+        "keyWord": ""
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "fates",
+      "at": "2026-10-27T02:01:50.286176+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 66537,
+      "sha256": "a49d221f4b3f816f5217317c7a07883ca917ce9c5a26eed5dfbacf8028e058c0",
+      "elapsedSeconds": 0.942679,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "gvg-defense",
+      "at": "2026-10-27T02:01:50.405938+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_defense/hot-defenses?limit=2",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 10137,
+      "sha256": "f6f8916f995712f8887b646fb9cc5633c0053414a1c4daca997f0a3b63b19240",
+      "elapsedSeconds": 0.783732,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "scheme-mei-lin",
+      "at": "2026-10-27T02:02:23.496213+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_equipment_scheme/getSchemeByHeroCode",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 12308,
+      "sha256": "1772cde539027e7f71a472c6c221b759db40c4516910e6065104dd3fc16732cd",
+      "elapsedSeconds": 0.909189,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "hero_code": "mei-lin"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "reviews-mei-lin",
+      "at": "2026-10-27T02:02:23.496389+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_review/by-hero",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 43,
+      "sha256": "a5e0139dcf9f9f41a0f19706df74bb4f91758c1c5d3a3177cdc640a461db5fb3",
+      "elapsedSeconds": 0.828456,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "heroCode": "mei-lin"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "guides-size",
+      "at": "2026-10-27T02:02:24.332585+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 6201,
+      "sha256": "a6047c65e85f10cd077e1f4ed8be5d612b1fe7caeb15676bb7393688cd72cdf9",
+      "elapsedSeconds": 0.777526,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "faq-size",
+      "at": "2026-10-27T02:02:24.413080+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 1320,
+      "sha256": "f2fd1912fa86016119116b0ce51edf317ca857b07966f28f8c5cb64acabf2ebd",
+      "elapsedSeconds": 0.758696,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "artifacts-conditional",
+      "at": "2026-10-27T02:02:54.167674+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/artifact/artifact-list",
+      "httpStatus": 304,
+      "exitCode": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "elapsedSeconds": 0.751741,
+      "headers": {},
+      "kind": "data",
+      "requestHeaders": {
+        "If-None-Match": "\"v-16-L29wZW4vZXBpY3NldmVuL2FydGlmYWN0L2FydGlmYWN0LWxpc3Q=\""
+      }
+    },
+    {
+      "key": "hero-mei-lin-conditional",
+      "at": "2026-10-27T02:02:54.167807+08:00",
+      "method": "GET",
+      "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+      "httpStatus": 304,
+      "exitCode": 0,
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "elapsedSeconds": 0.742275,
+      "headers": {
+        "last-modified": "Sun, 11 Oct 2026 04:47:24 GMT",
+        "etag": "\"6acb14dc-181d\""
+      },
+      "kind": "data",
+      "requestHeaders": {
+        "If-None-Match": "\"6acb14dc-181d\""
+      }
+    },
+    {
+      "key": "codes-identifiable-ua",
+      "at": "2026-10-27T02:02:54.917719+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epic7/redeem_code/lastest?count=2",
+      "httpStatus": 403,
+      "exitCode": 0,
+      "bytes": 23682,
+      "sha256": "259d059a0d9608ba0d0b716809de5d61e85d2f290cb071121566d2b22325565a",
+      "elapsedSeconds": 0.888388,
+      "headers": {
+        "content-type": "text/html; charset=UTF-8"
+      },
+      "kind": "data",
+      "requestHeaders": {
+        "User-Agent": "kurumi-e7/0.1-audit"
+      }
+    },
+    {
+      "key": "reviews-haru",
+      "at": "2026-10-27T02:03:35.662026+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_review/by-hero",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 3315,
+      "sha256": "181084d69a9b12b98e88280b0433e311dc001ea640742ae71fecc64efa0791a4",
+      "elapsedSeconds": 0.901231,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "heroCode": "haru"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "faq-keyword",
+      "at": "2026-10-27T02:03:35.662182+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 1320,
+      "sha256": "f2fd1912fa86016119116b0ce51edf317ca857b07966f28f8c5cb64acabf2ebd",
+      "elapsedSeconds": 0.894891,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2,
+        "keyword": "团战"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "guides-keyword",
+      "at": "2026-10-27T02:03:36.564628+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 6201,
+      "sha256": "a6047c65e85f10cd077e1f4ed8be5d612b1fe7caeb15676bb7393688cd72cdf9",
+      "elapsedSeconds": 0.854983,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2,
+        "keyword": "深渊"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "faq-keyWord",
+      "at": "2026-10-27T02:04:03.639807+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 1264,
+      "sha256": "883eca0aa04620f4d5258c9c23efc2090d280640bf6bae14e8bf5108a97d70f3",
+      "elapsedSeconds": 0.782688,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2,
+        "keyWord": "团战"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "guides-keyWord",
+      "at": "2026-10-27T02:04:03.639963+08:00",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 9965,
+      "sha256": "54d896466c702139839c704554b66206a50e52d400541d3f14e6bf6198897d09",
+      "elapsedSeconds": 0.806143,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "requestBody": {
+        "page": 1,
+        "size": 2,
+        "keyWord": "深渊"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "js-gift-pack-calculator-BSIZIHgp.js",
+      "at": "2026-10-27T02:04:16.758985+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/gift-pack-calculator-BSIZIHgp.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 22345,
+      "sha256": "b053817ade60b08fe8acaf6533b40a14baee4822f3879c05a071a0f865e9c8e6",
+      "elapsedSeconds": 1.275638,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-5749\"",
+        "expires": "Mon, 02 Nov 2026 18:04:17 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "js-more-C88AXlHk.js",
+      "at": "2026-10-27T02:04:16.759104+08:00",
+      "method": "GET",
+      "url": "https://e7.wiki/assets/more-C88AXlHk.js",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 5870,
+      "sha256": "160c6b124806951e4ac25483f11e08a8140cdc9b90558cee43d9a3db8c183f5e",
+      "elapsedSeconds": 0.98514,
+      "headers": {
+        "content-type": "application/javascript",
+        "last-modified": "Mon, 19 Oct 2026 03:54:06 GMT",
+        "etag": "W/\"6ad5945e-16ee\"",
+        "expires": "Mon, 02 Nov 2026 18:04:17 GMT",
+        "cache-control": "max-age=604800"
+      },
+      "kind": "frontend"
+    },
+    {
+      "key": "items-by-category",
+      "at": "2026-10-27T02:05:02.945303+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/item-dictionary/by-category",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 17792,
+      "sha256": "932667889dc5864150b928e34c3734378cbef2133f60317f9748a8fd6d55d77c",
+      "elapsedSeconds": 0.827051,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    },
+    {
+      "key": "gift-packs",
+      "at": "2026-10-27T02:05:02.945439+08:00",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gift-pack/list",
+      "httpStatus": 200,
+      "exitCode": 0,
+      "bytes": 15926,
+      "sha256": "14c948757a7f2bf3a42aa8050b3641e0a4795fb0b9c5bfedf7b73de935f8950b",
+      "elapsedSeconds": 0.880329,
+      "headers": {
+        "content-type": "application/json; charset=utf-8"
+      },
+      "kind": "data",
+      "jsonVerified": true,
+      "businessCode": 1000
+    }
+  ]
+}
