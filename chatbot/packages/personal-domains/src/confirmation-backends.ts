@@ -1,6 +1,6 @@
 // Each plugin owns one registration. Shared historical tables do not imply
 // shared ownership: both listing and recording must enforce the domain.
-import { registerConfirmationBackend, type ConfirmationBackend, type ConfirmationProposalRow } from '@kurumi/confirmation-core';
+import { registerConfirmationBackend, narrowNaturalConfirmationBackend, type ConfirmationBackend, type ConfirmationProposalRow } from '@kurumi/confirmation-core';
 type ServiceHost = {
     registerService(service: {
         id: string;
@@ -24,6 +24,7 @@ export function registerDomainBackend(api: ServiceHost, provider: {
                 open() {
                     const store = provider.open();
                     return {
+                        ...(store.natural ? {natural: narrowNaturalConfirmationBackend(store.natural, provider.domain)} : {}),
                         listInboundConfirmationCandidates: event => store.listInboundConfirmationCandidates(event)
                             .filter(proposal => proposal.domain === provider.domain),
                         recordInboundConfirmation(event, id) {

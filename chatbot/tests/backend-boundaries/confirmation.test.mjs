@@ -9,6 +9,9 @@ import {registerInteractionHooks} from '../../packages/personal-domains/dist/int
 
 test('shared package preserves its complete runtime public API without leaking split helpers', () => {
   assert.deepEqual(Object.keys(core).sort(), [
+    'captureNaturalConfirmationRequest', 'clearNaturalConfirmationRequest', 'createNaturalConfirmationBackend',
+    'narrowNaturalConfirmationBackend', 'listNaturalConfirmations', 'confirmNaturalProposal', 'naturalConfirmationTextAllowed',
+    'prepareConfirmationPreview', 'recordConfirmationDelivery',
     'CONFIRMATION_GATE_SCHEMA_SQL', 'buildConfirmationInstruction', 'checkApprovalGrant', 'confirmationBackendIds',
     'createPublicUuid', 'ensureConfirmationGateSchema', 'findConfirmationProposalForInbound', 'issueApprovalGrant',
     'listConfirmationProposalsForInbound', 'listPendingConfirmationProposals', 'markConfirmationProposalCommitted',

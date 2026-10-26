@@ -11,7 +11,8 @@
     "openclaw": "2026.9.7"
   },
   "dependencies": {
-    "ws": "8.21.3"
+    "ws": "8.21.3",
+    "@kurumi/confirmation-core": "file:../../packages/confirmation-core"
   },
   "openclaw": {
     "extensions": [

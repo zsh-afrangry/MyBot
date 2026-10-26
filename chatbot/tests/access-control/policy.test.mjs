@@ -37,7 +37,7 @@ test('Every current main tool is mapped; new tools and dangerous native/member o
  assert(hook(c,member,'session_status',{sessionKey:context(owner).sessionKey}));assert(hook(c,member,'session_status',{model:'costly/model'}));
  const source=JSON.parse(fs.readFileSync(fileURLToPath(new URL('../../../config/runtime.config.json',import.meta.url))));
  for(const name of source.agents.entries.main.tools.alsoAllow){
-  const args={action:({kurumi_document:'list',kurumi_translate:'list',kurumi_memory:'list',kurumi_task:'list',personal_reminder_list_manage:'add',automations:'list'})[name]};
+  const args={action:({kurumi_document:'list',kurumi_translate:'list',kurumi_memory:'list',kurumi_task:'list',personal_reminder_list_manage:'add',automations:'list',personal_confirmation:'list'})[name],...(name==='personal_confirmation'?{domain:'personal_reminder'}:{})};
   assert(toolPermission(name,args),`Unmapped current tool: ${name}`);
   assert.equal(hook(c,owner,name,args),undefined,name);
  }
@@ -78,4 +78,14 @@ test('Background lanes are limited to configured owner tasks and read-only weath
  assert(toolPolicyDecision({toolName:'personal_weather_get_brief'},{...cron,agentId:'qq-user-'+MEMBER},c));
  assert(toolPolicyDecision({toolName:'web_fetch'},{sessionKey:context(policy().subjects[0]).sessionKey},c));
  assert(PERMISSIONS.length>30);
+});
+
+test('Natural confirmation checks each domain and action against the current identity permissions',()=>{
+ const c=cfg(),[owner,member]=c.channels['kurumi-qq'].accessControl.subjects;
+ for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send']]){
+  for(const action of ['list','preview','confirm']){assert.equal(hook(c,owner,'personal_confirmation',{domain,action}),undefined);assert(hook(c,member,'personal_confirmation',{domain,action}));}
+  owner.permissions[write]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'confirm'}));assert.equal(hook(c,owner,'personal_confirmation',{domain,action:'list'}),undefined);owner.permissions[write]=true;
+  owner.permissions[read]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'list'}));assert(hook(c,owner,'personal_confirmation',{domain,action:'preview'}));owner.permissions[read]=true;
+ }
+ for(const params of [{},{domain:'mail',action:'send'},{domain:'unknown',action:'confirm'}])assert(hook(c,owner,'personal_confirmation',params));
 });

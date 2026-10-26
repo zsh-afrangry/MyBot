@@ -10,3 +10,4 @@ export * from "./public-id.js";
 export { createNaturalConfirmationBackend, narrowNaturalConfirmationBackend } from './natural-store.js';
 export { listNaturalConfirmations, confirmNaturalProposal, naturalConfirmationTextAllowed } from './natural-service.js';
 export { prepareConfirmationPreview, recordConfirmationDelivery } from './presentation.js';
+export { captureNaturalConfirmationRequest, clearNaturalConfirmationRequest } from './current-request.js';

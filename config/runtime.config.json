@@ -50,6 +50,7 @@
             "personal_planning_state_get",
             "personal_planning_change_propose",
             "personal_planning_change_commit",
+            "personal_confirmation",
             "personal_reminder_state_get",
             "personal_reminder_propose",
             "personal_reminder_commit",
@@ -248,7 +249,10 @@
         "enabled": true
       },
       "personal-confirmation": {
-        "enabled": true
+        "enabled": true,
+        "hooks": {
+          "allowConversationAccess": true
+        }
       },
       "personal-weather": {
         "enabled": true,

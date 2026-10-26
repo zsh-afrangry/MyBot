@@ -28,6 +28,7 @@ import {
   markConfirmationProposalCommitted,
   registerConfirmationProposal,
   scopeFromInboundEvent,
+  createNaturalConfirmationBackend,
 } from "@kurumi/confirmation-core";
 
 export const OWNER_SUBJECT_ID = "owner";
@@ -296,17 +297,32 @@ export class MailStore {
   }
 
   cancelDraft(draftId) {
-    const info = this.#db.prepare("UPDATE mail_drafts SET status = 'cancelled' WHERE draft_id = ? AND status = 'pending'").run(String(draftId));
-    if (Number(info.changes) === 0) return false;
-    this.#audit("cancelled", draftId, {});
-    return true;
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const info = this.#db.prepare("UPDATE mail_drafts SET status = 'cancelled' WHERE draft_id = ? AND status = 'pending'").run(String(draftId));
+      if (Number(info.changes) === 0) { this.#db.exec('COMMIT'); return false; }
+      this.#db.prepare("UPDATE confirmation_proposals SET status = 'cancelled', updated_at_utc = ? WHERE proposal_id = ? AND status = 'pending'").run(this.nowUtc(), String(draftId));
+      this.#audit("cancelled", draftId, {});
+      this.#db.exec('COMMIT');
+      return true;
+    } catch (error) { this.#db.exec('ROLLBACK'); throw error; }
   }
 
   /**
    * Consume the owner's approval for this exact draft content.
    * Returns the core grant check verbatim so callers can surface `approval_required` etc.
    */
-  consumeApproval({ draftId, scope }) {
+  consumeApproval(input) {
+    this.#db.exec('BEGIN IMMEDIATE');
+    try {
+      const result = this.#consumeApproval(input);
+      if (result.ok) markConfirmationProposalCommitted(this.#db, {proposalId: String(input.draftId), subjectId: OWNER_SUBJECT_ID, atUtc: this.nowUtc()});
+      this.#db.exec('COMMIT');
+      return result;
+    } catch (error) { this.#db.exec('ROLLBACK'); throw error; }
+  }
+
+  #consumeApproval({ draftId, scope }) {
     const draft = this.getDraft(draftId);
     if (!draft) return { ok: false, code: "unknown_draft" };
     if (draft.status === "sent") return { ok: false, code: "already_sent" };
@@ -323,6 +339,10 @@ export class MailStore {
       nowUtc,
       consume: true,
     });
+  }
+
+  get natural() {
+    return createNaturalConfirmationBackend(this.#db, {subjectId: OWNER_SUBJECT_ID, domains: [MAIL_DOMAIN], now: () => this.nowUtc()});
   }
 
   // ---------------------------------------------------------------- ConfirmationBackend protocol

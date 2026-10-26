@@ -44,18 +44,31 @@ export function createMailService(policy, {resolveAttachment} = {}) {
         }
         return { ok: false, code: "invalid_draft", reason: String(error?.message ?? error).slice(0, 300), sent: false };
       }
+      const expiresAtDisplay = {local: new Date(created.expiresAtUtc * 1000 + 8 * 3600000).toISOString().replace('Z', '+08:00'), timezone: 'Asia/Shanghai'};
+      const draft = store.getDraft(created.draftId);
+      const previewText = [
+        '待确认邮件（尚未发送）：', `收件人：${input.to.join(', ')}`, `抄送：${(input.cc ?? []).join(', ') || '无'}`,
+        `主题：${input.subject}`, '正文：', input.text,
+        ...(draft?.attachments ?? []).map(a => `附件：${a.filename}（${a.bytes}字节，SHA256 ${a.sha256}）`),
+        `提案确认截止：${expiresAtDisplay.local}（Asia/Shanghai）`,
+        '确认这份预览后才会发送；有多项时请说明哪一项。', '确认',
+      ].join('\n');
       return {
         ok: true,
         status: "needs_confirmation",
+        proposalId: created.draftId,
+        payloadHash: created.payloadHash,
+        previewText,
+        expiresAtDisplay,
         draftId: created.draftId,
-        confirmationInstruction: created.instruction,
+        confirmationInstruction: "确认",
         to: input.to,
         cc: input.cc,
         subject: input.subject,
         bodyChars: String(input.text).length,
         attachments: store.getDraft(created.draftId)?.attachments ?? [],
         expiresAtUtc: created.expiresAtUtc,
-        note: "Not sent. The owner must reply with the confirmation instruction before email_send can deliver it.",
+        note: "Not sent. The owner must confirm this preview before personal_confirmation and email_send can deliver it.",
       };
     },
 
@@ -90,7 +103,7 @@ export function createMailService(policy, {resolveAttachment} = {}) {
           ok: false,
           code: approval.code,
           sent: false,
-          hint: "Ask the owner to reply with the confirmation instruction from email_draft, then retry.",
+          hint: "Show the frozen preview, wait for a later owner confirmation, resolve it with personal_confirmation, then retry.",
         };
       }
 

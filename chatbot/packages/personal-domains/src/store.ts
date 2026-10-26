@@ -21,6 +21,7 @@ import {
   listConfirmationProposalsForInbound,
   registerConfirmationProposal,
   scopeFromInboundEvent,
+  createNaturalConfirmationBackend,
   type ConfirmationDomain,
   type ConfirmationInboundEvent,
   type ConfirmationProposalRow,
@@ -915,6 +916,10 @@ export class WeatherStore {
       effectiveFromUtc: current.confirmedAtUtc,
       effectiveUntilUtc: null,
     };
+  }
+
+  get natural() {
+    return createNaturalConfirmationBackend(this.#database, {subjectId: OWNER_SUBJECT_ID, domains: ['personal_profile', 'planning'], now: () => this.getNowUtc()});
   }
 
   getNowUtc(): UnixSeconds {

@@ -28,6 +28,13 @@ export function toolPermission(name, args = {}) {
     knowledge_bills_get: 'bills.read', knowledge_bill_add: 'bills.manage', knowledge_bill_manage: 'bills.manage',
     sessions_list: 'sessions.read', sessions_history: 'sessions.read',
   };
+  if (name === 'personal_confirmation') {
+    const permissions = {
+      personal_reminder: ['reminders.read', 'reminders.manage'], personal_profile: ['profile.read', 'profile.manage'],
+      planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'],
+    };
+    return ['list', 'preview', 'confirm'].includes(args.action) ? permissions[args.domain]?.[args.action === 'confirm' ? 1 : 0] : undefined;
+  }
   if (direct[name]) return direct[name];
   if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';

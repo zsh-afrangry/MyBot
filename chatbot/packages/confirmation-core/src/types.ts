@@ -21,6 +21,7 @@ export interface ConfirmationInboundEvent {
   content: string;
   timestamp?: number;
   replyToIsQuote?: boolean;
+  replyToMessageId?: string;
   metadata?: Record<string, unknown>;
   isGroup: boolean;
   senderIsOwner?: boolean;

@@ -2,7 +2,7 @@ import {randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {describe, expect, it} from 'vitest';
 import {
-  checkApprovalGrant, confirmNaturalProposal, createNaturalConfirmationBackend, listNaturalConfirmations,
+  captureNaturalConfirmationRequest, clearNaturalConfirmationRequest, checkApprovalGrant, confirmNaturalProposal, createNaturalConfirmationBackend, listNaturalConfirmations,
   naturalConfirmationTextAllowed, prepareConfirmationPreview, recordConfirmationDelivery,
   registerConfirmationBackend, registerConfirmationProposal, scopeFromInboundEvent,
   type ConfirmationInboundEvent, type NaturalConfirmationSelection,
@@ -45,7 +45,7 @@ describe('natural confirmation with persisted previews and one-time grants', () 
       recordConfirmationDelivery({accountId:'default',conversationId: source.conversationId!,sourceMessageId:source.messageId!,messageId:'delivered',text:'另一份内容'});
       expect(confirmNaturalProposal(f.event(), p, f.now()).ok).toBe(false);
       recordConfirmationDelivery({accountId:'default',conversationId: source.conversationId!,sourceMessageId:source.messageId!,messageId:'delivered',text:'冻结预览'});
-      const confirm = f.event(); expect(confirmNaturalProposal(confirm, p, f.now())).toEqual({ok: true, idempotent: false});
+      const confirm = f.event(); captureNaturalConfirmationRequest(confirm); expect(confirmNaturalProposal(confirm, p, f.now())).toEqual({ok: true, idempotent: false});
       const grant = f.db.prepare('SELECT expires_at_utc FROM approval_grants').get();
       f.tick(30); expect(confirmNaturalProposal(confirm, p, f.now())).toEqual({ok: true, idempotent: true});
       expect(f.db.prepare('SELECT expires_at_utc FROM approval_grants').get()).toEqual(grant);
@@ -70,6 +70,22 @@ describe('natural confirmation with persisted previews and one-time grants', () 
     const f=fixture();try {const a=f.proposal(),b=f.proposal();f.present(a);f.tick(2);f.present(b);
       expect(confirmNaturalProposal(f.event(),a,f.now())).toMatchObject({code:'confirmation_target_ambiguous'});
       expect(confirmNaturalProposal(f.event(),b,f.now()).ok).toBe(true);
+    }finally{f.close();}
+  });
+  it('uses a trusted reply target to select an older delivered preview for bare assent', () => {
+    const f=fixture();try {const a=f.proposal(),b=f.proposal();f.present(a,undefined,'receipt-a');f.tick(2);f.present(b,undefined,'receipt-b');
+      const e={...f.event(),replyToMessageId:'receipt-a'};
+      expect(confirmNaturalProposal(e,a,f.now()).ok).toBe(true);
+      expect(confirmNaturalProposal({...f.event(),replyToMessageId:'unknown'},b,f.now()).ok).toBe(false);
+    }finally{f.close();}
+  });
+  it('revokes an unconsumed natural grant when its trusted request ends', () => {
+    const f=fixture();try {const p=f.proposal();f.present(p);const e=f.event();captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposal(e,p,f.now()).ok).toBe(true);
+      clearNaturalConfirmationRequest(e.sessionKey!,e.messageId);
+      expect(checkApprovalGrant(f.db,{...p,subjectId:'owner',scope:scopeFromInboundEvent(e)!,nowUtc:f.now()/1000,consume:true}))
+        .toMatchObject({code:'confirmation_context_mismatch'});
+      expect(f.db.prepare('SELECT status FROM approval_grants').get()).toEqual({status:'pending'});
     }finally{f.close();}
   });
   it('does not reuse one confirmation across different domains', () => {

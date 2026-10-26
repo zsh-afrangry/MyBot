@@ -80,7 +80,7 @@ test("email_draft accepts the exact arguments that failed in production", async 
   }, undefined));
   assert.equal(result.ok, true, JSON.stringify(result));
   assert.equal(result.status, "needs_confirmation");
-  assert.equal(result.confirmationInstruction.startsWith("确认 "), true);
+  assert.equal(result.confirmationInstruction === "确认", true);
   assert.deepEqual(result.to, ["365999865@qq.com"]);
   assert.equal(result.bodyChars, "主人好，这是一封测试邮件。".length);
 });

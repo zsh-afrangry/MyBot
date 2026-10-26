@@ -5,6 +5,7 @@ import type { ConfirmationDomain, ConfirmationScope, ConfirmationProposalRow, Co
 import { ensureConfirmationGateSchema } from "./schema.js";
 import { parseConfirmationText, confirmationCode, normalizedContent } from "./protocol.js";
 import { scopesMatch, serializeScope, parseScope } from "./scope.js";
+import { naturalConfirmationRequestCurrent } from './current-request.js';
 import { boundedText, assertHash, assertUnixSeconds } from "./validation.js";
 
 const CONFIRMATION_GRANT_TTL_SECONDS = 5 * 60;
@@ -200,6 +201,11 @@ export function checkApprovalGrant(
     status: ConfirmationGrantStatus;
   } | undefined;
   if (!row) return { ok: false, code: "approval_required" };
+  const natural = database.prepare('SELECT confirmation_message_id FROM natural_confirmation_grants WHERE grant_id = ?')
+    .get(row.grant_id) as {confirmation_message_id: string} | undefined;
+  if (natural && !naturalConfirmationRequestCurrent(input.scope, natural.confirmation_message_id, nowUtc)) {
+    return {ok: false, code: 'confirmation_context_mismatch'};
+  }
   if (!scopesMatch(parseScope(row.scope_json), input.scope)) {
     return { ok: false, code: "confirmation_context_mismatch" };
   }

@@ -73,7 +73,9 @@ export function confirmNaturalProposal(event: ConfirmationInboundEvent, selectio
     if (/^(?:我\s*)?(?:确认|同意|批准|可以|好的?|没问题|yes|ok)[。！!]?$/iu.test(normalizedContent(event.content))) {
       const presented = stores.flatMap(s => s.rows).filter(p => p.presentedAtUtc !== null);
       const latest = Math.max(...presented.map(p => p.presentedAtUtc!));
-      const focus = presented.filter(p => p.presentedAtUtc === latest);
+      const focus = event.replyToMessageId
+        ? presented.filter(p => p.presentationMessageId === event.replyToMessageId)
+        : presented.filter(p => p.presentedAtUtc === latest);
       if (focus.length !== 1 || !matches(focus[0]!, selection)) return {ok: false, code: 'confirmation_target_ambiguous'};
     }
     return found[0]!.backend.confirm(event, selection)

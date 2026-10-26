@@ -1,7 +1,7 @@
 import { formatTimestamp } from "./time-display.js";
 import { createHash } from "node:crypto";
 
-import { buildConfirmationInstruction, createPublicUuid, type ConfirmationScope } from "@kurumi/confirmation-core";
+import { createPublicUuid, type ConfirmationScope } from "@kurumi/confirmation-core";
 
 import {
   REMINDER_SUBJECT_ID,
@@ -277,10 +277,10 @@ export function proposeReminderCreate(
       `- 内容：${payload.content}`,
       "- 投递：仅主人 QQ 私聊",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-      "请在本次私聊回复下面这一行原文；确认后才会创建受限的定时任务：",
-      buildConfirmationInstruction(proposalId, payloadHash),
+      "确认这份预览后才会创建定时任务；有多项时请说明哪一项：",
+      "确认",
     ].join("\n"),
-    confirmationInstruction: buildConfirmationInstruction(proposalId, payloadHash),
+    confirmationInstruction: "确认",
     canonicalFacts: {
       kind: "reminder.create",
       content: payload.content,
@@ -349,10 +349,10 @@ export function proposeReminderCancellation(
       `- 原内容：${reminder.content}`,
       "- 影响：仅取消这条尚未投递的主人私聊提醒",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-      "请在本次私聊回复下面这一行原文；确认后才会移除受限的定时任务：",
-      buildConfirmationInstruction(proposalId, payloadHash),
+      "确认这份预览后才会取消提醒；有多项时请说明哪一项：",
+      "确认",
     ].join("\n"),
-    confirmationInstruction: buildConfirmationInstruction(proposalId, payloadHash),
+    confirmationInstruction: "确认",
     canonicalFacts: { kind: "reminder.cancel", reminderId: reminder.reminderId },
     derivedEffects: [{ kind: "reminder.cancel", target: "owner_qq_private" }],
     requiresConfirmation: true,
@@ -444,10 +444,10 @@ export function proposeReminderUpdate(
       `- 新内容：${nextContent}`,
       "- 影响：在原有受限定时任务上原地更新，不会创建第二条提醒",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-      "请在本次私聊回复下面这一行原文；确认后才会应用修改：",
-      buildConfirmationInstruction(proposalId, payloadHash),
+      "确认这份预览后才会应用修改；有多项时请说明哪一项：",
+      "确认",
     ].join("\n"),
-    confirmationInstruction: buildConfirmationInstruction(proposalId, payloadHash),
+    confirmationInstruction: "确认",
     canonicalFacts: {
       kind: "reminder.update",
       reminderId: reminder.reminderId,
@@ -530,9 +530,7 @@ function gateFailure(
   const message = code === "approval_required"
     ? proposal === undefined
       ? "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。"
-      : `需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：${
-        buildConfirmationInstruction(proposal.proposalId, proposal.payloadHash)
-      }`
+      : "需要本人下一条消息确认已展示的预览；先用personal_confirmation查询并确认具体提案，再提交。"
     : code === "grant_expired"
       ? "确认已过期，请重新确认最新提案。"
       : code === "grant_replayed"

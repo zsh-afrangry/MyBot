@@ -6,7 +6,7 @@
 //   * Every tool is owner-private-chat only, enforced in execute() via ownerAuthorized(), not by
 //     prompt wording. A non-owner context gets a hard error.
 //   * Sending requires an approval grant issued through @kurumi/confirmation-core. The grant is
-//     created by the host's inbound router when the owner replies with the confirmation code, so the
+//     created by the shared tool from a bound current owner message, so the
 //     model cannot approve its own draft. This is why the plugin registers a confirmation backend
 //     instead of comparing a token itself.
 //   * Credentials come from the runtime environment (runtime-env.json is expanded by run-gateway.mjs
@@ -52,7 +52,7 @@ export function createMailPlugin({ registry } = {}) {
       try { return work(store); } finally { store.close(); }
     };
 
-    // The host routes the owner's "确认 <code>" message to registered backends only, so this
+    // The shared confirmation tool and legacy coded ingress use registered backends, so this
     // registration is what makes confirmation reachable at all. The backend opens the SELECTED store,
     // so a replacement store is picked up here without editing this file.
     let unregisterBackend;
@@ -148,10 +148,10 @@ export function createMailPlugin({ registry } = {}) {
         name: "email_draft",
         label: "Draft an email",
         description:
-          "Create a pending email draft and return the confirmation instruction the owner must read back verbatim. "
+          "Create a pending email draft and return its frozen preview. The owner can confirm in natural language. "
           + "Recipients must appear in the configured allowlist; a recipient outside it is refused with recipient_not_allowed. "
-          + "Nothing is sent by this tool. Show the preview (sender, recipients, subject, body excerpt) and the confirmation "
-          + "instruction on its own line, then wait for the owner's own message. Owner private chat only.",
+          + "Nothing is sent by this tool. Show the frozen recipients, subject, full body and attachments using "
+          + "previewText verbatim, then wait for a later owner message. Resolve it with personal_confirmation before email_send. Owner private chat only.",
         // Shape is intentionally permissive; content is validated at runtime.
         //
         // A schema rejection never reaches this plugin: the model only sees "Invalid arguments" and
@@ -196,7 +196,7 @@ export function createMailPlugin({ registry } = {}) {
         label: "Send an approved email",
         description:
           "Deliver a draft that the owner has already approved. Requires the draft id from email_draft plus the approval the host "
-          + "recorded when the owner replied with the confirmation code. Without that approval this returns approval_required and "
+          + "recorded via personal_confirmation from the current owner reply. Without that approval this returns approval_required and "
           + "sends nothing; repeated sends are refused. Owner private chat only.",
         // Same reasoning as email_draft: shape stays permissive, content is checked at runtime.
         // Models tend to echo the confirmation line back as an extra field; rejecting the call over

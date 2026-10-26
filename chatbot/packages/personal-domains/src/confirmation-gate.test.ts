@@ -288,12 +288,13 @@ describe("Confirmation Gate without a host-resolved owner bit", () => {
       if (!proposal.ok) return;
 
       expect(proposal.previewText).toContain(proposal.confirmationInstruction);
-      expect(parseConfirmationText(proposal.confirmationInstruction)).toEqual({shortCode: proposal.confirmationInstruction.split(" ")[1]});
+      expect(proposal.confirmationInstruction).toBe("确认");
+      expect(parseConfirmationText(proposal.confirmationInstruction)).toBeUndefined();
       expect(store.recordInboundConfirmation({
         channel: "qqbot",
         conversationId: "qqbot:c2c:gate-owner",
         messageId: "gate-instruction-roundtrip",
-        content: proposal.confirmationInstruction,
+        content: `确认 proposalId=${proposal.proposalId} payloadHash=${proposal.payloadHash}`,
         isGroup: false,
       })).toBe(true);
       expect(commitPlanningProposal(store, {

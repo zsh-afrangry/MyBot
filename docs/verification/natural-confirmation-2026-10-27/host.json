@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-26T18:56:34.827Z",
+  "boundary": "Real isolated OpenClaw hooks, tools, domain storage, Cron and loopback QQ HTTP receipts. Deterministic model; no real model API, QQ, SMTP, production writes or restart.",
+  "cases": [
+    {
+      "label": "same-message-cannot-confirm",
+      "passed": true,
+      "toolCalls": 2,
+      "receiptCount": 1
+    },
+    {
+      "label": "next-message-bare-confirm-commits",
+      "passed": true,
+      "toolCalls": 3,
+      "receiptCount": 1
+    },
+    {
+      "label": "two-previews-in-one-batch",
+      "passed": true,
+      "toolCalls": 2,
+      "receiptCount": 1
+    },
+    {
+      "label": "ambiguous-bare-confirm-rejected",
+      "passed": true,
+      "toolCalls": 1,
+      "receiptCount": 1
+    },
+    {
+      "label": "explicit-reference-confirms-one",
+      "passed": true,
+      "toolCalls": 2,
+      "receiptCount": 1
+    },
+    {
+      "label": "negative-does-not-authorize",
+      "passed": true,
+      "toolCalls": 1,
+      "receiptCount": 1
+    },
+    {
+      "label": "change-needs-new-preview",
+      "passed": true,
+      "toolCalls": 1,
+      "receiptCount": 1
+    }
+  ],
+  "requests": 31,
+  "passed": true,
+  "childStopped": true,
+  "finishedAt": "2026-10-26T18:56:49.031Z"
+}

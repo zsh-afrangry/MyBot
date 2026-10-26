@@ -47,6 +47,11 @@ export const CONFIRMATION_GATE_SCHEMA_SQL = String.raw`
     presented_at_utc INTEGER,
     presentation_message_id TEXT
   ) STRICT;
+
+  CREATE TABLE IF NOT EXISTS natural_confirmation_grants (
+    grant_id TEXT PRIMARY KEY,
+    confirmation_message_id TEXT NOT NULL
+  ) STRICT;
 `;
 
 export function ensureConfirmationGateSchema(database: DatabaseSync): void {

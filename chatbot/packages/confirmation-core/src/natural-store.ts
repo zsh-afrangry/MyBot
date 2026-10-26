@@ -61,6 +61,8 @@ export function createNaturalConfirmationBackend(db: DatabaseSync, options: {
           || proposal.sourceMessageId === event.messageId) { db.exec('COMMIT'); return false; }
         const result = issueApprovalGrant(db, {proposal, confirmationMessageId: event.messageId,
           confirmationContent: event.content, scope, nowUtc: now()});
+        if (result.ok) db.prepare(`INSERT OR IGNORE INTO natural_confirmation_grants
+          (grant_id, confirmation_message_id) VALUES (?, ?)`).run(result.grantId, event.messageId);
         db.exec('COMMIT');
         return result.ok;
       } catch (e) { db.exec('ROLLBACK'); throw e; }
