@@ -1,0 +1,22 @@
+{
+  "date": "2026-10-28",
+  "mainDirectory": "/home/afrangry/kurumi-fusion",
+  "worktree": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+  "mainBase": "1765d936e90c6220a60dc39dfc4338fb00096d0f",
+  "originalDocumentCommit": "99e5413",
+  "integratedCommit": "d85a89646935dfed6a1acf944c5de77a47307ec9",
+  "mainFastForwardCommand": "git merge --ff-only codex/docs-coding-delegation",
+  "mainFastForwardExitCode": 0,
+  "remoteWrite": false,
+  "mainCleanAtIntegration": true,
+  "retiredTopLevelFilesAbsent": {
+    "10_融合助手运行维护.md": true,
+    "15_旧系统回退.md": true,
+    "19_提醒列表与定时汇总.md": true
+  },
+  "archiveFirstLines": {
+    "10_融合助手运行维护.md": "> **已合并（2026-10-27）：** 本文已并入[《QQ 融合助手架构与运行维护》](../9_QQ融合助手架构与开发计划.md)。以下为归档原文，仅供追溯；原文来源：`326eb958fa769619a313b81dfcf9f47dbdb50285:docs/10_融合助手运行维护.md`。仅校正归档后的相对链接，日期、命令、结果与授权范围按原时点保留。",
+    "15_旧系统回退.md": "> **已合并（2026-10-27）：** 本文已并入[《系统资产、备份与回退管理》](../12_目录资产与Git备份整理.md#旧系统回退)，现行规则与操作以合并文档为准。以下保留合并前原文，仅调整相对链接；来源基线：`326eb958fa769619a313b81dfcf9f47dbdb50285`及本轮开始时的工作树。",
+    "19_提醒列表与定时汇总.md": "> **已合并（2026-10-27）：** 本文完整纳入[KnowledgeMap共享业务：提醒列表、记账与天气](../23_KnowledgeMap业务能力桥接.md#提醒列表与定时汇总)。以下保留合并前原文，仅调整归档后的链接；当前规则以合并文档为准。"
+  }
+}

@@ -26,5 +26,12 @@
       "exitCode": 0,
       "output": "whitespace.txt"
     }
+  ],
+  "readOnlyRuntimeChecks": "runtime-selfchecks.json",
+  "localIntegration": "local-integration.json",
+  "preservation": "preservation.json",
+  "links": "links.json",
+  "notes": [
+    "First-parent git diff --cached --check also inspected mainline code imported by the merge and reported existing CRLF lines. Those code bytes remain identical to mainBase; git diff mainBase --check for this documentation change passed. No unrelated source reformatting was performed."
   ]
 }
