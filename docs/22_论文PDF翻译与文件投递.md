@@ -50,6 +50,8 @@
 
 本轮实现、离线/真实隔离宿主检查与部署记录见[默认渠道与失败说明](verification/paper-translation-2026-10-17/default-deepseek-notification-2026-10-27/README.md)，真人复验归[待办N22](待办清单.md#n22-论文默认渠道与失败说明)。不把切换默认当成030用量异常已修复。
 
+2026-10-27[17:03真人实测调查](verification/paper-translation-2026-10-17/qq-retest-2026-10-27-1703/README.md)发现：完整任务回执使status结果截断，`failureSummary`未进模型可见结果；用户随后明确发起的DeepSeek重译报`response_not_completed`，单次输出8192高度符合输出截断，整篇95028未到30万上限；延迟说明调用因`Async work scope is closed`失败，仅中文兜底sent及后续上下文入队。N22退回待处理，原同步固定模型探针不覆盖工具返回后的真实后台生命周期。本次只读调查未改代码或预算，未再次付费重译。
+
 ## 架构与基础工具
 
 ```mermaid
