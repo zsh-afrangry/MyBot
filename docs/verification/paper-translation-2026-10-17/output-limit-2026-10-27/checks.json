@@ -51,7 +51,7 @@
   "documentation": {
     "coverage": {
       "passed": true,
-      "total": 581
+      "total": 583
     },
     "index": {
       "passed": true,
@@ -70,6 +70,14 @@
     "chatbot/tests/papers/notification.test.mjs": "7fe32c8001024b5d4e8b8eac7c6e756ad1571d19ade7cb7cd210daeb9412539c",
     "chatbot/tests/papers/responses_test.py": "600b1f73709c32371f60ba1c0fd60eb6fae302303cde04921b2d816d0ce2392d",
     "chatbot/tests/papers/mail.test.mjs": "c306dfe60d66710ee92af91c977367b54ce3ad44e938e69b71e0eb3e98ba421f",
-    "chatbot/tests/papers/acceptance-notification-host.mjs": "3381f6a9c7c3238f46e1d3d2d8cdc1bae40ca4b7ac5dd0c1ab1278c5dd6f7a69"
+    "chatbot/tests/papers/acceptance-notification-host.mjs": "3381f6a9c7c3238f46e1d3d2d8cdc1bae40ca4b7ac5dd0c1ab1278c5dd6f7a69",
+    "chatbot/tests/papers/acceptance-worker.mjs": "8a2ea81cc21242aa5971ebfaeb415d13a1f53f0ccdfa8b280be99ed885902733"
+  },
+  "capturedWorker": {
+    "command": "node chatbot/tests/papers/acceptance-worker.mjs --capture <实际生产捕获runner.js> --out <本目录worker-capture.json>",
+    "exitCode": 0,
+    "passed": true,
+    "deepseekMaxOutputTokens": 393216,
+    "paidProviderRequests": 0
   }
 }
