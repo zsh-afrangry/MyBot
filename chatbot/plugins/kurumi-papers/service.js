@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {AsyncResource} from 'node:async_hooks';
 import {Documents, atomicJson, paperTitle} from '../../packages/documents/index.js';
 import {downloadScholarlyPdf} from '../../packages/scholarly-source/index.js';
 import {resolveProfile} from './profiles.js';
@@ -27,6 +28,9 @@ export class PaperService {
     this.documentsFor = documentsFor ?? (() => this.documents); this.ownerBinding = ownerBinding; this.authorize = authorize;
     this.download = download; this.runner = runner; this.sendFile = sendFile; this.notify = notify; this.trace = trace; this.inspect = inspect;
     this.queue = []; this.active = null; this.online = false;
+    // Constructed at plugin startup, before any managed tool invocation. Background jobs
+    // must outlive that invocation without retaining its closed host work scope.
+    this.queueScope = new AsyncResource('kurumi-paper-jobs');
   }
   file(id) { if (!JOB_ID.test(id ?? '')) throw Error('Invalid translation job ID'); return path.join(this.documents.root, 'jobs', id + '.json'); }
   get(id) { const file = this.file(id); if (fs.lstatSync(file).isSymbolicLink()) throw Error('Invalid job file'); const data = JSON.parse(fs.readFileSync(file)); if (data.id !== id) throw Error('Job identity mismatch'); return data; }
@@ -47,7 +51,16 @@ export class PaperService {
     }
     return this.explain(job);
   }
-  explain(job) { const summary = failureSummary(job,this.config); return summary ? {...job,failureSummary:summary} : job; }
+  explain(job) {
+    const summary = failureSummary(job,this.config);
+    const fields = ['id','status','documentId','profile','pages','sourceLang','targetLang','deliveryTarget','deliveryKind','artifacts','createdAt','updatedAt','error'];
+    const view = {...(summary ? {failureSummary:summary} : {}),...Object.fromEntries(fields.filter(k => job[k] !== undefined).map(k => [k,job[k]]))};
+    if (job.usage) view.usage = Object.fromEntries(['requests','maxRequests','inputTokens','outputTokens','reportedTokens','maxReportedTokens','maxOutputTokens','unknownUsageAttempts','validationFailures','channelFailures','inFlight','maxConcurrency','maxQps'].filter(k => typeof job.usage[k] === 'number' && Number.isFinite(job.usage[k])).map(k => [k,job.usage[k]]));
+    if (job.engineProgress) view.engineProgress = Object.fromEntries(['type','stage','overall_progress','stage_progress'].filter(k => job.engineProgress[k] !== undefined).map(k => [k,job.engineProgress[k]]));
+    if (job.delivery) view.delivery = {status:job.delivery.status};
+    if (job.notification) view.notification = Object.fromEntries(['mode','status','contextQueued','explanationError'].filter(k => job.notification[k] !== undefined).map(k => [k,job.notification[k]]));
+    return view;
+  }
   save(job) { job.updatedAt = new Date().toISOString(); atomicJson(this.file(job.id), job); this.trace({kind: 'paper.job', correlation: {taskId: job.id, ...job.correlation}, data: {status: job.status, documentId: job.documentId, profile: job.profile, error: job.error ?? null, delivery: job.delivery ?? null}}); return job; }
   list(requester) { return fs.readdirSync(path.join(this.documents.root, 'jobs')).filter(n => /^job_[a-f0-9]{24}\.json$/.test(n)).map(n => this.get(n.slice(0,-5))).filter(job=>!this.authorize||(requester && this.binding(job)?.subjectId===requester.subjectId)).sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,20).map(job=>this.explain(job)); }
   start() {
@@ -96,11 +109,11 @@ export class PaperService {
     this.queue.push(id); this.scheduleDrain(); return job;
   }
   scheduleDrain() {
-    queueMicrotask(() => { void this.drain().catch(() => {
+    this.queueScope.runInAsyncScope(() => queueMicrotask(() => { void this.drain().catch(() => {
       // A damaged/missing job record must not become an unhandled rejection or paid retry loop.
       this.online = false;
       try { this.trace({kind: 'paper.dispatch_failed', data: {error: 'job_record_or_state_unavailable'}}); } catch {}
-    }); });
+    }); }));
   }
   async drain() {
     if (!this.online || this.active || !this.queue.length) return;

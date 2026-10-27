@@ -328,6 +328,8 @@ class ResponsesClient:
         spec = registered_profile(profile)
         self.profile, self.key_ids = dict(profile), tuple(spec["credentialIds"])
         self.batch_format = spec["batchFormat"]
+        # Provider-owned limit, including reasoning. Never impose an arbitrary common cap.
+        self.max_output_tokens = spec.get("maxOutputTokens")
         self.keys = {k: keys[k].strip() for k in self.key_ids if isinstance(keys.get(k), str) and keys[k].strip()}
         if not self.keys:
             raise TranslationFailure("missing_translation_credentials")
@@ -380,6 +382,7 @@ class ResponsesClient:
                     "failureDetails": copy.deepcopy(self.failure_details),
                     "failureDetectedOffsetSeconds": self.failure_clock,
                     "maxRequests": self.max_requests, "maxReportedTokens": self.max_tokens,
+                    "maxOutputTokens": self.max_output_tokens,
                     "requestIdleTimeoutSeconds": self.idle_timeout_seconds, "requestTimeoutSeconds": self.timeout,
                     "validationFailure": copy.deepcopy(self.validation_failure),
                     "normalizedJsonFences": self.normalized_json_fences,
@@ -533,6 +536,8 @@ class ResponsesClient:
                                "usageStatus": "unknown", "startedOffsetSeconds": round(clock - self.started_clock, 6),
                                "startedAt": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
                     receipt["recoveryRound"] = getattr(self.local, "recovery_round", 0)
+                    if self.max_output_tokens is not None:
+                        receipt["maxOutputTokens"] = self.max_output_tokens
                     if cooldown.get("recoverable"):
                         # One half-open probe per recovering channel; other callers keep waiting.
                         self.probing[name] = receipt
@@ -551,7 +556,9 @@ class ResponsesClient:
             raise TranslationFailure("invalid_translation_input")
         body = {"model": self.profile["model"], "reasoning": {"effort": self.profile["effort"]},
                 "instructions": instructions, "input": text, "store": False,
-                "max_output_tokens": 8192, "stream": True}
+                "stream": True}
+        if self.max_output_tokens is not None:
+            body["max_output_tokens"] = self.max_output_tokens
         if output_format is not None:
             body["text"] = {"format": output_format}
         channel_failed = False
@@ -725,6 +732,12 @@ class ResponsesClient:
 
     def _complete_reply(self, name, receipt, status, data, text, preserve_placeholders, attempt):
         receipt["httpStatus"] = status
+        if isinstance(data, dict):
+            if data.get("status") in ("in_progress", "completed", "incomplete", "failed", "cancelled", "queued"):
+                receipt["responseStatus"] = data["status"]
+            incomplete = data.get("incomplete_details")
+            if isinstance(incomplete, dict) and incomplete.get("reason") in ("max_output_tokens", "content_filter"):
+                receipt["incompleteReason"] = incomplete["reason"]
         if isinstance(data, dict) and isinstance(data.get("usage"), dict):
             usage = data["usage"]
             inp, out = usage.get("input_tokens"), usage.get("output_tokens")
@@ -774,7 +787,9 @@ class ResponsesClient:
         if receipt.get("responseEffort") not in (None, self.profile["effort"]):
             raise TranslationFailure("api_effort_mismatch")
         if data.get("status") != "completed":
-            raise TranslationFailure("response_not_completed")
+            details = {k: receipt[k] for k in ("responseStatus", "incompleteReason", "maxOutputTokens")
+                       if k in receipt}
+            raise TranslationFailure("response_not_completed", details)
         chunks = []
         for item in data.get("output", []):
             if item.get("type") != "message" or item.get("role") != "assistant":

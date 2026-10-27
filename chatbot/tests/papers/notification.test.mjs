@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {AsyncLocalStorage} from 'node:async_hooks';
 import {failureSummary} from '../../plugins/kurumi-papers/failure.js';
 import {createFailureNotifier} from '../../plugins/kurumi-papers/notification.js';
 import {PaperService} from '../../plugins/kurumi-papers/service.js';
@@ -58,6 +59,15 @@ test('Delivery failure preserves successful translation and suggests checking re
   assert.equal(summary.hasCompleteArtifact,true);assert.equal(summary.stage,'文件投递');
   assert.match(summary.message,/译文已生成/);assert.match(summary.message,/无需重新翻译/);assert(!summary.message.includes('尚无完整译稿'));
   assert.equal(failureSummary({status:'succeeded',delivery:{status:'platform_accepted'}}),undefined);
+});
+
+test('Incomplete output distinguishes output limit, content filtering and an unknown reason',()=>{
+  const summary=reason=>failureSummary(failed({error:'response_not_completed',usage:{failureDetails:{responseStatus:'incomplete',incompleteReason:reason,maxOutputTokens:393216}}}));
+  const capped=summary('max_output_tokens');
+  assert.match(capped.reason,/393,216/);assert.match(capped.reason,/推理token/);assert.match(capped.reason,/截断/);
+  assert.equal(capped.incompleteReason,'max_output_tokens');assert.match(capped.nextStep,/不是账号余额不足/);
+  assert.match(summary('content_filter').reason,/内容过滤/);
+  const unknown=summary('private upstream text');assert.match(unknown.reason,/没有明确/);assert(!JSON.stringify(unknown).includes('private'));
 });
 
 test('The bound existing chat receives a tool-free explanation and exactly one public QQ publication',async()=>{
@@ -133,7 +143,30 @@ test('Worker evidence is persisted before notification; historical status/list a
   assert.equal(service.get(job.id).notification.mode,'assistant');assert.equal(service.status(job.id).failureSummary.exhaustedBy,'reported_tokens');
   const old=service.get(job.id);delete old.failureSummary;service.save(old);
   assert.match(service.list()[0].failureSummary.message,/本地单篇/);assert.match(service.status(job.id).failureSummary.message,/本地单篇/);
+  old.usage.receipts=Array.from({length:300},(_,i)=>({attempt:i,responseId:'PRIVATE-RESPONSE-ID',usage:{input_tokens:23000},message:'PRIVATE-RAW-BODY'}));
+  old.engineProgress={stage:'Translate Paragraphs',overall_progress:51,stage_progress:27};
+  old.requester={subjectId:'PRIVATE-IDENTITY',sessionKey:'PRIVATE-CHAT'};old.engineFailure={path:'/PRIVATE-PATH'};service.save(old);
+  const visible=JSON.stringify(service.status(job.id));
+  assert(visible.length<4000);assert(visible.indexOf('failureSummary')<100);assert(!visible.includes('PRIVATE'));
+  assert.equal(service.get(job.id).usage.receipts.length,300);assert.equal(service.list()[0].usage.receipts,undefined);
+  assert.deepEqual(service.status(job.id).engineProgress,{stage:'Translate Paragraphs',overall_progress:51,stage_progress:27});
   await service.stop();const pending=service.get(job.id);pending.notification={status:'pending'};service.save(pending);
   const fresh=new PaperService({root},{notify:()=>{throw Error('must not replay');}});fresh.start();
   assert.equal(fresh.get(job.id).notification.status,'failed_or_unknown');await fresh.stop();
+});
+
+test('A delayed job and its notice outlive the submitting tool scope',async t=>{
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-paper-scope-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+  const scope=new AsyncLocalStorage(),submittedScope={closed:false};let notifications=0,release;
+  const gate=new Promise(resolve=>{release=resolve;});
+  const service=new PaperService({root,liveTranslationEnabled:true},{
+    runner:async()=>{await gate;assert.equal(scope.getStore(),undefined);throw Object.assign(Error('Synthetic failure'),{code:'response_not_completed'});},
+    notify:async()=>{assert.equal(submittedScope.closed,true);assert.equal(scope.getStore(),undefined);notifications++;return{mode:'assistant',status:'sent'};},
+  });
+  service.start();t.after(()=>service.stop());
+  const doc=await service.documents.add(pdf(),{filename:'fixture.pdf'},{inspect:async()=>({pages:1})});
+  const job=scope.run(submittedScope,()=>service.submit({documentId:doc.id,delivery:'none'},{key:'closed-invocation'}));
+  submittedScope.closed=true;release();
+  while(service.active||service.queue.length)await new Promise(r=>setTimeout(r,5));
+  assert.equal(notifications,1);assert.equal(service.get(job.id).notification.mode,'assistant');
 });

@@ -78,7 +78,8 @@ test('Single serial queue, requester binding, own list/status/cancel and self-on
  await idle(service);assert.deepEqual(events,['start','end','start','end']);
  assert.deepEqual(calls.filter(x=>x.action==='/upload_private_file').map(x=>x.args.user_id),[Number(OWNER),Number(MEMBER)]);
  assert.equal((await run(MEMBER,'kurumi_translate',{action:'list'})).jobs.length,1);
- const job=(await run(MEMBER,'kurumi_translate',{action:'status',jobId:second.job.id})).job;assert.equal(job.requester.to,'user:'+MEMBER);assert.equal(job.delivery.status,'platform_accepted');
+ const job=(await run(MEMBER,'kurumi_translate',{action:'status',jobId:second.job.id})).job;
+ assert.equal(job.requester,undefined);assert.equal(service.get(job.id).requester.to,'user:'+MEMBER);assert.equal(job.delivery.status,'platform_accepted');
 });
 test('Queued revocation does not start paid worker and never redirects notices/files to owner',async t=>{
  let release,entered;const wait=new Promise(r=>release=r),start=new Promise(r=>entered=r);let workers=0;

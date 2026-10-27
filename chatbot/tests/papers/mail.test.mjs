@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {spawnSync} from 'node:child_process';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {Documents} from '../../packages/documents/index.js';
 import {createMailApplication} from '../../plugins/kurumi-mail/application.js';
@@ -15,6 +15,7 @@ import {defaultConnector} from '../../plugins/kurumi-mail/smtp.js';
 import {buildMessage} from '../../plugins/kurumi-mail/mime.js';
 import {ownerScope,inboundEvent,RECIPIENT} from '../../plugins/kurumi-mail/test/helpers/owner-context.js';
 import {pdf} from './fixtures.mjs';
+import * as confirmation from '../../packages/confirmation-core/dist/index.js';
 const CA=fs.readFileSync(new URL('../../plugins/kurumi-mail/test/fixtures/cert.pem',import.meta.url));
 const connector=opts=>defaultConnector({...opts,tlsOptions:{ca:CA,servername:'localhost'}});
 function parseMime(raw){
@@ -27,7 +28,17 @@ async function setup(t){
  const docs=new Documents(path.join(root,'documents')),doc=await docs.add(pdf(),{filename:'论文双语.pdf'},{inspect:async()=>({pages:1})});
  const app=createMailApplication({resolveAttachment:id=>docs.get(id)}),storeOptions={stateDirectory:path.join(root,'mail'),allowedRecipients:[RECIPIENT]};
  let store=app.openStore(storeOptions);t.after(()=>store.close());
- return {root,docs,doc,app,store,storeOptions,scope:ownerScope()};
+ const off=confirmation.registerConfirmationBackend({id:'paper-attachment-fixture',open:()=>app.openStore(storeOptions)});
+ t.after(()=>{off();confirmation.clearNaturalConfirmationRequest(inboundEvent({content:''}).sessionKey);});
+ const approve=draft=>{
+  const event=content=>inboundEvent({content,messageId:randomUUID(),timestamp:Date.now()});
+  const selection={domain:'mail',proposalId:draft.draftId,payloadHash:draft.payloadHash},preview=event('展示附件预览');
+  assert(confirmation.prepareConfirmationPreview(preview,selection,draft.previewText));
+  confirmation.recordConfirmationDelivery({accountId:'default',conversationId:preview.conversationId,sourceMessageId:preview.messageId,messageId:randomUUID(),text:draft.previewText});
+  const reply=event('确认发送');confirmation.captureNaturalConfirmationRequest(reply);
+  assert.equal(confirmation.confirmNaturalProposal(reply,selection).ok,true);
+ };
+ return {root,docs,doc,app,store,storeOptions,scope:ownerScope(),approve};
 }
 test('Draft freezes exact PDF bytes, survives reopen; previews contain only metadata',async t=>{
  const {app,store,doc,storeOptions,scope}=await setup(t);
@@ -46,13 +57,13 @@ test('The store Uint8Array contract preserves the selected bytes and approval ha
  assert(store.consumeApproval({draftId:draft.draftId,scope}).ok);
 });
 test('Attachment delivery needs approval, sends captured bytes once even if source later changes',async t=>{
- const {app,store,docs,doc,scope}=await setup(t),server=new MockSmtpServer();const address=await server.start();t.after(()=>server.stop());
+ const {app,store,docs,doc,scope,approve}=await setup(t),server=new MockSmtpServer();const address=await server.start();t.after(()=>server.stop());
  const subject='[论文翻译验收] 2609.32536v1.pdf（仅页码 1）';
  const draft=app.directives.createDraft(store,{to:RECIPIENT,subject,text:'见附件',attachments:[{documentId:doc.id}]},scope,[RECIPIENT]);
  const context={scope,allowedRecipients:[RECIPIENT],config:{...address,user:TEST_USER,authCode:TEST_PASS,configured:true},connector};
  assert.equal((await app.directives.sendDraft(store,{draftId:draft.draftId},context)).code,'approval_required');
  assert.equal(server.receivedCount,0);
- assert(store.recordInboundConfirmation(inboundEvent({content:draft.confirmationInstruction}),draft.draftId));
+ approve(draft);
  fs.writeFileSync(path.join(docs.root,'files',doc.id+'.pdf'),pdf('changed after preview'));
  assert((await app.directives.sendDraft(store,{draftId:draft.draftId},context)).ok);
  assert.equal(server.receivedCount,1);
@@ -88,9 +99,9 @@ test('Unknown refs/raw paths/oversized attachments/recipient bypass cannot creat
  assert.equal(store.listDrafts().length,0);
 });
 test('Tampering with a persisted attachment after confirmation prevents network delivery',async t=>{
- const {app,store,doc,scope}=await setup(t);
+ const {app,store,doc,scope,approve}=await setup(t);
  const draft=app.directives.createDraft(store,{to:RECIPIENT,subject:'PDF',text:'body',attachments:[{documentId:doc.id}]},scope,[RECIPIENT]);
- assert(store.recordInboundConfirmation(inboundEvent({content:draft.confirmationInstruction}),draft.draftId));
+ approve(draft);
  const db=new DatabaseSync(store.file);
  const entries=JSON.parse(db.prepare('SELECT attachments_json FROM mail_drafts WHERE draft_id=?').get(draft.draftId).attachments_json);
  entries[0].contentBase64=pdf('tampered').toString('base64');

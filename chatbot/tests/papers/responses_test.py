@@ -39,14 +39,53 @@ class ResponsesTest(unittest.TestCase):
                 self.assertEqual(key,'synthetic-official')
                 self.assertEqual(body['instructions'],'Translate into Chinese.')
                 self.assertEqual(body['reasoning'],{'effort':effort})
+                self.assertEqual(body['max_output_tokens'],393216)
                 self.assertNotIn('messages',body);self.assertNotIn('previous_response_id',body)
                 receipt=client.snapshot()['receipts'][0]
                 self.assertEqual(receipt['usage']['input_tokens_details']['cached_tokens'],3)
                 self.assertEqual(receipt['credentialId'],'DEEPSEEK_API_KEY')
+                self.assertEqual(receipt['maxOutputTokens'],393216)
                 self.assertNotIn('synthetic-official',json.dumps(client.snapshot()))
         client.generate('JSON input','Return JSON.',output_format={'type':'json_schema','name':'test','schema':{'type':'object'}})
         self.assertEqual(seen[-1][2]['text']['format']['type'],'json_schema')
         self.assertEqual(client.receipts[-1]['outputFormat'],'json_schema')
+
+    def test_deepseek_accepts_completed_output_beyond_the_old_cap(self):
+        seen=[]
+        def request(url,key,body,timeout):
+            seen.append(body)
+            status,data=success('完整译文')
+            data.update(model=body['model'],usage={'input_tokens':839,'output_tokens':16384,
+                'output_tokens_details':{'reasoning_tokens':12000}})
+            return status,data
+        client=ResponsesClient({**DS_PROFILE,'effort':'high','maxOutputTokens':8192},
+            {'DEEPSEEK_API_KEY':'synthetic-official'},request=request)
+        self.assertEqual(client.generate('Synthetic input','Translate.'),'完整译文')
+        self.assertEqual(seen[0]['max_output_tokens'],393216)
+        self.assertEqual(client.snapshot()['outputTokens'],16384)
+        self.assertEqual(client.receipts[0]['usage']['output_tokens_details']['reasoning_tokens'],12000)
+
+    def test_incomplete_response_keeps_only_known_reason_and_actual_request_limit(self):
+        for reason in ('max_output_tokens','content_filter','private upstream prose'):
+            used=[]
+            def request(url,key,body,timeout):
+                used.append(key)
+                status,data=success('PRIVATE PARTIAL TRANSLATION')
+                data.update(model=body['model'],status='incomplete',
+                    incomplete_details={'reason':reason,'message':'PRIVATE ERROR BODY'})
+                stream='data: '+json.dumps({'type':'response.incomplete','response':data})+'\n\n'
+                return status,read_response_stream(io.BytesIO(stream.encode()))
+            client=ResponsesClient(DS_PROFILE,{'DEEPSEEK_API_KEY':'synthetic-official'},request=request)
+            with self.assertRaisesRegex(TranslationFailure,'response_not_completed') as caught:
+                client.generate('Synthetic input','Translate.')
+            expected={'responseStatus':'incomplete','maxOutputTokens':393216}
+            if reason!='private upstream prose':expected['incompleteReason']=reason
+            self.assertEqual(caught.exception.details,expected)
+            self.assertEqual(client.snapshot()['failureDetails'],expected)
+            self.assertEqual(len(used),1)
+            self.assertEqual(client.receipts[0]['usageStatus'],'reported')
+            self.assertNotIn('PRIVATE',json.dumps(client.snapshot()))
+            self.assertNotIn('private upstream prose',json.dumps(client.snapshot()))
 
     def test_deepseek_failure_cannot_fall_back_to_gpt_or_leak_the_gpt_pool(self):
         used=[]
@@ -74,6 +113,7 @@ class ResponsesTest(unittest.TestCase):
         self.assertEqual(seen[0]["reasoning"],{"effort":"max"})
         self.assertFalse(seen[0]["store"])
         self.assertTrue(seen[0]["stream"])
+        self.assertNotIn("max_output_tokens",seen[0])
         self.assertNotIn("messages",seen[0])
         self.assertNotIn("previous_response_id",seen[0])
         self.assertEqual(client.snapshot()["reportedTokens"],17)

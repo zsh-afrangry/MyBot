@@ -78,7 +78,7 @@ const TABLE = {
   'chatbot/tests/papers/file-ingress.test.mjs': ['离线', '附件类型/下载/校验事实、纯失败零模型分流、真实发送账本/未知回执、混合媒体与身份隔离', {testDir: 1}, 'header'],
   'chatbot/tests/papers/jobs.test.mjs': ['离线', '翻译high/显式MAX、所选产物贯通、任务幂等/取消/重启与独立投递状态', {testDir: 1}, 'header'],
   'chatbot/tests/papers/notification.test.mjs': ['离线', '失败摘要先持久化、用量/配额区分、原会话无工具说明、中文兜底/后续上下文、撤权/取消/未知回执不重发', {testDir: 1}, 'header'],
-  'chatbot/tests/papers/acceptance-notification-host.mjs': ['验收', '真实隔离Gateway与注册插件会话运行，本地固定模型/假投递器核对原会话说明与零工具；无真实API/QQ或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'header'],
+  'chatbot/tests/papers/acceptance-notification-host.mjs': ['验收', '真实隔离Gateway、本地固定模型/假投递器；实际工具回合结束后延迟失败说明与零工具，--legacy-scope复现旧队列兜底；无真实API/QQ或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/papers/mail.test.mjs': ['离线', '受管附件快照、确认、完整性、大小限制及本地 TLS SMTP', {testDir: 1}, 'header'],
   'chatbot/tests/papers/mime-parse.py': ['库', '标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin', {readonly: 1}, 'header'],
   'chatbot/tests/papers/worker.test.mjs': ['离线', '实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭', {testDir: 1}, 'header'],

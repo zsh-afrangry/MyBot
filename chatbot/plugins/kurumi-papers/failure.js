@@ -21,6 +21,8 @@ export function failureSummary(job, config = {}) {
   const terminalCode = ['all_translation_channels_failed','all_translation_credentials_unavailable'].includes(error) ? upstreamCode : error;
   const counters = compact(Object.fromEntries(['requests','maxRequests','inputTokens','outputTokens','reportedTokens','maxReportedTokens','unknownUsageAttempts','validationFailures','channelFailures'].map(k => [k,count(usage[k])])));
   const exhaustedBy = ['requests','reported_tokens'].includes(usage.failureDetails?.budgetExhaustedBy) ? usage.failureDetails.budgetExhaustedBy : undefined;
+  const incompleteReason = ['max_output_tokens','content_filter'].includes(usage.failureDetails?.incompleteReason) ? usage.failureDetails.incompleteReason : undefined;
+  const maxOutputTokens = count(usage.failureDetails?.maxOutputTokens);
   const stage = deliveryFailure ? '文件投递' : stages[job.engineProgress?.stage] ?? '论文处理';
   let reason, nextStep = '请确认后再安排重试；本次不会自动重新翻译。';
   if (error === 'translation_budget_exhausted') {
@@ -52,6 +54,12 @@ export function failureSummary(job, config = {}) {
     reason = upstreamCode?.includes('idle') ? '所选翻译渠道长时间没有有效正文，切换/有界恢复后仍未完成。' : '所选翻译渠道均失败、限流或处于冷却中，有界恢复后仍未完成。';
   } else if (['invalid_batch_translation','translation_placeholder_mismatch'].includes(error)) {
     reason = '模型返回的译文未通过结构、公式或样式标记校验，当前批次重试后仍失败。';
+  } else if (error === 'response_not_completed') {
+    reason = incompleteReason === 'max_output_tokens'
+      ? `上游因单次输出token上限${maxOutputTokens === undefined ? '' : `（${number(maxOutputTokens)}）`}截断响应，推理token也计入该上限；该批次译文不完整。`
+      : incompleteReason === 'content_filter' ? '上游因内容过滤未完成本批次翻译。'
+        : '上游没有返回已完成的响应，当前记录没有明确的未完成原因。';
+    nextStep = '需要核对单次响应限制与上游未完成原因后再重试；这不是账号余额不足的判断，本次不会自动重译。';
   } else if (error === 'api_usage_unknown') {
     reason = '翻译渠道没有返回可核实用量，为避免无法核算的持续调用已停止。';
   } else if (['api_model_mismatch','api_effort_mismatch'].includes(error)) {
@@ -62,7 +70,7 @@ export function failureSummary(job, config = {}) {
     reason = '后台论文处理失败，当前记录尚不能进一步确定原因。';
   }
   const profile = compact(Object.fromEntries(['provider','channel','model','effort'].map(k => [k,code(job.profile?.[k])])));
-  const summary = compact({jobId:code(job.id),code:error,stage,reason,nextStep,profile,exhaustedBy,upstreamCode,counters,hasCompleteArtifact:job.status === 'succeeded'});
+  const summary = compact({jobId:code(job.id),code:error,stage,reason,nextStep,profile,exhaustedBy,incompleteReason,maxOutputTokens,upstreamCode,counters,hasCompleteArtifact:job.status === 'succeeded'});
   summary.message = `${deliveryFailure ? '论文译文投递遇到问题' : '这篇论文未完成翻译'}（${stage}）：${reason}`
     + (counters.unknownUsageAttempts ? `另有${counters.unknownUsageAttempts}次请求用量未知，不能视为零消耗。` : '')
     + `${deliveryFailure ? '' : '尚无完整译稿可投递。'}${nextStep}\n任务：${summary.jobId ?? '未知'}；诊断码：${error}`;
