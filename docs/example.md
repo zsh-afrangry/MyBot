@@ -6,7 +6,7 @@
 > 下表有两处已随迁移变化、以正文之外的事实为准：
 >
 > - 旧 Kurumi/OpenClaw 与旧 QQ bridge 的**原路径已不存在**，现在归档在
->   `/home/afrangry/kurumi-archive/{legacy-openclaw,qq-bridge}`；回退时按[文档 15](15_旧系统回退.md)复制还原。
+>   `/home/afrangry/kurumi-archive/{legacy-openclaw,qq-bridge}`；回退时按[旧系统回退](12_目录资产与Git备份整理.md#旧系统回退)复制还原。
 > - “小鲸鱼角色卡（临时）”的临时性质仍在，当前角色声明见 [`config/persona.json`](../config/persona.json)。
 >
 > 正文由主人维护，改动前先确认意图；其余章节的行文与图示保持原样。

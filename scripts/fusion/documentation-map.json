@@ -5,7 +5,7 @@
     {
       "prefix": "scripts/fusion/",
       "documents": [
-        "docs/10_融合助手运行维护.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
         "docs/16_验收与测试总表.md"
       ]
     },
@@ -42,21 +42,21 @@
     {
       "prefix": "chatbot/plugins/kurumi-qq/test/",
       "documents": [
-        "docs/10_融合助手运行维护.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
         "docs/24_统一身份与权限管理.md"
       ]
     },
     {
       "prefix": "chatbot/plugins/kurumi-research/test/",
       "documents": [
-        "docs/10_融合助手运行维护.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
         "docs/21_后端职责分层与代码整理.md"
       ]
     },
     {
       "prefix": "chatbot/plugins/kurumi-tasks/test/",
       "documents": [
-        "docs/10_融合助手运行维护.md"
+        "docs/9_QQ融合助手架构与开发计划.md"
       ]
     },
     {
@@ -110,13 +110,13 @@
     {
       "prefix": "chatbot/tests/reminder-list/",
       "documents": [
-        "docs/19_提醒列表与定时汇总.md"
+        "docs/23_KnowledgeMap业务能力桥接.md"
       ]
     },
     {
       "prefix": "scripts/fusion/launchers/",
       "documents": [
-        "docs/10_融合助手运行维护.md"
+        "docs/9_QQ融合助手架构与开发计划.md"
       ]
     },
     {
@@ -164,7 +164,7 @@
     {
       "path": "chatbot/scripts/reminder-list.mjs",
       "documents": [
-        "docs/19_提醒列表与定时汇总.md"
+        "docs/23_KnowledgeMap业务能力桥接.md"
       ]
     },
     {
@@ -200,7 +200,7 @@
     {
       "path": "scripts/fusion/configure-deepseek-persona.mjs",
       "documents": [
-        "docs/10_融合助手运行维护.md"
+        "docs/9_QQ融合助手架构与开发计划.md"
       ]
     },
     {
@@ -218,13 +218,13 @@
     {
       "path": "scripts/fusion/openclaw-update-guard.sh",
       "documents": [
-        "docs/10_融合助手运行维护.md"
+        "docs/9_QQ融合助手架构与开发计划.md"
       ]
     },
     {
       "path": "scripts/fusion/restore-legacy.sh",
       "documents": [
-        "docs/15_旧系统回退.md"
+        "docs/12_目录资产与Git备份整理.md"
       ]
     },
     {
@@ -261,7 +261,7 @@
       "path": "chatbot/tests/reminder-list/log-query.test.mjs",
       "documents": [
         "docs/18_跨模块链路日志查询.md",
-        "docs/19_提醒列表与定时汇总.md"
+        "docs/23_KnowledgeMap业务能力桥接.md"
       ]
     },
     {
@@ -344,6 +344,30 @@
   ],
   "evidenceOwners": [
     {
+      "prefix": "shared-business-merge-2026-10-27/",
+      "documents": [
+        "docs/23_KnowledgeMap业务能力桥接.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "assets-rollback-merge-2026-10-27/",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "documentation-merge-2026-10-27/",
+      "documents": [
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "e7-interface-2026-10-27/",
       "documents": [
         "docs/27_E7数据插件设计.md",
@@ -354,7 +378,6 @@
     {
       "prefix": "reminder-list-multi-item-2026-10-27/",
       "documents": [
-        "docs/19_提醒列表与定时汇总.md",
         "docs/23_KnowledgeMap业务能力桥接.md"
       ],
       "category": "当前有效"
@@ -362,7 +385,7 @@
     {
       "prefix": "qq-image-2026-10-27/",
       "documents": [
-        "docs/10_融合助手运行维护.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
         "docs/16_验收与测试总表.md"
       ],
       "category": "当前有效"
@@ -411,7 +434,6 @@
       "prefix": "fusion/",
       "documents": [
         "docs/9_QQ融合助手架构与开发计划.md",
-        "docs/10_融合助手运行维护.md",
         "docs/16_验收与测试总表.md"
       ],
       "category": "当前有效"
@@ -419,7 +441,7 @@
     {
       "prefix": "deepseek-whale/",
       "documents": [
-        "docs/10_融合助手运行维护.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
         "docs/25_人格、记忆与会话连续性.md",
         "docs/21_后端职责分层与代码整理.md"
       ],
@@ -428,7 +450,7 @@
     {
       "prefix": "reminder-list-2026-10-11/",
       "documents": [
-        "docs/19_提醒列表与定时汇总.md"
+        "docs/23_KnowledgeMap业务能力桥接.md"
       ],
       "category": "当前有效"
     },
@@ -600,14 +622,14 @@
     {
       "path": "2026-10-10_projects-fusion-sync.md",
       "documents": [
-        "docs/10_融合助手运行维护.md"
+        "docs/9_QQ融合助手架构与开发计划.md"
       ],
       "category": "当前有效"
     },
     {
       "path": "2026-10-11_projects-fusion-sync.md",
       "documents": [
-        "docs/10_融合助手运行维护.md"
+        "docs/9_QQ融合助手架构与开发计划.md"
       ],
       "category": "当前有效"
     },

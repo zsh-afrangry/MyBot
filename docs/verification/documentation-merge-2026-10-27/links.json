@@ -1,0 +1,39 @@
+{
+  "at": "2026-10-27 (Asia/Shanghai)",
+  "scope": "Repository Markdown, top-level historical TXT navigation, local file/heading targets and fenced blocks; no network or private runtime reads.",
+  "baseline": {
+    "files": 98,
+    "localLinks": 1655,
+    "errors": [],
+    "fenceErrors": []
+  },
+  "current": {
+    "files": 99,
+    "localLinks": 1760,
+    "errors": [],
+    "fenceErrors": [],
+    "newErrors": [],
+    "newFenceErrors": []
+  },
+  "staleCurrentNavigation": [],
+  "currentNumberedDocuments": [
+    "12_目录资产与Git备份整理.md",
+    "15_旧系统回退.md",
+    "16_验收与测试总表.md",
+    "18_跨模块链路日志查询.md",
+    "19_提醒列表与定时汇总.md",
+    "20_邮件能力与横切扩展.md",
+    "21_后端职责分层与代码整理.md",
+    "22_论文PDF翻译与文件投递.md",
+    "23_KnowledgeMap业务能力桥接.md",
+    "24_统一身份与权限管理.md",
+    "25_人格、记忆与会话连续性.md",
+    "26_基础能力插件边界整理与检索接入设计.md",
+    "27_E7数据插件设计.md",
+    "9_QQ融合助手架构与开发计划.md"
+  ],
+  "numberedCount": 14,
+  "removedTopLevelOperationsExists": false,
+  "archiveFirstLine": "> **已合并（2026-10-27）：** 本文已并入[《QQ 融合助手架构与运行维护》](../9_QQ融合助手架构与开发计划.md)。以下为归档原文，仅供追溯；原文来源：`326eb958fa769619a313b81dfcf9f47dbdb50285:docs/10_融合助手运行维护.md`。仅校正归档后的相对链接，日期、命令、结果与授权范围按原时点保留。",
+  "ok": true
+}

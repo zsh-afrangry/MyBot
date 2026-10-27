@@ -1,0 +1,283 @@
+{
+  "date": "2026-10-27 (Asia/Shanghai)",
+  "baseline": "326eb958fa769619a313b81dfcf9f47dbdb50285",
+  "phase": "Completed",
+  "repositoryChecks": [
+    {
+      "name": "evidence-coverage",
+      "command": [
+        "node",
+        "scripts/fusion/evidence-coverage.mjs"
+      ],
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.039,
+      "layer": "repository/offline",
+      "writesProduction": false
+    },
+    {
+      "name": "evidence-index",
+      "command": [
+        "node",
+        "scripts/fusion/evidence-index.mjs",
+        "--check-markdown"
+      ],
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.06,
+      "layer": "repository/offline",
+      "writesProduction": false
+    },
+    {
+      "name": "documentation-map-tests",
+      "command": [
+        "node",
+        "--test",
+        "scripts/fusion/test/documentation-map.test.mjs"
+      ],
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.601,
+      "layer": "repository/offline",
+      "writesProduction": false
+    },
+    {
+      "name": "guard-syntax",
+      "command": [
+        "bash",
+        "-n",
+        "scripts/fusion/openclaw-update-guard.sh"
+      ],
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.002,
+      "layer": "repository/offline",
+      "writesProduction": false
+    },
+    {
+      "name": "bootstrap-syntax",
+      "command": [
+        "node",
+        "--check",
+        "scripts/fusion/configure-projects.mjs"
+      ],
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.021,
+      "layer": "repository/offline",
+      "writesProduction": false
+    },
+    {
+      "name": "whitespace",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.008,
+      "layer": "repository/offline",
+      "writesProduction": false
+    }
+  ],
+  "runtimeSelfChecks": [
+    {
+      "name": "health",
+      "command": [
+        "node",
+        "scripts/fusion/health.mjs"
+      ],
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.74,
+      "layer": "read-only runtime/canonical checkout",
+      "writesProduction": false,
+      "summary": {
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "testMethodDisabled": true,
+        "channelDatabase": "ok",
+        "weatherDatabase": "ok",
+        "remindersDatabase": "ok",
+        "reminderListDatabase": "ok",
+        "knowledgeMap": {
+          "ok": true
+        }
+      }
+    },
+    {
+      "name": "verify-dependencies",
+      "command": [
+        "node",
+        "scripts/fusion/verify-dependencies.mjs"
+      ],
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.06,
+      "layer": "read-only runtime/canonical checkout",
+      "writesProduction": false,
+      "summary": "ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 55 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies"
+    },
+    {
+      "name": "sync-config",
+      "command": [
+        "node",
+        "scripts/fusion/sync-config.mjs"
+      ],
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.033,
+      "layer": "read-only runtime/canonical checkout",
+      "writesProduction": false,
+      "summary": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+    },
+    {
+      "name": "sync-persona",
+      "command": [
+        "node",
+        "scripts/fusion/sync-persona.mjs"
+      ],
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "elapsedSeconds": 0.03,
+      "layer": "read-only runtime/canonical checkout",
+      "writesProduction": false,
+      "summary": "persona in sync with roles/世凪.md (12 workspace file(s) match)"
+    }
+  ],
+  "runtimeSelfCheckSourceAudit": {
+    "sourceWorktree": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+    "checkedCanonicalRoot": "/home/afrangry/kurumi-fusion",
+    "worktreeSdkPresent": false,
+    "files": [
+      {
+        "path": "scripts/fusion/health.mjs",
+        "sha256": "c6c111d1b4cb69a6425abcb2e81498ff29c22bc484931c4bb545b5eeddd2e17d",
+        "canonicalSha256": "c6c111d1b4cb69a6425abcb2e81498ff29c22bc484931c4bb545b5eeddd2e17d",
+        "equal": true
+      },
+      {
+        "path": "scripts/fusion/rpc.mjs",
+        "sha256": "0a1ef9953c4fa7232e1a9b85dc95feb206e23efca9f921f520a51d62c7435acc",
+        "canonicalSha256": "0a1ef9953c4fa7232e1a9b85dc95feb206e23efca9f921f520a51d62c7435acc",
+        "equal": true
+      },
+      {
+        "path": "scripts/fusion/verify-dependencies.mjs",
+        "sha256": "3dd4ffb29e6df50e041e8a3170fdefb74201907097432b19b2d03d9a5d132c34",
+        "canonicalSha256": "3dd4ffb29e6df50e041e8a3170fdefb74201907097432b19b2d03d9a5d132c34",
+        "equal": true
+      },
+      {
+        "path": "scripts/fusion/sync-config.mjs",
+        "sha256": "cb81f4e5911e1cecbbdd6a6aa3b49203bae020c3f74b123977913f58a2912362",
+        "canonicalSha256": "cb81f4e5911e1cecbbdd6a6aa3b49203bae020c3f74b123977913f58a2912362",
+        "equal": true
+      },
+      {
+        "path": "scripts/fusion/sync-persona.mjs",
+        "sha256": "707bb27462e714e07b928e6ca071439e0d02ae85c929de786427a9b2eea4b4bf",
+        "canonicalSha256": "707bb27462e714e07b928e6ca071439e0d02ae85c929de786427a9b2eea4b4bf",
+        "equal": true
+      },
+      {
+        "path": "scripts/fusion/lib/legacy-source.mjs",
+        "sha256": "e9206f084ba8ab2306741a0b2cb77e67df54c0e5a608601b454d5cf993fd4c5d",
+        "canonicalSha256": "e9206f084ba8ab2306741a0b2cb77e67df54c0e5a608601b454d5cf993fd4c5d",
+        "equal": true
+      },
+      {
+        "path": "chatbot/plugins/kurumi-qq/src/config.js",
+        "sha256": "324ec193dd3eb7a2b278e1028d5b12d1445a04fb89ff7ae007b021d40d3548ff",
+        "canonicalSha256": "324ec193dd3eb7a2b278e1028d5b12d1445a04fb89ff7ae007b021d40d3548ff",
+        "equal": true
+      },
+      {
+        "path": "chatbot/plugins/kurumi-qq/src/transport.js",
+        "sha256": "2968ae2d8f93f068064bc22cc2ed82e0ac7b99b9c68c0947ece401f60074894d",
+        "canonicalSha256": "2968ae2d8f93f068064bc22cc2ed82e0ac7b99b9c68c0947ece401f60074894d",
+        "equal": true
+      },
+      {
+        "path": "chatbot/packages/knowledgemap-client/client.js",
+        "sha256": "70b948412f6abfe26e5fd3d18221873c83bf3ac3a657ec063e716299e4a62d1f",
+        "canonicalSha256": "70b948412f6abfe26e5fd3d18221873c83bf3ac3a657ec063e716299e4a62d1f",
+        "equal": true
+      },
+      {
+        "path": "chatbot/plugins/personal-reminder-list/data-source.js",
+        "sha256": "049dfd12d29181915bfcd6ece733867f99c07210a60a2f4149d9a79b200a6886",
+        "canonicalSha256": "049dfd12d29181915bfcd6ece733867f99c07210a60a2f4149d9a79b200a6886",
+        "equal": true
+      },
+      {
+        "path": "config/runtime.config.json",
+        "sha256": "b2336bad5d67ce9ab4b2a661ce4143c164c8e8bce8d5d684db9c411781d9db08",
+        "canonicalSha256": "b2336bad5d67ce9ab4b2a661ce4143c164c8e8bce8d5d684db9c411781d9db08",
+        "equal": true
+      },
+      {
+        "path": "config/access-control.json",
+        "sha256": "5a0c6e910d2d52afd542d523fbbfaebbcef84214e5d3ce2e3baca53382da052b",
+        "canonicalSha256": "5a0c6e910d2d52afd542d523fbbfaebbcef84214e5d3ce2e3baca53382da052b",
+        "equal": true
+      },
+      {
+        "path": "config/persona.json",
+        "sha256": "4f3b01ad5e78b6b33e3db8bdf3a05654cdcb6bb6e589cc43bb7e824fa00f81a8",
+        "canonicalSha256": "4f3b01ad5e78b6b33e3db8bdf3a05654cdcb6bb6e589cc43bb7e824fa00f81a8",
+        "equal": true
+      }
+    ],
+    "ok": true
+  },
+  "preservation": {
+    "command": "python3 /tmp/fusion-doc-merge-20261027-98udmpna/check-preservation.py",
+    "exitCode": 0,
+    "report": "preservation.json"
+  },
+  "linkInitial": {
+    "command": "python3 /tmp/fusion-doc-merge-20261027-98udmpna/check-links.py",
+    "exitCode": 1,
+    "report": "links-initial.json",
+    "reason": "Three referenced reports were not written yet: preservation.json, checks.json and links.json. No other link or anchor errors."
+  },
+  "authorization": {
+    "requested": "Merge architecture and operations, update related references and wording, archive the superseded document with a first-line notice, refresh outdated document text.",
+    "productionWrites": false,
+    "serviceRestartOrStop": false,
+    "qqOrMailSend": false,
+    "paidModelOrApi": false,
+    "quiescedBackupOrRestore": false,
+    "remoteWrites": false
+  },
+  "linkFinal": {
+    "command": "python3 /tmp/fusion-doc-merge-20261027-98udmpna/check-links.py",
+    "exitCode": 0,
+    "report": "links.json",
+    "documents": 99,
+    "localLinks": 1760,
+    "errors": 0,
+    "currentNumberedDocuments": 14
+  },
+  "newMarkdownWhitespace": {
+    "files": [
+      "docs/archive/10_融合助手运行维护.md",
+      "docs/verification/documentation-merge-2026-10-27/README.md"
+    ],
+    "errors": []
+  },
+  "ok": true,
+  "gitState": {
+    "head": "326eb958fa769619a313b81dfcf9f47dbdb50285",
+    "committedThisTask": false,
+    "pushedThisTask": false
+  }
+}

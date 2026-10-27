@@ -135,7 +135,7 @@ node scripts/fusion/sync-persona.mjs --apply
 
 | 领域 / 来源键 | 配置与同步边界 | 详细规则 |
 | --- | --- | --- |
-| 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [19](../docs/19_提醒列表与定时汇总.md)、[23迁移/切换](../docs/23_KnowledgeMap业务能力桥接.md#迁移) |
+| 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [提醒列表与播报](../docs/23_KnowledgeMap业务能力桥接.md#提醒列表与定时汇总)、[迁移与切换](../docs/23_KnowledgeMap业务能力桥接.md#迁移) |
 | 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析/默认城市桥接，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [21当前生产实现](../docs/21_后端职责分层与代码整理.md#当前生产实现) |
 | 阅读：`kurumi-research.config.cacheRoot` | 显式缓存位置，不从QQ频道目录推导 | [21共享边界](../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期) |
 | 记忆：`continuity.enabled/summaryTtlDays/maxContextChars` | 仓库为true/7/6000；TTL范围1–30天、缺省7；资料预算2000–12000字符、缺省6000 | [25存储与检索](../docs/25_人格、记忆与会话连续性.md#记忆存储与检索) |
@@ -175,7 +175,7 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 | 配置对齐 | `sync-config.mjs`（漂移时非零退出）与 `sync-persona.mjs` | 代码已提交、已推送；模型风格符合主观预期 |
 | 依赖自持 | `verify-dependencies.mjs` | 领域功能正确、隔离恢复可运行 |
 | 服务健康 | `health.mjs` | 真实模型理解、真实 QQ 往返、提醒一定送达 |
-| 版本收录 | `git status` / `git log` / 远端实查 SHA（见文档 12、15） | 运行配置与仓库一致 |
+| 版本收录 | `git status` / `git log` / 远端实查 SHA（见[Git与实时状态查询](../docs/12_目录资产与Git备份整理.md#git-与实时状态查询)） | 运行配置与仓库一致 |
 
 **四项自检全过不等于改动已提交或已推送。** 提交范围与远端同步状态必须单独用 Git 命令核对，
 远端要看实查 SHA（`git ls-remote`），不能只看缓存的 `origin/main`。

@@ -12,9 +12,9 @@ OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领�
 |---|---|---|
 | 开发新系统 | `/home/afrangry/kurumi-fusion` → 远端 `MyBot`（`git@github.com:zsh-afrangry/MyBot.git`） | [文档 12](docs/12_目录资产与Git备份整理.md) |
 | 新系统运行数据 | `/home/afrangry/.openclaw-fusion`（配置、凭据、会话、记忆、数据库、提醒、任务） | [config/README.md](config/README.md) |
-| 旧 bridge 二次开发 | 封存分支 `personal/main` + 标签 `seal/qq-bridge-personal-2026-10-05` | [文档 15](docs/15_旧系统回退.md) |
+| 旧 bridge 二次开发 | 封存分支 `personal/main` + 标签 `seal/qq-bridge-personal-2026-10-05` | [旧系统回退](docs/12_目录资产与Git备份整理.md#旧系统回退) |
 | 恢复资料 | `/home/afrangry/kurumi-backups` | [文档 16](docs/16_验收与测试总表.md) |
-| 官方组件 | SnowLuma、DSH、OpenClaw 按固定版本与升级流程管理，不手工改动安装目录 | [文档 10](docs/10_融合助手运行维护.md) |
+| 官方组件 | SnowLuma、DSH、OpenClaw 按固定版本与升级流程管理，不手工改动安装目录 | [依赖与升级恢复](docs/9_QQ融合助手架构与开发计划.md#固定依赖与升级恢复) |
 
 旧目录已移出活动位置的统一放在 `/home/afrangry/kurumi-archive`（详见其 `README.md`）。
 

@@ -6,6 +6,9 @@
 
 | 路径 | 用途 |
 | --- | --- |
+| [`shared-business-merge-2026-10-27/README.md`](shared-business-merge-2026-10-27/README.md) 及同目录全部文件 | 提醒列表规则与定时播报并入KnowledgeMap共享业务；原列表文档归档、引用与脚本/证据归属同步、链接与正文保留检查；不重新验收业务 |
+| [`assets-rollback-merge-2026-10-27/README.md`](assets-rollback-merge-2026-10-27/README.md) 及同目录全部文件 | 资产、备份与旧系统回退合并；原回退归档、导航/归属与链接/保留核对，不包含真实恢复或服务切换 |
+| [`documentation-merge-2026-10-27/README.md`](documentation-merge-2026-10-27/README.md) 及同目录全部文件 | 架构与运行维护合并、原运行维护归档、现行引用和历史导航调整、章节/链接/归属与只读自检；不改变业务验收 |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
 | [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md) 及同目录全部文件 | E7·WIKI真实公开读取接口盘点、分页/检索参数对照、字段覆盖与缓存头；固定检索/AI职责判断依据；无生产插件、模型或QQ外发 |
 | [`reminder-list-multi-item-2026-10-27/README.md`](reminder-list-multi-item-2026-10-27/README.md)、[闭合记录](reminder-list-multi-item-2026-10-27/closeout.md)及同目录全部文件 | 2026-10-27 提醒列表单消息多项的离线/隔离HTTP、人格与运行核对、01:46真人QQ及后端只读证据；文档收尾与分层证明范围 |
@@ -25,10 +28,10 @@
 | `recovery-2026-10-10/*` | 上述报告的原始证据：`verification.json`、`isolation-result.json`、`gateway-probe.log`、备份 `EXPECTED.json` 与 `meta` |
 | [`recovery-2026-10-06/README.md`](recovery-2026-10-06/README.md) | 上一恢复点（`466b5074`）的恢复与隔离报告，保留作为历史对照 |
 | `recovery-2026-10-06/*` | 上述报告引用的逐项 JSON、日志和测试输出 |
-| [`2026-10-10_projects-fusion-sync.md`](2026-10-10_projects-fusion-sync.md) | 后台开发副本同步到主仓库 `dacfac4` 的前后状态、归档、沙箱检查复验与未覆盖范围（规则见[文档 10 的后台开发副本契约](../10_融合助手运行维护.md#后台开发副本契约)） |
-| [`2026-10-11_projects-fusion-sync.md`](2026-10-11_projects-fusion-sync.md) | 后台开发副本同步到主仓库 `c039e3d`、冲突处理和最终工作区复核（规则见[文档 10 的后台开发副本契约](../10_融合助手运行维护.md#后台开发副本契约)） |
+| [`2026-10-10_projects-fusion-sync.md`](2026-10-10_projects-fusion-sync.md) | 后台开发副本同步到主仓库 `dacfac4` 的前后状态、归档、沙箱检查复验与未覆盖范围（规则见[后台开发副本契约](../9_QQ融合助手架构与开发计划.md#后台开发副本契约)） |
+| [`2026-10-11_projects-fusion-sync.md`](2026-10-11_projects-fusion-sync.md) | 后台开发副本同步到主仓库 `c039e3d`、冲突处理和最终工作区复核（规则见[后台开发副本契约](../9_QQ融合助手架构与开发计划.md#后台开发副本契约)） |
 | `fusion/*` | 融合系统阶段验收和最终运行回执；以 recovery 报告和 16 为当前恢复结论 |
-| [`deepseek-whale/README.md`](deepseek-whale/README.md) 及同目录全部文件 | 文档11归并后的迁移、模型/图片验收与历史边界；当前规则分别归配置契约、10、21、25 |
+| [`deepseek-whale/README.md`](deepseek-whale/README.md) 及同目录全部文件 | 文档11归并后的迁移、模型/图片验收与历史边界；当前规则分别见配置契约、[架构与运行维护手册](../9_QQ融合助手架构与开发计划.md)、后端分层与人格记忆规则 |
 | [`mail-2026-10-16/README.md`](mail-2026-10-16/README.md) 及同目录全部文件 | 文档20文本邮件86项回归、真实SMTP/到信/QQ往返，时间戳接缝与误判更正；从原文迁入，整理时未重跑 |
 | [`reminder-list-2026-10-11/README.md`](reminder-list-2026-10-11/README.md) 及同目录全部文件 | 提醒列表初版证据及 `natural-input/` 自然多轮录入、空 DDL、实际会话重置、原功能回归与部署复验；原生本人 QQ 投递仍单独引用初版记录 |
 | [`backend-refactor-2026-10-16/README.md`](backend-refactor-2026-10-16/README.md) 及同目录全部文件 | 初轮职责分层；`structured-items/` 保存指代修复，`adapters/` 保存初次策略/存储替换、373 项回归与模型/隔离宿主证据；[`adapter-contracts/`](backend-refactor-2026-10-16/adapter-contracts/README.md) 保存同步返回/注销身份补正、最新 395 项回归、构建与运行自检 |

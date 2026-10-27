@@ -7,7 +7,7 @@
 // Routine maintenance instead:
 //   - registry (projects.json): scripts/fusion/register-project.mjs
 //   - agent definition (agents.entries.<id>): config/runtime.config.json + sync-config.mjs
-// See docs/10_融合助手运行维护.md.
+// See docs/9_QQ融合助手架构与开发计划.md#代码项目接入与合入.
 //
 // Register an independent fusion checkout. Existing checkouts and fixture state are never silently replaced.
 import fs from 'node:fs';

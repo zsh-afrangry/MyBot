@@ -1,0 +1,18 @@
+✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (1.047324ms)
+✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (2.767563ms)
+▶ CLI verifies ownership and saved Markdown without touching the real repository
+  ✔ saved table and both P2 evidence overrides survive generation (106.812264ms)
+  ✔ unknown source fails even inside a known suite (41.920647ms)
+  ✔ missing document and invalid/duplicate selectors fail (91.00128ms)
+  ✔ an existing classified script without a document owner fails (49.86173ms)
+  ✔ stale generated table or reversed markers fail (108.799279ms)
+  ✔ new receipts inherit a named suite; unknown evidence directory fails (77.956006ms)
+✔ CLI verifies ownership and saved Markdown without touching the real repository (547.356016ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 614.99667
