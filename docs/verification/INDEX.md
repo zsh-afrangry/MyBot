@@ -6,11 +6,14 @@
 
 | 路径 | 用途 |
 | --- | --- |
+| [`coding-delegation-plan-2026-10-28/README.md`](coding-delegation-plan-2026-10-28/README.md) 及同目录全部文件 | 本机编码委托需求整理、编号与worktree/主目录差异说明、三组文档合并结果的本地合入、最新规则保留及索引检查；未启用执行能力 |
 | [`shared-business-merge-2026-10-27/README.md`](shared-business-merge-2026-10-27/README.md) 及同目录全部文件 | 提醒列表规则与定时播报并入KnowledgeMap共享业务；原列表文档归档、引用与脚本/证据归属同步、链接与正文保留检查；不重新验收业务 |
 | [`assets-rollback-merge-2026-10-27/README.md`](assets-rollback-merge-2026-10-27/README.md) 及同目录全部文件 | 资产、备份与旧系统回退合并；原回退归档、导航/归属与链接/保留核对，不包含真实恢复或服务切换 |
 | [`documentation-merge-2026-10-27/README.md`](documentation-merge-2026-10-27/README.md) 及同目录全部文件 | 架构与运行维护合并、原运行维护归档、现行引用和历史导航调整、章节/链接/归属与只读自检；不改变业务验收 |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
-| [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md) 及同目录全部文件 | E7·WIKI真实公开读取接口盘点、分页/检索参数对照、字段覆盖与缓存头；固定检索/AI职责判断依据；无生产插件、模型或QQ外发 |
+| [`capability-review-2026-10-28/README.md`](capability-review-2026-10-28/README.md) 及同目录全部文件 | 当前插件/依赖方向、Policy/Store与权限分级复核；377项离线、7组隔离宿主、生产目录与四项自检；首批E7用户反馈登记及第二批开发准备边界 |
+| [`natural-confirmation-2026-10-27/README.md`](natural-confirmation-2026-10-27/README.md) 及同目录全部文件 | N4自然语言二次确认：用户批准范围、核心/领域/权限/回执回归、真实隔离宿主和运行对齐；真人QQ与真实模型语义未验收 |
+| [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md)、[角色补充](e7-interface-2026-10-27/character-sample/README.md)、[查询契约](e7-interface-2026-10-27/query-contract/README.md)、[首批实现](e7-interface-2026-10-27/phase1/README.md)及同目录全部文件 | E7·WIKI公开读取、角色/图片取样与分类设计；首批6类只读查询的实现、离线/真实取数/隔离宿主/分轮模型及生产加载证据。各阶段不互相替代，QQ与图片结论分别记录 |
 | [`reminder-list-multi-item-2026-10-27/README.md`](reminder-list-multi-item-2026-10-27/README.md)、[闭合记录](reminder-list-multi-item-2026-10-27/closeout.md)及同目录全部文件 | 2026-10-27 提醒列表单消息多项的离线/隔离HTTP、人格与运行核对、01:46真人QQ及后端只读证据；文档收尾与分层证明范围 |
 | [`qq-image-2026-10-27/retest-0119.md`](qq-image-2026-10-27/retest-0119.md) 及同目录全部文件 | 2026-10-27 QQ图片初测失败与Fake-IP定向修复后复测：本人JPG入站、PNG表情外发、只读账本核对和前端确认；保留首次失败，图片子项已验收 |
 | [`git-consolidation-2026-10-24/README.md`](git-consolidation-2026-10-24/README.md) 及同目录全部文件 | 文档整理与主线补验的冲突合并、记忆调研保留、主线收拢与分支清理；保留各业务原证明范围 |
@@ -36,6 +39,11 @@
 | [`reminder-list-2026-10-11/README.md`](reminder-list-2026-10-11/README.md) 及同目录全部文件 | 提醒列表初版证据及 `natural-input/` 自然多轮录入、空 DDL、实际会话重置、原功能回归与部署复验；原生本人 QQ 投递仍单独引用初版记录 |
 | [`backend-refactor-2026-10-16/README.md`](backend-refactor-2026-10-16/README.md) 及同目录全部文件 | 初轮职责分层；`structured-items/` 保存指代修复，`adapters/` 保存初次策略/存储替换、373 项回归与模型/隔离宿主证据；[`adapter-contracts/`](backend-refactor-2026-10-16/adapter-contracts/README.md) 保存同步返回/注销身份补正、最新 395 项回归、构建与运行自检 |
 | [`paper-api-2026-10-17/README.md`](paper-api-2026-10-17/README.md) 及同目录全部文件 | 论文翻译第三方协议探查：014 凭据的 Responses/Chat、显式 instructions 输入开销、JSON/占位符和输出预算；不代表 pdf2zh 或文件投递已验收 |
+| [00:23生产翻译失败调查](paper-translation-2026-10-17/runtime-failure-2026-10-27/README.md) | 2026-10-27只读任务/回执核对：300963已报告token触发300000预算，030的9笔大输入占205549；5项离线预算/流测试通过。用量来源与修复待处理，未付费重试或修改配置 |
+| [论文默认DeepSeek与失败说明](paper-translation-2026-10-17/default-deepseek-notification-2026-10-27/README.md) | 2026-10-27默认官方Flash/high、结构化诊断与原会话无工具说明；125项Node、74项Python回归和真实隔离宿主/固定模型通过。部署状态见回执；本轮无真实模型/API/QQ，真人效果待复验 |
+| [17:03论文查询与DeepSeek重译实测调查](paper-translation-2026-10-17/qq-retest-2026-10-27-1703/README.md) | 2026-10-27只读核对本人既有QQ实测：旧状态结果截断；明确要求的DeepSeek新任务95028报告token、单次8192后未完成；后台说明作用域关闭，中文兜底sent且上下文入队。N22待处理，本次未重试/调预算/修代码 |
+| [论文输出限制与延迟通知修复](paper-translation-2026-10-17/output-limit-2026-10-27/README.md) 及同目录文件 | 用户要求移除8192，DeepSeek按官方393216请求；未完成原因/安全状态摘要、后台生命周期修复。128项Node、76项Python、真实隔离宿主延迟通知正负对照通过；无付费重译或QQ测试外发，部署与真人边界见报告 |
+| [18:35后论文成功实测与N22闭合](paper-translation-2026-10-17/qq-success-2026-10-27-1835/README.md) 及同目录文件 | 2026-10-27只读核对主人既有实测：18:36–18:42默认官方Flash/high，179次完成、283340报告token、393216输出上限、30页双语PDF完整及一次QQ投递；主人确认正常，N22闭合。失败主动说明保持隔离验证边界，本次未新增模型/外发/部署 |
 | [`paper-translation-2026-10-17/README.md`](paper-translation-2026-10-17/README.md) 及同目录全部文件 | 文档22的实现、回归、下载/编排与翻译/投递；[日常运行调查](paper-translation-2026-10-17/runtime-investigation-2026-10-19/README.md)收录日常成功、30页冷启动/冷却瓶颈和MD上传后旧译稿误重发的原时点证据；[file-ingress](paper-translation-2026-10-17/file-ingress-2026-10-19/README.md)收录附件事实/纯失败零模型分流修复、191项回归、13场景真实隔离模型/独立产物复验及部署（全套人格对齐归并行文档25）；[output-idle](paper-translation-2026-10-17/output-idle-2026-10-19/README.md)收录有效正文空闲100秒、独立总期限、取消/有界切换及部署检查（原开发时点）；[concurrency-six](paper-translation-2026-10-17/concurrency-six/README.md)收录单篇六并发对比（生产配置仍四并发）；[batch-recovery](paper-translation-2026-10-17/batch-recovery/README.md)收录批次有界重试、冷却恢复、连接诊断/及时取消与真实整篇复验；[high-dual-fix](paper-translation-2026-10-17/high-dual-fix/README.md)收录high默认、30分钟、双语生成/登记与600秒调查；[channel-upgrade](paper-translation-2026-10-17/channel-upgrade/README.md)为三渠道/DeepSeek串行基线；[concurrency-four](paper-translation-2026-10-17/concurrency-four/README.md)为单篇4并发、全文缓存复验与逐篇投递时序；[deepseek-max-default](paper-translation-2026-10-17/deepseek-max-default/README.md)为旧MAX默认。各回执注明缓存/失败/质量边界 |
 | [knowledgemap-bridge-2026-10-17/README.md](knowledgemap-bridge-2026-10-17/README.md) 及目录全部文件 | 文档23天气/待做/账单桥接；隔离API、MySQL恢复、网页、模型/宿主与切换证据 |
 | [knowledgemap-bills-round2-2026-10-17/README.md](knowledgemap-bills-round2-2026-10-17/README.md) 及目录全部文件 | 文档23第二轮账单完整维护、共享版本/幂等、真实宿主runId关联与部署验收 |

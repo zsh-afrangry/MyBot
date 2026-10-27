@@ -14,6 +14,7 @@
 | --- | --- | --- |
 | Fusion 源码与配置意图 | `/home/afrangry/kurumi-fusion`，MyBot `main` | Git；远端 `git@github.com:zsh-afrangry/MyBot.git`，运行副本不作为源码主线 |
 | 私有运行状态 | `/home/afrangry/.openclaw-fusion` | 凭据、会话、记忆、业务状态和产物走私密备份；根目录不建 Git |
+| E7公开资料缓存 | `.openclaw-fusion/state/kurumi-e7` | 仅公开JSON及条件请求/哈希元数据，可重新抓取；整目录备份包含它，不作为聊天或业务账本 |
 | 后台项目副本 | `.openclaw-fusion/projects/fusion` | 独立代码 Git；同步、审阅和合入只按[后台开发副本契约](9_QQ融合助手架构与开发计划.md#后台开发副本契约) |
 | 旧 A 原件 | `/home/afrangry/kurumi-archive/legacy-openclaw` | 封存版本 `f8319c1`已包含在MyBot `main`历史中；原`archive/legacy-openclaw`分支清理不删除历史或原件；不直接启动或修改，凭据/依赖另靠私密归档 |
 | 旧 B bridge 原件 | `/home/afrangry/kurumi-archive/qq-bridge` | 独立 Git；封存 `d64a4d2`、`personal/main`、`seal/qq-bridge-personal-2026-10-05`；保留 upstream 和本地恢复资料 |

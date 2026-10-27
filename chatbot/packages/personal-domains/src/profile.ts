@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { WeatherError, type WeatherErrorCode } from "./errors.js";
 import { formatTimestamp } from "./time-display.js";
 
-import { buildConfirmationInstruction, type ConfirmationScope } from "@kurumi/confirmation-core";
+import { type ConfirmationScope } from "@kurumi/confirmation-core";
 import { OWNER_SUBJECT_ID } from "./store.js";
 import type {
   CurrentLocation,
@@ -267,14 +267,12 @@ export async function proposeProfileChange(
     expiresAtUtc,
     ...(scope === undefined ? {} : { scope }),
   });
-  // The instruction can only be appended once the proposal exists, since it
-  // carries the generated id and hash. Telling the owner merely to "confirm
-  // clearly" is what let the model invent its own confirmation wording.
-  const confirmationInstruction = buildConfirmationInstruction(created.proposalId, created.payloadHash);
+  // Natural assent is resolved by the shared tool against the delivered frozen preview.
+  const confirmationInstruction = "确认";
   const previewText = [
     basePreview,
     `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-    "请在本次主人 QQ 私聊回复下面这一行原文，确认后才会更新：",
+    "请确认这份预览；有多项时说明要确认哪一项。确认后才会更新：",
     confirmationInstruction,
   ].join("\n");
 
@@ -410,9 +408,7 @@ function grantMessage(
     case "approval_required":
       return proposal === undefined
         ? "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。"
-        : `需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。请主人原样发送：${
-          buildConfirmationInstruction(proposal.proposalId, proposal.payloadHash)
-        }`;
+        : "需要本人下一条消息确认已展示的预览；先用personal_confirmation查询并确认具体提案，再提交。";
     case "grant_expired":
       return "确认已过期，请重新确认最新提案。";
     case "grant_replayed":

@@ -4,5 +4,7 @@
   "description": "Shared inbound confirmation governance for Kurumi capabilities.",
   "version": "0.1.0",
   "configSchema": { "type": "object", "properties": {}, "additionalProperties": false },
+  "contracts": {"tools": ["personal_confirmation"]},
+  "toolMetadata": {"personal_confirmation": {"optional": true}},
   "activation": { "onStartup": true }
 }

@@ -96,6 +96,9 @@ export type GrantCheck =
   | {ok: false; code: string};
 
 export interface Store {
+  /** Required for natural confirmations; absent adapters fail closed, without a SQLite fallback. */
+  readonly natural?: import('@kurumi/confirmation-core').NaturalConfirmationBackend;
+
   /** Current time in Unix seconds; the tables store seconds, never milliseconds. */
   nowUtc(): number;
   close(): void;

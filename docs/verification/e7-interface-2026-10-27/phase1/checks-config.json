@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-27T10:02:38.072992+00:00",
+  "command": "node scripts/fusion/sync-config.mjs --check",
+  "exitCode": 0,
+  "outputSha256": "45e09e5b6b6febdd67cf7b0febcc1daec5e29cc6047c5a4ea5d9ad6f04da0fde",
+  "passed": true
+}

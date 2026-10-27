@@ -21,6 +21,7 @@ export interface ConfirmationInboundEvent {
   content: string;
   timestamp?: number;
   replyToIsQuote?: boolean;
+  replyToMessageId?: string;
   metadata?: Record<string, unknown>;
   isGroup: boolean;
   senderIsOwner?: boolean;
@@ -44,6 +45,28 @@ export interface ConfirmationProposalRow {
   status: ConfirmationProposalStatus;
   createdAtUtc: number;
   expiresAtUtc: number;
+}
+
+export interface NaturalConfirmationSelection {
+  proposalId: string;
+  payloadHash: string;
+  domain: string;
+}
+
+export interface ConfirmationPreview extends ConfirmationProposalRow {
+  previewText: string | null;
+  sourceMessageId: string | null;
+  presentedAtUtc: number | null;
+  presentationMessageId: string | null;
+}
+
+/** Domain-owned persistence; transport hooks can save previews, never approvals. */
+export interface NaturalConfirmationBackend {
+  list(event: ConfirmationInboundEvent): ConfirmationPreview[];
+  used(event: ConfirmationInboundEvent): NaturalConfirmationSelection[];
+  savePreview(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, text: string): boolean;
+  presented(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, messageId: string): boolean;
+  confirm(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection): boolean;
 }
 
 export type ConfirmationGrantCheck =

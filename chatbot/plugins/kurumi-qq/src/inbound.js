@@ -1,3 +1,4 @@
+import {recordConfirmationDelivery} from '@kurumi/confirmation-core';
 import fs from 'node:fs';
 import path from 'node:path';
 import {activeSubject, agentFor, sessionFor, targetSubject} from '../../../packages/access-control/index.js';
@@ -71,7 +72,8 @@ export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverrid
    if(urls.length>1)throw Error('Multiple media pending implementation');
    const args={cfg,to,signal,text:payload.text??'',mediaUrl:urls[0],replyToId:payload.replyToId,key:`in:${msg.id}:${index++}`};
    targetSubject(to,cfg,'qq.reply');
-   await (deliverOverride??sendPayload)(args);
+   const receipt=await (deliverOverride??sendPayload)(args);
+   if(subject.role==='owner'&&receipt?.messageId&&payload.text)recordConfirmationDelivery({accountId:'default',conversationId:to,sourceMessageId:msg.messageId,messageId:String(receipt.messageId),text:payload.text});
   },onError:e=>{deliveryError=e;log?.error?.('Kurumi QQ reply delivery failed');}},replyOptions:{disableBlockStreaming:true}});
   if(deliveryError)throw deliveryError;
   ledger.finish(msg.id,'completed');return {ok:true,sessionKey:route.sessionKey,stagedImages:media.length,quoteLoaded:!!quote,modelDispatched:true};

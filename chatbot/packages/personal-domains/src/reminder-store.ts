@@ -20,6 +20,7 @@ import {
   markConfirmationProposalExpired,
   registerConfirmationProposal,
   scopeFromInboundEvent,
+  createNaturalConfirmationBackend,
   type ConfirmationInboundEvent,
   type ConfirmationGrantCheck,
   type ConfirmationProposalRow,
@@ -158,6 +159,10 @@ export class ReminderStore {
       this.#database.close();
       this.#closed = true;
     }
+  }
+
+  get natural() {
+    return createNaturalConfirmationBackend(this.#database, {subjectId: REMINDER_SUBJECT_ID, domains: ['personal_reminder'], now: () => this.getNowUtc()});
   }
 
   getNowUtc(): number {

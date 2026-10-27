@@ -1,0 +1,52 @@
+{
+  "at": "2026-10-26T18:51:52.139375+00:00",
+  "boundary": "本地合成数据、注入模型传输/假投递；不调用真实模型/API/QQ。",
+  "node": {
+    "command": "node --test chatbot/tests/papers/*.test.mjs chatbot/tests/access-control/*.test.mjs chatbot/tests/persona/projection.test.mjs",
+    "exitCode": 0,
+    "tests": 125,
+    "pass": 125,
+    "fail": 0,
+    "cancelled": 0,
+    "skipped": 0
+  },
+  "pythonResponses": {
+    "cwd": "chatbot/tests/papers",
+    "command": "python3 -m unittest -v responses_test concurrency_test reliability_test",
+    "tests": 59,
+    "pass": 59,
+    "fail": 0,
+    "durationSeconds": 4.71
+  },
+  "pythonEngine": {
+    "cwd": "chatbot/tests/papers",
+    "command": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python engine_test.py",
+    "tests": 15,
+    "pass": 15,
+    "fail": 0,
+    "durationSeconds": 5.56,
+    "warnings": "锁定依赖的SWIG弃用警告，不影响结果"
+  },
+  "host": {
+    "command": "node chatbot/tests/papers/acceptance-notification-host.mjs --out /tmp/kurumi-paper-notification-host-20261027-1.json",
+    "passed": true,
+    "report": "host.json",
+    "realGateway": true,
+    "localDeterministicModel": true,
+    "fakePublisher": true
+  },
+  "credentials": {
+    "file": "paper-credentials.json（仅私密运行目录）",
+    "regularFile": true,
+    "mode": "0600",
+    "deepseekFieldNonempty": true,
+    "keyValueRecorded": false,
+    "accountOrApiVerified": false
+  },
+  "notVerified": [
+    "真实DeepSeek密钥/余额与本轮完整翻译",
+    "真实模型解释与QQ实际通知/追问",
+    "030异常输入用量的渠道侧原因",
+    "全文逐字/公式质量"
+  ]
+}

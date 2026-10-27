@@ -21,11 +21,12 @@
 | `.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` | 主人连续性记忆唯一事实：长期事实、7天（可配置1–30天）近期摘要、来源、版本与遗忘屏障 | ❌ 仅私有备份；由备份脚本做 SQLite 一致快照 |
 | `.openclaw-fusion/users/<QQ>/workspace/` | 成员独立 Agent 的四份受管人格/规则文件及个人会话环境，不复制主人记忆/资料 | ❌ 仅私有备份 |
 | `.openclaw-fusion/state/` | 一次性提醒、天气、Profile、行程；共享列表的设置/投递账本及冻结旧事项（SQLite） | ❌ 仅私有备份 |
+| `.openclaw-fusion/state/kurumi-e7/` | E7公开资料JSON缓存、哈希与条件请求元数据；不存聊天/身份/凭据 | ❌ 可从公开站点重建；随整目录私密备份保留 |
 | `.openclaw-fusion/channel/` | 频道账本、贴纸目录、发送回执 | ❌ 仅私有备份 |
 | `.openclaw-fusion/agents/` | 各 Agent 的原生会话 SQLite、保留的历史 JSONL 等资料；读取归属见文档25 | ❌ 仅私有备份 |
 | `.openclaw-fusion/{code,research}-workspace/`、`project-checks/`、`research-cache/` | 后台任务与研究的隔离工作区、检查夹具、缓存 | ❌ 仅私有备份 |
 | `.openclaw-fusion/plugins/` | 受控第三方插件安装（由仓库锁文件重建） | ❌ 可重建 |
-| `.openclaw-fusion/paper-credentials.json` | 论文翻译凭据，0600；GPT 014 → 030 → 040 与独立 DeepSeek 官方 Key，按本次厂商选取 | ❌ 仅私有备份 |
+| `.openclaw-fusion/paper-credentials.json` | 论文翻译凭据，0600；默认DeepSeek官方的`DEEPSEEK_API_KEY`，显式GPT选用014 → 030 → 040独立池；按本次厂商选取 | ❌ 仅私有备份 |
 | `.openclaw-fusion/documents/` | 受管 PDF、任务/产物记录、论文链路事件及模型/字体/译文缓存 | ❌ 仅私有备份；缓存可重建 |
 | `.openclaw-fusion/venvs/paper-translation/` | 按锁文件重建的 Python 3.12 翻译环境 | ❌ 可重建 |
 | `.openclaw-fusion/paper-acceptance/` | 明确授权的真实 PDF 验收状态与缓存，归属文档 22 | ❌ 私有验收资料 |
@@ -110,6 +111,7 @@ node scripts/fusion/sync-persona.mjs --apply
 | 工具白名单 | 同上，`agents.entries.main.tools.alsoAllow` | `sync-config.mjs --apply` |
 | 禁用某类工具 | 同上，`tools.deny` / `tools.fs` | `sync-config.mjs --apply` |
 | 插件开关或参数 | 同上，`plugins.entries.<id>` | `sync-config.mjs --apply` |
+| E7本人只读查询 | `plugins.entries.kurumi-e7`、main的`e7_data`与身份表owner的`e7.read` | 首批6类、7个角色view；缓存24小时，公告/码30分钟，本地05:30串行刷新；差异审阅后同步并重启，验收见[文档27](../docs/27_E7数据插件设计.md) |
 | 发送限额 / 分段 | 同上，`channels.kurumi-qq` | `sync-config.mjs --apply` |
 | 搜索 provider | 同上，`tools.web` | `sync-config.mjs --apply` |
 | 轮换 API Key | **只改** `.openclaw-fusion/runtime-env.json` | 重启服务 |

@@ -1,5 +1,8 @@
 # QQ 融合助手架构与运行维护
 
+<a id="qq-融合助手架构与边界"></a>
+<a id="融合助手运行维护"></a>
+
 类型：架构规则与操作手册。状态：维护现行架构、开发运维与后台副本契约；各领域上线范围、验收结论和未完成项分别见归属文档与[验收总表](16_验收与测试总表.md)。
 
 本文说明系统如何组成、职责与能力边界，以及开发、检查和维护的操作路径。阅读入口见[README](README.md)，配置意图与运行事实的分工见[配置契约](../config/README.md)；逐轮开发和部署过程进入验证记录。
@@ -158,6 +161,7 @@ systemctl --user start kurumi-fusion.service
 | 适配器 | `node --test chatbot/tests/domain-adapters/*.test.mjs` |
 | 权限 | `node --test chatbot/tests/access-control/*.test.mjs` |
 | 检索提供方 | `node --test chatbot/tests/web-deepseek/*.test.mjs` |
+| E7只读数据 | `npm --prefix chatbot/plugins/kurumi-e7 run build`；`node --test chatbot/tests/e7/*.test.mjs`；实际HTTP/宿主/模型记录归文档27，不能用离线结果代替QQ验收 |
 | 人格与连续性记忆 | `node --test chatbot/tests/persona/*.test.mjs` |
 | KnowledgeMap桥接 | `node --test chatbot/tests/knowledgemap/*.test.mjs` |
 | 邮件与论文Node层 | `node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/tests/papers/*.test.mjs` |

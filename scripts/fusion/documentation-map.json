@@ -3,6 +3,13 @@
   "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
   "scriptOwners": [
     {
+      "prefix": "chatbot/tests/e7/",
+      "documents": [
+        "docs/27_E7数据插件设计.md",
+        "docs/24_统一身份与权限管理.md"
+      ]
+    },
+    {
       "prefix": "scripts/fusion/",
       "documents": [
         "docs/9_QQ融合助手架构与开发计划.md",
@@ -344,6 +351,17 @@
   ],
   "evidenceOwners": [
     {
+      "prefix": "coding-delegation-plan-2026-10-28/",
+      "documents": [
+        "docs/28_本机编码工具委托与实验任务.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/23_KnowledgeMap业务能力桥接.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "shared-business-merge-2026-10-27/",
       "documents": [
         "docs/23_KnowledgeMap业务能力桥接.md",
@@ -363,6 +381,15 @@
       "prefix": "documentation-merge-2026-10-27/",
       "documents": [
         "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "natural-confirmation-2026-10-27/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/20_邮件能力与横切扩展.md",
         "docs/16_验收与测试总表.md"
       ],
       "category": "当前有效"
@@ -507,6 +534,16 @@
       "prefix": "plugin-lifecycle-2026-10-19/",
       "documents": [
         "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "当前有效"
+    },
+    {
+      "prefix": "capability-review-2026-10-28/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/24_统一身份与权限管理.md",
+        "docs/27_E7数据插件设计.md",
+        "docs/16_验收与测试总表.md"
       ],
       "category": "当前有效"
     },

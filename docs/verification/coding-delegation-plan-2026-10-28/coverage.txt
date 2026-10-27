@@ -1,0 +1,5 @@
+evidence coverage
+  历史领域验收: 83
+  当前有效: 553
+  total: 636
+OK: every file belongs to exactly one named group with valid documents.

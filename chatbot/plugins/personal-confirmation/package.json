@@ -22,7 +22,8 @@
     }
   },
   "dependencies": {
-    "@kurumi/confirmation-core": "file:../../packages/confirmation-core"
+    "@kurumi/confirmation-core": "file:../../packages/confirmation-core",
+    "@kurumi/access-control": "file:../../packages/access-control"
   },
   "devDependencies": {
     "@types/node": "^24.0.0",

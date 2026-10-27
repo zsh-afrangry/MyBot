@@ -4,5 +4,10 @@ export { CONFIRMATION_GATE_SCHEMA_SQL, ensureConfirmationGateSchema } from "./sc
 export { scopeFromToolContext, scopeFromInboundEvent } from "./scope.js";
 export { parseConfirmationText, buildConfirmationInstruction } from "./protocol.js";
 export * from "./store.js";
-export * from "./registry.js";
+export { registerConfirmationBackend, confirmationBackendIds, recordRegisteredConfirmation } from './registry.js';
+export type { ConfirmationBackend, ConfirmationBackendProvider, ConfirmationOutcome, ConfirmationDiagnostic } from './registry.js';
 export * from "./public-id.js";
+export { createNaturalConfirmationBackend, narrowNaturalConfirmationBackend } from './natural-store.js';
+export { listNaturalConfirmations, confirmNaturalProposal, naturalConfirmationTextAllowed } from './natural-service.js';
+export { prepareConfirmationPreview, recordConfirmationDelivery } from './presentation.js';
+export { captureNaturalConfirmationRequest, clearNaturalConfirmationRequest } from './current-request.js';

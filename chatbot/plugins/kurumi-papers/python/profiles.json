@@ -1,5 +1,5 @@
 {
-  "defaultProvider": "openai",
+  "defaultProvider": "deepseek",
   "providers": [
     {
       "provider": "openai",
@@ -20,6 +20,7 @@
       "defaultModel": "deepseek-flash",
       "defaultEffort": "high",
       "batchFormat": "json_schema",
+      "maxOutputTokens": 393216,
       "models": {
         "deepseek-flash": ["none", "low", "high", "max"],
         "deepseek-v4-pro": ["none", "low", "high", "max"]

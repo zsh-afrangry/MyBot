@@ -9,7 +9,7 @@ export const OWNER_PERMISSIONS = Object.freeze([
   'weather.read', 'profile.read', 'profile.manage', 'planning.read', 'planning.manage',
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
   'memory.read', 'memory.manage', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
-  'automations.read', 'automations.manage', 'sessions.read',
+  'automations.read', 'automations.manage', 'sessions.read', 'e7.read',
 ]);
 export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
 export const MEMBER_TOOLS = Object.freeze(['session_status', 'web_search', 'web_fetch', 'kurumi_document', 'kurumi_translate', 'kurumi_document_send']);
@@ -28,7 +28,15 @@ export function toolPermission(name, args = {}) {
     knowledge_bills_get: 'bills.read', knowledge_bill_add: 'bills.manage', knowledge_bill_manage: 'bills.manage',
     sessions_list: 'sessions.read', sessions_history: 'sessions.read',
   };
+  if (name === 'personal_confirmation') {
+    const permissions = {
+      personal_reminder: ['reminders.read', 'reminders.manage'], personal_profile: ['profile.read', 'profile.manage'],
+      planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'],
+    };
+    return ['list', 'preview', 'confirm'].includes(args.action) ? permissions[args.domain]?.[args.action === 'confirm' ? 1 : 0] : undefined;
+  }
   if (direct[name]) return direct[name];
+  if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news'].includes(args.action) ? 'e7.read' : undefined;
   if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';
   if (name === 'kurumi_task') return args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read';
