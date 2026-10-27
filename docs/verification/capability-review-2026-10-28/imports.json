@@ -1,0 +1,11 @@
+{
+  "sourceFiles": 152,
+  "crossPluginImports": [
+    {
+      "from": "chatbot/plugins/kurumi-papers/index.js",
+      "to": "chatbot/plugins/kurumi-qq/delivery.js"
+    }
+  ],
+  "violations": [],
+  "method": "Literal static imports, dynamic imports and require calls in non-generated production JS/TS; excludes dependency/vendor/test trees. Not whole-program dynamic dataflow."
+}

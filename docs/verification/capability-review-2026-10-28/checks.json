@@ -1,0 +1,139 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "baseline": "0dd547a",
+  "boundary": "Source/build/offline and isolated Gateway review, plus read-only production metadata and authorization evaluation. No new paid model/API queries, QQ/SMTP sends, production writes/restarts, backup/restore or remote Git write.",
+  "builds": [
+    {
+      "command": "npm --prefix chatbot/packages/confirmation-core run build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm --prefix chatbot/plugins/personal-confirmation run build",
+      "exitCode": 0
+    },
+    {
+      "command": "node chatbot/scripts/build-personal-plugins.mjs",
+      "exitCode": 0
+    },
+    {
+      "command": "npm --prefix chatbot/plugins/kurumi-e7 run build",
+      "exitCode": 0
+    }
+  ],
+  "offline": [
+    {
+      "command": "node --test chatbot/tests/backend-boundaries/*.test.mjs chatbot/tests/domain-adapters/*.test.mjs chatbot/tests/access-control/*.test.mjs chatbot/tests/e7/*.test.mjs",
+      "exitCode": 0,
+      "passed": 97,
+      "failed": 0,
+      "skipped": 0,
+      "outputTail": "✔ name normalization, alias ambiguity, typed filtering and cursor binding use the complete local index (129.784797ms)\n✔ seven hero views share one detail and preserve numeric basis, skill conditions and missing values (50.723395ms)\n✔ artifacts use filled effect text, dictionaries remain separate and codes/news retain source limitations (56.861812ms)\n✔ unsupported actions, mixed parameters and URL/path inputs fail before any cache/network activity (6.112369ms)\n✔ conditional 304, content hash and count shrink protect the last validated cache across service instances (22.0491ms)\n✔ no cache plus failure returns an error, invalid JSON cache is not trusted, and symlinks are refused (8.237442ms)\n✔ shared reads coalesce, one cancelled waiter does not cancel others, stop aborts and waits for outstanding reads (12.207937ms)\n✔ long external prose is bounded while JSON structure, IDs, source dates and truncation remain usable (22.303354ms)\nℹ tests 97\nℹ suites 0\nℹ pass 97\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 5595.758313"
+    },
+    {
+      "command": "node --test chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/knowledgemap/*.test.mjs chatbot/tests/web-deepseek/*.test.mjs",
+      "exitCode": 0,
+      "passed": 72,
+      "failed": 0,
+      "skipped": 0,
+      "outputTail": "✔ timeouts, cancellation, stale callers and network failures are distinct (32.486684ms)\n✔ malformed and oversized responses are rejected (8.851768ms)\n✔ in-flight requests are bounded and queued callers stay cancellable (37.453116ms)\n✔ credentials load only from an owner-only regular JSON file (1.878092ms)\n✔ providers register under the manifest contract and are never implicitly selectable (4.897393ms)\n✔ web_search provider wraps external text, rejects unsupported filters, caches only non-empty results and traces without query or key (16.343139ms)\n✔ web_search provider surfaces upstream failures with HTTP status for the host diagnostic (1.536605ms)\n✔ web_fetch provider follows the host url/extractMode/maxChars contract and leaves wrapping to the host (10.006852ms)\nℹ tests 72\nℹ suites 0\nℹ pass 72\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 3820.364598"
+    },
+    {
+      "command": "npm --prefix chatbot/packages/confirmation-core test",
+      "exitCode": 0,
+      "passed": 46,
+      "failed": 0,
+      "skipped": 0,
+      "outputTail": "> @kurumi/confirmation-core@0.1.0 test\n> vitest run --config ./vitest.config.ts\n\n\n RUN  v3.2.7 /home/afrangry/kurumi-fusion/chatbot/packages/confirmation-core\n\n ✓ src/public-id.test.ts (3 tests) 47ms\n ✓ src/confirmation.test.ts (16 tests) 57ms\n ✓ src/natural.test.ts (27 tests) 71ms\n\n Test Files  3 passed (3)\n      Tests  46 passed (46)\n   Start at  00:30:00\n   Duration  1.37s (transform 480ms, setup 0ms, collect 917ms, tests 175ms, environment 1ms, prepare 623ms)"
+    },
+    {
+      "command": "npm --prefix chatbot/packages/personal-domains test",
+      "exitCode": 0,
+      "passed": 162,
+      "failed": 0,
+      "skipped": 0,
+      "outputTail": "✓ src/controlled-replies.test.ts (6 tests) 16ms\n ✓ src/reminder-gateway.test.ts (2 tests) 6ms\n ✓ src/profile.test.ts (10 tests) 555ms\n ✓ src/store.test.ts (9 tests) 859ms\n ✓ src/reminders.test.ts (13 tests) 877ms\n ✓ src/confirmation-gate.test.ts (17 tests) 876ms\n ✓ src/native-reminder-scheduler.test.ts (4 tests) 209ms\n ✓ src/config.test.ts (12 tests) 7ms\n ✓ src/qweather-client.test.ts (17 tests) 25ms\n ✓ src/index.test.ts (4 tests) 3ms\n\n Test Files  18 passed (18)\n      Tests  162 passed (162)\n   Start at  00:30:00\n   Duration  4.58s (transform 2.64s, setup 0ms, collect 12.43s, tests 5.06s, environment 13ms, prepare 3.43s)"
+    }
+  ],
+  "health": {
+    "at": "2026-10-27T16:28:59.344Z",
+    "exitCode": 0,
+    "ok": true,
+    "issues": [],
+    "gateway": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "testIngress": false,
+    "testMethodDisabled": true,
+    "channelDatabase": "ok",
+    "weatherDatabase": "ok",
+    "remindersDatabase": "ok",
+    "reminderListDatabase": "ok",
+    "knowledgeMap": {
+      "ok": true,
+      "contract": 1,
+      "domains": [
+        "weather",
+        "tasks",
+        "bills"
+      ]
+    }
+  },
+  "operational": [
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "summary": "ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-e7: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-qq: 2 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs --check",
+      "exitCode": 0,
+      "summary": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs --check",
+      "exitCode": 0,
+      "summary": "persona in sync with roles/世凪.md (12 workspace file(s) match)"
+    }
+  ],
+  "accessPolicyCheck": {
+    "command": "node chatbot/scripts/access-control.mjs --check",
+    "exitCode": 0,
+    "version": 1,
+    "revision": 4,
+    "subjectCount": 3,
+    "groupsDisabled": true
+  },
+  "recordedAt": "2026-10-27T16:37:16.284Z",
+  "sourceCommit": "0dd547a241c671c77afbdb33f1b2ef7b18e5cc2c",
+  "sourceHashes": {
+    "chatbot/packages/access-control/index.js": "5e0a094d5819dc70dcd8ae592c67705a6b3e486ace3aa28d66f5ab6454fc9657",
+    "chatbot/packages/access-control/permissions.js": "0160528fa6c5293610caf8e24f19d8aa7c37cca936b038b3dbe617676a0236a5",
+    "chatbot/packages/domain-adapters/index.js": "d67ce9d2d8e6dcaf25dcdd8ed2830317487605293c2f19221eda8ca69f9254b7",
+    "chatbot/plugins/kurumi-qq/delivery.js": "f37c50290dda4982dd2acbbc41268cde55621db7b97c076b6d21f87cdb924099",
+    "chatbot/plugins/kurumi-e7/index.js": "35848f3c0f78b9f729a13dca0c9f121adb3fe489eb77434566e9909a3236630b",
+    "chatbot/plugins/kurumi-e7/client.js": "cffdeedc9e0ac4484a6572d84fb3ed7b374637593fc33e166b120bb1db655832",
+    "chatbot/plugins/kurumi-e7/service.js": "379a0cb930b9c4223554f0a4399ac484ef6a5fe56a7de8adc843180dc34565d4",
+    "chatbot/plugins/kurumi-e7/query.js": "5dbf0726e31e730901fc3eb119080d0007244a8809e3686547bd17b945dc11cf",
+    "config/runtime.config.json": "77caa88089c13794f79dcca49736840f8d81669031bc1a5656f81b7e21475d6d"
+  },
+  "documentation": [
+    {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exitCode": 0,
+      "summary": "evidence coverage\n  历史领域验收: 83\n  当前有效: 524\n  total: 607\nOK: every file belongs to exactly one named group with valid documents."
+    },
+    {
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "exitCode": 0,
+      "summary": "OK: SCRIPTS.md matches 212 classified, document-owned entries."
+    },
+    {
+      "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+      "exitCode": 0,
+      "summary": "✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (4.919293ms)\n✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (2.812545ms)\n▶ CLI verifies ownership and saved Markdown without touching the real repository\n  ✔ saved table and both P2 evidence overrides survive generation (102.389016ms)\n  ✔ unknown source fails even inside a known suite (37.979404ms)\n  ✔ missing document and invalid/duplicate selectors fail (87.33886ms)\n  ✔ an existing classified script without a document owner fails (43.290578ms)\n  ✔ stale generated table or reversed markers fail (99.467677ms)\n  ✔ new receipts inherit a named suite; unknown evidence directory fails (72.929729ms)\n✔ CLI verifies ownership and saved Markdown without touching the real repository (511.462878ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 572.276173"
+    }
+  ]
+}
