@@ -53,9 +53,7 @@ DeepSeek上限依据2026-10-27查阅的[官方模型元数据](https://api-docs.
 
 后台仅将该摘要交给实际请求人绑定的原会话/Agent，调用宿主注册插件的会话运行入口生成解释。本次说明回合禁用全部工具，不自动重译、调预算、换厂商或重发文件，不开放QQ助手原有禁用能力。运行前和发送前分别复核身份/权限，成员结果不改发给主人。模型不可用、超时或无有效回复时，用同一摘要生成中文兜底；发出兜底后为下一聊天回合注入已通知的结果，避免助手失去上下文。外发只经QQ公开投递接口及既有幂等账本；外发回执未知不另发第二条兜底。通知状态与翻译/文件投递状态分别保存，重启不自动重放。
 
-本轮实现、离线/真实隔离宿主检查与部署记录见[默认渠道与失败说明](verification/paper-translation-2026-10-17/default-deepseek-notification-2026-10-27/README.md)，真人复验归[待办N22](待办清单.md#n22-论文默认渠道与失败说明)。不把切换默认当成030用量异常已修复。
-
-2026-10-27[17:03真人实测调查](verification/paper-translation-2026-10-17/qq-retest-2026-10-27-1703/README.md)发现：完整任务回执使status结果截断，`failureSummary`未进模型可见结果；用户随后明确发起的DeepSeek重译报`response_not_completed`，单次输出8192高度符合输出截断，整篇95028未到30万上限；延迟说明调用因`Async work scope is closed`失败，仅中文兜底sent及后续上下文入队。原同步固定模型探针不覆盖工具返回后的真实后台生命周期。随后按主人要求[修复输出限制、摘要与后台生命周期](verification/paper-translation-2026-10-17/output-limit-2026-10-27/README.md)，隔离延迟场景与负对照通过；N22待真人复验，不自动重译。
+实现与部署依据见[默认渠道与失败说明](verification/paper-translation-2026-10-17/default-deepseek-notification-2026-10-27/README.md)、[输出限制与延迟通知修复](verification/paper-translation-2026-10-17/output-limit-2026-10-27/README.md)；原失败依据保留在[17:03调查](verification/paper-translation-2026-10-17/qq-retest-2026-10-27-1703/README.md)。[N22](待办清单.md#n22-论文默认渠道与失败说明)按主人确认闭合，18:36起的生产翻译/QQ回传及失败通知的不同验证范围见[闭合证据](verification/paper-translation-2026-10-17/qq-success-2026-10-27-1835/README.md)和[验收总表](16_验收与测试总表.md#分领域验收摘要)。本次不把官方渠道成功当成030用量异常已修复。
 
 ## 架构与基础工具
 
