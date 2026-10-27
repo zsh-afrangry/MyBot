@@ -1,0 +1,7 @@
+{
+  "at": "2026-10-27T10:02:38.103532+00:00",
+  "command": "node scripts/fusion/verify-dependencies.mjs",
+  "exitCode": 0,
+  "outputSha256": "feb3befbebf70b93ce0b58efecbd6b276da63e3286104926a1c21b136bb14ecf",
+  "passed": true
+}

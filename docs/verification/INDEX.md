@@ -8,7 +8,7 @@
 | --- | --- |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
 | [`natural-confirmation-2026-10-27/README.md`](natural-confirmation-2026-10-27/README.md) 及同目录全部文件 | N4自然语言二次确认：用户批准范围、核心/领域/权限/回执回归、真实隔离宿主和运行对齐；真人QQ与真实模型语义未验收 |
-| [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md)、[角色补充](e7-interface-2026-10-27/character-sample/README.md)、[查询契约核对](e7-interface-2026-10-27/query-contract/README.md)及同目录全部文件 | E7·WIKI公开读取接口、参数/缓存头及角色字段盘点；单张WebP半身图下载/打开、效果词典与宿命推荐等补充；查询分类与角色view的文档设计核对。无生产插件、模型或QQ外发 |
+| [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md)、[角色补充](e7-interface-2026-10-27/character-sample/README.md)、[查询契约](e7-interface-2026-10-27/query-contract/README.md)、[首批实现](e7-interface-2026-10-27/phase1/README.md)及同目录全部文件 | E7·WIKI公开读取、角色/图片取样与分类设计；首批6类只读查询的实现、离线/真实取数/隔离宿主/分轮模型及生产加载证据。各阶段不互相替代，QQ与图片结论分别记录 |
 | [`reminder-list-multi-item-2026-10-27/README.md`](reminder-list-multi-item-2026-10-27/README.md)、[闭合记录](reminder-list-multi-item-2026-10-27/closeout.md)及同目录全部文件 | 2026-10-27 提醒列表单消息多项的离线/隔离HTTP、人格与运行核对、01:46真人QQ及后端只读证据；文档收尾与分层证明范围 |
 | [`qq-image-2026-10-27/retest-0119.md`](qq-image-2026-10-27/retest-0119.md) 及同目录全部文件 | 2026-10-27 QQ图片初测失败与Fake-IP定向修复后复测：本人JPG入站、PNG表情外发、只读账本核对和前端确认；保留首次失败，图片子项已验收 |
 | [`git-consolidation-2026-10-24/README.md`](git-consolidation-2026-10-24/README.md) 及同目录全部文件 | 文档整理与主线补验的冲突合并、记忆调研保留、主线收拢与分支清理；保留各业务原证明范围 |

@@ -37,10 +37,12 @@ test('Every current main tool is mapped; new tools and dangerous native/member o
  assert(hook(c,member,'session_status',{sessionKey:context(owner).sessionKey}));assert(hook(c,member,'session_status',{model:'costly/model'}));
  const source=JSON.parse(fs.readFileSync(fileURLToPath(new URL('../../../config/runtime.config.json',import.meta.url))));
  for(const name of source.agents.entries.main.tools.alsoAllow){
-  const args={action:({kurumi_document:'list',kurumi_translate:'list',kurumi_memory:'list',kurumi_task:'list',personal_reminder_list_manage:'add',automations:'list',personal_confirmation:'list'})[name],...(name==='personal_confirmation'?{domain:'personal_reminder'}:{})};
+  const args={action:({kurumi_document:'list',kurumi_translate:'list',kurumi_memory:'list',kurumi_task:'list',personal_reminder_list_manage:'add',automations:'list',personal_confirmation:'list',e7_data:'codes'})[name],...(name==='personal_confirmation'?{domain:'personal_reminder'}:{})};
   assert(toolPermission(name,args),`Unmapped current tool: ${name}`);
   assert.equal(hook(c,owner,name,args),undefined,name);
  }
+ assert(hook(c,member,'e7_data',{action:'codes'}));
+ for(const action of ['image','builds',undefined])assert(hook(c,owner,'e7_data',{action}));
 });
 test('Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs',()=>{
  const source={channels:{'kurumi-qq':{}},commands:{},plugins:{entries:{'personal-weather':{config:{}},'kurumi-mail':{}}},agents:{entries:{main:{workspace:'/isolated/workspace',model:{primary:'fake/model'},tools:{deny:['exec']}}}},bindings:[{agentId:'main',match:{channel:'kurumi-qq'}}]};
