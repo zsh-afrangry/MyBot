@@ -1,0 +1,110 @@
+{
+  "at": "2026-10-27T17:41:53.458127+08:00",
+  "sourceBaseline": "8f33b69f7f53b9e37f14eafcb7dd7078f725ea89",
+  "scope": "First-batch E7 code, synthetic offline/local HTTP and authorization/map tests, dependency/build/document checks and read-only operational alignment. No production E7 load, model or QQ acceptance.",
+  "checks": [
+    {
+      "command": "node --test chatbot/tests/e7/client.test.mjs chatbot/tests/e7/service.test.mjs chatbot/tests/e7/plugin.test.mjs chatbot/tests/access-control/isolation.test.mjs chatbot/tests/access-control/log-query.test.mjs chatbot/tests/access-control/policy.test.mjs scripts/fusion/test/documentation-map.test.mjs",
+      "at": "2026-10-27T17:43:38.937153+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "0c722688ffb1322a56b5ed4d2f26fd89d04a1d04e81f8e41c42383223f1649f3",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "ℹ tests 46\nℹ suites 0\nℹ pass 46\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 1186.293948"
+    },
+    {
+      "command": "npm --prefix chatbot/plugins/kurumi-e7 run build",
+      "at": "2026-10-27T17:41:52.517438+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "fa0da56ee0e8c93b416ac9f2192690c3cbc78f9d8bc954e99b373aa9c8c356a1",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "> @kurumi/e7@0.1.0 build\n> node --check index.js && node --check policy.js && node --check client.js && node --check store.js && node --check query.js && node --check service.js"
+    },
+    {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "at": "2026-10-27T17:41:52.176646+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "2c1f1d44299fda9d2f57dce6575b770277822110d717377d0d3a84590b714870",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "evidence coverage\n  历史领域验收: 83\n  当前有效: 500\n  total: 583\nOK: every file belongs to exactly one named group with valid documents."
+    },
+    {
+      "command": "node scripts/fusion/evidence-index.mjs",
+      "at": "2026-10-27T17:41:52.232385+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "9f9ca56114996adb5724ab7c09acaadea4ee496601916f9263871426ee509292",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "    用途: 停止融合助手与 DSH Web；不停止 QQ 传输\n    副作用: 重启或停服务（需授权）\n    依据: header\n\ntotal 209: 需授权 78，可离线/只读 131\n依据分布: offline=42, code=14, header=131, boundary=22\nboundary 声明交叉校验: 52 个脚本有声明，全部与分类一致\n文档归属全部有效；另显式排除运行源码 5、退役脚本 2，不执行扫描到的文件。"
+    },
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "at": "2026-10-27T17:41:53.190433+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "21a70097bc2ca0f16f6ca365930d8d5621513cf65652d02672571108ae83f38d",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": {
+        "ok": true,
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "testMethodDisabled": true,
+        "channel": [
+          {
+            "running": true,
+            "connected": true
+          }
+        ],
+        "channelDatabase": "ok",
+        "weatherDatabase": "ok",
+        "remindersDatabase": "ok",
+        "reminderListDatabase": "ok",
+        "issues": [],
+        "knowledgeMapOk": true
+      }
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "at": "2026-10-27T17:41:52.366788+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "feb3befbebf70b93ce0b58efecbd6b276da63e3286104926a1c21b136bb14ecf",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-qq: 2 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "at": "2026-10-27T17:41:52.440118+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "45e09e5b6b6febdd67cf7b0febcc1daec5e29cc6047c5a4ea5d9ad6f04da0fde",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "at": "2026-10-27T17:41:52.486839+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "601a931394298a6d3594c1f26f6869bec0a558363a7816fdf2824d860e298f38",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "persona in sync with roles/世凪.md (12 workspace file(s) match)"
+    },
+    {
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "at": "2026-10-27T17:43:38.992394+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "ea27193ead42821cd68a14a5a617fe64311a3fef36eed9ff0180428598ab1cb9",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": "OK: SCRIPTS.md matches 209 classified, document-owned entries."
+    },
+    {
+      "command": "git diff --check",
+      "at": "2026-10-27T17:41:52.531361+08:00",
+      "exitCode": 0,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "summary": ""
+    }
+  ],
+  "ok": true,
+  "initialCheckIssue": "The generated script table had replaced its surrounding markers; only the table body was regenerated within the original wrapper. The index checker caught this; no E7/authorization test failed in that run."
+}

@@ -3,6 +3,10 @@
   "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
   "scriptOwners": [
     {
+      "prefix": "chatbot/tests/e7/",
+      "documents": ["docs/27_E7数据插件设计.md", "docs/24_统一身份与权限管理.md"]
+    },
+    {
       "prefix": "scripts/fusion/",
       "documents": [
         "docs/10_融合助手运行维护.md",

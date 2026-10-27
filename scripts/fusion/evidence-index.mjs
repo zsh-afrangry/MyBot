@@ -40,6 +40,10 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/e7/fixtures.mjs': ['库', 'E7合成公开资料形状、临时缓存与注入client，不导入生产名单或真实站点数据', {testDir: 1}, 'header'],
+  'chatbot/tests/e7/client.test.mjs': ['离线', 'E7精确读路径、可信代理策略、限流/拒绝退避、并发与解压后大小上限；仅注入guard与本地HTTP', {testDir: 1}, 'header'],
+  'chatbot/tests/e7/service.test.mjs': ['离线', 'E7六类查询/七个角色视图、检索/筛选/续页、原子缓存/304/数量异常与降级/停止；仅合成资料', {testDir: 1}, 'header'],
+  'chatbot/tests/e7/plugin.test.mjs': ['离线', 'E7真实工具处理器的本人权限、撤权复核、外部不可信边界、每日定时器与停止；仅合成上下文', {testDir: 1}, 'header'],
   'scripts/fusion/lib/documentation-map.mjs': ['库', '只读文档归属、命名分组及维护源码发现；不执行扫描到的文件', {readonly: 1}, 'header'],
   'scripts/fusion/test/documentation-map.test.mjs': ['离线', '文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库', {testDir: 1}, 'header'],
   'chatbot/plugins/kurumi-mail/test/helpers/mock-smtp.js': ['库', '邮件测试的本地TLS/SMTP服务器及故障夹具，无公网外发', {readonly: 1}, 'header'],
