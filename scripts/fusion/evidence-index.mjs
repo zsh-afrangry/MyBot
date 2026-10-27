@@ -40,6 +40,9 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/e7/model-cases.mjs': ['库', 'E7真实模型验收的问题与判定断言；可离线复核保存的公开验收回复，导入无模型或网络调用', {readonly: 1}, 'header'],
+  'chatbot/tests/e7/acceptance-live.mjs': ['验收', '显式--live使用真实E7公开HTTP和临时缓存；可选--model调用现行官方模型与真实工具处理器，无QQ或生产写入', {externalApi: 1, model: 1, testDir: 1, writesRepo: 1}, 'header'],
+  'chatbot/tests/e7/acceptance-host.mjs': ['验收', '真实隔离Gateway验证E7插件启用/禁用、工具目录及正常停止，无模型/API/QQ网络或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/e7/fixtures.mjs': ['库', 'E7合成公开资料形状、临时缓存与注入client，不导入生产名单或真实站点数据', {testDir: 1}, 'header'],
   'chatbot/tests/e7/client.test.mjs': ['离线', 'E7精确读路径、可信代理策略、限流/拒绝退避、并发与解压后大小上限；仅注入guard与本地HTTP', {testDir: 1}, 'header'],
   'chatbot/tests/e7/service.test.mjs': ['离线', 'E7六类查询/七个角色视图、检索/筛选/续页、原子缓存/304/数量异常与降级/停止；仅合成资料', {testDir: 1}, 'header'],

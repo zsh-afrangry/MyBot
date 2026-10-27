@@ -1,0 +1,88 @@
+{
+  "at": "2026-10-27T09:57:57.704Z",
+  "boundary": "Offline re-evaluation of existing real-model replies using the current shared assertions. No new API/model/QQ or production writes. Different runs are linked explicitly; not an additional live run.",
+  "reason": "The codes assertion incorrectly excluded 未实际验证/尚未经过验证 and negated 仍在有效期内. Original failed reports are retained. Artifact level/breakthrough ambiguity was fixed in the actual projection and verified in model-boundaries.json.",
+  "cases": [
+    {
+      "label": "hero-ambiguous",
+      "evidence": "live-http-model-v3.json",
+      "evidenceAt": "2026-10-27T09:53:29.184Z",
+      "originalAutomaticPass": true,
+      "reEvaluatedPass": true,
+      "modelRequests": 2,
+      "toolCalls": 1,
+      "replySha256": "bc587f70dc8346623fc2544b8c0ec14f9c400351b7ea20c7c7fdc01eba727af4"
+    },
+    {
+      "label": "hero-skills",
+      "evidence": "live-http-model-v3.json",
+      "evidenceAt": "2026-10-27T09:53:29.184Z",
+      "originalAutomaticPass": true,
+      "reEvaluatedPass": true,
+      "modelRequests": 3,
+      "toolCalls": 2,
+      "replySha256": "99bc4461a6ed1e59128572a0b71955855d780a141d17743deb7b6915c4856027"
+    },
+    {
+      "label": "hero-stats",
+      "evidence": "live-http-model-v3.json",
+      "evidenceAt": "2026-10-27T09:53:29.184Z",
+      "originalAutomaticPass": true,
+      "reEvaluatedPass": true,
+      "modelRequests": 3,
+      "toolCalls": 2,
+      "replySha256": "4544b225b478488d8e5b367d6db1673313b46c39c424a99fdec888e13f688e00"
+    },
+    {
+      "label": "hero-missing-exclusive",
+      "evidence": "live-http-model-v3.json",
+      "evidenceAt": "2026-10-27T09:53:29.184Z",
+      "originalAutomaticPass": true,
+      "reEvaluatedPass": true,
+      "modelRequests": 3,
+      "toolCalls": 2,
+      "replySha256": "6386cd7fa3851ce30cbf190a56ab06a9158e1e2b498371cc4d0d8930b693261e"
+    },
+    {
+      "label": "artifact-effect",
+      "evidence": "model-boundaries.json",
+      "evidenceAt": "2026-10-27T09:55:27.091Z",
+      "originalAutomaticPass": true,
+      "reEvaluatedPass": true,
+      "modelRequests": 3,
+      "toolCalls": 4,
+      "replySha256": "c7ffdbb1532faee45dee64aa196613f9f4abaa88f237e9a658e113781cb48520"
+    },
+    {
+      "label": "effect-dictionary",
+      "evidence": "model-boundaries.json",
+      "evidenceAt": "2026-10-27T09:55:27.091Z",
+      "originalAutomaticPass": true,
+      "reEvaluatedPass": true,
+      "modelRequests": 2,
+      "toolCalls": 1,
+      "replySha256": "944fd59fde783620fc6e3f1ae97215bc04cca4a718d899c64d7c9065298ad239"
+    },
+    {
+      "label": "codes",
+      "evidence": "model-boundaries.json",
+      "evidenceAt": "2026-10-27T09:55:27.091Z",
+      "originalAutomaticPass": false,
+      "reEvaluatedPass": true,
+      "modelRequests": 2,
+      "toolCalls": 1,
+      "replySha256": "9495c71ece544d34a073fdeb50e5ec2555f5dfbd5f1400326d8c1b1753008d7c"
+    },
+    {
+      "label": "game-news",
+      "evidence": "live-http-model-v2.json",
+      "evidenceAt": "2026-10-27T09:51:02.400Z",
+      "originalAutomaticPass": true,
+      "reEvaluatedPass": true,
+      "modelRequests": 2,
+      "toolCalls": 1,
+      "replySha256": "24a27f7e008715ca7139c324e85c8004772a3129dcf6cffd5b8dc71b5b48d6ba"
+    }
+  ],
+  "passed": true
+}

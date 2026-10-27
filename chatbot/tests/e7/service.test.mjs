@@ -40,6 +40,7 @@ test('artifacts use filled effect text, dictionaries remain separate and codes/n
   const {service} = setup(t);
   const art = await service.query({action: 'artifact', artifactId: '5'});
   assert.equal(art.data.effect, '攻击提升10(20)%。\n第二行'); assert(!JSON.stringify(art).includes('{per('));
+  assert.equal(art.data.effectBasis.level, null); assert.equal(art.data.effectBasis.limitBreak, null);
   assert.equal((await service.query({action: 'dictionary', kind: 'effect', entryId: '101'})).data.items[0].description, '攻击增加');
   const item = await service.query({action: 'dictionary', kind: 'item', query: '測試金幣'}); assert.equal(item.data.items[0].defaultPrice, '1.0000');
   const codes = await service.query({action: 'codes', server: '国际服'}); assert.equal(codes.data.timezone, null); assert.equal(codes.data.redemptionVerified, false);

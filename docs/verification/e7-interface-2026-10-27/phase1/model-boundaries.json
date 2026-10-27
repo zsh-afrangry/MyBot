@@ -1,0 +1,1169 @@
+{
+  "at": "2026-10-27T09:55:27.091Z",
+  "boundary": "Real public E7 HTTP, temporary public-data cache. Optional configured official model and actual v2 tool handlers with synthetic trusted owner context. No QQ send or production write; not full model/Gateway/QQ inbound.",
+  "userAgent": "kurumi-e7/0.1 (personal read-only wiki client)",
+  "requests": [
+    {
+      "kind": "cards",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+      "status": 200,
+      "bytes": 97401,
+      "at": "2026-10-27T09:55:28.649Z",
+      "parameters": {},
+      "dataSha256": "3c1c75bb19b6dddd8b6c1d027ddda71cc75e39d2b43b8bf6416f77aaf0df3d69",
+      "conditional": false
+    },
+    {
+      "kind": "hero",
+      "method": "GET",
+      "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+      "status": 200,
+      "bytes": 6173,
+      "at": "2026-10-27T09:55:29.542Z",
+      "parameters": {
+        "heroCode": "mei-lin"
+      },
+      "dataSha256": "e485bf3681e15c9632545cb592a6e9409a1830c6d8c14aae7eb03855d1768467",
+      "conditional": false
+    },
+    {
+      "kind": "artifacts",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/artifact/artifact-list",
+      "status": 200,
+      "bytes": 322827,
+      "at": "2026-10-27T09:55:31.624Z",
+      "parameters": {},
+      "dataSha256": "3d94c837dec423b12938d57d5e15c2f2ce1ea7f5e3517cb205128d0aa5660e54",
+      "conditional": false
+    },
+    {
+      "kind": "effects",
+      "method": "GET",
+      "url": "https://assets2.e7.wiki/static/effects.json",
+      "status": 200,
+      "bytes": 52055,
+      "at": "2026-10-27T09:55:32.791Z",
+      "parameters": {},
+      "dataSha256": "fc12badabde8a8831aed2928ad61e7ac7772c75514b8638ff6221cd831f86727",
+      "conditional": false
+    },
+    {
+      "kind": "summary",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_summary/hero-list",
+      "status": 200,
+      "bytes": 743171,
+      "at": "2026-10-27T09:55:36.404Z",
+      "parameters": {},
+      "dataSha256": "b3f64939616216f3749b2fb21ad28f83778fd4673d149685e64270329ba6ce9c",
+      "conditional": false
+    },
+    {
+      "kind": "items",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/item-dictionary/by-category",
+      "status": 200,
+      "bytes": 17792,
+      "at": "2026-10-27T09:55:37.349Z",
+      "parameters": {},
+      "dataSha256": "5d6c8a4275b1d038869e8c5f055f585ade06e231484065ded8dbaa4bb8707088",
+      "conditional": false
+    },
+    {
+      "kind": "codes",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epic7/redeem_code/lastest?count=50",
+      "status": 200,
+      "bytes": 14046,
+      "at": "2026-10-27T09:55:38.613Z",
+      "parameters": {},
+      "dataSha256": "d7dd4cd53434efa2b14865348a743bf3ba0abdc267a96ca930fe0d2dc0fbbc58",
+      "conditional": false
+    },
+    {
+      "kind": "wikiUpdates",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/updates/latest?count=50",
+      "status": 200,
+      "bytes": 15827,
+      "at": "2026-10-27T09:55:39.526Z",
+      "parameters": {},
+      "dataSha256": "a37c0b837e329cb24918d58fe691c42ce7fbc22ff521a587c1e410098ab150a3",
+      "conditional": false
+    },
+    {
+      "kind": "gameNews",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/announcement/page",
+      "status": 200,
+      "bytes": 96,
+      "at": "2026-10-27T09:55:40.769Z",
+      "parameters": {
+        "page": 1,
+        "server": 1
+      },
+      "dataSha256": "f5ec03dbd6880127db12766e6740576a09c07addc7d4a2c93f31596d24ad44a2",
+      "conditional": false
+    },
+    {
+      "kind": "gameNews",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/announcement/page",
+      "status": 200,
+      "bytes": 2588,
+      "at": "2026-10-27T09:55:41.646Z",
+      "parameters": {
+        "page": 1,
+        "server": 2
+      },
+      "dataSha256": "606385e67dba1132c952a2358f2b80ab13cdfc23334d6c6fab3674860c801f34",
+      "conditional": false
+    },
+    {
+      "kind": "gameNews",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/announcement/page",
+      "status": 200,
+      "bytes": 2589,
+      "at": "2026-10-27T09:55:42.801Z",
+      "parameters": {
+        "page": 2,
+        "server": 2
+      },
+      "dataSha256": "676e76cf9033a5b6e9181cdd062a73a61f1a76e6484e88dfc2adf0cc5396753c",
+      "conditional": false
+    },
+    {
+      "kind": "hero",
+      "method": "GET",
+      "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+      "status": 304,
+      "bytes": 0,
+      "at": "2026-10-27T09:55:43.648Z",
+      "parameters": {
+        "heroCode": "mei-lin"
+      },
+      "dataSha256": null,
+      "conditional": true
+    },
+    {
+      "kind": "cards",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+      "status": 200,
+      "bytes": 97401,
+      "at": "2026-10-27T09:55:44.801Z",
+      "parameters": {},
+      "dataSha256": "3c1c75bb19b6dddd8b6c1d027ddda71cc75e39d2b43b8bf6416f77aaf0df3d69",
+      "conditional": false
+    },
+    {
+      "kind": "summary",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero_summary/hero-list",
+      "status": 304,
+      "bytes": 0,
+      "at": "2026-10-27T09:55:45.911Z",
+      "parameters": {},
+      "dataSha256": null,
+      "conditional": true
+    },
+    {
+      "kind": "artifacts",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/artifact/artifact-list",
+      "status": 304,
+      "bytes": 0,
+      "at": "2026-10-27T09:55:46.967Z",
+      "parameters": {},
+      "dataSha256": null,
+      "conditional": true
+    },
+    {
+      "kind": "effects",
+      "method": "GET",
+      "url": "https://assets2.e7.wiki/static/effects.json",
+      "status": 304,
+      "bytes": 0,
+      "at": "2026-10-27T09:55:47.812Z",
+      "parameters": {},
+      "dataSha256": null,
+      "conditional": true
+    },
+    {
+      "kind": "items",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/item-dictionary/by-category",
+      "status": 200,
+      "bytes": 17792,
+      "at": "2026-10-27T09:55:48.738Z",
+      "parameters": {},
+      "dataSha256": "5d6c8a4275b1d038869e8c5f055f585ade06e231484065ded8dbaa4bb8707088",
+      "conditional": false
+    }
+  ],
+  "queries": [
+    {
+      "label": "traditional-name-search",
+      "args": {
+        "action": "search",
+        "kind": "hero",
+        "query": "梅鈴"
+      },
+      "result": {
+        "status": "ok",
+        "action": "search",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 584,
+        "sha256": "4ddf155a90c23d97146214fcbfe43c1e16faf5d8f26e5713e584a4ef1342d9f9",
+        "total": 1,
+        "items": [
+          {
+            "id": "mei-lin",
+            "name": "梅铃",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "hero-skills",
+      "args": {
+        "action": "hero",
+        "heroCode": "mei-lin",
+        "view": "skills"
+      },
+      "result": {
+        "status": "ok",
+        "action": "hero",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+            "fetchedAt": "2026-10-27T09:55:29.542Z",
+            "checkedAt": "2026-10-27T09:55:29.542Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 2270,
+        "sha256": "a904c7a630e277310d3cbcacb7e05b661e89e77bab0873f12175ace9e7636201",
+        "heroCode": "mei-lin",
+        "name": "梅铃",
+        "view": "skills",
+        "skillNames": [
+          "火龙拳",
+          "升龙脚",
+          "火龙升天"
+        ]
+      }
+    },
+    {
+      "label": "hero-stats",
+      "args": {
+        "action": "hero",
+        "heroCode": "mei-lin",
+        "view": "stats"
+      },
+      "result": {
+        "status": "ok",
+        "action": "hero",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+            "fetchedAt": "2026-10-27T09:55:29.542Z",
+            "checkedAt": "2026-10-27T09:55:29.542Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1060,
+        "sha256": "4becf04e7153f7963869d3204090241ba16098e8b4dcca1b64c11207901c62ac",
+        "heroCode": "mei-lin",
+        "name": "梅铃",
+        "view": "stats",
+        "stats": {
+          "hp": 5178,
+          "atk": 1208,
+          "def": 508,
+          "spd": 121,
+          "chc": 0.15,
+          "chd": 1.65,
+          "dac": 0.03,
+          "eff": 0,
+          "efr": 0
+        },
+        "statBasis": {
+          "equipmentIncluded": false,
+          "level": null,
+          "rarityStage": null,
+          "awakening": null,
+          "description": "角色JSON列示的基础数值；来源未注明等级/觉醒口径，不另加被动、印记或装备"
+        }
+      }
+    },
+    {
+      "label": "hero-multipliers",
+      "args": {
+        "action": "hero",
+        "heroCode": "mei-lin",
+        "view": "multipliers"
+      },
+      "result": {
+        "status": "ok",
+        "action": "hero",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+            "fetchedAt": "2026-10-27T09:55:29.542Z",
+            "checkedAt": "2026-10-27T09:55:29.542Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1726,
+        "sha256": "33c85e0750d3a0faaa819a6b8f55f59558a2370db2219236f56a7d7da2ead29c",
+        "heroCode": "mei-lin",
+        "name": "梅铃",
+        "view": "multipliers",
+        "skillNames": [
+          "火龙拳",
+          "升龙脚",
+          "火龙升天"
+        ]
+      }
+    },
+    {
+      "label": "hero-devotion",
+      "args": {
+        "action": "hero",
+        "heroCode": "mei-lin",
+        "view": "devotion"
+      },
+      "result": {
+        "status": "ok",
+        "action": "hero",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+            "fetchedAt": "2026-10-27T09:55:29.542Z",
+            "checkedAt": "2026-10-27T09:55:29.542Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 900,
+        "sha256": "6358df81a708d891782b57181c9391d63a769bd8956c909a655268eaf1bfd20c",
+        "heroCode": "mei-lin",
+        "name": "梅铃",
+        "view": "devotion"
+      }
+    },
+    {
+      "label": "hero-exclusive",
+      "args": {
+        "action": "hero",
+        "heroCode": "mei-lin",
+        "view": "exclusive"
+      },
+      "result": {
+        "status": "ok",
+        "action": "hero",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [
+          "exclusiveEquipment"
+        ],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+            "fetchedAt": "2026-10-27T09:55:29.542Z",
+            "checkedAt": "2026-10-27T09:55:29.542Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 723,
+        "sha256": "def2622d0d1e5274fc95811477c898eb625bbf8d0e2c0f78627a64ce2c255c50",
+        "heroCode": "mei-lin",
+        "name": "梅铃",
+        "view": "exclusive",
+        "exclusiveEquipment": null
+      }
+    },
+    {
+      "label": "hero-profile",
+      "args": {
+        "action": "hero",
+        "heroCode": "mei-lin",
+        "view": "profile"
+      },
+      "result": {
+        "status": "ok",
+        "action": "hero",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+            "fetchedAt": "2026-10-27T09:55:29.542Z",
+            "checkedAt": "2026-10-27T09:55:29.542Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1335,
+        "sha256": "3e8fb8e021f24c4dd733d742a83ee80059a48bb955b06d6f68ae5e34e75e1318",
+        "heroCode": "mei-lin",
+        "name": "梅铃",
+        "view": "profile",
+        "storyCharacters": 60
+      }
+    },
+    {
+      "label": "hero-overview",
+      "args": {
+        "action": "hero",
+        "heroCode": "mei-lin",
+        "view": "overview"
+      },
+      "result": {
+        "status": "ok",
+        "action": "hero",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/heroes/mei-lin.json",
+            "fetchedAt": "2026-10-27T09:55:29.542Z",
+            "checkedAt": "2026-10-27T09:55:29.542Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 980,
+        "sha256": "639cee29ceee5b00e9783fa472033c4795da6f1c461a5c131f2a09031e00f709",
+        "heroCode": "mei-lin",
+        "name": "梅铃",
+        "view": "overview",
+        "skillNames": [
+          "火龙拳",
+          "升龙脚",
+          "火龙升天"
+        ]
+      }
+    },
+    {
+      "label": "artifact-search",
+      "args": {
+        "action": "search",
+        "kind": "artifact",
+        "query": "火龙宝石"
+      },
+      "result": {
+        "status": "ok",
+        "action": "search",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/artifact/artifact-list",
+            "fetchedAt": "2026-10-27T09:55:31.625Z",
+            "checkedAt": "2026-10-27T09:55:31.625Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 588,
+        "sha256": "5c80fe643f15d8d3f496c69f196f339819793a33716056270509c8f069fea82c",
+        "total": 1,
+        "items": [
+          {
+            "id": "286",
+            "name": "火龙宝石",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "artifact-effect",
+      "args": {
+        "action": "artifact",
+        "artifactId": "286"
+      },
+      "result": {
+        "status": "ok",
+        "action": "artifact",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/artifact/artifact-list",
+            "fetchedAt": "2026-10-27T09:55:31.625Z",
+            "checkedAt": "2026-10-27T09:55:31.625Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 903,
+        "sha256": "0a5f188c47ae0aa2315f18cfed2f7a982915dff187d935518b515863559f24b2"
+      }
+    },
+    {
+      "label": "effect-dictionary",
+      "args": {
+        "action": "dictionary",
+        "kind": "effect",
+        "query": "灭亡"
+      },
+      "result": {
+        "status": "ok",
+        "action": "dictionary",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://assets2.e7.wiki/static/effects.json",
+            "fetchedAt": "2026-10-27T09:55:32.792Z",
+            "checkedAt": "2026-10-27T09:55:32.792Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 526,
+        "sha256": "48067461c9eb1e5ca046da56aa8345802e399b7f9256c3cdd3738e707fba76fb",
+        "total": 1,
+        "items": [
+          {
+            "id": "reviveblock",
+            "name": "灭亡",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "effect-filter",
+      "args": {
+        "action": "search",
+        "kind": "hero",
+        "filters": {
+          "effectIds": [
+            "reviveblock"
+          ]
+        },
+        "limit": 3
+      },
+      "result": {
+        "status": "ok",
+        "action": "search",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-10-27T09:55:28.650Z",
+            "checkedAt": "2026-10-27T09:55:28.651Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://assets2.e7.wiki/static/effects.json",
+            "fetchedAt": "2026-10-27T09:55:32.792Z",
+            "checkedAt": "2026-10-27T09:55:32.792Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero_summary/hero-list",
+            "fetchedAt": "2026-10-27T09:55:36.409Z",
+            "checkedAt": "2026-10-27T09:55:36.409Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1286,
+        "sha256": "e46e29f5047cde64142b6a990e0f6ad7c760f3eaab35a2e8f8e849b25623d8e8",
+        "total": 17,
+        "items": [
+          {
+            "id": "mei-lin",
+            "name": "梅铃",
+            "server": null
+          },
+          {
+            "id": "bystander-hwayoung",
+            "name": "旁观者和英",
+            "server": null
+          },
+          {
+            "id": "jenua",
+            "name": "济纽亚",
+            "server": null
+          }
+        ],
+        "hasNext": true
+      }
+    },
+    {
+      "label": "item-dictionary",
+      "args": {
+        "action": "dictionary",
+        "kind": "item",
+        "query": "天空石"
+      },
+      "result": {
+        "status": "ok",
+        "action": "dictionary",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/item-dictionary/by-category",
+            "fetchedAt": "2026-10-27T09:55:37.349Z",
+            "checkedAt": "2026-10-27T09:55:37.349Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 613,
+        "sha256": "97dc27cdbb33b21d8530f624b9b830d7de51d7dbf6819bd0f28ea2fe6938ccf5",
+        "total": 1,
+        "items": [
+          {
+            "id": "47",
+            "name": "天空石",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "codes",
+      "args": {
+        "action": "codes",
+        "server": "国际服",
+        "limit": 3
+      },
+      "result": {
+        "status": "ok",
+        "action": "codes",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epic7/redeem_code/lastest?count=50",
+            "fetchedAt": "2026-10-27T09:55:38.614Z",
+            "checkedAt": "2026-10-27T09:55:38.614Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1201,
+        "sha256": "606ff3549b88a2aee545f4f65094c28072d8b8da09fc045ceca4e569b70efab6",
+        "total": null,
+        "items": [
+          {
+            "id": null,
+            "name": null,
+            "server": "国际服"
+          },
+          {
+            "id": null,
+            "name": null,
+            "server": "国际服"
+          },
+          {
+            "id": null,
+            "name": null,
+            "server": "国际服"
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "wiki-updates",
+      "args": {
+        "action": "news",
+        "kind": "wiki_update",
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "news",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/updates/latest?count=50",
+            "fetchedAt": "2026-10-27T09:55:39.527Z",
+            "checkedAt": "2026-10-27T09:55:39.527Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1127,
+        "sha256": "1504c235039c12d8a032e2cb12a61380933620c27cd9b4744b909bfeb9b4c8d7",
+        "total": 50,
+        "items": [
+          {
+            "id": "64",
+            "name": "v1.13.4",
+            "server": null
+          },
+          {
+            "id": "63",
+            "name": "v1.13.3",
+            "server": null
+          }
+        ],
+        "hasNext": true
+      }
+    },
+    {
+      "label": "game-news-national",
+      "args": {
+        "action": "news",
+        "kind": "game",
+        "server": "国服",
+        "limit": 10
+      },
+      "result": {
+        "status": "ok",
+        "action": "news",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/announcement/page",
+            "fetchedAt": "2026-10-27T09:55:40.769Z",
+            "checkedAt": "2026-10-27T09:55:40.769Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 450,
+        "sha256": "05f8f55143061e3eda9f495d06af8b0a7661e4054746b9968653ef78aa6613d3",
+        "total": 0,
+        "items": [],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "game-news-page1",
+      "args": {
+        "action": "news",
+        "kind": "game",
+        "server": "国际服",
+        "limit": 10
+      },
+      "result": {
+        "status": "ok",
+        "action": "news",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/announcement/page",
+            "fetchedAt": "2026-10-27T09:55:41.646Z",
+            "checkedAt": "2026-10-27T09:55:41.646Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 2962,
+        "sha256": "4dc7a8cfab21ce8a87a85ca8f5bf900d58ebabcf606b5789bd57a3bb3e86474b",
+        "total": 123,
+        "items": [
+          {
+            "id": "190",
+            "name": "E7WC 2026淘汰賽應援活動",
+            "server": "国际服"
+          },
+          {
+            "id": "189",
+            "name": "萬聖節快樂！ALL強化效果活動",
+            "server": "国际服"
+          },
+          {
+            "id": "188",
+            "name": "「貝爾諾瓦」萬聖節精選特別禮包販售說明",
+            "server": "国际服"
+          },
+          {
+            "id": "187",
+            "name": "梅鈴的裝備評鑑會！繼承者們的「最棒裝備」或「最糟裝備」是什麼？活動",
+            "server": "国际服"
+          },
+          {
+            "id": "186",
+            "name": "「次元探查」征服認證活動！",
+            "server": "国际服"
+          },
+          {
+            "id": "185",
+            "name": "E7WC 2026原聲帶－「Revive」歌詞問答活動",
+            "server": "国际服"
+          },
+          {
+            "id": "184",
+            "name": "《第七史詩》x《卡厄思夢境》合作紀念「火龍蘊含的紅焰」禮包販售說明",
+            "server": "国际服"
+          },
+          {
+            "id": "183",
+            "name": "《第七史詩》x《卡厄思夢境》合作紀念「與梅鈴一起！」活動",
+            "server": "国际服"
+          },
+          {
+            "id": "182",
+            "name": "STEAM正式上市及全新伺服器「原石鑄界」開放紀念活動說明",
+            "server": "国际服"
+          },
+          {
+            "id": "181",
+            "name": "10/8(週四)更新資訊",
+            "server": "国际服"
+          }
+        ],
+        "hasNext": true
+      }
+    },
+    {
+      "label": "game-news-page2",
+      "args": {
+        "action": "news",
+        "kind": "game",
+        "server": "国际服",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "news",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/announcement/page",
+            "fetchedAt": "2026-10-27T09:55:42.801Z",
+            "checkedAt": "2026-10-27T09:55:42.801Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 2963,
+        "sha256": "306bc47e7da40c45abcce4396ef4ea8ebba85c171e665d1e9d3404843c397815",
+        "total": 123,
+        "items": [
+          {
+            "id": "180",
+            "name": "為飢腸轆轆的小春尋找《第七史詩》中的美食吧！活動",
+            "server": "国际服"
+          },
+          {
+            "id": "179",
+            "name": "10/1(週四)更新資訊",
+            "server": "国际服"
+          },
+          {
+            "id": "178",
+            "name": "🐰與月兔多米妮爾一起製作幸運月餅🥮活動",
+            "server": "国际服"
+          },
+          {
+            "id": "177",
+            "name": "迎接秋季ALL強化效果活動及異界討伐禮包販售說明",
+            "server": "国际服"
+          },
+          {
+            "id": "176",
+            "name": "迎接秋季！特別登入禮物活動",
+            "server": "国际服"
+          },
+          {
+            "id": "175",
+            "name": "9/24(週四)更新資訊",
+            "server": "国际服"
+          },
+          {
+            "id": "174",
+            "name": "《第七史詩》X SONNET SON「Revive」MV正式發售紀念線上觀看認證活動",
+            "server": "国际服"
+          },
+          {
+            "id": "173",
+            "name": "《卡厄思夢境》聯名合作更新紀念！優惠券公開＆次元探查心得活動",
+            "server": "国际服"
+          },
+          {
+            "id": "172",
+            "name": "《第七史詩》x《卡厄思夢境》聯名合作紀念 撲通撲通幸運盤！活動",
+            "server": "国际服"
+          },
+          {
+            "id": "171",
+            "name": "活動副本【緊急任務！搜索催化劑】開放",
+            "server": "国际服"
+          }
+        ],
+        "hasNext": true
+      }
+    }
+  ],
+  "modelCases": [
+    {
+      "label": "artifact-effect",
+      "input": "查一下火龙宝石的效果。",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "artifact",
+            "query": "火龙宝石"
+          },
+          "resultBytes": 910,
+          "resultSha256": "1b30575ea63701fd34e3a75cec0496e6dd4f37ab46814f98e468abaaac5983f0",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "hero",
+            "query": "火龙宝石"
+          },
+          "resultBytes": 804,
+          "resultSha256": "1e8b2fdfb5d6579c8201d7ae9aad4f60b3b62d424d1517a0e9a4dce4da684d54",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "artifact",
+            "artifactId": "286",
+            "view": "effect"
+          },
+          "resultBytes": 1225,
+          "resultSha256": "03247e73e06d6b389441bba941e5a45811601a23be720942ebabc8b29dc11ede",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "artifact",
+            "artifactId": "286",
+            "view": "stats"
+          },
+          "resultBytes": 932,
+          "resultSha256": "7b61e954cf1a387a128180c2da28cd31b247e1235f6eef9d003ad3e0a27a0d8d",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 3,
+      "reply": "火龙宝石是 5 星刺客专用神器，效果见 E7·WIKI：\n\n- **攻击力提升 10%～20%**\n- **受到攻击后，有 50%～100% 的几率使自身弱化效果减少 1 回合**\n\n基础面板显示攻击 21、生命 32（防御未给）。站点只提供了效果原文和参数上下限，没有标注各端点对应的等级与突破：也就是满突还是普通觉醒、数值在哪档，我无法替你确定，上面的百分比按区间原样给出。面板也没有等级口径，我就不推算满级数值了。\n\n需要的话，我可以再查它的概览或适合的角色方向（不过仓库里没有配装/测评数据）。",
+      "passed": true
+    },
+    {
+      "label": "effect-dictionary",
+      "input": "第七史诗中的灭亡效果是什么意思？",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "dictionary",
+            "kind": "effect",
+            "query": "灭亡"
+          },
+          "resultBytes": 848,
+          "resultSha256": "165882f0de5fd153328db2afaed8f5763b9540b0d9f812b0de99da12d952b84f",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 2,
+      "reply": "在第七史诗里，「灭亡」是技能附带的死亡惩罚效果：被带该效果的技能击杀的目标无法复活。\n\n- 类型：通用效果（效果 ID `reviveblock`）\n- 词典原描述：“因此技能死亡的目标无法复活。”\n\n也就是说，这类技能只是让本次击杀无法被复活技能拉起来，并非单独的持续 debuff。以上来自 E7·WIKI 的效果词典条目，非官方原文表述。\n\n如果你想知道具体哪些角色带灭亡效果，可以把角色名或者其他条件告诉我，我再帮你查；我也可以按效果 ID 反向筛角色。",
+      "passed": true
+    },
+    {
+      "label": "codes",
+      "input": "查最新的国际服兑换码，能保证我现在一定能兑换吗？",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "codes",
+            "server": "国际服",
+            "limit": 10
+          },
+          "resultBytes": 3079,
+          "resultSha256": "1870b485fb5a0000d5131711e47c35e2cc392dd8c4b383a33f558381115caa3d",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 2,
+      "reply": "以下兑换码来自 E7·WIKI（数据仅整理自上游，未实际验证），国际服共 7 条；时间均为上游原值，且**未标时区**，因此无法换算成你当地的具体时刻：\n\n- `A1REVIVE8Q`：2026-10-17 起，2026-10-31 11:00 到期\n- `EF1GROUPSTAGE`：2026-10-17 起，2026-10-31 11:00 到期\n- `matchday2win`：2026-10-11 起，2026-10-31 11:00 到期\n- `K7M9START2`：2026-10-10 起，2026-10-31 11:00 到期\n- `WELCOME2E7WC!`：2026-10-10 起，2026-10-31 11:00 到期\n- `E7WCMATCHSTART`：2026-10-10 起，2026-10-31 11:00 到期\n- `EPICWITHCZN`：2026-09-17 起，2026-10-29 11:00 到期；备注：圣约书签×15、金币×30w\n\n更早的兑换码（例如 `EPIC7_8TH_IMTSU`、`C5R1V9`、`G4P9L6`）所标注的有效期已经结束，我不建议再尝试。\n\n**关于能否保证现在一定兑换成功，答案是不能：**\n\n1. 站点明确标注这些兑换码尚未经过验证，只表示“符合条件、可供尝试”，不能构成可用承诺。\n2. 到期时间没有时区信息，因此我只能按原样转述，不能断言此刻一定仍在有效期内。\n3. 兑换是否成功还取决于账号所在区服、是否已经领取过该码，以及上游是否提前下架；这些我这边查不到。\n4. 前六条的礼包内容在上游同样缺失，备注里写的是“不知道”。\n\n如果你愿意，我可以之后再去查询一次国际服兑换码列表，帮你确认有没有新增或下架。不过，我只能反映上游目录中的内容，仍然无法替你验证实际兑换结果。"
+    }
+  ],
+  "cacheReuseWithoutHttp": true,
+  "conditionalStatus": 304,
+  "refresh": [
+    {
+      "kind": "cards",
+      "stale": false,
+      "warning": null
+    },
+    {
+      "kind": "summary",
+      "stale": false,
+      "warning": null
+    },
+    {
+      "kind": "artifacts",
+      "stale": false,
+      "warning": null
+    },
+    {
+      "kind": "effects",
+      "stale": false,
+      "warning": null
+    },
+    {
+      "kind": "items",
+      "stale": false,
+      "warning": null
+    }
+  ],
+  "catalogs": [
+    {
+      "kind": "cards",
+      "count": 389,
+      "sha256": "3c1c75bb19b6dddd8b6c1d027ddda71cc75e39d2b43b8bf6416f77aaf0df3d69"
+    },
+    {
+      "kind": "summary",
+      "count": 389,
+      "sha256": "b3f64939616216f3749b2fb21ad28f83778fd4673d149685e64270329ba6ce9c"
+    },
+    {
+      "kind": "artifacts",
+      "count": 282,
+      "sha256": "3d94c837dec423b12938d57d5e15c2f2ce1ea7f5e3517cb205128d0aa5660e54"
+    },
+    {
+      "kind": "effects",
+      "count": 172,
+      "sha256": "fc12badabde8a8831aed2928ad61e7ac7772c75514b8638ff6221cd831f86727"
+    },
+    {
+      "kind": "items",
+      "count": 52,
+      "sha256": "5d6c8a4275b1d038869e8c5f055f585ade06e231484065ded8dbaa4bb8707088"
+    }
+  ],
+  "model": "deepseek/deepseek-flash",
+  "modelCaseSelection": [
+    "artifact-effect",
+    "effect-dictionary",
+    "codes",
+    "game-news"
+  ],
+  "passed": false,
+  "error": {
+    "name": "AssertionError",
+    "code": "ERR_ASSERTION",
+    "message": "The input did not match the regular expression /不能保证|无法保证|不保证|未验证|不一定/u. Input:\n\n'以下兑换码来自 E7·WIKI（数据仅整理自上游，未实际验证），国际服共 7 条；时间均为上游原值，且**未标时区**，因此无法换算成你当地的具体时刻：\\n' +\n  '\\n' +\n  '- `A1REVIVE8Q`：2026-10-17 起，2026-10-31 11:00 到期\\n' +\n  '- `EF1GROUPSTAGE`：2026-10-17 起，2026-10-31 11:00 到期\\n' +\n  '- `matchday2win`：2026-10-11 起，2026-10-31 11:00 到期\\n' +\n  '- `K7M9START2`：2026-10-10 起，2026-10-31 11:00 到期\\n' +\n  '- `WELCOME2E7WC!`：2026-10-10 起，2026-10-31 11:00 到期\\n' +\n  '- `E7WCMATCHSTART`：2026-10-10 起，2026-10-31 11:00 到期\\n' +\n  '- `EPICWITHCZN`：2026-09-17 起，2026-10-29 11:00 到期；备注：圣约书签×15、金币×30w\\n' +\n  '\\n' +\n  '更早的兑换码（例如 `EPIC7_8TH_IMTSU`、`C5R1V9`、`G4P9L6`）所标注的有效期已经结束，我不建议再尝试。\\n' +\n  '\\n' +\n  '**关于能否保证现在一定兑换成功，答案是不能：**\\n' +\n  '\\n' +\n  '1. 站点明确标注这些兑换码尚未经过验证，只表示“符合条件、可供尝试”，不能构成可用承诺。\\n' +\n  '2. 到期时间没有时区信息，因此我只能按原样转述，不能断言此刻一定仍在有效期内。\\n' +\n  '3. 兑换是否成功还取决于账号所在区服、是否已经领取过该码，以及上游是否提前下架；这些我这边查不到。\\n' +\n  '4. 前六条的礼包内容在上游同样缺失，备注里写的是“不知道”。\\n' +\n  '\\n' +\n  '如果你愿意，我可以之后再去查询一次国际服兑换码列表，帮你确认有没有新增或下架。不过，我只能反映上游目录中的内容，仍然无法替你验证实际兑换结果。'\n"
+  },
+  "finishedAt": "2026-10-27T09:56:01.498Z"
+}

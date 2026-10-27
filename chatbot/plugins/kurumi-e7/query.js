@@ -144,7 +144,8 @@ export function artifactProjection(row, view) {
     max: row['skill_max_ps_refer' + (n === 1 ? '' : n)] ?? null})).filter(r => r.min !== null || r.max !== null);
   return {...artifactIdentity(row), view, ...(view === 'stats' ? {baseStats, statBasis: '站点stat_*原始属性，未给等级口径，不推算满级属性'} : view === 'overview'
     ? {nameEn: row.name_en ?? null, limited: row.limited ?? null, description: text(row.description)}
-    : {effect: text(row.skill_display_desc), parameterRanges: ranges})};
+    : {effect: text(row.skill_display_desc), parameterRanges: ranges,
+      effectBasis: {level: null, limitBreak: null, description: '上游只给效果原文与参数上下限，未注明各端点对应的等级/突破；按区间原值表述'}})};
 }
 export const dictionaryProjection = (row, kind) => kind === 'effect' ? {...effect(row), entryId: String(row.id)}
   : {entryId: String(row.id), key: row.itemKey ?? null, name: text(row.name), category: row.category ?? null,

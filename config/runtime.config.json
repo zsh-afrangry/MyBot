@@ -71,7 +71,8 @@
             "kurumi_document_send",
             "knowledge_bills_get",
             "knowledge_bill_add",
-            "knowledge_bill_manage"
+            "knowledge_bill_manage",
+            "e7_data"
           ],
           "deny": [
             "read",
@@ -218,7 +219,8 @@
       "kurumi-knowledgemap",
       "personal-profile",
       "personal-planning",
-      "personal-reminders"
+      "personal-reminders",
+      "kurumi-e7"
     ],
     "load": {
       "paths": [
@@ -235,7 +237,8 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-knowledgemap",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-profile",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-planning",
-        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders"
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-e7"
       ]
     },
     "entries": {
@@ -356,6 +359,18 @@
         "config": {
           "reminderBackend": "native-service",
           "reminderRunnerRoot": "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders"
+        }
+      },
+      "kurumi-e7": {
+        "enabled": true,
+        "config": {
+          "cacheRoot": "/home/afrangry/.openclaw-fusion/state/kurumi-e7",
+          "refreshEnabled": true,
+          "refreshTime": "05:30",
+          "detailTtlHours": 24,
+          "liveTtlMinutes": 30,
+          "timeoutMs": 15000,
+          "maxResponseBytes": 2097152
         }
       }
     },
