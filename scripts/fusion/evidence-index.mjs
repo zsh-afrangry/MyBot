@@ -41,12 +41,12 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 // [group, purpose, flags, basis]
 const TABLE = {
   'chatbot/tests/e7/model-cases.mjs': ['库', 'E7真实模型验收的问题与判定断言；可离线复核保存的公开验收回复，导入无模型或网络调用', {readonly: 1}, 'header'],
-  'chatbot/tests/e7/acceptance-live.mjs': ['验收', '显式--live读取E7公开HTTP/临时缓存，--community-only选配装/测评；可选--model调用现行官方模型与真实处理器，无QQ或生产写入', {externalApi: 1, model: 1, testDir: 1, writesRepo: 1}, 'header'],
+  'chatbot/tests/e7/acceptance-live.mjs': ['验收', '显式--live读取E7公开HTTP/临时缓存，--community-only选配装/测评、--reference-only选榜单/攻略/FAQ；可选--model调用现行官方模型与真实处理器，无QQ或生产写入', {externalApi: 1, model: 1, testDir: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/e7/acceptance-host.mjs': ['验收', '真实隔离Gateway验证E7插件启用/禁用、工具目录及正常停止，无模型/API/QQ网络或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/tests/e7/fixtures.mjs': ['库', 'E7合成公开资料形状、临时缓存与注入client，不导入生产名单或真实站点数据', {testDir: 1}, 'header'],
   'chatbot/tests/e7/client.test.mjs': ['离线', 'E7精确读路径、可信代理策略、限流/拒绝退避、并发与解压后大小上限；仅注入guard与本地HTTP', {testDir: 1}, 'header'],
-  'chatbot/tests/e7/service.test.mjs': ['离线', 'E7八类查询/七个角色视图、配装单位/筛选与测评分类/空值、游标绑定、原子缓存/304/异常保护与降级/停止；仅合成资料', {testDir: 1}, 'header'],
-  'chatbot/tests/e7/plugin.test.mjs': ['离线', 'E7真实工具处理器的本人权限、撤权复核、外部不可信边界、每日定时器与停止；仅合成上下文', {testDir: 1}, 'header'],
+  'chatbot/tests/e7/service.test.mjs': ['离线', 'E7十类查询/七个角色视图、配装单位/筛选与测评分类/空值、榜单未知类型/完整续页、攻略FAQ稳定ID/跨页/重启定位、原子缓存/304/降级/停止；仅合成资料', {testDir: 1}, 'header'],
+  'chatbot/tests/e7/plugin.test.mjs': ['离线', 'E7真实处理器的本人权限、撤权复核、外部不可信边界与长正文完整工具预算、每日定时器与停止；仅合成上下文', {testDir: 1}, 'header'],
   'scripts/fusion/lib/documentation-map.mjs': ['库', '只读文档归属、命名分组及维护源码发现；不执行扫描到的文件', {readonly: 1}, 'header'],
   'scripts/fusion/test/documentation-map.test.mjs': ['离线', '文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库', {testDir: 1}, 'header'],
   'chatbot/plugins/kurumi-mail/test/helpers/mock-smtp.js': ['库', '邮件测试的本地TLS/SMTP服务器及故障夹具，无公网外发', {readonly: 1}, 'header'],
