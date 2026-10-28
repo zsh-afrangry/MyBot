@@ -48,6 +48,19 @@ test('community endpoints build different fixed read-only POST bodies and refuse
   assert.equal(f.calls.length, 2); assert.equal(f.releases(), 2);
 });
 
+test('rankings and content use only verified list/page reads with exact keyword casing and bounded pages', async () => {
+  const f = setup(() => json({code: 1000, data: []}));
+  await f.client.read('rankings'); await f.client.read('guides', {page: 2, query: '测试'}); await f.client.read('faq', {page: 1});
+  assert.deepEqual(f.calls.map(c => [new URL(c.url).pathname, JSON.parse(c.init.body)]), [
+    ['/api/open/epicseven/tier/list', {}], ['/api/open/epicseven/guide/page', {page: 2, size: 10, keyWord: '测试'}],
+    ['/api/open/epicseven/faq/page', {page: 1, size: 10}],
+  ]);
+  for (const params of [{page: 0}, {page: 1001}, {page: '1'}, {query: ''}, {query: 'x'.repeat(129)}, {query: {url: 'evil'}}])
+    await rejects(f.client.read('guides', params), 'invalid_query');
+  for (const kind of ['guideDetail', 'increment-read', 'like']) await rejects(f.client.read(kind), 'unknown_resource');
+  assert.equal(f.calls.length, 3);
+});
+
 test('malformed envelopes, HTML and streamed decoded oversize are rejected without exposing a body', async () => {
   for (const response of [json({code: 1, message: 'PRIVATE-UPSTREAM-ERROR'}), json({not: 'envelope'}), new Response('HTML', {headers: {'content-type': 'text/html'}}), new Response('{', {headers: {'content-type': 'application/json'}})]) {
     const f = setup(() => response); await rejects(f.client.read('cards'), 'invalid_response'); assert.equal(f.releases(), 1);

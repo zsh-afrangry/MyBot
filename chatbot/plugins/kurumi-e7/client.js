@@ -16,6 +16,13 @@ export function endpoint(kind, params = {}) {
     return {url: `${ASSETS}/static/heroes/${params.heroCode}.json`, method: 'GET', envelope: false};
   }
   if (kind === 'effects') return {url: ASSETS + '/static/effects.json', method: 'GET', envelope: false};
+  if (kind === 'rankings') return {url: API + '/open/epicseven/tier/list', method: 'POST', envelope: true, body: {}};
+  if (kind === 'guides' || kind === 'faq') {
+    const page = params.page ?? 1;
+    if (!Number.isInteger(page) || page < 1 || page > 1000 || (params.query !== undefined && (typeof params.query !== 'string' || !params.query.trim() || [...params.query].length > 128))) fail('invalid_query');
+    return {url: API + '/open/epicseven/' + (kind === 'guides' ? 'guide' : 'faq') + '/page', method: 'POST', envelope: true,
+      body: {page, size: 10, ...(params.query ? {keyWord: params.query} : {})}};
+  }
   if (kind === 'builds' || kind === 'reviews') {
     if (typeof params.heroCode !== 'string' || !codePattern.test(params.heroCode)) fail('invalid_query');
     return {url: API + '/open/epicseven/' + (kind === 'builds' ? 'hero_equipment_scheme/getSchemeByHeroCode' : 'hero_review/by-hero'),

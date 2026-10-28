@@ -1,0 +1,1098 @@
+{
+  "at": "2026-10-28T17:10:38.296Z",
+  "boundary": "Real public E7 HTTP, temporary public-data cache. Optional configured official model and actual v2 tool handlers with synthetic trusted owner context. No QQ send or production write; not full model/Gateway/QQ inbound.",
+  "userAgent": "kurumi-e7/0.1 (personal read-only wiki client)",
+  "requests": [
+    {
+      "kind": "rankings",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/tier/list",
+      "status": 200,
+      "bytes": 52107,
+      "at": "2026-10-28T17:10:39.526Z",
+      "parameters": {},
+      "dataSha256": "5d12470921c7f547a45d34f379644a36a03634056dae4875ed294aecd0593789",
+      "conditional": false
+    },
+    {
+      "kind": "guides",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "status": 200,
+      "bytes": 30581,
+      "at": "2026-10-28T17:10:40.674Z",
+      "parameters": {
+        "page": 1
+      },
+      "dataSha256": "8e42ce51f81b636112709d22efcabe0c8c38986fb664e3fe12daf7c6e46b56f8",
+      "conditional": false
+    },
+    {
+      "kind": "guides",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "status": 200,
+      "bytes": 2667,
+      "at": "2026-10-28T17:10:41.663Z",
+      "parameters": {
+        "page": 2
+      },
+      "dataSha256": "bb59be724d069447dbb16ae7ec18efb71f90e4b29bd328c28f05d8f8666c47d8",
+      "conditional": false
+    },
+    {
+      "kind": "guides",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "status": 200,
+      "bytes": 96,
+      "at": "2026-10-28T17:10:42.631Z",
+      "parameters": {
+        "page": 1,
+        "query": "kurumi-no-match-20261029"
+      },
+      "dataSha256": "f5ec03dbd6880127db12766e6740576a09c07addc7d4a2c93f31596d24ad44a2",
+      "conditional": false
+    },
+    {
+      "kind": "faq",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "status": 200,
+      "bytes": 6289,
+      "at": "2026-10-28T17:10:43.554Z",
+      "parameters": {
+        "page": 1
+      },
+      "dataSha256": "bdee77cd326172bbef90ba1b51d4f24a24ec706dece34008589cab375ebdf91c",
+      "conditional": false
+    },
+    {
+      "kind": "faq",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "status": 200,
+      "bytes": 5837,
+      "at": "2026-10-28T17:10:44.497Z",
+      "parameters": {
+        "page": 2
+      },
+      "dataSha256": "d8ee026da6f9cc2b8ae2fabfd2779b09978b27b8523e3587abbe396253f04b6a",
+      "conditional": false
+    },
+    {
+      "kind": "faq",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "status": 200,
+      "bytes": 2392,
+      "at": "2026-10-28T17:10:45.438Z",
+      "parameters": {
+        "page": 1,
+        "query": "团战"
+      },
+      "dataSha256": "3be7da964432b07d2c132a134287792b7d6df6d59366a3d4b2971f49facd9566",
+      "conditional": false
+    },
+    {
+      "kind": "artifacts",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/artifact/artifact-list",
+      "status": 200,
+      "bytes": 322827,
+      "at": "2026-10-28T17:10:52.199Z",
+      "parameters": {},
+      "dataSha256": "3d94c837dec423b12938d57d5e15c2f2ce1ea7f5e3517cb205128d0aa5660e54",
+      "conditional": false
+    },
+    {
+      "kind": "guides",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+      "status": 200,
+      "bytes": 2371,
+      "at": "2026-10-28T17:10:57.236Z",
+      "parameters": {
+        "page": 1,
+        "query": "挑战深渊1层30秒速刷光辉精髓"
+      },
+      "dataSha256": "013e69df68afacc68ef60f7e897f3b7ffb6e46e25bc854dc25a477b8331b75a0",
+      "conditional": false
+    },
+    {
+      "kind": "faq",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "status": 200,
+      "bytes": 96,
+      "at": "2026-10-28T17:11:04.570Z",
+      "parameters": {
+        "page": 1,
+        "query": "团战 少人 防御塔 血量"
+      },
+      "dataSha256": "f5ec03dbd6880127db12766e6740576a09c07addc7d4a2c93f31596d24ad44a2",
+      "conditional": false
+    },
+    {
+      "kind": "faq",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "status": 200,
+      "bytes": 486,
+      "at": "2026-10-28T17:11:06.769Z",
+      "parameters": {
+        "page": 1,
+        "query": "防御塔"
+      },
+      "dataSha256": "2ade76942dc418c279da4e02f9c1cc78c7de79560c0797aaaf3e069c84bec732",
+      "conditional": false
+    },
+    {
+      "kind": "faq",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "status": 200,
+      "bytes": 3124,
+      "at": "2026-10-28T17:11:07.675Z",
+      "parameters": {
+        "page": 1,
+        "query": "血量"
+      },
+      "dataSha256": "e163eb838f751ef38c6a861f23e4098b190775f39279d9eca7f2c17bcea75705",
+      "conditional": false
+    }
+  ],
+  "queries": [
+    {
+      "label": "rankings-list",
+      "args": {
+        "action": "rankings",
+        "limit": 10
+      },
+      "result": {
+        "status": "ok",
+        "action": "rankings",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [
+          "items.objectType"
+        ],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/tier/list",
+            "fetchedAt": "2026-10-28T17:10:39.527Z",
+            "checkedAt": "2026-10-28T17:10:39.527Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 2853,
+        "sha256": "8f73e7a0a9323411047fd16198ecbef6676a1dac29bea87f8b362d72496dfe52",
+        "total": 8,
+        "items": [
+          {
+            "id": "18",
+            "name": "gvg神器榜",
+            "server": null
+          },
+          {
+            "id": "17",
+            "name": "限定角色强度榜（乘风之前）",
+            "server": null
+          },
+          {
+            "id": "16",
+            "name": "全力套适配度",
+            "server": null
+          },
+          {
+            "id": "15",
+            "name": "弱化套适配度",
+            "server": null
+          },
+          {
+            "id": "13",
+            "name": "新手池光暗5推荐",
+            "server": null
+          },
+          {
+            "id": "12",
+            "name": "追伤套适配程度",
+            "server": null
+          },
+          {
+            "id": "11",
+            "name": "开战套适配度",
+            "server": null
+          },
+          {
+            "id": "3",
+            "name": "GVG进攻角色T度表",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "rankings-artifacts",
+      "args": {
+        "action": "rankings",
+        "objectType": "artifact"
+      },
+      "result": {
+        "status": "ok",
+        "action": "rankings",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/tier/list",
+            "fetchedAt": "2026-10-28T17:10:39.527Z",
+            "checkedAt": "2026-10-28T17:10:39.527Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 708,
+        "sha256": "8d443cd6fe396e5770402c5e92e85a2a686e135d56eae48b9def7c1659c963ec",
+        "total": 1,
+        "items": [
+          {
+            "id": "18",
+            "name": "gvg神器榜",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "ranking-entries-page1",
+      "args": {
+        "action": "rankings",
+        "mode": "get",
+        "rankingId": "18",
+        "limit": 5
+      },
+      "result": {
+        "status": "ok",
+        "action": "rankings",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/tier/list",
+            "fetchedAt": "2026-10-28T17:10:39.527Z",
+            "checkedAt": "2026-10-28T17:10:39.527Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1379,
+        "sha256": "cc06c4093b89c216cb8b12da84ec31b5ca2bb46421be1f49233e45a9176ed18e",
+        "total": 14,
+        "items": [
+          {
+            "id": "sweet-miracle",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "guiding-light",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "queens-whistle",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "refracted-desire",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "summer-photogenic",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "rankingId": "18",
+        "objectType": "artifact",
+        "entryCount": 14,
+        "tierCount": 2
+      }
+    },
+    {
+      "label": "ranking-entries-page2",
+      "args": {
+        "action": "rankings",
+        "mode": "get",
+        "rankingId": "18",
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "rankings",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/tier/list",
+            "fetchedAt": "2026-10-28T17:10:39.527Z",
+            "checkedAt": "2026-10-28T17:10:39.527Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1388,
+        "sha256": "e7929920b53ccee0098b4ccca540d5e41ae2d8390d488713958d719a98e5dbb8",
+        "total": 14,
+        "items": [
+          {
+            "id": "proof-of-friendship",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "doctors-bag",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "thorn-of-the-blue-rose",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "birds-eye-view",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "holy-sacrifice",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "rankingId": "18",
+        "objectType": "artifact",
+        "entryCount": 14,
+        "tierCount": 2
+      }
+    },
+    {
+      "label": "ranking-untyped",
+      "args": {
+        "action": "rankings",
+        "mode": "get",
+        "rankingId": "13"
+      },
+      "result": {
+        "status": "ok",
+        "action": "rankings",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [
+          "objectType"
+        ],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/tier/list",
+            "fetchedAt": "2026-10-28T17:10:39.527Z",
+            "checkedAt": "2026-10-28T17:10:39.527Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1652,
+        "sha256": "a896cc978a99dae1895049785ce78376dcf352ae5729d7353cc364bf56914665",
+        "total": 42,
+        "items": [
+          {
+            "id": "boss-arunka",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "empyrean-ilynav",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "new-moon-luna",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "lady-of-the-scales",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "arbiter-vildred",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "rankingId": "13",
+        "objectType": null,
+        "entryCount": 42,
+        "tierCount": 4
+      }
+    },
+    {
+      "label": "guides-page1",
+      "args": {
+        "action": "content",
+        "kind": "guide",
+        "limit": 10
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+            "fetchedAt": "2026-10-28T17:10:40.674Z",
+            "checkedAt": "2026-10-28T17:10:40.674Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4651,
+        "sha256": "d3f0c97e4d57b9b7a52e3c31b4204b14b37ae1b0cd9165e90a1d17fbbc23f2ba",
+        "total": 12,
+        "items": [
+          {
+            "id": "20",
+            "name": "GVG神器推荐—常驻篇",
+            "server": null
+          },
+          {
+            "id": "19",
+            "name": "挑战深渊1层30秒速刷光辉精髓",
+            "server": null
+          },
+          {
+            "id": "18",
+            "name": "木降临无机制速通",
+            "server": null
+          },
+          {
+            "id": "17",
+            "name": "木降临炼狱无斗神",
+            "server": null
+          },
+          {
+            "id": "15",
+            "name": "永劫新赛季开荒——第三关火永劫",
+            "server": null
+          },
+          {
+            "id": "14",
+            "name": "永劫新赛季开荒——第二关木永劫",
+            "server": null
+          },
+          {
+            "id": "13",
+            "name": "永劫新赛季开荒——第一关水永劫",
+            "server": null
+          },
+          {
+            "id": "12",
+            "name": "萌新三色全五星英雄功用索引（个人向）",
+            "server": null
+          },
+          {
+            "id": "11",
+            "name": "战术档案——禁忌档案攻略",
+            "server": null
+          },
+          {
+            "id": "10",
+            "name": "战术档案——特殊档案攻略",
+            "server": null
+          }
+        ],
+        "hasNext": true
+      }
+    },
+    {
+      "label": "guides-page2",
+      "args": {
+        "action": "content",
+        "kind": "guide",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+            "fetchedAt": "2026-10-28T17:10:41.663Z",
+            "checkedAt": "2026-10-28T17:10:41.663Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1255,
+        "sha256": "87177679d7b9b610d4b8e5bbad8318d08b490412e89f2401cce15149dff3fda7",
+        "total": 12,
+        "items": [
+          {
+            "id": "9",
+            "name": "战术档案——一级档案攻略",
+            "server": null
+          },
+          {
+            "id": "8",
+            "name": "战术档案——初级档案攻略",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "guide-body",
+      "args": {
+        "action": "content",
+        "kind": "guide",
+        "mode": "get",
+        "contentId": "20"
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [
+          "detailUrl",
+          "images"
+        ],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+            "fetchedAt": "2026-10-28T17:10:40.674Z",
+            "checkedAt": "2026-10-28T17:10:40.674Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1830,
+        "sha256": "80710c7e10869bdbf0d47f00095cc55b21969a40f69028ceb21ce7b0c6fec033",
+        "contentId": "20",
+        "kind": "guide",
+        "author": "Noshiro1",
+        "updatedAt": "2026-10-29 00:28:41",
+        "imageDependency": true,
+        "contentCharacters": 354,
+        "detailUrl": null,
+        "sourcePage": "https://e7.wiki/guides"
+      }
+    },
+    {
+      "label": "guides-keyword-empty",
+      "args": {
+        "action": "content",
+        "kind": "guide",
+        "query": "kurumi-no-match-20261029"
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/guide/page",
+            "fetchedAt": "2026-10-28T17:10:42.631Z",
+            "checkedAt": "2026-10-28T17:10:42.631Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 510,
+        "sha256": "d06a5dfdd68b5a6229c9f0ff9dc63a5d32afb4944858f7791a3b8ec566b15d85",
+        "total": 0,
+        "items": [],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "faq-page1",
+      "args": {
+        "action": "content",
+        "kind": "faq",
+        "limit": 10
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+            "fetchedAt": "2026-10-28T17:10:43.554Z",
+            "checkedAt": "2026-10-28T17:10:43.554Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4137,
+        "sha256": "d91ab4e3596493d6a54f005c25a531b86a1d08641700705a4fd2332738a1807c",
+        "total": 40,
+        "items": [
+          {
+            "id": "41",
+            "name": "团战比对方少人时，防御塔的血量如何变化？",
+            "server": null
+          },
+          {
+            "id": "40",
+            "name": "多少速度的大将军可以不被斗神套圈S2？",
+            "server": null
+          },
+          {
+            "id": "38",
+            "name": "水双被封印时，任务计数到10后会触发额外回合吗？",
+            "server": null
+          },
+          {
+            "id": "37",
+            "name": "士气BUFF可以增幅额外伤害吗？",
+            "server": null
+          },
+          {
+            "id": "36",
+            "name": "队友被阻断时，精灵使触发灵药神器时必然给自己解Debuff吗？",
+            "server": null
+          },
+          {
+            "id": "35",
+            "name": "赫尔赛蒂拥有速度增加、超人化或狂气BUFF后，其他角色的速度会随之产生变化吗？",
+            "server": null
+          },
+          {
+            "id": "34",
+            "name": "速攻值是基于“四舍五入”的原则进行显示吗？",
+            "server": null
+          },
+          {
+            "id": "33",
+            "name": "暴击的发生率如何计算？",
+            "server": null
+          },
+          {
+            "id": "32",
+            "name": "闪避的发生率和伤害量如何计算？",
+            "server": null
+          },
+          {
+            "id": "31",
+            "name": "强击的发生率和伤害量如何计算？",
+            "server": null
+          }
+        ],
+        "hasNext": true
+      }
+    },
+    {
+      "label": "faq-page2",
+      "args": {
+        "action": "content",
+        "kind": "faq",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+            "fetchedAt": "2026-10-28T17:10:44.497Z",
+            "checkedAt": "2026-10-28T17:10:44.497Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4089,
+        "sha256": "efb1bce806dcbda57ba2cf97e1a29db1db69157559bd1ccd6a6391ae8e117df1",
+        "total": 40,
+        "items": [
+          {
+            "id": "30",
+            "name": "激爆伤害可以被追伤套增幅吗？",
+            "server": null
+          },
+          {
+            "id": "29",
+            "name": "人机AI的攻击逻辑是什么？",
+            "server": null
+          },
+          {
+            "id": "28",
+            "name": "一个队伍里有两个怂证时，哪个会发挥作用？",
+            "server": null
+          },
+          {
+            "id": "27",
+            "name": "迪彩被放逐期间死掉的队友，可以被回溯直接复活吗？",
+            "server": null
+          },
+          {
+            "id": "26",
+            "name": "生命碎片会被木原神放逐吗？",
+            "server": null
+          },
+          {
+            "id": "25",
+            "name": "阻断效果会阻止光女主给队友挂丰饶吗？",
+            "server": null
+          },
+          {
+            "id": "24",
+            "name": "配置团战防守后，防守角色的配装是否永久不变？",
+            "server": null
+          },
+          {
+            "id": "23",
+            "name": "团战结算时，系统给予的排名积分如何计算？",
+            "server": null
+          },
+          {
+            "id": "22",
+            "name": "团战中，击破主塔/中塔/小塔分别奖励多少积分？",
+            "server": null
+          },
+          {
+            "id": "21",
+            "name": "额外伤害是否可以被分摊，以及是否可以被减伤？",
+            "server": null
+          }
+        ],
+        "hasNext": true
+      }
+    },
+    {
+      "label": "faq-keyword",
+      "args": {
+        "action": "content",
+        "kind": "faq",
+        "query": "团战"
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+            "fetchedAt": "2026-10-28T17:10:45.438Z",
+            "checkedAt": "2026-10-28T17:10:45.438Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 2105,
+        "sha256": "e967221a0d3b00c8c4254ddc62468a0b8309c14a932a4b489c3e64715b009808",
+        "total": 4,
+        "items": [
+          {
+            "id": "41",
+            "name": "团战比对方少人时，防御塔的血量如何变化？",
+            "server": null
+          },
+          {
+            "id": "24",
+            "name": "配置团战防守后，防守角色的配装是否永久不变？",
+            "server": null
+          },
+          {
+            "id": "23",
+            "name": "团战结算时，系统给予的排名积分如何计算？",
+            "server": null
+          },
+          {
+            "id": "22",
+            "name": "团战中，击破主塔/中塔/小塔分别奖励多少积分？",
+            "server": null
+          }
+        ],
+        "hasNext": false
+      }
+    },
+    {
+      "label": "faq-answer",
+      "args": {
+        "action": "content",
+        "kind": "faq",
+        "mode": "get",
+        "contentId": "41"
+      },
+      "result": {
+        "status": "ok",
+        "action": "content",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [
+          "detailUrl"
+        ],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+            "fetchedAt": "2026-10-28T17:10:45.438Z",
+            "checkedAt": "2026-10-28T17:10:45.438Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1033,
+        "sha256": "6097039234ae480ed0863cfe03e9a2de364741b6e9409c6a4854b40db685e132",
+        "contentId": "41",
+        "kind": "faq",
+        "author": "康德",
+        "updatedAt": "2026-10-29 00:20:55",
+        "imageDependency": false,
+        "answerCharacters": 30,
+        "detailUrl": null,
+        "sourcePage": "https://e7.wiki/faq"
+      }
+    }
+  ],
+  "modelCases": [
+    {
+      "label": "rankings-artifacts",
+      "input": "看看E7wiki有哪些神器榜单，打开其中一份，列出前五条并保留榜单名称和更新时间。",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "rankings",
+            "mode": "list",
+            "objectType": "artifact"
+          },
+          "resultBytes": 1030,
+          "resultSha256": "bf731ad0902775453fb93c46db2a94e7a81e58a8642c4e0661e9bc18dcd178ed",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "rankings",
+            "mode": "get",
+            "rankingId": "18",
+            "objectType": "artifact"
+          },
+          "resultBytes": 1701,
+          "resultSha256": "01ab65ea8c276935c59fe7019f66a8a09c732e87a4307eba301f3ce1c0f3d86e",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "artifact",
+            "query": "sweet-miracle"
+          },
+          "resultBytes": 901,
+          "resultSha256": "381348753aa35919f9d31e06c7750bcd27b61f047d8008ea57f69a1ddb61318a",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "artifact",
+            "query": "guiding-light"
+          },
+          "resultBytes": 901,
+          "resultSha256": "023bb046aeb05b9b054abbb3e897d7e08b5aed4abb3acfe0dc3d5c376ff5cc05",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "artifact",
+            "query": "queens-whistle"
+          },
+          "resultBytes": 905,
+          "resultSha256": "e538409cc22792736371a5b27ce652e339b3ae773dfb4016c6a20b5342ced2e8",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "artifact",
+            "query": "refracted-desire"
+          },
+          "resultBytes": 903,
+          "resultSha256": "29f2866b87828b0d3423c73cb0208ed3151e3835ea94cb1ff9b60d026940d249",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "artifact",
+            "query": "summer-photogenic"
+          },
+          "resultBytes": 908,
+          "resultSha256": "a0a43665b956efb43e14a18fb05f846d354b8d3aa8e9752e09ecda12bade1a11",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 4,
+      "passed": true,
+      "replyCharacters": 506,
+      "replySha256": "642bc36eeefa969602d6be8e259c7105c4f73d4d22875dce8920b2a2c597d966"
+    },
+    {
+      "label": "content-guide",
+      "input": "查E7wiki的“挑战深渊1层30秒速刷光辉精髓”攻略，读取正文后告诉我要点；如果图片没有提取，明确说明。",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "content",
+            "kind": "guide",
+            "mode": "search",
+            "query": "挑战深渊1层30秒速刷光辉精髓",
+            "limit": 10
+          },
+          "resultBytes": 1182,
+          "resultSha256": "1d4ee7173e21fb2ea6f4501e94f809084483b94cde32ea3c489b89cbf84e386a",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "content",
+            "kind": "guide",
+            "mode": "get",
+            "contentId": "19"
+          },
+          "resultBytes": 1751,
+          "resultSha256": "3a24280b2df3da37abe3c1966398edbba718d5d1c1e3be43fa29971adcce8814",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 3,
+      "passed": true,
+      "replyCharacters": 610,
+      "replySha256": "ec3fc6b0d83d97cb132e2eb6b57aa29d574ce1e419790bd88a7fa87c5ce6290e"
+    },
+    {
+      "label": "content-faq",
+      "input": "查E7wiki FAQ：团战比对方少人时，防御塔的血量如何变化？请读取对应问答并保留作者和日期。",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "content",
+            "kind": "faq",
+            "mode": "search",
+            "query": "团战 少人 防御塔 血量",
+            "limit": 10
+          },
+          "resultBytes": 830,
+          "resultSha256": "804af391e1acf9e590924cf081d2cd413bd48e386563b7045e671e1f5f037c7e",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "content",
+            "kind": "faq",
+            "limit": 10,
+            "mode": "search",
+            "query": "团战"
+          },
+          "resultBytes": 2427,
+          "resultSha256": "b8a0f450192d7e59a42e6cab3e111770c52479400a27d534dd9041af5bdc5c0d",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "content",
+            "kind": "faq",
+            "limit": 10,
+            "mode": "search",
+            "query": "防御塔"
+          },
+          "resultBytes": 1222,
+          "resultSha256": "3724a52ae000f1c4e6d01478f77dbef2739631b79dd3c7c821f4b3bcd61ab40d",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "content",
+            "kind": "faq",
+            "limit": 10,
+            "mode": "search",
+            "query": "血量"
+          },
+          "resultBytes": 2366,
+          "resultSha256": "729b577ba1d689d11ea7ca1728a75385dcfcae9be2b69efdd1a19ba7171b605e",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "content",
+            "kind": "faq",
+            "mode": "get",
+            "contentId": "41"
+          },
+          "resultBytes": 1355,
+          "resultSha256": "bb70c9ab0d53c3b0060765e1dd7ee4aaf8f47b5ec09edd18784922990083aa5d",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 4,
+      "passed": true,
+      "replyCharacters": 236,
+      "replySha256": "8b9d98d1da11ce396e635b28eaed5b29fb96fb09218b5555a2f86465915e5aa1"
+    }
+  ],
+  "phase": "2B",
+  "cacheReuseWithoutHttp": true,
+  "model": "deepseek/deepseek-flash",
+  "modelCaseSelection": [
+    "rankings-artifacts",
+    "content-guide",
+    "content-faq"
+  ],
+  "passed": true,
+  "finishedAt": "2026-10-28T17:11:10.131Z"
+}

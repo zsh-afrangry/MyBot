@@ -29,6 +29,13 @@ export function bodies() {
       artifact_code: 'test-artifact', artifact_name: '测试神器', author: '合成作者', remark: '合成样本，不代表推荐', updateTime: '2026-10-28 01:00:00'})),
     reviews: ['RTA', 'PVP', 'PVE', '综合'].map((category, n) => ({id: n + 1, hero_code: 'test-hero-1', category,
       title: category, content: '<p>合成测评正文</p><script>UNTRUSTED-SCRIPT</script>', author: '合成作者', updateTime: '2026-10-28 02:00:00'})),
+    rankings: ['hero', 'artifact', null].map((type, n) => ({id: n + 1, title: '合成榜单' + n, type, tags: '["合成场景"]',
+      author: '合成署名', updateTime: '2026-10-28 03:00:00', tiers: [{id: 'tier-a', name: '优先', order: 1}, {id: 'tier-b', name: '备选', order: 2}],
+      heroAssignments: Array.from({length: n === 0 ? 55 : 3}, (_, i) => ({tierId: i < 10 ? 'tier-a' : 'tier-b', heroCode: 'test-object-' + i, note: '合成备注'}))})),
+    guides: {list: Array.from({length: 12}, (_, n) => ({id: n + 1, title: '合成攻略' + n, summary: '合成摘要', author: '合成署名', updateTime: '2026-10-28 04:00:00',
+      category: '["综合攻略"]', tags: '["测试"]', content: '<p>第一段 A&amp;B</p><p>第二段&#x3002;</p><img src="https://invalid.test/image.png"><script>HIDDEN-SCRIPT</script><style>HIDDEN-STYLE</style>'})), pagination: {page: 1, size: 10, total: 12}},
+    faq: {list: Array.from({length: 12}, (_, n) => ({id: String(n + 1), question: '合成FAQ' + n, answer: '合成答案' + n, analysis: null,
+      tags: '["问答"]', author: '合成署名', updateTime: '2026-10-28 05:00:00'})), pagination: {page: 1, size: 10, total: 12}},
     gameNews: {list: Array.from({length: 10}, (_, n) => ({id: n + 1, title: '测试公告' + n, server: 2, url: '/event/test-' + n + '.pdf'})), pagination: {page: 1, size: 10, total: 12}},
   };
 }
@@ -38,8 +45,13 @@ export function setup(t, options = {}) {
   const client = {async read(kind, params, opts) {
     calls.push({kind, params, opts});
     if (options.read) return options.read(kind, params, opts, data);
-    const body = kind === 'hero' ? hero(Number(params.heroCode.split('-').at(-1)))
+    let body = kind === 'hero' ? hero(Number(params.heroCode.split('-').at(-1)))
       : kind === 'gameNews' && params.page === 2 ? {list: data.gameNews.list.slice(0, 2), pagination: {page: 2, size: 10, total: 12}} : data[kind];
+    if (['guides', 'faq'].includes(kind)) {
+      const rows = data[kind].list.filter(r => !params.query || (r.title ?? r.question).includes(params.query));
+      const page = params.page ?? 1;
+      body = {list: rows.slice((page - 1) * 10, page * 10), pagination: {...data[kind].pagination, page, total: params.query ? rows.length : data[kind].pagination.total}};
+    }
     return {status: 200, url: endpoint(kind, params).url, data: structuredClone(body), etag: '"test-' + kind + '"'};
   }};
   const service = new E7Service({cacheRoot: root, refreshEnabled: false, ...options.config}, {client, clock: () => now.value, ...options.dependencies});

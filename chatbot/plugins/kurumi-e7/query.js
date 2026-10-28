@@ -1,6 +1,9 @@
 // Typed query validation and bounded projections; upstream text is never executable policy.
 import {ACTIONS, HERO_VIEWS, RESULT_BYTES, codePattern, fail, object, normalize} from './policy.js';
 import {digest} from './store.js';
+import {text} from './text.js';
+import {validateReferenceQuery, validateReferenceData} from './reference.js';
+export {text} from './text.js';
 
 export const ATTRIBUTES = ['fire', 'ice', 'wind', 'light', 'dark'];
 export const ROLES = ['warrior', 'knight', 'assassin', 'ranger', 'mage', 'manauser'];
@@ -16,12 +19,14 @@ export function validateQuery(raw) {
     artifact: ['artifactId', 'view'], dictionary: ['kind', 'query', 'entryId', 'limit', 'cursor'],
     codes: ['server', 'limit'], news: ['kind', 'server', 'limit', 'cursor'],
     builds: ['heroCode', 'filters', 'limit', 'cursor'], reviews: ['heroCode', 'category', 'limit', 'cursor'],
+    rankings: ['mode', 'rankingId', 'objectType', 'limit', 'cursor'], content: ['kind', 'mode', 'query', 'contentId', 'limit', 'cursor'],
   };
   keys(a, ['action', ...fields[a.action]]);
   if ('query' in a && (!string(a.query) || !normalize(a.query))) fail('invalid_query');
   if ('limit' in a && (!Number.isInteger(a.limit) || a.limit < 1 || a.limit > 10)) fail('invalid_query');
   if ('cursor' in a && (!string(a.cursor, 256) || !/^[a-zA-Z0-9_-]+$/.test(a.cursor))) fail('invalid_cursor');
   if ('server' in a && !['国服', '国际服'].includes(a.server)) fail('invalid_query');
+  if (['rankings', 'content'].includes(a.action)) validateReferenceQuery(a);
   if (['builds', 'reviews'].includes(a.action)) {
     if (typeof a.heroCode !== 'string' || !codePattern.test(a.heroCode)) fail('invalid_query');
     if ('category' in a && !REVIEW_CATEGORIES.includes(a.category)) fail('invalid_query');
@@ -64,9 +69,10 @@ export function validateQuery(raw) {
   return a;
 }
 
-const listOf = (value, kind) => kind === 'items' ? Object.values(value).flat() : kind === 'gameNews' ? value.list : value;
+const listOf = (value, kind) => kind === 'items' ? Object.values(value).flat() : ['gameNews', 'guides', 'faq'].includes(kind) ? value.list : value;
 export function validateData(kind, data, params = {}) {
   const invalid = () => fail('invalid_response');
+  if (['rankings', 'guides', 'faq'].includes(kind)) return validateReferenceData(kind, data, params);
   if (kind === 'hero') {
     if (!object(data) || data.code !== params.heroCode || !string(data.name, 200) || !Array.isArray(data.skills) || !object(data.stats)) invalid();
     if (data.skills.length > 20 || data.skills.some(s => !object(s) || !string(s.name, 200) || !Number.isInteger(s.slot)
@@ -99,15 +105,6 @@ export function validateData(kind, data, params = {}) {
 }
 export const dataCount = (kind, data) => kind === 'hero' ? 1 : listOf(data, kind).length;
 
-export function text(value, depth = 0) {
-  if (depth > 10 || value == null) return '';
-  if (Array.isArray(value)) return value.map(v => text(v, depth + 1)).join(value.some(Array.isArray) ? '\n' : '');
-  if (object(value)) return typeof value.text === 'string' ? text(value.text, depth + 1) : '';
-  if (typeof value !== 'string' && typeof value !== 'number') return '';
-  return String(value).replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>|<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '')
-    .replace(/<br\s*\/?\s*>/gi, '\n').replace(/<[^>]*>/g, '').replace(/%n/g, '\n')
-    .replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, '').trim();
-}
 const pick = (v, names) => Object.fromEntries(names.map(k => [k, v?.[k] ?? null]));
 const names = row => [row.name, row.name_en, row.nameEn, row.name_zht, row.code, ...(String(row.nicknames ?? '').split(/[,，;；]/))].filter(Boolean);
 export function matchRows(rows, query, filters = {}) {
@@ -217,7 +214,7 @@ export function boundResult(result) {
     const walk = (v, key = '', depth = 0) => {
       if (depth > 12) {truncated = true; return null;}
       if (typeof v === 'string') {
-        const max = /^(?:heroCode|artifactId|entryId|code|url|nextCursor|fetchedAt|upstreamUpdatedAt|hash|key|source|status)$/.test(key) ? 1024 : limit;
+        const max = /^(?:id|heroCode|artifactId|entryId|rankingId|contentId|tierId|objectCode|code|url|sourcePage|detailUrl|nextCursor|fetchedAt|upstreamUpdatedAt|hash|key|source|status)$/.test(key) ? 1024 : limit;
         if ([...v].length <= max) return v;
         truncated = true; const prefix = [...v].slice(0, max).join('');
         const paragraph = prefix.lastIndexOf('\n'); return (paragraph > max / 2 ? prefix.slice(0, paragraph) : prefix) + '…';

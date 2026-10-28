@@ -42,8 +42,8 @@ test('Every current main tool is mapped; new tools and dangerous native/member o
   assert.equal(hook(c,owner,name,args),undefined,name);
  }
  assert(hook(c,member,'e7_data',{action:'codes'}));
- for(const action of ['builds','reviews']){assert.equal(hook(c,owner,'e7_data',{action}),undefined);assert(hook(c,member,'e7_data',{action}));}
- for(const action of ['image','rankings',undefined])assert(hook(c,owner,'e7_data',{action}));
+ for(const action of ['builds','reviews','rankings','content']){assert.equal(hook(c,owner,'e7_data',{action}),undefined);assert(hook(c,member,'e7_data',{action}));}
+ for(const action of ['image','gvg',undefined])assert(hook(c,owner,'e7_data',{action}));
 });
 test('Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs',()=>{
  const source={channels:{'kurumi-qq':{}},commands:{},plugins:{entries:{'personal-weather':{config:{}},'kurumi-mail':{}}},agents:{entries:{main:{workspace:'/isolated/workspace',model:{primary:'fake/model'},tools:{deny:['exec']}}}},bindings:[{agentId:'main',match:{channel:'kurumi-qq'}}]};

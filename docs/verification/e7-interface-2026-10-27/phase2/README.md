@@ -1,4 +1,4 @@
-# E7第二批2A：社区配装与测评
+# E7第二批文本查询：2A与2B
 
 日期：2026-10-29（北京时间）。任务N20.4的2A子项：**已验收（限本轮真人用例）**。源码`548c7d4`已加载生产，开发侧验证通过，主人确认QQ测试无误，00:48起的后台链路核对符合预期。规则：[文档27](../../../27_E7数据插件设计.md#第二批文本查询开发)。
 
@@ -21,7 +21,26 @@
 
 新增HTTP固定为两个已验证的公开只读POST：`hero_equipment_scheme/getSchemeByHeroCode`使用`hero_code`，`hero_review/by-hero`使用`heroCode`。模型只能提供受校验的角色代码与查询条件，不能指定URL/请求体。单次结果继续默认5条、最多10条，完整工具结果预算16KiB；每日刷新仅原5类基础目录，社区资料按需缓存24小时。
 
-2B的榜单/攻略/FAQ和2C的GVG/宿命/礼包已少量公开取样，但尚未接入工具。取样成功不登记为实现或生产开放。E7图片、公告PDF正文及真实兑换码可用性不在本组结论内。
+上述表格仅记录2A；2B进展见下节。2C的GVG/宿命/礼包仍未接入工具，取样成功不登记为实现或生产开放。E7图片、公告PDF正文及真实兑换码可用性不在本组结论内。
+
+## 2B：榜单、攻略与FAQ
+
+状态：**处理中，开发侧验证通过，待部署与主人QQ复验**。主人在确认00:48起2A测试无误后，授权核对后台并继续。2B新增`rankings/content`两个action，仍只使用本人既有`e7.read`，不增加工具、成员授权、白名单主机或站点写接口。
+
+| 层次 | 结果 | 证据与边界 |
+| --- | --- | --- |
+| 离线 | 32项E7及95项权限/分层/人格回归通过 | [offline-2b.json](offline-2b.json)。包括55条榜单的完整续页、未知类型、坏分档保护、文章搜索/正文、同号ID隔离、重启后定位、移动条目、段落/实体清理、图片缺失、长文裁剪及成员拒绝；两次命令重复覆盖的7项权限测试不重复计数 |
+| 实际client及现行模型 | 13个直接查询、12次HTTP、3题模型通过 | [live-model-2b.json](live-model-2b.json)。真实公开读取与临时缓存、现行官方DeepSeek及真实工具处理器/合成主人上下文；不是完整Gateway/QQ入站。模型每题最多5轮、单次1600输出tokens，证据仅保留元数据、正文/回复哈希与长度 |
+| 隔离宿主 | 启用/禁用2组通过 | [host-2b.json](host-2b.json)。实际Gateway加载与目录、无启动预取和正常停止；没有模型/API/QQ网络 |
+| 生产/主人QQ | 待处理/待复验 | 开发侧结果不代替生产加载和真人体验 |
+
+榜单来源`POST tier/list {}`一次返回8份完整定义；1份明确为神器、3份为角色、4份类型未知。详情复用此列表，返回分档及分页条目，不因来源字段叫`heroAssignments`就误标为角色。最多197条的大榜单不整体塞入工具结果；未知类型保留`null`，筛选只纳入明确类型。模型读取一份神器榜后，用既有`search`将前5条真实对象代码解析为名称。
+
+攻略与FAQ使用固定只读`POST guide/page`、`POST faq/page`，请求`page/size:10/keyWord`；实际读取第1/2页并核对无重复，来源总数分别为12、40，关键词“团战”匹配4条。文章正文就在列表行中；仅调用这些已验证的读取路径，不调用阅读计数、点赞或未经验证的独立详情路径。搜索只返回摘要及真实ID，把ID到对应页/关键词的定位存入公开缓存，`get`再沿定位读取并核对ID；首次未知ID要求先搜索，原页移动要求重搜，不误称全站不存在。
+
+正文去除脚本/样式，转换段落与HTML实体；摘要限360字符并有`summaryTruncated`标记。图表不会下载或解释，正文依赖图片时标缺失；单篇深链未知，返回核实的`/guides`或`/faq`列表链接及`detailUrl:null`。长文由已有16KiB完整工具预算裁剪。资料按需缓存24小时；每日刷新仍仅原5类基础目录。
+
+3题模型分别覆盖神器榜单列表/条目/名称解析、攻略搜索后取正文并说明图片未提取、FAQ搜索后取问答并保留署名/日期。FAQ初次组合关键词为0，模型改用短关键词后取到真实条目；这不代表固定关键词接口支持语义搜索。没有伪造ID或开放任意URL。
 
 ## 真人QQ复验：2026-10-29 00:48起
 
@@ -44,6 +63,7 @@ node --test chatbot/tests/access-control/*.test.mjs chatbot/tests/backend-bounda
 node chatbot/tests/e7/acceptance-live.mjs --live --community-only --out /absolute/new-live-report.json
 node chatbot/tests/e7/acceptance-host.mjs --out /absolute/new-host-report.json
 node chatbot/tests/e7/acceptance-live.mjs --live --community-only --model --out /absolute/new-model-report.json
+node chatbot/tests/e7/acceptance-live.mjs --live --reference-only --model --out /absolute/new-reference-report.json
 ```
 
 实际HTTP/模型脚本须显式选择执行，不能当离线测试批量运行；输出路径必须尚不存在。运行只读取私密配置所指的代理/模型凭据，不记录其内容，不复制私聊、生产缓存或完整wiki数据。

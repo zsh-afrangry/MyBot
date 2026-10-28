@@ -1,9 +1,12 @@
 // Cache/read/query orchestration, shared in-flight reads and an explicitly stopped daily refresher.
 import {E7Client, endpoint} from './client.js';
 import {E7Store, digest} from './store.js';
-import {E7Error, fail, settings, ttlFor, CATALOGS, normalize, nextRefresh} from './policy.js';
+import {E7Error, fail, settings, ttlFor, CATALOGS, normalize, nextRefresh, object} from './policy.js';
 import {validateQuery, validateData, dataCount, text, matchRows, cardProjection, artifactIdentity, heroProjection, artifactProjection, dictionaryProjection, pageRows, boundResult} from './query.js';
 import {buildProjection, reviewProjection, matchBuilds} from './query.js';
+import {rankingIdentity, rankingTiers, rankingEntries, contentProjection, contentCursor, contentPage} from './reference.js';
+
+const contentKey = (kind, contentId) => JSON.stringify(['contentLocator', {kind, contentId}]);
 
 function waitFor(promise, signal) {
   if (!signal) return promise;
@@ -91,6 +94,10 @@ export class E7Service {
     const get = async (kind, params = {}) => {
       const r = await this.resource(kind, params, {signal}); resources.push(r); return r;
     };
+    const rememberContent = (kind, params, record) => {
+      signal?.throwIfAborted();
+      for (const row of record.data.list) this.store.write(contentKey(kind, String(row.id)), {...record, data: params, hash: digest(params)});
+    };
     let data, missingFields = [], status = 'ok';
     if (args.action === 'search') {
       const base = await get(args.kind === 'hero' ? 'cards' : 'artifacts');
@@ -135,6 +142,49 @@ export class E7Service {
           ...(args.action === 'reviews' ? {availableCategories: [...new Set(all.data.map(r => text(r.category)))]} : {})};
         if (args.action === 'builds' && data.items.some(r => Object.values(r.stats).some(v => v === null))) missingFields.push('items.stats');
         if (args.action === 'reviews' && data.items.some(r => !r.content)) missingFields.push('items.content');
+      }
+    }
+    if (args.action === 'rankings') {
+      const all = await get('rankings');
+      const rows = all.data.filter(r => !args.objectType || r.type === args.objectType);
+      if (args.mode === 'list') {
+        data = {...pageRows(rows.map(rankingIdentity), args, all.hash), untypedCount: all.data.filter(r => !['hero', 'artifact'].includes(r.type)).length,
+          coverage: '来源完整榜单列表；类型筛选只包含来源明确标注的对象类型'};
+        if (data.items.some(r => r.objectType === null)) missingFields.push('items.objectType');
+      } else {
+        const row = rows.find(r => String(r.id) === args.rankingId);
+        if (!row) {status = 'not_found'; data = null;}
+        else {
+          data = {...rankingIdentity(row), tiers: rankingTiers(row), ...pageRows(rankingEntries(row), args, all.hash),
+            coverage: '同一榜单的分档条目；objectCode遵循来源类型，类型未知时不当成角色或神器'};
+          if (data.objectType === null) missingFields.push('objectType');
+        }
+      }
+    }
+    if (args.action === 'content') {
+      const kind = args.kind === 'guide' ? 'guides' : 'faq';
+      let params, cursor;
+      if (args.mode === 'search') {
+        cursor = contentCursor(args);
+        params = {page: cursor.p, ...(args.query ? {query: args.query} : {})};
+      } else {
+        const locator = this.store.read(contentKey(args.kind, args.contentId));
+        params = locator?.data;
+        if (!object(params) || Object.keys(params).some(k => !['page', 'query'].includes(k))
+          || !Number.isInteger(params.page) || params.page < 1 || params.page > 1000) fail('content_search_required');
+        try {validateQuery({action: 'content', kind: args.kind, mode: 'search', ...('query' in params ? {query: params.query} : {})});}
+        catch {fail('content_search_required');}
+      }
+      const all = await get(kind, params);
+      rememberContent(args.kind, params, all);
+      if (args.mode === 'search') data = contentPage(all, args, cursor);
+      else {
+        const row = all.data.list.find(r => String(r.id) === args.contentId);
+        if (!row) fail('content_locator_expired');
+        data = {...contentProjection(row, args.kind, true), coverage: '从该ID已验证的来源列表页读取，未调用独立详情或阅读计数接口'};
+        missingFields.push('detailUrl');
+        if (data.imageDependency) missingFields.push('images');
+        if (args.kind === 'guide' ? !data.content : !data.answer) missingFields.push(args.kind === 'guide' ? 'content' : 'answer');
       }
     }
     if (args.action === 'dictionary') {

@@ -1,4 +1,4 @@
-// Explicit --live public HTTP acceptance; --community-only selects phase 2A; optional --model uses the configured official model.
+// Explicit --live public HTTP acceptance; --community-only/--reference-only select 2A/2B; optional --model uses the configured official model.
 // Temporary public cache and new --out evidence only. No QQ delivery or production state writes.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -17,6 +17,8 @@ import {modelCases as cases} from './model-cases.mjs';
 const out = process.argv[process.argv.indexOf('--out') + 1];
 if (!process.argv.includes('--live') || !process.argv.includes('--out') || !path.isAbsolute(out ?? '') || fs.existsSync(out)) throw Error('Require --live and a new absolute --out');
 const communityOnly = process.argv.includes('--community-only');
+const referenceOnly = process.argv.includes('--reference-only');
+assert(!(communityOnly && referenceOnly), 'Choose at most one phase selector');
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const runtimeEnv = JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
 for (const name of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy'])
@@ -36,7 +38,10 @@ function brief(result) {
   const d = result.data;
   return {status: result.status, action: result.action, source: result.source, stale: result.stale, missingFields: result.missingFields, sources: result.sources,
     bytes: Buffer.byteLength(JSON.stringify(result)), sha256: digest(result),
-    ...(d?.items ? {total: d.total ?? null, items: d.items.map(r => ({id: r.id ?? r.heroCode ?? r.artifactId ?? r.entryId ?? null, name: r.name ?? r.title ?? null, server: r.server ?? null})), hasNext: Boolean(d.nextCursor)} : {}),
+    ...(d?.items ? {total: d.total ?? null, items: d.items.map(r => ({id: r.id ?? r.heroCode ?? r.artifactId ?? r.entryId ?? r.rankingId ?? r.contentId ?? r.objectCode ?? null, name: r.name ?? r.title ?? null, server: r.server ?? null})), hasNext: Boolean(d.nextCursor)} : {}),
+    ...(d?.rankingId ? {rankingId: d.rankingId, objectType: d.objectType, entryCount: d.entryCount, tierCount: d.tierCount} : {}),
+    ...(d?.contentId ? {contentId: d.contentId, kind: d.kind, author: d.author, updatedAt: d.updatedAt, imageDependency: d.imageDependency,
+      contentCharacters: d.content?.length, answerCharacters: d.answer?.length, detailUrl: d.detailUrl, sourcePage: d.sourcePage} : {}),
     ...(d?.heroCode ? {heroCode: d.heroCode, name: d.name, view: d.view, skillNames: d.skills?.map(s => s.name), stats: d.stats,
       statBasis: d.statBasis, exclusiveEquipment: d.exclusiveEquipment, storyCharacters: d.story?.length} : {}),
   };
@@ -67,7 +72,8 @@ async function modelAcceptance() {
   const definition = {type: 'function', function: {name: E7_TOOL.name, description: E7_TOOL.description, parameters: E7_TOOL.parameters}};
 
   const selection = process.argv.includes('--cases') ? process.argv[process.argv.indexOf('--cases') + 1]?.split(',')
-    : cases.filter(c => communityOnly ? /^(?:builds|reviews)-/.test(c[0]) : !/^(?:builds|reviews)-/.test(c[0])).map(c => c[0]);
+    : cases.filter(c => referenceOnly ? /^(?:rankings|content)-/.test(c[0])
+      : communityOnly ? /^(?:builds|reviews)-/.test(c[0]) : !/^(?:builds|reviews|rankings|content)-/.test(c[0])).map(c => c[0]);
   assert(selection?.length && selection.every(label => cases.some(c => c[0] === label)), 'Unknown --cases selection');
   report.modelCaseSelection = selection;
   for (const [label, input, verify] of cases.filter(c => selection.includes(c[0]))) {
@@ -93,7 +99,7 @@ async function modelAcceptance() {
       }
     }
     assert(row.passed, 'Exceeded bounded tool rounds');
-    if (communityOnly) {row.replyCharacters = row.reply.length; row.replySha256 = digest(row.reply); delete row.reply;}
+    if (communityOnly || referenceOnly) {row.replyCharacters = row.reply.length; row.replySha256 = digest(row.reply); delete row.reply;}
     console.log(JSON.stringify({modelCase: label, passed: true, calls: row.calls.length}));
   }
 }
@@ -121,8 +127,47 @@ async function communityAcceptance() {
   await service.query({action: 'builds', heroCode: 'mei-lin'}); await service.query({action: 'reviews', heroCode: 'haru'});
   assert.equal(report.requests.length, before); report.cacheReuseWithoutHttp = true;
 }
+async function referenceAcceptance() {
+  report.phase = '2B';
+  const all = await query('rankings-list', {action: 'rankings', limit: 10});
+  assert(all.data.total >= 8); assert(all.data.untypedCount >= 1);
+  assert(all.data.items.some(r => r.objectType === null)); assert(all.missingFields.includes('items.objectType'));
+  const artifactList = await query('rankings-artifacts', {action: 'rankings', objectType: 'artifact'});
+  assert(artifactList.data.items.length); assert(artifactList.data.items.every(r => r.objectType === 'artifact'));
+  const rankingId = artifactList.data.items[0].rankingId;
+  const first = await query('ranking-entries-page1', {action: 'rankings', mode: 'get', rankingId, limit: 5});
+  assert.equal(first.data.objectType, 'artifact'); assert(first.data.tiers.length); assert(first.data.total > 5);
+  assert(first.data.items.every(r => r.objectCode && !('heroCode' in r)));
+  const second = await query('ranking-entries-page2', {action: 'rankings', mode: 'get', rankingId, cursor: first.data.nextCursor});
+  assert(!second.data.items.some(r => first.data.items.some(p => p.objectCode === r.objectCode && p.tierId === r.tierId)));
+  const unknown = all.data.items.find(r => r.objectType === null);
+  const untyped = await query('ranking-untyped', {action: 'rankings', mode: 'get', rankingId: unknown.rankingId});
+  assert.equal(untyped.data.objectType, null); assert(untyped.missingFields.includes('objectType'));
+  const guides = await query('guides-page1', {action: 'content', kind: 'guide', limit: 10});
+  assert(guides.data.items.length); assert(guides.data.nextCursor); assert(guides.data.items.every(r => !('content' in r)));
+  const guidePage2 = await query('guides-page2', {action: 'content', kind: 'guide', limit: 10, cursor: guides.data.nextCursor});
+  assert(!guidePage2.data.items.some(r => guides.data.items.some(p => p.contentId === r.contentId)));
+  const guide = await query('guide-body', {action: 'content', kind: 'guide', mode: 'get', contentId: guides.data.items[0].contentId});
+  assert(guide.data.content.length); assert(guide.data.author); assert(guide.data.updatedAt);
+  assert.equal(guide.data.detailUrl, null); assert(!/<script\b|<style\b|<img\b/i.test(guide.data.content));
+  const absent = await query('guides-keyword-empty', {action: 'content', kind: 'guide', query: 'kurumi-no-match-20261029'});
+  assert.equal(absent.data.total, 0);
+  const faq = await query('faq-page1', {action: 'content', kind: 'faq', limit: 10});
+  assert(faq.data.nextCursor);
+  const faqPage2 = await query('faq-page2', {action: 'content', kind: 'faq', limit: 10, cursor: faq.data.nextCursor});
+  assert(!faqPage2.data.items.some(r => faq.data.items.some(p => p.contentId === r.contentId)));
+  const filtered = await query('faq-keyword', {action: 'content', kind: 'faq', query: '团战'});
+  assert(filtered.data.total > 0); assert(filtered.data.items.length);
+  const answer = await query('faq-answer', {action: 'content', kind: 'faq', mode: 'get', contentId: filtered.data.items[0].contentId});
+  assert(answer.data.question.length); assert(answer.data.answer.length); assert(answer.data.author); assert(answer.data.updatedAt);
+  const before = report.requests.length;
+  await service.query({action: 'rankings'});
+  await service.query({action: 'content', kind: 'faq', mode: 'get', contentId: filtered.data.items[0].contentId});
+  assert.equal(report.requests.length, before); report.cacheReuseWithoutHttp = true;
+}
 try {
   if (communityOnly) await communityAcceptance();
+  else if (referenceOnly) await referenceAcceptance();
   else {
   const found = await query('traditional-name-search', {action: 'search', kind: 'hero', query: '梅鈴'});
   assert.equal(found.data.items.length, 1); assert.equal(found.data.items[0].heroCode, 'mei-lin');

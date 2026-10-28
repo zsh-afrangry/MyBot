@@ -6,6 +6,7 @@ import path from 'node:path';
 import {setup} from './fixtures.mjs';
 import {E7Error, RESULT_BYTES} from '../../plugins/kurumi-e7/policy.js';
 import {E7Store} from '../../plugins/kurumi-e7/store.js';
+import {E7Service} from '../../plugins/kurumi-e7/service.js';
 
 test('name normalization, alias ambiguity, typed filtering and cursor binding use the complete local index', async t => {
   const {service, calls} = setup(t);
@@ -177,4 +178,105 @@ test('community prose is bounded without damaging pagination and record identity
   const r = await service.query({action: 'reviews', heroCode: 'test-hero-1', limit: 3});
   assert.equal(r.truncated, true); assert(Buffer.byteLength(JSON.stringify(r)) < RESULT_BYTES - 2048);
   assert(r.data.nextCursor); assert.equal(r.data.items[2].id, '3'); assert.equal(r.data.total, 4);
+});
+
+test('rankings preserve unknown object types and paginate every assignment beyond the result array cap', async t => {
+  const {service, calls} = setup(t);
+  const all = await service.query({action: 'rankings'});
+  assert.equal(all.data.total, 3); assert.equal(all.data.untypedCount, 1);
+  assert.equal(all.data.items[2].objectType, null); assert(all.missingFields.includes('items.objectType'));
+  const artifacts = await service.query({action: 'rankings', objectType: 'artifact'});
+  assert.deepEqual(artifacts.data.items.map(r => r.rankingId), ['2']);
+  const artifact = await service.query({action: 'rankings', mode: 'get', rankingId: '2'});
+  assert.equal(artifact.data.objectType, 'artifact'); assert.equal(artifact.data.items[0].objectCode, 'test-object-0');
+  assert(!('heroCode' in artifact.data.items[0])); assert.equal(artifact.data.author, '合成署名');
+  const unknown = await service.query({action: 'rankings', mode: 'get', rankingId: '3'});
+  assert.equal(unknown.data.objectType, null); assert(unknown.missingFields.includes('objectType'));
+  assert.equal((await service.query({action: 'rankings', mode: 'get', rankingId: '999'})).status, 'not_found');
+  const seen = []; let cursor;
+  do {
+    const page = await service.query({action: 'rankings', mode: 'get', rankingId: '1', limit: 10, ...(cursor ? {cursor} : {})});
+    assert.equal(page.data.tiers.length, 2); assert.equal(page.data.total, 55); assert.equal(page.truncated, false);
+    seen.push(...page.data.items.map(r => r.objectCode)); cursor = page.data.nextCursor;
+  } while (cursor);
+  assert.equal(seen.length, 55); assert.equal(new Set(seen).size, 55); assert.equal(seen.at(-1), 'test-object-54');
+  assert.equal(calls.length, 1);
+});
+
+test('invalid ranking tier references never replace a valid snapshot', async t => {
+  const {service, now, data} = setup(t);
+  const args = {action: 'rankings', mode: 'get', rankingId: '1'};
+  const original = await service.query(args); now.value += 25 * 3600000;
+  data.rankings[0].heroAssignments[0].tierId = 'foreign-tier';
+  const stale = await service.query(args);
+  assert.equal(stale.stale, true); assert.deepEqual(stale.data, original.data);
+  assert.equal(stale.sources[0].warning, 'invalid_response');
+});
+
+test('articles search before get, clean prose, preserve image gaps and persist kind-specific locators', async t => {
+  const {service, root, calls, now, data} = setup(t);
+  await assert.rejects(service.query({action: 'content', kind: 'guide', mode: 'get', contentId: '1'}), e => e.code === 'content_search_required');
+  assert.equal(calls.length, 0);
+  data.guides.list[0].summary = '合成摘要'.repeat(200);
+  const list = await service.query({action: 'content', kind: 'guide'});
+  assert.equal(list.data.total, 12); assert.equal(list.data.items.length, 5);
+  assert(!('content' in list.data.items[0])); assert.equal(list.data.items[0].summaryTruncated, true);
+  const guide = await service.query({action: 'content', kind: 'guide', mode: 'get', contentId: '1'});
+  assert.equal(guide.data.content, '第一段 A&B\n第二段。'); assert.equal(guide.data.author, '合成署名');
+  assert.equal(guide.data.updatedAt, '2026-10-28 04:00:00'); assert.equal(guide.data.imageDependency, true);
+  assert.equal(guide.data.detailUrl, null); assert(guide.missingFields.includes('images')); assert(guide.missingFields.includes('detailUrl'));
+  assert.equal(guide.data.sourcePage, 'https://e7.wiki/guides'); assert(!JSON.stringify(guide).includes('HIDDEN-'));
+  await assert.rejects(service.query({action: 'content', kind: 'faq', mode: 'get', contentId: '1'}), e => e.code === 'content_search_required');
+  await service.query({action: 'content', kind: 'faq', query: 'FAQ0'});
+  const faq = await service.query({action: 'content', kind: 'faq', mode: 'get', contentId: '1'});
+  assert.equal(faq.data.answer, '合成答案0'); assert.equal(faq.data.kind, 'faq');
+  const restarted = new E7Service({cacheRoot: root, refreshEnabled: false}, {clock: () => now.value,
+    client: {read() {throw new Error('fresh public cache should survive restart');}}});
+  t.after(() => restarted.stop());
+  assert.equal((await restarted.query({action: 'content', kind: 'guide', mode: 'get', contentId: '1'})).data.content, guide.data.content);
+});
+
+test('article cursors traverse within and between real source pages without duplicates and bind kind/query/snapshot', async t => {
+  const {service, data, now} = setup(t);
+  const first = await service.query({action: 'content', kind: 'guide', limit: 3});
+  const ids = first.data.items.map(r => r.contentId); let cursor = first.data.nextCursor;
+  while (cursor) {
+    const next = await service.query({kind: 'guide', action: 'content', cursor, limit: 3});
+    ids.push(...next.data.items.map(r => r.contentId)); cursor = next.data.nextCursor;
+  }
+  assert.deepEqual(ids, Array.from({length: 12}, (_, n) => String(n + 1)));
+  await assert.rejects(service.query({action: 'content', kind: 'faq', cursor: first.data.nextCursor}), e => e.code === 'cursor_expired');
+  await assert.rejects(service.query({action: 'content', kind: 'guide', query: '合成', cursor: first.data.nextCursor}), e => e.code === 'cursor_expired');
+  const bad = JSON.parse(Buffer.from(first.data.nextCursor, 'base64url')); bad.o = 99;
+  await assert.rejects(service.query({action: 'content', kind: 'guide', cursor: Buffer.from(JSON.stringify(bad)).toString('base64url')}), e => e.code === 'invalid_cursor');
+  now.value += 25 * 3600000; data.guides.list[0].title += '改版';
+  await assert.rejects(service.query({action: 'content', kind: 'guide', cursor: first.data.nextCursor}), e => e.code === 'cursor_expired');
+  const absent = await service.query({action: 'content', kind: 'guide', query: '不存在的测试词'});
+  assert.equal(absent.status, 'ok'); assert.equal(absent.data.total, 0); assert.equal(absent.data.nextCursor, null);
+});
+
+test('moved articles require a new search and malformed pagination cannot overwrite the last valid page', async t => {
+  const {service, now, data} = setup(t);
+  const args = {action: 'content', kind: 'guide'};
+  const original = await service.query(args);
+  now.value += 25 * 3600000; data.guides.pagination.size = 11;
+  const stale = await service.query(args); assert.equal(stale.stale, true);
+  assert.deepEqual(stale.data, original.data); assert.equal(stale.sources[0].warning, 'invalid_response');
+  data.guides.pagination.size = 10; data.guides.list.reverse();
+  await assert.rejects(service.query({action: 'content', kind: 'guide', mode: 'get', contentId: '1'}), e => e.code === 'content_locator_expired');
+  const faq = await service.query({action: 'content', kind: 'faq'}); assert(faq.data.items.length);
+  now.value += 25 * 3600000; data.faq.list[0].answer = null;
+  assert((await service.query({action: 'content', kind: 'faq', mode: 'get', contentId: '1'})).missingFields.includes('answer'));
+});
+
+test('reference modes and mixed or path-like IDs fail before any IO', async t => {
+  const {service, calls, root} = setup(t);
+  for (const args of [{action: 'rankings', mode: null}, {action: 'rankings', mode: 'search'}, {action: 'rankings', objectType: 'any'},
+    {action: 'rankings', mode: 'get', rankingId: '../1'}, {action: 'rankings', rankingId: '1'}, {action: 'rankings', mode: 'get'},
+    {action: 'content', kind: 'guide', mode: 'get', contentId: '1', query: 'x'}, {action: 'content', kind: 'guide', mode: 'get', contentId: '1', limit: 1},
+    {action: 'content', kind: 'guide', contentId: '1'}, {action: 'content', kind: 'faq', mode: 'get', contentId: 'https://evil.invalid'},
+    {action: 'content', kind: 'news'}, {action: 'content', kind: 'faq', mode: 'get'}, {action: 'content', kind: 'guide', mode: null},
+    {action: 'content', kind: 'guide', url: 'https://evil.invalid'}, {action: 'content', kind: 'guide', query: ' '},
+  ]) await assert.rejects(service.query(args), e => e.code === 'invalid_query');
+  assert.equal(calls.length, 0); assert.equal(fs.readdirSync(root).length, 0);
 });

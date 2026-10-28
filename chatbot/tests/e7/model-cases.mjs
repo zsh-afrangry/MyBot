@@ -13,4 +13,19 @@ export const modelCases = [
     ['builds-filtered', '查梅铃的配装，只要同时包含开战和穿透、速度至少218、暴伤至少250%的，取前三条。', row => {assert(row.calls.some(c => c.args.action === 'builds' && c.args.filters?.sets?.includes('开战') && c.args.filters?.sets?.includes('穿透') && c.args.filters?.minStats?.spd === 218 && c.args.filters?.minStats?.chd === 250 && c.args.limit === 3)); assert.doesNotMatch(row.reply, /28900%|25000%/u);}],
     ['reviews-rta', '查小春的RTA测评，告诉我作者和更新时间。', row => {assert(row.calls.some(c => c.args.action === 'reviews' && c.args.heroCode === 'haru' && c.args.category === 'RTA')); assert.match(row.reply, /顽皮的鱼/u); assert.match(row.reply, /2026-10-10/u);}],
     ['reviews-empty', '查梅铃的PVE测评，来源没有的话直接说没有，不用自己编。', row => {assert(row.calls.some(c => c.args.action === 'reviews' && c.args.heroCode === 'mei-lin' && c.args.category === 'PVE')); assert.match(row.reply, /没有|暂无|未.*(?:收录|找到|列出|提供)|空/u);}],
+    ['rankings-artifacts', '看看E7wiki有哪些神器榜单，打开其中一份，列出前五条并保留榜单名称和更新时间。', row => {
+      assert(row.calls.some(c => c.args.action === 'rankings' && (!c.args.mode || c.args.mode === 'list') && c.args.objectType === 'artifact'));
+      assert(row.calls.some(c => c.args.action === 'rankings' && c.args.mode === 'get' && c.args.rankingId));
+      assert.match(row.reply, /神器/u); assert.match(row.reply, /2026|更新|日期/u);
+    }],
+    ['content-guide', '查E7wiki的“挑战深渊1层30秒速刷光辉精髓”攻略，读取正文后告诉我要点；如果图片没有提取，明确说明。', row => {
+      assert(row.calls.some(c => c.args.action === 'content' && c.args.kind === 'guide' && (!c.args.mode || c.args.mode === 'search')));
+      assert(row.calls.some(c => c.args.action === 'content' && c.args.kind === 'guide' && c.args.mode === 'get' && c.args.contentId));
+      assert.match(row.reply, /图片|截图|配图/u); assert.match(row.reply, /未|无法|没/u);
+    }],
+    ['content-faq', '查E7wiki FAQ：团战比对方少人时，防御塔的血量如何变化？请读取对应问答并保留作者和日期。', row => {
+      assert(row.calls.some(c => c.args.action === 'content' && c.args.kind === 'faq' && (!c.args.mode || c.args.mode === 'search')));
+      assert(row.calls.some(c => c.args.action === 'content' && c.args.kind === 'faq' && c.args.mode === 'get' && c.args.contentId));
+      assert.match(row.reply, /血量|生命/u); assert.match(row.reply, /作者|来源/u); assert.match(row.reply, /20\d{2}/u);
+    }],
   ];
