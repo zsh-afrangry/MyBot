@@ -6,7 +6,7 @@
 
 | 路径 | 用途 |
 | --- | --- |
-| [`coding-delegation-plan-2026-10-28/README.md`](coding-delegation-plan-2026-10-28/README.md) 及同目录全部文件 | 本机编码委托需求整理、编号与worktree/主目录差异说明、三组文档合并结果的本地合入、最新规则保留及索引检查；未启用执行能力 |
+| [`coding-delegation-plan-2026-10-28/README.md`](coding-delegation-plan-2026-10-28/README.md) 及同目录全部文件 | 本机编码委托需求、权限与工作树决定、三组文档合并的本地合入；[DSH局部测试](coding-delegation-plan-2026-10-28/local-pilot-2026-10-29/README.md)含真实模型修改/检查、并行、续接、取消及审批回调；QQ委托未启用 |
 | [`shared-business-merge-2026-10-27/README.md`](shared-business-merge-2026-10-27/README.md) 及同目录全部文件 | 提醒列表规则与定时播报并入KnowledgeMap共享业务；原列表文档归档、引用与脚本/证据归属同步、链接与正文保留检查；不重新验收业务 |
 | [`assets-rollback-merge-2026-10-27/README.md`](assets-rollback-merge-2026-10-27/README.md) 及同目录全部文件 | 资产、备份与旧系统回退合并；原回退归档、导航/归属与链接/保留核对，不包含真实恢复或服务切换 |
 | [`documentation-merge-2026-10-27/README.md`](documentation-merge-2026-10-27/README.md) 及同目录全部文件 | 架构与运行维护合并、原运行维护归档、现行引用和历史导航调整、章节/链接/归属与只读自检；不改变业务验收 |

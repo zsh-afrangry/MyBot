@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "kind": "Synthetic no-remote Node/Git fixture; no production code or runtime state",
+  "sourceBase": "ce35cae6ca5418cc7da20234048a7543bfe9999a",
+  "baselineFiles": {
+    "AGENTS.md": "# Probe project rules\n\nOnly work inside the exact task worktree. Do not read unrelated private files, use the network, install packages, start subagents, commit, merge, push, or modify other worktrees. Use built-in Node.js tools. Implement the requested change, add meaningful tests, and run node --test. Existing tests must remain effective.\n",
+    "README.md": "# Local delegation probe\n\nSynthetic fixture, no remote and no production data.\n",
+    "metrics.mjs": "export function sumNumbers(values) {\n  if (!Array.isArray(values) || values.some(value => typeof value !== \"number\" || !Number.isFinite(value))) throw new TypeError(\"finite numbers required\");\n  return values.reduce((sum, value) => sum + value, 0);\n}\n",
+    "package.json": "{\n  \"name\": \"fusion-local-delegation-probe\",\n  \"private\": true,\n  \"type\": \"module\",\n  \"scripts\": {\n    \"test\": \"node --test\"\n  }\n}\n",
+    "test/metrics.test.mjs": "import test from \"node:test\";\nimport assert from \"node:assert/strict\";\nimport { sumNumbers } from \"../metrics.mjs\";\ntest(\"sumNumbers preserves finite-number behavior\", () => {\n  assert.equal(sumNumbers([1, 2, 3]), 6);\n  assert.equal(sumNumbers([]), 0);\n  assert.throws(() => sumNumbers([NaN]), TypeError);\n});\n"
+  },
+  "originalUncommittedState": {
+    "README.md": "Append ORIGINAL_LOCAL_PROGRESS_MUST_SURVIVE after committing the baseline",
+    "untracked-owner-note.txt": "UNTRACKED_LOCAL_PROGRESS_MUST_SURVIVE"
+  },
+  "tasks": {
+    "a": {
+      "request": "Add summarizeRuns(records): only status === ok counts, included durationMs must be finite and nonnegative, reject non-array input, return count/totalMs/meanMs, preserve sumNumbers, add tests and run node --test. Later resume and append the synthetic conversation note to README without changing metrics.mjs.",
+      "commit": "8d47a98061fdf61aec13a6ea066ec43c936db774",
+      "diff": "diff --git a/README.md b/README.md\nindex 101026c..932f3bc 100644\n--- a/README.md\n+++ b/README.md\n@@ -1,3 +1,5 @@\n # Local delegation probe\n \n Synthetic fixture, no remote and no production data.\n+\n+Continuity note: alpha-session-note-e9f3a91ea85a\ndiff --git a/metrics.mjs b/metrics.mjs\nindex 9468c69..52b4e7c 100644\n--- a/metrics.mjs\n+++ b/metrics.mjs\n@@ -2,3 +2,21 @@ export function sumNumbers(values) {\n   if (!Array.isArray(values) || values.some(value => typeof value !== \"number\" || !Number.isFinite(value))) throw new TypeError(\"finite numbers required\");\n   return values.reduce((sum, value) => sum + value, 0);\n }\n+\n+export function summarizeRuns(records) {\n+  if (!Array.isArray(records)) throw new TypeError(\"records must be an array\");\n+\n+  const durations = records\n+    .filter(record => record !== null && typeof record === \"object\" && record.status === \"ok\")\n+    .map(record => {\n+      const { durationMs } = record;\n+      if (typeof durationMs !== \"number\" || !Number.isFinite(durationMs) || durationMs < 0) {\n+        throw new TypeError(\"successful runs require a finite nonnegative durationMs\");\n+      }\n+      return durationMs;\n+    });\n+\n+  const count = durations.length;\n+  const totalMs = sumNumbers(durations);\n+  return { count, totalMs, meanMs: count === 0 ? 0 : totalMs / count };\n+}\ndiff --git a/test/summarize-runs.test.mjs b/test/summarize-runs.test.mjs\nnew file mode 100644\nindex 0000000..bf587e8\n--- /dev/null\n+++ b/test/summarize-runs.test.mjs\n@@ -0,0 +1,81 @@\n+import test from \"node:test\";\n+import assert from \"node:assert/strict\";\n+import { summarizeRuns } from \"../metrics.mjs\";\n+\n+test(\"summarizeRuns summarizes only successful runs\", () => {\n+  const records = [\n+    { status: \"ok\", durationMs: 10 },\n+    { status: \"failed\", durationMs: 500 },\n+    { status: \"ok\", durationMs: 30 },\n+    { status: \"skipped\", durationMs: 1 },\n+    { status: \"ok\", durationMs: 0 },\n+  ];\n+\n+  assert.deepEqual(summarizeRuns(records), {\n+    count: 3,\n+    totalMs: 40,\n+    meanMs: 40 / 3,\n+  });\n+});\n+\n+test(\"summarizeRuns returns all zeros for an empty or fully unsuccessful set\", () => {\n+  const empty = { count: 0, totalMs: 0, meanMs: 0 };\n+  assert.deepEqual(summarizeRuns([]), empty);\n+  assert.deepEqual(\n+    summarizeRuns([\n+      { status: \"failed\", durationMs: 12 },\n+      { status: \"ignored\" },\n+    ]),\n+    empty,\n+  );\n+});\n+\n+test(\"summarizeRuns rejects a non-array argument\", () => {\n+  for (const value of [undefined, null, \"records\", 42, {}, { length: 0 }]) {\n+    assert.throws(() => summarizeRuns(value), TypeError);\n+  }\n+});\n+\n+test(\"summarizeRuns rejects malformed successful records\", () => {\n+  const invalidDurations = [undefined, null, NaN, Infinity, -Infinity, -1, \"5\", true, {}];\n+  for (const durationMs of invalidDurations) {\n+    assert.throws(\n+      () => summarizeRuns([{ status: \"ok\", durationMs }]),\n+      TypeError,\n+      `expected durationMs=${String(durationMs)} to be rejected`,\n+    );\n+  }\n+\n+  assert.throws(() => summarizeRuns([{ status: \"ok\" }]), TypeError);\n+  assert.throws(\n+    () => summarizeRuns([{ status: \"ok\", durationMs: 10 }, { status: \"ok\", durationMs: Infinity }]),\n+    TypeError,\n+  );\n+});\n+\n+test(\"summarizeRuns ignores malformed durations on unsuccessful records\", () => {\n+  assert.deepEqual(\n+    summarizeRuns([\n+      { status: \"failed\", durationMs: NaN },\n+      { status: \"failed\", durationMs: -3 },\n+      { status: \"failed\" },\n+      { status: \"ok\", durationMs: 7 },\n+    ]),\n+    { count: 1, totalMs: 7, meanMs: 7 },\n+  );\n+\n+  assert.deepEqual(\n+    summarizeRuns([null, 42, \"ok\", {}, { status: \"ok\", durationMs: 4 }]),\n+    { count: 1, totalMs: 4, meanMs: 4 },\n+  );\n+});\n+\n+test(\"summarizeRuns computes fractional means without losing the total\", () => {\n+  assert.deepEqual(\n+    summarizeRuns([\n+      { status: \"ok\", durationMs: 1 },\n+      { status: \"ok\", durationMs: 2 },\n+    ]),\n+    { count: 2, totalMs: 3, meanMs: 1.5 },\n+  );\n+});\n"
+    },
+    "b": {
+      "request": "Modify README only: append Independent documentation probe section and BRAVO_ONLY_DOCUMENTATION marker; run node --test.",
+      "commit": "a84d61297b016076191ba0e6c068bf990a7db80d",
+      "diff": "diff --git a/README.md b/README.md\nindex 101026c..85bfc7b 100644\n--- a/README.md\n+++ b/README.md\n@@ -1,3 +1,7 @@\n # Local delegation probe\n \n Synthetic fixture, no remote and no production data.\n+\n+## Independent documentation probe\n+\n+This section documents the independent documentation probe. BRAVO_ONLY_DOCUMENTATION\n"
+    }
+  },
+  "independentAcceptanceCases": {
+    "assertionCount": 14,
+    "normal": [
+      {
+        "input": "ok:10, failed:999, ok:30",
+        "expected": {
+          "count": 2,
+          "totalMs": 40,
+          "meanMs": 20
+        }
+      },
+      {
+        "input": "[]",
+        "expected": {
+          "count": 0,
+          "totalMs": 0,
+          "meanMs": 0
+        }
+      },
+      {
+        "input": "failed:NaN",
+        "expected": {
+          "count": 0,
+          "totalMs": 0,
+          "meanMs": 0
+        }
+      },
+      {
+        "input": "ok:0",
+        "expected": {
+          "count": 1,
+          "totalMs": 0,
+          "meanMs": 0
+        }
+      }
+    ],
+    "invalidContainers": [
+      "null",
+      "{}",
+      "1",
+      "bad string"
+    ],
+    "invalidIncludedDurationMs": [
+      "-1",
+      "NaN",
+      "Infinity",
+      "numeric string",
+      "undefined"
+    ],
+    "legacy": "sumNumbers([1,2,3]) === 6"
+  }
+}

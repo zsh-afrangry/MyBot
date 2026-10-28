@@ -1,0 +1,359 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "scope": "Local DSH interface and synthetic project probes; no QQ delegation or production adapter enabled.",
+  "environment": {
+    "dshVersion": "0.2.0-rc.2",
+    "nodeVersion": "v26.12.1",
+    "processUser": "afrangry",
+    "sharedService": "dsh-web.service",
+    "dshHome": "/var/lib/dsh/.dsh",
+    "profiles": [
+      "sdk",
+      "headless",
+      "acp"
+    ],
+    "permissionMode": "workspace-write",
+    "permissionCallbackProbeMode": "read-only",
+    "toolsMode": "native",
+    "provider": "deepseek-official",
+    "model": "deepseek-flash",
+    "reasoningEffort": "high",
+    "nativeAutoReviewEnabled": false,
+    "sessionTitleModelDisabledByEphemeralPatch": true
+  },
+  "promptAccounting": {
+    "submittedPrompts": 7,
+    "breakdown": {
+      "parallelCodingAndDocumentation": 2,
+      "crossProcessContinuation": 1,
+      "cancelObservationAttempt": 1,
+      "correctedCancelAttempt": 1,
+      "permissionAllowAndDeny": 2
+    },
+    "actualModelApiRequestCount": null,
+    "tokenAndCostTotals": null,
+    "note": "One submitted prompt can contain multiple model/tool steps. No exact billing total was collected."
+  },
+  "interface": {
+    "sdk": {
+      "initialize": {
+        "serverInfo": {
+          "name": "deepseek-harness-sdk-runtime",
+          "version": "0.0.1"
+        }
+      },
+      "unsupportedSessionCancel": {
+        "rejected": true,
+        "code": -32603,
+        "message": "unknown DeepSeek Harness SDK runtime method: session/cancel"
+      },
+      "shutdown": {},
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "protocolErrors": [],
+      "realCodingPromptTested": false
+    },
+    "headless": {
+      "case": "unknown-session",
+      "exitCode": 1,
+      "frames": [
+        {
+          "type": "error",
+          "message": "session \"synthetic-nonexistent-fusion-probe\" does not exist; omit --session-id to start a new Session"
+        }
+      ],
+      "invalidJsonLines": 0,
+      "noModelPromptExpected": true,
+      "rejected": true
+    },
+    "acp": {
+      "initialize": {
+        "protocolVersion": 1,
+        "agentInfo": {
+          "name": "deepseek-harness-acp",
+          "version": "0.0.1"
+        },
+        "agentCapabilities": {
+          "mcpCapabilities": {
+            "http": true
+          },
+          "promptCapabilities": {
+            "image": false,
+            "audio": false,
+            "embeddedContext": false
+          },
+          "sessionCapabilities": {
+            "close": {},
+            "list": {},
+            "resume": {}
+          }
+        },
+        "authMethods": []
+      },
+      "relativeCwdRejection": {
+        "rejected": true,
+        "code": -32602,
+        "message": "Invalid params: cwd must be an absolute path: relative-directory"
+      },
+      "unknownResumeRejection": {
+        "rejected": true,
+        "code": -32602,
+        "message": "Invalid params: session is not resumable: synthetic-unopened-session"
+      },
+      "handshakeExit": {
+        "code": 0,
+        "signal": null
+      },
+      "protocolErrors": [],
+      "sessionListSemantics": "Inactive resumable root sessions only; active sessions are excluded."
+    }
+  },
+  "project": {
+    "sourceBase": "ce35cae6ca5418cc7da20234048a7543bfe9999a",
+    "sourceHasNoRemote": true,
+    "baselineChecks": {
+      "tests": 1,
+      "pass": 1,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0
+    },
+    "sessions": {
+      "a": {
+        "sessionId": "8a7fbb23-6806-4747-9d3e-08ffaad3850a",
+        "workspace": "$PILOT_ROOT/worktree-a",
+        "result": {
+          "stopReason": "end_turn"
+        },
+        "verifiedCommit": "8d47a98061fdf61aec13a6ea066ec43c936db774",
+        "changedFiles": [
+          "README.md",
+          "metrics.mjs",
+          "test/summarize-runs.test.mjs"
+        ],
+        "checks": {
+          "tests": 7,
+          "pass": 7,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "elapsedMsFirstTurn": 24241
+      },
+      "b": {
+        "sessionId": "68ce6db9-5d10-4615-b4b9-6fd1ecda12f8",
+        "workspace": "$PILOT_ROOT/worktree-b",
+        "result": {
+          "stopReason": "end_turn"
+        },
+        "verifiedCommit": "a84d61297b016076191ba0e6c068bf990a7db80d",
+        "changedFiles": [
+          "README.md"
+        ],
+        "checks": {
+          "tests": 1,
+          "pass": 1,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "elapsedMsFirstTurn": 12428
+      }
+    },
+    "concurrentlySubmitted": true,
+    "firstTurnOutcomes": [
+      {
+        "status": "fulfilled",
+        "value": {
+          "stopReason": "end_turn"
+        }
+      },
+      {
+        "status": "fulfilled",
+        "value": {
+          "stopReason": "end_turn"
+        }
+      }
+    ],
+    "independentAcceptance": {
+      "passed": true,
+      "assertions": 14,
+      "observation": "All assertions preceding the initial list assertion completed; the probe then failed its incorrect active-list expectation."
+    },
+    "originalDirtyFilesExcludedFromWorktrees": true,
+    "documentationOnlyTaskSourceUnchanged": true,
+    "taskMarkersIsolated": true,
+    "continuation": {
+      "sameSessionId": "8a7fbb23-6806-4747-9d3e-08ffaad3850a",
+      "closedSessionList": {
+        "includesA": true,
+        "excludesBFromA": true,
+        "includesB": true
+      },
+      "wrongCwdResume": {
+        "rejected": true,
+        "code": -32602,
+        "message": "Invalid params: session cwd does not match: $PILOT_ROOT/worktree-b"
+      },
+      "activeSessionOmittedFromList": true,
+      "result": {
+        "stopReason": "end_turn"
+      },
+      "conversationNoteRecovered": true,
+      "listedAfterClose": true,
+      "events": {
+        "usage_update": 4,
+        "tool_call": 4,
+        "tool_call_update": 4,
+        "agent_message_chunk": 1
+      },
+      "protocolErrors": [],
+      "exit": {
+        "code": 0,
+        "signal": null
+      }
+    },
+    "snapshotAndCommitMechanics": {
+      "performedBy": "Temporary probe controller, not an implemented Fusion adapter",
+      "intentionalFailure": {
+        "checkExit": 1,
+        "commitStayedAtBase": true
+      },
+      "snapshotRestored": true,
+      "projectChecksPassedBeforeLocalTaskCommits": true,
+      "sourceBranchUnchanged": true,
+      "mergedToSource": false
+    }
+  },
+  "cancellation": {
+    "sessionId": "83d61859-3ca8-4408-a815-ca0995e4df32",
+    "namespacePid": 2,
+    "hostPidResolved": true,
+    "childObservedRunning": true,
+    "promptResult": {
+      "stopReason": "cancelled"
+    },
+    "cancelSettlementMs": 10,
+    "childStopped": true,
+    "heartbeatStopped": true,
+    "jobScriptUnchanged": true,
+    "protocolErrors": [],
+    "exit": {
+      "code": 0,
+      "signal": null
+    },
+    "worktreeAndArtifactsRetained": true,
+    "result": "passed"
+  },
+  "permissionCallbacks": {
+    "sandbox": "read-only",
+    "nativeAutoReviewEnabled": false,
+    "cases": {
+      "deny": {
+        "sessionId": "cdb925ed-f3bb-4699-9858-5d1cebfa37d2",
+        "promptResult": {
+          "stopReason": "end_turn"
+        },
+        "requests": [
+          {
+            "sessionId": "cdb925ed-f3bb-4699-9858-5d1cebfa37d2",
+            "callId": "call_00_Ar02rrGAaSZ23ofSz41w2855",
+            "tool": "write",
+            "allowed": false
+          }
+        ],
+        "fileExists": false,
+        "eventCounts": {
+          "agent_message_chunk": 3,
+          "usage_update": 4,
+          "tool_call": 3,
+          "tool_call_update": 3,
+          "agent_thought_chunk": 2
+        }
+      },
+      "allow": {
+        "sessionId": "88587319-0160-493a-931f-1a859034201e",
+        "promptResult": {
+          "stopReason": "end_turn"
+        },
+        "requests": [
+          {
+            "sessionId": "88587319-0160-493a-931f-1a859034201e",
+            "callId": "call_00_pFOVO4hh7VPmBH46f6Cv6673",
+            "tool": "write",
+            "allowed": true
+          }
+        ],
+        "fileExists": true,
+        "eventCounts": {
+          "agent_thought_chunk": 3,
+          "agent_message_chunk": 3,
+          "usage_update": 3,
+          "tool_call": 2,
+          "tool_call_update": 2
+        }
+      }
+    },
+    "protocolErrors": [],
+    "exit": {
+      "code": 0,
+      "signal": null
+    },
+    "result": "passed",
+    "allowFileContentVerified": true,
+    "decisionSource": "Fixed fixture-scoped probe controller joining session/update tool_call data to session/request_permission; not an AI reviewer or production approval policy."
+  },
+  "probeCorrections": [
+    {
+      "probe": "Initial project/list observation",
+      "rawProbeResult": "failed",
+      "explanation": "The initial probe wrongly expected active sessions in session/list; installed ACP deliberately lists inactive resumable sessions only.",
+      "resolution": "Keep successful coding results, dispose runtime, list and resume original persisted sessions in a new process; corrected assertions passed."
+    },
+    {
+      "result": "probe-observation-failed",
+      "backendCancelSent": false,
+      "reason": "The sandbox job reported namespace PID 2; the probe incorrectly treated it as a host PID. The runtime was disposed before cleanup, and a new isolated worktree is used for the corrected run.",
+      "namespacePid": 2
+    }
+  ],
+  "guards": {
+    "capturedAt": "2026-10-29T01:13:17+08:00",
+    "nodeVersion": "v26.12.1",
+    "dshVersion": "0.2.0-rc.2",
+    "serviceIdentityAndStateUnchanged": true,
+    "profileConfigUnchanged": true,
+    "sourceFilesUnchanged": true,
+    "sourceHeadUnchanged": true,
+    "sourceStatusUnchanged": true
+  },
+  "notValidated": [
+    "QQ ingress and outbound",
+    "OpenClaw production adapter and live task registry",
+    "Native Auto review stability/security",
+    "Production identity and permission deployment",
+    "Real repository merge approval, stale approval and conflicts",
+    "No-Git copy and reviewed writeback",
+    "Dependency install and arbitrary project-external reads",
+    "Resource exhaustion, seven heavy concurrent tasks, exact billing",
+    "Observability pipeline and delivery retry",
+    "Abrupt crash reconciliation and in-flight connection loss"
+  ],
+  "inputReportDigests": {
+    "handshake-results.json": "fd98f8d6aed7057f8551ee028d44fa3757b30c54481666fd7c3732b1d846a5c6",
+    "headless-results.json": "2e96b2bd30b6ede653192ad2ccd7f5458ae7f524f15dc9cc16bbef496c74d155",
+    "project-results.json": "ce44d43d5affc69d97f148858223c0947f2bf61de1f5b8412619a122e8f378b6",
+    "continuation-results.json": "504980bbd323b69b8d1688c99395e6c0d50bc2eabd9cc9ee3e4f1419dbf8f758",
+    "cancel-attempt1-results.json": "fac31048e644e29dedf162ab63464f2f7535f5c338bba3717ba012a3954deaa8",
+    "cancel-attempt2-results.json": "822ed807e43ca9bff5827a03e62bf3fb7232aad485e0abc4376f66843c68d226",
+    "permission-results.json": "d3113505763dcb8814339629446e5d12048b186bd20eaeac85e1f9e5fddbcfc5",
+    "environment-guards.json": "8501d8e4bf5b498d8749dc4c8bde9470d9c38abb280531c6e54d3aeb408101ea"
+  }
+}
