@@ -3,6 +3,7 @@ import {E7Client, endpoint} from './client.js';
 import {E7Store, digest} from './store.js';
 import {E7Error, fail, settings, ttlFor, CATALOGS, normalize, nextRefresh} from './policy.js';
 import {validateQuery, validateData, dataCount, text, matchRows, cardProjection, artifactIdentity, heroProjection, artifactProjection, dictionaryProjection, pageRows, boundResult} from './query.js';
+import {buildProjection, reviewProjection, matchBuilds} from './query.js';
 
 function waitFor(promise, signal) {
   if (!signal) return promise;
@@ -121,6 +122,20 @@ export class E7Service {
       const all = await get('artifacts'), row = all.data.find(a => String(a.id) === args.artifactId);
       data = row ? artifactProjection(row, args.view) : null;
       if (!row) status = 'not_found'; else if (args.view === 'effect' && !row.skill_display_desc) missingFields.push('effect');
+    }
+    if (['builds', 'reviews'].includes(args.action)) {
+      const cards = await get('cards'), hero = cards.data.find(r => r.code === args.heroCode);
+      if (!hero) {status = 'not_found'; data = null;}
+      else {
+        const all = await get(args.action, {heroCode: args.heroCode});
+        const rows = args.action === 'builds' ? matchBuilds(all.data.map(buildProjection), args.filters)
+          : all.data.filter(r => !args.category || r.category === args.category).map(reviewProjection);
+        data = {...cardProjection(hero), ...pageRows(rows, args, all.hash),
+          coverage: '来源返回的该角色完整列表，筛选与续页在本地完成',
+          ...(args.action === 'reviews' ? {availableCategories: [...new Set(all.data.map(r => text(r.category)))]} : {})};
+        if (args.action === 'builds' && data.items.some(r => Object.values(r.stats).some(v => v === null))) missingFields.push('items.stats');
+        if (args.action === 'reviews' && data.items.some(r => !r.content)) missingFields.push('items.content');
+      }
     }
     if (args.action === 'dictionary') {
       const all = await get(args.kind === 'effect' ? 'effects' : 'items');

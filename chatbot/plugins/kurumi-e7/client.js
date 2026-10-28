@@ -16,6 +16,11 @@ export function endpoint(kind, params = {}) {
     return {url: `${ASSETS}/static/heroes/${params.heroCode}.json`, method: 'GET', envelope: false};
   }
   if (kind === 'effects') return {url: ASSETS + '/static/effects.json', method: 'GET', envelope: false};
+  if (kind === 'builds' || kind === 'reviews') {
+    if (typeof params.heroCode !== 'string' || !codePattern.test(params.heroCode)) fail('invalid_query');
+    return {url: API + '/open/epicseven/' + (kind === 'builds' ? 'hero_equipment_scheme/getSchemeByHeroCode' : 'hero_review/by-hero'),
+      method: 'POST', envelope: true, body: kind === 'builds' ? {hero_code: params.heroCode} : {heroCode: params.heroCode}};
+  }
   if (kind === 'codes' || kind === 'wikiUpdates') return {
     url: API + (kind === 'codes' ? '/open/epic7/redeem_code/lastest?count=50' : '/open/epicseven/updates/latest?count=50'), method: 'GET', envelope: true,
   };

@@ -2,7 +2,7 @@
 import path from 'node:path';
 import OpenCC from 'opencc-js';
 
-export const ACTIONS = Object.freeze(['search', 'hero', 'artifact', 'dictionary', 'codes', 'news']);
+export const ACTIONS = Object.freeze(['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews']);
 export const HERO_VIEWS = Object.freeze(['skills', 'stats', 'multipliers', 'devotion', 'exclusive', 'profile', 'overview']);
 export const CATALOGS = Object.freeze(['cards', 'summary', 'artifacts', 'effects', 'items']);
 export const RESULT_BYTES = 16 * 1024;

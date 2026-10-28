@@ -24,6 +24,11 @@ export function bodies() {
     items: {currency: [{id: 1, itemKey: 'gold', name: '测试金币', category: 'currency', defaultPrice: '1.0000', isActive: 1}]},
     codes: [{id: 1, code: 'SYNTHETIC', server: '国际服', effectiveDate: '2026-10-01 00:00:00', expiryDate: '2026-10-31 11:00:00'}],
     wikiUpdates: [{id: 1, title: '测试站点版本', date: '2026-10-01', content: '合成更新日志'}],
+    builds: Array.from({length: 12}, (_, n) => ({id: n + 1, hero_code: 'test-hero-1', name: '合成配装' + n,
+      set: n < 8 ? '开战,穿透' : '速度,免疫', health: '17346', att: '4249', def: '971', speed: String(218 + n), cri: '15', cri_dmg: '289', acc: n === 0 ? null : '0', res: '0',
+      artifact_code: 'test-artifact', artifact_name: '测试神器', author: '合成作者', remark: '合成样本，不代表推荐', updateTime: '2026-10-28 01:00:00'})),
+    reviews: ['RTA', 'PVP', 'PVE', '综合'].map((category, n) => ({id: n + 1, hero_code: 'test-hero-1', category,
+      title: category, content: '<p>合成测评正文</p><script>UNTRUSTED-SCRIPT</script>', author: '合成作者', updateTime: '2026-10-28 02:00:00'})),
     gameNews: {list: Array.from({length: 10}, (_, n) => ({id: n + 1, title: '测试公告' + n, server: 2, url: '/event/test-' + n + '.pdf'})), pagination: {page: 1, size: 10, total: 12}},
   };
 }

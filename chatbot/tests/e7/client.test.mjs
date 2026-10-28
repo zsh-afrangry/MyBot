@@ -35,6 +35,19 @@ test('304 releases the body without trying to parse JSON', async () => {
   assert.equal((await f.client.read('cards')).status, 304); assert.equal(f.releases(), 1);
 });
 
+test('community endpoints build different fixed read-only POST bodies and refuse path input before IO', async () => {
+  const f = setup(() => json({code: 1000, data: []}));
+  await f.client.read('builds', {heroCode: 'test-hero-1'});
+  await f.client.read('reviews', {heroCode: 'test-hero-1'});
+  assert.equal(f.calls[0].url, 'https://admin.e7.wiki/api/open/epicseven/hero_equipment_scheme/getSchemeByHeroCode');
+  assert.equal(f.calls[1].url, 'https://admin.e7.wiki/api/open/epicseven/hero_review/by-hero');
+  assert.deepEqual(f.calls.map(c => JSON.parse(c.init.body)), [{hero_code: 'test-hero-1'}, {heroCode: 'test-hero-1'}]);
+  assert(f.calls.every(c => c.init.method === 'POST' && c.init.credentials === 'omit' && c.maxRedirects === 0));
+  for (const heroCode of [undefined, '../secret', 'abc?url=evil', 'https://evil.invalid'])
+    for (const kind of ['builds', 'reviews']) await rejects(f.client.read(kind, {heroCode}), 'invalid_query');
+  assert.equal(f.calls.length, 2); assert.equal(f.releases(), 2);
+});
+
 test('malformed envelopes, HTML and streamed decoded oversize are rejected without exposing a body', async () => {
   for (const response of [json({code: 1, message: 'PRIVATE-UPSTREAM-ERROR'}), json({not: 'envelope'}), new Response('HTML', {headers: {'content-type': 'text/html'}}), new Response('{', {headers: {'content-type': 'application/json'}})]) {
     const f = setup(() => response); await rejects(f.client.read('cards'), 'invalid_response'); assert.equal(f.releases(), 1);

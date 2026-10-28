@@ -4,6 +4,8 @@ import {digest} from './store.js';
 
 export const ATTRIBUTES = ['fire', 'ice', 'wind', 'light', 'dark'];
 export const ROLES = ['warrior', 'knight', 'assassin', 'ranger', 'mage', 'manauser'];
+export const REVIEW_CATEGORIES = ['RTA', 'PVP', 'PVE', '综合'];
+export const BUILD_STATS = Object.freeze({hp: 'health', atk: 'att', def: 'def', spd: 'speed', chc: 'cri', chd: 'cri_dmg', eff: 'acc', efr: 'res'});
 const keys = (v, allowed) => {if (!object(v) || Object.keys(v).some(k => !allowed.includes(k))) fail('invalid_query');};
 const string = (v, max = 128) => typeof v === 'string' && v.trim().length > 0 && [...v].length <= max;
 const id = v => typeof v === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(v);
@@ -13,12 +15,27 @@ export function validateQuery(raw) {
     search: ['kind', 'query', 'filters', 'limit', 'cursor'], hero: ['heroCode', 'view', 'skill'],
     artifact: ['artifactId', 'view'], dictionary: ['kind', 'query', 'entryId', 'limit', 'cursor'],
     codes: ['server', 'limit'], news: ['kind', 'server', 'limit', 'cursor'],
+    builds: ['heroCode', 'filters', 'limit', 'cursor'], reviews: ['heroCode', 'category', 'limit', 'cursor'],
   };
   keys(a, ['action', ...fields[a.action]]);
   if ('query' in a && (!string(a.query) || !normalize(a.query))) fail('invalid_query');
   if ('limit' in a && (!Number.isInteger(a.limit) || a.limit < 1 || a.limit > 10)) fail('invalid_query');
   if ('cursor' in a && (!string(a.cursor, 256) || !/^[a-zA-Z0-9_-]+$/.test(a.cursor))) fail('invalid_cursor');
   if ('server' in a && !['国服', '国际服'].includes(a.server)) fail('invalid_query');
+  if (['builds', 'reviews'].includes(a.action)) {
+    if (typeof a.heroCode !== 'string' || !codePattern.test(a.heroCode)) fail('invalid_query');
+    if ('category' in a && !REVIEW_CATEGORIES.includes(a.category)) fail('invalid_query');
+    if ('filters' in a) {
+      keys(a.filters, ['sets', 'minStats']);
+      if (!Object.keys(a.filters).length) fail('invalid_query');
+      if ('sets' in a.filters && (!Array.isArray(a.filters.sets) || a.filters.sets.length < 1 || a.filters.sets.length > 3
+          || a.filters.sets.some(s => !string(s, 20) || !normalize(s)) || new Set(a.filters.sets.map(normalize)).size !== a.filters.sets.length)) fail('invalid_query');
+      if ('minStats' in a.filters) {
+        keys(a.filters.minStats, Object.keys(BUILD_STATS));
+        if (!Object.keys(a.filters.minStats).length || Object.values(a.filters.minStats).some(v => typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 10000000)) fail('invalid_query');
+      }
+    }
+  }
   if (a.action === 'search') {
     if (!['hero', 'artifact'].includes(a.kind)) fail('invalid_query');
     if (a.filters !== undefined) {
@@ -72,6 +89,11 @@ export function validateData(kind, data, params = {}) {
     if (['artifacts', 'effects', 'items'].includes(kind) && !string(row.name, 200)) invalid();
     if (kind === 'codes' && !string(row.code, 200)) invalid();
     if (['gameNews', 'wikiUpdates'].includes(kind) && !string(row.title, 500)) invalid();
+    if (['builds', 'reviews'].includes(kind) && row.hero_code !== params.heroCode) invalid();
+    if (kind === 'builds' && (!string(row.name, 200) || (row.set != null && typeof row.set !== 'string')
+      || (row.artifact_code != null && row.artifact_code !== '' && (typeof row.artifact_code !== 'string' || !codePattern.test(row.artifact_code)))
+      || Object.values(BUILD_STATS).some(k => row[k] != null && row[k] !== '' && numericStat(row[k]) === null))) invalid();
+    if (kind === 'reviews' && (!string(row.category, 80) || !string(row.title, 500) || typeof row.content !== 'string')) invalid();
   }
   return data;
 }
@@ -151,9 +173,33 @@ export const dictionaryProjection = (row, kind) => kind === 'effect' ? {...effec
   : {entryId: String(row.id), key: row.itemKey ?? null, name: text(row.name), category: row.category ?? null,
     description: text(row.description), defaultPrice: row.defaultPrice ?? null, active: row.isActive === 1, valuationBasis: 'E7·WIKI道具估值，不是实时商城价格'};
 
+// Community equipped samples use percentage points, unlike the hero JSON's fractions.
+const numericStat = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value
+  : typeof value === 'string' && /^\d+(?:\.\d+)?$/.test(value.trim()) && Number.isFinite(Number(value)) ? Number(value) : null;
+export function buildProjection(row) {
+  return {id: String(row.id), heroCode: row.hero_code, name: text(row.name),
+    sets: typeof row.set === 'string' ? row.set.split(/[,，;；]/).map(s => text(s)).filter(Boolean) : [],
+    stats: Object.fromEntries(Object.entries(BUILD_STATS).map(([k, source]) => [k, numericStat(row[source])])),
+    statBasis: {equipmentIncluded: true, percentUnit: 'percentage_points', level: null, awakening: null,
+      description: '社区配装样本面板；百分比字段按百分数点，未推算等级/觉醒或重复加算被动、印记'},
+    artifact: row.artifact_code ? {code: row.artifact_code, name: text(row.artifact_name) || null} : null,
+    author: text(row.author) || null, remark: text(row.remark), updatedAt: row.updateTime ?? null,
+    recommendationBasis: '来源列示的社区样本，不保证最优或适合当前环境'};
+}
+export const reviewProjection = row => ({id: String(row.id), heroCode: row.hero_code, category: text(row.category),
+  title: text(row.title), tier: text(row.tier) || null, content: text(row.content), remark: text(row.remark),
+  author: text(row.author) || null, updatedAt: row.updateTime ?? null});
+export function matchBuilds(rows, filters = {}) {
+  return rows.filter(row => (!filters.sets || filters.sets.every(s => row.sets.some(v => normalize(v) === normalize(s))))
+    && Object.entries(filters.minStats ?? {}).every(([k, min]) => row.stats[k] !== null && row.stats[k] >= min));
+}
+
 export function pageRows(rows, args, stamp) {
   const {cursor, limit = 5, ...query} = args;
-  const fingerprint = digest({query, stamp});
+  // Models can reorder JSON fields between calls. Key order is not a query condition.
+  const canonical = v => Array.isArray(v) ? v.map(canonical) : object(v)
+    ? Object.fromEntries(Object.keys(v).sort().map(k => [k, canonical(v[k])])) : v;
+  const fingerprint = digest({query: canonical(query), stamp});
   let offset = 0;
   if (cursor) {
     let c; try {c = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'));} catch {fail('invalid_cursor');}

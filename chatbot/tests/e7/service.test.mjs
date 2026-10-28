@@ -108,3 +108,73 @@ test('long external prose is bounded while JSON structure, IDs, source dates and
   assert.equal(result.truncated, true); assert.equal(result.data.heroCode, 'test-hero-1'); assert(Buffer.byteLength(JSON.stringify(result)) < RESULT_BYTES);
   assert.equal(result.sources.length, 2); assert.equal(result.sources[1].upstreamUpdatedAt, null);
 });
+
+test('equipped builds preserve percentage points, nulls and sources; filters and cursors bind to the snapshot', async t => {
+  const {service, calls, now, data} = setup(t);
+  const query = extra => service.query({action: 'builds', heroCode: 'test-hero-1', ...extra});
+  const first = await query({limit: 3});
+  const sample = first.data.items[0];
+  assert.equal(sample.stats.chd, 289); assert.equal(sample.stats.eff, null);
+  assert.equal(sample.statBasis.equipmentIncluded, true); assert.equal(sample.statBasis.percentUnit, 'percentage_points');
+  assert.equal(sample.statBasis.level, null); assert.equal(sample.author, '合成作者'); assert.equal(sample.updatedAt, '2026-10-28 01:00:00');
+  assert.equal(first.data.total, 12); assert(first.missingFields.includes('items.stats'));
+  assert(first.sources.some(s => s.url.endsWith('/getSchemeByHeroCode'))); assert(!JSON.stringify(first).includes('artifact_icon'));
+  const next = await query({cursor: first.data.nextCursor, limit: 10}); assert.equal(next.data.items[0].id, '4');
+  const matched = await query({filters: {sets: ['開戰', '穿透'], minStats: {spd: 220, chd: 250, eff: 0}}});
+  assert.equal(matched.data.total, 6); assert(matched.data.items.every(r => r.stats.spd >= 220));
+  const reordered = await service.query({heroCode: 'test-hero-1', cursor: matched.data.nextCursor,
+    filters: {minStats: {eff: 0, chd: 250, spd: 220}, sets: ['開戰', '穿透']}, action: 'builds'});
+  assert.equal(reordered.data.items.length, 1); assert(!reordered.missingFields.includes('items.stats'));
+  await assert.rejects(query({filters: {sets: ['速度']}, cursor: first.data.nextCursor}), e => e.code === 'cursor_expired');
+  assert.equal(calls.filter(c => c.kind === 'builds').length, 1);
+  now.value += 25 * 3600000; data.builds[0].speed = '219';
+  await assert.rejects(query({cursor: first.data.nextCursor}), e => e.code === 'cursor_expired');
+});
+
+test('reviews keep category, attribution and cleaned prose; no reviews is a successful empty result', async t => {
+  const {service, data, now, calls} = setup(t);
+  const query = extra => service.query({action: 'reviews', heroCode: 'test-hero-1', ...extra});
+  const all = await query({limit: 2}); assert.equal(all.data.total, 4); assert.deepEqual(all.data.availableCategories, ['RTA', 'PVP', 'PVE', '综合']);
+  assert.equal(all.data.items[0].content, '合成测评正文'); assert.equal(all.data.items[0].author, '合成作者');
+  const pve = await query({category: 'PVE'}); assert.equal(pve.data.items[0].category, 'PVE'); assert.equal(pve.data.total, 1);
+  await assert.rejects(query({category: 'PVE', cursor: all.data.nextCursor}), e => e.code === 'cursor_expired');
+  assert.equal(calls.filter(c => c.kind === 'reviews').length, 1);
+  now.value += 25 * 3600000; data.reviews = [];
+  const empty = await query({}); assert.equal(empty.status, 'ok'); assert.equal(empty.data.total, 0); assert.equal(empty.data.nextCursor, null);
+  assert.equal((await service.query({action: 'builds', heroCode: 'missing-hero'})).status, 'not_found');
+  assert(!calls.some(c => c.params.heroCode === 'missing-hero'));
+});
+
+test('community queries reject malformed filters and mixed action parameters before any IO', async t => {
+  const {service, calls} = setup(t);
+  for (const args of [
+    {action: 'builds', filters: {sets: []}}, {action: 'builds', filters: {sets: ['开战', '開戰']}},
+    {action: 'builds', filters: {minStats: {chd: '250'}}}, {action: 'builds', filters: {minStats: {spd: -1}}},
+    {action: 'builds', filters: {minStats: {attack: 1}}}, {action: 'builds', filters: {minStats: {spd: Infinity}}},
+    {action: 'builds', filters: {attribute: 'fire'}}, {action: 'builds', category: 'RTA'}, {action: 'reviews', category: 'unknown'},
+    {action: 'reviews', filters: {sets: ['速度']}}, {action: 'reviews', url: 'https://evil.invalid'},
+  ]) await assert.rejects(service.query({heroCode: 'test-hero-1', ...args}), e => e.code === 'invalid_query');
+  assert.equal(calls.length, 0);
+});
+
+test('foreign hero or malformed community responses cannot replace a validated cache', async t => {
+  const {service, data, now} = setup(t);
+  for (const action of ['builds', 'reviews']) {
+    const args = {action, heroCode: 'test-hero-1'};
+    const good = await service.query(args);
+    now.value += 25 * 3600000; data[action][0].hero_code = 'foreign-hero';
+    const stale = await service.query(args); assert.equal(stale.stale, true);
+    assert(stale.sources.some(s => s.warning === 'invalid_response')); assert.deepEqual(stale.data.items, good.data.items);
+    data[action][0].hero_code = 'test-hero-1';
+  }
+  data.builds[0].att = 'NaN';
+  const stale = await service.query({action: 'builds', heroCode: 'test-hero-1'}); assert.equal(stale.stale, true); assert.equal(stale.data.items[0].stats.atk, 4249);
+});
+
+test('community prose is bounded without damaging pagination and record identity', async t => {
+  const {service, data} = setup(t);
+  data.reviews.forEach(row => {row.content = '合成长文\n'.repeat(10000);});
+  const r = await service.query({action: 'reviews', heroCode: 'test-hero-1', limit: 3});
+  assert.equal(r.truncated, true); assert(Buffer.byteLength(JSON.stringify(r)) < RESULT_BYTES - 2048);
+  assert(r.data.nextCursor); assert.equal(r.data.items[2].id, '3'); assert.equal(r.data.total, 4);
+});
