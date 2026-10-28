@@ -1,0 +1,72 @@
+{
+  "date": "2026-10-28",
+  "timezone": "Asia/Shanghai",
+  "baseCommit": "44fa869104bf38e4efee818b8c77e2122c5b9142",
+  "scope": "requirements documentation and read-only checks only",
+  "status": "passed within stated scope; N23 remains requirements work",
+  "checks": [
+    {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "evidenceFiles": 648,
+      "unclassifiedFiles": 0
+    },
+    {
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "classifiedScriptEntries": 212
+    },
+    {
+      "command": "git diff --check",
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0
+    },
+    {
+      "command": "python3 /tmp/fusion-pdf-rename-scope-20261028-uat2ay3g/scan.py",
+      "cwd": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "exitCode": 0,
+      "files": 115,
+      "localLinks": 2073,
+      "errors": [],
+      "fenceErrors": []
+    },
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0,
+      "ok": true,
+      "issuesCount": 0,
+      "details": "private runtime identifiers omitted"
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs --diff",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs --diff",
+      "cwd": "/home/afrangry/kurumi-fusion",
+      "exitCode": 0
+    }
+  ],
+  "mainWorkingTreeAtCheck": {
+    "headBefore": "44fa869104bf38e4efee818b8c77e2122c5b9142",
+    "existingParallelChangedPaths": 16
+  },
+  "excluded": [
+    "runtime permission or configuration changes",
+    "real coding tool or model execution",
+    "software installation or privilege escalation",
+    "QQ or other external messages",
+    "service restart or backup/restore",
+    "remote Git writes"
+  ],
+  "metadataOwnershipUnchanged": true
+}
