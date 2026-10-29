@@ -1,5 +1,5 @@
 {
-  "at": "2026-10-29T03:47:47.804315+00:00",
+  "at": "2026-10-29T03:50:50.386546+00:00",
   "scope": "worktree final local validation; no production enable or QQ send",
   "testSuites": [
     {
@@ -53,10 +53,44 @@
     "localLinkFiles": 124,
     "localLinks": 2190,
     "localLinkErrors": 0,
-    "whitespaceErrors": 0
+    "whitespaceErrors": 0,
+    "canonicalAfterIntegration": {
+      "evidenceFiles": 679,
+      "classifiedScripts": 220,
+      "localLinkFiles": 126,
+      "localLinks": 2213,
+      "errors": 0,
+      "includesParallelArchiveTask": true
+    }
   },
   "runtimeSelfChecks": {
-    "status": "pending_after_local_integration"
+    "status": "passed_readonly_after_local_integration",
+    "sourceCommit": "4ad57e1",
+    "cwd": "/home/afrangry/kurumi-fusion",
+    "commands": [
+      {
+        "command": "node scripts/fusion/health.mjs",
+        "exitCode": 0
+      },
+      {
+        "command": "node scripts/fusion/verify-dependencies.mjs",
+        "exitCode": 0
+      },
+      {
+        "command": "node scripts/fusion/sync-config.mjs --diff",
+        "exitCode": 0
+      },
+      {
+        "command": "node scripts/fusion/sync-persona.mjs --diff",
+        "exitCode": 0
+      }
+    ],
+    "configInSync": true,
+    "personaInSync": true,
+    "newCodingPluginEnabled": false,
+    "newCodingToolAllowed": false,
+    "genericDenyRetained": true,
+    "rawOutput": "not copied: may include runtime identifiers or private state"
   },
   "actualExecution": {
     "realModelPromptsAcrossTwoRounds": 6,
@@ -69,6 +103,17 @@
     "runtimeConfigApplied": false,
     "fusionRestarted": false,
     "qqSent": false,
+    "pushed": false
+  },
+  "localIntegration": {
+    "commit": "4ad57e1",
+    "method": "fast-forward with checked three-way combination of disjoint shared-file changes",
+    "existingDirtyFilesPreserved": 16,
+    "sharedFilesCombined": 7,
+    "originalStatusPreserved": true,
+    "unrelatedBytesAndModesPreserved": true,
+    "stagedIndexEmptyAfterIntegration": true,
+    "protectedUserFilesAndRuntimeIntentUntouched": true,
     "pushed": false
   }
 }

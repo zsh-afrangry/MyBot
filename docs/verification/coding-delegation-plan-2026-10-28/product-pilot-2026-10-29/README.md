@@ -34,6 +34,10 @@
 
 已准备[具体启用差异与风险](deployment-review.md)和独立`dsh-pilot`合成项目。只有主人明确同意配置同步/必要Fusion重启及真实本人QQ测试后，才能进入[八步真实验收](../full-flow-readiness-2026-10-29.md#真实验收步骤)；首期合入仍逐候选审阅确认，push另行授权。自动合入稳定性评估保留未完成。
 
+## 本地合入与收尾自检
+
+实现提交`4ad57e1`已本地快进合入日常主目录；7个共享文件按各自不相交改动合并，原有16个未提交文件的状态、其他任务内容及mode保持，未暂存/提交他人进度，未push。新插件按自身锁文件补齐本地依赖，未启用运行配置。主目录`health`、`verify-dependencies`、`sync-config --diff`、`sync-persona --diff`四项只读检查均退出0，配置/人格一致；679份证据归属、220项脚本索引、126份文档/2213条链接亦通过，计数包含并行文档归档任务，不能算本需求新产物数量。具体摘要见[检查记录](validation.json)。
+
 ## 复现入口
 
 离线：`node --test chatbot/tests/coding/*.test.mjs`。先安装/构建confirmation-core和personal-confirmation，新插件用自己的锁文件安装；OpenClaw SDK沿用仓库固定版本。隔离宿主：`node chatbot/tests/coding/acceptance-host.mjs --out /绝对路径/新报告.json`。
