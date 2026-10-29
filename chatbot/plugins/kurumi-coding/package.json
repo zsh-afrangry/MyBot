@@ -1,0 +1,14 @@
+{
+  "name": "@kurumi/coding",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ]
+  },
+  "dependencies": {
+    "@kurumi/confirmation-core": "file:../../packages/confirmation-core"
+  }
+}

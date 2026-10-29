@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-29T03:45:46.429Z",
+  "type": "product-pilot-local",
+  "actualDsh": true,
+  "actualQq": false,
+  "ownerConfirmation": "synthetic-local-fixture-only",
+  "prompts": 2,
+  "cases": [
+    {
+      "name": "baseline_missing_requested_feature",
+      "ok": true,
+      "checkExit": 1
+    },
+    {
+      "name": "start_and_query",
+      "ok": true,
+      "taskId": "d85a2ccd-4364-4602-8a2e-521bc012b4de",
+      "baseline": "74b02869f8912e54480e0a4c3256fd3ce3848dcc",
+      "isolatedCwd": true
+    },
+    {
+      "name": "actual_coding_registered_checks_commit",
+      "ok": true,
+      "state": "ready",
+      "checks": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "fixed clamp assertions",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 29
+          },
+          {
+            "name": "project node tests",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 89
+          }
+        ]
+      },
+      "commit": "3e1247c1c2eb67edc96b50fa54e47dd7703e0add",
+      "externalSessionId": "aa41baf4-8ed3-4176-b682-eb2914003dfe"
+    },
+    {
+      "name": "same_session_continuation",
+      "ok": true,
+      "externalSessionId": "aa41baf4-8ed3-4176-b682-eb2914003dfe",
+      "checks": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "fixed clamp assertions",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 29
+          },
+          {
+            "name": "project node tests",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 94
+          }
+        ]
+      },
+      "commit": "f5591b7e476bd7c6319a785637ea98ca03bc0cb8"
+    },
+    {
+      "name": "no_merge_before_owner_fixture_approval",
+      "ok": true,
+      "proposalId": "27eed861-38d0-4790-9a8b-f68abf955f69",
+      "payloadHash": "44340c3974adfe678317ba4278507d69b40c5315c238542b791d6958a1df8128"
+    },
+    {
+      "name": "confirmed_local_fixture_merge_dirty_preserved",
+      "ok": true,
+      "candidate": "ee946039f70e8b1b2801368765384003edbf26aa",
+      "checks": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "fixed clamp assertions",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 28
+          },
+          {
+            "name": "project node tests",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 93
+          }
+        ]
+      }
+    },
+    {
+      "name": "recording_delivery_and_trusted_trace",
+      "ok": true,
+      "messages": 2,
+      "linkedEvents": 52,
+      "transport": "recording-adapter-only-no-real-QQ"
+    }
+  ],
+  "productionChanged": false,
+  "ok": true,
+  "projectTestCounts": {
+    "coding": 7,
+    "continuation": 8,
+    "merged": 8,
+    "fixedAssertionsPerRun": 7
+  },
+  "earlierDevelopmentRound": {
+    "at": "2026-10-29T03:31:30.862Z",
+    "ok": true,
+    "prompts": 2,
+    "actualQq": false,
+    "projectTestCounts": {
+      "coding": 6,
+      "continuation": 7
+    }
+  }
+}

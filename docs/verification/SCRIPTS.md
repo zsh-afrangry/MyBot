@@ -19,6 +19,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 更新表格：运行 `node scripts/fusion/evidence-index.mjs --markdown`，只替换下方生成标记之间的内容，再执行 `--check-markdown`；不得手改生成表补文档/证据链接。新增脚本需登记分类和归属，新增证据组需登记元数据与INDEX；已登记证据目录中的回执继承目录归属。
 
 <!-- BEGIN GENERATED SCRIPT INDEX -->
+
 | 脚本 | 分组 | 归属文档 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `chatbot/packages/confirmation-core/src/confirmation.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认核心：提案校验、TTL、幂等与 grant 消费 | 只读 | 否 | offline | — |
@@ -70,6 +71,8 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/backend-boundaries/domain.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/natural-confirmation.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 实际领域Store自然确认/提交/单次消费、当前消息撤销与邮件取消；临时SQLite，调度器为记录器 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 真实OpenClaw服务管理器验证论文异步停止/中止/不重放、邮件注销/重启/失败清理；无生产重启或外发 | 写临时测试目录 | 否 | header | `docs/verification/plugin-lifecycle-2026-10-19/README.md` |
+| `chatbot/tests/coding/acp.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 真实本地stdio权限关联、自有进程及检查进程树取消；离线对端，无模型或QQ | 重启或停服务、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md` |
+| `chatbot/tests/coding/flow.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 实际编码工具处理器与Git/SQLite/确认/日志：身份、基线、幂等、检查、回档、合入与重启；注入ACP和投递 | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md` |
 | `chatbot/tests/domain-adapters/integration.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/domain-adapters/registry.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 领域适配器注册/注销、启动选择、同步契约和失败拒绝 | 只读 | 否 | header | — |
 | `chatbot/tests/e7/client.test.mjs` | 离线 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | E7精确读路径、可信代理策略、限流/拒绝退避、并发与解压后大小上限；仅注入guard与本地HTTP | 写临时测试目录 | 否 | header | — |
@@ -116,6 +119,8 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/acceptance/model-driver.mjs` | 库 | [16](../16_验收与测试总表.md) | 旧 harness 模型驱动（构造模型客户端，读取遗留 AGENTS） | 真实模型 | 否 | code | — |
 | `chatbot/tests/acceptance/retrieval-config.mjs` | 库 | [16](../16_验收与测试总表.md) | 旧验收检索输出预算配置 | 只读 | 否 | header | — |
 | `chatbot/tests/access-control/fixtures.mjs` | 库 | [24](../24_统一身份与权限管理.md) | 构造合成QQ身份/显式权限与可信上下文，不导入生产名单 | 只读 | 否 | header | — |
+| `chatbot/tests/coding/acp-peer.mjs` | 库 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 离线测试子进程ACP对端与自有心跳进程，仅由协议测试启动，无模型或QQ | 重启或停服务、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md` |
+| `chatbot/tests/coding/fixtures.mjs` | 库 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 合成身份、临时Git及可注入ACP/投递夹具，不读取生产身份或凭据 | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md` |
 | `chatbot/tests/e7/fixtures.mjs` | 库 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | E7合成公开资料形状、临时缓存与注入client，不导入生产名单或真实站点数据 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/e7/model-cases.mjs` | 库 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | E7真实模型验收的问题与判定断言；可离线复核保存的公开验收回复，导入无模型或网络调用 | 只读 | 否 | header | — |
 | `chatbot/tests/papers/fixtures.mjs` | 库 | [22](../22_论文PDF翻译与文件投递.md) | 生成最小有效 PDF 测试字节，不读生产文件 | 只读 | 否 | header | — |
@@ -159,6 +164,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/configure-research.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 配置检索 provider 与抓取路径 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/configure-worker.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 显式配置隔离代码 worker | 写运行状态 | 是 | header | — |
 | `scripts/fusion/prepare.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 首次引导隔离运行目录，拒绝覆盖已写内容 | 写运行状态 | 是 | header | — |
+| `chatbot/scripts/prepare-coding-pilot.mjs` | 维护 | [28](../28_本机编码工具委托与实验任务.md)、[README.md](../../config/README.md) | 新建无远端合成Git项目和配置审阅草案；不apply、不启停生产服务、不调用模型或QQ | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/deployment-review.md` |
 | `chatbot/scripts/reminder-list.mjs` | 领域运行 | [23](../23_KnowledgeMap业务能力桥接.md) | 固定提醒列表 Cron 程序：按切换来源查询、slot 防重和汇总输出，OpenClaw 投递本人 | 写运行状态 | 是 | header | — |
 | `chatbot/tests/acceptance/probe-profile-geo.py` | 遗留验收 | [16](../16_验收与测试总表.md) | GeoAPI provider 探测 | 真实外部API、写仓库内文件 | 是 | code | `docs/verification/profile-geo-provider-probe.json` |
 | `chatbot/tests/acceptance/run-fallback-failover.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 主模型指向必然失败地址、fallback 用真实 deepseek | 真实模型、写临时测试目录 | 是 | header | — |
@@ -175,6 +181,9 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/access-control/acceptance-host.mjs` | 验收 | [24](../24_统一身份与权限管理.md) | 真实隔离OpenClaw、本地确定性模型与模拟OneBot/翻译器：双身份、强制策略及后台交接；无真实API/QQ/邮件 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/access-control-2026-10-19/host.json` |
 | `chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs` | 验收 | [21](../21_后端职责分层与代码整理.md) | 真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/capability-decoupling-2026-10-20/README.md` |
 | `chatbot/tests/backend-boundaries/acceptance-natural-confirmation-host.mjs` | 验收 | [21](../21_后端职责分层与代码整理.md) | 真实隔离Gateway自然确认钩子/实际工具/SQLite/Cron及模拟QQ回执；确定性模型，无真实模型API、QQ、SMTP或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | — |
+| `chatbot/tests/coding/acceptance-cancel-live.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 显式--live单个真实DSH任务与产品取消、心跳停止；无QQ、共享DSH服务或生产变更 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md` |
+| `chatbot/tests/coding/acceptance-host.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 真实隔离Gateway验证编码插件启用/禁用、工具目录与正常停止；不启动DSH，无模型/API/QQ或生产变更 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md` |
+| `chatbot/tests/coding/acceptance-live.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 显式--live真实DSH模型和专用处理器：编码/检查/续接/测试夹具确认后临时合入；记录投递，无真实QQ或生产变更 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md` |
 | `chatbot/tests/e7/acceptance-host.mjs` | 验收 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | 真实隔离Gateway验证E7插件启用/禁用、工具目录及正常停止，无模型/API/QQ网络或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | — |
 | `chatbot/tests/e7/acceptance-live.mjs` | 验收 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | 显式--live读取E7公开HTTP/临时缓存，--community-only选配装/测评、--reference-only选榜单/攻略/FAQ；可选--model调用现行官方模型与真实处理器，无QQ或生产写入 | 真实模型、真实外部API、写仓库内文件、写临时测试目录 | 否 | header | — |
 | `chatbot/tests/knowledgemap/acceptance-bills-live.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 第二轮真实模型/生产API/MySQL/网页增改删查、歧义及天气runId；合成入站不发QQ | 真实模型、真实外部API、重启或停服务、写运行状态、写仓库内文件 | 是 | header | — |
@@ -233,4 +242,5 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/stop-gateway.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 按环境证明停止隔离 Gateway | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Start-DSH.sh` | 启停脚本 | [9](../9_QQ融合助手架构与开发计划.md) | 启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | [9](../9_QQ融合助手架构与开发计划.md) | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
+
 <!-- END GENERATED SCRIPT INDEX -->

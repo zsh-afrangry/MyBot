@@ -1,0 +1,116 @@
+{
+  "id": "kurumi-coding",
+  "name": "Kurumi coding delegation pilot",
+  "description": "Disabled-by-default DSH ACP delegation for registered synthetic Git projects; owner-confirmed local merge.",
+  "version": "0.1.0",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": [
+      "pilot",
+      "root",
+      "worktrees",
+      "dsh",
+      "projects"
+    ],
+    "properties": {
+      "pilot": {
+        "const": true
+      },
+      "root": {
+        "type": "string"
+      },
+      "worktrees": {
+        "type": "string"
+      },
+      "dsh": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "command",
+          "home",
+          "model"
+        ],
+        "properties": {
+          "command": {
+            "type": "string"
+          },
+          "home": {
+            "type": "string"
+          },
+          "model": {
+            "type": "array",
+            "minItems": 2,
+            "maxItems": 2,
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "projects": {
+        "type": "array",
+        "minItems": 1,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "root",
+            "branch",
+            "checks"
+          ],
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "root": {
+              "type": "string"
+            },
+            "branch": {
+              "type": "string"
+            },
+            "checks": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "argv"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "argv": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "timeoutMs": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "contracts": {
+    "tools": [
+      "kurumi_code"
+    ]
+  },
+  "toolMetadata": {
+    "kurumi_code": {
+      "optional": true
+    }
+  }
+}

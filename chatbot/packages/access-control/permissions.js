@@ -31,7 +31,7 @@ export function toolPermission(name, args = {}) {
   if (name === 'personal_confirmation') {
     const permissions = {
       personal_reminder: ['reminders.read', 'reminders.manage'], personal_profile: ['profile.read', 'profile.manage'],
-      planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'],
+      planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'], coding: ['tasks.read', 'tasks.code'],
     };
     return ['list', 'preview', 'confirm'].includes(args.action) ? permissions[args.domain]?.[args.action === 'confirm' ? 1 : 0] : undefined;
   }
@@ -39,6 +39,7 @@ export function toolPermission(name, args = {}) {
   if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content'].includes(args.action) ? 'e7.read' : undefined;
   if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';
+  if (name === 'kurumi_code') return ['list', 'status', 'diff'].includes(args.action) ? 'tasks.read' : ['start', 'continue', 'cancel', 'rollback', 'preview', 'merge'].includes(args.action) ? 'tasks.code' : undefined;
   if (name === 'kurumi_task') return args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read';
   if (name === 'automations') return ['list', 'get', 'status', 'runs'].includes(args.action) ? 'automations.read' : 'automations.manage';
   if (name === 'kurumi_document') return args.action==='fetch'?'papers.import':['list','get','find'].includes(args.action)?'papers.read':undefined;

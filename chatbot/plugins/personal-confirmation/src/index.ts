@@ -10,7 +10,7 @@ const parameters = {
   type: 'object', additionalProperties: false, required: ['action', 'domain'],
   properties: {
     action: {type: 'string', enum: ['list', 'preview', 'confirm']},
-    domain: {type: 'string', enum: ['personal_reminder', 'personal_profile', 'planning', 'mail']},
+    domain: {type: 'string', enum: ['personal_reminder', 'personal_profile', 'planning', 'mail', 'coding']},
     proposalId: {type: 'string', pattern: '^[a-fA-F0-9-]{36}$'},
     payloadHash: {type: 'string', pattern: '^[a-f0-9]{64}$'},
   },
@@ -43,7 +43,7 @@ const entry: ReturnType<typeof definePluginEntry> = definePluginEntry({
     api.registerTool({contextVersion: 2, create: ctx => ({
       name: 'personal_confirmation', label: 'Confirm a pending proposal',
       description: 'Read pending proposals with action=list. Resolve the current owner confirmation to ONE previously delivered frozen preview. '
-        + 'Then action=confirm with its real proposalId/payloadHash, and call the matching domain commit or email_send. '
+        + 'Then action=confirm with its real proposalId/payloadHash, and call the matching domain commit, email_send, or kurumi_code(action=merge) for coding. '
         + 'Do not require a code. Ambiguous/negative/quoted statements or a request to change the proposal need clarification/new preview. '
         + 'action=preview re-displays a stored preview. New proposals cannot be confirmed in the same message. Owner private chat only.',
       parameters,

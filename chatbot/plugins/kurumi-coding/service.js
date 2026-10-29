@@ -1,0 +1,275 @@
+// Task orchestration. Execution, Git, confirmation and outward transport each keep their own boundaries.
+import fs from 'node:fs';
+import path from 'node:path';
+import {randomUUID} from 'node:crypto';
+import {AcpClient, processIdentity, sameProcess} from '../../packages/coding-runtime/acp-client.js';
+import {CodingStore} from './store.js';
+import {projectPolicy, createWorkspace, assertWorkspace, runChecks, commitUnit, snapshot, targetState, git, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
+import {digest, fail, taskText, policyHash} from './policy.js';
+
+export class CodingService {
+  constructor(config, {authorize, sendText, trace = () => {}, clientFactory = args => new AcpClient(args)} = {}) {
+    this.config = config; this.authorize = authorize; this.sendText = sendText; this.trace = trace;
+    this.clientFactory = clientFactory; this.active = new Map(); this.projectLocks = new Set(); this.started = false;
+  }
+  start() {
+    if (this.started) return;
+    projectPolicy(this.config);
+    fs.mkdirSync(this.config.root, {recursive: true, mode: 0o700});
+    this.lockFile = path.join(this.config.root, 'service.lock');
+    if (fs.existsSync(this.lockFile)) {
+      const owner = JSON.parse(fs.readFileSync(this.lockFile, 'utf8'));
+      if (sameProcess(owner)) throw fail('coding_service_already_running');
+      fs.unlinkSync(this.lockFile);
+    }
+    fs.writeFileSync(this.lockFile, JSON.stringify(processIdentity(process.pid)), {flag: 'wx', mode: 0o600});
+    try {
+      this.store = new CodingStore(this.config.root);
+      for (const task of this.store.list()) if (['queued', 'running', 'checking', 'cancelling', 'merging'].includes(task.state)) {
+        this.store.save({...task, state: 'needs_reconciliation', reason: 'restart_requires_state_check'});
+      }
+      this.started = true;
+    } catch (error) { fs.unlinkSync(this.lockFile); throw error; }
+  }
+  project(id) { const p = this.config.projects.find(p => p.id === id); if (!p) throw fail('unknown_coding_project'); return p; }
+  task(id, requester) {
+    const task = this.store.get(id);
+    if (!task || task.requester.subjectId !== requester.subjectId || task.requester.sessionKey !== requester.sessionKey) throw fail('unknown_coding_task');
+    this.authorize(task.requester, 'tasks.read');
+    if (task.policyHash !== policyHash(this.project(task.projectId))) throw fail('project_policy_changed');
+    return task;
+  }
+  event(task, kind, data = {}) {
+    this.trace({source: 'coding', kind, correlation: {...task.correlation, taskId: task.id},
+      data: {projectId: task.projectId, backend: 'dsh-acp', state: task.state, ...(task.externalSessionId ? {externalSessionId: task.externalSessionId} : {}), ...data}});
+  }
+  describe(task) {
+    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, reason, delivery, candidate} = task;
+    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, reason, delivery, candidate};
+  }
+  list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
+  status(id, requester) { return this.describe(this.task(id, requester)); }
+  submit({projectId, task: text}, {requester, key, correlation}) {
+    this.authorize(requester, 'tasks.code');
+    taskText(text);
+    if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
+    const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester}));
+    const old = this.store.find(key);
+    if (old) { if (old.requestHash !== requestHash) throw fail('coding_request_key_conflict'); return this.describe(this.task(old.id, requester)); }
+    const id = randomUUID();
+    const workspace = createWorkspace(this.config, project, id);
+    const task = {id, projectId, text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', policyHash: policyHash(project), ...workspace};
+    this.store.create(task); this.event(task, 'coding.submitted');
+    this.launch(task, text); return this.describe(task);
+  }
+  launch(task, text) {
+    if (this.active.has(task.id)) throw fail('coding_task_busy');
+    const entry = {controller: new AbortController()}; this.active.set(task.id, entry);
+    entry.monitor = setInterval(() => {
+      try {this.authorize(task.requester, 'tasks.code');}
+      catch {this.requestStop(entry, 'authorization_revoked');}
+    }, 1000); entry.monitor.unref();
+    entry.done = this.execute(task.id, text, entry).catch(error => {
+      const current = this.store.get(task.id);
+      this.store.save({...current, state: 'failed', reason: error.code ?? 'coding_execution_failed'});
+      this.event(this.store.get(task.id), 'coding.failed', {code: error.code ?? 'coding_execution_failed'});
+      return this.notify(this.store.get(task.id));
+    }).finally(() => {clearInterval(entry.monitor); this.active.delete(task.id);});
+  }
+  async execute(id, text, entry) {
+    let task = this.store.get(id), denied = false;
+    const project = this.project(task.projectId), directory = path.join(this.config.root, 'tasks', id);
+    fs.mkdirSync(directory, {recursive: true, mode: 0o700});
+    const patch = path.join(directory, 'acp.patch.yml');
+    fs.writeFileSync(patch, '- id: session-title-llm\n  disabled: true\n', {mode: 0o600});
+    const update = changes => { task = {...this.store.get(id), ...changes}; this.store.save(task); };
+    this.authorize(task.requester, 'tasks.code'); assertWorkspace(task); entry.controller.signal.throwIfAborted();
+    update({state: 'running', reason: undefined}); this.event(task, 'coding.running');
+    const dsh = this.config.dsh;
+    const client = this.clientFactory({command: dsh.command, args: ['--profile', 'acp', '--patch', patch], cwd: task.cwd,
+      env: {...executionEnv(), DSH_HOME: dsh.home, DSH_PERMISSION_MODE: 'workspace-write', DSH_TOOLS_MODE: 'native'},
+      stderrFile: path.join(directory, 'acp.stderr'), permission: async (params, call) => {
+        denied = true;
+        fs.writeFileSync(path.join(directory, 'permission-request.json'), JSON.stringify({params, call}), {mode: 0o600});
+        this.event(task, 'coding.permission_rejected', {decisionSource: 'pilot_extra_permission_requires_owner', toolCallId: call.toolCallId});
+        return false;
+      }});
+    entry.client = client; update({runtimeIdentity: client.identity});
+    try {
+      await client.initialize(); entry.controller.signal.throwIfAborted();
+      const externalSessionId = await client.open(task.cwd, {sessionId: task.externalSessionId, model: dsh.model});
+      update({externalSessionId}); entry.controller.signal.throwIfAborted(); this.event(task, 'coding.session_bound');
+      client.on('notification', frame => {
+        if (frame.method !== 'session/update' || frame.params?.sessionId !== externalSessionId) return;
+        const update = frame.params.update;
+        if (['tool_call', 'tool_call_update'].includes(update?.sessionUpdate)) this.event(task, 'coding.tool_event', {eventType: update.sessionUpdate, externalToolCallId: update.toolCallId});
+      });
+      const instruction = `Work only on the authorized task in ${task.cwd}. Read applicable AGENTS.md. Do not commit, merge, push, edit other worktrees, change services, or install system software. The host runs registered checks and creates verified commits. Keep unfinished work in this worktree. Task:\n${text}`;
+      const result = await client.prompt(instruction);
+      if (entry.cancelRequested || result.stopReason === 'cancelled') {
+        const stopped = await client.cancellationStopped();
+        update({state: stopped ? 'cancelled' : 'needs_reconciliation', reason: stopped ? entry.cancelReason : 'cancel_not_verified'});
+        this.event(task, 'coding.cancelled', {stopped}); return;
+      }
+      await client.request('session/close', {sessionId: externalSessionId}); await client.stop();
+      if (denied) { update({state: 'needs_permission', reason: 'extra_backend_permission_required'}); this.event(task, 'coding.needs_permission'); await this.notify(task); return; }
+      if (result.stopReason !== 'end_turn') throw fail('coding_turn_incomplete');
+      this.authorize(task.requester, 'tasks.code'); assertWorkspace(task);
+      update({state: 'checking'}); this.event(task, 'coding.checking');
+      const snapshotPath = snapshot(task, path.join(directory, 'snapshots', randomUUID()));
+      update({snapshotPath});
+      const checkedHash = workingHash(task.cwd);
+      const checks = await runChecks(project, task.cwd, path.join(directory, 'checks.log'), entry.controller.signal);
+      if (workingHash(task.cwd) !== checkedHash) throw fail('checked_tree_changed');
+      update({checks}); this.event(task, 'coding.checked', {ok: checks.ok, checkCount: checks.rows.length});
+      if (!checks.ok) { update({state: 'check_failed', reason: 'registered_checks_failed'}); await this.notify(task); return; }
+      this.authorize(task.requester, 'tasks.code'); entry.controller.signal.throwIfAborted();
+      const verifiedCommit = commitUnit(task, checkedHash);
+      update({verifiedCommit, state: 'ready', runtimeIdentity: undefined}); this.event(task, 'coding.ready', {verifiedCommit});
+      await this.notify(task);
+    } catch (error) {
+      if (entry.cancelRequested) {
+        try { client.cancel(); } catch { /* Connection may already be closed. */ }
+        const runtimeStopped = await client.cancellationStopped();
+        const stopped = runtimeStopped && error.code !== 'check_cancel_not_verified';
+        update({state: stopped ? 'cancelled' : 'needs_reconciliation', reason: stopped ? entry.cancelReason : 'cancel_not_verified'});
+        this.event(task, 'coding.cancelled', {stopped}); return;
+      }
+      throw error;
+    } finally { await client.stop(); }
+  }
+  continue(id, text, requester, key) {
+    const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    taskText(text);
+    if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
+    const hash = digest(JSON.stringify({id, text, requester}));
+    const old = this.store.findCommand(key);
+    if (old) { if (old.task_id !== id || old.hash !== hash) throw fail('coding_request_key_conflict'); return this.describe(task); }
+    if (!['ready', 'check_failed', 'failed', 'cancelled', 'needs_permission', 'needs_reconciliation', 'rolled_back'].includes(task.state) || this.active.has(id)) throw fail('coding_task_busy');
+    if (sameProcess(task.runtimeIdentity)) throw fail('original_runtime_still_running');
+    assertWorkspace(task); this.store.command(key, id, hash); this.store.invalidate(id); this.launch(task, text); return this.describe(this.store.get(id));
+  }
+  async cancel(id, requester) {
+    const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    const entry = this.active.get(id);
+    if (!entry) {
+      if (['cancelled', 'merged'].includes(task.state)) return this.describe(task);
+      if (sameProcess(task.runtimeIdentity)) throw fail('cancel_requires_runtime_reconciliation');
+      this.store.invalidate(id); this.store.save({...task, state: 'cancelled'}); this.event(this.store.get(id), 'coding.cancelled', {stopped: true});
+      return this.describe(this.store.get(id));
+    }
+    this.requestStop(entry); this.store.save({...task, state: 'cancelling'}); this.event(this.store.get(id), 'coding.cancel_requested');
+    await entry.done;
+    return this.describe(this.store.get(id));
+  }
+  rollback(id, requester) {
+    const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    if (this.active.has(id) || !['check_failed', 'failed', 'cancelled', 'needs_permission'].includes(task.state) || sameProcess(task.runtimeIdentity)) throw fail('coding_task_busy');
+    const snapshotPath = snapshot(task, path.join(this.config.root, 'tasks', id, 'snapshots', randomUUID()));
+    rollbackUnit(task); this.store.invalidate(id);
+    this.store.save({...task, state: 'rolled_back', snapshotPath, reason: undefined});
+    this.event(this.store.get(id), 'coding.rolled_back'); return this.describe(this.store.get(id));
+  }
+  diff(id, requester) {
+    const task = this.task(id, requester); assertWorkspace(task);
+    return {task: this.describe(task), diff: git(task.cwd, 'diff', '--no-ext-diff', task.base, '--'), committedDiff: git(task.cwd, 'diff', '--no-ext-diff', task.base, task.verifiedCommit, '--')};
+  }
+  async preview(id, requester, scope) {
+    const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    if (task.state !== 'ready' || this.active.has(id)) throw fail('coding_task_not_ready');
+    assertWorkspace(task);
+    if (git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
+    const project = this.project(task.projectId);
+    if (this.projectLocks.has(project.id)) throw fail('project_merge_busy');
+    this.projectLocks.add(project.id);
+    try {
+      const target = targetState(project);
+      if (target.branch !== project.branch) throw fail('target_branch_changed');
+      const candidateDir = path.join(this.config.worktrees, `candidate-${randomUUID()}`);
+      git(project.root, 'worktree', 'add', '--detach', candidateDir, target.head);
+      const commits = git(task.cwd, 'rev-list', '--reverse', `${task.base}..${task.verifiedCommit}`).trim().split('\n').filter(Boolean);
+      if (!commits.length) throw fail('no_coding_changes');
+      try { git(candidateDir, '-c', 'user.name=Kurumi', '-c', 'user.email=kurumi@localhost', 'cherry-pick', ...commits); }
+      catch { throw fail('merge_conflict'); }
+      const checkedHash = workingHash(candidateDir);
+      const checks = await runChecks(project, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'));
+      if (!checks.ok) throw fail('candidate_checks_failed');
+      if (workingHash(candidateDir) !== checkedHash) throw fail('checked_candidate_changed');
+      if (JSON.stringify(targetState(project)) !== JSON.stringify(target)) throw fail('target_changed_during_checks');
+      const candidate = git(candidateDir, 'rev-parse', 'HEAD').trim();
+      const diff = git(candidateDir, 'diff', '--no-ext-diff', target.head, candidate, '--');
+      assertNoUntrackedOverwrite(project, target.head, candidate);
+      const paths = git(candidateDir, 'diff', '--name-only', target.head, candidate, '--').trim().split('\n');
+      const payload = {taskId: id, projectId: project.id, taskCommit: task.verifiedCommit, target, candidate, diffHash: digest(diff), candidateDir, checks};
+      const previewText = `编码任务待确认合入\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${project.branch} @ ${target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + '=通过').join('；')}\n目标当前有未提交内容：${target.status ? '有，合入不得覆盖' : '无'}\n差异SHA256：${payload.diffHash}\n请审阅差异后确认本地合入；不包含push。`;
+      const result = this.store.preview(task, payload, previewText, scope);
+      this.store.save({...task, candidate}); this.event(task, 'coding.merge_preview', {candidate, proposalId: result.proposalId, payloadHash: result.payloadHash});
+      return result;
+    } finally { this.projectLocks.delete(project.id); }
+  }
+  async merge(id, proposalId, requester, scope, assertCurrent) {
+    const task = this.task(id, requester), project = this.project(task.projectId);
+    this.authorize(requester, 'tasks.code'); assertCurrent();
+    if (this.active.has(id) || this.projectLocks.has(project.id)) throw fail('project_merge_busy');
+    this.projectLocks.add(project.id);
+    try {
+      const preview = this.store.getPreview(proposalId);
+      if (!preview || preview.taskId !== id || task.state !== 'ready' || preview.payload.taskCommit !== task.verifiedCommit) throw fail('merge_not_pending');
+      assertWorkspace(task);
+      if (git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
+      if (JSON.stringify(targetState(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
+      if (git(preview.payload.candidateDir, 'rev-parse', 'HEAD').trim() !== preview.payload.candidate
+        || git(preview.payload.candidateDir, 'status', '--porcelain=v1').trim()
+        || digest(git(preview.payload.candidateDir, 'diff', '--no-ext-diff', preview.payload.target.head, preview.payload.candidate, '--')) !== preview.payload.diffHash) throw fail('candidate_changed');
+      assertNoUntrackedOverwrite(project, preview.payload.target.head, preview.payload.candidate);
+      assertCurrent(); const payload = this.store.claimMerge(task, proposalId, scope);
+      this.event(this.store.get(id), 'coding.merge_authorized', {proposalId});
+      try {
+        git(project.root, 'merge', '--ff-only', payload.candidate);
+        if (git(project.root, 'rev-parse', 'HEAD').trim() !== payload.candidate || git(project.root, 'symbolic-ref', '--short', 'HEAD').trim() !== project.branch) throw fail('merge_result_requires_check');
+        assertDirtyPreserved(project, payload.target);
+      } catch {
+        this.store.save({...this.store.get(id), state: 'needs_reconciliation', reason: 'merge_result_requires_check'});
+        throw fail('merge_result_requires_check');
+      }
+      this.store.save({...this.store.get(id), state: 'merged', mergeCommit: payload.candidate});
+      this.event(this.store.get(id), 'coding.merged', {candidate: payload.candidate});
+      return this.describe(this.store.get(id));
+    } finally { this.projectLocks.delete(project.id); }
+  }
+  async notify(task) {
+    if (!this.sendText) return;
+    try {
+      this.authorize(task.requester, 'qq.reply');
+      const text = `编码任务 ${task.id}\n项目：${task.projectId}\n状态：${task.state}\n检查：${task.checks ? (task.checks.ok ? '通过' : '失败') : '未完成'}\n提交：${task.verifiedCommit}\n${task.state === 'ready' ? '等待审阅与确认合入，尚未修改目标分支。' : '请查询任务状态和私有检查记录。'}`;
+      this.store.save({...this.store.get(task.id), delivery: {state: 'sending'}});
+      const receipt = await this.sendText({to: task.requester.to, text, key: `coding:${task.id}:${task.verifiedCommit}:${task.state}`});
+      if (receipt?.channel !== 'kurumi-qq' || typeof receipt.messageId !== 'string' || !/^-?[1-9][0-9]*$/.test(receipt.messageId)) throw fail('missing_delivery_receipt');
+      this.store.save({...this.store.get(task.id), delivery: {state: 'platform_accepted', messageId: receipt.messageId}});
+      this.event(this.store.get(task.id), 'coding.delivery', {state: 'platform_accepted'});
+    } catch (e) {
+      this.store.save({...this.store.get(task.id), delivery: {state: 'unknown', code: e.code ?? 'delivery_failed'}});
+      this.event(this.store.get(task.id), 'coding.delivery', {state: 'unknown'});
+    }
+  }
+  requestStop(entry, reason) {
+    entry.cancelRequested = true; if (reason) entry.cancelReason = reason; entry.controller.abort();
+    try {entry.client?.cancel();} catch {}
+    // Do not wait forever for session/prompt to acknowledge cancellation. Closing
+    // this owned stdio process also rejects the pending prompt and verifies its tree.
+    if (entry.client) entry.stopping ??= entry.client.cancellationStopped().catch(() => false);
+  }
+  async idle(id) { await this.active.get(id)?.done; }
+  async stop() {
+    if (!this.started) return;
+    await Promise.all([...this.active.entries()].map(async ([id, entry]) => {
+      this.requestStop(entry);
+      await entry.done;
+    }));
+    this.store.close(); this.started = false;
+    if (fs.existsSync(this.lockFile)) {
+      const owner = JSON.parse(fs.readFileSync(this.lockFile, 'utf8'));
+      if (owner.pid === process.pid && sameProcess(owner)) fs.unlinkSync(this.lockFile);
+    }
+  }
+}

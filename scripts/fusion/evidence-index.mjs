@@ -40,6 +40,14 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/scripts/prepare-coding-pilot.mjs': ['维护', '新建无远端合成Git项目和配置审阅草案；不apply、不启停生产服务、不调用模型或QQ', {testDir: 1}, 'header'],
+  'chatbot/tests/coding/fixtures.mjs': ['库', '合成身份、临时Git及可注入ACP/投递夹具，不读取生产身份或凭据', {testDir: 1}, 'header'],
+  'chatbot/tests/coding/acp-peer.mjs': ['库', '离线测试子进程ACP对端与自有心跳进程，仅由协议测试启动，无模型或QQ', {testDir: 1, restart: 1}, 'header'],
+  'chatbot/tests/coding/acp.test.mjs': ['离线', '真实本地stdio权限关联、自有进程及检查进程树取消；离线对端，无模型或QQ', {testDir: 1, restart: 1}, 'header'],
+  'chatbot/tests/coding/flow.test.mjs': ['离线', '实际编码工具处理器与Git/SQLite/确认/日志：身份、基线、幂等、检查、回档、合入与重启；注入ACP和投递', {testDir: 1}, 'header'],
+  'chatbot/tests/coding/acceptance-live.mjs': ['验收', '显式--live真实DSH模型和专用处理器：编码/检查/续接/测试夹具确认后临时合入；记录投递，无真实QQ或生产变更', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
+  'chatbot/tests/coding/acceptance-cancel-live.mjs': ['验收', '显式--live单个真实DSH任务与产品取消、心跳停止；无QQ、共享DSH服务或生产变更', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
+  'chatbot/tests/coding/acceptance-host.mjs': ['验收', '真实隔离Gateway验证编码插件启用/禁用、工具目录与正常停止；不启动DSH，无模型/API/QQ或生产变更', {testDir: 1, writesRepo: 1, restart: 1}, 'header'],
   'chatbot/tests/e7/model-cases.mjs': ['库', 'E7真实模型验收的问题与判定断言；可离线复核保存的公开验收回复，导入无模型或网络调用', {readonly: 1}, 'header'],
   'chatbot/tests/e7/acceptance-live.mjs': ['验收', '显式--live读取E7公开HTTP/临时缓存，--community-only选配装/测评、--reference-only选榜单/攻略/FAQ；可选--model调用现行官方模型与真实处理器，无QQ或生产写入', {externalApi: 1, model: 1, testDir: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/e7/acceptance-host.mjs': ['验收', '真实隔离Gateway验证E7插件启用/禁用、工具目录及正常停止，无模型/API/QQ网络或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],

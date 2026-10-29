@@ -1,0 +1,74 @@
+{
+  "at": "2026-10-29T03:47:47.804315+00:00",
+  "scope": "worktree final local validation; no production enable or QQ send",
+  "testSuites": [
+    {
+      "command": "node --test chatbot/tests/coding/*.test.mjs",
+      "exitCode": 0,
+      "passed": 19
+    },
+    {
+      "command": "node --test chatbot/tests/access-control/*.test.mjs chatbot/tests/knowledgemap/bills.test.mjs scripts/fusion/test/log-query.test.mjs",
+      "exitCode": 0,
+      "passed": 36
+    },
+    {
+      "command": "node --test chatbot/tests/backend-boundaries/capabilities.test.mjs",
+      "exitCode": 0,
+      "passed": 9
+    },
+    {
+      "command": "npm --prefix chatbot/packages/confirmation-core test",
+      "exitCode": 0,
+      "passed": 46
+    },
+    {
+      "command": "npm --prefix chatbot/plugins/personal-confirmation test",
+      "exitCode": 0,
+      "passed": 24
+    },
+    {
+      "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+      "exitCode": 0,
+      "passed": 9
+    }
+  ],
+  "builds": [
+    {
+      "command": "npm --prefix chatbot/packages/confirmation-core run build",
+      "exitCode": 0
+    },
+    {
+      "command": "npm --prefix chatbot/plugins/personal-confirmation run build",
+      "exitCode": 0
+    },
+    {
+      "command": "node chatbot/scripts/build-personal-plugins.mjs",
+      "exitCode": 0
+    }
+  ],
+  "metadata": {
+    "evidenceFiles": 677,
+    "classifiedScripts": 220,
+    "localLinkFiles": 124,
+    "localLinks": 2190,
+    "localLinkErrors": 0,
+    "whitespaceErrors": 0
+  },
+  "runtimeSelfChecks": {
+    "status": "pending_after_local_integration"
+  },
+  "actualExecution": {
+    "realModelPromptsAcrossTwoRounds": 6,
+    "actualQq": false,
+    "actualHumanMergeConfirmation": false,
+    "sharedDshServiceMainPid": 4174530,
+    "sharedDshServiceActive": true
+  },
+  "productionMutations": {
+    "runtimeConfigApplied": false,
+    "fusionRestarted": false,
+    "qqSent": false,
+    "pushed": false
+  }
+}

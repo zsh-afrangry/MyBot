@@ -1,0 +1,50 @@
+{
+  "agents.entries.main.tools.alsoAllow": {
+    "append": "kurumi_code"
+  },
+  "plugins.allow": {
+    "append": "kurumi-coding"
+  },
+  "plugins.load.paths": {
+    "append": "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-coding"
+  },
+  "plugins.entries.kurumi-coding": {
+    "enabled": true,
+    "config": {
+      "pilot": true,
+      "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/state",
+      "worktrees": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/worktrees",
+      "dsh": {
+        "command": "/opt/deepseek-harness/node_modules/.bin/dsh",
+        "home": "/var/lib/dsh/.dsh",
+        "model": [
+          "deepseek-official",
+          "deepseek-flash"
+        ]
+      },
+      "projects": [
+        {
+          "id": "dsh-pilot",
+          "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/source",
+          "branch": "main",
+          "checks": [
+            {
+              "name": "fixed pilot assertions",
+              "argv": [
+                "/usr/bin/node",
+                "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/fixed-check.mjs"
+              ]
+            },
+            {
+              "name": "project node tests",
+              "argv": [
+                "/usr/bin/node",
+                "--test"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
