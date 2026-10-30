@@ -1,0 +1,283 @@
+{
+  "at": "2026-10-30T09:02:05.994Z",
+  "authorization": {
+    "source": "主人同意按推荐路线修复Q1/Q2/Q3，遵守docs/tp2.txt；沿用dsh-pilot单目录的部署及Fusion重启授权。",
+    "allowedRoot": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
+    "newQqMessagesSent": false,
+    "testIngress": false,
+    "additionalPermissionsApproved": 0
+  },
+  "source": {
+    "baseCommit": "b4f2102e40cc3fd0c761b076566940aa61c28ec1",
+    "worktree": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+    "branch": "codex/docs-coding-delegation",
+    "deploymentRoot": "/home/afrangry/kurumi-fusion",
+    "versionKind": "base commit plus tested files identified by sha256",
+    "canonicalHeadAtDeployment": "b4f2102e40cc3fd0c761b076566940aa61c28ec1",
+    "canonicalWorkingTreeIntegrated": true,
+    "canonicalGitCommitCreated": false,
+    "push": false,
+    "artifacts": [
+      {
+        "path": "chatbot/packages/access-control/permissions.js",
+        "sha256": "f9a81ab4b44232eb35682281a339ab190eb1a1c04871e5dab119611fc1b483e2"
+      },
+      {
+        "path": "chatbot/plugins/kurumi-coding/index.js",
+        "sha256": "06e34a3d558931210f5ab3958ff757181cc9fef4cf6aa0f8ff9bc5dadea1291f"
+      },
+      {
+        "path": "chatbot/plugins/kurumi-coding/openclaw.plugin.json",
+        "sha256": "7ff2e4f257980e0c885d1882869287995c5435d41e81f70cd2d9da6944154f7b"
+      },
+      {
+        "path": "chatbot/plugins/kurumi-coding/results.js",
+        "sha256": "17f68445abe78197ecc91f658bd7e9211c698f3c8ffeec5ce8314952153359d7"
+      },
+      {
+        "path": "chatbot/plugins/kurumi-coding/service.js",
+        "sha256": "6d0fd29bc7f61c217fd28a8604f84a04ba763c949fd5180d5d7646e78a69c74e"
+      },
+      {
+        "path": "chatbot/plugins/kurumi-coding/store.js",
+        "sha256": "e10c55f6b090934183c3502e417aacd55a21012d8b359756bd5089f4000567bc"
+      },
+      {
+        "path": "chatbot/plugins/kurumi-coding/workspaces.js",
+        "sha256": "87ad10336600abe66dc4f305a2308a1d7aadb50ae21cb6a5ad23f1374b3b4e2e"
+      },
+      {
+        "path": "chatbot/scripts/check-coding-pilot-python.py",
+        "sha256": "7f6bba063769fb8e481e886d5f097f13ad85e9a0473226f987da13d04f830103"
+      },
+      {
+        "path": "chatbot/scripts/prepare-coding-pilot.mjs",
+        "sha256": "5392d3e38e9c44840e191659f585108c3c4e37e2e9555934ea7304a0cab9afc4"
+      },
+      {
+        "path": "chatbot/tests/access-control/policy.test.mjs",
+        "sha256": "ca5b844068e6b602ba3df06118a83ae2751e701776910ab4bde90cd22cdd63ac"
+      },
+      {
+        "path": "chatbot/tests/coding/acceptance-results-live.mjs",
+        "sha256": "94bc017bb2591acb91a2505a0795e83e165ead74f03ed8bc3b7651e8bf0593c4"
+      },
+      {
+        "path": "chatbot/tests/coding/fixtures.mjs",
+        "sha256": "b4435dc98bd0df6208f7fce987a2ae0b0ff3445c66ce959cb8ef815d8d352f32"
+      },
+      {
+        "path": "chatbot/tests/coding/results.test.mjs",
+        "sha256": "b2d749d2d6909786ec676700be59d47359e4c80ab38e958643cd0f23f779c74b"
+      },
+      {
+        "path": "config/runtime.config.json",
+        "sha256": "d40e60e8ddfc5d8923ff6bf2942be7fa97bbe1c367fd632e5025bbba577c30a1"
+      },
+      {
+        "path": "scripts/fusion/templates/AGENTS.md",
+        "sha256": "e8c2bba4d9afbc64cb30add96ec1483e2c452efd34fba806deeb872f062ca022"
+      }
+    ]
+  },
+  "deployment": {
+    "privateSourceBackup": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/reviews/deploy-results-fix-20261030T084736Z",
+    "configChangedPaths": [
+      "plugins.entries.kurumi-coding.config.projects"
+    ],
+    "configApplyAt": "2026-10-30T08:49:11.703Z",
+    "configBackup": "/home/afrangry/.openclaw-fusion/openclaw.json.bak.2026-10-30T08-49-11-703Z",
+    "personaChangedFiles": [
+      "workspace/AGENTS.md"
+    ],
+    "service": {
+      "name": "kurumi-fusion.service",
+      "activeEnterTimestamp": "2026-10-30T16:49:42+08:00",
+      "mainPid": 3634696,
+      "activeState": "active",
+      "subState": "running"
+    },
+    "sharedDshOrSnowLumaRestarted": false,
+    "toolsDenyOrAlsoAllowChanged": false,
+    "identityOrCronPrivilegesExpanded": false
+  },
+  "tests": {
+    "offline": {
+      "command": "node --test chatbot/tests/coding/*.test.mjs chatbot/tests/access-control/*.test.mjs chatbot/tests/backend-boundaries/*.test.mjs",
+      "passed": 83,
+      "failed": 0,
+      "skipped": 0,
+      "log": "offline.log"
+    },
+    "canonicalIntegration": {
+      "command": "node --test chatbot/tests/coding/*.test.mjs chatbot/tests/access-control/policy.test.mjs",
+      "passed": 42,
+      "failed": 0
+    },
+    "realDsh": {
+      "receipt": "live-result.json",
+      "prompts": 1,
+      "actualQq": false,
+      "localFixtureOnly": true,
+      "sourceUnchanged": true,
+      "hostPythonExecuted": true
+    },
+    "isolatedHost": {
+      "receipt": "host.json",
+      "stagesPassed": 2,
+      "actualQq": false
+    }
+  },
+  "runtime": {
+    "at": "2026-10-30T08:50:53.024Z",
+    "pluginState": "active",
+    "tools": [
+      "kurumi_code"
+    ],
+    "tables": [
+      "coding_result_events",
+      "coding_results"
+    ],
+    "productionTasks": [
+      {
+        "id": "3bb84f40-beb1-4f2a-b33a-ccdc050781ed",
+        "state": "ready",
+        "hasNewRound": false,
+        "deliveryState": "platform_accepted"
+      }
+    ],
+    "recordedRounds": 0
+  },
+  "finalChecks": {
+    "health": {
+      "exitCode": 0,
+      "at": "2026-10-30T08:50:02.525Z",
+      "ok": true,
+      "issues": [],
+      "gateway": true,
+      "qq": {
+        "online": true,
+        "good": true
+      },
+      "testIngress": false,
+      "channel": [
+        {
+          "running": true,
+          "connected": true
+        }
+      ],
+      "testMethodDisabled": true
+    },
+    "dependencies": {
+      "exitCode": 0,
+      "projectOwnsDependencies": true
+    },
+    "config": {
+      "exitCode": 0,
+      "inSync": true,
+      "managedKeys": 13
+    },
+    "persona": {
+      "exitCode": 0,
+      "inSync": true,
+      "workspaceFiles": 12
+    },
+    "documentation": {
+      "roots": [
+        {
+          "root": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+          "checks": [
+            {
+              "name": "coverage",
+              "exitCode": 0
+            },
+            {
+              "name": "scripts-index",
+              "exitCode": 0
+            },
+            {
+              "name": "documentation-map",
+              "exitCode": 0
+            },
+            {
+              "name": "diff",
+              "exitCode": 0
+            }
+          ],
+          "mapTestsPassed": 9
+        },
+        {
+          "root": "/home/afrangry/kurumi-fusion",
+          "checks": [
+            {
+              "name": "coverage",
+              "exitCode": 0
+            },
+            {
+              "name": "scripts-index",
+              "exitCode": 0
+            },
+            {
+              "name": "documentation-map",
+              "exitCode": 0
+            },
+            {
+              "name": "diff",
+              "exitCode": 0
+            }
+          ],
+          "mapTestsPassed": 9
+        }
+      ]
+    }
+  },
+  "parallelWorkPreservation": {
+    "unchangedFiles": [
+      {
+        "path": "docs/archive/chatbot-AGENTS.md",
+        "sha256": "27ddb8af92aa81d8129e5045c09b01467c690c40cbfbffee2451c137f4ddb10e"
+      },
+      {
+        "path": "docs/verification/chatbot-agents-archive-2026-10-28/README.md",
+        "sha256": "828cb482ca61e6e47427f0b4cb8f289174f3c150df5a9909ae2985583e160bc6"
+      },
+      {
+        "path": "docs/verification/chatbot-agents-archive-2026-10-28/checks.json",
+        "sha256": "59e7529a6200c5fb59c79fa2c5f3ddd9e79dfd704c74f44984943df92d4dd42f"
+      },
+      {
+        "path": "AGENTS.md",
+        "sha256": "face6ae8d52a28a9f2697febd6e24a51aa83c5a3aaf7d15e74cfa57ba9d14982"
+      },
+      {
+        "path": "chatbot/AGENTS.md",
+        "sha256": null
+      },
+      {
+        "path": "chatbot/tests/acceptance/README.md",
+        "sha256": "af0d083f6cf385255513ebf1d2bb06250cbe887d52e2f1a3173c2dcf28944983"
+      },
+      {
+        "path": "chatbot/tests/acceptance/model-driver.mjs",
+        "sha256": "894623b0c22386c4517b7e34f0135c6cab79ef3cd8eb9f94dafc70ade247b77d"
+      },
+      {
+        "path": "chatbot/tests/acceptance/run-retrieval-t3.mjs",
+        "sha256": "f091365b0517467b3439ee68ea2023dcdd5ee00775b091c47400dffc39a2085a"
+      },
+      {
+        "path": "scripts/fusion/configure-projects.mjs",
+        "sha256": "f6f152a19ee2d797d91adb8ceb5b659380ec54d3dc49df91c4ff9ae2a0039311"
+      }
+    ],
+    "overlappingDocuments": "按部署时工作树快照进行增量三方整合，保留源码目录的chatbot提示词归档改动；SCRIPTS.md分别按各自清单生成。",
+    "finalDocumentMerge": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/reviews/deploy-results-fix-20261030T084736Z/final-doc-merge.json"
+  },
+  "pending": {
+    "status": "待复验",
+    "humanQqAfterFix": false,
+    "next": "主人从QQ在dsh-pilot发起新任务，核对直接完成回报、实际输出查询及后续交互；继续/取消/真人确认合入分别记录。",
+    "legacyTask": "保留原任务、投递回执及旧证据；未回填或伪造旧执行输出。检查策略变化后不自动续接、重发或合入旧任务。",
+    "scope": "额外目录申请继续拒绝并累计；其他项目、通用执行、自动合入、系统修改和push未开放。"
+  }
+}

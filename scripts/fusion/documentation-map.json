@@ -10,7 +10,18 @@
         "docs/24_统一身份与权限管理.md"
       ],
       "evidence": [
-        "docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md"
+        "docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md",
+        "docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md"
+      ]
+    },
+    {
+      "path": "chatbot/scripts/check-coding-pilot-python.py",
+      "documents": [
+        "docs/28_本机编码工具委托与实验任务.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "evidence": [
+        "docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md"
       ]
     },
     {

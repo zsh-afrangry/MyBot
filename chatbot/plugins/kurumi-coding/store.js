@@ -16,6 +16,11 @@ export class CodingStore {
       CREATE TABLE IF NOT EXISTS coding_tasks(id TEXT PRIMARY KEY, request_key TEXT UNIQUE NOT NULL, facts TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS coding_commands(request_key TEXT PRIMARY KEY, task_id TEXT NOT NULL, hash TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS coding_previews(id TEXT PRIMARY KEY, task_id TEXT NOT NULL, payload TEXT NOT NULL, text TEXT NOT NULL);`);
+    // Private, task-bound execution rounds and selected ACP result events. Never a general file reader.
+    this.db.exec(`CREATE TABLE IF NOT EXISTS coding_results(task_id TEXT NOT NULL, round_id TEXT NOT NULL, facts TEXT NOT NULL,
+      PRIMARY KEY(task_id,round_id));
+      CREATE TABLE IF NOT EXISTS coding_result_events(task_id TEXT NOT NULL, round_id TEXT NOT NULL, seq INTEGER NOT NULL, facts TEXT NOT NULL,
+      PRIMARY KEY(task_id,round_id,seq));`);
     ensureConfirmationGateSchema(this.db);
   }
   close() { this.db.close(); }
@@ -24,6 +29,26 @@ export class CodingStore {
   list() { return this.db.prepare('SELECT facts FROM coding_tasks ORDER BY rowid DESC').all().map(row => JSON.parse(row.facts)); }
   create(task) { this.db.prepare('INSERT INTO coding_tasks VALUES (?,?,?)').run(task.id, task.requestKey, JSON.stringify(task)); }
   save(task) { this.db.prepare('UPDATE coding_tasks SET facts=? WHERE id=?').run(JSON.stringify({...task, updatedAt: Date.now()}), task.id); }
+  createResult(task, round) {
+    this.transaction(() => {
+      this.db.prepare('INSERT INTO coding_results VALUES (?,?,?)').run(task.id, round.roundId, JSON.stringify(round));
+      this.save({...task, executionRoundId: round.roundId, state: 'queued', checks: undefined, reason: undefined, delivery: undefined});
+    });
+  }
+  result(taskId, roundId) {
+    const row = this.db.prepare('SELECT facts FROM coding_results WHERE task_id=? AND round_id=?').get(taskId, roundId);
+    return row ? JSON.parse(row.facts) : null;
+  }
+  saveResult(taskId, round) {
+    this.db.prepare('UPDATE coding_results SET facts=? WHERE task_id=? AND round_id=?').run(JSON.stringify(round), taskId, round.roundId);
+  }
+  appendResultEvent(taskId, roundId, event) {
+    this.db.prepare(`INSERT INTO coding_result_events SELECT ?,?,COALESCE(MAX(seq),0)+1,?
+      FROM coding_result_events WHERE task_id=? AND round_id=?`).run(taskId, roundId, JSON.stringify(event), taskId, roundId);
+  }
+  resultEvents(taskId, roundId) {
+    return this.db.prepare('SELECT facts FROM coding_result_events WHERE task_id=? AND round_id=? ORDER BY seq').all(taskId, roundId).map(row => JSON.parse(row.facts));
+  }
   transaction(action) {
     this.db.exec('BEGIN IMMEDIATE');
     try { const result = action(); this.db.exec('COMMIT'); return result; }

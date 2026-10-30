@@ -49,7 +49,9 @@ export function projectPolicy(config) {
     if (!/^[a-zA-Z0-9][a-zA-Z0-9/_-]*$/.test(p.branch ?? '')) throw fail('invalid_project_branch');
     git(p.root, 'rev-parse', '--verify', `refs/heads/${p.branch}^{commit}`);
     if (git(p.root, 'remote').trim() || fs.existsSync(path.join(p.root, '.gitmodules'))) throw fail('pilot_requires_synthetic_local_repository');
-    if (!Array.isArray(p.checks) || !p.checks.length || p.checks.some(c => !/^[\w .-]{1,100}$/.test(c.name ?? '') || !Array.isArray(c.argv) || !path.isAbsolute(c.argv[0] ?? '') || c.argv.some(a => typeof a !== 'string' || a.includes('\0')) || (c.timeoutMs !== undefined && (!Number.isSafeInteger(c.timeoutMs) || c.timeoutMs <= 0)))) throw fail('invalid_project_checks');
+    if (!Array.isArray(p.checks) || !p.checks.length || p.checks.some(c => !/^[\w .-]{1,100}$/.test(c.name ?? '') || !Array.isArray(c.argv) || !path.isAbsolute(c.argv[0] ?? '') || c.argv.some(a => typeof a !== 'string' || a.includes('\0'))
+      || (c.timeoutMs !== undefined && (!Number.isSafeInteger(c.timeoutMs) || c.timeoutMs <= 0))
+      || (c.skipExitCode !== undefined && (!Number.isSafeInteger(c.skipExitCode) || c.skipExitCode < 1 || c.skipExitCode > 255)))) throw fail('invalid_project_checks');
     for (const protectedPath of [config.root, config.worktrees, config.dsh.home, '/home/afrangry/.openclaw-fusion', '/home/afrangry/kurumi-archive', '/home/afrangry/.npm-global']) {
       if (inside(p.root, protectedPath) || inside(protectedPath, p.root)) throw fail('protected_project_root');
     }
@@ -103,12 +105,13 @@ export async function runChecks(project, cwd, file, signal, boundary) {
         resolve({code, signal: sig, ...(timedOut ? {timedOut: true} : {}), ...(killed ? {stopped: captured.every(p => !sameProcess(p))} : {})});
       });
     });
-    rows.push({name: check.name, ...result, elapsedMs: Date.now() - started});
+    const skipped = check.skipExitCode !== undefined && result.code === check.skipExitCode && !result.timedOut;
+    rows.push({name: check.name, ...result, ...(skipped ? {skipped: true} : {}), elapsedMs: Date.now() - started});
     if (result.stopped === false) throw fail('check_cancel_not_verified');
     signal?.throwIfAborted();
-    if (result.code !== 0 || result.timedOut) break;
+    if ((!skipped && result.code !== 0) || result.timedOut) break;
   }
-  return {ok: rows.length === project.checks.length && rows.every(r => r.code === 0 && !r.timedOut), rows};
+  return {ok: rows.length === project.checks.length && rows.some(r => !r.skipped) && rows.every(r => (r.skipped || r.code === 0) && !r.timedOut), rows};
 }
 function fileFacts(cwd, names) {
   return names.map(name => {

@@ -6,7 +6,7 @@
 
 | 路径 | 用途 |
 | --- | --- |
-| [`coding-delegation-plan-2026-10-28/README.md`](coding-delegation-plan-2026-10-28/README.md) 及同目录全部文件 | 编码委托需求、工作树与审批决定、文档合并的本地合入；[接口局部测试](coding-delegation-plan-2026-10-28/local-pilot-2026-10-29/README.md)、[实现前准备](coding-delegation-plan-2026-10-28/full-flow-readiness-2026-10-29.md)、[专用插件产品试点](coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md)；真实DSH处理链及隔离宿主通过；[单目录QQ试点](coding-delegation-plan-2026-10-28/qq-pilot-2026-10-30/README.md)已部署待真人验收，追加权限请求记录 |
+| [`coding-delegation-plan-2026-10-28/README.md`](coding-delegation-plan-2026-10-28/README.md) 及同目录全部文件 | 编码委托需求、工作树与审批决定、文档合并的本地合入；[接口局部测试](coding-delegation-plan-2026-10-28/local-pilot-2026-10-29/README.md)、[实现前准备](coding-delegation-plan-2026-10-28/full-flow-readiness-2026-10-29.md)、[专用插件产品试点](coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md)；真实DSH处理链及隔离宿主通过；[单目录QQ部署](coding-delegation-plan-2026-10-28/qq-pilot-2026-10-30/README.md)与权限请求记录；[14:25真人回溯](coding-delegation-plan-2026-10-28/qq-review-2026-10-30/README.md)核实编码执行/完成通知及自动查询、结果回传缺口；[结果与检查修复](coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md)记录结果持久化、事件回传与独立Python检查 |
 | [`shared-business-merge-2026-10-27/README.md`](shared-business-merge-2026-10-27/README.md) 及同目录全部文件 | 提醒列表规则与定时播报并入KnowledgeMap共享业务；原列表文档归档、引用与脚本/证据归属同步、链接与正文保留检查；不重新验收业务 |
 | [`assets-rollback-merge-2026-10-27/README.md`](assets-rollback-merge-2026-10-27/README.md) 及同目录全部文件 | 资产、备份与旧系统回退合并；原回退归档、导航/归属与链接/保留核对，不包含真实恢复或服务切换 |
 | [`documentation-merge-2026-10-27/README.md`](documentation-merge-2026-10-27/README.md) 及同目录全部文件 | 架构与运行维护合并、原运行维护归档、现行引用和历史导航调整、章节/链接/归属与只读自检；不改变业务验收 |

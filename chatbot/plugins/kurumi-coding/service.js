@@ -6,6 +6,7 @@ import {AcpClient, processIdentity, sameProcess} from '../../packages/coding-run
 import {probeWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
+import {CodingResultRecorder, readCodingResult, completionText} from './results.js';
 import {projectPolicy, createWorkspace, assertWorkspace, runChecks, commitUnit, snapshot, targetState, git, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
 import {digest, fail, taskText, policyHash} from './policy.js';
 
@@ -30,6 +31,8 @@ export class CodingService {
       this.store = new CodingStore(this.config.root);
       for (const task of this.store.list()) if (['queued', 'running', 'checking', 'cancelling', 'merging'].includes(task.state)) {
         this.store.save({...task, state: 'needs_reconciliation', reason: 'restart_requires_state_check'});
+        const round = task.executionRoundId && this.store.result(task.id, task.executionRoundId);
+        if (round) this.store.saveResult(task.id, {...round, state: 'needs_reconciliation', reason: 'restart_requires_state_check', interruptedAt: new Date().toISOString()});
       }
       this.started = true;
     } catch (error) { fs.unlinkSync(this.lockFile); throw error; }
@@ -47,11 +50,15 @@ export class CodingService {
       data: {projectId: task.projectId, backend: 'dsh-acp', state: task.state, ...(task.externalSessionId ? {externalSessionId: task.externalSessionId} : {}), ...data}});
   }
   describe(task) {
-    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, reason, delivery, candidate, permissionSummary, executionBoundary} = task;
-    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, reason, delivery, candidate, permissionSummary, executionBoundary};
+    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId} = task;
+    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId};
   }
   list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
   status(id, requester) { return this.describe(this.task(id, requester)); }
+  result(id, requester, options) {
+    const task = this.task(id, requester);
+    return {task: this.describe(task), result: readCodingResult(this.store, task, options)};
+  }
   submit({projectId, task: text}, {requester, key, correlation}) {
     this.authorize(requester, 'tasks.code');
     taskText(text);
@@ -63,11 +70,13 @@ export class CodingService {
     const workspace = createWorkspace(this.config, project, id);
     const task = {id, projectId, text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', policyHash: policyHash(project, this.config), ...workspace};
     this.store.create(task); this.event(task, 'coding.submitted');
-    this.launch(task, text); return this.describe(task);
+    this.launch(task, text); return this.describe(this.store.get(id));
   }
   launch(task, text) {
     if (this.active.has(task.id)) throw fail('coding_task_busy');
-    const entry = {controller: new AbortController()}; this.active.set(task.id, entry);
+    const entry = {controller: new AbortController(), roundId: randomUUID()};
+    this.store.createResult(task, {roundId: entry.roundId, state: 'queued', startedAt: new Date().toISOString(), baseCommit: task.verifiedCommit});
+    this.active.set(task.id, entry);
     entry.monitor = setInterval(() => {
       try {this.authorize(task.requester, 'tasks.code');}
       catch {this.requestStop(entry, 'authorization_revoked');}
@@ -75,6 +84,7 @@ export class CodingService {
     entry.done = this.execute(task.id, text, entry).catch(error => {
       const current = this.store.get(task.id);
       this.store.save({...current, state: 'failed', reason: error.code ?? 'coding_execution_failed'});
+      this.finishResult(this.store.get(task.id));
       this.event(this.store.get(task.id), 'coding.failed', {code: error.code ?? 'coding_execution_failed'});
       return this.notify(this.store.get(task.id));
     }).finally(() => {clearInterval(entry.monitor); this.active.delete(task.id);});
@@ -89,7 +99,7 @@ export class CodingService {
     fs.writeFileSync(patch, `- id: session-title-llm\n  disabled: true\n- id: credentials\n  config:\n    path: ${JSON.stringify(path.join(this.config.dsh.home, '.credentials.yaml'))}\n    watch: false\n- id: session-persistence-jsonl\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'sessions'))}\n- id: storage-json\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'storages'))}\n- id: attachment-local\n  config:\n    dshHome: ${JSON.stringify(backendRoot)}\n`, {mode: 0o600});
     const update = changes => { task = {...this.store.get(id), ...changes}; this.store.save(task); };
     this.authorize(task.requester, 'tasks.code'); assertWorkspace(task); entry.controller.signal.throwIfAborted();
-    const audit = new PermissionAudit(directory, task, this.config.writeBoundary), roundId = randomUUID();
+    const audit = new PermissionAudit(directory, task, this.config.writeBoundary), roundId = entry.roundId;
     update({state: 'running', reason: undefined, permissionSummary: audit.summary(), executionBoundary: this.boundaryFacts}); this.event(task, 'coding.running');
     const dsh = this.config.dsh;
     const confined = confinedProcess(this.config.writeBoundary, dsh.command, ['--profile', 'acp', '--patch', patch], task.cwd);
@@ -108,13 +118,18 @@ export class CodingService {
       await client.initialize(); entry.controller.signal.throwIfAborted();
       const externalSessionId = await client.open(task.cwd, {sessionId: task.externalSessionId, model: dsh.model});
       update({externalSessionId}); entry.controller.signal.throwIfAborted(); this.event(task, 'coding.session_bound');
+      const round = this.store.result(id, roundId);
+      this.store.saveResult(id, {...round, state: 'running', externalSessionId});
+      const recorder = new CodingResultRecorder(this.store, id, roundId, externalSessionId);
       client.on('notification', frame => {
         if (frame.method !== 'session/update' || frame.params?.sessionId !== externalSessionId) return;
+        recorder.capture(frame);
         const update = frame.params.update;
         if (['tool_call', 'tool_call_update'].includes(update?.sessionUpdate)) this.event(task, 'coding.tool_event', {eventType: update.sessionUpdate, externalToolCallId: update.toolCallId});
       });
       const instruction = `Work only on the authorized task in ${task.cwd}. Read applicable AGENTS.md. Do not commit, merge, push, edit other worktrees, change services, or install system software. The host runs registered checks and creates verified commits. Keep unfinished work in this worktree. Task:\n${text}`;
       const result = await client.prompt(instruction);
+      this.store.saveResult(id, {...this.store.result(id, roundId), stopReason: result.stopReason});
       if (entry.cancelRequested || result.stopReason === 'cancelled') {
         const stopped = await client.cancellationStopped();
         update({state: stopped ? 'cancelled' : 'needs_reconciliation', reason: stopped ? entry.cancelReason : 'cancel_not_verified'});
@@ -145,7 +160,7 @@ export class CodingService {
         this.event(task, 'coding.cancelled', {stopped}); return;
       }
       throw error;
-    } finally { await client.stop(); }
+    } finally { await client.stop(); this.finishResult(this.store.get(id)); }
   }
   continue(id, text, requester, key) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
@@ -248,18 +263,41 @@ export class CodingService {
   }
   async notify(task) {
     if (!this.sendText) return;
+    // A prior completion callback must never deliver a later round or retry an uncertain send.
+    const current = this.store.get(task.id);
+    if (current.executionRoundId !== task.executionRoundId || current.state !== task.state) return;
+    task = current;
+    const key = `coding:${task.id}:${task.executionRoundId ?? task.verifiedCommit}:${task.state}`;
+    if (task.delivery?.key === key) return;
     try {
+      this.authorize(task.requester, 'tasks.read');
       this.authorize(task.requester, 'qq.reply');
-      const text = `编码任务 ${task.id}\n项目：${task.projectId}\n状态：${task.state}\n检查：${task.checks ? (task.checks.ok ? '通过' : '失败') : '未完成'}\n提交：${task.verifiedCommit}\n额外权限请求：${task.permissionSummary?.requests ?? 0}次，已批准0次\n${task.state === 'ready' ? '等待审阅与确认合入，尚未修改目标分支。' : '请查询任务状态和私有检查记录。'}`;
-      this.store.save({...this.store.get(task.id), delivery: {state: 'sending'}});
-      const receipt = await this.sendText({to: task.requester.to, text, key: `coding:${task.id}:${task.verifiedCommit}:${task.state}`});
+      this.finishResult(task);
+      let result = readCodingResult(this.store, task, {limit: 1800});
+      if (result.available && result.page.nextOffset !== null) result = readCodingResult(this.store, task, {offset: Math.max(0, result.page.totalChars - 1800), limit: 1800});
+      const text = completionText(task, result), bodyHash = digest(text);
+      if (result.available) this.store.saveResult(task.id, {...this.store.result(task.id, result.roundId), notification: {key, text, bodyHash}});
+      this.store.save({...this.store.get(task.id), delivery: {state: 'sending', key, roundId: task.executionRoundId, bodyHash}});
+      const receipt = await this.sendText({to: task.requester.to, text, key});
       if (receipt?.channel !== 'kurumi-qq' || typeof receipt.messageId !== 'string' || !/^-?[1-9][0-9]*$/.test(receipt.messageId)) throw fail('missing_delivery_receipt');
-      this.store.save({...this.store.get(task.id), delivery: {state: 'platform_accepted', messageId: receipt.messageId}});
+      this.store.save({...this.store.get(task.id), delivery: {...this.store.get(task.id).delivery, state: 'platform_accepted', messageId: receipt.messageId}});
       this.event(this.store.get(task.id), 'coding.delivery', {state: 'platform_accepted'});
     } catch (e) {
-      this.store.save({...this.store.get(task.id), delivery: {state: 'unknown', code: e.code ?? 'delivery_failed'}});
+      this.store.save({...this.store.get(task.id), delivery: {...this.store.get(task.id).delivery, key, roundId: task.executionRoundId, state: 'unknown', code: e.code ?? 'delivery_failed'}});
       this.event(this.store.get(task.id), 'coding.delivery', {state: 'unknown'});
     }
+  }
+  finishResult(task) {
+    if (!task.executionRoundId) return;
+    const round = this.store.result(task.id, task.executionRoundId);
+    if (!round) return;
+    let changedFiles = round.changedFiles;
+    try {
+      changedFiles = [...new Set([...git(task.cwd, 'diff', '--name-only', '-z', round.baseCommit, '--').split('\0'),
+        ...git(task.cwd, 'ls-files', '--others', '--exclude-standard', '-z').split('\0')].filter(Boolean))].sort();
+    } catch { /* Failed or interrupted workspace; no invented artifact claim. */ }
+    this.store.saveResult(task.id, {...round, state: task.state, reason: task.reason, hostChecks: task.checks, changedFiles,
+      verifiedCommit: task.verifiedCommit, finishedAt: round.finishedAt ?? new Date().toISOString()});
   }
   requestStop(entry, reason) {
     entry.cancelRequested = true; if (reason) entry.cancelReason = reason; entry.controller.abort();

@@ -412,6 +412,16 @@
                     "/usr/bin/node",
                     "--test"
                   ]
+                },
+                {
+                  "name": "independent python quicksort",
+                  "argv": [
+                    "/usr/bin/python3",
+                    "-B",
+                    "/home/afrangry/kurumi-fusion/chatbot/scripts/check-coding-pilot-python.py"
+                  ],
+                  "skipExitCode": 77,
+                  "timeoutMs": 15000
                 }
               ]
             }

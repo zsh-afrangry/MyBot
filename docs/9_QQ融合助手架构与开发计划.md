@@ -160,6 +160,7 @@ systemctl --user start kurumi-fusion.service
 | 后端边界 | `node --test chatbot/tests/backend-boundaries/*.test.mjs` |
 | 适配器 | `node --test chatbot/tests/domain-adapters/*.test.mjs` |
 | 权限 | `node --test chatbot/tests/access-control/*.test.mjs` |
+| 本机编码委托 | `node --test chatbot/tests/coding/*.test.mjs`；真实DSH、隔离宿主与QQ按[文档28](28_本机编码工具委托与实验任务.md#后续实施与验收)分别授权与记录，不批量执行`acceptance-*.mjs` |
 | 检索提供方 | `node --test chatbot/tests/web-deepseek/*.test.mjs` |
 | E7只读数据 | `npm --prefix chatbot/plugins/kurumi-e7 run build`；`node --test chatbot/tests/e7/*.test.mjs`；实际HTTP/宿主/模型记录归文档27，不能用离线结果代替QQ验收 |
 | 人格与连续性记忆 | `node --test chatbot/tests/persona/*.test.mjs` |
