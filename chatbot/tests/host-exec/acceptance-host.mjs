@@ -27,8 +27,8 @@ fs.writeFileSync(path.join(source, 'DIRECT_SOURCE_SENTINEL.txt'), 'fixture');
 fs.writeFileSync(path.join(worktree, 'DIRECT_WORKTREE_SENTINEL.py'), 'fixture');
 const canary = path.join(root, 'outside-write'), token = randomBytes(24).toString('hex'), bot = '900001';
 const q = s => "'" + s.replaceAll("'", "'\\''") + "'";
-const plans = {
-  source: {command: 'pwd; ls -1'},
+const plans = Object.fromEntries(Object.entries({
+  source: {command: 'pwd; ls -1', timeoutSeconds: 10},
   worktree: {command: 'pwd; ls -1', workdir: worktree},
   host: {command: "free -h; printf 'CREDENTIAL=%s\\n' \"${PROVIDER_CREDENTIAL_FIXTURE-unset}\""},
   write: {command: "printf 'inside' > inside.txt"},
@@ -39,7 +39,7 @@ const plans = {
   node: {command: `touch ${q(canary)}`, host: 'node', node: 'unapproved'},
   timeout: {command: 'sleep 5; touch late.txt', timeoutSeconds: 1},
   member: {command: 'touch member-ran.txt'},
-};
+}).map(([name,params])=>[name,{title:'Native exec fixture '+name,...params}]));
 const report = {at: new Date().toISOString(), boundary: 'Real isolated Gateway/QQ plugin/native exec with local deterministic model and synthetic OneBot. No model provider, external API, QQ network or production write; DSH is not launched. Ordinary-file write confinement only.', cases: []};
 let modelRequests = 0;
 const model = http.createServer(async (req, res) => {
@@ -114,7 +114,7 @@ try {
   let ready = false;
   for (let i=0;i<100;i++) {try {await call('health',{},1000); ready=true; break;} catch {if (child.exitCode!==null) throw Error('isolated_gateway_exited'); await new Promise(r=>setTimeout(r,300));}}
   assert(ready,'isolated_gateway_not_ready');
-  await check('native exec source directory query returns actual output without DSH',async()=>{const r=await turn('source');assert(r.includes('DIRECT_SOURCE_SENTINEL.txt'),r);assert(r.includes(source));});
+  await check('native exec accepts display title and default-directory query returns actual output without DSH',async()=>{const r=await turn('source');assert(r.includes('DIRECT_SOURCE_SENTINEL.txt'),r);assert(r.includes(source));});
   await check('native exec selects the requested task worktree rather than confusing it with source',async()=>{const r=await turn('worktree');assert(r.includes('DIRECT_WORKTREE_SENTINEL.py'),r);assert(!r.includes('DIRECT_SOURCE_SENTINEL.txt'));});
   await check('host memory query works and payload does not inherit provider environment',async()=>{const r=await turn('host');assert(r.includes('Mem:'),r);assert(r.includes('CREDENTIAL=unset'));assert(!r.includes('not-a-real-secret'));});
   await check('ordinary writes inside the approved directory work',async()=>{await turn('write');assert.equal(fs.readFileSync(path.join(source,'inside.txt'),'utf8'),'inside');});

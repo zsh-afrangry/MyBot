@@ -32,6 +32,21 @@ test('native payload reads the requested directory and host status, with clean e
   assert.equal(r.status, 0, r.stderr); assert(r.stdout.includes(f.source)); assert(r.stdout.includes('exists.txt'));
   assert(r.stdout.includes(path.join(f.allowed, 'state/tmp'))); assert(r.stdout.includes('Mem:'));
 });
+test('native display title remains metadata and does not prevent default-directory execution', t => {
+  const f = fixture(t), title = "Fixture $(touch title-must-not-run) 'quoted'\nlist";
+  fs.writeFileSync(path.join(f.source, 'title-fixture.txt'), 'fixture');
+  const params = {title, timeoutSeconds: 10};
+  const confined = confineOwnerExec({command: 'pwd; ls -1', ...params}, f.config);
+  assert(!confined.block, confined.blockReason); assert.equal(confined.params.title, title);
+  assert(!confined.params.command.includes(title));
+  const r = f.run('pwd; ls -1', params);
+  assert.equal(r.status, 0, r.stderr); assert(r.stdout.includes(f.source)); assert(r.stdout.includes('title-fixture.txt'));
+  assert(!fs.existsSync(path.join(f.source, 'title-must-not-run')));
+  for (const title of [null, 1, {}, [], 'x'.repeat(121), '\0']) {
+    assert.equal(confineOwnerExec({command: 'true', title}, f.config).blockReason, 'invalid_owner_exec_parameters');
+  }
+  assert.equal(confineOwnerExec({command:'true', title:'Fixture', workdir:f.root},f.config).blockReason, 'owner_exec_workdir_outside_boundary');
+});
 test('ordinary file writes work inside the approved directory, while create/overwrite/truncate/delete/rename and symlink escape fail outside', t => {
   const f = fixture(t), outside = path.join(f.root, 'outside'); fs.mkdirSync(outside);
   fs.writeFileSync(path.join(outside, 'keep'), 'original'); fs.symlinkSync(outside, path.join(f.source, 'escape'));
@@ -79,14 +94,14 @@ test('trusted QQ policy checks owner permission before exec, rejects member/forg
   qq.register({config:cfg, pluginConfig:{exec:f.config}, registerChannel(){}, registerTool(){}, registerTrustedToolPolicy(p){policy=p;}});
   const [owner,member] = cfg.channels['kurumi-qq'].accessControl.subjects;
   const ctx = row => {const c = context(row); return {agentId:c.agentId,sessionKey:c.sessionKey,runId:'fixture-run',toolCallId:'fixture-call',requester:{channel:c.messageChannel,accountId:'default',senderId:c.requesterSenderId,senderIsOwner:c.senderIsOwner}};};
-  const event = {toolName:'exec',params:{command:'printf PRIVATE_COMMAND_SENTINEL'}};
+  const event = {toolName:'exec',params:{command:'printf PRIVATE_COMMAND_SENTINEL',title:'PRIVATE_TITLE_SENTINEL'}};
   assert.equal(toolPermission('exec'), 'host.exec'); assert(policy.evaluate(event,ctx(owner)).params);
   for (const c of [ctx(member), {...ctx(member),requester:ctx(owner).requester}, {...ctx(owner),requester:undefined},
     {...ctx(owner),sessionKey:'agent:main:cron:12345678-1234-1234-1234-123456789abc'},
     {agentId:'researcher',sessionKey:'agent:researcher:kurumi-task-'+'a'.repeat(24)}]) assert(policy.evaluate(event,c).block);
   owner.permissions['host.exec']=false; assert.equal(policy.evaluate(event,ctx(owner)).blockReason,'capability_not_allowed');
   const audit = fs.readFileSync(path.join(f.root,'channel/access-events.jsonl'),'utf8');
-  assert(!audit.includes('PRIVATE_COMMAND_SENTINEL')); assert(audit.includes('host.exec')); assert(audit.includes('writeRoot'));
+  assert(!audit.includes('PRIVATE_COMMAND_SENTINEL')); assert(!audit.includes('PRIVATE_TITLE_SENTINEL')); assert(audit.includes('host.exec')); assert(audit.includes('writeRoot'));
   assert(audit.includes('"decision":"allow"')); assert(audit.includes('"decision":"deny"'));
 });
 test('source enables only owner native exec; member agents, background agents and all process tools remain restricted', () => {

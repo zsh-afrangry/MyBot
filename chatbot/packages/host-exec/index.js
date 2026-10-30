@@ -7,14 +7,15 @@ import {confinedProcess, probeWriteFence, fencedDirectory} from '../coding-runti
 const fail = code => {throw Object.assign(Error(code), {code});};
 const inside = (file, root) => file === root || file.startsWith(root + path.sep);
 const quote = value => "'" + String(value).replaceAll("'", "'\\''") + "'";
-const fields = new Set(['command', 'workdir', 'env', 'timeoutSeconds', 'host', 'node', 'ask', 'pty', 'elevated', 'background', 'yieldMs']);
+const fields = new Set(['title', 'command', 'workdir', 'env', 'timeoutSeconds', 'host', 'node', 'ask', 'pty', 'elevated', 'background', 'yieldMs']);
 
 export function confineOwnerExec(params, config) {
   try {
     if (!config) fail('owner_exec_disabled');
     if (!params || typeof params !== 'object' || Array.isArray(params)
       || Object.keys(params).some(key => !fields.has(key))
-      || typeof params.command !== 'string' || !params.command.trim() || params.command.includes('\0')) fail('invalid_owner_exec_parameters');
+      || typeof params.command !== 'string' || !params.command.trim() || params.command.includes('\0')
+      || (params.title !== undefined && (typeof params.title !== 'string' || params.title.length > 120 || params.title.includes('\0')))) fail('invalid_owner_exec_parameters');
     // No caller-selected launcher, environment injection, remote host, PTY, or background tool mode.
     if (params.host != null && !['auto', 'gateway'].includes(params.host)) fail('owner_exec_host_not_allowed');
     if (params.node != null || params.elevated === true || params.pty === true || params.background === true) fail('owner_exec_mode_not_allowed');
@@ -37,7 +38,9 @@ export function confineOwnerExec(params, config) {
       `TMPDIR=${path.join(boundary.root, 'state', 'tmp')}`, `TMP=${path.join(boundary.root, 'state', 'tmp')}`,
       `TEMP=${path.join(boundary.root, 'state', 'tmp')}`, `XDG_CACHE_HOME=${path.join(home, 'cache')}`,
       '/bin/bash', '--noprofile', '--norc', '-c', `cd -- ${quote(workdir)} &&\n${params.command}`], workdir);
-    return {params: {command: [process.command, ...process.args].map(quote).join(' '), workdir,
+    // Native exec's optional title (max 120 characters) is display metadata only.
+    // Preserve it without incorporating it into the command, environment, or access audit.
+    return {params: {...(params.title !== undefined ? {title: params.title} : {}), command: [process.command, ...process.args].map(quote).join(' '), workdir,
       host: 'gateway', elevated: false, pty: false, background: false, timeoutSeconds: timeout},
       scope: {writeRoot: boundary.root, workdir, timeoutSeconds: timeout}};
   } catch (error) {
