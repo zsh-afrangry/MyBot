@@ -1,0 +1,66 @@
+{
+  "date": "2026-10-30",
+  "checkedSourceCommit": "ed9da45",
+  "runtime": {
+    "health": true,
+    "dependencies": true,
+    "configAligned": true,
+    "personaAligned": true,
+    "testIngress": false,
+    "legacyCodeEnabled": false,
+    "dshWebPidUnchanged": 4174530
+  },
+  "authorization": {
+    "onlyNewWriteRoot": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
+    "extraDirectoriesApproved": 0,
+    "push": false,
+    "runtimeLedgerCleanup": false
+  },
+  "humanQq": {
+    "snapshotAt": "2026-10-30T02:05:17.386Z",
+    "codingTasks": 0,
+    "status": "awaiting_owner_real_inbound",
+    "instructionPlatformAccepted": true,
+    "humanReadConfirmed": false,
+    "candidateMerged": false
+  },
+  "permissionObservations": {
+    "normalLocalPreflights": {
+      "prompts": 2,
+      "extraAcpRequests": 0
+    },
+    "inducedTest": {
+      "prompts": 1,
+      "extraAcpRequests": 1,
+      "rejected": 1,
+      "approved": 0
+    },
+    "startupOutsideWriteAttempt": {
+      "attempts": 1,
+      "denied": 1,
+      "resolvedByRelocatingProfileInsideRoot": true
+    }
+  },
+  "checks": {
+    "coding": 23,
+    "accessAndBackendRegression": 28,
+    "legacyGuardAndAccess": 23,
+    "documentationMap": 9,
+    "countsOverlapDoNotSum": true,
+    "canonicalEvidenceAndScriptIndex": "passed",
+    "canonicalLocalLinkErrors": 0
+  },
+  "localIntegration": {
+    "preexistingCanonicalDirtyItemsPreserved": 16,
+    "stagedUnrelatedChanges": false,
+    "pushed": false
+  },
+  "followUp": {
+    "kind": "heartbeat",
+    "automationId": "dsh",
+    "statusAtCreation": "ACTIVE",
+    "intervalMinutes": 5,
+    "observationUntil": "2026-10-30T12:05:00+08:00",
+    "behavior": "Read-only; quiet on unchanged state; report new permission requests/failures/completion; pause at deadline. No execution or approvals."
+  }
+}
