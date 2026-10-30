@@ -112,7 +112,7 @@ node scripts/fusion/sync-persona.mjs --apply
 | 禁用某类工具 | 同上，`tools.deny` / `tools.fs` | `sync-config.mjs --apply` |
 | 插件开关或参数 | 同上，`plugins.entries.<id>` | `sync-config.mjs --apply` |
 | E7本人只读查询 | `plugins.entries.kurumi-e7`、main的`e7_data`与身份表owner的`e7.read` | 首批6类、7个角色view；缓存24小时，公告/码30分钟，本地05:30串行刷新；差异审阅后同步并重启，验收见[文档27](../docs/27_E7数据插件设计.md) |
-| 编码委托最小试点（未启用） | 拟新增`kurumi-coding`插件allow/load/entry及main的`kurumi_code`；通用deny不变 | 仅登记无远端合成Git项目，DSH ACP workspace-write/native；[具体差异及授权边界](../docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/deployment-review.md)，未经主人同意不apply、重启或外发 |
+| 编码委托单目录试点（已授权，待同步） | `kurumi-coding`插件allow/load/entry及main的`kurumi_code`；通用deny不变 | 仅登记`dsh-pilot`；Linux Landlock限定普通文件写入试点目录，DSH profile/会话/临时文件留在该目录、既有凭据只读复用。主人已批准同步、重启Fusion和本人QQ测试；[实际差异与执行记录](../docs/verification/coding-delegation-plan-2026-10-28/qq-pilot-2026-10-30/README.md)。额外目录申请累计记录并拒绝，具体合入另行确认 |
 | 发送限额 / 分段 | 同上，`channels.kurumi-qq` | `sync-config.mjs --apply` |
 | 搜索 provider | 同上，`tools.web` | `sync-config.mjs --apply` |
 | 轮换 API Key | **只改** `.openclaw-fusion/runtime-env.json` | 重启服务 |

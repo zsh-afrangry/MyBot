@@ -9,6 +9,8 @@ import {once} from 'node:events';
 import {setTimeout as delay} from 'node:timers/promises';
 import {AcpClient, processIdentity, sameProcess} from '../../packages/coding-runtime/acp-client.js';
 import {runChecks} from '../../plugins/kurumi-coding/workspaces.js';
+import {confinedProcess, probeWriteFence} from '../../packages/coding-runtime/write-fence.js';
+import {spawnSync} from 'node:child_process';
 function fixture(t, permission) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-acp-'));
   const marker = path.join(root, 'heartbeat');
@@ -23,6 +25,30 @@ test('stdio correlates permission requests by prior tool call and returns exact 
   await f.client.initialize(); await f.client.open(f.root, {model: ['fixture', 'fixture']});
   assert.equal((await f.client.prompt('PERMISSION')).stopReason, 'end_turn');
   assert.equal((await f.client.prompt('PERMISSION')).stopReason, 'cancelled'); assert.equal(calls, 2);
+});
+
+test('the write fence allows its folder and denies outside create, overwrite, truncate, delete, rename and symlink writes', t => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-write-fence-')), root = path.join(base, 'allowed'), outside = path.join(base, 'outside');
+  t.after(() => fs.rmSync(base, {recursive: true, force: true})); fs.mkdirSync(root); fs.mkdirSync(outside);
+  const sentinel = path.join(outside, 'sentinel'); fs.writeFileSync(sentinel, 'retain'); fs.symlinkSync(outside, path.join(root, 'escape'));
+  const boundary = {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'};
+  assert.equal(probeWriteFence(boundary).backend, 'landlock');
+  const code = `const fs=require('fs'),assert=require('assert/strict'),path=require('path'); const [root,out]=process.argv.slice(1);
+fs.writeFileSync(path.join(root,'allowed'),'yes'); const file=path.join(out,'sentinel'); assert.equal(fs.readFileSync(file,'utf8'),'retain');
+for(const f of [()=>fs.writeFileSync(path.join(out,'new'),'x'),()=>fs.writeFileSync(file,'x'),()=>fs.truncateSync(file),()=>fs.unlinkSync(file),()=>fs.renameSync(file,path.join(root,'moved')),()=>fs.writeFileSync(path.join(root,'escape','new'),'x')]) assert.throws(f,e=>['EACCES','EPERM','EXDEV'].includes(e.code));`;
+  const c = confinedProcess(boundary, process.execPath, ['-e', code, root, outside], root);
+  const r = spawnSync(c.command, c.args, {cwd: root, env: {...process.env, ...c.env}, encoding: 'utf8'});
+  assert.equal(r.status, 0, r.stderr); assert.equal(fs.readFileSync(sentinel, 'utf8'), 'retain');
+  assert.equal(fs.readFileSync(path.join(root, 'allowed'), 'utf8'), 'yes'); assert.equal(fs.existsSync(path.join(outside, 'new')), false);
+});
+
+test('registered checks inherit the same write boundary', async t => {
+  const base = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-check-fence-')), root = path.join(base, 'allowed'); fs.mkdirSync(root);
+  t.after(() => fs.rmSync(base, {recursive: true, force: true}));
+  const boundary = {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'};
+  const outside = path.join(base, 'must-not-exist');
+  const checks = await runChecks({checks: [{name: 'outside write', argv: [process.execPath, '-e', 'require("fs").writeFileSync(process.argv[1],"x")', outside]}]}, root, path.join(root, 'check.log'), undefined, boundary);
+  assert.equal(checks.ok, false); assert.equal(fs.existsSync(outside), false);
 });
 test('cancel verifies its own child heartbeat stopped and does not signal the test runner', async t => {
   const f = fixture(t); await f.client.initialize(); await f.client.open(f.root);

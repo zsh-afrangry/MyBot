@@ -37,13 +37,15 @@ test('Every current main tool is mapped; new tools and dangerous native/member o
  assert(hook(c,member,'session_status',{sessionKey:context(owner).sessionKey}));assert(hook(c,member,'session_status',{model:'costly/model'}));
  const source=JSON.parse(fs.readFileSync(fileURLToPath(new URL('../../../config/runtime.config.json',import.meta.url))));
  for(const name of source.agents.entries.main.tools.alsoAllow){
-  const args={action:({kurumi_document:'list',kurumi_translate:'list',kurumi_memory:'list',kurumi_task:'list',personal_reminder_list_manage:'add',automations:'list',personal_confirmation:'list',e7_data:'codes'})[name],...(name==='personal_confirmation'?{domain:'personal_reminder'}:{})};
+  const args={action:({kurumi_document:'list',kurumi_translate:'list',kurumi_memory:'list',kurumi_task:'list',kurumi_code:'list',personal_reminder_list_manage:'add',automations:'list',personal_confirmation:'list',e7_data:'codes'})[name],...(name==='personal_confirmation'?{domain:'personal_reminder'}:{})};
   assert(toolPermission(name,args),`Unmapped current tool: ${name}`);
   assert.equal(hook(c,owner,name,args),undefined,name);
  }
  assert(hook(c,member,'e7_data',{action:'codes'}));
  for(const action of ['builds','reviews','rankings','content']){assert.equal(hook(c,owner,'e7_data',{action}),undefined);assert(hook(c,member,'e7_data',{action}));}
  for(const action of ['image','gvg',undefined])assert(hook(c,owner,'e7_data',{action}));
+ for(const action of ['list','status','diff','start','continue','cancel','rollback','preview','merge']){assert.equal(hook(c,owner,'kurumi_code',{action}),undefined);assert(hook(c,member,'kurumi_code',{action}));}
+ for(const action of ['exec','push',undefined])assert(hook(c,owner,'kurumi_code',{action}));
 });
 test('Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs',()=>{
  const source={channels:{'kurumi-qq':{}},commands:{},plugins:{entries:{'personal-weather':{config:{}},'kurumi-mail':{}}},agents:{entries:{main:{workspace:'/isolated/workspace',model:{primary:'fake/model'},tools:{deny:['exec']}}}},bindings:[{agentId:'main',match:{channel:'kurumi-qq'}}]};
@@ -85,7 +87,7 @@ test('Background lanes are limited to configured owner tasks and read-only weath
 
 test('Natural confirmation checks each domain and action against the current identity permissions',()=>{
  const c=cfg(),[owner,member]=c.channels['kurumi-qq'].accessControl.subjects;
- for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send']]){
+ for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send'],['coding','tasks.read','tasks.code']]){
   for(const action of ['list','preview','confirm']){assert.equal(hook(c,owner,'personal_confirmation',{domain,action}),undefined);assert(hook(c,member,'personal_confirmation',{domain,action}));}
   owner.permissions[write]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'confirm'}));assert.equal(hook(c,owner,'personal_confirmation',{domain,action:'list'}),undefined);owner.permissions[write]=true;
   owner.permissions[read]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'list'}));assert(hook(c,owner,'personal_confirmation',{domain,action:'preview'}));owner.permissions[read]=true;

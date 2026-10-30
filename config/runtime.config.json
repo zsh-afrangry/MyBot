@@ -72,7 +72,8 @@
             "knowledge_bills_get",
             "knowledge_bill_add",
             "knowledge_bill_manage",
-            "e7_data"
+            "e7_data",
+            "kurumi_code"
           ],
           "deny": [
             "read",
@@ -220,7 +221,8 @@
       "personal-profile",
       "personal-planning",
       "personal-reminders",
-      "kurumi-e7"
+      "kurumi-e7",
+      "kurumi-coding"
     ],
     "load": {
       "paths": [
@@ -238,7 +240,8 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-profile",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-planning",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders",
-        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-e7"
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-e7",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-coding"
       ]
     },
     "entries": {
@@ -371,6 +374,49 @@
           "liveTtlMinutes": 30,
           "timeoutMs": 15000,
           "maxResponseBytes": 2097152
+        }
+      },
+      "kurumi-coding": {
+        "enabled": true,
+        "config": {
+          "pilot": true,
+          "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/state",
+          "worktrees": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/worktrees",
+          "dsh": {
+            "command": "/opt/deepseek-harness/node_modules/.bin/dsh",
+            "home": "/var/lib/dsh/.dsh",
+            "model": [
+              "deepseek-official",
+              "deepseek-flash"
+            ]
+          },
+          "projects": [
+            {
+              "id": "dsh-pilot",
+              "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/source",
+              "branch": "main",
+              "checks": [
+                {
+                  "name": "fixed pilot assertions",
+                  "argv": [
+                    "/usr/bin/node",
+                    "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/fixed-check.mjs"
+                  ]
+                },
+                {
+                  "name": "project node tests",
+                  "argv": [
+                    "/usr/bin/node",
+                    "--test"
+                  ]
+                }
+              ]
+            }
+          ],
+          "writeBoundary": {
+            "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
+            "launcher": "/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run"
+          }
         }
       }
     },

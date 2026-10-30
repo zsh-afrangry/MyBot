@@ -28,7 +28,7 @@ async function run(enabled) {
   const socket = net.createServer(); socket.listen(0, '127.0.0.1'); await once(socket, 'listening');
   const port = socket.address().port; await new Promise(r => socket.close(r));
   const codingRoot = path.join(directory, 'coding');
-  const pluginConfig = {pilot: true, root: codingRoot, worktrees: path.join(directory, 'worktrees'), dsh: {command: process.execPath, home: dshHome, model: ['fixture', 'fixture']}, projects: [{id: 'fixture', root: source, branch: 'main', checks: [{name: 'fixture check', argv: [process.execPath, '-e', 'process.exit(0)']}]}]};
+  const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'}, root: codingRoot, worktrees: path.join(directory, 'worktrees'), dsh: {command: process.execPath, home: dshHome, model: ['fixture', 'fixture']}, projects: [{id: 'fixture', root: source, branch: 'main', checks: [{name: 'fixture check', argv: [process.execPath, '-e', 'process.exit(0)']}]}]};
   const config = {
     gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
     agents: {defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['kurumi_code']}}}},

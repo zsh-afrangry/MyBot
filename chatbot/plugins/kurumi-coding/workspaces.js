@@ -4,6 +4,7 @@ import path from 'node:path';
 import {spawnSync, spawn} from 'node:child_process';
 import {setTimeout as delay} from 'node:timers/promises';
 import {processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/acp-client.js';
+import {validateWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {digest, fail} from './policy.js';
 
 export function executionEnv() {
@@ -26,9 +27,16 @@ function canonical(file) {
   if (fs.realpathSync(ancestor) !== ancestor) throw fail('invalid_coding_paths');
 }
 export function projectPolicy(config) {
-  // This first integration is intentionally a disabled synthetic-project pilot.
+  // Pilot projects require an explicit operator-owned filesystem write boundary.
   if (config.pilot !== true || !Array.isArray(config.projects) || !config.projects.length) throw fail('coding_pilot_not_configured');
+  validateWriteFence(config.writeBoundary);
   canonical(config.root); canonical(config.worktrees);
+  for (const file of [config.root, config.worktrees, ...config.projects.map(p => p.root)]) {
+    if (!inside(file, config.writeBoundary.root) || file === config.writeBoundary.root) throw fail('coding_paths_outside_write_boundary');
+  }
+  for (const protectedPath of ['/home/afrangry/.openclaw-fusion', '/home/afrangry/kurumi-fusion', '/home/afrangry/kurumi-archive', '/home/afrangry/.npm-global', '/opt/deepseek-harness']) {
+    if (inside(protectedPath, config.writeBoundary.root) || inside(config.writeBoundary.root, protectedPath)) throw fail('protected_write_boundary');
+  }
   if (inside(config.root, config.worktrees) || inside(config.worktrees, config.root)) throw fail('overlapping_coding_paths');
   if (!config.dsh || typeof config.dsh.command !== 'string' || !path.isAbsolute(config.dsh.command)
     || !fs.statSync(config.dsh.command).isFile() || !path.isAbsolute(config.dsh.home ?? '') || !fs.statSync(config.dsh.home).isDirectory()
@@ -59,14 +67,15 @@ export function assertWorkspace(task) {
     || git(task.cwd, 'symbolic-ref', '--short', 'HEAD').trim() !== task.branch) throw fail('task_workspace_changed');
   if (git(task.cwd, 'rev-parse', 'HEAD').trim() !== task.verifiedCommit) throw fail('unexpected_task_commit');
 }
-export async function runChecks(project, cwd, file, signal) {
+export async function runChecks(project, cwd, file, signal, boundary) {
   const rows = [];
   for (const check of project.checks) {
     signal?.throwIfAborted();
     const started = Date.now();
     const result = await new Promise((resolve, reject) => {
       const out = fs.createWriteStream(file, {flags: 'a', mode: 0o600});
-      const child = spawn(check.argv[0], check.argv.slice(1), {cwd, env: {...executionEnv(), CODING_WORKTREE: cwd}, detached: true, stdio: ['ignore', 'pipe', 'pipe']});
+      const confined = boundary ? confinedProcess(boundary, check.argv[0], check.argv.slice(1), cwd) : {command: check.argv[0], args: check.argv.slice(1), env: {}};
+      const child = spawn(confined.command, confined.args, {cwd, env: {...executionEnv(), ...confined.env, CODING_WORKTREE: cwd}, detached: true, stdio: ['ignore', 'pipe', 'pipe']});
       const identity = processIdentity(child.pid);
       let killed = false, timedOut = false, captured = [], hard;
       const kill = () => {

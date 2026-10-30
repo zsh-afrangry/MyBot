@@ -3,7 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
 import {AcpClient, processIdentity, sameProcess} from '../../packages/coding-runtime/acp-client.js';
+import {probeWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {CodingStore} from './store.js';
+import {PermissionAudit} from './permissions.js';
 import {projectPolicy, createWorkspace, assertWorkspace, runChecks, commitUnit, snapshot, targetState, git, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
 import {digest, fail, taskText, policyHash} from './policy.js';
 
@@ -15,6 +17,7 @@ export class CodingService {
   start() {
     if (this.started) return;
     projectPolicy(this.config);
+    this.boundaryFacts = probeWriteFence(this.config.writeBoundary);
     fs.mkdirSync(this.config.root, {recursive: true, mode: 0o700});
     this.lockFile = path.join(this.config.root, 'service.lock');
     if (fs.existsSync(this.lockFile)) {
@@ -36,7 +39,7 @@ export class CodingService {
     const task = this.store.get(id);
     if (!task || task.requester.subjectId !== requester.subjectId || task.requester.sessionKey !== requester.sessionKey) throw fail('unknown_coding_task');
     this.authorize(task.requester, 'tasks.read');
-    if (task.policyHash !== policyHash(this.project(task.projectId))) throw fail('project_policy_changed');
+    if (task.policyHash !== policyHash(this.project(task.projectId), this.config)) throw fail('project_policy_changed');
     return task;
   }
   event(task, kind, data = {}) {
@@ -44,8 +47,8 @@ export class CodingService {
       data: {projectId: task.projectId, backend: 'dsh-acp', state: task.state, ...(task.externalSessionId ? {externalSessionId: task.externalSessionId} : {}), ...data}});
   }
   describe(task) {
-    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, reason, delivery, candidate} = task;
-    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, reason, delivery, candidate};
+    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, reason, delivery, candidate, permissionSummary, executionBoundary} = task;
+    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, reason, delivery, candidate, permissionSummary, executionBoundary};
   }
   list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
   status(id, requester) { return this.describe(this.task(id, requester)); }
@@ -58,7 +61,7 @@ export class CodingService {
     if (old) { if (old.requestHash !== requestHash) throw fail('coding_request_key_conflict'); return this.describe(this.task(old.id, requester)); }
     const id = randomUUID();
     const workspace = createWorkspace(this.config, project, id);
-    const task = {id, projectId, text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', policyHash: policyHash(project), ...workspace};
+    const task = {id, projectId, text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', policyHash: policyHash(project, this.config), ...workspace};
     this.store.create(task); this.event(task, 'coding.submitted');
     this.launch(task, text); return this.describe(task);
   }
@@ -81,17 +84,23 @@ export class CodingService {
     const project = this.project(task.projectId), directory = path.join(this.config.root, 'tasks', id);
     fs.mkdirSync(directory, {recursive: true, mode: 0o700});
     const patch = path.join(directory, 'acp.patch.yml');
-    fs.writeFileSync(patch, '- id: session-title-llm\n  disabled: true\n', {mode: 0o600});
+    const backendRoot = path.join(this.config.root, 'backend'), backendHome = path.join(backendRoot, 'dsh-home');
+    fs.mkdirSync(backendHome, {recursive: true, mode: 0o700});
+    fs.writeFileSync(patch, `- id: session-title-llm\n  disabled: true\n- id: credentials\n  config:\n    path: ${JSON.stringify(path.join(this.config.dsh.home, '.credentials.yaml'))}\n    watch: false\n- id: session-persistence-jsonl\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'sessions'))}\n- id: storage-json\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'storages'))}\n- id: attachment-local\n  config:\n    dshHome: ${JSON.stringify(backendRoot)}\n`, {mode: 0o600});
     const update = changes => { task = {...this.store.get(id), ...changes}; this.store.save(task); };
     this.authorize(task.requester, 'tasks.code'); assertWorkspace(task); entry.controller.signal.throwIfAborted();
-    update({state: 'running', reason: undefined}); this.event(task, 'coding.running');
+    const audit = new PermissionAudit(directory, task, this.config.writeBoundary), roundId = randomUUID();
+    update({state: 'running', reason: undefined, permissionSummary: audit.summary(), executionBoundary: this.boundaryFacts}); this.event(task, 'coding.running');
     const dsh = this.config.dsh;
-    const client = this.clientFactory({command: dsh.command, args: ['--profile', 'acp', '--patch', patch], cwd: task.cwd,
-      env: {...executionEnv(), DSH_HOME: dsh.home, DSH_PERMISSION_MODE: 'workspace-write', DSH_TOOLS_MODE: 'native'},
-      stderrFile: path.join(directory, 'acp.stderr'), permission: async (params, call) => {
+    const confined = confinedProcess(this.config.writeBoundary, dsh.command, ['--profile', 'acp', '--patch', patch], task.cwd);
+    const client = this.clientFactory({command: confined.command, args: confined.args, cwd: task.cwd,
+      env: {...executionEnv(), ...confined.env, DSH_HOME: backendHome, DSH_PERMISSION_MODE: 'workspace-write', DSH_TOOLS_MODE: 'native'},
+      stderrFile: path.join(directory, 'acp.stderr'), permission: async (params, call, context) => {
         denied = true;
-        fs.writeFileSync(path.join(directory, 'permission-request.json'), JSON.stringify({params, call}), {mode: 0o600});
-        this.event(task, 'coding.permission_rejected', {decisionSource: 'pilot_extra_permission_requires_owner', toolCallId: call.toolCallId});
+        const result = audit.reject(params, call, context, roundId);
+        update({permissionSummary: result.summary});
+        if (!result.duplicate) this.event(task, 'coding.permission_rejected', {decisionSource: 'owner_test_folder_only',
+          externalToolCallId: call?.toolCallId, requests: result.summary.requests, rejected: result.summary.rejected});
         return false;
       }});
     entry.client = client; update({runtimeIdentity: client.identity});
@@ -119,7 +128,7 @@ export class CodingService {
       const snapshotPath = snapshot(task, path.join(directory, 'snapshots', randomUUID()));
       update({snapshotPath});
       const checkedHash = workingHash(task.cwd);
-      const checks = await runChecks(project, task.cwd, path.join(directory, 'checks.log'), entry.controller.signal);
+      const checks = await runChecks(project, task.cwd, path.join(directory, 'checks.log'), entry.controller.signal, this.config.writeBoundary);
       if (workingHash(task.cwd) !== checkedHash) throw fail('checked_tree_changed');
       update({checks}); this.event(task, 'coding.checked', {ok: checks.ok, checkCount: checks.rows.length});
       if (!checks.ok) { update({state: 'check_failed', reason: 'registered_checks_failed'}); await this.notify(task); return; }
@@ -192,7 +201,7 @@ export class CodingService {
       try { git(candidateDir, '-c', 'user.name=Kurumi', '-c', 'user.email=kurumi@localhost', 'cherry-pick', ...commits); }
       catch { throw fail('merge_conflict'); }
       const checkedHash = workingHash(candidateDir);
-      const checks = await runChecks(project, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'));
+      const checks = await runChecks(project, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'), undefined, this.config.writeBoundary);
       if (!checks.ok) throw fail('candidate_checks_failed');
       if (workingHash(candidateDir) !== checkedHash) throw fail('checked_candidate_changed');
       if (JSON.stringify(targetState(project)) !== JSON.stringify(target)) throw fail('target_changed_during_checks');
@@ -241,7 +250,7 @@ export class CodingService {
     if (!this.sendText) return;
     try {
       this.authorize(task.requester, 'qq.reply');
-      const text = `编码任务 ${task.id}\n项目：${task.projectId}\n状态：${task.state}\n检查：${task.checks ? (task.checks.ok ? '通过' : '失败') : '未完成'}\n提交：${task.verifiedCommit}\n${task.state === 'ready' ? '等待审阅与确认合入，尚未修改目标分支。' : '请查询任务状态和私有检查记录。'}`;
+      const text = `编码任务 ${task.id}\n项目：${task.projectId}\n状态：${task.state}\n检查：${task.checks ? (task.checks.ok ? '通过' : '失败') : '未完成'}\n提交：${task.verifiedCommit}\n额外权限请求：${task.permissionSummary?.requests ?? 0}次，已批准0次\n${task.state === 'ready' ? '等待审阅与确认合入，尚未修改目标分支。' : '请查询任务状态和私有检查记录。'}`;
       this.store.save({...this.store.get(task.id), delivery: {state: 'sending'}});
       const receipt = await this.sendText({to: task.requester.to, text, key: `coding:${task.id}:${task.verifiedCommit}:${task.state}`});
       if (receipt?.channel !== 'kurumi-qq' || typeof receipt.messageId !== 'string' || !/^-?[1-9][0-9]*$/.test(receipt.messageId)) throw fail('missing_delivery_receipt');

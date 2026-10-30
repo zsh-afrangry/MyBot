@@ -25,7 +25,7 @@ export async function fixture(t, options = {}) {
   fs.writeFileSync(checks, `import assert from 'node:assert/strict'; import {pathToFileURL} from 'node:url'; import path from 'node:path';\nconst {value} = await import(pathToFileURL(path.join(process.env.CODING_WORKTREE, 'value.mjs'))); assert.ok(Number.isInteger(value) && value > 0); console.log('registered fixture check passed');\n`);
   const config = withAccess({channels: {'kurumi-qq': {ownerId: owner, stateDir: path.join(root, 'channel')}}}, owner);
   config.channels['kurumi-qq'].accessControl.subjects.push(memberRow(member));
-  const pluginConfig = {pilot: true, root: path.join(root, 'state'), worktrees: path.join(root, 'worktrees'), dsh: {command: process.execPath, home: root, model: ['fixture', 'fixture']},
+  const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'}, root: path.join(root, 'state'), worktrees: path.join(root, 'worktrees'), dsh: {command: process.execPath, home: root, model: ['fixture', 'fixture']},
     projects: [{id: 'fixture', root: source, branch: 'main', checks: [{name: 'independent check', argv: [process.execPath, checks]}]}]};
   // The fake DSH home must be separate from the registered project, as in the real runtime.
   pluginConfig.dsh.home = path.join(root, 'dsh'); fs.mkdirSync(pluginConfig.dsh.home);

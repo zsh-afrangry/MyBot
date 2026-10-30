@@ -11,7 +11,8 @@
       "root",
       "worktrees",
       "dsh",
-      "projects"
+      "projects",
+      "writeBoundary"
     ],
     "properties": {
       "pilot": {
@@ -98,6 +99,22 @@
                 }
               }
             }
+          }
+        }
+      },
+      "writeBoundary": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "root",
+          "launcher"
+        ],
+        "properties": {
+          "root": {
+            "type": "string"
+          },
+          "launcher": {
+            "type": "string"
           }
         }
       }

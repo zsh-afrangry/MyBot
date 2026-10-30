@@ -80,8 +80,9 @@ export class AcpClient extends EventEmitter {
       });
     } else if (frame.method) {
       const update = frame.params?.update;
-      if (frame.method === 'session/update' && update?.sessionUpdate === 'tool_call') {
-        this.calls.set(`${frame.params.sessionId}:${update.toolCallId}`, update);
+      if (frame.method === 'session/update' && ['tool_call', 'tool_call_update'].includes(update?.sessionUpdate)) {
+        const key = `${frame.params.sessionId}:${update.toolCallId}`;
+        this.calls.set(key, {...this.calls.get(key), ...update});
       }
       this.emit('notification', frame);
       if (update?.sessionUpdate === 'tool_call_update' && ['completed', 'failed'].includes(update.status)) this.calls.delete(`${frame.params.sessionId}:${update.toolCallId}`);
@@ -97,8 +98,12 @@ export class AcpClient extends EventEmitter {
     if (frame.method !== 'session/request_permission') {
       this.send({id: frame.id, error: {code: -32601, message: 'Unsupported client method'}}); return;
     }
-    const p = frame.params, call = this.calls.get(`${p.sessionId}:${p.toolCall?.toolCallId ?? p.toolCallId}`);
-    const allowed = !!call && await this.permission(p, call);
+    const p = frame.params ?? {}, prior = this.calls.get(`${p.sessionId}:${p.toolCall?.toolCallId ?? p.toolCallId}`);
+    const call = prior ? {...prior, ...p.toolCall} : undefined;
+    const correlated = !!call && p.sessionId === this.sessionId;
+    // Audit even a malformed or uncorrelated request; it can never be approved.
+    const decision = await this.permission(p, call, {requestId: frame.id, correlated});
+    const allowed = correlated && decision === true;
     const selected = p.options?.find(option => option.kind === (allowed ? 'allow_once' : 'reject_once'));
     this.send({id: frame.id, result: {outcome: selected ? {outcome: 'selected', optionId: selected.optionId} : {outcome: 'cancelled'}}});
   }

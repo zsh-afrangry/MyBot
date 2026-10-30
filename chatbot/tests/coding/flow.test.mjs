@@ -101,6 +101,30 @@ test('an extra ACP permission never becomes automatic approval or a tested commi
   assert.equal(JSON.stringify(f.events).includes('not for unified log'), false);
 });
 
+test('permission requests accumulate privately across continuation; repeated RPCs are counted once per connection', async t => {
+  const f = await fixture(t, {behavior: async ({peer}) => {
+    const params = {sessionId: peer.sessionId, toolCall: {toolCallId: 'outside-edit'}, options: [{kind: 'allow_once', optionId: 'allow'}]};
+    const call = {toolCallId: 'outside-edit', kind: 'edit', rawInput: {file_path: '/outside-test/private.txt', justification: 'private reason retained only in audit'}};
+    for (let i = 0; i < 2; i++) assert.equal(await peer.args.permission(params, call, {requestId: 'same-rpc', correlated: true}), false);
+    assert.equal(await peer.args.permission({...params, toolCall: {toolCallId: 'unknown-action'}}, undefined, {requestId: 'unknown-rpc', correlated: false}), false);
+  }});
+  const task = await start(f), first = await f.settle(task.id);
+  assert.equal(first.state, 'needs_permission'); assert.equal(first.permissionSummary.requests, 2); assert.equal(first.permissionSummary.approved, 0);
+  assert.equal(first.permissionSummary.byScope.outside_test_root, 1); assert.equal(first.permissionSummary.byScope.unknown, 1);
+  await f.run({action: 'continue', taskId: task.id, task: 'Continue without extra access.'});
+  const next = await f.settle(task.id); assert.equal(next.permissionSummary.requests, 4);
+  const file = next.permissionSummary.privateAuditFile, rows = fs.readFileSync(file, 'utf8').trim().split('\n').map(JSON.parse);
+  assert.equal(rows.length, 4); assert.equal(new Set(rows.map(row => row.roundId)).size, 2);
+  assert.equal(rows[0].call.rawInput.justification, 'private reason retained only in audit');
+  assert.equal(fs.statSync(file).mode & 0o777, 0o600);
+  assert.equal(JSON.stringify(f.events).includes('private reason'), false); assert.equal(JSON.stringify(f.events).includes('/outside-test'), false);
+  assert.equal(f.events.filter(e => e.kind === 'coding.permission_rejected').length, 4);
+});
+
+test('a missing filesystem fence fails closed before creating a task', async t => {
+  await assert.rejects(fixture(t, {configure(config) {config.writeBoundary.launcher = '/usr/bin/false';}}), /coding_write_boundary_unavailable/);
+});
+
 test('cancel and stop terminate their own active task; revoked delivery cannot rerun the model', async t => {
   let entered;
   const waiting = new Promise(resolve => entered = resolve);
