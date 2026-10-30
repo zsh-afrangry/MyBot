@@ -1,0 +1,11 @@
+{
+  "at": "2026-10-30T01:49:21.788Z",
+  "type": "operator_test_instruction",
+  "actualQq": true,
+  "scope": "configured-owner-only",
+  "receipt": {
+    "channel": "kurumi-qq",
+    "messageId": "2009800723"
+  },
+  "meaning": "Platform acceptance only; human inbound and reading not yet established."
+}

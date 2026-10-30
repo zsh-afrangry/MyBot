@@ -225,6 +225,8 @@ node scripts/fusion/log-query.mjs --proposal-id <提案ID> --json
 
 ## 代码项目接入与合入
 
+当前新增编码请求走[文档28的单目录DSH试点](28_本机编码工具委托与实验任务.md#单目录qq试点授权2026-10-30)，仅登记`dsh-pilot`；旧`kurumi_task`的`codeEnabled=false`，不再启动fusion开发副本。下述登记与副本维护契约保留供已有资产维护，不是本轮扩大项目授权的入口；重新启用旧编码或登记其他项目需主人另行决定。
+
 当前`fusion`是`.openclaw-fusion/projects/fusion`独立副本，主聊天可说“让后台检查fusion项目……”，完成后查询或取消。模型可读写项目并做本地Git，固定检查在隔离环境运行，不提供宿主shell、网络安装或push。副本提交不会自动部署；操作者审阅diff/测试后再合入`kurumi-fusion`，重启服务。
 
 新增项目时，**两类信息各有唯一维护入口**，不要混用：
@@ -278,6 +280,8 @@ node scripts/fusion/register-project.mjs --remove <id> [--apply]     # 移除
 ## 后台开发副本契约
 
 > 本节承接原独立后台开发副本维护契约；基线、同步、隔离检查和合入规则在此统一维护。
+
+2026-10-30起，QQ的旧`kurumi_task kind=code`新任务启动已关闭；旧任务仍可查询/取消，论文研究继续使用`kind=research`。本节不替代文档28的任务工作树与确认合入规则。
 
 后台代码任务（`kurumi_task kind=code`）不在 `/home/afrangry/kurumi-fusion` 里改代码，而在独立副本
 `/home/afrangry/.openclaw-fusion/projects/fusion` 中工作。本节说明该副本的基线、同步、验证、合入和回退规则。

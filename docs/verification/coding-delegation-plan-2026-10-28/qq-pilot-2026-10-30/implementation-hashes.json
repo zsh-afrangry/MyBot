@@ -16,5 +16,5 @@
   "chatbot/plugins/kurumi-tasks/index.js": "1cbebd46039405b7a48f326739240ff2aa8da7f7df5f20dd542be299d357547f",
   "chatbot/plugins/kurumi-tasks/openclaw.plugin.json": "b4228f1f730d9ffcd9966ee33c9ebc37a92c17d3d12fd738531abbb8484f8cd0",
   "chatbot/plugins/kurumi-tasks/test/task.test.js": "b7900bbdd6a89b02411759c0ada9ff2a4b72bc09d7a62cf0654e16e4170136c3",
-  "scripts/fusion/templates/AGENTS.md": "ac442ac7439911aba232b8b45f2b77746d1be59a0df527ae552f2bdc62ce21fb"
+  "scripts/fusion/templates/AGENTS.md": "c021d686dc2d17b8f8f053d535333b3a059ebadb0ac08d686ac095e33a53875c"
 }

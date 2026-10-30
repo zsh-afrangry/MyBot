@@ -16,6 +16,7 @@
 | 私有运行状态 | `/home/afrangry/.openclaw-fusion` | 凭据、会话、记忆、业务状态和产物走私密备份；根目录不建 Git |
 | E7公开资料缓存 | `.openclaw-fusion/state/kurumi-e7` | 仅公开JSON及条件请求/哈希元数据，可重新抓取；整目录备份包含它，不作为聊天或业务账本 |
 | 后台项目副本 | `.openclaw-fusion/projects/fusion` | 独立代码 Git；同步、审阅和合入只按[后台开发副本契约](9_QQ融合助手架构与开发计划.md#后台开发副本契约) |
+| 单目录DSH编码试点 | `/home/afrangry/.local/share/kurumi-coding-pilot-20261029` | 仅合成项目、Git工作树、私有执行/权限记录与后端profile；不是生产恢复点，当前Fusion整目录备份不自动覆盖。记录供主人评估权限，未经决定不清理；范围归[文档28](28_本机编码工具委托与实验任务.md#单目录qq试点授权2026-10-30) |
 | 旧 A 原件 | `/home/afrangry/kurumi-archive/legacy-openclaw` | 封存版本 `f8319c1`已包含在MyBot `main`历史中；原`archive/legacy-openclaw`分支清理不删除历史或原件；不直接启动或修改，凭据/依赖另靠私密归档 |
 | 旧 B bridge 原件 | `/home/afrangry/kurumi-archive/qq-bridge` | 独立 Git；封存 `d64a4d2`、`personal/main`、`seal/qq-bridge-personal-2026-10-05`；保留 upstream 和本地恢复资料 |
 | 旧服务单元 | `/home/afrangry/kurumi-archive/legacy-units` | 旧消费者日常 mask；只按[旧系统回退](#旧系统回退)恢复所选单元 |

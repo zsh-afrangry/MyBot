@@ -45,5 +45,35 @@
   "legacyRoutingGuard": {
     "command": "node --test chatbot/plugins/kurumi-tasks/test/task.test.js chatbot/tests/access-control/*.test.mjs",
     "passed": 23
-  }
+  },
+  "afterDeployment": {
+    "health": true,
+    "dependencies": true,
+    "configInSync": true,
+    "personaInSync": true,
+    "testIngress": false,
+    "pluginActive": true,
+    "realInstructionSend": "platform_accepted",
+    "humanQqCodingFlow": "awaiting_real_owner_inbound"
+  },
+  "localLinksAfterDocumentationUpdate": {
+    "files": 125,
+    "localLinks": 2206,
+    "errors": [],
+    "fenceErrors": []
+  },
+  "permissionRejection": {
+    "actualDsh": true,
+    "requests": 1,
+    "rejected": 1,
+    "approved": 0,
+    "inducedTest": true
+  },
+  "fileOperations": {
+    "actualDsh": true,
+    "passed": true,
+    "extraPermissions": 0,
+    "actualQq": false
+  },
+  "realDshPromptCountThisRound": 3
 }

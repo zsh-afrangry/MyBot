@@ -50,5 +50,8 @@
         "launcher": "/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run"
       }
     }
+  },
+  "plugins.entries.kurumi-tasks.config": {
+    "codeEnabled": false
   }
 }

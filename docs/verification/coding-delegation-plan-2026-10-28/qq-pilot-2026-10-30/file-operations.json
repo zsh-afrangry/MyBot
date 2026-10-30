@@ -1,0 +1,67 @@
+{
+  "type": "actual-dsh-local-file-operations-preflight",
+  "actualQq": false,
+  "at": "2026-10-30T01:55:15.121Z",
+  "directory": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/preflight/affecce0-19c6-4935-99e2-69793a3cfb6b",
+  "boundary": {
+    "backend": "landlock",
+    "enforcement": "partial",
+    "writeRoot": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029"
+  },
+  "prompts": 1,
+  "sessionId": "b50db8dc-b3b8-432d-a03a-b406df58100b",
+  "stopReason": "end_turn",
+  "permissionSummary": {
+    "requests": 0,
+    "rejected": 0,
+    "approved": 0,
+    "byKind": {},
+    "byScope": {},
+    "byMode": {},
+    "privateAuditFile": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/preflight/affecce0-19c6-4935-99e2-69793a3cfb6b/permission-requests.jsonl"
+  },
+  "checks": {
+    "ok": true,
+    "rows": [
+      {
+        "name": "fixed pilot assertions",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 32
+      },
+      {
+        "name": "node tests",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 96
+      }
+    ]
+  },
+  "fileOperations": {
+    "finalContent": true,
+    "oldNamesAbsent": true,
+    "hostSummarySaved": true
+  },
+  "sourceUnchanged": true,
+  "ok": true,
+  "readOnlyQueryCalls": [
+    {
+      "callId": "call_00_ODW7SJSnBfKlTCcGVhTx9605",
+      "queryCommands": [
+        "free -h",
+        "ss -ltn"
+      ],
+      "resultFound": true,
+      "errorIndicators": []
+    },
+    {
+      "callId": "call_00_ofNH5mQAD3Fe0OkJohpw2375",
+      "queryCommands": [
+        "ss -ltn"
+      ],
+      "resultFound": true,
+      "errorIndicators": []
+    }
+  ],
+  "boundaryNote": "Local execution-tool check only; standalone QQ host-query entry remains outside this pilot acceptance."
+}
