@@ -1,0 +1,19 @@
+{
+  "at": "2026-10-30T11:31:48.061832+00:00",
+  "reports": [
+    {
+      "root": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "ok": true,
+      "localLinks": 1029,
+      "prospectiveDeploymentTargets": 0,
+      "errors": []
+    },
+    {
+      "root": "/home/afrangry/kurumi-fusion",
+      "ok": true,
+      "localLinks": 1038,
+      "prospectiveDeploymentTargets": 0,
+      "errors": []
+    }
+  ]
+}

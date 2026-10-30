@@ -1,0 +1,36 @@
+{
+  "recordedAt": "2026-10-30T11:28:55.162034+00:00",
+  "capture": "Summary of completed command tool receipts in this conversation; no replay to collect duplicate output.",
+  "canonical": "/home/afrangry/kurumi-fusion",
+  "checks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "summary": {
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qqOnline": true,
+        "qqConnected": true,
+        "testIngress": false,
+        "testMethodDisabled": true,
+        "databases": "ok"
+      }
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "summary": "project owns dependencies; pinned OpenClaw 2026.9.7"
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "exitCode": 0,
+      "summary": "13 managed keys aligned"
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exitCode": 0,
+      "summary": "12 workspace files aligned"
+    }
+  ]
+}

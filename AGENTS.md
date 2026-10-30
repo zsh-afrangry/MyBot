@@ -52,8 +52,8 @@
 ## 触及禁用限制时必须先告知
 
 运行期 agent 的能力由 `config/runtime.config.json` 的 `agents.entries.<id>.tools` 决定，**不是由提示词决定**。
-当前 `main`（主人 QQ 私聊里的助手）禁用：`read`、`write`、`edit`、`apply_patch`、`exec`、`process`、`message`、
-`sessions_spawn`；它能用的只有聊天与 `tools.alsoAllow` 明列的业务工具。成员使用独立 Agent/workspace、显式窄工具上限与强制宿主授权策略，不继承主人的数据或后台工具。群聊入口关闭；不得只放宽入口、伪造 owner 标志或用模型参数决定身份/投递对象。
+当前 `main`（主人 QQ 私聊里的助手）禁用：`read`、`write`、`edit`、`apply_patch`、`process`、`message`、
+`sessions_spawn`；原生 `exec` 由主人显式批准，受可信 `host.exec` 授权及试点目录普通文件写入边界约束，规则见[文档28](docs/28_本机编码工具委托与实验任务.md#主人原生exec)。工作目录不是隔离边界，不能移除执行层写入限制。成员使用独立 Agent/workspace、显式窄工具上限与强制宿主授权策略，不继承主人的数据或后台工具。群聊入口关闭；不得只放宽入口、伪造 owner 标志或用模型参数决定身份/投递对象。
 
 **当某个需求需要某项被禁用的能力时**（例如"让 QQ 里的助手读文件/跑命令"）：
 

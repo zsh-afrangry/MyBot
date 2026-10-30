@@ -40,6 +40,8 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/host-exec/policy.test.mjs': ['离线', '主人原生exec的真实文件写入边界、可信身份/撤权/成员隔离、环境与参数绕过、临时目录符号链接及受管配置回归；仅临时目录', {testDir: 1}, 'header'],
+  'chatbot/tests/host-exec/acceptance-host.mjs': ['验收', '真实独立Gateway/QQ插件/原生exec：本地确定性模型与合成OneBot，核对目录/主机查询、实际写入边界、超时、成员拒绝与审计；无真实模型/QQ/DSH或生产写入', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
   'chatbot/scripts/prepare-coding-pilot.mjs': ['维护', '新建无远端合成Git项目和配置审阅草案；不apply、不启停生产服务、不调用模型或QQ', {testDir: 1}, 'header'],
   'chatbot/scripts/check-coding-pilot-python.py': ['维护', '宿主导入任务Python并独立断言；无产物为不适用，错误/删除/符号链接失败；导入代码的副作用由宿主写入边界约束，无模型或QQ调用', {testDir: 1}, 'header'],
   'chatbot/tests/coding/fixtures.mjs': ['库', '合成身份、临时Git及可注入ACP/投递夹具，不读取生产身份或凭据', {testDir: 1}, 'header'],

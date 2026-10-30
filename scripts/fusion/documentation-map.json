@@ -3,6 +3,17 @@
   "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
   "scriptOwners": [
     {
+      "prefix": "chatbot/tests/host-exec/",
+      "documents": [
+        "docs/28_本机编码工具委托与实验任务.md",
+        "docs/24_统一身份与权限管理.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "evidence": [
+        "docs/verification/coding-delegation-plan-2026-10-28/owner-exec-2026-10-30/README.md"
+      ]
+    },
+    {
       "prefix": "chatbot/tests/coding/",
       "documents": [
         "docs/28_本机编码工具委托与实验任务.md",

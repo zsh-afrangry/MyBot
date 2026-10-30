@@ -73,18 +73,27 @@
             "knowledge_bill_add",
             "knowledge_bill_manage",
             "e7_data",
-            "kurumi_code"
+            "kurumi_code",
+            "exec"
           ],
           "deny": [
             "read",
             "write",
             "edit",
             "apply_patch",
-            "exec",
             "process",
             "message",
             "sessions_spawn"
-          ]
+          ],
+          "exec": {
+            "host": "gateway",
+            "mode": "full",
+            "timeoutSeconds": 60,
+            "notifyOnExit": false
+          },
+          "elevated": {
+            "enabled": false
+          }
         },
         "model": {
           "primary": "deepseek/deepseek-flash"
@@ -246,7 +255,17 @@
     },
     "entries": {
       "kurumi-qq": {
-        "enabled": true
+        "enabled": true,
+        "config": {
+          "exec": {
+            "writeBoundary": {
+              "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
+              "launcher": "/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run"
+            },
+            "workdir": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/source",
+            "timeoutSeconds": 60
+          }
+        }
       },
       "kurumi-tasks": {
         "enabled": true,
@@ -459,7 +478,6 @@
     },
     "deny": [
       "message",
-      "exec",
       "process",
       "gateway",
       "browser",
