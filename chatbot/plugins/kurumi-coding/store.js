@@ -32,7 +32,7 @@ export class CodingStore {
   createResult(task, round) {
     this.transaction(() => {
       this.db.prepare('INSERT INTO coding_results VALUES (?,?,?)').run(task.id, round.roundId, JSON.stringify(round));
-      this.save({...task, executionRoundId: round.roundId, state: 'queued', checks: undefined, reason: undefined, delivery: undefined});
+      this.save({...task, executionRoundId: round.roundId, state: 'queued', checks: undefined, mergeChecks: undefined, candidate: undefined, reason: undefined, delivery: undefined});
     });
   }
   result(taskId, roundId) {

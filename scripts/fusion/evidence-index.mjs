@@ -47,6 +47,7 @@ const TABLE = {
   'chatbot/tests/coding/acp.test.mjs': ['离线', '真实本地stdio权限关联、自有进程及检查进程树取消；离线对端，无模型或QQ', {testDir: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/flow.test.mjs': ['离线', '实际编码工具处理器与Git/SQLite/确认/日志：身份、基线、幂等、检查、回档、合入与重启；注入ACP和投递', {testDir: 1}, 'header'],
   'chatbot/tests/coding/results.test.mjs': ['离线', '实际结果持久化、分页脱敏、轮次/身份隔离、重启核对、通知去重与Python宿主门禁；注入ACP和投递', {testDir: 1}, 'header'],
+  'chatbot/tests/coding/policy-compatibility.test.mjs': ['离线', '配置升级后的旧任务读写兼容、实际目录与仓库绑定、当前合入检查及确认消费边界；注入ACP和投递', {testDir: 1}, 'header'],
   'chatbot/tests/coding/acceptance-results-live.mjs': ['验收', '显式--live在获准试点目录内调用真实DSH，核对实际输出/独立Python检查/结果分页和通知正文；无真实QQ、生产任务或合入', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/acceptance-live.mjs': ['验收', '显式--live真实DSH模型和专用处理器：编码/检查/续接/测试夹具确认后临时合入；记录投递，无真实QQ或生产变更', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/acceptance-cancel-live.mjs': ['验收', '显式--live单个真实DSH任务与产品取消、心跳停止；无QQ、共享DSH服务或生产变更', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],

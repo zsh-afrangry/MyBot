@@ -64,6 +64,25 @@ export function createWorkspace(config, project, id) {
   git(project.root, 'worktree', 'add', '-b', branch, cwd, base);
   return {cwd, branch, base, verifiedCommit: base};
 }
+// Validate the actual current location/repository, independently of check commands or backend settings.
+export function assertTaskLocation(config, project, task) {
+  for (const file of [config.root, config.worktrees, project.root, task.cwd]) {
+    canonical(file);
+    if (!inside(file, config.writeBoundary.root) || file === config.writeBoundary.root) throw fail('coding_paths_outside_write_boundary');
+  }
+  if (task.cwd !== path.join(config.worktrees, task.id) || task.branch !== `codex/qq-${task.id}`) throw fail('task_workspace_changed');
+  assertRepository(project, task.cwd);
+}
+export function assertCandidateLocation(config, project, cwd) {
+  canonical(cwd);
+  if (path.dirname(cwd) !== config.worktrees || !/^candidate-[a-f0-9-]{36}$/.test(path.basename(cwd))) throw fail('candidate_workspace_changed');
+  assertRepository(project, cwd);
+}
+function assertRepository(project, cwd) {
+  if (git(cwd, 'rev-parse', '--show-toplevel').trim() !== cwd) throw fail('task_workspace_changed');
+  const common = root => fs.realpathSync(git(root, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim());
+  if (common(project.root) !== common(cwd)) throw fail('task_project_changed');
+}
 export function assertWorkspace(task) {
   if (fs.realpathSync(task.cwd) !== task.cwd || git(task.cwd, 'rev-parse', '--show-toplevel').trim() !== task.cwd
     || git(task.cwd, 'symbolic-ref', '--short', 'HEAD').trim() !== task.branch) throw fail('task_workspace_changed');
