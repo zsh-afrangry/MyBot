@@ -1,0 +1,30 @@
+{
+  "verifiedOn": "2026-10-31",
+  "scope": "Documentation/evidence checks in the audit worktree; no code or production behavior change",
+  "checks": [
+    {
+      "name": "evidence-coverage",
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exitCode": 0,
+      "groups": {
+        "historical": 83,
+        "current": 609,
+        "total": 692
+      },
+      "passed": true
+    },
+    {
+      "name": "evidence-index",
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "exitCode": 0,
+      "classifiedEntries": 220,
+      "passed": true
+    },
+    {
+      "name": "diff-and-links",
+      "command": "git diff --check; JSON parse and relative-link target checks",
+      "exitCode": 0,
+      "passed": true
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "verifiedOn": "2026-10-31",
+  "scope": "Current main checkout, read-only commands; not historical health or proof of committed code",
+  "sourceBaseline": "b4f2102",
+  "checks": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "passed": true,
+      "ok": true,
+      "issues": [],
+      "qqOnline": true,
+      "testIngress": false
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "exitCode": 0,
+      "passed": true,
+      "managedKeys": 13
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exitCode": 0,
+      "passed": true,
+      "matchedWorkspaceFiles": 12
+    }
+  ]
+}

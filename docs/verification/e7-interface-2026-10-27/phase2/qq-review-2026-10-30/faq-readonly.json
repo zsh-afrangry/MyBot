@@ -1,0 +1,57 @@
+{
+  "verifiedOn": "2026-10-31",
+  "boundary": "Read-only public API; independent temporary cache; no model or QQ; not a replay of historical upstream state",
+  "search": {
+    "action": "content",
+    "kind": "faq",
+    "mode": "search",
+    "query": "团战",
+    "status": "ok",
+    "total": 4,
+    "returnedIds": [
+      "41",
+      "24",
+      "23",
+      "22"
+    ],
+    "sources": [
+      {
+        "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+        "fetchedAt": "2026-10-30T17:38:49.066Z",
+        "checkedAt": "2026-10-30T17:38:49.066Z",
+        "upstreamUpdatedAt": null,
+        "stale": false
+      }
+    ]
+  },
+  "get": {
+    "action": "content",
+    "kind": "faq",
+    "mode": "get",
+    "contentId": "41",
+    "status": "ok",
+    "title": "团战比对方少人时，防御塔的血量如何变化？",
+    "author": "康德",
+    "upstreamUpdatedAt": "2026-10-30 09:55:46",
+    "answerCharacters": 30,
+    "answerSha256": "4670ec21956fa55634bde7248c0cee951e1582a34e800610cce9ebef8ee42984",
+    "containsNumericBasis": {
+      "largeTower40": true,
+      "middleTower30": true
+    },
+    "imageDependency": false,
+    "missingFields": [
+      "detailUrl"
+    ],
+    "sources": [
+      {
+        "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+        "fetchedAt": "2026-10-30T17:38:49.066Z",
+        "checkedAt": "2026-10-30T17:38:49.066Z",
+        "upstreamUpdatedAt": null,
+        "stale": false
+      }
+    ]
+  },
+  "historicalUpstreamReplay": false
+}
