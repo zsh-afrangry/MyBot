@@ -249,7 +249,10 @@
         "enabled": true
       },
       "kurumi-tasks": {
-        "enabled": true
+        "enabled": true,
+        "config": {
+          "codeEnabled": false
+        }
       },
       "tavily": {
         "enabled": true

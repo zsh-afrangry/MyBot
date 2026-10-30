@@ -12,3 +12,7 @@
 - 真实DSH在上述目录中完成1次编码prompt，新增clamp与Node测试，固定检查和项目检查通过，源`main`和未跟踪草稿未改动；无ACP额外申请。真实QQ层仍待部署与主人发起，见[结构化结果](preflight.json)。
 - 第一次预检在模型调用前被拦住：启动器试图重写`/var/lib/dsh/.dsh/profiles/acp/cordis.yml`，1次、未放行。这是启动期写入尝试，**不是模型发出的ACP申请**。私有stderr及`permission-review/operational-denials.jsonl`留在试点目录；原因从已安装启动器`prepareProfile`源码核实。改用试点目录内独立`DSH_HOME`，原凭据通过原有provider显式只读复用，无需放宽共享目录权限。
 - 当前Linux 6.8/runner报告`partial`（旧ABI）；已验证上述普通文件内容操作，不宣称阻止所有文件元数据、网络或进程副作用。工作树仍只承担Git工作内容隔离。
+
+## 旧入口的目录保护
+
+首次同步并重启后确认`kurumi-coding`已active、主人工具目录有`kurumi_code`，健康通过。发送真人测试指令前核对人格模板，发现旧文案仍将代码交给`kurumi_task`的fusion开发副本。为落实本轮只开放试点目录，在源码为旧入口补充`codeEnabled=false`配置门禁并更新主人模板：新编码请求仅走`kurumi_code`，旧研究任务及历史状态/取消不受影响。该项收紧不授权旧副本写入，也不通过提示词代替后端门禁；变更验证并按配置/人格同步契约生效后再进行真人测试。

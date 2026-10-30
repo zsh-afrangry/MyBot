@@ -10,7 +10,11 @@
   "chatbot/tests/coding/acp.test.mjs": "0696bcf88492e0631263efda460ffffa1850120c2c6c3f0e60f72dcda2ab4728",
   "chatbot/tests/coding/fixtures.mjs": "9f19967a36058c8af9de2fdcde686033debe53ffa3ac54d6252422dc9f6a6a30",
   "chatbot/tests/coding/flow.test.mjs": "810f22e35306b86129e318a2f0f67414176f23191b6084216f9ab9c866ad0b6f",
-  "config/runtime.config.json": "45122a90988e6079c330ba0e98dbfc0b74296f365f6ce7348d42b0852f1a5d1d",
+  "config/runtime.config.json": "565b80c7a8645d8f28bc7dc1d71112ba512471acd8c65dcbe5559a0fae1c075a",
   "chatbot/packages/coding-runtime/write-fence.js": "ec24633d3adba332016de84f41d4f6beb11330ee55c416d5ec4b03f3b9e41625",
-  "chatbot/plugins/kurumi-coding/permissions.js": "4672d1a2ab41f1dbe360baab5ff7708a9e073427b36bd8b6529f7c535ceea9c1"
+  "chatbot/plugins/kurumi-coding/permissions.js": "4672d1a2ab41f1dbe360baab5ff7708a9e073427b36bd8b6529f7c535ceea9c1",
+  "chatbot/plugins/kurumi-tasks/index.js": "1cbebd46039405b7a48f326739240ff2aa8da7f7df5f20dd542be299d357547f",
+  "chatbot/plugins/kurumi-tasks/openclaw.plugin.json": "b4228f1f730d9ffcd9966ee33c9ebc37a92c17d3d12fd738531abbb8484f8cd0",
+  "chatbot/plugins/kurumi-tasks/test/task.test.js": "b7900bbdd6a89b02411759c0ada9ff2a4b72bc09d7a62cf0654e16e4170136c3",
+  "scripts/fusion/templates/AGENTS.md": "ac442ac7439911aba232b8b45f2b77746d1be59a0df527ae552f2bdc62ce21fb"
 }

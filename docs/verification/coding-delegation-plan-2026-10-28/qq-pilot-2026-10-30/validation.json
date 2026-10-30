@@ -41,5 +41,9 @@
     "testIngress": false,
     "dshWebPid": 4174530
   },
-  "testBoundary": "Synthetic/local/isolated checks do not establish real QQ inbound, approval, merge or human receipt."
+  "testBoundary": "Synthetic/local/isolated checks do not establish real QQ inbound, approval, merge or human receipt.",
+  "legacyRoutingGuard": {
+    "command": "node --test chatbot/plugins/kurumi-tasks/test/task.test.js chatbot/tests/access-control/*.test.mjs",
+    "passed": 23
+  }
 }
