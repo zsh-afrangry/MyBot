@@ -13,6 +13,8 @@
 | [`documentation-merge-2026-10-27/README.md`](documentation-merge-2026-10-27/README.md) 及同目录全部文件 | 架构与运行维护合并、原运行维护归档、现行引用和历史导航调整、章节/链接/归属与只读自检；不改变业务验收 |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
 | [`capability-review-2026-10-28/README.md`](capability-review-2026-10-28/README.md) 及同目录全部文件 | 当前插件/依赖方向、Policy/Store与权限分级复核；377项离线、7组隔离宿主、生产目录与四项自检；首批E7用户反馈登记及第二批开发准备边界 |
+
+| [`proactive-design-2026-10-29/README.md`](proactive-design-2026-10-29/README.md)、[R03](proactive-design-2026-10-29/r03-sources-and-preferences.md)、[R04](proactive-design-2026-10-29/r04-self-interests.md)、[R05](proactive-design-2026-10-29/r05-record-maintenance.md)、[R06](proactive-design-2026-10-29/r06-night-contact-2026-10-31.md)、[R07](proactive-design-2026-10-29/r07-autonomous-speech-2026-10-31.md)及同目录全部文件 | N3工作稿建档与逐轮边界讨论、文档与只读检查；不证明功能实现、模型判断或真实外发 |
 | [`natural-confirmation-2026-10-27/README.md`](natural-confirmation-2026-10-27/README.md) 及同目录全部文件 | N4自然语言二次确认：用户批准范围、核心/领域/权限/回执回归、真实隔离宿主和运行对齐；真人QQ与真实模型语义未验收 |
 | [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md)、[角色补充](e7-interface-2026-10-27/character-sample/README.md)、[查询契约](e7-interface-2026-10-27/query-contract/README.md)、[首批实现](e7-interface-2026-10-27/phase1/README.md)、[第二批2A/2B](e7-interface-2026-10-27/phase2/README.md)、[10-30 QQ核对](e7-interface-2026-10-27/phase2/qq-review-2026-10-30/README.md)及同目录全部文件 | E7·WIKI公开读取、角色/图片取样与分类设计；文本查询的实现、离线/实际取数/隔离宿主/模型、生产加载及分轮QQ证据。10-30核对保留FAQ漏检、完整消息/回执匹配与日志接口缺口；状态统一见文档16 |
 | [`reminder-list-multi-item-2026-10-27/README.md`](reminder-list-multi-item-2026-10-27/README.md)、[闭合记录](reminder-list-multi-item-2026-10-27/closeout.md)及同目录全部文件 | 2026-10-27 提醒列表单消息多项的离线/隔离HTTP、人格与运行核对、01:46真人QQ及后端只读证据；文档收尾与分层证明范围 |
