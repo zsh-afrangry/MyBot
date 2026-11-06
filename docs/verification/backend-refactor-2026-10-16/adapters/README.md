@@ -4,13 +4,13 @@
 
 | 证据 | 结论与边界 |
 | --- | --- |
-| [node-tests.txt](node-tests.txt) | 179/179；包含 9 项新增适配器回归、实际插件工具的独立策略/存储替换、不可覆盖的入站校验、存储版本及关闭检查、调度/runner 同源与错绑拒绝 |
-| [confirmation-core-tests.txt](confirmation-core-tests.txt) | 17/17，共享确认 |
-| [confirmation-inbound-tests.txt](confirmation-inbound-tests.txt) | 15/15，可信确认入站 |
-| [weather-tests.txt](weather-tests.txt) | 162/162，天气/Profile/行程/一次性提醒 |
-| [model/model.json](model/model.json) | 7/7，真实配置的 DeepSeek + 实际插件工厂，合成入站/隔离库；序号对应此前展示的列表，新增事项改变排序后仍选对 ID；否定/假设和无列表澄清 |
-| [host/host.json](host/host.json) | 6/6，真实 OpenClaw、配置模型、入站及新组合模块加载，独立运行目录和模拟 OneBot；新增/修改/完成/调时刻/暂停/恢复通过，隔离进程已结束 |
-| [report.json](report.json) | 最终构建、自检、索引、文档链接与加载摘要，不复制生产业务数据 |
+| [node-tests.txt（历史材料）](README.md#historical-material) | 179/179；包含 9 项新增适配器回归、实际插件工具的独立策略/存储替换、不可覆盖的入站校验、存储版本及关闭检查、调度/runner 同源与错绑拒绝 |
+| [confirmation-core-tests.txt（历史材料）](README.md#historical-material) | 17/17，共享确认 |
+| [confirmation-inbound-tests.txt（历史材料）](README.md#historical-material) | 15/15，可信确认入站 |
+| [weather-tests.txt（历史材料）](README.md#historical-material) | 162/162，天气/Profile/行程/一次性提醒 |
+| [model/model.json（历史材料）](model/README.md#historical-material) | 7/7，真实配置的 DeepSeek + 实际插件工厂，合成入站/隔离库；序号对应此前展示的列表，新增事项改变排序后仍选对 ID；否定/假设和无列表澄清 |
+| [host/host.json（历史材料）](host/README.md#historical-material) | 6/6，真实 OpenClaw、配置模型、入站及新组合模块加载，独立运行目录和模拟 OneBot；新增/修改/完成/调时刻/暂停/恢复通过，隔离进程已结束 |
+| [report.json（历史材料）](README.md#historical-material) | 最终构建、自检、索引、文档链接与加载摘要，不复制生产业务数据 |
 
 共 373/373。三个 TypeScript 包构建通过。扩展回归位于 `chatbot/tests/domain-adapters/`；默认实现的一致性由原领域/事务/重放/版本测试继续覆盖。独立替换夹具只用于验证接口消费，不声明其为可部署存储。
 
@@ -25,3 +25,17 @@ node chatbot/tests/reminder-list/acceptance-host.mjs --out docs/verification/bac
 完整离线包命令见[初轮报告](../README.md)，其 Node 命令额外追加 `chatbot/tests/domain-adapters/*.test.mjs` 即覆盖本轮集合。
 
 两份真实模型/宿主报告均确认生产数据库指纹不变。没有真实 QQ/邮件发送，没有把生产数据库用于测试，没有更换生产存储或迁移其数据，没有重打快照、更新后台副本或推送远端。服务重载与配置/人格同步的具体结果见 `report.json`。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `confirmation-core-tests.txt` | 未提取；以原材料及现有结论为准 | `1f4752cd0b31bf1a3d0075d912b8d621e79dfdd5` |
+| `confirmation-inbound-tests.txt` | 未提取；以原材料及现有结论为准 | `acf5b6c5ff8961a8aad0c6e48af8927f7178ad0e` |
+| `node-tests.txt` | 未提取；以原材料及现有结论为准 | `264d71bab4ac2cb964c4c26f377a31b13417a4d9` |
+| `report.json` | status=passed；at=2026-10-15T18:52:51.260005+00:00 | `80dd15dfea419c0b7e172171bdf2e747e224459a` |
+| `weather-tests.txt` | 未提取；以原材料及现有结论为准 | `3ce888967c2d5f1a968b4d28e81d269f56ad1c5a` |

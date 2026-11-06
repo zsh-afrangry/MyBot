@@ -30,18 +30,37 @@
 - 归档原文仅增加首行合并说明并校正相对链接；其原始标题、命令、日期、结果和授权边界保留。先前已归档的阶段记录只更新“当前规则”指针。
 - 七份旧Markdown报告只增加导航说明、调整当前规则链接及少量导航措辞；原日期、版本、验证命令、通过/失败和未覆盖范围保留。旧JSON、TXT回执及diff不改写。
 - 历史编号1、3、7只更新已有首行主题指针，正文及换行字节保留；`example.md`、`tp.txt`、`tp2.txt`等用户原件不改。
-- 受保护原件、历史报告非导航内容、章节/命令及归档保留情况以[保留核对](preservation.json)为准；历史原文中的旧编号与路径仍属于原时点记录。
+- 受保护原件、历史报告非导航内容、章节/命令及归档保留情况以[保留核对（历史材料）](README.md#historical-material)为准；历史原文中的旧编号与路径仍属于原时点记录。
 
 ## 验证与未覆盖范围
 
-实际命令、退出码与检查摘要见[检查记录](checks.json)，本地链接、锚点、围栏及现行旧指针核对见[链接与引用检查](links.json)。
+实际命令、退出码与检查摘要见[检查记录（历史材料）](README.md#historical-material)，本地链接、锚点、围栏及现行旧指针核对见[链接与引用检查（历史材料）](README.md#historical-material)。
 
-- [证据覆盖](evidence-coverage.txt)及[生成索引一致性](evidence-index.txt)通过；SCRIPTS中198项脚本归属有效。
-- [归属元数据回归](documentation-map-tests.txt)9/9通过；两个仅改文档提示的脚本通过[Shell语法](guard-syntax.txt)和[Node语法](bootstrap-syntax.txt)检查。
+- [证据覆盖（历史材料）](README.md#historical-material)及[生成索引一致性（历史材料）](README.md#historical-material)通过；SCRIPTS中198项脚本归属有效。
+- [归属元数据回归（历史材料）](README.md#historical-material)9/9通过；两个仅改文档提示的脚本通过[Shell语法（历史材料）](README.md#historical-material)和[Node语法（历史材料）](README.md#historical-material)检查。
 - 原两份文档的28个章节标题/兼容锚点、10个代码围栏全部保留；归档正文除链接目标外一致。3份用户原件、3份历史TXT正文及510份既有非Markdown回执逐字节保留；七份历史报告的非导航文字一致。
 - 四项只读自检通过。当前worktree没有SDK链接，未安装依赖；先比对13份关键源码/配置与规范主仓库一致，再从`/home/afrangry/kurumi-fusion`执行health、verify-dependencies、sync-config和sync-persona。只保存脱敏结论，不复制运行凭据、聊天或原始状态文件；不把规范目录的依赖检查当成worktree依赖齐备。
-- [链接初检](links-initial.json)发现本轮三个报告尚未写出，已保留原结果；补齐报告后复查99份文档、1760个本地链接，文件/锚点/围栏与现行旧指针均无错误；Git差异空白检查通过。
+- [链接初检（历史材料）](README.md#historical-material)发现本轮三个报告尚未写出，已保留原结果；补齐报告后复查99份文档、1760个本地链接，文件/锚点/围栏与现行旧指针均无错误；Git差异空白检查通过。
 
 本轮不重新运行模型、QQ、业务API端到端或备份恢复验收，不改变原业务结论与待验项；N9的主人阅读复核仍按[待办清单](../../待办清单.md#n9-逐份整理项目文档)维护。
 
 返回[文档入口](../../README.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `bootstrap-syntax.txt` | 未提取；以原材料及现有结论为准 | `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391` |
+| `checks.json` | ok=True | `5cdbed1303ee7eb4f0999cd56ead41bb30197b02` |
+| `documentation-map-tests.txt` | 未提取；以原材料及现有结论为准 | `439d01dd325d6510b4f8d391d782f30b9f3722ab` |
+| `evidence-coverage.txt` | 未提取；以原材料及现有结论为准 | `8d1307b8a40ae92c85228cd9cffcc90fe18ef070` |
+| `evidence-index.txt` | 未提取；以原材料及现有结论为准 | `fc5c626fbe535e1f22c20eede8ae9b23ea97148a` |
+| `guard-syntax.txt` | 未提取；以原材料及现有结论为准 | `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391` |
+| `links-initial.json` | ok=False；at=2026-10-27 (Asia/Shanghai) | `1e31d44ce4753a8baa0b674cf49056011f25cfb6` |
+| `links.json` | ok=True；at=2026-10-27 (Asia/Shanghai) | `cabbe02275905000962ddc1da48f4cfe04816716` |
+| `preservation.json` | ok=True | `e7d276198a51d55e67dcf50d1b66b379ee7b1c86` |
+| `whitespace.txt` | 未提取；以原材料及现有结论为准 | `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391` |

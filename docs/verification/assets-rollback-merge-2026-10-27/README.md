@@ -26,15 +26,32 @@
 
 归档回退原文只增加首行说明并调整相对链接。先前归档运行维护、回退阶段记录仅调整现行入口；两份历史文档整理报告保留原结论并补导航说明。既有JSON/TXT/diff回执不改写。
 
-`example.md`只更新已有“用途与状态”补注里的回退链接，主人维护的表格与图示正文逐字节保留；`tp.txt`、`tp2.txt`和历史1–8正文不改。原架构与运维合并的材料保留原时点结论。保留核对见[preservation.json](preservation.json)，现行链接、锚点与围栏见[links.json](links.json)。
+`example.md`只更新已有“用途与状态”补注里的回退链接，主人维护的表格与图示正文逐字节保留；`tp.txt`、`tp2.txt`和历史1–8正文不改。原架构与运维合并的材料保留原时点结论。保留核对见[preservation.json（历史材料）](README.md#historical-material)，现行链接、锚点与围栏见[links.json（历史材料）](README.md#historical-material)。
 
 ## 本地验证与证明范围
 
-实际命令、退出码、源文件比对和四项只读自检摘要见[checks.json](checks.json)。文档检查证明导航、归属、章节/命令保留与索引一致，不证明旧系统已启动、运行材料已恢复或远端已同步。
+实际命令、退出码、源文件比对和四项只读自检摘要见[checks.json（历史材料）](README.md#historical-material)。文档检查证明导航、归属、章节/命令保留与索引一致，不证明旧系统已启动、运行材料已恢复或远端已同步。
 
-- [证据覆盖](coverage.txt)、[生成索引一致性](index.txt)与[归属元数据回归](metadata-tests.txt)通过；SCRIPTS包含198项，回归9/9通过。
+- [证据覆盖（历史材料）](README.md#historical-material)、[生成索引一致性（历史材料）](README.md#historical-material)与[归属元数据回归（历史材料）](README.md#historical-material)通过；SCRIPTS包含198项，回归9/9通过。
 - 原两份文档的22个标题锚点与7个代码块均保留；归档正文仅链接目标变化。520份既有非Markdown回执、历史TXT及前轮架构合并材料逐字节保留，用户正文和历史报告非导航内容保持一致。
-- [链接初检](links-initial.json)时两份检查报告尚未生成；补齐后复查，文件、锚点、围栏及现行旧指针无错误。差异与新增Markdown空白检查通过。
+- [链接初检（历史材料）](README.md#historical-material)时两份检查报告尚未生成；补齐后复查，文件、锚点、围栏及现行旧指针无错误。差异与新增Markdown空白检查通过。
 - 四项收尾自检从规范目录`/home/afrangry/kurumi-fusion`以只读模式执行并通过。此worktree未安装SDK；比对的13份关键文件有12份一致，规范目录的`config/runtime.config.json`已有本工作树未包含的确认功能改动。因此这些自检只证明规范目录及运行态，不证明本工作树的配置与运行态完全一致；本轮没有同步或覆盖任何配置。
 
 返回[文档入口](../../README.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | ok=True；at=2026-10-27 (Asia/Shanghai) | `63d63e9c5fc4c2d3f6738747710e7f71ae224ad5` |
+| `coverage.txt` | 未提取；以原材料及现有结论为准 | `03e470130bc31e0bebfe8763a089143fc286635c` |
+| `index.txt` | 未提取；以原材料及现有结论为准 | `fc5c626fbe535e1f22c20eede8ae9b23ea97148a` |
+| `links-initial.json` | ok=False；at=2026-10-27 (Asia/Shanghai) | `b2a832ad8093b2ae6b071623dac1e6f7fdc41744` |
+| `links.json` | ok=True；at=2026-10-27 (Asia/Shanghai) | `740a4e5c381272d0970e8eb8d123a7b84eed653f` |
+| `metadata-tests.txt` | 未提取；以原材料及现有结论为准 | `cc5c0da82c6b267727281b9a049d0a959c7f682b` |
+| `preservation.json` | ok=True | `dc5c57cde75ba9a5307ebe55ca0e1f34ecef822c` |
+| `whitespace.txt` | 未提取；以原材料及现有结论为准 | `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391` |

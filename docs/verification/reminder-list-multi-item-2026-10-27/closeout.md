@@ -9,7 +9,7 @@
 - [文档19](../../23_KnowledgeMap业务能力桥接.md#一条消息维护多项)集中维护单消息多项的业务规则。
 - [文档23](../../23_KnowledgeMap业务能力桥接.md#写入与查询契约)保留桥接键契约；[文档21](../../21_后端职责分层与代码整理.md#默认策略与后续规则调整入口)保留实现位置。
 - [文档16](../../16_验收与测试总表.md#分领域验收摘要)维护验收结论与未覆盖范围；[N21](../../待办清单.md#n21)保留简短完成记录。
-- [专项报告](README.md)、[回归结果](tests.json)、[部署核对](runtime.json)、[自检](checks.json)与[真人核对](qq-acceptance-0146.json)按取证时内容保留，不改写历史回执。
+- [专项报告](README.md)、[回归结果（历史材料）](README.md#historical-material)、[部署核对（历史材料）](README.md#historical-material)、[自检（历史材料）](README.md#historical-material)与[真人核对（历史材料）](README.md#historical-material)按取证时内容保留，不改写历史回执。
 
 本人QQ样本覆盖每消息三项新增、查询和三项作废；8项上限、第9项拒绝、重试和冲突由离线/隔离HTTP验证。E4的整天播报、长期运行与恢复不随N21关闭。
 

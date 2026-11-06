@@ -28,11 +28,11 @@
 
 ## 验证及覆盖边界
 
-- 论文Node34/34、Responses20/20、并发10/10、固定安装引擎14/14，合计78/78；见 [regression.json](regression.json)。相关邮件/QQ/查询112/112。新增覆盖默认high/显式MAX、三种产物、未选路径不读取、缺失/逃逸路径拒绝、超25 MiB产物、100 MiB上限、原文件保留和30分钟配置边界。
+- 论文Node34/34、Responses20/20、并发10/10、固定安装引擎14/14，合计78/78；见 [regression.json（历史材料）](README.md#historical-material)。相关邮件/QQ/查询112/112。新增覆盖默认high/显式MAX、三种产物、未选路径不读取、缺失/逃逸路径拒绝、超25 MiB产物、100 MiB上限、原文件保留和30分钟配置边界。
 - BabelDOC生成标志由实际安装版本的契约测试检查；HTTP/译文及投递使用fixture。真实Bubblewrap测试验证stdin传播、文件边界及超时杀整个进程组。第一次新增缺失产物测试暴露错误仍是Node通用参数码，补齐领域错误后复验通过。
-- [host.json](host.json)：真实隔离OpenClaw/主模型四轮通过，默认GPT/high、重置后查询、DeepSeek/high仅生成，双语只登记一份；翻译/OneBot模拟，无真实QQ/邮件外发。不能替代实际翻译质量。
-- [captured-worker.json](captured-worker.json)：当前生产捕获的runner/产物选择函数、双厂商high/显式MAX、1800秒/4并发/QPS1及固定Python导入通过；跨包service/documents捕获文件与已回归源码逐字节一致。扩展检查首次误用原生ESM跨包导入失败，原回执保留在 [captured-worker-native-import-failed.json](captured-worker-native-import-failed.json)；OpenClaw使用捕获映射解析跨包依赖，校验改为源字节一致性及实际宿主编排，不修改捕获目录或伪造链接。
-- [deployment.json](deployment.json)：检查没有queued/running/dispatching任务后，仅同步timeoutSeconds=1800及受管提示词并重载服务；四项自检通过，testIngress=false。没有启动、重放或改写旧论文任务。
+- [host.json（历史材料）](README.md#historical-material)：真实隔离OpenClaw/主模型四轮通过，默认GPT/high、重置后查询、DeepSeek/high仅生成，双语只登记一份；翻译/OneBot模拟，无真实QQ/邮件外发。不能替代实际翻译质量。
+- [captured-worker.json（历史材料）](README.md#historical-material)：当前生产捕获的runner/产物选择函数、双厂商high/显式MAX、1800秒/4并发/QPS1及固定Python导入通过；跨包service/documents捕获文件与已回归源码逐字节一致。扩展检查首次误用原生ESM跨包导入失败，原回执保留在 [captured-worker-native-import-failed.json（历史材料）](README.md#historical-material)；OpenClaw使用捕获映射解析跨包依赖，校验改为源字节一致性及实际宿主编排，不修改捕获目录或伪造链接。
+- [deployment.json（历史材料）](README.md#historical-material)：检查没有queued/running/dispatching任务后，仅同步timeoutSeconds=1800及受管提示词并重载服务；四项自检通过，testIngress=false。没有启动、重放或改写旧论文任务。
 - 不自动重跑本人整篇PDF；新high默认的完整实际翻译、耗时/成本、本人收件及全文质量待后续本人QQ复测。旧MAX失败回执保留，不改写其固定profile或状态。
 
 ## 已知延期
@@ -41,4 +41,19 @@
 
 ## 文件归属
 
-本目录全部文件仅服务本轮修复：本页为索引；regression.json记录离线回归；host.json记录隔离主模型编排；captured-worker*.json记录捕获检查及一次测试方式修正；deployment.json记录部署自检；[production-observations.json](production-observations.json)保留经过筛选的生产元数据、600秒回执与离线大小复现。没有论文原文、聊天原文、凭据、签名URL或失败半成品进入Git。
+本目录全部文件仅服务本轮修复：本页为索引；regression.json记录离线回归；host.json记录隔离主模型编排；captured-worker*.json记录捕获检查及一次测试方式修正；deployment.json记录部署自检；[production-observations.json（历史材料）](README.md#historical-material)保留经过筛选的生产元数据、600秒回执与离线大小复现。没有论文原文、聊天原文、凭据、签名URL或失败半成品进入Git。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `captured-worker-native-import-failed.json` | ok=False；at=2026-10-17T11:56:23.351Z | `e42143116709e69acb8b9440c6554882aebd4eba` |
+| `captured-worker.json` | ok=True；exitCode=0；at=2026-10-17T11:57:25.899Z | `a41e06de19cf51e440a1f609739dde3021af9f5d` |
+| `deployment.json` | at=2026-10-17T11:53:22.756Z | `e2579b9f67bfbe8cc679532f80c7ba9fa1171016` |
+| `host.json` | passed=True；at=2026-10-17T11:51:49.984Z | `b053fd0c1328720dfb2185970e6251d4a9b5ad39` |
+| `production-observations.json` | at=2026-10-17T11:56:23.221864+00:00 | `ae54b73d57c077cb07be825e59b0d31c88c549ba` |
+| `regression.json` | at=2026-10-17T11:56:23.220624+00:00 | `a1157847d9a0b4b3d8a43d8469077967bbe08326` |

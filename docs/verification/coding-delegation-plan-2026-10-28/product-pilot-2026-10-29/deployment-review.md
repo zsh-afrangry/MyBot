@@ -11,7 +11,7 @@
 
 ## 受管配置的四处新增
 
-精确值见[配置新增项JSON](configuration-additions.json)。本机另有完整候选文件`/home/afrangry/.local/share/kurumi-coding-pilot-20261029/runtime.config.proposed.json`，只供审阅，不直接覆盖运行配置。
+精确值见[配置新增项JSON（历史材料）](README.md#historical-material)。本机另有完整候选文件`/home/afrangry/.local/share/kurumi-coding-pilot-20261029/runtime.config.proposed.json`，只供审阅，不直接覆盖运行配置。
 
 | 位置 | 拟变更 |
 | --- | --- |

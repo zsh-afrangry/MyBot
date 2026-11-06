@@ -1,1 +1,0 @@
-OK: SCRIPTS.md matches 212 classified, document-owned entries.

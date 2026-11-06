@@ -14,7 +14,7 @@
 - 原子缓存、结构/条数验证、304与内容哈希、旧数据降级、共享在途读取及可等待的服务停止。
 - 6个严格参数分支、7个角色view、简繁体/全半角/别名检索、基础数值/配装口径区分、效果/道具词典、公告目录及兑换码覆盖说明；无取图或发图入口。
 - 查询执行前后均复核可信身份与当前权限；上游文字由宿主外部不可信内容边界包装。未开放的action/kind/view和任意URL/路径拒绝。
-- [offline-checks.json](offline-checks.json)保存离线、权限、文档索引与只读自检结果。本轮没有新建“上游全量数据”或图片样本进仓库。
+- [offline-checks.json（历史材料）](README.md#historical-material)保存离线、权限、文档索引与只读自检结果。本轮没有新建“上游全量数据”或图片样本进仓库。
 
 `opencc-js@1.4.2`通过插件自己的package-lock锁定，依赖自持检查覆盖它。用法依据[上游文档](https://github.com/nk2028/opencc-js)，不从站点动态下载转换字典。
 
@@ -22,17 +22,17 @@
 
 | 证据 | 执行与结论 |
 | --- | --- |
-| [isolated-host.json](isolated-host.json) | 真实隔离Gateway：启用为active且目录仅注册`e7_data`，禁用为unloaded且无该工具，均正常停止；启动没有创建缓存或立即请求。此脚本不调用模型/API/QQ |
-| [live-http-model-v2.json](live-http-model-v2.json) | 实际client的18个查询、17次HTTP（13个200/4个304）、完整串行目录刷新及国际服公告两页通过；缓存复用无HTTP。取得389角色、389摘要、282神器、172效果、52道具。灭亡效果反查17名角色。国服公告目录0项，国际服123项：均为来源当时响应，不承诺全量官方公告覆盖 |
-| [model-reviewed.json](model-reviewed.json) | 现行`deepseek/deepseek-flash`、实际v2处理器与合成可信主人上下文；8类样本分轮完成，并以当前共同断言离线复核保存的真实回复。涵盖“莉莉”歧义、梅铃技能/面板/缺失专属、火龙宝石区间、灭亡词典、国际服码和公告正文边界。各项指向原始证据，不冒充一次完整最新源码重跑 |
+| [isolated-host.json（历史材料）](README.md#historical-material) | 真实隔离Gateway：启用为active且目录仅注册`e7_data`，禁用为unloaded且无该工具，均正常停止；启动没有创建缓存或立即请求。此脚本不调用模型/API/QQ |
+| [live-http-model-v2.json（历史材料）](README.md#historical-material) | 实际client的18个查询、17次HTTP（13个200/4个304）、完整串行目录刷新及国际服公告两页通过；缓存复用无HTTP。取得389角色、389摘要、282神器、172效果、52道具。灭亡效果反查17名角色。国服公告目录0项，国际服123项：均为来源当时响应，不承诺全量官方公告覆盖 |
+| [model-reviewed.json（历史材料）](README.md#historical-material) | 现行`deepseek/deepseek-flash`、实际v2处理器与合成可信主人上下文；8类样本分轮完成，并以当前共同断言离线复核保存的真实回复。涵盖“莉莉”歧义、梅铃技能/面板/缺失专属、火龙宝石区间、灭亡词典、国际服码和公告正文边界。各项指向原始证据，不冒充一次完整最新源码重跑 |
 
 模型验收只开放一个实际业务工具；没有竞争的web工具或完整QQ入站/投递，不能据此判断生产工具竞争或真人体感已验收。资料内容仍需主人核对。公开API和模型回复均作为数据，未执行其中的指令；所有外部请求使用固定client标识，没有换UA、绕过403或开启testIngress。
 
 ### 修正与保留的失败记录
 
-- [live-http-model.json](live-http-model.json)：初次脚本错误假设国服公告一定有第二页，实际0项导致断言失败；保留响应，改用有数据的国际服验证翻页，不更改来源内容。
+- [live-http-model.json（历史材料）](README.md#historical-material)：初次脚本错误假设国服公告一定有第二页，实际0项导致断言失败；保留响应，改用有数据的国际服验证翻页，不更改来源内容。
 - `live-http-model-v2.json`的8个路由断言通过；人工复核发现神器区间被解释为满级、词典被称为官方说明、兑换码先称有效再附未验证说明，不能把路由通过当作文字完全正确。
-- [live-http-model-v3.json](live-http-model-v3.json)：仅增加文字规则后，神器满级表述仍出现，断言正确拒绝。随后在真实投影补充`effectBasis.level/limitBreak=null`及来源口径，最新[model-boundaries.json](model-boundaries.json)的神器回复改为区间、不推算满级；词典也不再冒称官方原文。
+- [live-http-model-v3.json（历史材料）](README.md#historical-material)：仅增加文字规则后，神器满级表述仍出现，断言正确拒绝。随后在真实投影补充`effectBasis.level/limitBreak=null`及来源口径，最新[model-boundaries.json（历史材料）](README.md#historical-material)的神器回复改为区间、不推算满级；词典也不再冒称官方原文。
 - `model-boundaries.json`的兑换码回复正确使用“未实际验证/尚未经过验证”，并在否定语句中说“不能断言……仍在有效期内”；旧正则误报失败。修正为能识别这些否定说法，使用同一`model-cases.mjs`复核现存回复，未再付费重跑；原文件的失败状态保持不动。末项公告使用前轮已完成样本，未执行的用例不记成新一轮完成。
 - 生产白名单加入`e7_data`后，既有权限回归缺少该工具的有效action夹具，曾报Unmapped；补上`codes`、成员拒绝和未知action拒绝后，46项回归重新通过。
 
@@ -40,8 +40,31 @@
 
 ## 生产加载与下一步
 
-已按[部署操作](deployment-operations.json)同步配置与人格、正常重启Fusion，加载源码`b048027`；未执行备份/恢复、DSH启停、远端写入或测试QQ外发。[生产目录与策略](production-catalog.json)核对插件active、main包含`e7_data`、revision=4、本人允许而成员拒绝、原生禁用列表保留、testIngress=false。RPC的includePlugins目录会列出已安装可选工具，成员目录出现名称不代表其允许列表或执行权限开放。
+已按[部署操作（历史材料）](README.md#historical-material)同步配置与人格、正常重启Fusion，加载源码`b048027`；未执行备份/恢复、DSH启停、远端写入或测试QQ外发。[生产目录与策略（历史材料）](README.md#historical-material)核对插件active、main包含`e7_data`、revision=4、本人允许而成员拒绝、原生禁用列表保留、testIngress=false。RPC的includePlugins目录会列出已安装可选工具，成员目录出现名称不代表其允许列表或执行权限开放。
 
-[健康](checks-health.json)、[依赖](checks-dependencies.json)、[配置](checks-config.json)、[人格](checks-persona.json)四项收尾自检通过；只证明当时的运行与对齐状态，不代替QQ验收。缓存按首次查询创建/填充；已验证的完整刷新使用临时目录，未把验收样本直接复制进生产。
+[健康（历史材料）](README.md#historical-material)、[依赖（历史材料）](README.md#historical-material)、[配置（历史材料）](README.md#historical-material)、[人格（历史材料）](README.md#historical-material)四项收尾自检通过；只证明当时的运行与对齐状态，不代替QQ验收。缓存按首次查询创建/填充；已验证的完整刷新使用临时目录，未把验收样本直接复制进生产。
 
 主人可在QQ测试“梅铃的技能”“梅铃的基础面板”“火龙宝石的效果”“最新国际服兑换码”；真人往返未完成前，N20.2保持待复验，E7图片仍待处理。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks-config.json` | passed=True；exitCode=0；at=2026-10-27T10:02:38.072992+00:00 | `2da182ec899ba8c581a61736f72bdf1fb8c69737` |
+| `checks-dependencies.json` | passed=True；exitCode=0；at=2026-10-27T10:02:38.103532+00:00 | `3778d1ded610456e5bc4cb380ce1ca4d78970412` |
+| `checks-health.json` | passed=True；exitCode=0；at=2026-10-27T10:02:38.874867+00:00 | `0f77fda5d4bceb8326164b57bcec1c027972c6e0` |
+| `checks-persona.json` | passed=True；exitCode=0；at=2026-10-27T10:02:38.071931+00:00 | `24fc264aa297a055884142235399496902c58b06` |
+| `deployment-operations.json` | at=2026-10-27T10:01:06.688987+00:00 | `aaeefe188636966b5fcc530b0183c41ac4b3560e` |
+| `isolated-host.json` | passed=True；at=2026-10-27T09:49:29.785Z | `3c8a60aec99bc1df38393097457a476c334b67e7` |
+| `live-http-model-v2.json` | passed=True；at=2026-10-27T09:51:02.400Z | `1a726546e7fcc71e3c3f6a065aa6c627a98c48a7` |
+| `live-http-model-v3.json` | passed=False；at=2026-10-27T09:53:29.184Z | `0b118044e0379ec0d58ae782fb6e8bf6259eca18` |
+| `live-http-model.json` | passed=False；at=2026-10-27T09:49:29.501Z | `346b06011f023f8d39f3137f61c3b6cd9b2c5742` |
+| `model-boundaries.json` | passed=False；at=2026-10-27T09:55:27.091Z | `4fb0c56681b253bcc5b19234306d100fed5e0822` |
+| `model-reviewed.json` | passed=True；at=2026-10-27T09:57:57.704Z | `1f7a9e6dcb0f7c6fdcda08fec9255fbbd9c2c5d3` |
+| `offline-checks.json` | ok=True；at=2026-10-27T17:41:53.458127+08:00 | `4ca115ca75ed57548e51f0c61920e9c2cc0ad49e` |
+| `pre-deploy.json` | passed=True；at=2026-10-27T09:59:49.617Z | `8ca813fab9f09675c762bd1bc9df629959f99731` |
+| `production-catalog.json` | passed=True；at=2026-10-27T10:01:48.728Z | `b2ae873a8bc8bd9b0a402c83b9b2466bb957170e` |

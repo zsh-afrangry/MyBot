@@ -35,7 +35,7 @@ test("business rejection, missing response and contradictory error flags cannot 
   }
 });
 test("historical failures remain distinct without rewriting their verdicts", () => {
-  const load = name => JSON.parse(readFileSync(new URL(`../../../docs/verification/${name}`, import.meta.url), "utf8"));
+  const load = name => JSON.parse(readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8"));
   const reminder = load("confirmation-instruction-reminder-initial.json");
   const planning = load("planning-capability-initial.json");
   assert.equal(reminder.status, "acceptance-failed");

@@ -10,9 +10,9 @@
 
 | 文件 | 结果与边界 |
 | --- | --- |
-| [model-image.json](model-image.json) | 真实QQ CDN图片经 `stageImage`下载，JPEG为1,012,270字节；独立main会话 `deliver=false` 送官方DeepSeek，回执模型无reroute并识别图片内容。存在细节误读，不代表建议正确或真人QQ完整往返通过 |
-| [channel-tests.txt](channel-tests.txt) | 当时QQ频道19项回归；CDN精确主机修复保留HTTPS、8MiB、类型和重定向限制，不开放任意URL |
-| [stack-lifecycle.json](stack-lifecycle.json) | 当时启停与旧消费者切换记录；不覆盖后来“QQ传输只检查、不启停”的脚本实际往返。当前启停契约见[栈启停规则](../../9_QQ融合助手架构与开发计划.md#dsh与融合栈统一启停) |
+| [model-image.json（历史材料）](README.md#historical-material) | 真实QQ CDN图片经 `stageImage`下载，JPEG为1,012,270字节；独立main会话 `deliver=false` 送官方DeepSeek，回执模型无reroute并识别图片内容。存在细节误读，不代表建议正确或真人QQ完整往返通过 |
+| [channel-tests.txt（历史材料）](README.md#historical-material) | 当时QQ频道19项回归；CDN精确主机修复保留HTTPS、8MiB、类型和重定向限制，不开放任意URL |
+| [stack-lifecycle.json（历史材料）](README.md#historical-material) | 当时启停与旧消费者切换记录；不覆盖后来“QQ传输只检查、不启停”的脚本实际往返。当前启停契约见[栈启停规则](../../9_QQ融合助手架构与开发计划.md#dsh与融合栈统一启停) |
 
 原图域名 `multimedia.nt.qq.com.cn` 曾因只允许不带`.cn`的主机而在频道入口被拒，模型只收到未加载提示。修复后同图在独立会话可下载并输入模型；测试没有重新向用户QQ发验收消息，不扩大为日常新图片体验已验收。证据未保存签名图片URL、凭据或思考正文。
 
@@ -26,3 +26,15 @@
 原文及当时外部权限机制调研可用 `git show 072a327:docs/11_小鲸鱼与DeepSeek切换及确认策略研究.md`追溯。调研日期是2026-10-05，整理本报告没有重查官网或重新调用模型；不能把早期会话中的重置卡授权解释为永久项目规则。
 
 返回[证据索引](../INDEX.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `channel-tests.txt` | 未提取；以原材料及现有结论为准 | `fd5d7b1ab21748ba0541c767e4a44432e3290812` |
+| `model-image.json` | status=ok | `fb02a771c244708e29db0622719fc28cdc847049` |
+| `stack-lifecycle.json` | 未提取；以原材料及现有结论为准 | `9887ab75bf132309e4c0e9bdd0f6ba66fe1a167d` |

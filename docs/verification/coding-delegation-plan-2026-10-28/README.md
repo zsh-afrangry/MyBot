@@ -15,7 +15,7 @@
 - 三组文档合并原先完成于Codex worktree `/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion`，基点为`326eb958fa769619a313b81dfcf9f47dbdb50285`，改动尚未提交或合入日常主目录。
 - 日常源码目录 `/home/afrangry/kurumi-fusion` 在本次开始时为干净的`main`，提交`1765d936e90c6220a60dc39dfc4338fb00096d0f`，相对远端领先28个本地提交；顶层10、15、19仍存在。
 - 先将原合并结果本地保存为`99e5413`，再用Git合并上述主目录提交，保留后续E7、论文和自然语言确认的代码、配置、验收及未完成项。不能直接用旧worktree覆盖日常目录。
-- 合并提交`d85a896`已通过`--ff-only`本地合入主目录，两个目录在该点一致且主目录干净；[目录与Git记录](local-integration.json)逐项核对顶层10、15、19不存在及三份归档首行。之前三份合并报告继续保留原日期和取证范围，不改成“当时已合入主目录”。本目录收尾回执由后续本地提交保存，未推送。
+- 合并提交`d85a896`已通过`--ff-only`本地合入主目录，两个目录在该点一致且主目录干净；[目录与Git记录（历史材料）](README.md#historical-material)逐项核对顶层10、15、19不存在及三份归档首行。之前三份合并报告继续保留原日期和取证范围，不改成“当时已合入主目录”。本目录收尾回执由后续本地提交保存，未推送。
 
 ## 本次整理
 
@@ -27,14 +27,33 @@
 
 ## 检查与边界
 
-具体命令及范围见[检查记录](checks.json)。
+具体命令及范围见[检查记录（历史材料）](README.md#historical-material)。
 
-- [链接检查](links.json)：文件、锚点及围栏无错误；本次也补齐了架构/运行维护两个原一级标题的兼容锚点。
-- [保留检查](preservation.json)：三组原文的30、22、50个标题锚点全部可达；三份归档与主目录最新原文除相对链接外一致；550份既有非Markdown回执及原三组合并证据28个文件未改。代码与运行配置保持主目录最新版本，两个脚本只带入此前已审阅的文档提示。
+- [链接检查（历史材料）](README.md#historical-material)：文件、锚点及围栏无错误；本次也补齐了架构/运行维护两个原一级标题的兼容锚点。
+- [保留检查（历史材料）](README.md#historical-material)：三组原文的30、22、50个标题锚点全部可达；三份归档与主目录最新原文除相对链接外一致；550份既有非Markdown回执及原三组合并证据28个文件未改。代码与运行配置保持主目录最新版本，两个脚本只带入此前已审阅的文档提示。
 - 用户原件本轮未再编辑：`tp.txt`、`tp2.txt`与原主目录一致；`example.md`只随此前合并带入旧回退入口的一处导航更新，正文未改，差异单独列在保留检查中。
-- [归属覆盖](coverage.txt)、[生成索引](index.txt)及[归属回归](metadata-tests.txt)通过，212项脚本归属有效，测试9/9通过。本轮相对主目录基点的差异[空白检查](whitespace.txt)通过；按合并第一父提交检查导入代码时遇到主目录既有CRLF提示，未为此格式化业务文件。
-- [四项只读自检](runtime-selfchecks.json)均从本地合入后的`/home/afrangry/kurumi-fusion`执行通过：服务健康、依赖自持、配置及人格同步。无`--apply`、重启或外发；健康明细仅保存脱敏摘要，不复制任务标识或私密状态。此结果不证明未安装依赖的worktree可以启动。
+- [归属覆盖（历史材料）](README.md#historical-material)、[生成索引（历史材料）](README.md#historical-material)及[归属回归（历史材料）](README.md#historical-material)通过，212项脚本归属有效，测试9/9通过。本轮相对主目录基点的差异[空白检查（历史材料）](README.md#historical-material)通过；按合并第一父提交检查导入代码时遇到主目录既有CRLF提示，未为此格式化业务文件。
+- [四项只读自检（历史材料）](README.md#historical-material)均从本地合入后的`/home/afrangry/kurumi-fusion`执行通过：服务健康、依赖自持、配置及人格同步。无`--apply`、重启或外发；健康明细仅保存脱敏摘要，不复制任务标识或私密状态。此结果不证明未安装依赖的worktree可以启动。
 
 这里只核对文档整理与本地合入，不重跑原业务验收，不把旧证据改成新一轮通过；N23仍处于需求整理，后续选型与执行权限需明确后实施。
 
 返回[文档入口](../../README.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | 未提取；以原材料及现有结论为准 | `7499f8d67fd31a7da034b1827a01b08a634a42a1` |
+| `coverage.txt` | 未提取；以原材料及现有结论为准 | `549ad2ada76b80df9f13011121943bc269701b69` |
+| `index.txt` | 未提取；以原材料及现有结论为准 | `0db4c43ae1c14336f9d7b750d4dda5af86126f15` |
+| `links.json` | 未提取；以原材料及现有结论为准 | `2a3b41d268a68fe8db4c4ac572c4b0bd29a19d39` |
+| `local-integration.json` | 未提取；以原材料及现有结论为准 | `1dca6f70d29565e140ec1345495053bdd64b6752` |
+| `metadata-tests.txt` | 未提取；以原材料及现有结论为准 | `1d037b4f94e592f4fd273f254f206c6b0ade6e81` |
+| `preservation.json` | ok=True | `76164bffda59284f5ca5ed9b15f07ca8b4381c9d` |
+| `runtime-selfchecks.json` | 未提取；以原材料及现有结论为准 | `be6586f87cc3a9d2278f385ce6a001fed67cbea7` |
+| `scope-discussion-checks-2026-10-28.json` | status=passed within stated scope; N23 remains requirements work | `65209d187b2e7fa7e6dd856df3e5052247cbdf4b` |
+| `whitespace.txt` | 未提取；以原材料及现有结论为准 | `6b7259fc772af4ed8df9eabd0244bfa4e8267d5a` |

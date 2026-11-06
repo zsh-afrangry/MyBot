@@ -15,21 +15,43 @@
 
 | 文件 | 结果与边界 |
 | --- | --- |
-| [`node-tests.txt`](node-tests.txt) | 论文/QQ/统一权限/邮件/统一查询191/191通过，含附件专项26项；真实传输账本仅连本机HTTP。覆盖纯失败零模型、各类错误、混合/引用/媒体、真实ID、取消、原账本防重/未知回执和统一日志查询 |
-| [`host.json`](host.json) | 首轮13场景通过，4个合成任务成功、零翻译API。该轮合成译文相同，内容去重后沿用历史文件名，不能证明投递内容互不相同；保留原回执 |
-| [`host-recheck.json`](host-recheck.json) | 改为每任务独立合成产物，并加入来源inputId/实际投递hash/收件人断言，13/13再次通过。MD-only零模型、重复无发送；失败PDF直接反馈；MD+读文件不启动翻译；明确重发只发旧稿；当前PDF/待续PDF各建新任务并投递对应新稿；成员只收自身文件。5次模拟上传=历史首发+明确重发+当前新稿+待续新稿+成员新稿；4任务均dual成功，零翻译API，隔离进程已退出 |
-| [`runtime-before.json`](runtime-before.json) | 部署前0活动翻译/投递、11任务、配置hash、服务状态；当时仅3份AGENTS有差异 |
-| [`persona-apply.txt`](persona-apply.txt) | 整套同步实际写入10份文件。检查到并行“人格和记忆”任务已修改人格配置后，未再重复整套同步；见下方偏差记录 |
-| [`deployment.json`](deployment.json) | 23:48无活动任务时只重载Fusion；当前启动生成的QQ捕获中inbound/files/attachments三文件与源码逐字相同。3个工作区AGENTS附件规则对齐；生产配置hash和11任务不变，无真实翻译/QQ/邮件测试调用 |
-| [`health.json`](health.json) | 健康检查通过、QQ在线、testIngress=false；不证明真人收到附件 |
-| [`dependencies.txt`](dependencies.txt)、[`config-check.txt`](config-check.txt) | 依赖与运行配置检查通过，无配置apply |
-| [`persona-check-initial.txt`](persona-check-initial.txt) | 初次全套人格检查非零，6份SOUL/USER与并行开发的新投影不一致；未把它改写成通过 |
-| [`persona-check-final.txt`](persona-check-final.txt) | 本轮结束前只读复查仍为相同6份差异，附件AGENTS无差异；未再次apply，交由并行人格任务完成 |
-| [`closeout.json`](closeout.json) | 脚本/证据分类、链接/围栏、Git空白和已知私密值检查；同时记录并行范围及未提交/推送状态 |
-| [`evidence-coverage-final.txt`](evidence-coverage-final.txt) | 全局覆盖末次检查非零：另一项开发新建`plugin-lifecycle-2026-10-19/README.md`尚未登记；本轮附件目录全部已分类，脚本索引179项/46个boundary无冲突。不替其他开发豁免或补写结论 |
+| [`node-tests.txt`（历史材料）](README.md#historical-material) | 论文/QQ/统一权限/邮件/统一查询191/191通过，含附件专项26项；真实传输账本仅连本机HTTP。覆盖纯失败零模型、各类错误、混合/引用/媒体、真实ID、取消、原账本防重/未知回执和统一日志查询 |
+| [`host.json`（历史材料）](README.md#historical-material) | 首轮13场景通过，4个合成任务成功、零翻译API。该轮合成译文相同，内容去重后沿用历史文件名，不能证明投递内容互不相同；保留原回执 |
+| [`host-recheck.json`（历史材料）](README.md#historical-material) | 改为每任务独立合成产物，并加入来源inputId/实际投递hash/收件人断言，13/13再次通过。MD-only零模型、重复无发送；失败PDF直接反馈；MD+读文件不启动翻译；明确重发只发旧稿；当前PDF/待续PDF各建新任务并投递对应新稿；成员只收自身文件。5次模拟上传=历史首发+明确重发+当前新稿+待续新稿+成员新稿；4任务均dual成功，零翻译API，隔离进程已退出 |
+| [`runtime-before.json`（历史材料）](README.md#historical-material) | 部署前0活动翻译/投递、11任务、配置hash、服务状态；当时仅3份AGENTS有差异 |
+| [`persona-apply.txt`（历史材料）](README.md#historical-material) | 整套同步实际写入10份文件。检查到并行“人格和记忆”任务已修改人格配置后，未再重复整套同步；见下方偏差记录 |
+| [`deployment.json`（历史材料）](README.md#historical-material) | 23:48无活动任务时只重载Fusion；当前启动生成的QQ捕获中inbound/files/attachments三文件与源码逐字相同。3个工作区AGENTS附件规则对齐；生产配置hash和11任务不变，无真实翻译/QQ/邮件测试调用 |
+| [`health.json`（历史材料）](README.md#historical-material) | 健康检查通过、QQ在线、testIngress=false；不证明真人收到附件 |
+| [`dependencies.txt`（历史材料）](README.md#historical-material)、[`config-check.txt`（历史材料）](README.md#historical-material) | 依赖与运行配置检查通过，无配置apply |
+| [`persona-check-initial.txt`（历史材料）](README.md#historical-material) | 初次全套人格检查非零，6份SOUL/USER与并行开发的新投影不一致；未把它改写成通过 |
+| [`persona-check-final.txt`（历史材料）](README.md#historical-material) | 本轮结束前只读复查仍为相同6份差异，附件AGENTS无差异；未再次apply，交由并行人格任务完成 |
+| [`closeout.json`（历史材料）](README.md#historical-material) | 脚本/证据分类、链接/围栏、Git空白和已知私密值检查；同时记录并行范围及未提交/推送状态 |
+| [`evidence-coverage-final.txt`（历史材料）](README.md#historical-material) | 全局覆盖末次检查非零：另一项开发新建`plugin-lifecycle-2026-10-19/README.md`尚未登记；本轮附件目录全部已分类，脚本索引179项/46个boundary无冲突。不替其他开发豁免或补写结论 |
 
 部署偏差：审阅差异后到实际`sync-persona --apply`之间，另一个经用户授权的“人格和记忆”任务更改了`config/persona.json`等文件。全量同步因此读入了中间状态，将世凪人格写入运行区，随后该任务继续新增关系层，产生6份差异。本轮已停止再次全量同步，不回退其源码或工作区；只核实本次3份AGENTS附件规则与当前投影一致。全套人格对齐/验证归[文档25](../../../25_人格、记忆与会话连续性.md)，本轮不宣称四项自检全过。后续共享工作树部署应在写入前再次核对预期变更集合；发现集合扩大时只同步本任务文件，或等待另项开发完成。
 
 测试回执包含合成对话，不含用户真实聊天或凭据；未向生产写测试身份、文档或任务。没有提交/推送混合工作树，也未修改SnowLuma/DSH、归档或性能参数。
 
 当前确定性保证只覆盖结构上纯失败附件的分流；带自然语言请求的业务意图仍由模型判断，其可靠性通过隔离模型场景验收，不承诺永不误判。原有后台翻译自动投递不受该入站分支控制。性能优化仍另列文档22待办，不混入本次修复。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `closeout.json` | at=2026-10-19T15:53:19.921983+00:00 | `2d49fe92f475a88cc30e2e366449dc4c23217595` |
+| `config-check.txt` | 未提取；以原材料及现有结论为准 | `eada40e092dd018889c932dd1f59879d51a09754` |
+| `dependencies.txt` | 未提取；以原材料及现有结论为准 | `b39597afebc94c642d0b90a449359c7df6c20054` |
+| `deployment.json` | at=2026-10-19T15:50:30.912576+00:00 | `830a871ecd4bbd17d4fcd2f0b6b30b26e6e1778d` |
+| `evidence-coverage-final.txt` | 未提取；以原材料及现有结论为准 | `d522580a9c0c7051995883c8ec285f23673e98bf` |
+| `health.json` | ok=True；at=2026-10-19T15:48:48.679Z | `5a52c8a761e949e88d2abc4b294e7777319d7e20` |
+| `host-recheck.json` | passed=True；at=2026-10-19T15:45:24.187Z | `93c8a3e3a18760a0b3d8033e8d6d4deb127868f7` |
+| `host.json` | passed=True；at=2026-10-19T15:40:31.292Z | `6f29830a197679da01ccdae630ddaf8700bd82a7` |
+| `node-tests.txt` | 未提取；以原材料及现有结论为准 | `5f18e6d268131ce7eb71774d484bf3c0380b5812` |
+| `persona-apply.txt` | 未提取；以原材料及现有结论为准 | `8ffec3d0556874bb17b4c19ab907ccd24306f585` |
+| `persona-check-final.txt` | 未提取；以原材料及现有结论为准 | `795bff7f6292e5ae3669eab773cfe02cb1995cff` |
+| `persona-check-initial.txt` | 未提取；以原材料及现有结论为准 | `795bff7f6292e5ae3669eab773cfe02cb1995cff` |
+| `runtime-before.json` | at=2026-10-19T15:45:53.834136+00:00 | `d9d4a298bd3f5736f1671cfa951ea4e32c21dd88` |

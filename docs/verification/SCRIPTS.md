@@ -61,7 +61,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/plugins/personal-confirmation/src/inbound.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认入站插件：身份绑定与重放拒绝 | 只读 | 否 | offline | — |
 | `chatbot/plugins/personal-confirmation/src/index.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认入站插件装配与工具暴露 | 只读 | 否 | offline | — |
 | `chatbot/plugins/personal-confirmation/src/runtime.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 当前QQ原文与实际run/session/toolCall绑定、嵌套结果、冻结回复、同回合及失效拒绝 | 写临时测试目录 | 否 | code | — |
-| `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | [16](../16_验收与测试总表.md) | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | `docs/verification/` |
+| `chatbot/tests/acceptance/call-analysis.test.mjs` | 离线 | [16](../16_验收与测试总表.md) | 旧调用分析离线断言（读取两份输入样本） | 只读 | 否 | offline | — |
 | `chatbot/tests/access-control/isolation.test.mjs` | 离线 | [24](../24_统一身份与权限管理.md) | 两身份实际目录/路由/任务/投递/撤权、旧账本与隔离人格；本地模拟OneBot/翻译器 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/access-control/log-query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md)、[24](../24_统一身份与权限管理.md) | 授权审计的统一查询、run关联、拒绝原因展示与私密文件模式 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/access-control/policy.test.mjs` | 离线 | [24](../24_统一身份与权限管理.md) | 权限/schema/完整工具映射、可信身份与后台委托、配置派生及默认拒绝 | 只读 | 否 | header | — |

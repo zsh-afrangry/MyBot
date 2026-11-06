@@ -41,8 +41,8 @@
 - 原187项之外补录邮件test/helpers两份、默认领域test-fixtures一份，新增归属库及其回归两份，共192项。3份论文Python和2份领域运行CLI显式归运行源码，2份旧搜索脚本逐文件登记为退役例外。
 - 两份记忆测试的P2证据链接原先只存在于手工表格，现进入元数据；显式evidence替代源码路径提取，避免把临时夹具路径误当验收结果。
 - 证据519份（当前436、历史83），每份恰好一个命名组且目标文档存在。10月11日后台副本同步报告原被日期规则误归历史，现与10月10日报告一起显式归当前维护证据。目录内新增回执继承归属，未知目录/顶层文件拒绝，不把继承说成逐文件人工登记。
-- [回归结果](checker-tests.txt)：9/9，包括最长前缀/精确文件选择、重叠拒绝、嵌套/散落文件发现、P2链接稳定、漏分类、缺失文档/越界路径/重复selector、缺失归属、生成表过期/标记倒置、未知证据目录；所有变更在临时仓库，不读写生产库。
-- [首次失败](initial-checker-tests.txt)为测试副本没有复制报告README，导致源码目录引用不能解析为相同README目标；补齐夹具形状后通过，没有放宽生成表一致性断言。该失败是本轮检查器夹具问题，不是业务回归失败。
+- [回归结果（历史材料）](README.md#historical-material)：9/9，包括最长前缀/精确文件选择、重叠拒绝、嵌套/散落文件发现、P2链接稳定、漏分类、缺失文档/越界路径/重复selector、缺失归属、生成表过期/标记倒置、未知证据目录；所有变更在临时仓库，不读写生产库。
+- [首次失败（历史材料）](README.md#historical-material)为测试副本没有复制报告README，导致源码目录引用不能解析为相同README目标；补齐夹具形状后通过，没有放宽生成表一致性断言。该失败是本轮检查器夹具问题，不是业务回归失败。
 
 复验命令（仓库根目录，均不调用模型或真实业务）：
 
@@ -53,7 +53,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 git diff --check
 ```
 
-[validation.json](validation.json)记录最终命令、统计、文件保护与Git边界；[links.json](links.json)列出本地Markdown文件/锚点检查的范围与逐项目标。链接核验只读当前Markdown规则、入口及verification内Markdown，不验证外部URL，不把历史txt/归档中有意保留的旧路径作为当前入口。
+[validation.json（历史材料）](README.md#historical-material)记录最终命令、统计、文件保护与Git边界；[links.json（历史材料）](README.md#historical-material)列出本地Markdown文件/锚点检查的范围与逐项目标。链接核验只读当前Markdown规则、入口及verification内Markdown，不验证外部URL，不把历史txt/归档中有意保留的旧路径作为当前入口。
 
 ## 保留的未完成项与边界
 
@@ -69,3 +69,16 @@ HEAD仍为072a327，暂存区未改；本轮和起点已有修改均留在工作
 ## 2026-11-07 仓库边界回归
 
 归属扫描不再进入含 `.git` 目录或指针文件的嵌套仓库；普通名为 `worktrees` 的目录仍扫描。隔离回归10项全部通过，`evidence-index.mjs --check-markdown`核对226项一致，`evidence-coverage.mjs`核对740份材料归属通过。该检查只证明文档发现/归属边界，不代表业务或真人验收。命令输出临时保存在全局手册所列的有限保护材料，后续由正式结果替代。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checker-tests.txt` | 未提取；以原材料及现有结论为准 | `ad600b6288956ed86e688c3bec8a442b0734aa74` |
+| `initial-checker-tests.txt` | 未提取；以原材料及现有结论为准 | `3f3432ebdeea83d44c1615a94d31a393d363e490` |
+| `links.json` | 未提取；以原材料及现有结论为准 | `c45e21c53964210ba4ba3ce400a5263b72ea165e` |
+| `validation.json` | 未提取；以原材料及现有结论为准 | `19098319ab31acf1244560f3b616b9135561f39e` |

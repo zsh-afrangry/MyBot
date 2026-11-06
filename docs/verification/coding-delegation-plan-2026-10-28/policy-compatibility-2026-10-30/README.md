@@ -21,14 +21,34 @@
 
 | 层次 | 实际结果与证据 |
 | --- | --- |
-| 离线处理器与共享边界 | 工作树及整合后的源码目录最终均100项通过；[offline-final.log](offline-final.log)、[canonical-final-offline.log](canonical-final-offline.log)。覆盖旧字段兼容、读取/续接、额外检查、目录/仓库迁移、撤权、复验失败重试、目标分支改登与并发变化；真实Git/SQLite，ACP和投递为注入夹具 |
-| 隔离宿主 | 真实独立Gateway的启用/禁用两阶段通过，服务锁正常释放、加载不建任务；[host-final.json](host-final.json)。不调用真实DSH或QQ |
-| 单目录部署 | 仅更新源码并重启Fusion，编码插件active且有`kurumi_code`，配置/人格未放宽；四项运行自检通过。[最终部署](deployment-final.json)记录文件哈希与私有回执位置，其他并行需求文件已核对保留 |
-| 真实旧任务只读核对 | `3bb84f40-beb1-4f2a-b33a-ccdc050781ed`仍为`ready`，原状态和差异可读，变更为`quicksort_first_pivot.py`。当前登记三项检查，历史执行检查仍是原两项；旧输出返回`result_not_recorded`。[最终只读回执](old-task-final-readonly.json)由直接服务调用与只读SQLite取得，任务事实与源Git状态均未改变 |
-| 文档验证 | 文档归属覆盖、生成索引一致性、归属规则隔离测试与修改文档链接检查通过；[documentation.json](documentation.json) |
+| 离线处理器与共享边界 | 工作树及整合后的源码目录最终均100项通过；[offline-final.log（历史材料）](README.md#historical-material)、[canonical-final-offline.log（历史材料）](README.md#historical-material)。覆盖旧字段兼容、读取/续接、额外检查、目录/仓库迁移、撤权、复验失败重试、目标分支改登与并发变化；真实Git/SQLite，ACP和投递为注入夹具 |
+| 隔离宿主 | 真实独立Gateway的启用/禁用两阶段通过，服务锁正常释放、加载不建任务；[host-final.json（历史材料）](README.md#historical-material)。不调用真实DSH或QQ |
+| 单目录部署 | 仅更新源码并重启Fusion，编码插件active且有`kurumi_code`，配置/人格未放宽；四项运行自检通过。[最终部署（历史材料）](README.md#historical-material)记录文件哈希与私有回执位置，其他并行需求文件已核对保留 |
+| 真实旧任务只读核对 | `3bb84f40-beb1-4f2a-b33a-ccdc050781ed`仍为`ready`，原状态和差异可读，变更为`quicksort_first_pivot.py`。当前登记三项检查，历史执行检查仍是原两项；旧输出返回`result_not_recorded`。[最终只读回执（历史材料）](README.md#historical-material)由直接服务调用与只读SQLite取得，任务事实与源Git状态均未改变 |
+| 文档验证 | 文档归属覆盖、生成索引一致性、归属规则隔离测试与修改文档链接检查通过；[documentation.json（历史材料）](README.md#historical-material) |
 
 离线命令：`node --test chatbot/tests/coding/*.test.mjs chatbot/tests/access-control/*.test.mjs chatbot/tests/backend-boundaries/*.test.mjs`。隔离宿主命令：`node chatbot/tests/coding/acceptance-host.mjs --out <新的绝对路径>`。本轮没有付费模型请求、模拟生产入站或真实QQ外发，没有继续、取消、回档或合入生产任务。
 
-首轮99项回归、宿主与部署回执保留为[offline.log](offline.log)、[canonical-offline.log](canonical-offline.log)、[host.json](host.json)、[deployment.json](deployment.json)与[old-task-readonly.json](old-task-readonly.json)。收尾审阅补充登记目标分支变化的显式检查与独立回归后，重新运行全套检查并部署；上述原回执不覆盖。
+首轮99项回归、宿主与部署回执保留为[offline.log（历史材料）](README.md#historical-material)、[canonical-offline.log（历史材料）](README.md#historical-material)、[host.json（历史材料）](README.md#historical-material)、[deployment.json（历史材料）](README.md#historical-material)与[old-task-readonly.json（历史材料）](README.md#historical-material)。收尾审阅补充登记目标分支变化的显式检查与独立回归后，重新运行全套检查并部署；上述原回执不覆盖。
 
 真人QQ端的修复后查询、收件及完整闭环仍须主人实际操作验收，不能由直接调用服务或测试夹具代替。本次不恢复缺失的历史stdout，也不新增任意文件读取或目录列表能力。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `canonical-final-offline.log` | 未提取；以原材料及现有结论为准 | 未入Git的生成日志，已丢弃 |
+| `canonical-offline.log` | 未提取；以原材料及现有结论为准 | 未入Git的生成日志，已丢弃 |
+| `deployment-final.json` | at=2026-10-30T10:00:46.721252+00:00 | `252593c926a3ee4ac095acc6addb6cd264225bf5` |
+| `deployment.json` | at=2026-10-30T09:56:10.408607+00:00 | `5b0ce5ee1fb7ee07837a8796fc4c9d2a184a751d` |
+| `documentation.json` | passed=True；at=2026-10-30T10:01:22.826727+00:00 | `954cf06f1725581b941f0848433dfd691f7796c0` |
+| `host-final.json` | passed=True；at=2026-10-30T09:59:16.621Z | `84590263e190ef871fe2f385c448f696055c12e6` |
+| `host.json` | passed=True；at=2026-10-30T09:51:21.734Z | `7358a750ea080a2668f01ef144fdb02e8939aca1` |
+| `offline-final.log` | 未提取；以原材料及现有结论为准 | 未入Git的生成日志，已丢弃 |
+| `offline.log` | 未提取；以原材料及现有结论为准 | 未入Git的生成日志，已丢弃 |
+| `old-task-final-readonly.json` | at=2026-10-30T09:59:43.723Z | `d5b6941ccb19a02e3e6002410dc0074e9cdff44b` |
+| `old-task-readonly.json` | at=2026-10-30T09:53:53.638Z | `ce72c18ecb3554a1bffaaf950708c77e0b22f11a` |

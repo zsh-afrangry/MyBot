@@ -32,7 +32,7 @@
 | `node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/access-control/*.test.mjs` | 原组合125项通过；新增回执文件另3项通过 | 领域事务、模拟SMTP、身份/动作权限与频道传输 |
 | `node --test chatbot/plugins/kurumi-qq/test/confirmation-receipts.test.js` | 3项通过 | 真实loopback HTTP全量回执、部分失败、捕获无回执；不生成grant |
 | `node --test chatbot/tests/backend-boundaries/*.test.mjs chatbot/tests/domain-adapters/*.test.mjs chatbot/tests/persona/*.test.mjs` | 107项通过 | 真实领域Store自然确认/提交5项，边界/生命周期/适配器/人格回归 |
-| `node chatbot/tests/backend-boundaries/acceptance-natural-confirmation-host.mjs --out <新的绝对路径>` | 真实隔离宿主7场景通过，31次本地模型请求 | [host.json](host.json)：真实Gateway、typed hooks、deferred tools、SQLite、Cron与模拟QQ HTTP发送回执 |
+| `node chatbot/tests/backend-boundaries/acceptance-natural-confirmation-host.mjs --out <新的绝对路径>` | 真实隔离宿主7场景通过，31次本地模型请求 | [host.json（历史材料）](README.md#historical-material)：真实Gateway、typed hooks、deferred tools、SQLite、Cron与模拟QQ HTTP发送回执 |
 
 真实宿主的首次检查发现`allowConversationAccess`未声明，以及授权提示钩子只保留`prependContext/appendContext`，已补正配置及返回字段后复验。夹具的runner路径、结果解包也已修正；这些修前失败未写成业务成功。核心/插件回归曾因旧确认措辞和表名单断言失败，按新契约更新后重跑通过。
 
@@ -42,4 +42,16 @@
 
 真人建议先用未来的一次性提醒：单项后裸“确认”；同时两项后裸“确认”应追问，明确“确认其中某一项”只提交该项；“先别执行”和“确认，不过改成另一时间”不提交旧提案。AI按时间只读关联实际工具、grant、提交与QQ回执。邮件需另行明确外发范围。
 
-`fa0eeba`已于03:04:38同步并重启Fusion；配置2处、主人AGENTS 1份更新，12份受管人格文件对齐。四项自检、6个相关生产插件active及确认工具目录通过，testIngress保持关闭、成员工具和通用禁用项未放宽。精确结果在[deployment.json](deployment.json)。合并后人格回归47项、文档归属9项通过；证据全归属，脚本索引205项一致。待主人QQ复验后沿用N4更新，不提前勾选。
+`fa0eeba`已于03:04:38同步并重启Fusion；配置2处、主人AGENTS 1份更新，12份受管人格文件对齐。四项自检、6个相关生产插件active及确认工具目录通过，testIngress保持关闭、成员工具和通用禁用项未放宽。精确结果在[deployment.json（历史材料）](README.md#historical-material)。合并后人格回归47项、文档归属9项通过；证据全归属，脚本索引205项一致。待主人QQ复验后沿用N4更新，不提前勾选。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `deployment.json` | at=2026-10-26T19:06:45.982266+00:00 | `04c1fb7e691b5ebba344c3b7e03b16afbc49fe6c` |
+| `host.json` | passed=True；at=2026-10-26T19:01:50.252Z | `928514cfafcb3174e30920c694dffc26a9aca014` |
+| `sources.json` | 未提取；以原材料及现有结论为准 | `45385fb3b84e61196dcf903ba71de66efc21edcd` |

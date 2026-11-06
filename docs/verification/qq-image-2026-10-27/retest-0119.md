@@ -2,7 +2,7 @@
 
 # QQ图片修复后真人复测（2026-10-27 01:19）
 
-结论：**N14.1真实QQ新图入站与表情外发已验收**。主人确认前端成功，并在接手会话提供截图确认图片回复符合预期；AI只读核对同一时间窗的日志、暂存文件、权限及投递账本。JPG新图成功暂存，PNG表情取得真实QQ发送回执。首次失败记录保留在[README.md](README.md)与[checks.json](checks.json)，本次结构化核对见[retest-0119.json](retest-0119.json)。
+结论：**N14.1真实QQ新图入站与表情外发已验收**。主人确认前端成功，并在接手会话提供截图确认图片回复符合预期；AI只读核对同一时间窗的日志、暂存文件、权限及投递账本。JPG新图成功暂存，PNG表情取得真实QQ发送回执。首次失败记录保留在[README.md](README.md)与[checks.json（历史材料）](README.md#historical-material)，本次结构化核对见[retest-0119.json（历史材料）](README.md#historical-material)。
 
 版本：基线`57fb6c9ba0a20ed7e2e9b1e7bd1901b5daf95d7d`加`kurumi-qq/src/media.js`及`test/channel.test.js`定向修复；精确文件SHA-256见JSON。本报告不把同目录工作树中另一项提醒列表改动纳入图片验收。
 

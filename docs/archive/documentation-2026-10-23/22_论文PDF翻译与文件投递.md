@@ -14,7 +14,7 @@
 
 | 已完成迭代 | 结果与证据边界 |
 | --- | --- |
-| 原始工具与样稿 | 受管PDF、固定CLI、QQ/邮件附件；本人确认QQ样稿及修复邮件正文/附件可读，见[原报告](../../verification/paper-translation-2026-10-17/README.md)及[observations](../../verification/paper-translation-2026-10-17/observations.json) |
+| 原始工具与样稿 | 受管PDF、固定CLI、QQ/邮件附件；本人确认QQ样稿及修复邮件正文/附件可读，见[原报告](../../verification/paper-translation-2026-10-17/README.md)及[observations（历史材料）](../../verification/paper-translation-2026-10-17/README.md#historical-material) |
 | GPT三渠道与DeepSeek | 014/030/040短句、同厂商有界切换与官方Responses接入；DeepSeek low串行整篇通过（请求数、tokens和耗时见报告），修复结束回调后零新请求缓存生成。GPT串行失败保留，见[渠道报告](../../verification/paper-translation-2026-10-17/channel-upgrade/README.md)；协议初探单列[paper-api](../../verification/paper-api-2026-10-17/README.md) |
 | 单篇四并发 | GPT/MAX复用旧缓存完整16页；DeepSeek首轮标记失败、一次显式缓存复验生成16页。无本轮外发，不是严格冷缓存A/B，见[四并发](../../verification/paper-translation-2026-10-17/concurrency-four/README.md) |
 | 默认及双语契约 | 历史MAX两次生产失败与预算上调回执保留；现默认high、30分钟，dual选择贯通登记/发送。旧600秒是单请求总期限，不证明持续生成/无思考，见[MAX历史](../../verification/paper-translation-2026-10-17/deepseek-max-default/README.md)与[high/dual修复](../../verification/paper-translation-2026-10-17/high-dual-fix/README.md) |
@@ -36,7 +36,7 @@
 ## 未覆盖、阻塞与收尾
 
 - **B1 已验收（全文产物生成，2026-10-17）**：GPT/MAX完整16页由缓存续验生成；当前GPT/high另有独立冷译文缓存完整23页、19页各一次提交成功证据，耗时/用量见顶部。MAX冷缓存全文、长时间稳定性及全文人工语言/公式校对仍未覆盖；此前串行超时与未知用量回执保留。
-- **B2 已验收（2026-10-17）**：本人确认修复邮件正文正常、PDF 以附件收到且可打开，第一页原文/译文排版正常；与此前QQ样稿收件相互独立，不扩大为全文质量验收。反馈摘要见[observations.json](../../verification/paper-translation-2026-10-17/observations.json)。
+- **B2 已验收（2026-10-17）**：本人确认修复邮件正文正常、PDF 以附件收到且可打开，第一页原文/译文排版正常；与此前QQ样稿收件相互独立，不扩大为全文质量验收。反馈摘要见[observations.json（历史材料）](../../verification/paper-translation-2026-10-17/README.md#historical-material)。
 - 014/030/040 均通过一次真实短句请求；原整篇验收自然故障实测 014 → 030，本次生产任务也实际使用040并取得成功响应，见顶部记录。全部顺序/共享冷却/全失败由故障注入覆盖，未专门制造单批次030 → 040故障或耗尽/吊销 Key，不能把一次成功当长期可用保证。
 - DeepSeek 官方 Flash/low 整篇已生成且抽查；当前high默认未做实际全文验收，旧MAX生产失败也保留，不能把默认调整视为输出8192不足已修复。V4 Pro 仅短句、none 未通过整篇标记校验。Grok 经主人决定不接入；不会在 GPT/DeepSeek 之间自动切换。
 - naiccc 的显式 text.format JSON 模式曾 502，GPT 保留原数组提示词加本地校验；DeepSeek 官方结构化批次已做独立实测。上游输出硬预算和实际金额仍不可验证。

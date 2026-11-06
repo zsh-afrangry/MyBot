@@ -49,3 +49,22 @@
 - `closeout.json`：最终索引、链接/私密值、源码/配置hash、无活动验收任务与改动范围检查。
 
 本轮无新增依赖/SQL/后端脚本，沿用已索引的 `chatbot/tests/papers/acceptance.mjs`。不测试第二篇、不新增邮件/QQ投递、不重打恢复点、不变更文档23。长期压力、八并发等未覆盖。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `closeout.json` | ok=True；at=2026-10-17T15:45:56.636783+00:00 | `f4e6e3eab055d6f9778a70b792a0619614fe0cbb` |
+| `concurrency-tests.txt` | 未提取；以原材料及现有结论为准 | `5b559f0a2b3c5f23235db577d7f06a27b0c8c929` |
+| `context.json` | at=2026-10-17T15:24:22.400177+00:00 | `7cb84b63e1dd26d96759df718978ec6da681add9` |
+| `engine-tests.txt` | 未提取；以原材料及现有结论为准 | `62001ed88aacde39bc2b9f0406d1baa883840a4c` |
+| `node-tests.txt` | 未提取；以原材料及现有结论为准 | `9a43471ad2080d8b14a7718c7e74b3ba0cf3d019` |
+| `reliability-tests.txt` | 未提取；以原材料及现有结论为准 | `658e9263bd3fce4167a09d3e057239a1557c65f1` |
+| `responses-tests.txt` | 未提取；以原材料及现有结论为准 | `d1f717b983c0dd7a9d13d9a20cf8f6be717ebb6c` |
+| `results.json` | at=2026-10-17T15:42:55.299818+00:00 | `f11b90f4fcb5c4eac845ffb131338afa79aad89d` |
+| `runtime-checks.json` | at=2026-10-17T15:26:23.745Z | `f888aab8bc2f12b42f1dca41b7917f6126ee6d43` |
+| `tail-observation.json` | at=2026-10-17T15:36:07.614023+00:00 | `a6740a65fe5a19d70aca9facf8ab0a52cd5c76e9` |

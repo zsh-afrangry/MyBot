@@ -10,14 +10,14 @@
 
 | 证据 | 结果与边界 |
 | --- | --- |
-| [channels-api.json](channels-api.json) | 014/030/040 各一次真实短句 Responses 成功：8.336/4.418/5.433 秒、91/188/205 已报告 tokens；均为 gpt-6.1-sol/max，只证明该次可用 |
-| [gpt-full/acceptance.json](gpt-full/acceptance.json) | `job_a51b4c45cedd67c31c9fc54f`，1800.748 秒超时；41 请求/87359 已报告 tokens/3 次未知用量。014 用 24 次、030 用 17 次，实际在 server_error 与 HTTP524 后两次 014 → 030；014 冷却到期恢复。030未失败，未触发040。段落60.52%/总66.93%，无完整译稿；不自动付费复试 |
-| [deepseek-api.json](deepseek-api.json)、[deepseek-pro-api.json](deepseek-pro-api.json) | 官方 Flash/none、V4 Pro/none 各一次真实短句成功：0.591/0.898 秒、29/28 tokens；不是两种模型全文通过 |
-| [deepseek-batch-api.json](deepseek-batch-api.json)、[deepseek-structured-api.json](deepseek-structured-api.json) | 合成 JSON 批次；后一份使用官方原生 text.format=json_schema，本地条数/ID/公式样式校验通过 |
-| [deepseek-low/acceptance.json](deepseek-low/acceptance.json) | Flash/low 105 个实际请求均完成，136595 已报告 tokens，458.441 秒；无渠道/批次/占位符失败。Save PDF100% 后因本次新增取消适配遗漏 finish_callback 而 TypeError，原任务仍如实记 failed；成功译文缓存保留 |
-| [deepseek-layout/acceptance.json](deepseek-layout/acceptance.json) | 35.045 秒/0请求/0tokens，复用成功缓存定位上述结束错误。安全堆栈定位 ProgressMonitor.on_finish，不记录异常原文/正文；不是又一次付费翻译 |
-| [deepseek-final/acceptance.json](deepseek-final/acceptance.json) | 修复结束回调后 `job_3f4e489ccd6d69d2f92be1b5` succeeded；31.047 秒、0新增请求/用量，缓存生成 mono/dual 各16页。实际翻译工作耗时458.441秒，不能宣传为31秒或约1分钟 |
-| [deepseek-final/quality/checks.json](deepseek-final/quality/checks.json) 及 quality/ 全部文件 | 页数/大小/哈希匹配，16页均有中文，提取0替换字符。已查看 mono/dual 第1/8/16页共6图：正文可读、抽样数值表存在；作者/单位间距欠佳、部分术语/换行需校对。Poppler有字体类型警告。不代表整篇语义/公式/出版质量通过 |
+| [channels-api.json（历史材料）](README.md#historical-material) | 014/030/040 各一次真实短句 Responses 成功：8.336/4.418/5.433 秒、91/188/205 已报告 tokens；均为 gpt-6.1-sol/max，只证明该次可用 |
+| [gpt-full/acceptance.json（历史材料）](gpt-full/README.md#historical-material) | `job_a51b4c45cedd67c31c9fc54f`，1800.748 秒超时；41 请求/87359 已报告 tokens/3 次未知用量。014 用 24 次、030 用 17 次，实际在 server_error 与 HTTP524 后两次 014 → 030；014 冷却到期恢复。030未失败，未触发040。段落60.52%/总66.93%，无完整译稿；不自动付费复试 |
+| [deepseek-api.json（历史材料）](README.md#historical-material)、[deepseek-pro-api.json（历史材料）](README.md#historical-material) | 官方 Flash/none、V4 Pro/none 各一次真实短句成功：0.591/0.898 秒、29/28 tokens；不是两种模型全文通过 |
+| [deepseek-batch-api.json（历史材料）](README.md#historical-material)、[deepseek-structured-api.json（历史材料）](README.md#historical-material) | 合成 JSON 批次；后一份使用官方原生 text.format=json_schema，本地条数/ID/公式样式校验通过 |
+| [deepseek-low/acceptance.json（历史材料）](deepseek-low/README.md#historical-material) | Flash/low 105 个实际请求均完成，136595 已报告 tokens，458.441 秒；无渠道/批次/占位符失败。Save PDF100% 后因本次新增取消适配遗漏 finish_callback 而 TypeError，原任务仍如实记 failed；成功译文缓存保留 |
+| [deepseek-layout/acceptance.json（历史材料）](deepseek-layout/README.md#historical-material) | 35.045 秒/0请求/0tokens，复用成功缓存定位上述结束错误。安全堆栈定位 ProgressMonitor.on_finish，不记录异常原文/正文；不是又一次付费翻译 |
+| [deepseek-final/acceptance.json（历史材料）](deepseek-final/README.md#historical-material) | 修复结束回调后 `job_3f4e489ccd6d69d2f92be1b5` succeeded；31.047 秒、0新增请求/用量，缓存生成 mono/dual 各16页。实际翻译工作耗时458.441秒，不能宣传为31秒或约1分钟 |
+| [deepseek-final/quality/checks.json（历史材料）](deepseek-final/quality/README.md#historical-material) 及 quality/ 全部文件 | 页数/大小/哈希匹配，16页均有中文，提取0替换字符。已查看 mono/dual 第1/8/16页共6图：正文可读、抽样数值表存在；作者/单位间距欠佳、部分术语/换行需校对。Poppler有字体类型警告。不代表整篇语义/公式/出版质量通过 |
 
 DeepSeek 这次实测消耗低于生产默认的 200 请求/150000 已报告 tokens/1200秒，但运行的**验收脚本限额**为300/200000/1800，不能冒称在生产限额下执行了完整真人链路。GPT默认不变；不存在 GPT → DeepSeek 自动回退。none实际论文标记不稳，因此DeepSeek默认low；显式none仍如实执行，不自动升级/重跑。预算统计不是账单金额保证，未知用量不能记为0。
 
@@ -32,14 +32,14 @@ DeepSeek 这次实测消耗低于生产默认的 200 请求/150000 已报告 tok
 
 | 文件 | 已证明的范围 |
 | --- | --- |
-| [paper-node-tests.txt](paper-node-tests.txt) | 该阶段源码 Node26/26：厂商默认/冲突、凭据隔离/原子合并、任务/产物、受管文件、附件/本地TLS SMTP、边界与恢复隔离；无真实外发 |
-| [responses-final-tests.txt](responses-final-tests.txt) | 20/20，含渠道有界切换/冷却/预算、未知用量、官方配置与凭据/格式；网络注入 |
-| [engine-tests.txt](engine-tests.txt) | 9/9，实际安装 BabelDOC0.6.2 的缓存、批次/标记及正常结束/取消契约；API模拟 |
-| [host-final.json](host-final.json) | 真实隔离 OpenClaw/主模型四轮：列文件、GPT默认且仅dual一份、会话重置后不重发、DeepSeek/low且仅生成。翻译/OneBot模拟；无真实翻译API或QQ/邮件 |
-| [capture-final.json](capture-final.json) | 最终生产捕获runner在真实Bubblewrap中导入固定Python、双厂商注册表；engine.py/responses.py/profiles.json哈希与源码一致。无凭据/API/模型/外发 |
-| [deployment-final.json](deployment-final.json)、[health.json](health.json) | 最终重载2026-10-17 12:59:58（Asia/Shanghai），运行健康、QQ连接正常、testIngress=false；凭据四个名称均存在且0600，不记录值 |
-| [dependencies.txt](dependencies.txt)、[sync-config.txt](sync-config.txt)、[sync-persona.txt](sync-persona.txt) | 依赖自持、受管配置0漂移、人格四文件对齐；不等于模型/实际交付全验收 |
-| [doc-links.json](doc-links.json)、[closeout.json](closeout.json) | 本轮维护文档的本地目标存在检查、脚本/证据分类、差异/私密值检查与提交范围；不验证远端链接、标题锚点或人工分类的语义正确性 |
+| [paper-node-tests.txt（历史材料）](README.md#historical-material) | 该阶段源码 Node26/26：厂商默认/冲突、凭据隔离/原子合并、任务/产物、受管文件、附件/本地TLS SMTP、边界与恢复隔离；无真实外发 |
+| [responses-final-tests.txt（历史材料）](README.md#historical-material) | 20/20，含渠道有界切换/冷却/预算、未知用量、官方配置与凭据/格式；网络注入 |
+| [engine-tests.txt（历史材料）](README.md#historical-material) | 9/9，实际安装 BabelDOC0.6.2 的缓存、批次/标记及正常结束/取消契约；API模拟 |
+| [host-final.json（历史材料）](README.md#historical-material) | 真实隔离 OpenClaw/主模型四轮：列文件、GPT默认且仅dual一份、会话重置后不重发、DeepSeek/low且仅生成。翻译/OneBot模拟；无真实翻译API或QQ/邮件 |
+| [capture-final.json（历史材料）](README.md#historical-material) | 最终生产捕获runner在真实Bubblewrap中导入固定Python、双厂商注册表；engine.py/responses.py/profiles.json哈希与源码一致。无凭据/API/模型/外发 |
+| [deployment-final.json（历史材料）](README.md#historical-material)、[health.json（历史材料）](README.md#historical-material) | 最终重载2026-10-17 12:59:58（Asia/Shanghai），运行健康、QQ连接正常、testIngress=false；凭据四个名称均存在且0600，不记录值 |
+| [dependencies.txt（历史材料）](README.md#historical-material)、[sync-config.txt（历史材料）](README.md#historical-material)、[sync-persona.txt（历史材料）](README.md#historical-material) | 依赖自持、受管配置0漂移、人格四文件对齐；不等于模型/实际交付全验收 |
+| [doc-links.json（历史材料）](README.md#historical-material)、[closeout.json（历史材料）](README.md#historical-material) | 本轮维护文档的本地目标存在检查、脚本/证据分类、差异/私密值检查与提交范围；不验证远端链接、标题锚点或人工分类的语义正确性 |
 
 该阶段回归合计55/55；原报告中的112、54项是早期时点回执，本轮未重跑。`tool-fields-tests.txt` 是字段说明调整后的中间定向回归，最终以 Node26/26为准。`paper-node-phase1.txt`、`responses-tests.txt`、`engine-phase1.txt` 为阶段一的20/17/4通过记录，未覆盖后续DeepSeek最终实现。
 
@@ -66,3 +66,39 @@ DeepSeek 这次实测消耗低于生产默认的 200 请求/150000 已报告 tok
 - DeepSeek完整产物未向本人实际发送；本人真实上传→主模型→真实翻译→收件的完整链路、真实邮件带码确认往返、整篇人工语义/公式校对未覆盖。
 - 030→040的真实故障、真实额度耗尽/吊销未制造；注入覆盖全部顺序/冷却/预算。V4 Pro全文、none全文成功未证明；Grok未实现。
 - GPU/OCR、超过4并发压力、新功能完整灾难恢复和第三方账单硬上限未验收；恢复点未重打。旧系统和文档23开发未改。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `capture-final.json` | ok=True；exitCode=0；at=2026-10-17T05:02:52.375Z | `af88d6859847a8b2b5a6427871d443077f3e372a` |
+| `capture-smoke-fixed.json` | ok=True；exitCode=0；at=2026-10-17T04:54:33.881Z | `5a8843294a90981c74abaf474b864429026fc782` |
+| `capture-smoke.json` | ok=False；exitCode=1；at=2026-10-17T04:53:28.414Z | `a50f64c46a8c2c05bec6e862b7faa903d9def89c` |
+| `channels-api.json` | ok=True；at=2026-10-17T04:27:54Z | `f3049b6181121024e5d8cc11162354933e80fa19` |
+| `closeout.json` | 未提取；以原材料及现有结论为准 | `45bfb7937362faef1123fe3ca5769119bebe0e5c` |
+| `deepseek-api.json` | ok=True；at=2026-10-17T04:34:47Z | `522c23436d9e57383c4bc0864830982e05517895` |
+| `deepseek-assets-prewarm.json` | 未提取；以原材料及现有结论为准 | `769ff57cd69aaf792cf38d54ef8cc70bc5fe6dae` |
+| `deepseek-batch-api.json` | ok=True；at=2026-10-17T04:42:11Z | `3b3ddb24566d547c0af48d3c0e22aaa212fc396f` |
+| `deepseek-pro-api.json` | ok=True；at=2026-10-17T04:35:02Z | `f3ebaf4bc285834e1a7a9cef4bcf70a337f6fdbb` |
+| `deepseek-structured-api.json` | ok=True；at=2026-10-17T04:45:46Z | `7fd05bc097567d5300c84fd23e1cac029c2931dc` |
+| `dependencies.txt` | 未提取；以原材料及现有结论为准 | `b39597afebc94c642d0b90a449359c7df6c20054` |
+| `deployment-final.json` | 未提取；以原材料及现有结论为准 | `91c7e9c830ca18934003509d45477cec48867e1c` |
+| `doc-links.json` | 未提取；以原材料及现有结论为准 | `7086f16a3435f12ac06058257cfc39ed4c426db5` |
+| `engine-phase1.txt` | 未提取；以原材料及现有结论为准 | `49a2a64b7061a13a08076de4073b8b99d1dcf416` |
+| `engine-tests.txt` | 未提取；以原材料及现有结论为准 | `a61b11878ce2cc83d8fb52076108dd4acf83305e` |
+| `health.json` | ok=True；at=2026-10-17T05:02:45.159Z | `1cbf2c8217acb6ea4248446e69e38008d5ab9e40` |
+| `host-final.json` | passed=True；at=2026-10-17T04:54:33.912Z | `c98337b6f47c5c2b5ef5d37953eba2b7bf59c35d` |
+| `host-fixed.json` | passed=True；at=2026-10-17T04:40:01.042Z | `a947ad3224ad52cc8931cb8b9fefe855b9608486` |
+| `host-low.json` | passed=False；at=2026-10-17T04:52:10.492Z | `de42eb512ffdf7c44833b6453d794a02c6cf848e` |
+| `host.json` | passed=False；at=2026-10-17T04:36:07.499Z | `57ee4db53c2063fd3833eab2f1731e8a86231f11` |
+| `paper-node-phase1.txt` | 未提取；以原材料及现有结论为准 | `cff92709a00d8b5e4efe16f797f540e2a36967e2` |
+| `paper-node-tests.txt` | 未提取；以原材料及现有结论为准 | `1c0c5c462423ced2349499972be9609fd7b87e1f` |
+| `responses-final-tests.txt` | 未提取；以原材料及现有结论为准 | `1332b6bba51686edd5cfd924d0a7cc445578d684` |
+| `responses-tests.txt` | 未提取；以原材料及现有结论为准 | `23f2790d0d22792df0d46f997b6425e5e17c55fa` |
+| `sync-config.txt` | 未提取；以原材料及现有结论为准 | `f213f317a97141af0a82ec853632b0f9b6ca0d7f` |
+| `sync-persona.txt` | 未提取；以原材料及现有结论为准 | `60f644b6d0c52317a22a3d538d21f5277e1b1a06` |
+| `tool-fields-tests.txt` | 未提取；以原材料及现有结论为准 | `b07c215e9f07a0ccd91093efbfbed97b4e990c19` |

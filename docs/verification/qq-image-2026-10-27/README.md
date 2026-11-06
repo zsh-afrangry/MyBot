@@ -1,6 +1,6 @@
 # QQ图片收发真人验收（2026-10-27）
 
-> 以下保留00:25首次失败时的原始结论与检查结果。01:19修复后真人复测及接手核对见[复测报告](retest-0119.md)，对应记录为[retest-0119.json](retest-0119.json)。本页的“未改代码”等表述只适用于首次核对。
+> 以下保留00:25首次失败时的原始结论与检查结果。01:19修复后真人复测及接手核对见[复测报告](retest-0119.md)，对应记录为[retest-0119.json（历史材料）](README.md#historical-material)。本页的“未改代码”等表述只适用于首次核对。
 
 范围：文档10「QQ图片与引用」与[待办 N14](../../待办清单.md#n14)中的“真实QQ新图片”一项。方式是离线回归，加上主人在QQ里手动测试（主人发一张新图、要一个表情）。AI只读核对账本、权限日志、暂存目录和运行日志，过程中不发消息，不改配置，不重启服务，也没有运行 `scripts/fusion/test-*.mjs`。本文不粘贴聊天原文和图片内容。
 
@@ -8,7 +8,7 @@
 
 ## 离线回归
 
-2026-10-27 00:21:50，逐个指定 `chatbot/plugins/kurumi-qq/test/` 下的 `channel`、`stickers`、`presentation` 三个测试文件，共19项，全部通过。这三个文件只使用临时夹具和本地HTTP，不连运行目录。原始数据见 [checks.json](checks.json)。
+2026-10-27 00:21:50，逐个指定 `chatbot/plugins/kurumi-qq/test/` 下的 `channel`、`stickers`、`presentation` 三个测试文件，共19项，全部通过。这三个文件只使用临时夹具和本地HTTP，不连运行目录。原始数据见 [checks.json（历史材料）](README.md#historical-material)。
 
 ## 测试前基线
 
@@ -30,4 +30,15 @@
 - 2026-10-05 的出站表情验收和CDN下载能通过，说明当时这些域名还没有走Fake-IP。`runtime.log` 中这两个QQ域名最早的拦截记录就是本次测试。
 - 已有先例：2026-10-11 天气插件遇到同类问题（提交 `6faea7a`），修法是对单个精确Host使用 `ssrfPolicyFromHttpBaseUrlFakeIpHostnameAllowlist` 配合 `trusted_env_proxy`。`saveRemoteMedia` 的选项支持 `ssrfPolicy`。本次只做核对，**没有改代码**。
 
-完整计数与ID见 [checks.json](checks.json)。
+完整计数与ID见 [checks.json（历史材料）](README.md#historical-material)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | 未提取；以原材料及现有结论为准 | `0e3886013872d01eab6ab56b4cc989024ced0ffa` |
+| `retest-0119.json` | 未提取；以原材料及现有结论为准 | `cc45d0baa4ea1d635313e81989507a7367d50a22` |

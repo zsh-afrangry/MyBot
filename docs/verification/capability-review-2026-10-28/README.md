@@ -8,16 +8,16 @@
 
 | 检查项 | 结果与依据 |
 | --- | --- |
-| 插件装配 | 本地15份manifest；生产启用14个本地插件及Tavily，15个均为active。manifest声明工具或provider，工具归属见[生产目录](production-catalog.json) |
+| 插件装配 | 本地15份manifest；生产启用14个本地插件及Tavily，15个均为active。manifest声明工具或provider，工具归属见[生产目录（历史材料）](README.md#historical-material) |
 | 独立生命周期 | 四个个人领域全开及分别禁用共5组真实Gateway通过；禁用某领域不移除其它领域工具/确认后端。E7启用/禁用2组通过，启动无首次抓取并正常停止。论文异步stop、邮件确认注册注销在本轮离线宿主服务管理器回归中覆盖 |
-| 依赖方向 | 扫描152个非生成生产JS/TS文件，无共享包反向导入插件/部署脚本。仅一处跨插件直接导入：论文组合入口→QQ公开`delivery.js`；没有导入其它插件`src`。静态字面量扫描范围见[依赖检查](imports.json)，不当作任意动态数据流证明 |
+| 依赖方向 | 扫描152个非生成生产JS/TS文件，无共享包反向导入插件/部署脚本。仅一处跨插件直接导入：论文组合入口→QQ公开`delivery.js`；没有导入其它插件`src`。静态字面量扫描范围见[依赖检查（历史材料）](README.md#historical-material)，不当作任意动态数据流证明 |
 | 后端分层 | 共享能力归packages；E7分别由index/service/query/policy/client/store注册、编排、投影、约束、取数和缓存。需要替换的Policy/Store在组合入口选择，知识图谱走显式异步HTTP边界 |
 | 适配器一致性 | 替换策略/存储覆盖工具、调度器和固定runner；未知实现拒绝，不静默回退。同步Store拒绝Promise，失败回滚与revision/事务/幂等回归通过。同步注册机制不承诺所有异步后端可直接替换 |
 | 身份分级 | 唯一授权来源编译为运行策略；owner、两个member及其Agent/会话边界保留，群聊关闭。生产策略本地求值确认E7六类action仅owner获准，成员拒绝；没有执行真实业务调用 |
 | 操作与执行分级 | 读取、维护、邮件发送、后台研究/代码、管理命令各有权限映射；未知工具/action拒绝。宿主强制策略覆盖动态工具内层调用，领域执行处复核；后台只接受已登记委托通道 |
 | 确认与直接维护 | 一次性提醒、Profile/行程及邮件发送经共享确认层；列表、账单的明确维护按现行规则执行。回归检查预览回执、当前请求、有效期及事务消费，不将所有写入强行改为同一种确认方式 |
 | 受限能力 | main的read/write/edit/apply_patch/exec/process/message/sessions_spawn仍禁用；E7无发图权限。`testIngress=false`，未知工具、尚未实现的E7 action和e7_image在实际生产策略求值中均拒绝 |
-| 配置与运行 | 健康、固定依赖、配置和人格四项检查通过；只读元数据与离线检查摘要见[checks.json](checks.json) |
+| 配置与运行 | 健康、固定依赖、配置和人格四项检查通过；只读元数据与离线检查摘要见[checks.json（历史材料）](README.md#historical-material) |
 
 工具目录的`includePlugins`会列出未授权或仅后台使用的已安装工具，目录出现名称不代表该身份可执行。权限依据仍是Agent上限、强制宿主策略与领域检查。
 
@@ -48,7 +48,7 @@ node chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs --out /ab
 node chatbot/tests/e7/acceptance-host.mjs --out /absolute/new/e7-host.json
 ```
 
-回执：[四领域5组](domains-host.json)、[E7两组](e7-host.json)。生产使用`plugins.list`和`tools.catalog`只读取元数据，并对内存中的当前授权策略求值；[production-catalog.json](production-catalog.json)不含身份号码、凭据或聊天内容。[checks.json](checks.json)保留命令、摘要、版本及相关源码哈希；完整私密运行配置不进入仓库。
+回执：[四领域5组（历史材料）](README.md#historical-material)、[E7两组（历史材料）](README.md#historical-material)。生产使用`plugins.list`和`tools.catalog`只读取元数据，并对内存中的当前授权策略求值；[production-catalog.json（历史材料）](README.md#historical-material)不含身份号码、凭据或聊天内容。[checks.json（历史材料）](README.md#historical-material)保留命令、摘要、版本及相关源码哈希；完整私密运行配置不进入仓库。
 
 ## 保留的耦合与未覆盖范围
 
@@ -69,3 +69,17 @@ node chatbot/tests/e7/acceptance-host.mjs --out /absolute/new/e7-host.json
 范围选择尚未收到回复，先按第二批文本查询整理可审阅的开发清单，见[27的开发准备](../../27_E7数据插件设计.md#第二批文本查询开发准备)。建议先角色配装/测评，再榜单/攻略/FAQ，最后GVG/宿命/礼包估值；共7个新增action，继续复用原只读工具、client和缓存。
 
 此处完成架构前置检查和开发准备；未增加新action、权限、依赖或生产配置，也未实际外发图片。图片保留N20.3独立任务；若主人选择先做图片，后续按该选择调整开发排期，不将准备顺序视为已批准全部扩展上线。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | 未提取；以原材料及现有结论为准 | `2dc7f48721e0625f8e76e01e0f47f09b41553230` |
+| `domains-host.json` | passed=True；at=2026-10-27T16:30:43.802Z | `c1e66193c64fab338146c2cf8ca001a71a6037ce` |
+| `e7-host.json` | passed=True；at=2026-10-27T16:30:43.798Z | `a8455638c9e3786aa9857e99a19f37f9df05e70f` |
+| `imports.json` | 未提取；以原材料及现有结论为准 | `08a739bc07286c5fc172373a1b186e9979c8e4e1` |
+| `production-catalog.json` | at=2026-10-27T16:31:19.702Z | `4ee7bed4ebae31ffe1d3755e22c313965ae5a199` |

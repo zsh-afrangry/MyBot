@@ -24,13 +24,29 @@
 
 ## 本地核对与证明范围
 
-实际命令、退出码、来源比对与只读自检摘要见[checks.json](checks.json)。文档检查仅证明导航、归属、正文保留与索引一致，不代替业务重新验收。
+实际命令、退出码、来源比对与只读自检摘要见[checks.json（历史材料）](README.md#historical-material)。文档检查仅证明导航、归属、正文保留与索引一致，不代替业务重新验收。
 
-- [证据覆盖](coverage.txt)、[生成索引一致性](index.txt)、[空白检查](whitespace.txt)通过；SCRIPTS维持198项，[归属元数据回归](metadata-tests.txt)9/9通过。
-- [保留核对](preservation.json)：原两份文档的50个标题锚点、17条提醒规则、代码块及内联命令/字段均保留；归档正文仅链接目标变化。528份既有非Markdown回执、全部用户原件、历史TXT正文与前两轮合并证据保持原字节；历史报告仅调整导航。
-- [链接与围栏](links.json)：101份文档中的本地文件/锚点无错误，现行旧职责指针已清理，当前编号文档12份。实际链接数量见报告，随本记录补齐而变化。
+- [证据覆盖（历史材料）](README.md#historical-material)、[生成索引一致性（历史材料）](README.md#historical-material)、[空白检查（历史材料）](README.md#historical-material)通过；SCRIPTS维持198项，[归属元数据回归（历史材料）](README.md#historical-material)9/9通过。
+- [保留核对（历史材料）](README.md#historical-material)：原两份文档的50个标题锚点、17条提醒规则、代码块及内联命令/字段均保留；归档正文仅链接目标变化。528份既有非Markdown回执、全部用户原件、历史TXT正文与前两轮合并证据保持原字节；历史报告仅调整导航。
+- [链接与围栏（历史材料）](README.md#historical-material)：101份文档中的本地文件/锚点无错误，现行旧职责指针已清理，当前编号文档12份。实际链接数量见报告，随本记录补齐而变化。
 - 四项收尾自检从规范目录`/home/afrangry/kurumi-fusion`以只读检查模式执行并通过。此worktree未安装SDK；比对的13份关键来源有11份一致，规范目录的`config/runtime.config.json`与`config/access-control.json`存在本工作树未包含的独立改动。这些自检仅说明规范目录及运行态，不证明工作树与运行配置完全一致；本轮没有复制、同步或覆盖这些配置。
 
 变更保留在当前工作树，未提交、未推送；文档保留与归属检查不表示业务部署或验收范围发生变化。
 
 返回[文档入口](../../README.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | ok=True；at=2026-10-27 (Asia/Shanghai) | `73ca6d271333e8ebdd32487a1f89da8e92b131c2` |
+| `coverage.txt` | 未提取；以原材料及现有结论为准 | `7ca22011903b2b86d0a9fd0442f638247367e869` |
+| `index.txt` | 未提取；以原材料及现有结论为准 | `fc5c626fbe535e1f22c20eede8ae9b23ea97148a` |
+| `links.json` | ok=True；at=2026-10-27 (Asia/Shanghai) | `6cfb71401a49a85258227924e2f5d56cd9c20ad2` |
+| `metadata-tests.txt` | 未提取；以原材料及现有结论为准 | `76ee4a79c20f1a4ea55ed91c5db1fc87225b75fd` |
+| `preservation.json` | ok=True | `e525662dab8eb9d7ffb14cdb6f9f7c7d28bc6a49` |
+| `whitespace.txt` | 未提取；以原材料及现有结论为准 | `e69de29bb2d1d6434b8b29ae775ad8c2e48c5391` |

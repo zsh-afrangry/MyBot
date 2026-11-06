@@ -49,3 +49,26 @@ node scripts/fusion/restore-verify.mjs --backup /home/afrangry/kurumi-backups/20
 SIGKILL/断电不能依靠进程内清理恢复服务；保留 INCOMPLETE 和锁，按 docs/16 检查服务并处理陈旧锁。Git补丁恢复最终工作区内容，不保留暂存区分类。
 
 两套旧原件及旧备份未被删除。用户 `docs/example.md` 修改保持独立且被新恢复点捕获。本轮仅本地提交，没有创建远端或推送；旧 bridge 远端不可访问的问题不由本轮恢复修复解决。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `backup-interruption.json` | exitCode=143 | `36e60ed121aa600b7433730c09b87caab4aff432` |
+| `channel-tools-tests.txt` | 未提取；以原材料及现有结论为准 | `8b6d7b3e9762eda38c6547292a0d227d29e7bb01` |
+| `config-selftest.txt` | 未提取；以原材料及现有结论为准 | `9eeaefef6e2a2cd0a231946ee180fee84fd3569c` |
+| `dependencies.txt` | 未提取；以原材料及现有结论为准 | `f999fac79e56adb410eedce4d232a5bf994526fc` |
+| `domain-0.txt` | 未提取；以原材料及现有结论为准 | `7a8047df02453cbc3bdc99b8c57c453667e11e62` |
+| `domain-1.txt` | 未提取；以原材料及现有结论为准 | `b4c25929c0cb5760639bf281a052d2cf35ad181f` |
+| `domain-2.txt` | 未提取；以原材料及现有结论为准 | `ae3e1b43ea0c36e99fb9790b22daa2802e9a8c28` |
+| `health-after-interruption.json` | ok=True；at=2026-10-05T18:14:09.149Z | `6cde7f6ba4465f711607b7f5476d054501d07ad5` |
+| `health-final.json` | ok=True；at=2026-10-05T18:23:43.050Z | `e32ba66b31d42a5c1bfc2bc40c325230da428d5e` |
+| `isolation-result.json` | ok=True | `b7a94ee075c23e79f21f27dcca61be564b9d4d8f` |
+| `recovery-tests.txt` | 未提取；以原材料及现有结论为准 | `ac0c92facadb362e707430f2c4229be192b678b7` |
+| `restore-final.txt` | 未提取；以原材料及现有结论为准 | `049c067aeccdf9abc2c70ab255fd32803137ba15` |
+| `snapshot-summary.json` | 未提取；以原材料及现有结论为准 | `d2c0194bd5eb5ef8f49d81405a2e70f4b988c52a` |
+| `verification.json` | ok=True | `48d68c1bbe1512897454fbfd678b98c21838c1af` |

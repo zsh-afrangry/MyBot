@@ -659,42 +659,42 @@
       "category": "历史领域验收"
     },
     {
-      "path": "2026-09-10_文档与现状复核.txt",
+      "path": "2026-09-10_文档与现状复核.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "2026-09-26_搜索实验AB重新测试.txt",
+      "path": "2026-09-26_搜索实验AB重新测试.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "2026-09-30_Codex与OpenClaw原生搜索对照.txt",
+      "path": "2026-09-30_Codex与OpenClaw原生搜索对照.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "2026-09-30_OpenClaw联网故障根因与修复.txt",
+      "path": "2026-09-30_OpenClaw联网故障根因与修复.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "2026-10-01_A组改造记录.txt",
+      "path": "2026-10-01_A组改造记录.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "2026-10-01_OpenClaw升级与A3删除记录.txt",
+      "path": "2026-10-01_OpenClaw升级与A3删除记录.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
@@ -744,7 +744,7 @@
       "category": "当前有效"
     },
     {
-      "path": "agent-confirmation-acceptance.json",
+      "path": "agent-confirmation-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -752,14 +752,14 @@
       "category": "历史领域验收"
     },
     {
-      "path": "agent-errors-acceptance.json",
+      "path": "agent-errors-acceptance.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "clarification-gate-deployment.json",
+      "path": "clarification-gate-deployment.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -767,7 +767,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "confirmation-acceptance.json",
+      "path": "confirmation-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -775,7 +775,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "confirmation-instruction-planning-acceptance.json",
+      "path": "confirmation-instruction-planning-acceptance.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -783,7 +783,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "confirmation-instruction-reminder-acceptance.json",
+      "path": "confirmation-instruction-reminder-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -791,7 +791,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "confirmation-instruction-reminder-initial.json",
+      "path": "confirmation-instruction-reminder-initial.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -799,7 +799,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "controlled-reply-planning-acceptance.json",
+      "path": "controlled-reply-planning-acceptance.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -807,7 +807,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "controlled-reply-reminder-acceptance.json",
+      "path": "controlled-reply-reminder-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -815,7 +815,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "controlled-reply-reminder-fixed.json",
+      "path": "controlled-reply-reminder-fixed.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -823,7 +823,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "d16-d21-deployment.json",
+      "path": "d16-d21-deployment.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -831,7 +831,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "natural-language-reminder-a.json",
+      "path": "natural-language-reminder-a.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -839,7 +839,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "planning-capability-acceptance.json",
+      "path": "planning-capability-acceptance.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -847,7 +847,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "planning-capability-initial.json",
+      "path": "planning-capability-initial.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -855,7 +855,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "planning-title-acceptance.json",
+      "path": "planning-title-acceptance.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -863,7 +863,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "profile-geo-agent-acceptance.json",
+      "path": "profile-geo-agent-acceptance.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -871,7 +871,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "profile-geo-deployment.json",
+      "path": "profile-geo-deployment.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -879,7 +879,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "profile-geo-domain-acceptance.json",
+      "path": "profile-geo-domain-acceptance.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -887,7 +887,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "profile-geo-natural-fixed.json",
+      "path": "profile-geo-natural-fixed.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -895,7 +895,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "profile-geo-natural-initial.json",
+      "path": "profile-geo-natural-initial.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -903,7 +903,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "profile-geo-provider-probe.json",
+      "path": "profile-geo-provider-probe.md",
       "documents": [
         "docs/2_天气模块的开发.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -911,7 +911,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "proposal-expiry-acceptance.json",
+      "path": "proposal-expiry-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -919,7 +919,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "public-id-redaction-acceptance.json",
+      "path": "public-id-redaction-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -927,7 +927,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "qq-confirmation-acceptance.json",
+      "path": "qq-confirmation-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -935,7 +935,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "real-cron-acceptance.json",
+      "path": "real-cron-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -943,7 +943,7 @@
       "category": "历史领域验收"
     },
     {
-      "path": "reminder-expiry-acceptance.json",
+      "path": "reminder-expiry-acceptance.md",
       "documents": [
         "docs/3_个人提醒.txt",
         "docs/21_后端职责分层与代码整理.md"
@@ -951,42 +951,42 @@
       "category": "历史领域验收"
     },
     {
-      "path": "retrieval-review-20261004.json",
+      "path": "retrieval-review-20261004.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "search-agent-acceptance.json",
+      "path": "search-agent-acceptance.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "search-context-acceptance.json",
+      "path": "search-context-acceptance.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "search-error-agent-acceptance.json",
+      "path": "search-error-agent-acceptance.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "search-error-attribution-acceptance.json",
+      "path": "search-error-attribution-acceptance.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
     },
     {
-      "path": "search-provider-acceptance.json",
+      "path": "search-provider-acceptance.md",
       "documents": [
         "docs/8_检索功能重构.txt"
       ],

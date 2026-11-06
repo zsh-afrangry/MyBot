@@ -28,19 +28,19 @@
 
 | 验证 | 修复前 | 修复后 | 原始证据 |
 | --- | --- | --- | --- |
-| 确认核心 | 18过 / 1失败；复用 provider 后旧句柄删掉新注册 | 19/19，包括后续真实确认路由、重复注销和原接收对象 | [core-before.txt](core-before.txt)、[core-after.txt](core-after.txt) |
-| 实际宿主服务管理器 | 0过 / 3失败；停止未转交、论文仍在线、邮件后端残留 | 3/3：异步清理等待、活动/队列中止、零投递/不重放；邮件停止/重启/重复停止；重复ID失败不误删他人注册；注册后日志异常由宿主清理 | [host-before.txt](host-before.txt)、[host-after.txt](host-after.txt) |
-| Node相关回归 | 原有用例遗漏插件到宿主停止链路，两个邮件夹具接受了错误约定 | 149/149，包含上述3项、适配器、分层/确认事务、论文任务/邮件附件及全部邮件单元测试 | [node-regression.txt](node-regression.txt) |
-| 确认入口 / 天气 | 本次不改变业务规则 | 15/15、162/162 | [confirmation-tests.txt](confirmation-tests.txt)、[weather-tests.txt](weather-tests.txt) |
-| 三个TS构建 | — | 全部退出0 | [core-build.txt](core-build.txt)、[confirmation-build.txt](confirmation-build.txt)、[weather-build.txt](weather-build.txt) |
-| 四项只读运行自检 | — | 全部退出0；Gateway/QQ正常，testIngress=false，依赖自持、受管配置和12份人格文件对齐 | [health.json](health.json)、[dependencies.txt](dependencies.txt)、[config.txt](config.txt)、[persona.txt](persona.txt) |
-| 索引 / 文档 / 差异格式 | — | 脚本完整分类、boundary无矛盾；证据完整分类；本次文档本地链接和 `git diff --check` 通过 | [evidence-index.txt](evidence-index.txt)、[evidence-coverage.txt](evidence-coverage.txt)、[links.json](links.json) |
+| 确认核心 | 18过 / 1失败；复用 provider 后旧句柄删掉新注册 | 19/19，包括后续真实确认路由、重复注销和原接收对象 | [core-before.txt（历史材料）](README.md#historical-material)、[core-after.txt（历史材料）](README.md#historical-material) |
+| 实际宿主服务管理器 | 0过 / 3失败；停止未转交、论文仍在线、邮件后端残留 | 3/3：异步清理等待、活动/队列中止、零投递/不重放；邮件停止/重启/重复停止；重复ID失败不误删他人注册；注册后日志异常由宿主清理 | [host-before.txt（历史材料）](README.md#historical-material)、[host-after.txt（历史材料）](README.md#historical-material) |
+| Node相关回归 | 原有用例遗漏插件到宿主停止链路，两个邮件夹具接受了错误约定 | 149/149，包含上述3项、适配器、分层/确认事务、论文任务/邮件附件及全部邮件单元测试 | [node-regression.txt（历史材料）](README.md#historical-material) |
+| 确认入口 / 天气 | 本次不改变业务规则 | 15/15、162/162 | [confirmation-tests.txt（历史材料）](README.md#historical-material)、[weather-tests.txt（历史材料）](README.md#historical-material) |
+| 三个TS构建 | — | 全部退出0 | [core-build.txt（历史材料）](README.md#historical-material)、[confirmation-build.txt（历史材料）](README.md#historical-material)、[weather-build.txt（历史材料）](README.md#historical-material) |
+| 四项只读运行自检 | — | 全部退出0；Gateway/QQ正常，testIngress=false，依赖自持、受管配置和12份人格文件对齐 | [health.json（历史材料）](README.md#historical-material)、[dependencies.txt（历史材料）](README.md#historical-material)、[config.txt（历史材料）](README.md#historical-material)、[persona.txt（历史材料）](README.md#historical-material) |
+| 索引 / 文档 / 差异格式 | — | 脚本完整分类、boundary无矛盾；证据完整分类；本次文档本地链接和 `git diff --check` 通过 | [evidence-index.txt（历史材料）](README.md#historical-material)、[evidence-coverage.txt（历史材料）](README.md#historical-material)、[links.json（历史材料）](README.md#historical-material) |
 
 合计 **345/345** = Node149 + 确认核心19 + 确认入口15 + 天气162；宿主管理器3项已经包含在Node149，不重复计数。`host-after.txt` 内的两条失败启动日志来自预期负向用例，最终测试退出0。
 
 ## 复验入口与源码位置
 
-源码：[确认注册表](../../../chatbot/packages/confirmation-core/src/registry.ts)、[论文插件](../../../chatbot/plugins/kurumi-papers/index.js)、[邮件插件](../../../chatbot/plugins/kurumi-mail/index.js)。回归：[确认核心](../../../chatbot/packages/confirmation-core/src/confirmation.test.ts)、[真实服务管理器](../../../chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs)、邮件 [adapters](../../../chatbot/plugins/kurumi-mail/test/adapters.test.js) / [tool](../../../chatbot/plugins/kurumi-mail/test/tool.test.js) 夹具。关键源码与测试哈希见 [sources.json](sources.json)。
+源码：[确认注册表](../../../chatbot/packages/confirmation-core/src/registry.ts)、[论文插件](../../../chatbot/plugins/kurumi-papers/index.js)、[邮件插件](../../../chatbot/plugins/kurumi-mail/index.js)。回归：[确认核心](../../../chatbot/packages/confirmation-core/src/confirmation.test.ts)、[真实服务管理器](../../../chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs)、邮件 [adapters](../../../chatbot/plugins/kurumi-mail/test/adapters.test.js) / [tool](../../../chatbot/plugins/kurumi-mail/test/tool.test.js) 夹具。关键源码与测试哈希见 [sources.json（历史材料）](README.md#historical-material)。
 
 在仓库根目录先构建，再运行以下离线回归：
 
@@ -63,3 +63,30 @@ node --test chatbot/tests/domain-adapters/registry.test.mjs chatbot/tests/domain
 **本次未生产重载**，运行自检通过只证明原有运行服务健康，不能证明这些源码已经加载。需在下一次受控重启时加载，并核实在途翻译/投递；没有本次完整Gateway启停、真实模型、真人QQ/SMTP、操作系统级强杀或付费翻译子进程终止验收。论文取消/子进程已有测试不等于本次新增真实付费场景。正常关闭的内部资源清理由实际宿主管理器配合注入worker验证，不扩大为全部生命周期故障已排除。
 
 没有更改权限、DDL/确认业务策略、数据结构或外发对象，也没有重做备份恢复、更新后台副本或替换既有端到端证据。本轮没有待决策阻塞项。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `config.txt` | 未提取；以原材料及现有结论为准 | `eada40e092dd018889c932dd1f59879d51a09754` |
+| `confirmation-build.txt` | 未提取；以原材料及现有结论为准 | `c0fde78c57d039c78069914b1bfb111d344b3904` |
+| `confirmation-tests.txt` | 未提取；以原材料及现有结论为准 | `577ef3cd327ac9fc712a3f27f60c3297768d5a85` |
+| `core-after.txt` | 未提取；以原材料及现有结论为准 | `93b63de6f974966a7af094769c8692ee7249d755` |
+| `core-before.txt` | 未提取；以原材料及现有结论为准 | `8c16012daa6b40b4194c3aed36120d32ef6a93cb` |
+| `core-build.txt` | 未提取；以原材料及现有结论为准 | `d122bca7ca16e2e371419bd3e21b7fac5f5dd912` |
+| `dependencies.txt` | 未提取；以原材料及现有结论为准 | `b39597afebc94c642d0b90a449359c7df6c20054` |
+| `evidence-coverage.txt` | 未提取；以原材料及现有结论为准 | `0f0d67abcda773b6786ea9830d6924a761bb72d2` |
+| `evidence-index.txt` | 未提取；以原材料及现有结论为准 | `122c954f4a35f5b12e89d57e2379b7137fb2bad2` |
+| `health.json` | ok=True；at=2026-10-19T15:59:05.234Z | `d62627b6ca7f58a8088802e4a267e0ad0bf4854a` |
+| `host-after.txt` | 未提取；以原材料及现有结论为准 | `0fb2127177c284cddb78ccfccc4afb96866a126a` |
+| `host-before.txt` | 未提取；以原材料及现有结论为准 | `58ac459d33b8d640999dc364b15fa36483dae365` |
+| `links.json` | 未提取；以原材料及现有结论为准 | `bfe9f97d210ce23209b0b31e30e510dee5b3cb73` |
+| `node-regression.txt` | 未提取；以原材料及现有结论为准 | `84a4ad478bf496a86940ff34ad2dd34dade53d45` |
+| `persona.txt` | 未提取；以原材料及现有结论为准 | `75b58de3c059a531b6d1b13a6b1e7f5ca72507fd` |
+| `sources.json` | 未提取；以原材料及现有结论为准 | `b675b2267be43bf611bfbe6926a9aff8dd272ae5` |
+| `weather-build.txt` | 未提取；以原材料及现有结论为准 | `303d41177cb4a73f6a8431d92b76c879a7437f7f` |
+| `weather-tests.txt` | 未提取；以原材料及现有结论为准 | `a631925e71c59ec5e821f980e59c7a1bb0d3d065` |

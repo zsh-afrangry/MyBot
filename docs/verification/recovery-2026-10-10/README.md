@@ -95,3 +95,17 @@ node scripts/fusion/restore-verify.mjs --backup /home/afrangry/kurumi-backups/20
 - 若后续改动涉及代码、`config/`、`roles/` 或运行配置：重新制作恢复点，并在本文件追加新一节，保留旧恢复点作为历史。
 
 返回[文档入口](../../README.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `backup-EXPECTED.json` | 未提取；以原材料及现有结论为准 | `2fa0fb3585dc1fd6ff80d315a4f71faac9be798d` |
+| `backup-meta.txt` | 未提取；以原材料及现有结论为准 | `076a12f7c9ab6fc554afd0d932b76d172733e42e` |
+| `gateway-probe.log` | 未提取；以原材料及现有结论为准 | `16f4f352b1a49668e02a1e01c25acb6f554da388` |
+| `isolation-result.json` | ok=True | `b7a94ee075c23e79f21f27dcca61be564b9d4d8f` |
+| `verification.json` | ok=True | `a721b58e05118edcad14bc926296aa8b213a5ad1` |

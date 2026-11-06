@@ -1,6 +1,6 @@
 # 本机编码委托：专用插件产品试点
 
-日期：2026-10-29（Asia/Shanghai）。状态：**本地处理链与隔离宿主通过；QQ生产未启用，真人全流程待验收。** 归属：[文档28](../../../28_本机编码工具委托与实验任务.md)、[N23](../../../待办清单.md#n23)、[验收总表](../../../16_验收与测试总表.md)。代码基线为`76d5030`加本轮实现；具体文件版本由[文件哈希](implementation-hashes.json)固定。
+日期：2026-10-29（Asia/Shanghai）。状态：**本地处理链与隔离宿主通过；QQ生产未启用，真人全流程待验收。** 归属：[文档28](../../../28_本机编码工具委托与实验任务.md)、[N23](../../../待办清单.md#n23)、[验收总表](../../../16_验收与测试总表.md)。代码基线为`76d5030`加本轮实现；具体文件版本由[文件哈希（历史材料）](README.md#historical-material)固定。
 
 主人在接口局部测试后要求测试全流程。核对发现旧`kurumi_task`未接DSH，[准备报告](../full-flow-readiness-2026-10-29.md)记录了缺口。本轮补出独立、默认不启用的`kurumi-coding`/`kurumi_code`最小通道，使用DSH ACP stdio，不安装或启用acpx，不改旧项目/研究任务，不开放通用exec等能力。工作树、检查、持久任务、继续/取消、失败快照/显式回档、冻结候选、共享确认及投递状态均由产品代码处理，探针只发起调用和断言。
 
@@ -8,11 +8,11 @@
 
 | 层级 | 本轮证据与实际结果 | 不可扩大为 |
 | --- | --- | --- |
-| 离线产品/协议 | [检查记录](validation.json)：实际工具处理器、Git/SQLite、共享自然确认、私有事件sink与统一查询；本地stdio/自有进程树取消。19项通过 | 真实模型判断、QQ意图识别或所有命令安全性 |
-| 真实DSH处理链 | [live.json](live.json)：通过真实插件处理器发起，DSH实现clamp并添加测试，外部固定7个断言及项目7个测试通过后产生任务提交；同一session续接后8个项目测试通过；未确认合入被拒；测试夹具确认后合入合成项目并复验 | 真人确认、真实QQ投递或生产仓库可用 |
-| 真实指定任务取消 | [cancel.json](cancel.json)：宿主观察真实任务心跳增长，再通过工具取消；心跳停止、自有DSH运行进程退出、源目录不变 | 停止共享DSH服务、任意失联进程已恢复 |
-| 真实隔离OpenClaw | [host.json](host.json)：两轮Gateway分别启用/禁用；工具目录有/无kurumi_code，加载不启动模型任务，正常停止并释放锁 | QQ模型会正确选工具、真实外发或生产加载 |
-| 相关回归与构建 | [validation.json](validation.json)：权限/双身份隔离、账单可信runId兼容路径、日志查询、确认插件/core及构建 | 本轮全项目所有业务重新验收 |
+| 离线产品/协议 | [检查记录（历史材料）](README.md#historical-material)：实际工具处理器、Git/SQLite、共享自然确认、私有事件sink与统一查询；本地stdio/自有进程树取消。19项通过 | 真实模型判断、QQ意图识别或所有命令安全性 |
+| 真实DSH处理链 | [live.json（历史材料）](README.md#historical-material)：通过真实插件处理器发起，DSH实现clamp并添加测试，外部固定7个断言及项目7个测试通过后产生任务提交；同一session续接后8个项目测试通过；未确认合入被拒；测试夹具确认后合入合成项目并复验 | 真人确认、真实QQ投递或生产仓库可用 |
+| 真实指定任务取消 | [cancel.json（历史材料）](README.md#historical-material)：宿主观察真实任务心跳增长，再通过工具取消；心跳停止、自有DSH运行进程退出、源目录不变 | 停止共享DSH服务、任意失联进程已恢复 |
+| 真实隔离OpenClaw | [host.json（历史材料）](README.md#historical-material)：两轮Gateway分别启用/禁用；工具目录有/无kurumi_code，加载不启动模型任务，正常停止并释放锁 | QQ模型会正确选工具、真实外发或生产加载 |
+| 相关回归与构建 | [validation.json（历史材料）](README.md#historical-material)：权限/双身份隔离、账单可信runId兼容路径、日志查询、确认插件/core及构建 | 本轮全项目所有业务重新验收 |
 | QQ生产与真人 | **未执行**：配置未apply、Fusion未重启、无真实QQ入站/外发、无真人合入确认 | 本机产品链成功不计作QQ全流程通过 |
 
 真实模型开发初测与补强后的最终复测各提交编码、续接、取消一次，共**6次prompt**，不等于6次底层API调用；没有可靠累计计费回执，不推算费用。DSH为本机0.2.0-rc.2，按已有认证加载器运行，未读取或复制凭据。端到端任务回报使用记录适配器，统一runId来自合成可信钩子夹具；隔离Gateway另验加载，**没有伪称这两个层级合成了真实QQ链路**。
@@ -36,10 +36,25 @@
 
 ## 本地合入与收尾自检
 
-实现提交`4ad57e1`已本地快进合入日常主目录；7个共享文件按各自不相交改动合并，原有16个未提交文件的状态、其他任务内容及mode保持，未暂存/提交他人进度，未push。新插件按自身锁文件补齐本地依赖，未启用运行配置。主目录`health`、`verify-dependencies`、`sync-config --diff`、`sync-persona --diff`四项只读检查均退出0，配置/人格一致；679份证据归属、220项脚本索引、126份文档/2213条链接亦通过，计数包含并行文档归档任务，不能算本需求新产物数量。具体摘要见[检查记录](validation.json)。
+实现提交`4ad57e1`已本地快进合入日常主目录；7个共享文件按各自不相交改动合并，原有16个未提交文件的状态、其他任务内容及mode保持，未暂存/提交他人进度，未push。新插件按自身锁文件补齐本地依赖，未启用运行配置。主目录`health`、`verify-dependencies`、`sync-config --diff`、`sync-persona --diff`四项只读检查均退出0，配置/人格一致；679份证据归属、220项脚本索引、126份文档/2213条链接亦通过，计数包含并行文档归档任务，不能算本需求新产物数量。具体摘要见[检查记录（历史材料）](README.md#historical-material)。
 
 ## 复现入口
 
 离线：`node --test chatbot/tests/coding/*.test.mjs`。先安装/构建confirmation-core和personal-confirmation，新插件用自己的锁文件安装；OpenClaw SDK沿用仓库固定版本。隔离宿主：`node chatbot/tests/coding/acceptance-host.mjs --out /绝对路径/新报告.json`。
 
 真实模型（仅明确授权范围内）：`node chatbot/tests/coding/acceptance-live.mjs --live --output=/绝对路径/新报告.json`、`acceptance-cancel-live.mjs --live --output=...`。这两个入口没有QQ网络；不能当离线测试批量运行。`chatbot/scripts/prepare-coding-pilot.mjs --root /绝对路径/新目录`只创建合成项目和配置草案，不apply或启动服务。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `cancel.json` | ok=True；at=2026-10-29T03:45:46.426Z | `b1f5eb4356e0d8bf1ce35ea67526511b0d6dcd9a` |
+| `configuration-additions.json` | 未提取；以原材料及现有结论为准 | `efb5dba44bad505a61b4f74c9007cb1d13c08fa2` |
+| `host.json` | passed=True；at=2026-10-29T03:45:46.398Z | `13f34358e7daccb1bf0195ab54ffd45330f71664` |
+| `implementation-hashes.json` | 未提取；以原材料及现有结论为准 | `4c8770d247f71ee7ded6add95203e023af9c2fb9` |
+| `live.json` | ok=True；at=2026-10-29T03:45:46.429Z | `db186dea30f6407a031ad75b453e165325bc03aa` |
+| `validation.json` | at=2026-10-29T03:50:50.386546+00:00 | `d7527aafa79471d329d14e8dd70ac79221fcff89` |

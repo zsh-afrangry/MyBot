@@ -47,3 +47,27 @@
 - 收尾：`closeout.json` 收录349个证据全分类、169个脚本无声明冲突、7个变动Markdown的86个本地文件链接目标、10个私密值0匹配、生产捕获源码hash/预算和无活动任务检查。路径用Git NUL输出读取，含中文文档；不检查外链/锚点。该回执记录提交前审计，版本收录以随后论文范围本地提交及Git状态为准。
 
 已回填文档22/16、本页与在线汇总，按论文范围收录本地提交，不推送。失败半成品治理/断点重做经主人确认延期；DeepSeek当前high/MAX完整复验、GPT/MAX冷译文缓存全文、全文人工质量、真实本人上传→主模型→翻译全链路、长期压力/恢复仍未由本轮证明。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `captured-marker-retry-fix.json` | ok=True；exitCode=0；at=2026-10-17T13:43:43.196Z | `24f9132ff9f61be011321c783ab8a317fcdefb29` |
+| `captured-production-contract.json` | ok=True；exitCode=0；at=2026-10-17T13:11:24.526Z | `66b94abfe6fa88dbce48094b6f3a7ba43ba56aaa` |
+| `captured-recovery-round-fix.json` | ok=True；exitCode=0；at=2026-10-17T13:20:23.385Z | `5ccf234fdbcf4c5d37d94278c3fa4637f15b60ea` |
+| `captured-worker-final.json` | ok=True；exitCode=0；at=2026-10-17T13:08:19.298Z | `81de0ec679c44a53624cdbd460360319978dfd55` |
+| `captured-worker.json` | ok=True；exitCode=0；at=2026-10-17T12:51:21.152Z | `94787098c4421543d0c10d52e24bc2c2879becd3` |
+| `closeout.json` | status=verified_before_local_commit；at=2026-10-17T14:39:08.169052+00:00 | `cadaa695f7d43dd16284164799d46cf29f6eab29` |
+| `concurrency-tests.txt` | 未提取；以原材料及现有结论为准 | `060512b503f889b9618b612a4ab35805ba3d6d65` |
+| `deployment.json` | at=2026-10-17T14:20:43.568Z | `ab24634b9fe6705b05574e14b2fec3647989aed5` |
+| `engine-tests.txt` | 未提取；以原材料及现有结论为准 | `ca4522998ee0b818551f478c99b0d4421cc82aee` |
+| `network-diagnostics.json` | at=2026-10-17T13:18:12.235178+00:00 | `856fb763ce240001772db37fb6ea988e94fdaa10` |
+| `node-tests.txt` | 未提取；以原材料及现有结论为准 | `bd82499a2592a1cb8beaf208bd32c1a992d2f254` |
+| `online-results.json` | at=2026-10-17T14:34:07.892535+00:00 | `c70b74d81b4c6a3f6d1800e79797c2707bb31d63` |
+| `related-tests.txt` | 未提取；以原材料及现有结论为准 | `923b7daf298c21d53d7f8e2723257e3e6b80692b` |
+| `reliability-tests.txt` | 未提取；以原材料及现有结论为准 | `8863c000b0cbf38e64318413d32b9288ab5403c0` |
+| `responses-tests.txt` | 未提取；以原材料及现有结论为准 | `af612f373cd573426927125d34e34e84d0ac8bcc` |

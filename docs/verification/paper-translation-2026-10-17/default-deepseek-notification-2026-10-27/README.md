@@ -16,7 +16,7 @@
 
 ## 验证
 
-具体命令、数量及边界见[checks.json](checks.json)，真实隔离宿主回执见[host.json](host.json)，生产核对见[deployment.json](deployment.json)。
+具体命令、数量及边界见[checks.json（历史材料）](README.md#historical-material)，真实隔离宿主回执见[host.json（历史材料）](README.md#historical-material)，生产核对见[deployment.json（历史材料）](README.md#historical-material)。
 
 | 层级 | 结果与实际证明范围 |
 | --- | --- |
@@ -30,3 +30,15 @@
 开发首轮回归发现凭据导入默认耦合，以及GPT旧断言、worker合成密钥和工作树本地依赖解析问题；已分别修正实现、夹具和忽略依赖链接后全量通过。未将首轮失败写成业务已验收。
 
 真人复验等待主人正常使用：下一篇核对实际profile与收件；自然失败后核对主动解释、后续追问可见性与单次通知。无需为了测试制造扣费失败或耗尽预算。本轮固定模型结果不代替真实模型措辞、DeepSeek余额/密钥有效性或论文全文质量验收。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | at=2026-10-26T18:51:52.139375+00:00 | `1810c794225927b5e22445a417d87cac44fb261a` |
+| `deployment.json` | at=2026-10-26T18:54:08.519Z | `ae395ad237a894ee399edbc813bbc6e48e35bc92` |
+| `host.json` | passed=True；at=2026-10-26T18:43:37.217Z | `02981ca2298a2ceac34be8ba1d8c911edebade4b` |

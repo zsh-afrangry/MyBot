@@ -107,3 +107,17 @@ node scripts/fusion/restore-verify.mjs --backup /home/afrangry/kurumi-backups/20
   因为恢复点验证的是运行态可还原性，而这些工具不参与运行时。
 
 返回[文档入口](../../README.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `backup-EXPECTED.json` | 未提取；以原材料及现有结论为准 | `229f1e6b606671b31cf7ec8ceed78a93ac09ac8a` |
+| `backup-meta.txt` | 未提取；以原材料及现有结论为准 | `06592897643dd041f33ba5f31ed294c4d61b57e9` |
+| `gateway-probe.log` | 未提取；以原材料及现有结论为准 | `7e999fa3b0a1efa0742bb4842ac527719554c887` |
+| `isolation-result.json` | ok=True | `b7a94ee075c23e79f21f27dcca61be564b9d4d8f` |
+| `verification.json` | ok=True | `1fe85c2f654048c1e35a876f01c1f3d24630aea1` |

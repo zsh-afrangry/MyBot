@@ -1,9 +1,0 @@
-{
-  "passed": true,
-  "checks": [
-    "trusted owner fields",
-    "fixed target",
-    "fixed executable/no shell",
-    "explicit future time"
-  ]
-}

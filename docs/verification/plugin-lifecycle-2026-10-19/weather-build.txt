@@ -1,3 +1,0 @@
-
-> openclaw-plugin-personal-weather@0.1.0 build
-> tsc -p tsconfig.json

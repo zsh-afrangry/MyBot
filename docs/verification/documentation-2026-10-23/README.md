@@ -38,7 +38,7 @@
 | [文档入口](../../README.md) | 唯一顶层入口，保留 | 按文档类型约定结构；明确状态、待办与验收各自归属，新增档案指针；对tp2的项目补充只写本页 |
 | [待办](../../待办清单.md) | 永久目标/完成记录，保留 | 稳定ID+层级目标+验收复选框；E1子目标归在同一父项；原已验收与旧关闭索引分别保留，AI未复验项不勾选 |
 
-当前规则14份主文从149218字符变为122425字符，约减少18%；这是主文统计，不把新增历史摘录算作内容删除。文件与分项统计见[preservation.json](preservation.json)。
+当前规则14份主文从149218字符变为122425字符，约减少18%；这是主文统计，不把新增历史摘录算作内容删除。文件与分项统计见[preservation.json（历史材料）](README.md#historical-material)。
 
 ## 历史与用户原件
 
@@ -60,7 +60,7 @@
 
 ## 文档—代码核对
 
-本轮重点复核三模块及记忆生命周期，入口见[文档25第2节](../../25_人格、记忆与会话连续性.md#2-已核实的现状)。[代码定位记录](code-correspondence.json)保存源码路径、函数/常量和SHA256，不含运行私密内容。
+本轮重点复核三模块及记忆生命周期，入口见[文档25第2节](../../25_人格、记忆与会话连续性.md#2-已核实的现状)。[代码定位记录（历史材料）](README.md#historical-material)保存源码路径、函数/常量和SHA256，不含运行私密内容。
 
 - 四份人格投影由受管来源生成，不能将仓库docs或任意Markdown当每回合自动输入。
 - 固定宿主默认bootstrap候选为AGENTS/SOUL/IDENTITY/USER/BOOTSTRAP/MEMORY，按会话类型/文件存在性/预算过滤；TOOLS常量存在不等于在默认表内。
@@ -72,9 +72,9 @@
 
 ## 验证与限制
 
-实际命令、退出码及摘要记录在[checks.json](checks.json)，本地链接与锚点明细在[links.json](links.json)。覆盖范围是现行Markdown、所有verification Markdown、新历史索引/摘录，以及配置/根入口；不访问外部URL，不把旧TXT原文中有意保留的路径当现行入口。
+实际命令、退出码及摘要记录在[checks.json（历史材料）](README.md#historical-material)，本地链接与锚点明细在[links.json（历史材料）](README.md#historical-material)。覆盖范围是现行Markdown、所有verification Markdown、新历史索引/摘录，以及配置/根入口；不访问外部URL，不把旧TXT原文中有意保留的路径当现行入口。
 
-- 文档归属/生成索引检查；归属元数据[回归输出](checker-tests.txt)9/9。
+- 文档归属/生成索引检查；归属元数据[回归输出（历史材料）](README.md#historical-material)9/9。
 - 本地Markdown目标、页内锚点与围栏检查；旧证据所用锚点保留，不改写旧回执。
 - 四份受保护原件、13份历史TXT正文、519份旧verification及9份其他旧archive原件的字节/哈希核对。
 - Git差异和新增文件空白检查；业务代码、配置JSON、人格模板与运行数据没有改动，唯一非文档差异为新证据组的documentation-map登记。
@@ -83,3 +83,17 @@
 本轮不启停服务、不同步运行配置、不外发、不进行付费模型/API调用、不创建备份/恢复点、不推送。N9留待主人阅读复核；人格/记忆、定时播报、论文和其他业务未完成项保持原范围。
 
 返回[文档入口](../../README.md)。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checker-tests.txt` | 未提取；以原材料及现有结论为准 | `1b081e1d015da82ccdf504b5ef43aea385dc497a` |
+| `checks.json` | 未提取；以原材料及现有结论为准 | `3f9743f853139abbaa61b3a00c15a82dcdcb3b28` |
+| `code-correspondence.json` | 未提取；以原材料及现有结论为准 | `88c69a66166dfd5274dd53b86435dbb3dc5b1bdd` |
+| `links.json` | 未提取；以原材料及现有结论为准 | `0c5fc29e620c66662c561f14388711b853d712d7` |
+| `preservation.json` | 未提取；以原材料及现有结论为准 | `ecd5c6a4574358c3d0524588da7525deaf9109d9` |

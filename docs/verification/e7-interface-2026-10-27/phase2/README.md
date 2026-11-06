@@ -11,11 +11,11 @@
 | 离线E7 | 24项通过 | 合成数据、临时缓存与注入HTTP；新增配装字符串数值、百分数点/空值、组合条件、游标绑定及JSON字段换序、分类/空测评、错角色/异常数据保护、长文裁剪 |
 | 权限/分层/人格 | 95项通过 | 既有真实处理器、合成身份、临时SQLite和本地模拟服务；包括本人准入、成员拒绝、撤权、共享包导入方向与独立生命周期；不等于真人验收 |
 | 构建 | 通过 | E7语法检查；为较广回归先构建确认核心、确认入口与共享领域库。初次回归因新工作区未构建依赖而失败，补齐后95项全过，没有修改这些领域的实现 |
-| 实际client | 8个查询、4次HTTP通过 | [首轮](live-2a.json)、[最终复测](live-2a-final.json)。真实E7公开读取、临时缓存；没有QQ外发或生产状态写入 |
-| 隔离宿主 | 启用/禁用2组通过 | [host-2a.json](host-2a.json)。实际Gateway加载、工具目录、无启动预取和正常停止；没有模型/API/QQ网络 |
-| 真实模型 | 4题全部通过 | [model-2a.json](model-2a.json)。现行官方DeepSeek、真实工具处理器与公开接口，合成可信主人上下文；不是完整Gateway/QQ入站。每题最多5轮、单次最多1600输出tokens；仅保留判定、调用元数据和回复哈希 |
-| 生产加载 | 通过 | [deployment-2a.json](deployment-2a.json)。源码哈希与离线受测文件一致；正常重启Fusion后E7 active、目录仅原`e7_data`；健康/依赖/配置/人格四项自检全过，QQ在线，`testIngress=false`且验收RPC关闭 |
-| 主人QQ | 本轮已验收 | 主人反馈测试无误；[00:48起只读核对](qq-2a-2026-10-29.json)包含2轮实际入站/回复及出站。范围为错字检索后定位梅铃、基础面板/配装与小春RTA测评，不扩大为全部筛选/分页/异常路径 |
+| 实际client | 8个查询、4次HTTP通过 | [首轮（历史材料）](README.md#historical-material)、[最终复测（历史材料）](README.md#historical-material)。真实E7公开读取、临时缓存；没有QQ外发或生产状态写入 |
+| 隔离宿主 | 启用/禁用2组通过 | [host-2a.json（历史材料）](README.md#historical-material)。实际Gateway加载、工具目录、无启动预取和正常停止；没有模型/API/QQ网络 |
+| 真实模型 | 4题全部通过 | [model-2a.json（历史材料）](README.md#historical-material)。现行官方DeepSeek、真实工具处理器与公开接口，合成可信主人上下文；不是完整Gateway/QQ入站。每题最多5轮、单次最多1600输出tokens；仅保留判定、调用元数据和回复哈希 |
+| 生产加载 | 通过 | [deployment-2a.json（历史材料）](README.md#historical-material)。源码哈希与离线受测文件一致；正常重启Fusion后E7 active、目录仅原`e7_data`；健康/依赖/配置/人格四项自检全过，QQ在线，`testIngress=false`且验收RPC关闭 |
+| 主人QQ | 本轮已验收 | 主人反馈测试无误；[00:48起只读核对（历史材料）](README.md#historical-material)包含2轮实际入站/回复及出站。范围为错字检索后定位梅铃、基础面板/配装与小春RTA测评，不扩大为全部筛选/分页/异常路径 |
 
 实际取样：梅铃返回20条配装、0条测评；小春返回RTA/PVP/PVE/综合4类测评。梅铃配装首样本暴伤289表示289%，含装备，不是角色基础暴伤165%。套装与速度/暴伤组合筛选、无重复续页、缓存复用均通过。配装来源与更新时间保留，不推断最优解；测评保留作者和更新时间，不以配装补写不存在的测评。
 
@@ -29,10 +29,10 @@
 
 | 层次 | 结果 | 证据与边界 |
 | --- | --- | --- |
-| 离线 | 32项E7及95项权限/分层/人格回归通过 | [offline-2b.json](offline-2b.json)。包括55条榜单的完整续页、未知类型、坏分档保护、文章搜索/正文、同号ID隔离、重启后定位、移动条目、段落/实体清理、图片缺失、长文裁剪及成员拒绝；两次命令重复覆盖的7项权限测试不重复计数 |
-| 实际client及现行模型 | 13个直接查询、12次HTTP、3题模型通过 | [live-model-2b.json](live-model-2b.json)。真实公开读取与临时缓存、现行官方DeepSeek及真实工具处理器/合成主人上下文；不是完整Gateway/QQ入站。模型每题最多5轮、单次1600输出tokens，证据仅保留元数据、正文/回复哈希与长度 |
-| 隔离宿主 | 启用/禁用2组通过 | [host-2b.json](host-2b.json)。实际Gateway加载与目录、无启动预取和正常停止；没有模型/API/QQ网络 |
-| 生产加载 | 通过 | [deployment-2b.json](deployment-2b.json)。源码与受测worktree哈希一致，E7 active且仍只有`e7_data`；健康/依赖/配置/人格四项全过，QQ在线，`testIngress=false`且验收RPC关闭 |
+| 离线 | 32项E7及95项权限/分层/人格回归通过 | [offline-2b.json（历史材料）](README.md#historical-material)。包括55条榜单的完整续页、未知类型、坏分档保护、文章搜索/正文、同号ID隔离、重启后定位、移动条目、段落/实体清理、图片缺失、长文裁剪及成员拒绝；两次命令重复覆盖的7项权限测试不重复计数 |
+| 实际client及现行模型 | 13个直接查询、12次HTTP、3题模型通过 | [live-model-2b.json（历史材料）](README.md#historical-material)。真实公开读取与临时缓存、现行官方DeepSeek及真实工具处理器/合成主人上下文；不是完整Gateway/QQ入站。模型每题最多5轮、单次1600输出tokens，证据仅保留元数据、正文/回复哈希与长度 |
+| 隔离宿主 | 启用/禁用2组通过 | [host-2b.json（历史材料）](README.md#historical-material)。实际Gateway加载与目录、无启动预取和正常停止；没有模型/API/QQ网络 |
+| 生产加载 | 通过 | [deployment-2b.json（历史材料）](README.md#historical-material)。源码与受测worktree哈希一致，E7 active且仍只有`e7_data`；健康/依赖/配置/人格四项全过，QQ在线，`testIngress=false`且验收RPC关闭 |
 | 主人QQ | 待复验 | 开发侧及生产加载结果不代替真人体验 |
 
 榜单来源`POST tier/list {}`一次返回8份完整定义；1份明确为神器、3份为角色、4份类型未知。详情复用此列表，返回分档及分页条目，不因来源字段叫`heroAssignments`就误标为角色。最多197条的大榜单不整体塞入工具结果；未知类型保留`null`，筛选只纳入明确类型。模型读取一份神器榜后，用既有`search`将前5条真实对象代码解析为名称。
@@ -72,3 +72,24 @@ node chatbot/tests/e7/acceptance-live.mjs --live --reference-only --model --out 
 ```
 
 实际HTTP/模型脚本须显式选择执行，不能当离线测试批量运行；输出路径必须尚不存在。运行只读取私密配置所指的代理/模型凭据，不记录其内容，不复制私聊、生产缓存或完整wiki数据。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `deployment-2a.json` | passed=True；at=2026-10-28T16:23:44.286528+00:00 | `bad19ed9a01369864483d82965831a0953e7aaa8` |
+| `deployment-2b.json` | passed=True；at=2026-10-28T17:14:09.196195+00:00 | `eff0ac29938490e34b897a045ae14767c51c5911` |
+| `host-2a.json` | passed=True；at=2026-10-28T16:17:41.236Z | `7cf6e8b4a4a0f0da1ac35deb69f572ff3080e098` |
+| `host-2b.json` | passed=True；at=2026-10-28T17:10:38.572Z | `7ad6850d2e2ffb37ce54b8d46fb125bdf2b57844` |
+| `live-2a-final.json` | passed=True；at=2026-10-28T16:20:02.088Z | `92a56a8018e7d12b40eb3ce821355cb25e856376` |
+| `live-2a.json` | passed=True；at=2026-10-28T16:17:40.967Z | `114f079991f00961e819590b21b0e61785ccdda9` |
+| `live-model-2b.json` | passed=True；at=2026-10-28T17:10:38.296Z | `357191cfd15bc0b9a15c02c2873a7dcf803e488a` |
+| `model-2a.json` | passed=True；at=2026-10-28T16:18:14.697Z | `4e5b7185bddbbc2f5153968ca1b094205483144b` |
+| `offline-2a.json` | passed=True；at=2026-10-28T16:21:41.612265+00:00 | `ca6017d0347be28ee50d3a79f0a388a24980a3a5` |
+| `offline-2b.json` | passed=True；at=2026-10-28T17:12:55.328255+00:00 | `a78aff80e18274dab77d473e1b16e8b897be741a` |
+| `qq-2a-2026-10-29.json` | at=2026-10-28T16:54:57.573202+00:00 | `337620cc77ddbf79c332428f6585af5a0a68d3c1` |
+| `source-check-2b.json` | passed=True；at=2026-10-28T17:12:55.328255+00:00 | `c5649d06e40d1dfe71dccc1ac6e55a57ecbb54c0` |

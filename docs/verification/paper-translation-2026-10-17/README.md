@@ -69,3 +69,37 @@
 - 014/030/040各自真实短句成功；本次GPT/high全文三渠道故障切换和冷却恢复均有真实回执，见当前报告。未人为制造渠道耗尽/吊销。DeepSeek Flash/low整篇生成并抽查通过；当前默认Flash/high全文未验收，旧MAX输出不足仍保留，V4 Pro仅短句，none全文样式标记失败。Grok经主人明确决定不接入，不是待办。
 - 未验证：本人真实上传原PDF→模型→实际翻译→交付的完整链路、DeepSeek全文本人收件、全文语义/公式、扫描OCR/GPU、超过4并发压力、第三方账单硬上限。多人/群、登录受限论文、邮件收信不在当前范围。
 - 已有停写恢复点不含本功能；本轮未做新增功能全量备份/恢复。不得只退旧邮件源码后继续发送含新字节快照的草稿，源码/配置/私有状态须联动回退。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `baseline-batch.json` | ok=False | `8c476937953a2aff8623066624b63555e28bd370` |
+| `boundary-recovery-tests.txt` | 未提取；以原材料及现有结论为准 | `c6207bb9b3b4cdbaa95a8884998bd8345d5a4485` |
+| `cache-warm.json` | 未提取；以原材料及现有结论为准 | `fdb496881e32d67a3726d85583387f468f2690b3` |
+| `capture-smoke.json` | ok=True；at=2026-10-16T18:20:49.487Z | `0751a421f02b2c833450a0395d15499e6b80882c` |
+| `closeout.json` | 未提取；以原材料及现有结论为准 | `9d8c1abf3d6223b3c6737b52da3df3301e3cd015` |
+| `dependencies.txt` | 未提取；以原材料及现有结论为准 | `b39597afebc94c642d0b90a449359c7df6c20054` |
+| `deployment.json` | at=2026-10-16T18:21:31.405Z | `8d4e3e8a97174ca90ad85d1834e732ff5eb98851` |
+| `doc-links.json` | 未提取；以原材料及现有结论为准 | `c9d0a4e445bc4caea47bcfef06f732d828f0d7d2` |
+| `download.json` | passed=True；at=2026-10-16T17:24:18.836Z | `3b54fdb2a37c2afb93715c6389160db63afc5f4b` |
+| `edge-403.json` | ok=False | `032020cd978f73230e8251b6d9b74f0a5ccd955f` |
+| `engine-tests.txt` | 未提取；以原材料及现有结论为准 | `ceea2f077d40c8ac8b83ad78fa2d1ff0913d9ead` |
+| `existing-tests.txt` | 未提取；以原材料及现有结论为准 | `7f4a3b1587d325e559fd39bed140930fb7ef40f4` |
+| `final-audit.json` | at=2026-10-17T03:03:10+08:00 | `4be8e8c87a0b3329f450d3d2ef00c483db7b4153` |
+| `host.json` | passed=True；at=2026-10-16T17:16:51.636Z | `813a2be68c9a6900f071070e119dd4c6dd85eeea` |
+| `mail-mime.json` | ok=True；at=2026-10-16T18:02:18.517Z | `a23e0ef6fcf2740a5c65f2b097ea6b69f28b689b` |
+| `nonstream-edge-timeout.json` | ok=False | `afb86a536284d21e68ee07a87acddd2ea8f320a1` |
+| `observations.json` | at=2026-10-16T18:08:52.032609+00:00 | `50a9250c190ad0c95a93f680ad8e09964ccb31f0` |
+| `papers-node-tests.txt` | 未提取；以原材料及现有结论为准 | `b438f345b2661e0f98fb0b40ca1a275a0b7fd290` |
+| `recovery-tests.txt` | 未提取；以原材料及现有结论为准 | `b43b9cfd51b96ddcf5d8bb54c3f9241a3191f38c` |
+| `request-400.json` | ok=False | `e66656ff5925deee7067251d7e87727f7bb4d96e` |
+| `responses-tests.txt` | 未提取；以原材料及现有结论为准 | `b639057829dd4f895e793b50fd7fab3489d892ce` |
+| `stream-error.json` | ok=False | `76e73ddece322ea9f4dd81522ef30570302e83c4` |
+| `sync-config.txt` | 未提取；以原材料及现有结论为准 | `f213f317a97141af0a82ec853632b0f9b6ca0d7f` |
+| `sync-persona.txt` | 未提取；以原材料及现有结论为准 | `60f644b6d0c52317a22a3d538d21f5277e1b1a06` |
+| `timeout-90s.json` | ok=False | `b1be689307e7ff87e1d64efc64d1d33955adc6b9` |

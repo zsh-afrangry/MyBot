@@ -4,7 +4,7 @@
 
 ## 真人现象与原因
 
-主人反馈21:24的回答不符合预期。实际QQ日志在21:24:59收到会话重置，在21:25:11收到目录文件查询，21:25:23–24记录回复投递。关联run为`8d5b21fa-79f1-49be-9a41-e86fffeb0b4a`。会话、可信准入和QQ发送记录已对应，必要索引见[observed.json](observed.json)。聊天原文只在私有记录中保留，不进入本报告或合成测试。
+主人反馈21:24的回答不符合预期。实际QQ日志在21:24:59收到会话重置，在21:25:11收到目录文件查询，21:25:23–24记录回复投递。关联run为`8d5b21fa-79f1-49be-9a41-e86fffeb0b4a`。会话、可信准入和QQ发送记录已对应，必要索引见[observed.json（历史材料）](README.md#historical-material)。聊天原文只在私有记录中保留，不进入本报告或合成测试。
 
 助手确实选择了原生exec。三次调用都带有原生工具支持的`title`，但host-exec参数白名单遗漏该字段，因而均在命令启动前被`invalid_owner_exec_parameters`拒绝。主人身份与`host.exec`许可有效；不能把参数兼容缺陷解释为未开放执行权限。先前隔离宿主测试未传入title，因此没有覆盖此次真实调用形态。
 
@@ -16,12 +16,28 @@ host-exec接受原生schema中的可选title字符串，保持120字符上限及
 
 | 证据 | 证明范围 |
 | --- | --- |
-| [observed.json](observed.json) | 真人回合关联、三次拒绝、零命令启动及修复前合成回归失败摘要；不含聊天或原始命令 |
-| [offline.txt](offline.txt) | 132项回归通过；带title的默认目录查询、标题不作为shell执行、无效标题、目录外workdir、身份/撤权、编码任务及QQ插件边界 |
-| [host.json](host.json) | 12项真实隔离Gateway/QQ插件/原生exec验证；所有合成调用带title，默认目录与工作树查询成功，提权/环境/目录外/成员仍拒绝 |
-| [canonical-offline.txt](canonical-offline.txt) | 同步到运行源码后同一132项回归通过，保留并行开发的其他改动 |
-| [deployment.json](deployment.json) | 21:37:11 CST重启Fusion，核对源码哈希、原配置与主人模板未变、真人任务及source Git未变、65个其他源码路径保持原样 |
-| [closeout.json](closeout.json) | 实际工具回执摘要：服务健康、依赖自持、配置对齐、人格对齐四项通过；testIngress关闭，无QQ重放或额外外发 |
-| [documentation.json](documentation.json) | 两份源码的证据归属、生成索引与本次文档链接检查；归属规则回归均通过 |
+| [observed.json（历史材料）](README.md#historical-material) | 真人回合关联、三次拒绝、零命令启动及修复前合成回归失败摘要；不含聊天或原始命令 |
+| [offline.txt（历史材料）](README.md#historical-material) | 132项回归通过；带title的默认目录查询、标题不作为shell执行、无效标题、目录外workdir、身份/撤权、编码任务及QQ插件边界 |
+| [host.json（历史材料）](README.md#historical-material) | 12项真实隔离Gateway/QQ插件/原生exec验证；所有合成调用带title，默认目录与工作树查询成功，提权/环境/目录外/成员仍拒绝 |
+| [canonical-offline.txt（历史材料）](README.md#historical-material) | 同步到运行源码后同一132项回归通过，保留并行开发的其他改动 |
+| [deployment.json（历史材料）](README.md#historical-material) | 21:37:11 CST重启Fusion，核对源码哈希、原配置与主人模板未变、真人任务及source Git未变、65个其他源码路径保持原样 |
+| [closeout.json（历史材料）](README.md#historical-material) | 实际工具回执摘要：服务健康、依赖自持、配置对齐、人格对齐四项通过；testIngress关闭，无QQ重放或额外外发 |
+| [documentation.json（历史材料）](README.md#historical-material) | 两份源码的证据归属、生成索引与本次文档链接检查；归属规则回归均通过 |
 
 宿主验证使用本地确定性模型和合成OneBot，不访问真实模型或QQ，不启动DSH，不重放主人消息。修复后的真人自然语言选择、目录查询回答及收件效果仍需独立复验；服务健康不能替代这一层。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `canonical-offline.txt` | 未提取；以原材料及现有结论为准 | `5d8c503c88421da762e6a78cf1c0174fe2e4ab28` |
+| `closeout.json` | at=2026-10-30T13:37:54.982Z | `9f56b91383a187d64b0f8e7ed7cc4df6a56c35d3` |
+| `deployment.json` | at=2026-10-30T13:38:53.324Z | `7195e22e550119d32cca943139fccf4ce507d9cf` |
+| `documentation.json` | at=2026-10-30T13:40:24.313Z | `e353861e93381943e1d2573fca646abe21fa93d9` |
+| `host.json` | passed=True；at=2026-10-30T13:32:20.848Z | `a6ad74dd8c37949bbb9e9ff168a33f9358ef86da` |
+| `observed.json` | 未提取；以原材料及现有结论为准 | `4c351a6bedab136199e9729b2d9bcea65403264a` |
+| `offline.txt` | 未提取；以原材料及现有结论为准 | `f8862a78d60b3d5edd5bb719da611d704f8cf205` |

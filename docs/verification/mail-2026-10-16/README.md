@@ -46,7 +46,7 @@
 - 草稿 `eec466e0-ab5e-4e51-9801-d3e47cf57c95` → `365999865@qq.com`；**创建到发送耗时 12 秒**；grant 状态 `consumed`。
 - **本次全程 0 次工具参数拒绝、0 次 `no_match`**；对比修复前全时段累计 3 次 `no_match`、`recorded` 为 0。
 
-以上只保存必要的无凭据审计定位；不复制完整聊天、授权码或邮件正文。PDF附件的MIME修复、重新投递与本人到信确认归[论文原验收](../paper-translation-2026-10-17/README.md)和[observations.json](../paper-translation-2026-10-17/observations.json)。后来显式stop/确认注销、生产重载归[生命周期报告](../plugin-lifecycle-2026-10-19/README.md)与[结构整理报告](../capability-decoupling-2026-10-20/README.md)。
+以上只保存必要的无凭据审计定位；不复制完整聊天、授权码或邮件正文。PDF附件的MIME修复、重新投递与本人到信确认归[论文原验收](../paper-translation-2026-10-17/README.md)和[observations.json（历史材料）](../paper-translation-2026-10-17/README.md#historical-material)。后来显式stop/确认注销、生产重载归[生命周期报告](../plugin-lifecycle-2026-10-19/README.md)与[结构整理报告](../capability-decoupling-2026-10-20/README.md)。
 
 未覆盖：实际配额、退信、多收件人真实链路、Gmail代理与IMAP。离线mock、SMTP入队、到信、真人QQ分别判断，不互相替代。
 

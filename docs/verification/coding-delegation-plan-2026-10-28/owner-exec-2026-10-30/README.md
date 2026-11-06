@@ -25,12 +25,31 @@
 
 | 证据 | 证明范围 |
 | --- | --- |
-| [offline.txt](offline.txt) | 131项离线/本机隔离回归：原生参数与身份、实际目录读写、创建/覆盖/截断/删除/移动/符号链接越界、shell/解释器、环境/提权/超时绕过、运行目录准备；同时回归编码、权限、后端边界和QQ插件 |
-| [host.json](host.json)、[host-release.json](host-release.json) | 12项真实独立Gateway/QQ插件/原生exec链路；本地确定性模型与合成OneBot，实际source与worktree查询、内存查询、环境清理、目录内写/目录外拒绝、参数绕过、实际超时、成员强制拒绝及审计 |
-| [canonical-offline.txt](canonical-offline.txt) | 合入当前源码副本后同一131项回归通过；保留并行的旧提示词归档工作 |
-| [deployment.json](deployment.json) | 受管配置与人格同步、19:25:45 CST重启Fusion；运行身份revision=5、native exec目录可见、QQ/编码插件active、其余Agent拒绝、试点任务与源Git内容未改 |
-| [closeout.json](closeout.json) | 本对话工具回执摘要：服务健康、依赖自持、配置对齐、人格对齐四项通过；不包含聊天原文或凭据 |
-| [documentation.json](documentation.json) | 两份源码的证据归属、生成表、文档元数据回归及本地链接核对 |
-| [host-initial.json](host-initial.json)、[host-fixture-review.json](host-fixture-review.json) | 初次宿主夹具的成员AGENTS缺失、deny优先导致工具未暴露；前10项实际执行通过。完善夹具后在最终记录证明强制宿主权限拒绝 |
+| [offline.txt（历史材料）](README.md#historical-material) | 131项离线/本机隔离回归：原生参数与身份、实际目录读写、创建/覆盖/截断/删除/移动/符号链接越界、shell/解释器、环境/提权/超时绕过、运行目录准备；同时回归编码、权限、后端边界和QQ插件 |
+| [host.json（历史材料）](README.md#historical-material)、[host-release.json（历史材料）](README.md#historical-material) | 12项真实独立Gateway/QQ插件/原生exec链路；本地确定性模型与合成OneBot，实际source与worktree查询、内存查询、环境清理、目录内写/目录外拒绝、参数绕过、实际超时、成员强制拒绝及审计 |
+| [canonical-offline.txt（历史材料）](README.md#historical-material) | 合入当前源码副本后同一131项回归通过；保留并行的旧提示词归档工作 |
+| [deployment.json（历史材料）](README.md#historical-material) | 受管配置与人格同步、19:25:45 CST重启Fusion；运行身份revision=5、native exec目录可见、QQ/编码插件active、其余Agent拒绝、试点任务与源Git内容未改 |
+| [closeout.json（历史材料）](README.md#historical-material) | 本对话工具回执摘要：服务健康、依赖自持、配置对齐、人格对齐四项通过；不包含聊天原文或凭据 |
+| [documentation.json（历史材料）](README.md#historical-material) | 两份源码的证据归属、生成表、文档元数据回归及本地链接核对 |
+| [host-initial.json（历史材料）](README.md#historical-material)、[host-fixture-review.json（历史材料）](README.md#historical-material) | 初次宿主夹具的成员AGENTS缺失、deny优先导致工具未暴露；前10项实际执行通过。完善夹具后在最终记录证明强制宿主权限拒绝 |
 
 这些记录不调用真实模型、不发真实QQ、不启动DSH，不证明主人的真实QQ本次已调用exec。生产部署及收尾回执见上表。原生exec尚未由主人在本次部署后通过真人QQ验证，后续从文档16跟进。私有源码变更备份与未触及文件哈希位于`deployment.json`引用的目录。当前工作树的本地提交与源码目录未提交状态分别按Git事实判断，未执行push。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `canonical-offline.txt` | 未提取；以原材料及现有结论为准 | `ef33a6e53e5897afffc09e8e9ed51bc3bb38cbdd` |
+| `closeout.json` | 未提取；以原材料及现有结论为准 | `9b1d89db862702eb32b70c805b9e4e2c670692b4` |
+| `deployment.json` | at=2026-10-30T11:27:14.681173+00:00 | `63ca03ced15bef17e44af7081c76840f0e3df1c1` |
+| `documentation.json` | at=2026-10-30T11:30:00.318921+00:00 | `10f065fbdae9341d5955a92babaf7fbf470159c6` |
+| `host-fixture-review.json` | passed=False；at=2026-10-30T11:18:31.362Z | `fd5a0b68de9bfffd93683171c69669ea06a1ee7a` |
+| `host-initial.json` | passed=False；at=2026-10-30T11:17:06.457Z | `e16d25af97ba063bc29b633d35b0a3910c4c0b8f` |
+| `host-release.json` | passed=True；at=2026-10-30T11:22:32.578Z | `3d2e839a3517475eeec10444d59b668216ecf98f` |
+| `host.json` | passed=True；at=2026-10-30T11:19:13.808Z | `7085e44555dc21dbf0ff90c96fe7724e1bbb8143` |
+| `links.json` | at=2026-10-30T11:31:48.061832+00:00 | `0d2b09d644d4b4191a217f934dfbb9fc79c7cf17` |
+| `offline.txt` | 未提取；以原材料及现有结论为准 | `e981f4854e90d3a418669c726c380744e98e18cb` |

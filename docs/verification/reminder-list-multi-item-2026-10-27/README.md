@@ -4,7 +4,7 @@
 
 状态：**已验收**（领域回归、真实隔离HTTP、人格同步与运行核对通过；01:46本人QQ三项新增、查询、三项作废及后端只读核对一致，主人确认符合预期）。真人样本为每消息3项，8/9项边界仍以离线/隔离HTTP为据。规则见[文档19](../../23_KnowledgeMap业务能力桥接.md#提醒列表与定时汇总)与[文档23](../../23_KnowledgeMap业务能力桥接.md)，任务见[N21](../../待办清单.md#n21)。
 
-版本与时间：2026-10-27（Asia/Shanghai），实现提交`5109951`（基线`57fb6c9`）；真人核对时主源码为`1966beb`，本任务生产代码和主人提示词相对实现提交未变。KnowledgeMap源码基线`31e3ce6`，只读核对并用于临时SQLite集成，不修改该仓库。实现检查时点见三个原JSON，源文件指纹见[runtime.json](runtime.json)，真人核对见[qq-acceptance-0146.json](qq-acceptance-0146.json)。
+版本与时间：2026-10-27（Asia/Shanghai），实现提交`5109951`（基线`57fb6c9`）；真人核对时主源码为`1966beb`，本任务生产代码和主人提示词相对实现提交未变。KnowledgeMap源码基线`31e3ce6`，只读核对并用于临时SQLite集成，不修改该仓库。实现检查时点见三个原JSON，源文件指纹见[runtime.json（历史材料）](README.md#historical-material)，真人核对见[qq-acceptance-0146.json（历史材料）](README.md#historical-material)。
 
 ## 授权与接续范围
 
@@ -27,7 +27,7 @@
 
 ## 验证
 
-实现阶段结果摘要：[tests.json](tests.json)、[checks.json](checks.json)、[runtime.json](runtime.json)。真人核对摘要：[qq-acceptance-0146.json](qq-acceptance-0146.json)。只保存统计、源码指纹、关联ID和合成验收项的必要字段，不复制生产聊天、凭据或其他业务项内容。
+实现阶段结果摘要：[tests.json（历史材料）](README.md#historical-material)、[checks.json（历史材料）](README.md#historical-material)、[runtime.json（历史材料）](README.md#historical-material)。真人核对摘要：[qq-acceptance-0146.json（历史材料）](README.md#historical-material)。只保存统计、源码指纹、关联ID和合成验收项的必要字段，不复制生产聊天、凭据或其他业务项内容。
 
 | 层次 | 命令 / 依据 | 结果与边界 |
 | --- | --- | --- |
@@ -52,7 +52,7 @@
 node scripts/fusion/log-query.mjs --from '2026-10-27 01:44' --to '2026-10-27 01:48' --source knowledgemap --kind business.api
 ```
 
-AI通过该入口的`collectEvents`读取QQ、宿主工具、权限和KnowledgeMap事件，在内存核对参数/结果，只将白名单字段保存到[qq-acceptance-0146.json](qq-acceptance-0146.json)。后端使用配置中的固定客户端GET`/api/assistant/tasks`，关闭本次读取的trace写入；未调用POST、模型或QQ发送。
+AI通过该入口的`collectEvents`读取QQ、宿主工具、权限和KnowledgeMap事件，在内存核对参数/结果，只将白名单字段保存到[qq-acceptance-0146.json（历史材料）](README.md#historical-material)。后端使用配置中的固定客户端GET`/api/assistant/tasks`，关闭本次读取的trace写入；未调用POST、模型或QQ发送。
 
 | 北京时间 | 实际行为 | 核对结果 |
 | --- | --- | --- |
@@ -70,3 +70,16 @@ AI通过该入口的`collectEvents`读取QQ、宿主工具、权限和KnowledgeM
 - 真人每消息8项/第9项、同目标重试和冲突未重新实测；这些边界由本轮离线/真实隔离HTTP用例覆盖。
 - 不验证并发两条消息同时写同一事项的体验；版本冲突仍由后端 expected_version 决定。
 - E4整天四时段、长期运行和停写恢复保持原待验范围；本次不外推到所有自然表达组合。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | at=2026-10-27T01:34:20+08:00 | `0af3337ab77fcbe8e16cb7d3f2454abb45ad1f9a` |
+| `qq-acceptance-0146.json` | status=accepted | `d876ec86a71194859872a3c2e95de514fb595c18` |
+| `runtime.json` | at=2026-10-26T17:35:00.317Z | `cb7e360b239704046f87c4bc534cf76075c4fd93` |
+| `tests.json` | exitCode=0；at=2026-10-27T01:37:17.926086+08:00 | `8680584a282692371fe5f1974db638ce41f399f2` |

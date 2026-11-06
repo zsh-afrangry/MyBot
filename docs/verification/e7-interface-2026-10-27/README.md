@@ -10,9 +10,9 @@
 
 共58次curl请求：25次前端JS、3次首页、30次数据请求；43次GET、15次POST。状态为53次200、2次304、3次403。数据请求中27次200均解析为有效JSON，带业务码的响应均为1000；另有2次条件请求304、1次自定义User-Agent请求403。另用网页读取工具尝试首页及API，未取得可用正文，不计入curl计数。
 
-- [requests.json](requests.json)：每次curl的时间、方法、URL、参数、选定缓存头、状态、响应字节数和SHA256。前期引导请求的时间取响应文件mtime，已单独标明；不补猜耗时或退出码。
-- [samples.json](samples.json)：字段类型、条数、少量事实样例与参数对照；未保存整份上游正文、图库或前端JS。
-- [checks.json](checks.json)：文档归属与收尾只读自检；不代替E7插件测试。
+- [requests.json（历史材料）](README.md#historical-material)：每次curl的时间、方法、URL、参数、选定缓存头、状态、响应字节数和SHA256。前期引导请求的时间取响应文件mtime，已单独标明；不补猜耗时或退出码。
+- [samples.json（历史材料）](README.md#historical-material)：字段类型、条数、少量事实样例与参数对照；未保存整份上游正文、图库或前端JS。
+- [checks.json（历史材料）](README.md#historical-material)：文档归属与收尾只读自检；不代替E7插件测试。
 
 ## 实际可取得的内容
 
@@ -86,4 +86,16 @@ curl --silent --show-error --compressed --max-time 20 --max-redirs 0 \
 
 ## 收尾检查
 
-文档证据归属、脚本索引、生成Markdown一致性均通过；文档归属回归9/9。四项只读自检通过：Gateway与QQ连接正常、`testIngress=false`，所查数据库正常，依赖自持、配置与人格投影一致。结果见[checks.json](checks.json)。这些检查没有加载E7插件，也没有验证模型或QQ的E7查询。
+文档证据归属、脚本索引、生成Markdown一致性均通过；文档归属回归9/9。四项只读自检通过：Gateway与QQ连接正常、`testIngress=false`，所查数据库正常，依赖自持、配置与人格投影一致。结果见[checks.json（历史材料）](README.md#historical-material)。这些检查没有加载E7插件，也没有验证模型或QQ的E7查询。
+
+<a id="historical-material"></a>
+
+## 历史原始材料的保留位置
+
+本目录生成的原始回执、日志和图片已退出活动树；既有结论及失败状态不因此改变，也不代表新版已验收。已入Git的内容可用 `git show c849e63:<原仓库相对路径>` 读取；表中的blob标识可核对原始字节。未入Git的临时输出按本次清理授权丢弃。当前执行状态只在全局《整理记录.md》维护。
+
+| 原文件 | 原报告顶层字段（仅摘录） | Git blob |
+| --- | --- | --- |
+| `checks.json` | ok=True；at=2026-10-27T02:12:47.129057+08:00 | `5b0bf21f739581677286faf5efabc2cc05df4395` |
+| `requests.json` | 未提取；以原材料及现有结论为准 | `88ea33727282117feefe75ff45e153407b22135c` |
+| `samples.json` | 未提取；以原材料及现有结论为准 | `e0a20bf5c83c213c8c5d0ede89c14306f3c2ec26` |
