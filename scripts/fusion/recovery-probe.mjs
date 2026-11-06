@@ -8,7 +8,8 @@ import {DatabaseSync} from 'node:sqlite';
 import http from 'node:http';
 import {createRequire} from 'node:module';
 import {setTimeout as delay} from 'node:timers/promises';
-const [target]=process.argv.slice(2),runtime=target+'/runtime',repo=target+'/repos/kurumi-fusion',sdk=target+'/sdk/openclaw';
+const [target,scope='legacy']=process.argv.slice(2),runtime=target+'/runtime',repo=target+'/repos/kurumi-fusion',sdk=target+'/sdk/openclaw';
+assert(['legacy','fusion-only'].includes(scope),'Unknown recovery probe scope');
 assert(!fs.existsSync('/home/afrangry/.openclaw-fusion'),'Production state must be invisible');
 assert(!fs.existsSync('/home/afrangry/kurumi-fusion'),'Production source must be invisible');
 assert(!fs.existsSync('/run/user'),'Host service bus must be invisible');
@@ -78,7 +79,15 @@ try{
  const {projectPolicy}=await import('file://'+repo+'/chatbot/plugins/kurumi-coding/workspaces.js');
  const {probeWriteFence}=await import('file://'+repo+'/chatbot/packages/coding-runtime/write-fence.js');
  const coding=cfg.plugins.entries['kurumi-coding'].config;
- projectPolicy(coding);probeWriteFence(coding.writeBoundary);
+ let externalDshUnavailableRejected=false;
+ if(scope==='fusion-only'){
+  assert(!fs.existsSync(coding.dsh.command),'Independent DSH must not be restored');
+  assert.throws(()=>projectPolicy(coding),e=>e.code==='ENOENT'&&e.path===coding.dsh.command);
+  externalDshUnavailableRejected=true;
+  // Check remaining Fusion Git/path policy using an inert availability fixture; never run it.
+  projectPolicy({...coding,dsh:{...coding.dsh,command:'/usr/bin/false'}});
+ }else projectPolicy(coding);
+ probeWriteFence(coding.writeBoundary);
  const fenceAllowed=coding.writeBoundary.root+'/recovery-fence-allowed',fenceDenied=runtime+'/recovery-fence-denied';
  const fenceScript=`const fs=require('fs'),a=require('node:assert/strict');fs.writeFileSync(${JSON.stringify(fenceAllowed)},'allowed');a.throws(()=>fs.writeFileSync(${JSON.stringify(fenceDenied)},'denied'));`;
  const fenceCheck=spawnSync(coding.writeBoundary.launcher,['--ro','/','--rw','/dev/null','--rw',coding.writeBoundary.root,'--',process.execPath,'-e',fenceScript],{encoding:'utf8',timeout:5000});
@@ -93,7 +102,7 @@ try{
  const cronDb=new DatabaseSync(runtime+'/state/openclaw.sqlite',{readOnly:true});
  const enabledJobs=Number(cronDb.prepare('SELECT count(*) n FROM cron_jobs WHERE enabled=1').get().n);cronDb.close();assert.equal(enabledJobs,5);
 
- fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingWriteFence:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));
+ fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingPolicyUsesInertBackend:scope==='fusion-only',externalDshUnavailableRejected,codingWriteFence:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));
  console.log('Isolated Gateway health and all plugin imports passed; production paths and network inaccessible');
 }finally{
  if(!exited)child.kill('SIGTERM');

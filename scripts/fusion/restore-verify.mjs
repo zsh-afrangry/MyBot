@@ -439,7 +439,7 @@ if(cfg&&restoredRepo){
   }
   const probe=path.join(target,'recovery-probe.mjs');
   fs.copyFileSync(fileURLToPath(new URL('./recovery-probe.mjs',import.meta.url)),probe);
-  const result=sh('bwrap',[...sandboxArgs(target),'/usr/bin/node',probe,target],{timeout:120000});
+  const result=sh('bwrap',[...sandboxArgs(target),'/usr/bin/node',probe,target,expected.scope??'legacy'],{timeout:120000});
   check('isolated Gateway startup, plugin imports and production exclusion',result.status===0,result.status===0?result.stdout.trim():(result.stderr+result.stdout).slice(-1800));
  }
 }
@@ -506,7 +506,8 @@ console.log(`assembled runtime at: ${runtime}`);
 console.log(`restored repo at    : ${restoredRepo ?? '(none)'}`);
 console.log('No host service was changed; only an isolated Gateway probe may have run. No real QQ delivery.');
 console.log('Recovery inputs: v3 backup, verifier harness and manifest-pinned dependency artifacts; isolated execution cannot see production.');
-fs.writeFileSync(path.join(target,'verification.json'),JSON.stringify({backup,target,manifestHash:hashFile(manifestPath),expectedHash:hashFile(expectedPath),coreVersion:release.version,adaptedHead,level:adaptSource?'upgrade-rehearsal':skipDeps?'materials-only':'isolated-gateway',ok:!failed.length,results},null,2),{mode:0o600});
+const verifierHead=sh('git',['-C',fileURLToPath(new URL('../../',import.meta.url)),'rev-parse','HEAD']).stdout?.trim()||null;
+fs.writeFileSync(path.join(target,'verification.json'),JSON.stringify({backup,target,manifestHash:hashFile(manifestPath),expectedHash:hashFile(expectedPath),verifierHead,coreVersion:release.version,adaptedHead,level:adaptSource?'upgrade-rehearsal':skipDeps?'materials-only':'isolated-gateway',ok:!failed.length,results},null,2),{mode:0o600});
 if (failed.length) {
   console.error('\nRESULT: restore verification FAILED');
   for (const f of failed) console.error(`  - ${f.name}: ${f.detail}`);
