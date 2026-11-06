@@ -1,0 +1,81 @@
+{
+  "at": "2026-11-06T22:28:33.168Z",
+  "code": "cf32a1c",
+  "databases": [
+    {
+      "relative": "state/personal-reminders/reminders.sqlite",
+      "countsUnchanged": true,
+      "quickCheck": "ok",
+      "hasPresentationOrder": true
+    },
+    {
+      "relative": "state/personal-weather/weather.sqlite",
+      "countsUnchanged": true,
+      "quickCheck": "ok",
+      "hasPresentationOrder": false
+    },
+    {
+      "relative": "state/kurumi-mail/mail.sqlite",
+      "countsUnchanged": true,
+      "quickCheck": "ok",
+      "hasPresentationOrder": false
+    }
+  ],
+  "plugins": [
+    {
+      "id": "kurumi-e7",
+      "state": "active"
+    },
+    {
+      "id": "kurumi-mail",
+      "state": "active"
+    },
+    {
+      "id": "kurumi-memory",
+      "state": "active"
+    },
+    {
+      "id": "personal-confirmation",
+      "state": "active"
+    },
+    {
+      "id": "personal-planning",
+      "state": "active"
+    },
+    {
+      "id": "personal-profile",
+      "state": "active"
+    },
+    {
+      "id": "personal-reminders",
+      "state": "active"
+    }
+  ],
+  "changedManagedPermissions": false,
+  "realExternalSend": false,
+  "health": {
+    "at": "2026-11-06T22:28:12.240Z",
+    "ok": true,
+    "issues": [],
+    "gateway": true,
+    "qq": {
+      "online": true,
+      "good": true
+    },
+    "channel": [
+      {
+        "running": true,
+        "connected": true
+      }
+    ],
+    "testIngress": false
+  },
+  "checks": {
+    "dependencies": "passed",
+    "managedConfig": "in-sync",
+    "persona": "12 files in-sync",
+    "evidenceIndex": "218 scripts, 155 evidence files",
+    "docPersonaTests": "58 passed"
+  },
+  "startupProbe": "First probe during startup unavailable; readiness probe passed at 06:28:12 Asia/Shanghai."
+}
