@@ -40,11 +40,17 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/host-exec/policy.test.mjs': ['离线', '主人原生exec的真实文件写入边界、可信身份/撤权/成员隔离、环境与参数绕过、临时目录符号链接及受管配置回归；仅临时目录', {testDir: 1}, 'header'],
+  'chatbot/tests/host-exec/acceptance-host.mjs': ['验收', '真实独立Gateway/QQ插件/原生exec：本地确定性模型与合成OneBot，核对目录/主机查询、实际写入边界、超时、成员拒绝与审计；无真实模型/QQ/DSH或生产写入', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
   'chatbot/scripts/prepare-coding-pilot.mjs': ['维护', '新建无远端合成Git项目和配置审阅草案；不apply、不启停生产服务、不调用模型或QQ', {testDir: 1}, 'header'],
+  'chatbot/scripts/check-coding-pilot-python.py': ['维护', '宿主导入任务Python并独立断言；无产物为不适用，错误/删除/符号链接失败；导入代码的副作用由宿主写入边界约束，无模型或QQ调用', {testDir: 1}, 'header'],
   'chatbot/tests/coding/fixtures.mjs': ['库', '合成身份、临时Git及可注入ACP/投递夹具，不读取生产身份或凭据', {testDir: 1}, 'header'],
   'chatbot/tests/coding/acp-peer.mjs': ['库', '离线测试子进程ACP对端与自有心跳进程，仅由协议测试启动，无模型或QQ', {testDir: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/acp.test.mjs': ['离线', '真实本地stdio权限关联、自有进程及检查进程树取消；离线对端，无模型或QQ', {testDir: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/flow.test.mjs': ['离线', '实际编码工具处理器与Git/SQLite/确认/日志：身份、基线、幂等、检查、回档、合入与重启；注入ACP和投递', {testDir: 1}, 'header'],
+  'chatbot/tests/coding/results.test.mjs': ['离线', '实际结果持久化、分页脱敏、轮次/身份隔离、重启核对、通知去重与Python宿主门禁；注入ACP和投递', {testDir: 1}, 'header'],
+  'chatbot/tests/coding/policy-compatibility.test.mjs': ['离线', '配置升级后的旧任务读写兼容、实际目录与仓库绑定、当前合入检查及确认消费边界；注入ACP和投递', {testDir: 1}, 'header'],
+  'chatbot/tests/coding/acceptance-results-live.mjs': ['验收', '显式--live在获准试点目录内调用真实DSH，核对实际输出/独立Python检查/结果分页和通知正文；无真实QQ、生产任务或合入', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/acceptance-live.mjs': ['验收', '显式--live真实DSH模型和专用处理器：编码/检查/续接/测试夹具确认后临时合入；记录投递，无真实QQ或生产变更', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/acceptance-cancel-live.mjs': ['验收', '显式--live单个真实DSH任务与产品取消、心跳停止；无QQ、共享DSH服务或生产变更', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
   'chatbot/tests/coding/acceptance-host.mjs': ['验收', '真实隔离Gateway验证编码插件启用/禁用、工具目录与正常停止；不启动DSH，无模型/API/QQ或生产变更', {testDir: 1, writesRepo: 1, restart: 1}, 'header'],
@@ -205,7 +211,7 @@ const TABLE = {
   'chatbot/tests/acceptance/call-analysis.mjs': ['库', '旧验收调用观察工具（只观察，不证明写入）', {readonly: 1}, 'header'],
   'chatbot/tests/acceptance/domain-fixture.mjs': ['库', '旧验收领域夹具与工具定义', {readonly: 1}, 'code'],
   'chatbot/tests/acceptance/host-driver.mjs': ['库', '旧 harness Host 驱动，只开测试状态目录', {readonly: 1, testDir: 1}, 'code'],
-  'chatbot/tests/acceptance/model-driver.mjs': ['库', '旧 harness 模型驱动（构造模型客户端，读取遗留 AGENTS）', {model: 1}, 'code'],
+  'chatbot/tests/acceptance/model-driver.mjs': ['库', '旧 harness 模型驱动（构造模型客户端，显式读取 docs/archive/chatbot-AGENTS.md）', {model: 1}, 'code'],
   'chatbot/tests/acceptance/retrieval-config.mjs': ['库', '旧验收检索输出预算配置', {readonly: 1}, 'header'],
 
   // ---- 写运行状态的运维工具：需操作者明确执行 ----
@@ -268,7 +274,7 @@ const TABLE = {
   'chatbot/tests/acceptance/run-real-cron.mjs': ['遗留验收', '隔离 Gateway 的真实 Cron 存储与确认钩子；确定性认知，无模型、无 QQ 网络', {auth: 1, task: 1, testDir: 1}, 'boundary'],
   'chatbot/tests/acceptance/run-reminder-expiry.mjs': ['遗留验收', '真实主模型有界循环 + 提醒提案工具 + 隔离库；非生产 Agent/QQ 验收', {auth: 1, model: 1, task: 1, testDir: 1}, 'boundary'],
   'chatbot/tests/acceptance/run-retrieval-t2.mjs': ['遗留验收', '真实 Tavily API（生产凭据）；无模型、无 Host、无 QQ 投递、不写生产库', {auth: 1, externalApi: 1}, 'boundary'],
-  'chatbot/tests/acceptance/run-retrieval-t3.mjs': ['遗留验收', '真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置', {auth: 1, model: 1, externalApi: 1}, 'boundary'],
+  'chatbot/tests/acceptance/run-retrieval-t3.mjs': ['遗留验收', '显式读取归档提示词；真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置', {auth: 1, model: 1, externalApi: 1}, 'boundary'],
   'chatbot/tests/acceptance/run-retrieval-host.mjs': ['遗留验收', '全新 Host 状态 + 原生工具 + 真实 API；无 QQ 发送、不碰生产库', {auth: 1, model: 1, externalApi: 1, testDir: 1}, 'boundary'],
   'chatbot/tests/acceptance/run-fallback-failover.mjs': ['遗留验收', '主模型指向必然失败地址、fallback 用真实 deepseek', {auth: 1, model: 1, testDir: 1}, 'header'],
   'chatbot/tests/acceptance/run-profile-geo.mjs': ['遗留验收', '真实 GeoAPI + 隔离 Profile 库；无生产确认、无 QQ 投递', {auth: 1, externalApi: 1, testDir: 1}, 'header'],

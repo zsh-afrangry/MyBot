@@ -19,7 +19,7 @@ export async function createModelDriver(fixture, options = {}) {
   const client = new Anthropic({ apiKey, baseURL: provider.baseUrl, timeout: 60_000, maxRetries: 0 });
   const names = options.toolNames ?? ["personal_planning_state_get", "personal_planning_change_propose", "personal_planning_change_commit"];
   const definitions = fixture.toolDefinitions(names);
-  const system = readFileSync(join(root, "chatbot/AGENTS.md"), "utf8") +
+  const system = readFileSync(new URL("../../../docs/archive/chatbot-AGENTS.md", import.meta.url), "utf8") +
     "\n本轮运行于隔离验收环境。消息身份已由测试入口提供为主人 QQ 私聊；工具访问独立测试数据库。" +
     "测试提案允许按主人明确请求生成并在后续有效确认后提交。只使用本轮实际提供的工具，工具结果是事实来源。";
   const messages = [], turns = [];

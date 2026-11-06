@@ -1,0 +1,57 @@
+{
+  "at": "2026-10-30T11:17:06.457Z",
+  "boundary": "Real isolated Gateway/QQ plugin/native exec with local deterministic model and synthetic OneBot; ordinary-file kernel write fence. No real model/QQ/DSH or production writes.",
+  "cases": [
+    {
+      "label": "native exec source directory query returns actual output without DSH",
+      "passed": true
+    },
+    {
+      "label": "native exec selects the requested task worktree rather than confusing it with source",
+      "passed": true
+    },
+    {
+      "label": "host memory query works and payload does not inherit provider environment",
+      "passed": true
+    },
+    {
+      "label": "ordinary writes inside the approved directory work",
+      "passed": true
+    },
+    {
+      "label": "actual native execution cannot write an outside file",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks env before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks elevated before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks cwd before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks node before native launch",
+      "passed": true
+    },
+    {
+      "label": "native process timeout terminates the payload before a later write",
+      "passed": true
+    }
+  ],
+  "fence": {
+    "backend": "landlock",
+    "enforcement": "partial",
+    "writeRoot": "/tmp/kurumi-native-exec-host-xi40P3/approved"
+  },
+  "passed": false,
+  "error": "ENOENT: no such file or directory, open '/tmp/kurumi-native-exec-host-xi40P3/users/800001/workspace/AGENTS.md'",
+  "diagnosticDirectory": "/tmp/kurumi-native-exec-host-xi40P3",
+  "modelRequests": 20,
+  "finishedAt": "2026-10-30T11:17:23.221Z",
+  "childStopped": true
+}

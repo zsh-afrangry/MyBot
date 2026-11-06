@@ -1,0 +1,67 @@
+{
+  "at": "2026-10-30T11:22:32.578Z",
+  "boundary": "Real isolated Gateway/QQ plugin/native exec with local deterministic model and synthetic OneBot. No model provider, external API, QQ network or production write; DSH is not launched. Ordinary-file write confinement only.",
+  "cases": [
+    {
+      "label": "native exec source directory query returns actual output without DSH",
+      "passed": true
+    },
+    {
+      "label": "native exec selects the requested task worktree rather than confusing it with source",
+      "passed": true
+    },
+    {
+      "label": "host memory query works and payload does not inherit provider environment",
+      "passed": true
+    },
+    {
+      "label": "ordinary writes inside the approved directory work",
+      "passed": true
+    },
+    {
+      "label": "actual native execution cannot write an outside file",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks env before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks elevated before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks cwd before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks node before native launch",
+      "passed": true
+    },
+    {
+      "label": "native process timeout terminates the payload before a later write",
+      "passed": true
+    },
+    {
+      "label": "exposed synthetic member native exec still fails owner permission",
+      "passed": true
+    },
+    {
+      "label": "audit records final allow/deny and scope without raw command or provider credentials",
+      "passed": true
+    }
+  ],
+  "fence": {
+    "backend": "landlock",
+    "enforcement": "partial",
+    "writeRoot": "/tmp/kurumi-native-exec-host-MlrNS8/approved"
+  },
+  "nativeExecAudit": {
+    "allowed": 6,
+    "denied": 5
+  },
+  "passed": true,
+  "modelRequests": 22,
+  "finishedAt": "2026-10-30T11:22:51.083Z",
+  "childStopped": true
+}

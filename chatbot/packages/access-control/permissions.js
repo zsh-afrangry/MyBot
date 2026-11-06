@@ -9,14 +9,14 @@ export const OWNER_PERMISSIONS = Object.freeze([
   'weather.read', 'profile.read', 'profile.manage', 'planning.read', 'planning.manage',
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
   'memory.read', 'memory.manage', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
-  'automations.read', 'automations.manage', 'sessions.read', 'e7.read',
+  'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'host.exec',
 ]);
 export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
 export const MEMBER_TOOLS = Object.freeze(['session_status', 'web_search', 'web_fetch', 'kurumi_document', 'kurumi_translate', 'kurumi_document_send']);
 
 export function toolPermission(name, args = {}) {
   const direct = {
-    tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use',
+    tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec',
     personal_weather_get_brief: 'weather.read', personal_profile_state_get: 'profile.read',
     personal_profile_change_propose: 'profile.manage', personal_profile_change_commit: 'profile.manage',
     personal_planning_state_get: 'planning.read', personal_planning_change_propose: 'planning.manage', personal_planning_change_commit: 'planning.manage',
@@ -39,7 +39,7 @@ export function toolPermission(name, args = {}) {
   if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content'].includes(args.action) ? 'e7.read' : undefined;
   if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';
-  if (name === 'kurumi_code') return ['list', 'status', 'diff'].includes(args.action) ? 'tasks.read' : ['start', 'continue', 'cancel', 'rollback', 'preview', 'merge'].includes(args.action) ? 'tasks.code' : undefined;
+  if (name === 'kurumi_code') return ['list', 'status', 'result', 'diff'].includes(args.action) ? 'tasks.read' : ['start', 'continue', 'cancel', 'rollback', 'preview', 'merge'].includes(args.action) ? 'tasks.code' : undefined;
   if (name === 'kurumi_task') return args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read';
   if (name === 'automations') return ['list', 'get', 'status', 'runs'].includes(args.action) ? 'automations.read' : 'automations.manage';
   if (name === 'kurumi_document') return args.action==='fetch'?'papers.import':['list','get','find'].includes(args.action)?'papers.read':undefined;

@@ -18,12 +18,20 @@ export function probeWriteFence(boundary) {
   if (result.status !== 0 || !/^landlock: (fully|partially) enforced/m.test(result.stdout ?? '')) throw failure('coding_write_boundary_unavailable');
   return {backend: 'landlock', enforcement: /partially enforced/.test(result.stdout) ? 'partial' : 'full', writeRoot: boundary.root};
 }
+// Prepare runtime directories inside the same kernel fence: a writable parent may have
+// been replaced by a symlink since the previous call. Never mkdir through it as the host.
+export function fencedDirectory(boundary, relative) {
+  validateWriteFence(boundary);
+  const target = path.resolve(boundary.root, relative);
+  if (target === boundary.root || !inside(target, boundary.root)) throw failure('invalid_coding_write_boundary');
+  const result = spawnSync(boundary.launcher, ['--ro', '/', '--rw', '/dev/null', '--rw', boundary.root, '--', '/bin/mkdir', '-p', '-m', '700', target], {timeout: 5000, stdio: 'ignore'});
+  if (result.status !== 0 || fs.realpathSync(target) !== target) throw failure('invalid_coding_write_boundary');
+  return target;
+}
 export function confinedProcess(boundary, command, args, cwd) {
   validateWriteFence(boundary);
   if (!inside(fs.realpathSync(cwd), boundary.root)) throw failure('coding_cwd_outside_write_boundary');
-  const temporary = path.join(boundary.root, 'state', 'tmp');
-  fs.mkdirSync(temporary, {recursive: true, mode: 0o700});
-  if (fs.realpathSync(temporary) !== temporary) throw failure('invalid_coding_write_boundary');
+  const temporary = fencedDirectory(boundary, 'state/tmp');
   // Reads retain the existing on-demand information policy. /dev/null is the only device write grant.
   return {command: boundary.launcher, args: ['--ro', '/', '--rw', '/dev/null', '--rw', boundary.root, '--', command, ...args],
     env: {TMPDIR: temporary, TMP: temporary, TEMP: temporary, XDG_CACHE_HOME: path.join(boundary.root, 'state', 'cache')}};

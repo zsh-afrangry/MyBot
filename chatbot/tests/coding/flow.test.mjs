@@ -68,7 +68,7 @@ test('failed checks create no formal commit; explicit rollback retains failed sn
   assert.equal(JSON.parse(fs.readFileSync(path.join(raw.snapshotPath, 'untracked.json')))[0].name, 'scratch.txt');
 });
 
-test('stale target, changed untracked content, candidate tampering and changed checks each invalidate merge authority', async t => {
+test('stale target, changed untracked content and candidate tampering each invalidate merge authority', async t => {
   const f = await fixture(t), task = await start(f); await f.settle(task.id);
   fs.writeFileSync(path.join(f.source, 'draft.txt'), 'first draft');
   const p = await f.run({action: 'preview', taskId: task.id}); f.approve(p);
@@ -78,8 +78,6 @@ test('stale target, changed untracked content, candidate tampering and changed c
   const candidate = f.service.store.getPreview(p2.proposalId).payload.candidateDir;
   fs.writeFileSync(path.join(candidate, 'value.mjs'), 'export const value = 99;\n');
   await assert.rejects(f.run({action: 'merge', taskId: task.id, proposalId: p2.proposalId}), /candidate_changed/);
-  f.pluginConfig.projects[0].checks[0].argv.push('--changed');
-  await assert.rejects(f.run({action: 'status', taskId: task.id}), /project_policy_changed/);
   assert.equal(git(f.source, 'rev-parse', 'HEAD').trim(), f.baseline);
 });
 

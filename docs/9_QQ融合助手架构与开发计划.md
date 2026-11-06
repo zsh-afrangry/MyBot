@@ -160,6 +160,7 @@ systemctl --user start kurumi-fusion.service
 | 后端边界 | `node --test chatbot/tests/backend-boundaries/*.test.mjs` |
 | 适配器 | `node --test chatbot/tests/domain-adapters/*.test.mjs` |
 | 权限 | `node --test chatbot/tests/access-control/*.test.mjs` |
+| 本机编码委托 | `node --test chatbot/tests/coding/*.test.mjs`；真实DSH、隔离宿主与QQ按[文档28](28_本机编码工具委托与实验任务.md#后续实施与验收)分别授权与记录，不批量执行`acceptance-*.mjs` |
 | 检索提供方 | `node --test chatbot/tests/web-deepseek/*.test.mjs` |
 | E7只读数据 | `npm --prefix chatbot/plugins/kurumi-e7 run build`；`node --test chatbot/tests/e7/*.test.mjs`；实际HTTP/宿主/模型记录归文档27，不能用离线结果代替QQ验收 |
 | 人格与连续性记忆 | `node --test chatbot/tests/persona/*.test.mjs` |
@@ -308,9 +309,12 @@ node scripts/fusion/register-project.mjs --remove <id> [--apply]     # 移除
 | `AGENTS.md` | 修改 | 副本专用开发指令：只在本副本内工作、不推送、检查在隔离命名空间 |
 | `scripts/fusion/fixtures/stats.py` | 新增 | 后台代码任务的固定验收 fixture（`test_stats.py` 的 `mean`/`moving_average`）。**移走该文件会让固定测试失败**，已实测 |
 
-`chatbot/AGENTS.md` 在2026-10-11核对时与主仓库一致，作为离线验收提示词保留；后续一致性随每次基线同步实查。首次创建副本时，
-`configure-projects.mjs` 只写副本根 `AGENTS.md`，会保留克隆下来的 `chatbot/AGENTS.md`；
-这样重新创建副本不会悄悄改变验收提示词。
+融合前提示词原位于 `chatbot/AGENTS.md`，在2026-10-11核对时与主仓库一致；2026-10-28移至
+[`docs/archive/chatbot-AGENTS.md`](archive/chatbot-AGENTS.md)，避免被开发工具当作目录指令加载。
+旧验收脚本 `model-driver.mjs`、`run-retrieval-t3.mjs` 按自身模块位置显式读取仓库内的归档文件，
+`KURUMI_SOURCE_ROOT` 仍只指定旧配置、依赖代码与报告所在的提取副本，不再提供这份提示词。
+首次创建副本时，`configure-projects.mjs` 只写副本根 `AGENTS.md`，保留克隆下来的归档提示词，
+不另建 `chatbot/AGENTS.md`；后续一致性随每次基线同步实查。归档与路径验证见[本轮记录](verification/chatbot-agents-archive-2026-10-28/README.md)。
 
 另有三类内容**不出现在 Git 树差异里**，但确实存在于副本目录，排查时不要混淆：
 

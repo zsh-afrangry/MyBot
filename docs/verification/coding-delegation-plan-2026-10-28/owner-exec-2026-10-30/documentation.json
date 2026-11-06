@@ -1,0 +1,56 @@
+{
+  "at": "2026-10-30T11:30:00.318921+00:00",
+  "reports": [
+    {
+      "root": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "checks": [
+        {
+          "name": "evidence coverage",
+          "exitCode": 0,
+          "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 633\n  total: 716\nOK: every file belongs to exactly one named group with valid documents.\n"
+        },
+        {
+          "name": "generated script index",
+          "exitCode": 0,
+          "output": "OK: SCRIPTS.md matches 226 classified, document-owned entries.\n"
+        },
+        {
+          "name": "documentation map regression",
+          "exitCode": 0,
+          "output": "✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (1.05732ms)\n✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (3.399974ms)\n▶ CLI verifies ownership and saved Markdown without touching the real repository\n  ✔ saved table and both P2 evidence overrides survive generation (126.166455ms)\n  ✔ unknown source fails even inside a known suite (45.820292ms)\n  ✔ missing document and invalid/duplicate selectors fail (102.264936ms)\n  ✔ an existing classified script without a document owner fails (46.497584ms)\n  ✔ stale generated table or reversed markers fail (114.288205ms)\n  ✔ new receipts inherit a named suite; unknown evidence directory fails (79.900672ms)\n✔ CLI verifies ownership and saved Markdown without touching the real repository (598.838969ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 672.833838\n"
+        },
+        {
+          "name": "whitespace",
+          "exitCode": 0,
+          "output": ""
+        }
+      ]
+    },
+    {
+      "root": "/home/afrangry/kurumi-fusion",
+      "checks": [
+        {
+          "name": "evidence coverage",
+          "exitCode": 0,
+          "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 635\n  total: 718\nOK: every file belongs to exactly one named group with valid documents.\n"
+        },
+        {
+          "name": "generated script index",
+          "exitCode": 0,
+          "output": "OK: SCRIPTS.md matches 226 classified, document-owned entries.\n"
+        },
+        {
+          "name": "documentation map regression",
+          "exitCode": 0,
+          "output": "✔ suite ownership prefers exact files and longer directories; evidence rejects overlap (5.357962ms)\n✔ discovery includes nested helpers and misplaced scripts, excludes dependency/build trees (3.186546ms)\n▶ CLI verifies ownership and saved Markdown without touching the real repository\n  ✔ saved table and both P2 evidence overrides survive generation (128.595339ms)\n  ✔ unknown source fails even inside a known suite (50.928929ms)\n  ✔ missing document and invalid/duplicate selectors fail (99.693105ms)\n  ✔ an existing classified script without a document owner fails (53.770523ms)\n  ✔ stale generated table or reversed markers fail (114.313984ms)\n  ✔ new receipts inherit a named suite; unknown evidence directory fails (80.481795ms)\n✔ CLI verifies ownership and saved Markdown without touching the real repository (612.245174ms)\nℹ tests 9\nℹ suites 0\nℹ pass 9\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 679.204447\n"
+        },
+        {
+          "name": "whitespace",
+          "exitCode": 0,
+          "output": ""
+        }
+      ]
+    }
+  ],
+  "localLinksReceipt": "links.json"
+}

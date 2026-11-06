@@ -26,7 +26,7 @@
 | 功能 | [23 KnowledgeMap共享业务：提醒列表、记账与天气](23_KnowledgeMap业务能力桥接.md) | 提醒列表规则、单消息多项与每日播报；账单完整维护、天气；共享接口、版本/幂等、迁移与配对恢复、真实日志关联 |
 | 功能 | [26 检索提供方接入设计](26_基础能力插件边界整理与检索接入设计.md) | DeepSeek Search/Fetch provider的范围、宿主契约、实施与验收计划；现行结构归21 |
 | 功能 | [27 E7数据插件设计](27_E7数据插件设计.md) | E7·WIKI内容分类、文本查询/关键词覆盖、角色视图、混合刷新及权限；分组契约与独立图片扩展；验收状态及最新QQ核对见16 |
-| 需求方案 | [28 本机编码工具委托与实验任务](28_本机编码工具委托与实验任务.md) | QQ发起本机开发/实验、异步任务和权限逐步开放；独立Git/DSH通过，单目录QQ试点已部署待真人验收；目录外申请记录与真人验收 |
+| 需求方案 | [28 本机编码工具委托与实验任务](28_本机编码工具委托与实验任务.md) | QQ发起本机开发/实验、任务与结果回传、独立检查、[主人原生exec](28_本机编码工具委托与实验任务.md#主人原生exec)与分层验收；[结果修复](verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md)、[旧任务兼容与当前条件检查](verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md) |
 | 横切规则 | [21 后端职责分层](21_后端职责分层与代码整理.md) | 现行后端职责、共享代码归属、独立插件生命周期、Policy/Store与确认契约 |
 | 横切规则 | [24 统一身份与权限管理](24_统一身份与权限管理.md) | 单一权限 JSON、共享授权、独立用户 Agent/论文归属/投递隔离、成员登记与回退 |
 | 运维 | [12 系统资产、备份与回退管理](12_目录资产与Git备份整理.md) | 三套系统的资产、Git与备份保留；旧A/B原路径复制、风险审计、屏蔽与互斥切换 |
@@ -92,6 +92,7 @@
 | [`7_架构偏离分析与当前卡点.txt`](7_架构偏离分析与当前卡点.txt) | 架构偏离分析；其中“复核记录为唯一 TODO”已于 2026-10-10 作废 |
 | [`8_检索功能重构.txt`](8_检索功能重构.txt) | 检索重构方案与验收；QQ 迁移后失效的脚本已修复，Tavily 时间参数等问题按该文自述仍未闭环 |
 | [`tp.txt`](tp.txt) | 早期能力/编排架构参考（V1.0，2026-08-23）；原件保留，已采纳原则见[架构手册](9_QQ融合助手架构与开发计划.md#人格记忆与功能三模块)与后端分层，其余设想不视为已实现。头部旧编号以本入口为准 |
+| [`archive/chatbot-AGENTS.md`](archive/chatbot-AGENTS.md) | 原 `chatbot/AGENTS.md`；融合前能力提示词，仅供旧验收脚本显式加载，已退出开发指令目录 |
 | [`archive/`](archive/) | 已完成方案、失败实验与阶段详录（含 [`archive/4_受控搜索模块设计.txt`](archive/4_受控搜索模块设计.txt)） |
 
 发生冲突时以本页列出的当前规则文档和代码为准。未编号的 `docs/4_受控搜索模块设计.txt` 已归档到 `docs/archive/`，
@@ -99,6 +100,7 @@
 
 | 记录中出现的名字 | 现在的位置 | 说明 |
 | --- | --- | --- |
+| `chatbot/AGENTS.md` | [`archive/chatbot-AGENTS.md`](archive/chatbot-AGENTS.md) | 2026-10-28归档；历史回执中的原路径保留，当前读取路径已迁移 |
 | `docs/8_搜索功能修改.txt` | [`8_检索功能重构.txt`](8_检索功能重构.txt) | 主题扩展后改名（见 `verification/2026-09-26_搜索实验AB重新测试.txt`） |
 | `docs/4_受控搜索模块设计.txt` | [`archive/4_受控搜索模块设计.txt`](archive/4_受控搜索模块设计.txt) | 2026-10-01 归档 |
 | `docs/10_融合助手运行维护.md` | [架构与运行维护手册](9_QQ融合助手架构与开发计划.md)；[归档原文](archive/10_融合助手运行维护.md) | 2026-10-27合并，保留历史编号，现行引用使用主题与章节名称 |
@@ -154,7 +156,7 @@
 | `/AGENTS.md`（仓库根目录） | 开发助手 | 唯一开发指引：开发路径、保护范围、验证与授权边界 |
 | `scripts/fusion/templates/AGENTS.md` | 主人运行时聊天 agent | 主人提示词模板；经 `config/persona.json` 的 `agentsSubstitution` 替换后由 `sync-persona.mjs` 写入运行 workspace |
 | `scripts/fusion/templates/MEMBER_AGENTS.md` | 已登记成员的独立聊天 agent | 不带主人资料；同一同步命令写入 `users/<QQ>/workspace/`，共享人格不共享历史/记忆 |
-| `chatbot/AGENTS.md` | `chatbot/tests/acceptance/` 离线脚本 | **融合前遗留**的能力登记，只作历史提示词使用，不代表当前规则 |
+| [`docs/archive/chatbot-AGENTS.md`](archive/chatbot-AGENTS.md) | `model-driver.mjs`、`run-retrieval-t3.mjs`（显式加载） | **融合前遗留**的能力提示词；按模块位置读取，不代表当前规则，也不自动作为开发指令加载 |
 | 各后台工作区的 `AGENTS.md` | `project-fusion`、`researcher` | 由对应 `configure-*.mjs` 生成，随工作区存在，不在仓库维护 |
 
 运行副本（`.openclaw-fusion/workspace/AGENTS.md`）是生成结果，不是来源：改模板后跑 `node scripts/fusion/sync-persona.mjs` 核对是否一致，不能直接改副本后声称已生效。

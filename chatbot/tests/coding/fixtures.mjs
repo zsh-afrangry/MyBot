@@ -12,7 +12,7 @@ import * as core from '../../packages/confirmation-core/dist/index.js';
 export {core};
 export const owner = '100001', member = '100002';
 export async function fixture(t, options = {}) {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-coding-'));
+  const root = fs.mkdtempSync(path.join(options.parent ?? os.tmpdir(), 'kurumi-coding-'));
   fs.chmodSync(root, 0o700);
   const source = path.join(root, 'source'); fs.mkdirSync(source);
   git(source, 'init', '-b', 'main');

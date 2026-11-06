@@ -18,12 +18,12 @@ fs.mkdirSync(state+'/projects',{recursive:true,mode:0o700});fs.mkdirSync(checks,
 if(!fs.existsSync(root)){
  git(['clone','--no-hardlinks',source,root],source);git(['remote','remove','origin'],root);git(['switch','-c','kurumi/project-base'],root);
  const instructions='# 独立融合开发副本\n\n此处是授权的项目开发副本，只在本仓库内工作。原助手与QQ bridge原件不能访问或修改。可以维护源码、添加测试、使用受限Git工具创建分支和本地提交；不推送。\n\n任务先检查Git状态，再复现问题和修复，调用kurumi_project_check得到真实结果，审阅diff后提交。检查在隔离命名空间运行，固定外部验收只读；不得删除/改弱现有测试以伪造通过。无通用shell/外网，禁止创建子会话。简洁报告修改、实际检查、提交号和限制。\n';
-  // chatbot/AGENTS.md is an acceptance-test input owned by the source checkout. Keep the
-  // cloned source version instead of replacing it with workspace instructions; otherwise a
-  // fresh bootstrap would silently change the test prompt and diverge from the current copy.
+  // docs/archive/chatbot-AGENTS.md is a historical acceptance-test input owned by the
+  // source checkout. Keep the cloned archive unchanged; workspace instructions belong
+  // only in the copy's root AGENTS.md.
   fs.writeFileSync(root+'/AGENTS.md',instructions);
  fs.appendFileSync(root+'/.gitignore','\n# Host context stays outside project source.\n/IDENTITY.md\n/SOUL.md\n/USER.md\n/MEMORY.md\n');
- git(['add','AGENTS.md','chatbot/AGENTS.md','.gitignore'],root);git(['-c','user.name=Kurumi Setup','-c','user.email=kurumi@localhost','commit','-m','Prepare isolated development workspace instructions'],root);
+ git(['add','AGENTS.md','.gitignore'],root);git(['-c','user.name=Kurumi Setup','-c','user.email=kurumi@localhost','commit','-m','Prepare isolated development workspace instructions'],root);
 }
 fs.mkdirSync(root+'/node_modules',{recursive:true});for(const [name,target] of Object.entries({openclaw:'/home/afrangry/.npm-global/lib/node_modules/openclaw',ws:'/home/afrangry/.npm-global/lib/node_modules/openclaw/node_modules/ws'}))if(!fs.existsSync(root+'/node_modules/'+name))fs.symlinkSync(target,root+'/node_modules/'+name);
 const fixture=checks+'/fusion-memory-revision.mjs';if(!fs.existsSync(fixture))fs.writeFileSync(fixture,`// Operator-owned regression, mounted read-only in the project's test namespace.\nimport test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {readMemory,writeMemory} from '/workspace/chatbot/plugins/kurumi-memory/store.js';\ntest('memory rejects corrupt negative revisions while valid state remains readable',()=>{const dir=fs.mkdtempSync(path.join(os.tmpdir(),'revision-'));try{writeMemory(dir,{entries:[]},0);assert.equal(readMemory(dir).revision,1);fs.writeFileSync(path.join(dir,'MEMORY.md'),'<!-- KURUMI_MEMORY_JSON -->\\n'+JSON.stringify({version:1,revision:-1,entries:[]}));assert.throws(()=>readMemory(dir),/memory format/i);}finally{fs.rmSync(dir,{recursive:true,force:true});}});\n`,{mode:0o600});

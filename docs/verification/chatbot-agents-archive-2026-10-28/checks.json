@@ -1,0 +1,170 @@
+{
+  "checked_at_utc": "2026-10-28T04:48:32.203834+00:00",
+  "source_directory": "/home/afrangry/kurumi-fusion",
+  "source_commit": "c9672b5086ebd3f0733fb13309db2bc26176bf33",
+  "scope": "Archive migration and references; offline checks plus read-only runtime closeout.",
+  "archive_integrity": {
+    "status": "passed",
+    "old_path_absent": true,
+    "archive_avoids_AGENTS_basename": true,
+    "historical_body_preserved_except_relative_links": true,
+    "body_comparison": "Compare from 本文件规定 through EOF with HEAD:chatbot/AGENTS.md; reverse only the four moved relative-link targets before comparing.",
+    "normalized_body_sha256": "b75f7ea839132b8523bedbd74462fc64d056bfe4d395cd05adc3d329547cd975",
+    "markdown_files_checked": 9,
+    "local_links_and_anchors_checked": 658,
+    "anchor_types_checked": [
+      "Markdown headings",
+      "explicit HTML id/name anchors"
+    ],
+    "broken_links": [],
+    "protected_files_and_runtime_templates_unchanged": [
+      "docs/example.md",
+      "docs/kurimi.png",
+      "docs/tp.txt",
+      "docs/tp2.txt",
+      "scripts/fusion/templates/AGENTS.md",
+      "scripts/fusion/templates/MEMBER_AGENTS.md",
+      "config/runtime.config.json",
+      "config/persona.json"
+    ]
+  },
+  "prompt_path_resolution": {
+    "status": "passed",
+    "modules": [
+      "chatbot/tests/acceptance/model-driver.mjs",
+      "chatbot/tests/acceptance/run-retrieval-t3.mjs"
+    ],
+    "working_directory": "/tmp",
+    "result": "Each source read expression resolves the full archived prompt via its module URL; harnesses were not imported or executed."
+  },
+  "syntax_checks": [
+    {
+      "command": "node --check chatbot/tests/acceptance/model-driver.mjs",
+      "exit_code": 0,
+      "status": "passed"
+    },
+    {
+      "command": "node --check chatbot/tests/acceptance/run-retrieval-t3.mjs",
+      "exit_code": 0,
+      "status": "passed"
+    },
+    {
+      "command": "node --check scripts/fusion/configure-projects.mjs",
+      "exit_code": 0,
+      "status": "passed"
+    },
+    {
+      "command": "node --check scripts/fusion/evidence-index.mjs",
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "documentation_map_regression": {
+    "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+    "exit_code": 0,
+    "tests": 9,
+    "passed": 9,
+    "failed": 0
+  },
+  "read_only_closeout": [
+    {
+      "command": "node scripts/fusion/health.mjs",
+      "exit_code": 0,
+      "status": "passed",
+      "summary": {
+        "ok": true,
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "testMethodDisabled": true,
+        "issues": [],
+        "databases": {
+          "channelDatabase": "ok",
+          "weatherDatabase": "ok",
+          "remindersDatabase": "ok",
+          "reminderListDatabase": "ok"
+        },
+        "services": {
+          "kurumi-fusion": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "qq-bridge": {
+            "ActiveState": "inactive",
+            "UnitFileState": "masked"
+          },
+          "openclaw-gateway": {
+            "ActiveState": "inactive",
+            "UnitFileState": "masked"
+          },
+          "snowluma": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "snowluma-qq": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "knowledgemap-assistant": {
+            "ActiveState": "active",
+            "UnitFileState": "enabled"
+          },
+          "dsh-web": {
+            "ActiveState": "active",
+            "UnitFileState": "disabled"
+          }
+        }
+      }
+    },
+    {
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exit_code": 0,
+      "status": "passed",
+      "summary": "Dependency ownership verification passed."
+    },
+    {
+      "command": "node scripts/fusion/sync-config.mjs",
+      "exit_code": 0,
+      "status": "passed",
+      "summary": "Managed runtime configuration alignment (check only) passed."
+    },
+    {
+      "command": "node scripts/fusion/sync-persona.mjs",
+      "exit_code": 0,
+      "status": "passed",
+      "summary": "Runtime persona alignment (check only) passed."
+    }
+  ],
+  "documentation_checks": [
+    {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exit_code": 0,
+      "status": "passed",
+      "summary": "evidence coverage\n  历史领域验收: 83\n  当前有效: 564\n  total: 647\nOK: every file belongs to exactly one named group with valid documents."
+    },
+    {
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "exit_code": 0,
+      "status": "passed",
+      "summary": "OK: SCRIPTS.md matches 212 classified, document-owned entries."
+    }
+  ],
+  "final_scope_check": {
+    "scope": "passed",
+    "markdown_files": 9,
+    "local_links_and_anchors": 658,
+    "tracked_changes": 13,
+    "new_files": 3,
+    "historical_documents_and_frozen_receipts": "unchanged",
+    "read_only_closeout": "4/4 passed"
+  },
+  "limits": [
+    "No real model/Tavily/HTTP acceptance run",
+    "No configure-projects execution",
+    "No runtime apply/restart or production-copy update",
+    "No Git commit or remote write"
+  ]
+}

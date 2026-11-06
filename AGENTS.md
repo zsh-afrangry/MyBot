@@ -52,8 +52,8 @@
 ## 触及禁用限制时必须先告知
 
 运行期 agent 的能力由 `config/runtime.config.json` 的 `agents.entries.<id>.tools` 决定，**不是由提示词决定**。
-当前 `main`（主人 QQ 私聊里的助手）禁用：`read`、`write`、`edit`、`apply_patch`、`exec`、`process`、`message`、
-`sessions_spawn`；它能用的只有聊天与 `tools.alsoAllow` 明列的业务工具。成员使用独立 Agent/workspace、显式窄工具上限与强制宿主授权策略，不继承主人的数据或后台工具。群聊入口关闭；不得只放宽入口、伪造 owner 标志或用模型参数决定身份/投递对象。
+当前 `main`（主人 QQ 私聊里的助手）禁用：`read`、`write`、`edit`、`apply_patch`、`process`、`message`、
+`sessions_spawn`；原生 `exec` 由主人显式批准，受可信 `host.exec` 授权及试点目录普通文件写入边界约束，规则见[文档28](docs/28_本机编码工具委托与实验任务.md#主人原生exec)。工作目录不是隔离边界，不能移除执行层写入限制。成员使用独立 Agent/workspace、显式窄工具上限与强制宿主授权策略，不继承主人的数据或后台工具。群聊入口关闭；不得只放宽入口、伪造 owner 标志或用模型参数决定身份/投递对象。
 
 **当某个需求需要某项被禁用的能力时**（例如"让 QQ 里的助手读文件/跑命令"）：
 
@@ -87,7 +87,7 @@
 
 ## 其他 agent 指令入口
 
-- `chatbot/AGENTS.md`：**不是本仓库的当前规则**。它是融合前遗留的能力登记，只作为 `chatbot/tests/acceptance/` 离线验收脚本的基础提示词保留，并已在文件头标注。不要据它判断当前能力、工具或权限。
+- [`docs/archive/chatbot-AGENTS.md`](docs/archive/chatbot-AGENTS.md)：原 `chatbot/AGENTS.md`，融合前遗留的能力登记，已归档；仅供两处旧验收脚本显式读取，不作为开发指令或当前运行规则。不要据它判断当前能力、工具或权限。
 - 主人运行期提示词在 `scripts/fusion/templates/AGENTS.md`，由 `config/persona.json` 的 `agentsSubstitution` 替换后经 `sync-persona.mjs` 写入 `.openclaw-fusion/workspace/AGENTS.md`；成员使用 `scripts/fusion/templates/MEMBER_AGENTS.md`，同步到各自 `users/<QQ>/workspace/`。只改模板，不改运行副本；人格可共享，主人资料/记忆不可复制。
 - `project-fusion`、`researcher` 等后台 agent 的提示词由各自的 `configure-*.mjs` 生成在对应工作区，不在本文件维护。
 

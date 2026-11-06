@@ -1,9 +1,15 @@
-# kurumi 行为与安全规则（融合前遗留副本）
+# kurumi 行为与安全规则（融合前遗留提示词，已归档）
+
+> **归档日期：2026-10-28；原路径：`chatbot/AGENTS.md`。** 按用户要求移入 `docs/archive/`，
+> 文件名改为 `chatbot-AGENTS.md`，不再作为开发工具的目录指令入口。归属与迁移说明见
+> [架构与运行维护手册](../9_QQ融合助手架构与开发计划.md#与主仓库的有意差异2026-10-11-实测)及
+> [归档验证记录](../verification/chatbot-agents-archive-2026-10-28/README.md)。
 
 > **本文件不是当前系统的规则来源。** 它是融合前（旧 NAICCC/`qqbot` 部署）的能力登记，
-> 现在只作为 `chatbot/tests/acceptance/` 下离线验收脚本的基础提示词保留；脚本会在末尾追加本轮隔离说明。
+> 现在只由 `chatbot/tests/acceptance/model-driver.mjs` 与 `run-retrieval-t3.mjs` 显式读取，
+> 作为历史验收的基础提示词；脚本会在末尾追加本轮隔离说明，执行时仍可能调用真实模型/API。
 >
-> - 当前运行规则、工具与权限：[根目录开发指引](../AGENTS.md) → [文档入口](../docs/README.md) → [当前规则文档](../docs/README.md#当前规则)。
+> - 当前运行规则、工具与权限：[根目录开发指引](../../AGENTS.md) → [文档入口](../README.md) → [当前规则文档](../README.md#当前规则)。
 > - 当前运行期 agent 提示词：`scripts/fusion/templates/AGENTS.md`，经 `sync-persona.mjs` 同步到运行 workspace。
 > - 下面正文中与当前配置冲突的表述（频道 id、模型链、能力开关）已按 2026-10-10 的实际情况修正，
 >   其余内容作为历史契约保留；**引用前先核对代码和配置。**
@@ -28,7 +34,7 @@
 ## 融合前遗留：能力清单（v1 + Profile P0 + 天气 P1D + 规划 P2B + 提醒 R3c）
 
 > 本节及下面「Tools」段的能力清单属于旧部署阶段，阶段性标签（v1/P0/P1D/P2B/R3c）不再更新。
-> 引用前先查[验证证据索引](../docs/verification/INDEX.md)确认某项在哪个版本通过验收。
+> 引用前先查[验证证据索引](../verification/INDEX.md)确认某项在哪个版本通过验收。
 
 - 已验收 QQ 自然语言对话；主人私聊中已准入只读天气工具
   `personal_weather_get_brief`。
@@ -166,7 +172,7 @@
   `state_get`，或用 `current_location.set` 提案 → 明确确认 → commit 修改。它不支持 `home_location`、
   任意字段编辑、行程/航班自动更新或直接写入。原来的“QQ 端到端验收待完成”已在旧系统后续阶段补齐，
   对应证据见 `docs/verification/profile-geo-*-acceptance.json`；**该结论属于旧系统版本**，
-  融合系统的验证范围见[文档 16](../docs/16_验收与测试总表.md)。
+  融合系统的验证范围见[文档 16](../16_验收与测试总表.md)。
 - 天气工具只读，只访问配置好的 QWeather 专属 Host；省略参数时读取当前有效地点（无 active
   `location_period` 时为 Profile `current_location`），也可用受限的地点文本与可选上级行政区做一次
   临时查询。临时查询不写入 Profile、行程、location_period、每日简报或 Cron。指定地点、当前有效地点回归、同名地点澄清与
@@ -214,6 +220,6 @@
   仓库侧来源是 `roles/`、`config/persona.json` 与 `scripts/fusion/templates/AGENTS.md`。
 - 长期记忆/知识库：运行目录 `workspace/MEMORY.md`（不在 `state/` 下）。
 - 天气与行程、提醒：`docs/2_天气模块的开发.txt`、`docs/3_个人提醒.txt`（历史领域记录），
-  当前契约以[当前规则文档](../docs/README.md#当前规则)和代码为准。
+  当前契约以[当前规则文档](../README.md#当前规则)和代码为准。
 - 联网检索与模型能力：`docs/8_检索功能重构.txt`；主模型：`config/runtime.config.json` 的 `models` 与 `agents.*.model`。
-- 主配置和工具权限：仓库 `config/runtime.config.json`（意图）→ 运行目录 `openclaw.json`（事实）；见 [config/README.md](../config/README.md)。
+- 主配置和工具权限：仓库 `config/runtime.config.json`（意图）→ 运行目录 `openclaw.json`（事实）；见 [config/README.md](../../config/README.md)。

@@ -1,0 +1,31 @@
+{
+  "at": "2026-10-30T09:53:53.638Z",
+  "boundary": "Direct service read-only diagnosis against the actual old task and runtime config, with SQLite readOnly=true. No host/QQ model call, task execution, merge, delivery or config change. This is not a real QQ acceptance.",
+  "taskId": "3bb84f40-beb1-4f2a-b33a-ccdc050781ed",
+  "state": "ready",
+  "legacyFieldPreserved": true,
+  "registeredChecks": [
+    "fixed pilot assertions",
+    "project node tests",
+    "independent python quicksort"
+  ],
+  "historicalChecks": [
+    "fixed pilot assertions",
+    "project node tests"
+  ],
+  "statusReadable": true,
+  "diffReadable": true,
+  "changedPaths": [
+    "quicksort_first_pivot.py"
+  ],
+  "committedDiffSha256": "c4274299422c1f205bcc39f5e11358df29aeb18483d9a5b7616af223c3df1898",
+  "resultReadable": true,
+  "resultAvailable": false,
+  "resultReason": "result_not_recorded",
+  "sourceHead": "3783b368914074172a70b14d0397a07716e2e78a",
+  "taskCommit": "89aab21ac272fad1791e89b1b296f23608f2970a",
+  "sourceGitUnchanged": true,
+  "taskFactsUnchanged": true,
+  "taskFactsSha256": "ce396b13783f5235ba38223a4351046a5cc36c129726314b76b40d5ae70a4ad8",
+  "serviceNeverStarted": true
+}

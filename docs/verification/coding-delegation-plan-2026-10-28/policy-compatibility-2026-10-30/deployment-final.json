@@ -1,0 +1,67 @@
+{
+  "at": "2026-10-30T10:00:46.721252+00:00",
+  "base": "9c9cf9f00c6fabcaf9e0c991dc9f29863aa1053a",
+  "authorization": "Existing owner-approved dsh-pilot deployment and the explicit current-condition-check repair. Only Fusion restarted; no task action, extra permission or QQ message.",
+  "privateManifest": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/reviews/deploy-current-conditions-20261030T095213Z/manifest.json",
+  "sourceDirectory": "/home/afrangry/kurumi-fusion",
+  "sourceHead": "b4f2102e40cc3fd0c761b076566940aa61c28ec1",
+  "sourceHasUncommittedChanges": true,
+  "restart": {
+    "at": "2026-10-30T09:59:43.892560+00:00",
+    "unit": "kurumi-fusion.service",
+    "properties": {
+      "MainPID": "3694987",
+      "ActiveState": "active",
+      "SubState": "running",
+      "ActiveEnterTimestamp": "Fri 2026-10-30 17:59:43 CST"
+    }
+  },
+  "runtimePlugin": {
+    "at": "2026-10-30T10:00:17.401Z",
+    "plugin": "kurumi-coding",
+    "state": "active",
+    "tools": [
+      "kurumi_code"
+    ]
+  },
+  "codeSha256": {
+    "chatbot/plugins/kurumi-coding/policy.js": "8ad74db09be3d6953deee60e2fe12c6d40143fa91c4a4d752277814e2c233d8f",
+    "chatbot/plugins/kurumi-coding/service.js": "2e3a620a8284d993d1f4cbb92742db6ff330d71199a9b437efd56b70ee296ee5",
+    "chatbot/plugins/kurumi-coding/store.js": "0bd9f439c92c43bd41f67d6c9d4f936aaba5326476d0bccc680409f9900989d4",
+    "chatbot/plugins/kurumi-coding/workspaces.js": "2203f697d1daff6c77843007109717fb019013d525320c46335a10169c53afec"
+  },
+  "checks": {
+    "health": {
+      "passed": true,
+      "path": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/reviews/deploy-current-conditions-20261030T095213Z/final-health.log",
+      "sha256": "4889e86560b2609eeea16289f3ea52f4aa3d5eb1be6f2a638b6cc5f798c6cc28",
+      "summary": {
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "testIngress": false,
+        "testMethodDisabled": true
+      }
+    },
+    "dependencies": {
+      "passed": true,
+      "path": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/reviews/deploy-current-conditions-20261030T095213Z/final-dependencies.log",
+      "sha256": "a563fdc3132b14f8abdce19e4386aa841353e5d22d09ec28d5d7edbb24f0d5ee"
+    },
+    "config": {
+      "passed": true,
+      "path": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/reviews/deploy-current-conditions-20261030T095213Z/final-config.log",
+      "sha256": "45e09e5b6b6febdd67cf7b0febcc1daec5e29cc6047c5a4ea5d9ad6f04da0fde"
+    },
+    "persona": {
+      "passed": true,
+      "path": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/reviews/deploy-current-conditions-20261030T095213Z/final-persona.log",
+      "sha256": "601a931394298a6d3594c1f26f6869bec0a558363a7816fdf2824d860e298f38"
+    }
+  },
+  "productionTaskFactsUnchanged": true,
+  "parallelChangesPreserved": true,
+  "scope": "Only dsh-pilot. No config/persona edits; no shared DSH/SnowLuma/QQ restart, real task action, remote write or external delivery.",
+  "qqAcceptance": "pending",
+  "supersedes": "deployment.json (initial rollout; retained)"
+}

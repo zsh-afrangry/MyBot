@@ -1,0 +1,59 @@
+{
+  "at": "2026-10-30T13:40:24.313Z",
+  "boundary": "Read-only documentation ownership, generated table and local link file checks; no production model or messaging.",
+  "ownershipRegression": {
+    "worktree": {
+      "passed": 9,
+      "failed": 0
+    },
+    "canonical": {
+      "passed": 9,
+      "failed": 0
+    },
+    "receipt": "Actual node --test scripts/fusion/test/documentation-map.test.mjs outputs in this task before final evidence files were added."
+  },
+  "roots": [
+    {
+      "root": "/home/afrangry/.codex/worktrees/fb6c/kurumi-fusion",
+      "checks": [
+        {
+          "command": "node scripts/fusion/evidence-coverage.mjs",
+          "exitCode": 0,
+          "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 642\n  total: 725\nOK: every file belongs to exactly one named group with valid documents."
+        },
+        {
+          "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+          "exitCode": 0,
+          "output": "OK: SCRIPTS.md matches 226 classified, document-owned entries."
+        }
+      ],
+      "localFileLinks": {
+        "passed": 545,
+        "selfReceiptReferences": 1,
+        "scope": "File existence only; includes references in changed Markdown, excluding this receipt until it is created.",
+        "failures": []
+      }
+    },
+    {
+      "root": "/home/afrangry/kurumi-fusion",
+      "checks": [
+        {
+          "command": "node scripts/fusion/evidence-coverage.mjs",
+          "exitCode": 0,
+          "output": "evidence coverage\n  历史领域验收: 83\n  当前有效: 644\n  total: 727\nOK: every file belongs to exactly one named group with valid documents."
+        },
+        {
+          "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+          "exitCode": 0,
+          "output": "OK: SCRIPTS.md matches 226 classified, document-owned entries."
+        }
+      ],
+      "localFileLinks": {
+        "passed": 548,
+        "selfReceiptReferences": 1,
+        "scope": "File existence only; includes references in changed Markdown, excluding this receipt until it is created.",
+        "failures": []
+      }
+    }
+  ]
+}

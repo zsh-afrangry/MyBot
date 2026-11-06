@@ -56,6 +56,14 @@ the existing configuration and `.env` under `KURUMI_SOURCE_ROOT`; it currently
 supports `anthropic-messages` with an environment SecretRef and fails explicitly
 for other configurations.
 
+The historical base prompt for `model-driver.mjs` and `run-retrieval-t3.mjs`
+is archived at [docs/archive/chatbot-AGENTS.md](../../../docs/archive/chatbot-AGENTS.md).
+Both read that file relative to their own module, independently of the working
+directory and `KURUMI_SOURCE_ROOT`. They no longer read `chatbot/AGENTS.md` from
+the extracted legacy tree. The archive preserves historical capabilities and
+is not a current developer or runtime instruction file. These harnesses can
+still call real models/APIs; archiving the prompt does not make them offline.
+
 > `KURUMI_SOURCE_ROOT` has **no default**. These harnesses read a pre-fusion
 > (legacy) tree containing `openclaw.json`, `.env` and `gateway.systemd.env`, and
 > the migration is complete, so the new system no longer depends on

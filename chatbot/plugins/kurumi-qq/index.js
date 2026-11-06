@@ -1,5 +1,6 @@
 import {allowedMembers,toolPolicyDecision,accessPolicy,toolPermission} from '../../packages/access-control/index.js';
 import {createTraceSink} from '../../packages/observability/index.js';
+import {confineOwnerExec} from '../../packages/host-exec/index.js';
 import WebSocket from 'ws';
 import {registerAcceptanceTools} from './src/acceptance.js';
 import {account,CHANNEL,token} from './src/config.js';
@@ -40,9 +41,10 @@ export const plugin={
 export default {id:CHANNEL,name:'Kurumi QQ',description:'Isolated identity-scoped OneBot channel',register(api){runtime=api.runtime;api.registerChannel({plugin});
  if(typeof api.registerTrustedToolPolicy!=='function')throw Error('Trusted tool policy host API required');
  api.registerTrustedToolPolicy({id:'kurumi-access-control',description:'Identity capability and trusted session authorization',evaluate(event,ctx){
-  const result=toolPolicyDecision(event,ctx,api.config);
-  try{createTraceSink(api.config.channels[CHANNEL].stateDir+'/access-events.jsonl').emit({source:'access-control',kind:'access.tool',correlation:{sessionKey:ctx.sessionKey,runId:ctx.runId,toolCallId:ctx.toolCallId},data:{subjectId:ctx.requester?.senderId??'system',requesterChannel:ctx.requester?.channel,requesterAccount:ctx.requester?.accountId,requesterIsOwner:ctx.requester?.senderIsOwner,tool:event.toolName,permission:toolPermission(event.toolName,event.params)??null,revision:accessPolicy(api.config).revision,decision:result?'deny':'allow',code:result?.blockReason??'allowed'}});}catch{}
-  return result;
+  let result=toolPolicyDecision(event,ctx,api.config);
+  if(!result?.block && event.toolName==='exec')result=confineOwnerExec(event.params,api.pluginConfig?.exec);
+  try{createTraceSink(api.config.channels[CHANNEL].stateDir+'/access-events.jsonl').emit({source:'access-control',kind:'access.tool',correlation:{sessionKey:ctx.sessionKey,runId:ctx.runId,toolCallId:ctx.toolCallId},data:{subjectId:ctx.requester?.senderId??'system',requesterChannel:ctx.requester?.channel,requesterAccount:ctx.requester?.accountId,requesterIsOwner:ctx.requester?.senderIsOwner,tool:event.toolName,permission:toolPermission(event.toolName,event.params)??null,revision:accessPolicy(api.config).revision,decision:result?.block?'deny':'allow',code:result?.blockReason??'allowed',...(result?.scope?{execution:result.scope}:{})}});}catch{}
+  return result?.params?{params:result.params}:result;
  }});
  registerStickerTool(api);
  if(api.config.channels?.[CHANNEL]?.testIngress===true){

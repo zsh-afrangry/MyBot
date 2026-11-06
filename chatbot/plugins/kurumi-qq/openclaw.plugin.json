@@ -8,7 +8,26 @@
   "version": "0.1.0",
   "configSchema": {
     "type": "object",
-    "properties": {},
+    "properties": {
+      "exec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["writeBoundary", "workdir", "timeoutSeconds"],
+        "properties": {
+          "writeBoundary": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["root", "launcher"],
+            "properties": {
+              "root": {"type": "string", "minLength": 2},
+              "launcher": {"type": "string", "minLength": 1}
+            }
+          },
+          "workdir": {"type": "string", "minLength": 1},
+          "timeoutSeconds": {"type": "number", "exclusiveMinimum": 0, "maximum": 300}
+        }
+      }
+    },
     "additionalProperties": false
   },
   "channelConfigs": {
