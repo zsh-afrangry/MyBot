@@ -51,6 +51,8 @@ if (!fs.existsSync(backup)) throw new Error(`backup not found: ${backup}`);
 if(fs.existsSync(path.join(backup,'INCOMPLETE.json')))throw Error('Backup is incomplete or interrupted');
 const target = newRecoveryTarget(arg('--target'));
 const skipDeps = argv.includes('--skip-deps'); // material-only, never a runnable recovery pass
+const adaptSource=arg('--adapt-source'),adaptSdk=arg('--adapt-sdk');
+if(Boolean(adaptSource)!==Boolean(adaptSdk)||((adaptSource||adaptSdk)&&skipDeps))throw Error('Upgrade rehearsal requires both --adapt-source bundle and --adapt-sdk artifact, with dependencies');
 
 const results = [];
 const check = (name, ok, detail = '') => {
@@ -191,6 +193,19 @@ if (fs.existsSync(patchDir)) {
 }
 
 // --- 5. database snapshots ------------------------------------------------------------
+// Explicit adaptation replaces only the recovered code and SDK. The R1 input stays immutable,
+// its old databases migrate in the isolated copy, and the result cannot attest a recovery point.
+let adaptedHead=null;
+if(adaptSource){
+ const repo=clones.get('kurumi-fusion');
+ const heads=sh('git',['bundle','list-heads',adaptSource]).stdout.trim().split('\n');
+ const head=heads.find(x=>x.endsWith(' HEAD'))?.split(' ')[0];
+ if(!head||!/^[a-f0-9]{40}$/.test(head))throw Error('Adaptation bundle must record HEAD');
+ const fetch=sh('git',['-C',repo,'fetch','--no-tags',adaptSource,'HEAD']);
+ const checkout=fetch.status===0?sh('git',['-C',repo,'checkout','--detach',head]):fetch;
+ check('upgrade source bundle loaded',checkout.status===0);
+ if(checkout.status!==0)throw Error('Adaptation source checkout failed');adaptedHead=head;
+}
 const snapshotRoot = path.join(backup, 'state', 'runtime');
 const dbs=discoverDatabases(snapshotRoot,{skip:new Set()});
 let healthy = 0;
@@ -277,12 +292,13 @@ check('assemble: token/credential files present', credFiles.length === 3, credFi
 
 
 const sdk=path.join(target,'sdk/openclaw');
+const release=adaptSource?JSON.parse(fs.readFileSync(clones.get('kurumi-fusion')+'/config/openclaw-release.json')):expected.approvedRelease;
 if(!skipDeps){
  const destinations={'openclaw':path.dirname(sdk),'paper-python':runtime+'/venvs','dsh':target+'/dsh'};
  for(const kind of Object.keys(destinations)){
-  const rec=expected.artifacts?.find(a=>a.kind===kind);
+  const rec=kind==='openclaw'&&adaptSdk?JSON.parse(fs.readFileSync(adaptSdk+'.json')):expected.artifacts?.find(a=>a.kind===kind);
   if(!rec||path.basename(rec.name)!==rec.name||!rec.name.endsWith('.tar.gz'))throw Error('Required immutable dependency missing');
-  const archive=path.join(path.dirname(backup),'artifacts',rec.name);
+  const archive=kind==='openclaw'&&adaptSdk?path.resolve(adaptSdk):path.join(path.dirname(backup),'artifacts',rec.name);
   if(hashFile(archive)!==rec.sha256)throw Error('Immutable dependency hash mismatch: '+kind);
   const listing=sh('tar',['-tzf',archive]);
   if(listing.status!==0||listing.stdout.split('\n').filter(Boolean).some(n=>n.startsWith('/')||n.split('/').includes('..')||!n.startsWith(rec.rootName+'/')))throw Error('Unsafe dependency archive');
@@ -290,7 +306,7 @@ if(!skipDeps){
   const x=sh('tar',['-xzf',archive,'-C',destinations[kind]]);if(x.status!==0)throw Error('Dependency extraction failed: '+kind);
   check('immutable dependency restored: '+kind,treeHash(path.join(destinations[kind],rec.rootName))===rec.treeHash);
  }
- check('SDK matches approved backup release',JSON.parse(fs.readFileSync(sdk+'/package.json')).version===expected.approvedRelease.version);
+ check('SDK matches approved source release',JSON.parse(fs.readFileSync(sdk+'/package.json')).version===release.version);
 }
 
 // 6d. Third-party plugin prefix rebuilt from the versioned lockfile (not copied from production).
@@ -458,7 +474,7 @@ console.log(`assembled runtime at: ${runtime}`);
 console.log(`restored repo at    : ${restoredRepo ?? '(none)'}`);
 console.log('No host service was changed; only an isolated Gateway probe may have run. No real QQ delivery.');
 console.log('Recovery inputs: v3 backup, verifier harness and manifest-pinned dependency artifacts; isolated execution cannot see production.');
-fs.writeFileSync(path.join(target,'verification.json'),JSON.stringify({backup,target,manifestHash:hashFile(manifestPath),expectedHash:hashFile(expectedPath),coreVersion:expected.approvedRelease.version,level:skipDeps?'materials-only':'isolated-gateway',ok:!failed.length,results},null,2),{mode:0o600});
+fs.writeFileSync(path.join(target,'verification.json'),JSON.stringify({backup,target,manifestHash:hashFile(manifestPath),expectedHash:hashFile(expectedPath),coreVersion:release.version,adaptedHead,level:adaptSource?'upgrade-rehearsal':skipDeps?'materials-only':'isolated-gateway',ok:!failed.length,results},null,2),{mode:0o600});
 if (failed.length) {
   console.error('\nRESULT: restore verification FAILED');
   for (const f of failed) console.error(`  - ${f.name}: ${f.detail}`);

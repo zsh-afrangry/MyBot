@@ -41,7 +41,7 @@ const model=http.createServer(async(req,res)=>{
   if(active.expected){const result=decode(last?.content);assert.equal(result.ok,active.expected.ok,JSON.stringify(result));if(active.expected.code)assert.equal(result.code,active.expected.code);active.expected=undefined;}
   const step=active.steps[active.next];let tool;
   if(step){if(!active.discovered){tool=['tool_search',{query:step[0],limit:1}];active.discovered=true;}
-   else{tool=['tool_call',{id:step[0],args:typeof step[1]==='function'?step[1]():step[1]}];active.expected=step[2];active.next++;active.discovered=false;}}
+   else{tool=['dispatch_action',{id:step[0],args:typeof step[1]==='function'?step[1]():step[1]}];active.expected=step[2];active.next++;active.discovered=false;}}
   const message=tool?{role:'assistant',content:null,tool_calls:[{id:'call_'+report.requests,type:'function',function:{name:tool[0],arguments:JSON.stringify(tool[1])}}]}:{role:'assistant',content:'MODEL_PARAPHRASE_MUST_BE_REPLACED'};
   const usage={prompt_tokens:1,completion_tokens:1,total_tokens:2};res.setHeader('content-type',body.stream?'text/event-stream':'application/json');
   if(body.stream){const base={id:'chatcmpl-natural',object:'chat.completion.chunk',created:1,model:'fixture'};

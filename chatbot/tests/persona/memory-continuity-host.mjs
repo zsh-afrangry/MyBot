@@ -81,7 +81,7 @@ const model = http.createServer(async (req, res) => {
     const available = (body.tools ?? []).map(tool => tool.function?.name).filter(Boolean);
     const allAssistantCalls = messages.filter(message => message.role === 'assistant').flatMap(message => message.tool_calls ?? []);
     const priorMemoryWrapperCall = allAssistantCalls.some(call => {
-      if (call.function?.name !== 'tool_call') return false;
+      if (call.function?.name !== 'dispatch_action') return false;
       try { return JSON.parse(call.function.arguments ?? '{}').id === 'kurumi_memory'; } catch { return false; }
     });
     const checks = {
@@ -105,7 +105,7 @@ const model = http.createServer(async (req, res) => {
     const memoryCalls = turnCalls.flatMap(call => {
       const args = JSON.parse(call.function?.arguments ?? '{}');
       return call.function?.name === 'kurumi_memory' ? [args]
-        : call.function?.name === 'tool_call' && String(args.id).split(':').at(-1) === 'kurumi_memory' ? [args.args] : [];
+        : call.function?.name === 'dispatch_action' && String(args.id).split(':').at(-1) === 'kurumi_memory' ? [args.args] : [];
     });
     const described = results.find(result => result?.name === 'kurumi_memory' && result.parameters);
     if (described) {
@@ -113,21 +113,21 @@ const model = http.createServer(async (req, res) => {
       assert.match(described.parameters.properties.facts.description, /observe/);
       report.contractVisible = true;
     }
-    const businessCall = allAssistantCalls.some(call => ['kurumi_memory', 'tool_call'].includes(call.function?.name));
+    const businessCall = allAssistantCalls.some(call => ['kurumi_memory', 'dispatch_action'].includes(call.function?.name));
     const searchAlreadyRequested = allAssistantCalls.some(call => call.function?.name === 'tool_search');
     const shouldSave = json.includes('MEMORY_HOST_SAVE') && !businessCall;
     const saveArgs = {action: 'observe', expectedRevision: 0, facts: [{text: '我喜欢绿茶', evidence: '我喜欢绿茶', kind: 'preference'}]};
     let tool = shouldSave && !available.includes('kurumi_memory') && available.includes('tool_search') && !searchAlreadyRequested
       ? {id: 'memory-search-' + report.requests, type: 'function', function: {name: 'tool_search', arguments: JSON.stringify({query: 'kurumi_memory', limit: 1})}}
-      : shouldSave && !available.includes('kurumi_memory') && available.includes('tool_call')
-        ? {id: 'memory-call-wrapper-' + report.requests, type: 'function', function: {name: 'tool_call', arguments: JSON.stringify({id: 'kurumi_memory', args: saveArgs})}}
+      : shouldSave && !available.includes('kurumi_memory') && available.includes('dispatch_action')
+        ? {id: 'memory-call-wrapper-' + report.requests, type: 'function', function: {name: 'dispatch_action', arguments: JSON.stringify({id: 'kurumi_memory', args: saveArgs})}}
         : shouldSave && available.includes('kurumi_memory') ? {
       id: 'memory-call-' + report.requests, type: 'function', function: {name: 'kurumi_memory', arguments: JSON.stringify({
         ...saveArgs,
       })},
     } : null;
     const makeCall = (name, args) => ({id: 'contract-' + report.requests, type: 'function', function: {name, arguments: JSON.stringify(args)}});
-    const memoryCall = args => available.includes('kurumi_memory') ? makeCall('kurumi_memory', args) : makeCall('tool_call', {id: 'kurumi_memory', args});
+    const memoryCall = args => available.includes('kurumi_memory') ? makeCall('kurumi_memory', args) : makeCall('dispatch_action', {id: 'kurumi_memory', args});
     if (!live && ['owner-explicit-save','owner-correction','owner-forget'].includes(activeTurn.label)) {
       const writes = memoryCalls.filter(args => ['upsert','delete'].includes(args.action));
       tool = null;

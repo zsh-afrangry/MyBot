@@ -56,3 +56,7 @@ R1是整理后的升级前停写点，R2是新版验证点；R1在R2完整通过
 实际隔离恢复成功后执行 `node scripts/fusion/backup-retention.mjs --record /tmp/<恢复目标>/verification.json`，生成与EXPECTED/MANIFEST哈希绑定的VERIFIED回执。默认只预览最近两个已验证v3点；`--apply`只淘汰该集合中的多余点，失败/中断点不冒充恢复点，旧项目材料不按此命令批量删除。整个统一根连同artifacts一起搬移才具备完整恢复输入，单独复制一个点不够。
 
 QQ插件将宿主OpenClaw声明为可选peer：实际宿主版本由统一版本源/依赖校验强制，插件自身npm ci只重建锁定的业务依赖，避免另装一份OpenClaw。首轮R1演练实际发现并修复此锁文件重建缺口，失败候选不登记为有效点。
+
+当前旧版恢复点：2026-11-06-20-11-38-R1，源码ce9835f / OpenClaw2026.9.7，25/25隔离恢复通过。旧Fusion快照与kurumi-archive物理目录已退役，必要独有源码历史集中在私密history/，它不承诺恢复旧A/B运行。五个独立KnowledgeMap备份保持原样。
+
+升级隔离演练可对R1指定`restore-verify.mjs --adapt-source <本地bundle> --adapt-sdk <工件tar.gz>`；两项必须成对，原R1不变，仅替换隔离副本代码/内核并迁移其数据库。此模式结果标为upgrade-rehearsal，不能登记成生产恢复点或替代R1/R2。

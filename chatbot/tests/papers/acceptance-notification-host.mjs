@@ -26,7 +26,7 @@ const model=http.createServer(async(req,res)=>{
   let tool;
   if(available.length && !submitted){
     if(available.includes('paper_notice_probe'))tool=['paper_notice_probe',{}];
-    else if(available.includes('tool_search'))tool=messages.some(m=>m.role==='tool')?['tool_call',{id:'paper_notice_probe',args:{}}]:['tool_search',{query:'paper_notice_probe',limit:1}];
+    else if(available.includes('tool_search'))tool=messages.some(m=>m.role==='tool')?['dispatch_action',{id:'paper_notice_probe',args:{}}]:['tool_search',{query:'paper_notice_probe',limit:1}];
     else throw Error('Fixture tool is unavailable');
   }
   modelRequests.push({tools:available.length,model:body.model,explanation:available.length===0,tool:tool?.[0]});
@@ -108,7 +108,7 @@ try {
  assert.equal(delayed.job.notification?.mode,legacyScope?'fallback':'assistant',JSON.stringify(delayed.job.notification));
  assert.equal(delayed.sent.length,2);assert.equal(delayed.sent[1].to,'user:fixture');assert.match(delayed.sent[1].text,new RegExp(delayed.job.id));
  const explanations=modelRequests.filter(r=>r.explanation);assert.equal(explanations.length,legacyScope?1:2);assert(explanations.every(r=>r.tools===0));
- assert(modelRequests.some(r=>['paper_notice_probe','tool_call'].includes(r.tool)));
+ assert(modelRequests.some(r=>['paper_notice_probe','dispatch_action'].includes(r.tool)));
  const runtimeLog=fs.readFileSync(path.join(root,'runtime.log'),'utf8'),closedScopeErrors=runtimeLog.split('\n').filter(line=>line.includes('Async work scope is closed')).length;
  assert.equal(closedScopeErrors,0);
  if(legacyScope)assert.equal(delayed.job.notification.explanationError,'assistant_notice_run_failed');

@@ -16,7 +16,7 @@ export const MEMBER_TOOLS = Object.freeze(['session_status', 'web_search', 'web_
 
 export function toolPermission(name, args = {}) {
   const direct = {
-    tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec',
+    dispatch_action:'chat.use', tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec',
     personal_weather_get_brief: 'weather.read', personal_profile_state_get: 'profile.read',
     personal_profile_change_propose: 'profile.manage', personal_profile_change_commit: 'profile.manage',
     personal_planning_state_get: 'planning.read', personal_planning_change_propose: 'planning.manage', personal_planning_change_commit: 'planning.manage',

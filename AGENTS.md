@@ -26,7 +26,7 @@
 - `docs/example.md`、`docs/tp.txt`、`docs/tp2.txt` 是用户内容，未获明确指示不得删除或覆盖。
 - `roles/`、`config/` 是运行行为的权威来源；改行为改这里再同步，不改运行目录里的受管键。
 - `docs/archive/` 与 `docs/1–8` 是历史资料，只用于追溯，不是当前规则。
-- 旧系统原件只在 `/home/afrangry/kurumi-archive/` 保留，不直接启动、不修改。
+- 旧系统物理目录已退役；独有源码历史只在 `/home/afrangry/kurumi-backups/history/` 私密离线保留，不恢复旧消费者。
 
 ## 改动的验证路径
 

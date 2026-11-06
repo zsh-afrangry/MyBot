@@ -13,7 +13,7 @@ export function createFailureNotifier({runtime, workflow, config, authorize, sen
       const modelSignal = signal ? AbortSignal.any([signal,AbortSignal.timeout(timeoutMs)]) : AbortSignal.timeout(timeoutMs);
       const result = await agent.session.runWithWorkAdmission({storePath,sessionKey:request.sessionKey,signal:modelSignal},async abortSignal => {
         check();abortSignal.throwIfAborted();
-        const entry = agent.session.getSessionEntry({storePath,sessionKey:request.sessionKey,readConsistency:'latest'});
+        const entry = await agent.session.getSessionEntryAsync({storePath,sessionKey:request.sessionKey,readConsistency:'latest'});
         if (!entry?.sessionId) throw Error('assistant_notice_session_missing');
         const selected = cfg.agents?.entries?.[request.agentId]?.model ?? cfg.agents?.defaults?.model;
         const primary = typeof selected === 'string' ? selected : selected?.primary;

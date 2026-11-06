@@ -1,5 +1,4 @@
-import { fetchWithSsrFGuard } from "openclaw/plugin-sdk/ssrf-runtime";
-import { ssrfPolicyFromHttpBaseUrlFakeIpHostnameAllowlist } from "openclaw/plugin-sdk/infra-runtime";
+import { fetchWithSsrFGuard, type SsrFPolicy } from "openclaw/plugin-sdk/ssrf-runtime";
 
 import {
   buildAuthHeaders,
@@ -229,12 +228,13 @@ export class QWeatherClient {
       url.searchParams.set(key, value);
     }
 
-    const fakeIpPolicy = ssrfPolicyFromHttpBaseUrlFakeIpHostnameAllowlist(
-      this.#baseUrl,
-    );
-    if (!fakeIpPolicy) {
-      throw new WeatherError("CONFIG_INVALID");
-    }
+    // Preserve the narrow fake-IP policy through the public SSRF contract.
+    // allowedHostnames also bypasses other private-address checks; keep hostnameAllowlist.
+    const fakeIpPolicy: SsrFPolicy = {
+      allowRfc2544BenchmarkRange: true,
+      allowIpv6UniqueLocalRange: true,
+      hostnameAllowlist: [this.#config.apiHost],
+    };
 
     let guarded:
       | Awaited<ReturnType<typeof fetchWithSsrFGuard>>

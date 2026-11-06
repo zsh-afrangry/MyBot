@@ -74,7 +74,7 @@ test('Background lanes are limited to configured owner tasks and read-only weath
  // OpenClaw Cron runs pass only the delivery channel/account (2026-10-20..22 denials).
  const delivery={channel:'kurumi-qq',accountId:'default'};
  const cronRun={...cron,sessionKey:cron.sessionKey+':run:87654321-4321-4321-4321-cba987654321'};
- for(const toolName of ['personal_weather_get_brief','tool_call','tool_describe','tool_search'])assert.equal(toolPolicyDecision({toolName},{...cronRun,requester:delivery},c),undefined);
+ for(const toolName of ['personal_weather_get_brief','tool_call','dispatch_action','tool_describe','tool_search'])assert.equal(toolPolicyDecision({toolName},{...cronRun,requester:delivery},c),undefined);
  assert.equal(toolPolicyDecision({toolName:'personal_weather_get_brief'},{...cron,requester:{channel:'kurumi-qq'}},c),undefined);
  assert(toolPolicyDecision({toolName:'email_send'},{...cronRun,requester:delivery},c));
  assert(toolPolicyDecision({toolName:'web_fetch'},{...task,requester:delivery},c));
@@ -93,4 +93,11 @@ test('Natural confirmation checks each domain and action against the current ide
   owner.permissions[read]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'list'}));assert(hook(c,owner,'personal_confirmation',{domain,action:'preview'}));owner.permissions[read]=true;
  }
  for(const params of [{},{domain:'mail',action:'send'},{domain:'unknown',action:'confirm'}])assert(hook(c,owner,'personal_confirmation',params));
+});
+
+test('current dispatcher preserves outer identity checks and target permission checks',()=>{
+ const c=cfg(),[owner,member]=c.channels['kurumi-qq'].accessControl.subjects;
+ for(const row of [owner,member])assert.equal(hook(c,row,'dispatch_action',{id:'kurumi_document',args:{action:'list'}}),undefined);
+ assert(hook(c,member,'email_send',{}));assert(hook(c,member,'unknown_target',{}));
+ member.enabled=false;assert(hook(c,member,'dispatch_action',{id:'kurumi_document'}));
 });

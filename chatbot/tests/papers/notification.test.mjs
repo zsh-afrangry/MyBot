@@ -22,7 +22,7 @@ function setup(overrides={}) {
   const calls={runs:[],sends:[],injections:[],checks:[]};
   const runtime={agent:{
     resolveAgentWorkspaceDir:()=>'/fixture/workspace',resolveAgentDir:()=>'/fixture/agent',
-    session:{resolveStorePath:()=>'/fixture/store',getSessionEntry:()=>({sessionId:'fixture-current-session'}),runWithWorkAdmission:async({signal},run)=>run(signal)},
+    session:{resolveStorePath:()=>'/fixture/store',getSessionEntryAsync:async()=>({sessionId:'fixture-current-session'}),runWithWorkAdmission:async({signal},run)=>run(signal)},
     runEmbeddedAgent:async args=>{calls.runs.push(args);return {payloads:[{text:'本篇达到本地单篇用量上限，尚无完整译文。'}]};},
   }};
   const deps={runtime,workflow:{enqueueNextTurnInjection:async value=>{calls.injections.push(value);return{enqueued:true};}},
@@ -96,7 +96,7 @@ test('Host failure/empty response falls back to diagnostic Chinese and queues al
 });
 
 test('A missing chat falls back without creating a replacement session or using the owner route',async()=>{
-  const {calls,deps}=setup();deps.runtime.agent.session.getSessionEntry=()=>undefined;
+  const {calls,deps}=setup();deps.runtime.agent.session.getSessionEntryAsync=async()=>undefined;
   const receipt=await createFailureNotifier(deps)(failureSummary(failed()),jobId,binding);
   assert.equal(receipt.mode,'fallback');assert.equal(calls.runs.length,0);assert.equal(calls.sends[0].to,binding.to);
 });

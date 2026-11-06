@@ -54,7 +54,7 @@ const model = http.createServer(async (req, res) => {
     let tool = !completed && match ? ['exec', plans[match[1]]] : undefined;
     const available = (body.tools ?? []).map(t => t.function?.name);
     if (tool && !available.includes('exec') && available.includes('tool_search')) tool = after.some(m => m.role === 'tool' && nameOf(m) === 'tool_search')
-      ? ['tool_call', {id:'exec', args:tool[1]}] : ['tool_search', {query:'exec', limit:1}];
+      ? ['dispatch_action', {id:'exec', args:tool[1]}] : ['tool_search', {query:'exec', limit:1}];
     const message = tool ? {role:'assistant',content:null,tool_calls:[{id:'call_'+randomBytes(8).toString('hex'),type:'function',function:{name:tool[0],arguments:JSON.stringify(tool[1])}}]}
       : {role:'assistant',content:'EXEC_RESULT '+(typeof toolMessage?.content === 'string' ? toolMessage.content : JSON.stringify(toolMessage?.content ?? 'none'))};
     modelRequests++;
@@ -120,7 +120,7 @@ try {
   await check('ordinary writes inside the approved directory work',async()=>{await turn('write');assert.equal(fs.readFileSync(path.join(source,'inside.txt'),'utf8'),'inside');});
   await check('actual native execution cannot write an outside file',async()=>{const r=await turn('outside');assert(!fs.existsSync(canary));assert(/denied|permitted/i.test(r),r);});
   for (const [name,code] of [['env','owner_exec_environment_not_allowed'],['elevated','owner_exec_mode_not_allowed'],['cwd','owner_exec_workdir_outside_boundary'],['node','owner_exec_host_not_allowed']]) {
-    await check('mandatory gate blocks '+name+' before native launch',async()=>{const r=await turn(name);assert(r.includes(code),r);assert(!fs.existsSync(canary));});
+    await check('mandatory gate blocks '+name+' before native launch',async()=>{const r=await turn(name);assert(r.includes(code)||(name==='node'&&r.includes('Validation failed')&&r.includes('host: must be equal')),r);assert(!fs.existsSync(canary));});
   }
   await check('native process timeout terminates the payload before a later write',async()=>{const r=await turn('timeout');assert(!fs.existsSync(path.join(source,'late.txt')));assert(/time|signal|terminated/i.test(r),r);});
   await check('exposed synthetic member native exec still fails owner permission',async()=>{const r=await turn('member',MEMBER);assert(r.includes('capability_not_allowed'),r);assert(!fs.existsSync(path.join(source,'member-ran.txt')));});

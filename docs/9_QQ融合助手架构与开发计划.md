@@ -186,22 +186,22 @@ QQ 身份/权限/邮件目标只改 `config/access-control.json`，用 `chatbot/
 
 | 项目 | 当前约束与操作入口 |
 | --- | --- |
-| 宿主/连接库 | OpenClaw **2026.9.7**、`ws` **8.21.3**；以 `verify-dependencies.mjs` 检查。仓库 `node_modules/openclaw` 链接到全局安装，全局升级也会替换仓库依赖 |
+| 宿主/连接库 | 版本由 `config/openclaw-release.json` 指定（当前OpenClaw **2026.11.1**、`ws` **8.22.0**）；以 `verify-dependencies.mjs` 检查。仓库 `node_modules/openclaw` 链接到全局安装，全局升级也会替换仓库依赖 |
 | 全局升级 | 不直接运行 `openclaw update`；先更新版本契约、锁文件并验证。`run-gateway.mjs` 将非自身请求的子进程退出（含0）视为失败，systemd 按失败重试；版本检查持续失败时重试到限后停在 failed，用 `systemctl --user --failed` 检查 |
 | 交互保护 | `scripts/fusion/openclaw-update-guard.sh` 可由 `~/.bashrc` 加载；拦截普通 `openclaw update`，放行 `update status`、`--dry-run`、`--help`。显式升级用 `KURUMI_ALLOW_OPENCLAW_UPDATE=1`；它不能拦截 `npm i -g`、绝对路径或 `command openclaw update` |
 | 服务模板 | 源码模板和已安装单元分别维护；同步单元后执行 `systemctl --user daemon-reload`。Fusion 的 `Wants=` 包含 SnowLuma/QQ；是否运行仍以健康检查为准 |
 | 依赖安装 | 领域包按各自 lockfile 执行 `npm ci`；第三方 Tavily 由 `install-plugins.mjs` 和 `config/plugins.package-lock.json` 管理 |
 | 主机工具 | Git、Bubblewrap、Poppler、prlimit；不依赖旧 `.openclaw` 或归档树 |
 
-全局宿主意外被替换时，使用系统 Node 重装固定版（shell 中 nvm 的 Node 22 低于该宿主要求）：
+仅当当前数据库与批准版本匹配、全局宿主意外被替换时，可使用系统 Node 重装批准版（shell 中 nvm 的 Node 22 低于该宿主要求）。跨版本回退必须还原对应恢复点状态：
 
 ```bash
-PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global openclaw@2026.9.7
+PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global openclaw@2026.11.1
 ```
 
 该命令会更改全局安装，须作为已授权的修复步骤执行，不能放进日常只读检查。2026-10-21–22 的重启、模板同步及交互保护验证仅属原时点记录，见[阶段记录](archive/documentation-2026-10-23/10_融合助手运行维护.md#依赖与服务部署记录原文)与[验收总表](16_验收与测试总表.md)。
 
-升级先更新版本契约与锁文件，完成依赖检查、构建、领域回归和隔离恢复验收后再部署。运行状态不进入Git。隔离恢复使用固定哈希 SDK 包，具体流程见[验收总表](16_验收与测试总表.md)。
+升级先更新版本契约与锁文件，完成依赖检查、构建、领域回归和隔离恢复验收后再部署。运行状态不进入Git。隔离恢复使用v3清单指定的内核/Python/DSH工件，先验证SHA256及解包树；实际恢复和升级入口见运行根《整理记录.md》及[文档12](12_目录资产与Git备份整理.md)。
 
 离线测试、真实验收和探针的完整清单见[测试与证据索引](verification/INDEX.md)。`scripts/fusion/test-*.mjs` 可能真实发本人 QQ、创建任务或重启服务，不能按普通离线测试批量运行。执行前审阅脚本，使用独立会话/项目和有限发送预算；结束后关闭 `testIngress`、正常取消测试任务并检查真实终态，不删除账本。
 

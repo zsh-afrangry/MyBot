@@ -98,7 +98,7 @@ export function toolPolicyDecision(event, ctx, cfg) {
     if (task && ctx.agentId===task[1] && delegatedRequester) {
       activeSubject(cfg,owner.qq,'chat.use');activeSubject(cfg,owner.qq,task[1]==='researcher'?'tasks.research':'tasks.code');
       const tools=cfg.agents?.entries?.[ctx.agentId]?.tools?.allow??[];
-      if(tools.includes(event.toolName)||['tool_search','tool_describe','tool_call'].includes(event.toolName))return;
+      if(tools.includes(event.toolName)||['tool_search','tool_describe','tool_call','dispatch_action'].includes(event.toolName))return;
       deny('unmapped_background_tool');
     }
     // OpenClaw Cron runs carry only the delivery channel/account, no sender fields
@@ -107,7 +107,7 @@ export function toolPolicyDecision(event, ctx, cfg) {
     const cronDelivery = requester != null && requester.channel === CHANNEL && requester.senderId == null
       && requester.senderIsOwner == null && (!requester.accountId || requester.accountId === 'default');
     if (ctx.agentId === 'main' && /^agent:main:cron:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}(?::run:[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12})?$/.test(ctx.sessionKey ?? '') && (delegatedRequester || cronDelivery)
-      && ['personal_weather_get_brief','tool_search','tool_describe','tool_call'].includes(event.toolName)) {
+      && ['personal_weather_get_brief','tool_search','tool_describe','tool_call','dispatch_action'].includes(event.toolName)) {
       activeSubject(cfg,owner.qq,'chat.use');activeSubject(cfg,owner.qq,'weather.read');return;
     }
     if (requester?.channel===CHANNEL) {
