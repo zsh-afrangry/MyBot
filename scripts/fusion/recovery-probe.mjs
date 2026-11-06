@@ -79,6 +79,11 @@ try{
  const {probeWriteFence}=await import('file://'+repo+'/chatbot/packages/coding-runtime/write-fence.js');
  const coding=cfg.plugins.entries['kurumi-coding'].config;
  projectPolicy(coding);probeWriteFence(coding.writeBoundary);
+ const fenceAllowed=coding.writeBoundary.root+'/recovery-fence-allowed',fenceDenied=runtime+'/recovery-fence-denied';
+ const fenceScript=`const fs=require('fs'),a=require('node:assert/strict');fs.writeFileSync(${JSON.stringify(fenceAllowed)},'allowed');a.throws(()=>fs.writeFileSync(${JSON.stringify(fenceDenied)},'denied'));`;
+ const fenceCheck=spawnSync(coding.writeBoundary.launcher,['--ro','/','--rw','/dev/null','--rw',coding.writeBoundary.root,'--',process.execPath,'-e',fenceScript],{encoding:'utf8',timeout:5000});
+ assert.equal(fenceCheck.status,0,'Restored execution fence failed: '+fenceCheck.stderr.slice(-800));
+ assert.equal(fs.readFileSync(fenceAllowed,'utf8'),'allowed');assert(!fs.existsSync(fenceDenied));fs.unlinkSync(fenceAllowed);
  const pilotDb=new DatabaseSync(coding.root+'/coding.sqlite',{readOnly:true});
  const codingTasks=Number(pilotDb.prepare('SELECT count(*) n FROM coding_tasks').get().n);pilotDb.close();assert.equal(codingTasks,0);
  const python=cfg.plugins.entries['kurumi-papers'].config.python;
@@ -88,7 +93,7 @@ try{
  const cronDb=new DatabaseSync(runtime+'/state/openclaw.sqlite',{readOnly:true});
  const enabledJobs=Number(cronDb.prepare('SELECT count(*) n FROM cron_jobs WHERE enabled=1').get().n);cronDb.close();assert.equal(enabledJobs,5);
 
- fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));
+ fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingWriteFence:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));
  console.log('Isolated Gateway health and all plugin imports passed; production paths and network inaccessible');
 }finally{
  if(!exited)child.kill('SIGTERM');

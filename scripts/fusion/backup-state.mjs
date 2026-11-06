@@ -27,7 +27,7 @@ import {serviceLease,installBackupExitHandlers} from './lib/backup-service.mjs';
 import {captureWorkingTree} from './lib/working-tree-backup.mjs';
 import { REPO_ROOT, STATE_DIR } from './lib/runtime-paths.mjs';
 
-import {BACKUP_ROOT,PILOT_ROOT,SDK_ROOT,SKIP_RUNTIME,skippedRuntime,discoverDatabases,ensureArtifact} from './lib/backup-layout.mjs';
+import {BACKUP_ROOT,PILOT_ROOT,SDK_ROOT,EXEC_FENCE_ROOT,SKIP_RUNTIME,skippedRuntime,discoverDatabases,ensureArtifact} from './lib/backup-layout.mjs';
 import {OPENCLAW_RELEASE} from './lib/openclaw-release.mjs';
 const argv = process.argv.slice(2);
 const labelIdx = argv.indexOf('--label');
@@ -76,8 +76,10 @@ if(installed.version!==OPENCLAW_RELEASE.version)throw Error('Installed SDK is no
 const pythonRoot=STATE_DIR+'/venvs/paper-translation';
 const pythonVersion=sh(pythonRoot+'/bin/python',['-c','import platform;print(platform.python_version())']).stdout?.trim();
 if(!/^\d+\.\d+\.\d+$/.test(pythonVersion??''))throw Error('Paper Python environment unavailable');
+const fencePackage=JSON.parse(fs.readFileSync(EXEC_FENCE_ROOT+'/package.json'));
+if(fencePackage.name!=='@deepseek-ai/node-addon-system-linux-x64')throw Error('Unrecognized execution fence dependency');
 const artifacts=[];
-for(const [kind,version,source] of [['openclaw',installed.version,SDK_ROOT],['paper-python',pythonVersion,pythonRoot]]){
+for(const [kind,version,source] of [['openclaw',installed.version,SDK_ROOT],['paper-python',pythonVersion,pythonRoot],['exec-fence',fencePackage.version,EXEC_FENCE_ROOT]]){
  artifacts.push(ensureArtifact(kind,version,source));log('immutable dependency captured: '+kind+' '+version);await new Promise(setImmediate);
 }
 if(QUIESCE)lease.stop();

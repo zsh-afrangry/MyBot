@@ -1,7 +1,7 @@
 // Recovery verification is not production deployment. Only an empty private /tmp directory is allowed.
 import fs from 'node:fs';
 import path from 'node:path';
-import {PILOT_ROOT,DSH_HOME} from './backup-layout.mjs';
+import {PILOT_ROOT,DSH_HOME,EXEC_FENCE_ROOT} from './backup-layout.mjs';
 export const PRODUCTION_STATE='/home/afrangry/.openclaw-fusion';
 export const PRODUCTION_REPO='/home/afrangry/kurumi-fusion';
 const DSH_ROOT='/opt/deepseek-harness';
@@ -12,11 +12,12 @@ export function newRecoveryTarget(requested){
  if(!p.startsWith('/tmp/')||fs.realpathSync(parent)!==parent||fs.existsSync(p)||fs.lstatSync(parent).isSymbolicLink())throw Error('Recovery target must be a new directory directly under a canonical /tmp path');
  fs.mkdirSync(p,{mode:0o700});return p;
 }
-export function remap(value,runtime,repo){
- if(Array.isArray(value))return value.map(x=>remap(x,runtime,repo));
- if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,remap(v,runtime,repo)]));
+export function remap(value,runtime,repo,options={}){
+ if(Array.isArray(value))return value.map(x=>remap(x,runtime,repo,options));
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,remap(v,runtime,repo,options)]));
  const target=path.dirname(runtime);
- if(typeof value==='string')for(const [from,to] of [[PRODUCTION_STATE,runtime],[PRODUCTION_REPO,repo],[PILOT_ROOT,target+'/pilot'],[DSH_HOME,target+'/dsh-home'],[DSH_ROOT,target+'/dsh']])if(value===from||value.startsWith(from+'/'))return to+value.slice(from.length);
+ const overrides=options.execFenceRoot?[[EXEC_FENCE_ROOT,options.execFenceRoot]]:[];
+ if(typeof value==='string')for(const [from,to] of [...overrides,[PRODUCTION_STATE,runtime],[PRODUCTION_REPO,repo],[PILOT_ROOT,target+'/pilot'],[DSH_HOME,target+'/dsh-home'],[DSH_ROOT,target+'/dsh']])if(value===from||value.startsWith(from+'/'))return to+value.slice(from.length);
  return value;
 }
 export function assertNoProduction(value){

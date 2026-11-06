@@ -2,7 +2,7 @@
 import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import os from'node:os';import path from'node:path';import{artifactKindsForRestore,discoverDatabases,ensureArtifact,skippedRuntime}from'../lib/backup-layout.mjs';
 const temp=t=>{const p=fs.mkdtempSync(path.join(os.tmpdir(),'fusion-layout-'));t.after(()=>fs.rmSync(p,{recursive:true,force:true}));return p;};
 test('Fusion-only points exclude independent DSH while legacy v3 points retain their recovery inputs',()=>{
- assert.deepEqual(artifactKindsForRestore({formatVersion:3,scope:'fusion-only'}),['openclaw','paper-python']);
+ assert.deepEqual(artifactKindsForRestore({formatVersion:3,scope:'fusion-only'}),['openclaw','paper-python','exec-fence']);
  assert.deepEqual(artifactKindsForRestore({formatVersion:3}),['openclaw','paper-python','dsh']);
  assert.throws(()=>artifactKindsForRestore({formatVersion:3,scope:'unknown'}),/Unknown backup scope/);
  assert.throws(()=>artifactKindsForRestore({formatVersion:2}),/v3/);

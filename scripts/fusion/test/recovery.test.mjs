@@ -50,3 +50,11 @@ test('coding and DSH roots remap and cannot survive as production references',()
  assert.equal(got.root,'/tmp/r/pilot/source');assert.equal(got.dsh.home,'/tmp/r/dsh-home');assert.equal(got.dsh.command,'/tmp/r/dsh/node_modules/.bin/dsh');assertNoProduction(got);
  for(const value of Object.values(input.dsh))assert.throws(()=>assertNoProduction({value}));
 });
+test('Fusion recovery owns its execution fence without remapping the independent DSH interface to that package',()=>{
+ const input={writeBoundary:{launcher:'/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'},dsh:{command:'/opt/deepseek-harness/node_modules/.bin/dsh'}};
+ const got=remap(input,'/tmp/r/runtime','/tmp/r/repos/kurumi-fusion',{execFenceRoot:'/tmp/r/runtime/tools/fence'});
+ assert.equal(got.writeBoundary.launcher,'/tmp/r/runtime/tools/fence/bin/landlock-run');
+ assert.equal(got.dsh.command,'/tmp/r/dsh/node_modules/.bin/dsh');assertNoProduction(got);
+ const legacy=remap(input,'/tmp/r/runtime','/tmp/r/repos/kurumi-fusion');
+ assert.equal(legacy.writeBoundary.launcher,'/tmp/r/dsh/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run');
+});

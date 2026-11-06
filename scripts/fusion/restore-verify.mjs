@@ -307,7 +307,7 @@ check('assemble: token/credential files present', credFiles.length === 3, credFi
 const sdk=path.join(target,'sdk/openclaw');
 const release=adaptSource?JSON.parse(fs.readFileSync(clones.get('kurumi-fusion')+'/config/openclaw-release.json')):expected.approvedRelease;
 if(!skipDeps){
- const destinations={'openclaw':path.dirname(sdk),'paper-python':runtime+'/venvs','dsh':target+'/dsh'};
+ const destinations={'openclaw':path.dirname(sdk),'paper-python':runtime+'/venvs','dsh':target+'/dsh','exec-fence':runtime+'/tools'};
  for(const kind of artifactKinds){
   const rec=kind==='openclaw'&&adaptSdk?JSON.parse(fs.readFileSync(adaptSdk+'.json')):expected.artifacts?.find(a=>a.kind===kind);
   if(!rec||path.basename(rec.name)!==rec.name||!rec.name.endsWith('.tar.gz'))throw Error('Required immutable dependency missing');
@@ -370,7 +370,8 @@ if (skipDeps) {
 
 // Rewrite every active config tree and link; historical transcripts stay unchanged.
 if(cfg&&restoredRepo){
- cfg=remap(cfg,runtime,restoredRepo);
+ const fence=expected.scope==='fusion-only'?expected.artifacts.find(a=>a.kind==='exec-fence'):null;
+ cfg=remap(cfg,runtime,restoredRepo,fence?{execFenceRoot:runtime+'/tools/'+fence.rootName}:{});
  disableKnowledgeMapRecovery(cfg,runtime);
  const registry=remap(JSON.parse(fs.readFileSync(runtime+'/projects.json')),runtime,restoredRepo);
  assertNoProduction(cfg);assertNoProduction(registry);

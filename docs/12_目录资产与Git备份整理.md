@@ -29,7 +29,7 @@
 
 ## 备份资产与保留规则
 
-新备份仍使用格式v3，并显式标记`scope: fusion-only`。内核和论文Python环境保存为统一根artifacts中的内容寻址工件，恢复点逐项记录版本、源码树指纹及压缩包SHA256，重复点复用同一工件；未验证的工件不算可恢复。数据库发现不限制四层目录，同时识别.sqlite/.db并排除明确可重建缓存；保留Fusion拥有的编码试点Git、profile和控制状态，不采集DSH独立安装、全局认证或dsh-web服务单元。
+新备份仍使用格式v3，并显式标记`scope: fusion-only`。内核、论文Python环境及执行写入边界的原生辅助包保存为统一根artifacts中的内容寻址工件，恢复点逐项记录版本、源码树指纹及压缩包SHA256，重复点复用同一工件；未验证的工件不算可恢复。原生辅助包是Fusion实际使用的`@deepseek-ai/node-addon-system-linux-x64`依赖（含许可证），并非整套DSH；隔离恢复将其还原到Fusion私有tools目录并改写launcher路径。数据库发现不限制四层目录，同时识别.sqlite/.db并排除明确可重建缓存；保留Fusion拥有的编码试点Git、profile和控制状态，不采集DSH独立安装、全局认证或dsh-web服务单元。
 
 未标记scope的既有v3点维持原契约，恢复器仍接受其中的DSH工件与认证材料；不得拆改既有点来假装转换范围。新点的恢复验证只检查Fusion侧编码策略和写入边界，不运行DSH；实际使用编码能力还需独立DSH项目可用。
 
