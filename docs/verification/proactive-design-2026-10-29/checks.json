@@ -1,0 +1,142 @@
+{
+  "clientDate": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "scope": "Documentation creation and immediate design decisions only. No feature implementation or deployment.",
+  "worktree": "/home/afrangry/.codex/worktrees/ba70/kurumi-fusion",
+  "baselineHead": "8f33b69f7f53b9e37f14eafcb7dd7078f725ea89",
+  "branch": "codex/proactive-wake-design-20261029",
+  "documentationChecks": {
+    "evidenceCoverage": {
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exitCode": 0,
+      "note": "First pass before checks.json was added; final coverage recorded in README."
+    },
+    "scriptIndex": {
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "exitCode": 0,
+      "classified": 205
+    },
+    "documentationMap": {
+      "command": "node --test scripts/fusion/test/documentation-map.test.mjs",
+      "exitCode": 0,
+      "tests": 9,
+      "passed": 9,
+      "failed": 0
+    },
+    "diffWhitespace": {
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  },
+  "operationalChecks": [
+    {
+      "check": "verify-dependencies",
+      "cwd": "/home/afrangry/.codex/worktrees/ba70/kurumi-fusion",
+      "at": "2026-10-28T16:14:40.748304+00:00",
+      "exitCode": 0,
+      "summary": "ok   chatbot/packages/confirmation-core: 54 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/packages/personal-domains: 58 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-e7: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-mail: 1 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/kurumi-qq: 2 platform packages present at locked versions (0 skipped as other-platform)\n  ok   chatbot/plugins/personal-confirmation: 56 platform packages present at locked versions (50 skipped as other-platform)\n  ok   chatbot/plugins/personal-weather: 0 platform packages present at locked versions (0 skipped as other-platform)\n  ok   pinned SDK openclaw@2026.9.7 -> /home/afrangry/.npm-global/lib/node_modules/openclaw\n  ok   plugin @openclaw/tavily-plugin@2026.9.7 -> /home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin\n\ndependency verification passed: project owns its dependencies"
+    },
+    {
+      "check": "sync-config",
+      "cwd": "/home/afrangry/.codex/worktrees/ba70/kurumi-fusion",
+      "at": "2026-10-28T16:14:40.704151+00:00",
+      "exitCode": 1,
+      "errorCode": "invalid_access_subject",
+      "reason": "Worktree authorization code reads the newer primary policy via fixed REPO_ROOT; primary policy contains e7.read, absent from this worktree permission vocabulary."
+    },
+    {
+      "check": "sync-persona",
+      "cwd": "/home/afrangry/.codex/worktrees/ba70/kurumi-fusion",
+      "at": "2026-10-28T16:14:40.703533+00:00",
+      "exitCode": 1,
+      "errorCode": "invalid_access_subject",
+      "reason": "Worktree authorization code reads the newer primary policy via fixed REPO_ROOT; primary policy contains e7.read, absent from this worktree permission vocabulary."
+    },
+    {
+      "check": "health",
+      "cwd": "/home/afrangry/.codex/worktrees/ba70/kurumi-fusion",
+      "at": "2026-10-28T16:14:40.710796+00:00",
+      "exitCode": 1,
+      "outputUnavailable": true,
+      "missingModule": true,
+      "openclawDependencyMissing": true
+    }
+  ],
+  "primaryReadOnlyChecks": {
+    "head": "f231f1b41e05f0b52afdfd94a5ee9673be535cf2",
+    "scope": "Separate check of primary runtime; does not validate the older worktree's deployment alignment.",
+    "checks": [
+      {
+        "check": "health-primary",
+        "cwd": "/home/afrangry/kurumi-fusion",
+        "at": "2026-10-28T16:15:25.058567+00:00",
+        "exitCode": 0,
+        "ok": true,
+        "issues": [],
+        "gateway": true,
+        "qq": {
+          "online": true,
+          "good": true
+        },
+        "testIngress": false,
+        "channelDatabase": "ok",
+        "weatherDatabase": "ok",
+        "remindersDatabase": "ok",
+        "reminderListDatabase": "ok"
+      },
+      {
+        "check": "sync-config-primary",
+        "cwd": "/home/afrangry/kurumi-fusion",
+        "at": "2026-10-28T16:16:37.126151+00:00",
+        "exitCode": 0,
+        "summary": "config in sync with /home/afrangry/kurumi-fusion/config/runtime.config.json (13 managed key(s), 0 host-maintained kept)"
+      },
+      {
+        "check": "sync-persona-primary",
+        "cwd": "/home/afrangry/kurumi-fusion",
+        "at": "2026-10-28T16:16:37.158804+00:00",
+        "exitCode": 0,
+        "summary": "persona in sync with roles/世凪.md (12 workspace file(s) match)"
+      }
+    ]
+  },
+  "localDocumentationChecks": {
+    "ok": true,
+    "markdownFiles": 6,
+    "localLinksChecked": 296,
+    "tableRowsChecked": 249,
+    "protected": [
+      {
+        "path": "docs/example.md",
+        "unchanged": true,
+        "sha256": "a6dda07da465218fdba20e9e4d47d7165f963fb21d80449b4ae9d9f443e43a9f"
+      },
+      {
+        "path": "docs/tp.txt",
+        "unchanged": true,
+        "sha256": "b3de765d98e8f1161dd1850bb445af37f3ced2fdaf25f763b1ac0b2049767e57"
+      },
+      {
+        "path": "docs/tp2.txt",
+        "unchanged": true,
+        "sha256": "c4d2e8c163fe1506e39d9108547384f22effc263d809f249cc311690a475d53d"
+      }
+    ],
+    "changedPaths": [
+      "docs/25_人格、记忆与会话连续性.md",
+      "docs/README.md",
+      "docs/verification/INDEX.md",
+      "docs/verification/proactive-design-2026-10-29/README.md",
+      "docs/verification/proactive-design-2026-10-29/checks.json",
+      "docs/临时_主动唤醒与自主行动设计.md",
+      "docs/待办清单.md",
+      "scripts/fusion/documentation-map.json"
+    ],
+    "errors": []
+  },
+  "limitations": [
+    "Current worktree has no resolvable OpenClaw package for health imports.",
+    "sync-config and sync-persona use primary intent paths but worktree authorization imports; their worktree checks fail before drift comparison.",
+    "No runtime files, credentials, original private messages, or operational ledger contents are copied to this evidence."
+  ]
+}

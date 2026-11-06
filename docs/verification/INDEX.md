@@ -7,6 +7,7 @@
 | 路径 | 用途 |
 | --- | --- |
 | [`SCRIPTS.md`](SCRIPTS.md) | 脚本与证据索引：每个脚本的用途、副作用、是否需授权、会写哪份证据，以及旧 harness 与当前融合验收的边界 |
+| [`proactive-design-2026-10-29/README.md`](proactive-design-2026-10-29/README.md)、[R03](proactive-design-2026-10-29/r03-sources-and-preferences.md)、[R04](proactive-design-2026-10-29/r04-self-interests.md)、[R05](proactive-design-2026-10-29/r05-record-maintenance.md)、[R06](proactive-design-2026-10-29/r06-night-contact-2026-10-31.md)、[R07](proactive-design-2026-10-29/r07-autonomous-speech-2026-10-31.md)及同目录全部文件 | N3工作稿建档与逐轮边界讨论、文档与只读检查；不证明功能实现、模型判断或真实外发 |
 | [`natural-confirmation-2026-10-27/README.md`](natural-confirmation-2026-10-27/README.md) 及同目录全部文件 | N4自然语言二次确认：用户批准范围、核心/领域/权限/回执回归、真实隔离宿主和运行对齐；真人QQ与真实模型语义未验收 |
 | [`e7-interface-2026-10-27/README.md`](e7-interface-2026-10-27/README.md)、[角色补充](e7-interface-2026-10-27/character-sample/README.md)、[查询契约核对](e7-interface-2026-10-27/query-contract/README.md)及同目录全部文件 | E7·WIKI公开读取接口、参数/缓存头及角色字段盘点；单张WebP半身图下载/打开、效果词典与宿命推荐等补充；查询分类与角色view的文档设计核对。无生产插件、模型或QQ外发 |
 | [`reminder-list-multi-item-2026-10-27/README.md`](reminder-list-multi-item-2026-10-27/README.md)、[闭合记录](reminder-list-multi-item-2026-10-27/closeout.md)及同目录全部文件 | 2026-10-27 提醒列表单消息多项的离线/隔离HTTP、人格与运行核对、01:46真人QQ及后端只读证据；文档收尾与分层证明范围 |
