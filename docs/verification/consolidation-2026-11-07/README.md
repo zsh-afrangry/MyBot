@@ -22,4 +22,11 @@ R2（2026-11-06-21-37-16-R2，4400260/2026.11.1）停写生成，包含下述Cod
 - 兼容修复：受管`tools.codeMode=false`显式保持原有业务调用模式。11.1缺省按模型自动启用Code Mode，官方DeepSeek模型会转为JavaScript exec/wait，与现有宿主exec策略重名；未放宽任何exec、天气或成员权限。[官方配置说明](https://docs.openclaw.ai/tools/code-mode/configuration)与[宿主权威类型说明](https://docs.openclaw.ai/plugins/hooks/tool-policy)支持这一定位。正式配置已同步并重启Fusion。
 - 修复验证：28项权限/隔离/宿主命令边界回归通过；真实隔离Gateway扩为12例，使用显式codeMode=preferred的本地模型，验证禁用包装后的实际模型工具表、内层可信天气授权、真实定时Cron及模拟OneBot平台回执。无外部模型/API/QQ调用。
 
-修复后的真实天气业务结果仍待核对；本次失败投递与隔离成功不能替代正式成功播报。当前继续位置与实时任务状态只在全局《整理记录.md》维护。
+2026-11-07用户再次授权将既有天气Cron临时设为05:50，只改时间，完成后恢复10:30。正式环境复验通过：
+
+- 运行始于1794001800537，6383ms完成，Cron为ok/delivered；模型通过dispatch_action实际调用personal_weather_get_brief，内层返回ok=true，包含current、today、next24Hours、alerts及来源/质量字段，最终回复包含实际气温，不是失败说明。
+- 1794001803时取得current、hourly、daily、alerts四类天气API缓存；本次只有1条QQ出站sent且取得平台message_id。SnowLuma已登录前端日志显示05:50:06发送及含气温的正文预览；该视图会截断正文，不宣称手机端或全文视觉验收。
+- 天气ID仍为2bd8e62c-2bf0-4a45-b231-34e39d2ee400；已恢复原30 10 * * *、Asia/Shanghai，下次1794018600000（当日10:30）。除调度运行事实外，原天气业务意图及其他任务均逐字段核对一致；08:00列表保持原时间。
+- 恢复时间后健康、配置、人格检查通过；临时原件与检查脚本提炼结论后退役，10:40补验跟进已删除。R1/R2继续保留原已验证范围，未为此次天气调用重复制作恢复点。
+
+本次关闭N8及整理升级的T4/CL-13；四时段整天、手机往返和长期体验仍按E4原延期范围保留。当前继续位置与实时任务状态只在全局《整理记录.md》维护。
