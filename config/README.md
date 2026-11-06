@@ -67,6 +67,8 @@
 
 ## 同步契约
 
+`tools.codeMode=false`显式维持现有业务工具调用模式。OpenClaw2026.11.1缺省按模型自动启用Code Mode；官方DeepSeek模型会把业务工具包装为JavaScript `exec/wait`，与本项目将`exec`绑定宿主命令权限/目录约束的策略冲突。本轮不开放这项新执行模式，不修改宿主exec、成员或天气的授权范围。后续若采用Code Mode，须独立验证宿主权威`toolKind/toolInputKind`、内层工具授权与执行器边界。配置依据见[官方说明](https://docs.openclaw.ai/tools/code-mode/configuration)，实际验证见[整理与升级核验](../docs/verification/consolidation-2026-11-07/README.md)。
+
 `sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
 
 ### 只读核对

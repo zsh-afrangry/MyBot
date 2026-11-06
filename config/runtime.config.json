@@ -452,6 +452,7 @@
     }
   },
   "tools": {
+    "codeMode": false,
     "fs": {
       "workspaceOnly": true
     },
