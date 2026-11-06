@@ -99,32 +99,6 @@
           "primary": "deepseek/deepseek-flash"
         }
       },
-      "project-fusion": {
-        "workspace": "/home/afrangry/.openclaw-fusion/projects/fusion",
-        "tools": {
-          "profile": "full",
-          "allow": [
-            "ls",
-            "read",
-            "write",
-            "edit",
-            "apply_patch",
-            "kurumi_project_check",
-            "kurumi_project_git"
-          ],
-          "fs": {
-            "workspaceOnly": true
-          },
-          "deny": [
-            "exec",
-            "process",
-            "message",
-            "sessions_spawn",
-            "web_search",
-            "web_fetch"
-          ]
-        }
-      },
       "researcher": {
         "workspace": "/home/afrangry/.openclaw-fusion/research-workspace",
         "tools": {
@@ -497,7 +471,8 @@
     }
   },
   "logging": {
-    "file": "/home/afrangry/.openclaw-fusion/runtime.log"
+    "file": "/home/afrangry/.openclaw-fusion/runtime.log",
+    "maxFileBytes": 10485760
   },
   "commands": {},
   "bindings": [

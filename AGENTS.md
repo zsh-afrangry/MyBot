@@ -19,7 +19,7 @@
 | `/home/afrangry/.openclaw-fusion` | 运行**事实与私密状态** | 只按 [`config/README.md`](config/README.md) 的同步契约写入 |
 
 运行目录含凭据、会话、记忆、数据库和聊天原文。不把它的内容复制进仓库，不在回复、文档、提交信息或测试输出里粘贴 API Key、token、私聊原文。
-`.openclaw-fusion/projects/fusion` 是后台 agent 用的独立副本，不是第二份源码主线；它的提交要经操作者审阅后才合入本仓库。
+旧 `.openclaw-fusion/projects/fusion` 后台副本已退役；未上线代码保存在主仓库冻结标签，日常只维护唯一主目录。
 
 ## 受保护内容
 
@@ -93,6 +93,6 @@
 
 - [`docs/archive/chatbot-AGENTS.md`](docs/archive/chatbot-AGENTS.md)：原 `chatbot/AGENTS.md`，融合前遗留的能力登记，已归档；仅供两处旧验收脚本显式读取，不作为开发指令或当前运行规则。不要据它判断当前能力、工具或权限。
 - 主人运行期提示词在 `scripts/fusion/templates/AGENTS.md`，由 `config/persona.json` 的 `agentsSubstitution` 替换后经 `sync-persona.mjs` 写入 `.openclaw-fusion/workspace/AGENTS.md`；成员使用 `scripts/fusion/templates/MEMBER_AGENTS.md`，同步到各自 `users/<QQ>/workspace/`。只改模板，不改运行副本；人格可共享，主人资料/记忆不可复制。
-- `project-fusion`、`researcher` 等后台 agent 的提示词由各自的 `configure-*.mjs` 生成在对应工作区，不在本文件维护。
+- `researcher` 的私有工作区保留现行提示词；旧project-fusion/worker原型及一次性configure入口已退役，不能通过旧引导脚本重建运行配置。
 
 返回[文档入口](docs/README.md)。

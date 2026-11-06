@@ -142,9 +142,11 @@ systemctl --user stop kurumi-fusion.service
 systemctl --user start kurumi-fusion.service
 ```
 
-停止服务不只杀子进程，否则Restart策略会拉起。`run-gateway.mjs`是前台入口，日常不与systemd并开。首次`install-service.mjs`会禁用旧助手并启用融合，只用于明确切换；`configure-production.mjs`要求先审阅活动任务，不是日常重置脚本。DSH与Fusion联合启停另见[栈启停](#dsh与融合栈统一启停)，QQ传输独立管理。
+停止服务不只杀子进程，否则Restart策略会拉起。`run-gateway.mjs`是前台入口，日常不与systemd并开。首次`install-service.mjs`会禁用旧助手并启用融合，只用于明确切换。DSH与Fusion联合启停另见[栈启停](#dsh与融合栈统一启停)，QQ传输独立管理。
 
 ## 开发与验证
+
+诊断日志由宿主按10MiB轮转，Gateway启动/运行时清理7天前的旧日志，活动诊断文件总预算60MiB。插件捕获只是运行代码临时副本，Gateway退出后清理，下一次启动前清理遗留；不会作为恢复数据备份。配置同步仅在统一备份根 `.working/config-sync/openclaw.before.json` 留一份待验证回退副本，验证完成后由整理/发布流程移除。宿主维护的last-good按其消费契约保留。
 
 文档与脚本归属检查只扫描本仓库；目录内含 `.git` 目录或工作树指针文件时视为另一个仓库边界，不递归扫描。普通嵌套目录仍纳入检查，避免用目录名排除掩盖游离脚本。
 
@@ -224,146 +226,18 @@ node scripts/fusion/log-query.mjs --proposal-id <提案ID> --json
 
 没有消息 ID 时给出明确的 `--from`/`--to` 时间范围。默认按 `Asia/Shanghai` 解释无时区时间。查询只读，不调用 Gateway、OneBot、模型或 Cron；输出可能包含私聊正文和本机路径，不提交到 Git。扩展新功能时保留其原始日志，并按[文档 18](18_跨模块链路日志查询.md)接入事件适配器或可选结构化 sink，不另造一套业务日志数据库。
 
-日常配置只使用 [config/README.md](../config/README.md) 中的同步入口；`prepare.mjs`、`configure-*.mjs`、`copy-domain-state.py` 为迁移工具，不是日常更新命令。
+日常配置只使用 [config/README.md](../config/README.md) 中的同步入口；原`prepare.mjs`、`configure-*.mjs`、`copy-domain-state.py`一次性迁移入口已退役，只在Git历史追溯。
 
 ## 代码项目接入与合入
 
-当前新增编码请求走[文档28的单目录DSH试点](28_本机编码工具委托与实验任务.md#单目录qq试点授权2026-10-30)，仅登记`dsh-pilot`；旧`kurumi_task`的`codeEnabled=false`，不再启动fusion开发副本。下述登记与副本维护契约保留供已有资产维护，不是本轮扩大项目授权的入口；重新启用旧编码或登记其他项目需主人另行决定。
-
-当前`fusion`是`.openclaw-fusion/projects/fusion`独立副本，主聊天可说“让后台检查fusion项目……”，完成后查询或取消。模型可读写项目并做本地Git，固定检查在隔离环境运行，不提供宿主shell、网络安装或push。副本提交不会自动部署；操作者审阅diff/测试后再合入`kurumi-fusion`，重启服务。
-
-新增项目时，**两类信息各有唯一维护入口**，不要混用：
-
-| 要改什么 | 唯一入口 | 生效方式 |
-| --- | --- | --- |
-| agent 定义（`agents.entries.<id>`：workspace、工具 allow/deny、`fs.workspaceOnly`） | 仓库 `config/runtime.config.json`——`agents` 是 `_managed` 键，**仓库全权拥有** | `sync-config.mjs --apply` → 重启融合服务 |
-| 项目注册表（`projects.json`：id、agentId、root、checks、只读依赖、fixtures） | `scripts/fusion/register-project.mjs`（校验 + `--apply` 写 `projects.json`） | 立即被插件读取；重启服务后仍生效 |
-
-**不要用 `configure-projects.mjs` 做日常维护。** 它是一次性首次引导脚本：只在 id 不存在时追加登记，
-**不会更新已存在的登记**；它会重写运行 `openclaw.json` 的 agent 定义（绕过仓库意图），
-还会改副本的 `AGENTS.md`/`.gitignore`。修改 agent 后如果不改仓库配置，`sync-config --apply` 会把它覆盖回去。
-
-步骤：
-
-1. 在`.openclaw-fusion/projects/<id>`建立独立Git clone --no-hardlinks，原项目不改，移除不需要的remote；不能把两套旧原件注册成工作目录。
-2. 把登记写成 JSON 条目文件（字段见下），先校验再应用：
-
-```bash
-node scripts/fusion/register-project.mjs --list                      # 当前登记
-node scripts/fusion/register-project.mjs --check <file>              # 只校验，不写
-node scripts/fusion/register-project.mjs --add <file>                # 预览将写入的内容
-node scripts/fusion/register-project.mjs --add <file> --apply        # 写入 projects.json
-node scripts/fusion/register-project.mjs --remove <id> [--apply]     # 移除
-```
-
-   **`<file>` 接受三种输入**（`--check` 与 `--add` 相同）：单条条目对象、条目数组、
-   或完整注册表对象 `{version:1, projects:[...]}`。`--add` 要求其中**恰好一条**。
-   注册表 `version` 只支持 `1`，其它值直接拒绝。
-
-   校验规则中**保护根一项与运行时共用同一实现**（`chatbot/plugins/kurumi-tasks/protected-roots.js`，
-   由 `projects.js` 与 CLI 同时导入）；其余字段由 CLI 按运行时规则复刻，**并非全部逻辑共用**：
-   id 匹配 `^[a-z][a-z0-9-]{0,39}$`、`agentId` 必须是 `project-<id>`、root 必须是 canonical 且自带 `.git`、
-   fixture target 只能是 `/checks/<文件名>`；root 不能是**整个归档目录** `/home/afrangry/kurumi-archive`
-   （含 `legacy-openclaw`、`qq-bridge`、`legacy-units`）、运行目录、备份、固定 SDK 或实时源码树
-   （`projects/` 下的工作区除外）。
-   `readOnlyDependencies` 必须位于 `/home/afrangry/.npm-global/lib/node_modules/` 之内——
-   这是沙箱唯一会只读挂载的路径，写别的值会在运行 `kurumi_project_check` 时被 `sandboxArguments` 拒绝。
-
-   校验覆盖的是这里列出的字段（身份、root、`.git`、checks、fixture、依赖路径与保护根）。
-   **它不保证运行时永不拒绝**：运行时还要求 `workspaceDir` 与登记 root 一致、agentId 与调用方匹配等条件，
-   这些依赖运行上下文，CLI 无法在离线时判定。修改校验器或沙箱规则时必须同步修改另一侧。
-3. 在仓库 `config/runtime.config.json` 的 `agents.entries` 增加同名 agent，workspace 指该副本，
-   沿用 project-fusion 的精确工具 allow 和 workspaceOnly；跑 `sync-config.mjs --diff` 审阅后 `--apply`。
-   同时在副本加项目 `AGENTS.md`，忽略 Host 生成的 IDENTITY/SOUL/USER/MEMORY。
-4. 先由操作者运行登记的Bubblewrap检查，确认依赖可见、项目可写、外部检查只读、主机私有目录及网络不可达，再重启融合服务；用kurumi_task list验证。
-
-注册表由操作者管理，模型只收项目ID。扩大检查范围应修改已有checks而不是新增第二套任务引擎；复杂项目的依赖需要预先准备并在隔离环境验证。`projects.json` 与运行 `openclaw.json` 都是**运行事实，不是编辑入口**；但它们的**来源不同**——前者用 `register-project.mjs` 维护，后者由仓库配置同步，见 [`config/README.md`](../config/README.md)。副本的基线、同步与合入流程见下一节。
-
+当前没有通过旧项目注册表开放的编码项目。`projects.json`保留空结构供插件兼容读取，日常编码通过文档28的`dsh-pilot`专用工具；不把Fusion源码登记给运行期助手。`register-project.mjs`保留为操作员显式登记/移除工具，其离线校验仍维护；重新开放旧代码模式或新增项目须另行确认需求与权限，不能靠登记文件绕过现行`codeEnabled=false`。
 
 ## 后台开发副本契约
 
-> 本节承接原独立后台开发副本维护契约；基线、同步、隔离检查和合入规则在此统一维护。
+旧 `project-fusion` 独立副本已结束使用；不再作为日常源码线，也不登记新的后台源码副本。历史独有提交先保存在私密统一备份中的 Git bundle。QQ 的 `kurumi_task` 仅保留研究与历史任务查询/取消，`codeEnabled=false`；现行编码能力遵循[文档28](28_本机编码工具委托与实验任务.md)的单目录试点边界。
 
-2026-10-30起，QQ的旧`kurumi_task kind=code`新任务启动已关闭；旧任务仍可查询/取消，论文研究继续使用`kind=research`。本节不替代文档28的任务工作树与确认合入规则。
+主源码在 `/home/afrangry/kurumi-fusion` 单线维护。未来若恢复旧代码任务模式，必须另行明确需求与授权，不沿用已退役的夹具、路径和验收状态。旧副本的同步步骤、SHA与原型脚本从当前运维契约移除，追溯使用Git历史。
 
-后台代码任务（`kurumi_task kind=code`）不在 `/home/afrangry/kurumi-fusion` 里改代码，而在独立副本
-`/home/afrangry/.openclaw-fusion/projects/fusion` 中工作。本节说明该副本的基线、同步、验证、合入和回退规则。
-验收标准见[文档 16](16_验收与测试总表.md)。
-
-### 当前基线
-
-副本路径为 `/home/afrangry/.openclaw-fusion/projects/fusion`。它有独立 Git 历史，不自动追平主仓库；无 remote、不推送。开始每次任务前，分别读取主仓库和副本的 HEAD、分支及工作区状态，依下面维护流程审阅和同步，不使用文档中的旧 SHA 代替检查。
-
-2026-10-10–17 的分支、同步基线、封存标签与当时工作区状态保留在[阶段记录](archive/documentation-2026-10-23/10_融合助手运行维护.md#当前基线)；旧线保留在归档标签及 bundle 中。Host 生成的上下文与 `node_modules` 由副本本地 `.gitignore` 忽略。
-
-### 适用版本（重要）
-
-同步只说明副本包含被审阅合入的源码版本，不证明与当前生产一致。任务开始前重新 fetch 并审阅 `git log`/`git diff`，不能把副本旧的 `config/` 或 Host 生成文件当生产事实。
-
-
-### 与主仓库的有意差异（2026-10-11 实测）
-
-相对最后一次同步基线，副本保留下面 3 项有意差异，**不是**“只差几个文件”的笼统说法：
-
-| 差异 | 类型 | 原因 |
-| --- | --- | --- |
-| `.gitignore` | 修改 | 追加副本本地规则，忽略 Host 生成的 `IDENTITY.md`/`SOUL.md`/`USER.md`/`MEMORY.md` |
-| `AGENTS.md` | 修改 | 副本专用开发指令：只在本副本内工作、不推送、检查在隔离命名空间 |
-| `scripts/fusion/fixtures/stats.py` | 新增 | 后台代码任务的固定验收 fixture（`test_stats.py` 的 `mean`/`moving_average`）。**移走该文件会让固定测试失败**，已实测 |
-
-融合前提示词原位于 `chatbot/AGENTS.md`，在2026-10-11核对时与主仓库一致；2026-10-28移至
-[`docs/archive/chatbot-AGENTS.md`](archive/chatbot-AGENTS.md)，避免被开发工具当作目录指令加载。
-旧验收脚本 `model-driver.mjs`、`run-retrieval-t3.mjs` 按自身模块位置显式读取仓库内的归档文件，
-`KURUMI_SOURCE_ROOT` 仍只指定旧配置、依赖代码与报告所在的提取副本，不再提供这份提示词。
-首次创建副本时，`configure-projects.mjs` 只写副本根 `AGENTS.md`，保留克隆下来的归档提示词，
-不另建 `chatbot/AGENTS.md`；后续一致性随每次基线同步实查。归档与路径验证见[本轮记录](verification/chatbot-agents-archive-2026-10-28/README.md)。
-
-另有三类内容**不出现在 Git 树差异里**，但确实存在于副本目录，排查时不要混淆：
-
-- `IDENTITY.md`、`SOUL.md`、`USER.md`：Host 生成的 agent 上下文，被副本本地 `.gitignore` 忽略（`git status --ignored` 可见）。
-- `node_modules/`：指向固定 SDK 的符号链接，忽略且由操作者维护。
-- `config/`（含 `runtime.config.json`、`persona.json`、`README.md` 等）：**来自主仓库同步基线且被 Git 跟踪**。
-  副本里存在这些文件是正常的；副本不负责**同步**生产配置，配置契约见 [`config/README.md`](../config/README.md)。
-
-### 维护流程
-
-1. **开始任务前同步**：确认主仓库工作区状态和目标提交，再在副本执行
-   `git fetch /home/afrangry/kurumi-fusion main:main-sync`，用 `git log --oneline HEAD..main-sync` 与
-   `git diff --stat HEAD main-sync` 审阅将合入的内容。**fetch 只更新引用，不等于合入**；
-   合入是单独的 `git merge` 步骤，且要先看清楚“谁改了哪些文件、哪些是副本刻意保留的差异”。
-   有疑问先停下问操作者；`-X theirs` 只在差异已确认时用于首次基线切换，
-   **不得用来掩盖没看懂的冲突**（文档 16 要求验收结论与证据对应，静默合并会让证据失真）。
-2. **建任务分支**：`git switch -c kurumi/<任务名>`；一个任务一个分支，不在基线上直接改。
-3. **修复与验证**：复现问题、修改、运行登记检查。检查必须在 `kurumi_project_check` 的 Bubblewrap 边界内运行，
-   实际退出码与输出是唯一依据；不得删除或改弱现有测试来让检查通过。
-4. **提交**：用 `kurumi_project_git` 的 `commit` 并**明确列出本次文件**，只提交这些文件；消息写清改了什么和验证结果。
-5. **审阅合入**：操作者审阅副本 diff 与检查输出后，才在主仓库以同样内容提交。
-   **副本提交不会自动部署**，也不得由 agent 直接 `push` 或重启生产服务。
-6. **回退**：副本出错优先用 `git switch` 切回基线分支，或 `git restore <文件>` 撤销单文件改动；
-   `git reset --hard <基线提交>` 会丢弃副本未提交的改动，**只在确认没有需要保留的内容时使用**，
-   且事后要检查 `git status` 与 `git log`。历史与旧线仍在标签和归档 bundle 中，不需要靠 reset 找回。
-
-### 登记检查与隔离边界
-
-检查登记在 `.openclaw-fusion/projects.json`（agent 可读，只有操作者能改；入口见[代码项目接入与合入](#代码项目接入与合入)）。下面是2026-10-10–11验收的登记与隔离约束；当前检查名、argv和覆盖领域须以注册表实查，不据旧清单保证新增领域已覆盖：
-
-- 检查名 `fusion-offline-regression`，超时 60s，argv 固定为
-  `/checks/fusion-memory-revision.mjs` 加 8 个插件测试文件（`kurumi-qq`×3、`kurumi-memory`×1、`kurumi-tasks`×3、`kurumi-research`×1）。
-- fixture `/checks/fusion-memory-revision.mjs` 来自 `.openclaw-fusion/project-checks/`，在沙箱内**只读**挂载。
-- 沙箱参数以 `chatbot/packages/sandbox/index.js` 的 `sandboxArguments` 为准：
-  `--unshare-all --die-with-parent --new-session --clearenv`，只读挂载 `/usr`、`/bin`、`/lib`、`/lib64` 和固定 SDK 路径，
-  副本挂到 `/workspace`，`HOME=/tmp`，PATH 固定。因此**主机 HOME、生产目录、服务总线与外网都不可见**；
-  沙箱内 `/workspace` 就是副本根本身，fixture 里写 `/workspace/chatbot/...` 才能解析。
-- 检查的 argv 在宿主机无法直接运行（fixture 的 `/checks/...` 与 `/workspace` 路径不存在），
-  必须通过 Bubblewrap 或 `kurumi_project_check` 执行；直接在主机跑会得到 `ERR_MODULE_NOT_FOUND`，那不是真实失败。
-- 新增项目或扩大检查范围按[代码项目接入与合入](#代码项目接入与合入)的步骤修改已有 `checks`，不新增第二套任务引擎。
-
-### 证据
-
-- 2026-10-10 副本同步与复验：`docs/verification/2026-10-10_projects-fusion-sync.md`。
-- 2026-10-11 副本最终同步与引导脚本复验：`docs/verification/2026-10-11_projects-fusion-sync.md`。
-- 旧副本线的完整历史与独有提交：`/home/afrangry/kurumi-backups/projects-fusion-copy-2026-10-10/`
-  （`projects-fusion-before-rebase.bundle`、`copy-only-9-commits.patch`、生成的 workspace 文件）。
 
 ## 研究与提醒
 

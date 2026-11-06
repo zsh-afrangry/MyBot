@@ -24,7 +24,7 @@
 | `.openclaw-fusion/state/kurumi-e7/` | E7公开资料JSON缓存、哈希与条件请求元数据；不存聊天/身份/凭据 | ❌ 可从公开站点重建；随整目录私密备份保留 |
 | `.openclaw-fusion/channel/` | 频道账本、贴纸目录、发送回执 | ❌ 仅私有备份 |
 | `.openclaw-fusion/agents/` | 各 Agent 的原生会话 SQLite、保留的历史 JSONL 等资料；读取归属见文档25 | ❌ 仅私有备份 |
-| `.openclaw-fusion/{code,research}-workspace/`、`project-checks/`、`research-cache/` | 后台任务与研究的隔离工作区、检查夹具、缓存 | ❌ 仅私有备份 |
+| `.openclaw-fusion/research-workspace/`、`research-cache/` | 后台研究的隔离工作区与可重建缓存（旧代码工作区/检查夹具已退役） | ❌ 仅私有备份 |
 | `.openclaw-fusion/plugins/` | 受控第三方插件安装（由仓库锁文件重建） | ❌ 可重建 |
 | `.openclaw-fusion/paper-credentials.json` | 论文翻译凭据，0600；默认DeepSeek官方的`DEEPSEEK_API_KEY`，显式GPT选用014 → 030 → 040独立池；按本次厂商选取 | ❌ 仅私有备份 |
 | `.openclaw-fusion/documents/` | 受管 PDF、任务/产物记录、论文链路事件及模型/字体/译文缓存 | ❌ 仅私有备份；缓存可重建 |
@@ -51,7 +51,7 @@
 
 - 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。历史实测见[模型与图片证据](../docs/verification/deepseek-whale/README.md)。
 - 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
-- `configure-deepseek-persona.mjs`是2026-10-05的一次性迁移脚本，**不是日常人格切换入口**。它会重写provider、默认模型、`runtime-env.json`并删除`OPENAI_API_KEY`，还会写四份工作区文件。迁移私密材料位于 `.openclaw-fusion/migration/before-deepseek-whale-2026-10-05/`，只代表当时状态，不是当前完整回退点。改配置与回退先按本文及文档16的契约核对，不删除运行目录或业务状态。
+- 旧一次性人格/provider迁移脚本与运行根中的迁移副本已退役；日常使用下文的配置与人格同步入口。
 
 ## 仓库全权管理 vs 宿主自行维护
 
@@ -94,7 +94,7 @@ node scripts/fusion/sync-persona.mjs --apply
 
 1. **只写 `openclaw.json`**。脚本不会打开、移动或删除 `state/`、`channel/`、`agents/`、
    `workspace/`、`media/` 或任何数据库与 JSONL，因此不可能覆盖记忆、提醒或聊天历史。
-2. **写入前先备份**为 `openclaw.json.bak.<时间戳>`（mode 600）。
+2. **写入前先备份**至统一根 `/home/afrangry/kurumi-backups/.working/config-sync/openclaw.before.json`（mode 600；仅保留最近待验证回退副本）。
 3. **`--check` 在漂移时以非零码退出**，可直接接进启停脚本或自检。
 
 ### 分阶段部署
@@ -119,9 +119,7 @@ node scripts/fusion/sync-persona.mjs --apply
 | 轮换 API Key | **只改** `.openclaw-fusion/runtime-env.json` | 重启服务 |
 | 升级第三方插件 | `scripts/fusion/lib/plugins.mjs`、`config/plugins.package.json` 和锁文件 | `install-plugins.mjs` 后跑验收 |
 
-> **不要用 `configure-deepseek-persona.mjs` 改人格。** 它是一次性迁移脚本，除了角色卡还会重写
-> `models.providers`、默认模型、`runtime-env.json`（并删掉 `OPENAI_API_KEY`）以及四份工作区文件。
-> 脚本开头已加警告。
+> 旧一次性迁移入口已从活动源码删除，追溯使用Git历史；不用于当前人格切换或配置恢复。
 
 ### 人格投影契约
 
@@ -161,7 +159,7 @@ node chatbot/scripts/memory-migrate.mjs --apply \
   --backup-root /home/afrangry/.openclaw-fusion/migration
 ```
 
-迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。原文和配置备份在`/home/afrangry/.openclaw-fusion/migration/before-memory-p2-2026-10-19T16-53-12-652Z/`。记忆生命周期与遗忘边界见[文档25](../docs/25_人格、记忆与会话连续性.md#会话生命周期)。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
+迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。开发记忆与原迁移副本已按2026-11-07全局清理授权移除；当前数据与恢复点以全局手册为准。记忆生命周期与遗忘边界见[文档25](../docs/25_人格、记忆与会话连续性.md#会话生命周期)。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
 
 ## 自检
 

@@ -160,7 +160,6 @@ const TABLE = {
   'scripts/fusion/test/register-project.test.mjs': ['离线', '项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝）', {readonly: 1}, 'offline'],
   'scripts/fusion/test/log-query.test.mjs': ['离线', '跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏', {readonly: 1}, 'offline'],
   'scripts/fusion/test/log-query-views.test.mjs': ['离线', '日志查询视图合成数据回归：过滤、调用配对、回合、错误、审计、展开', {readonly: 1}, 'offline'],
-  'scripts/fusion/fixtures/test_stats.py': ['离线', '固定验收 fixture：后台代码任务的 mean/moving_average 断言', {readonly: 1}, 'code'],
   'chatbot/tests/acceptance/call-analysis.test.mjs': ['离线', '旧调用分析离线断言（读取两份输入样本）', {readonly: 1}, 'offline'],
 
   // ---- TypeScript 源码测试（R02 指出第一版漏掉的 22 个）----
@@ -222,29 +221,19 @@ const TABLE = {
   'scripts/fusion/install-service.mjs': ['运维写状态', '首次切换 systemd 单元到融合服务', {auth: 1, restart: 1}, 'header'],
   'scripts/fusion/install-plugins.mjs': ['运维写状态', '按锁文件安装受控第三方插件', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/link-dependencies.mjs': ['运维写状态', '固定并链接本地 SDK 只读依赖', {auth: 1, writesState: 1}, 'header'],
+  'scripts/fusion/lib/runtime-retention.mjs': ['运维库', '限定诊断日志预算与离线捕获生命周期；不访问业务库', {writesState: 1}, 'header'],
+  'scripts/fusion/test/runtime-retention.test.mjs': ['离线', '临时目录验证诊断保留预算、过期删除与软链保护', {testDir: 1}, 'header'],
   'scripts/fusion/run-gateway.mjs': ['运维写状态', '前台生产入口；日常只由 systemd 启动', {auth: 1, restart: 1, model: 1, writesState: 1}, 'header'],
   'scripts/fusion/stop-gateway.mjs': ['运维写状态', '按环境证明停止隔离 Gateway', {auth: 1, restart: 1}, 'header'],
-  'scripts/fusion/close-acceptance.mjs': ['运维写状态', '验收结束后关闭 testIngress，不重置发送账本', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/copy-domain-state.py': ['运维写状态', '迁移领域状态库（迁移工具，不是日常命令）', {auth: 1, writesState: 1}, 'code'],
   'scripts/fusion/register-project.mjs': ['运维写状态', '维护 projects.json 登记（默认只预览，--apply 才写）', {auth: 1, writesState: 1}, 'header'],
 
   // ---- 一次性迁移/引导工具 ----
-  'scripts/fusion/prepare.mjs': ['迁移工具', '首次引导隔离运行目录，拒绝覆盖已写内容', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-deepseek-persona.mjs': ['迁移工具', '一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口', {auth: 1, writesState: 1, model: 1}, 'header'],
-  'scripts/fusion/configure-domains.mjs': ['迁移工具', '启用主人绑定领域插件', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-fulltext-research.mjs': ['迁移工具', '研究会话、笔记工作区与来源缓存', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-interaction.mjs': ['迁移工具', '复制表情目录并设定迁移/每日发送预算', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-production.mjs': ['迁移工具', '关闭仅验收能力，保留历史；需先审阅活动任务', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-projects.mjs': ['迁移工具', '一次性首次引导：只在 id 不存在时追加登记并写运行 openclaw.json', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-research.mjs': ['迁移工具', '配置检索 provider 与抓取路径', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/configure-worker.mjs': ['迁移工具', '显式配置隔离代码 worker', {auth: 1, writesState: 1}, 'header'],
 
   // ---- DSH/Fusion 启停（QQ/SnowLuma 只检查，不由脚本启停） ----
   'scripts/fusion/launchers/Start-DSH.sh': ['启停脚本', '启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉', {auth: 1, restart: 1}, 'header'],
   'scripts/fusion/launchers/Stop-DSH.sh': ['启停脚本', '停止融合助手与 DSH Web；不停止 QQ 传输', {auth: 1, restart: 1}, 'header'],
 
   // ---- 当前融合验收：副作用按各脚本自己的 boundary 声明标注 ----
-  'scripts/fusion/test-background-code.mjs': ['验收', '后台代码任务登记检查与终态', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-domain-read.mjs': ['验收', '领域只读自然语言验收：真实模型 + QWeather 工具；不发 QQ、不写偏好', {auth: 1, model: 1, externalApi: 1, writesRepo: 1}, 'boundary'],
   'scripts/fusion/test-domain-due.mjs': ['验收', '提醒到点投递（跨重启）', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-domain-planning.mjs': ['验收', '行程提案与确认写入（隔离库）', {auth: 1, model: 1, writesState: 1, writesRepo: 1}, 'header'],
@@ -256,8 +245,6 @@ const TABLE = {
   'scripts/fusion/test-native-concurrency.mjs': ['验收', '两个原生会话并发；不发 QQ', {auth: 1, model: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-native-cron.mjs': ['验收', '原生 Cron CRUD 与频道投递', {auth: 1, qq: 1, task: 1, restart: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-profile-confirmation.mjs': ['验收', 'Profile 变更确认后恢复原值', {auth: 1, model: 1, writesState: 1, writesRepo: 1}, 'header'],
-  'scripts/fusion/test-project-maintenance.mjs': ['验收', '真实 QQ → 项目 worker → 隔离检查 → 本地提交', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
-  'scripts/fusion/test-project-scoped-commit.mjs': ['验收', '提交范围只含指定文件', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-qq-interaction.mjs': ['验收', '合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发', {auth: 1, model: 1, qq: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'scripts/fusion/test-recurring-weather.mjs': ['验收', '周期天气 automations', {auth: 1, model: 1, qq: 1, task: 1, writesState: 1, writesRepo: 1}, 'code'],
   'scripts/fusion/test-mail-delivery.mjs': ['验收', '邮件真实投递：真实授权码与真实 SMTP；确认由脚本按宿主路由同一调用记录，不含 QQ 入站与到信确认', {auth: 1, externalApi: 1, writesState: 1}, 'boundary'],
@@ -266,7 +253,6 @@ const TABLE = {
   'scripts/fusion/test-research-cancel.mjs': ['验收', '研究任务查询与取消', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/test-research.mjs': ['验收', '公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入', {auth: 1, model: 1, externalApi: 1, writesState: 1, writesRepo: 1}, 'boundary'],
   'scripts/fusion/test-service-recovery.mjs': ['验收', '服务故障注入与恢复；不发 QQ、不调模型', {auth: 1, restart: 1, writesState: 1, writesRepo: 1}, 'header'],
-  'scripts/fusion/test-task-control.mjs': ['验收', '任务查询与取消', {auth: 1, model: 1, task: 1, writesState: 1, writesRepo: 1}, 'header'],
 
   // ---- 融合前遗留 harness：分类依据是脚本自己的 boundary 声明 ----
   'chatbot/tests/acceptance/run.mjs': ['遗留验收', '旧 harness 总入口：真实 Host 调度 + 合成 QQ 输入 + 确定性认知 + 假调度', {auth: 1, testDir: 1, writesRepo: 1}, 'boundary'],

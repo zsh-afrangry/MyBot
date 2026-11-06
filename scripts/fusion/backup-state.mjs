@@ -234,7 +234,6 @@ const REQUIRED = [
   ['state/workspace/AGENTS.md', 'behaviour rules'],
   ['state/workspace/IDENTITY.md', 'role identity'],
   ['state/workspace/USER.md', 'owner profile'],
-  ['state/project-checks/fusion-memory-revision.mjs', 'project check fixture required by projects.json'],
   ['state/channel/stickers.json', 'sticker catalogue'],
   ['config/openclaw.json', 'runtime config'],
   ['config/runtime-env.json', 'credential plane']

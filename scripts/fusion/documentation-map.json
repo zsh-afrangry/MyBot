@@ -250,12 +250,6 @@
       ]
     },
     {
-      "path": "scripts/fusion/configure-deepseek-persona.mjs",
-      "documents": [
-        "docs/9_QQ融合助手架构与开发计划.md"
-      ]
-    },
-    {
       "path": "scripts/fusion/test-memory.mjs",
       "documents": [
         "docs/25_人格、记忆与会话连续性.md"
@@ -997,6 +991,16 @@
         "docs/8_检索功能重构.txt"
       ],
       "category": "历史领域验收"
+    },
+    {
+      "prefix": "consolidation-2026-11-07/",
+      "category": "当前有效",
+      "documents": [
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md",
+        "docs/25_人格、记忆与会话连续性.md"
+      ]
     }
   ]
 }

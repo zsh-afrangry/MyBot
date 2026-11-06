@@ -19,7 +19,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 更新表格：运行 `node scripts/fusion/evidence-index.mjs --markdown`，只替换下方生成标记之间的内容，再执行 `--check-markdown`；不得手改生成表补文档/证据链接。新增脚本需登记分类和归属，新增证据组需登记元数据与INDEX；已登记证据目录中的回执继承目录归属。
 
 <!-- BEGIN GENERATED SCRIPT INDEX -->
-
 | 脚本 | 分组 | 归属文档 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `chatbot/packages/confirmation-core/src/confirmation.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认核心：提案校验、TTL、幂等与 grant 消费 | 只读 | 否 | offline | — |
@@ -107,12 +106,12 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/reminder-list/store.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 提醒列表领域状态、时间、授权、幂等、防重与固定 runner | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/web-deepseek/log-query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md)、[26](../26_基础能力插件边界整理与检索接入设计.md) | DeepSeek provider调用事件接入只读统一查询，不含query/Key | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/web-deepseek/providers.test.mjs` | 离线 | [26](../26_基础能力插件边界整理与检索接入设计.md) | DeepSeek Search/Fetch provider契约：注入fetch，参数/错误码/取消/并发/URL拒绝/凭据权限/包装/缓存/日志不泄露；无网络请求 | 写临时测试目录 | 否 | header | — |
-| `scripts/fusion/fixtures/test_stats.py` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 固定验收 fixture：后台代码任务的 mean/moving_average 断言 | 只读 | 否 | code | — |
 | `scripts/fusion/test/documentation-map.test.mjs` | 离线 | [16](../16_验收与测试总表.md) | 文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库 | 写临时测试目录 | 否 | header | `docs/verification/documentation-2026-10-21/README.md` |
 | `scripts/fusion/test/log-query-views.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 日志查询视图合成数据回归：过滤、调用配对、回合、错误、审计、展开 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/log-query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/register-project.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 项目注册表维护 CLI 与共享保护根规则回归（含归档拒绝） | 只读 | 否 | offline | — |
+| `scripts/fusion/test/runtime-retention.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 临时目录验证诊断保留预算、过期删除与软链保护 | 写临时测试目录 | 否 | header | — |
 | `chatbot/packages/personal-domains/src/test-fixtures.ts` | 库 | [21](../21_后端职责分层与代码整理.md) | 默认领域的离线QWeather/GeoAPI数据夹具 | 只读 | 否 | code | — |
 | `chatbot/plugins/kurumi-mail/test/helpers/mock-smtp.js` | 库 | [20](../20_邮件能力与横切扩展.md) | 邮件测试的本地TLS/SMTP服务器及故障夹具，无公网外发 | 只读 | 否 | header | — |
 | `chatbot/plugins/kurumi-mail/test/helpers/owner-context.js` | 库 | [20](../20_邮件能力与横切扩展.md) | 邮件测试的可信主人上下文与确认scope夹具，不产生生产授权 | 只读 | 否 | header | — |
@@ -160,15 +159,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/scripts/prepare-coding-pilot.mjs` | 维护 | [28](../28_本机编码工具委托与实验任务.md)、[README.md](../../config/README.md) | 新建无远端合成Git项目和配置审阅草案；不apply、不启停生产服务、不调用模型或QQ | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/deployment-review.md` |
 | `chatbot/scripts/import-knowledgemap-list.mjs` | 迁移工具 | [23](../23_KnowledgeMap业务能力桥接.md) | 默认预览旧列表导入；--apply写共享业务，--activate冻结旧项并启用runner切换标记 | 真实外部API、写运行状态 | 是 | header | — |
 | `chatbot/scripts/memory-migrate.mjs` | 迁移工具 | [25](../25_人格、记忆与会话连续性.md) | 文档25显式预览或迁移主人旧 MEMORY.md 到私密连续性 SQLite；--apply写私密备份与记忆状态，不调用模型/QQ/邮件 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-deepseek-persona.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md) | 一次性切到 DeepSeek+小鲸鱼；日常禁用作人格入口 | 真实模型、写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-domains.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 启用主人绑定领域插件 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-fulltext-research.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 研究会话、笔记工作区与来源缓存 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-interaction.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 复制表情目录并设定迁移/每日发送预算 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-production.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 关闭仅验收能力，保留历史；需先审阅活动任务 | 写运行状态 | 是 | header | `docs/verification/migration/33-production-config.json` |
-| `scripts/fusion/configure-projects.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 一次性首次引导：只在 id 不存在时追加登记并写运行 openclaw.json | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-research.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 配置检索 provider 与抓取路径 | 写运行状态 | 是 | header | — |
-| `scripts/fusion/configure-worker.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 显式配置隔离代码 worker | 写运行状态 | 是 | header | — |
-| `scripts/fusion/prepare.mjs` | 迁移工具 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 首次引导隔离运行目录，拒绝覆盖已写内容 | 写运行状态 | 是 | header | — |
 | `chatbot/scripts/reminder-list.mjs` | 领域运行 | [23](../23_KnowledgeMap业务能力桥接.md) | 固定提醒列表 Cron 程序：按切换来源查询、slot 防重和汇总输出，OpenClaw 投递本人 | 写运行状态 | 是 | header | — |
 | `chatbot/tests/acceptance/probe-profile-geo.py` | 遗留验收 | [16](../16_验收与测试总表.md) | GeoAPI provider 探测 | 真实外部API、写仓库内文件 | 是 | code | `docs/verification/profile-geo-provider-probe.json` |
 | `chatbot/tests/acceptance/run-fallback-failover.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 主模型指向必然失败地址、fallback 用真实 deepseek | 真实模型、写临时测试目录 | 是 | header | — |
@@ -211,7 +201,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/reminder-list/acceptance-host.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 隔离 OpenClaw 与真实模型；--natural 同时开放两类提醒、真实会话重置；模拟 OneBot，无生产写入；--out 独立证据目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/host.json` |
 | `chatbot/tests/reminder-list/acceptance-model.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实 DeepSeek 调用列表工具；--ordinal 验证序号/排序变化/澄清，--natural 七句与连续录入；--out 独立证据目录 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/model.json` |
 | `chatbot/tests/reminder-list/acceptance-native.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实原生 Cron 跨重启发本人一条汇总；待办在临时库、正常撤销测试任务 | 真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/reminder-list-2026-10-11`<br>`docs/verification/reminder-list-2026-10-11/native.json` |
-| `scripts/fusion/test-background-code.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 后台代码任务登记检查与终态 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/10-background-code.json` |
 | `scripts/fusion/test-domain-due.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 提醒到点投递（跨重启） | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/10-reminder-restart-delivery.json` |
 | `scripts/fusion/test-domain-planning.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 行程提案与确认写入（隔离库） | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/11-planning-confirmation.json` |
 | `scripts/fusion/test-domain-read.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 领域只读自然语言验收：真实模型 + QWeather 工具；不发 QQ、不写偏好 | 真实模型、真实外部API、写仓库内文件 | 是 | boundary | `docs/verification/migration/06-domain-read.json` |
@@ -224,8 +213,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/test-native-concurrency.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 两个原生会话并发；不发 QQ | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/05-native-concurrency.json` |
 | `scripts/fusion/test-native-cron.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 原生 Cron CRUD 与频道投递 | 真实QQ外发、建/改任务或提醒、重启或停服务、写仓库内文件 | 是 | header | `docs/verification/fusion/04-native-cron.json` |
 | `scripts/fusion/test-profile-confirmation.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | Profile 变更确认后恢复原值 | 真实模型、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/08-profile-confirmation.json` |
-| `scripts/fusion/test-project-maintenance.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 真实 QQ → 项目 worker → 隔离检查 → 本地提交 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/22-project-maintenance.json` |
-| `scripts/fusion/test-project-scoped-commit.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 提交范围只含指定文件 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/23-project-scoped-commit.json` |
 | `scripts/fusion/test-qq-interaction.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 合成主人 → 真实模型 → 仅本人 QQ 的分段与表情外发 | 真实模型、真实QQ外发、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/migration/15-qq-natural-sticker.json` |
 | `scripts/fusion/test-recurring-weather.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 周期天气 automations | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | code | `docs/verification/migration/27-recurring-weather.json` |
 | `scripts/fusion/test-reminder-delivery.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 自然语言 → automations → 到点外发 | 真实模型、真实QQ外发、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/13-natural-reminder-delivery.json` |
@@ -233,10 +220,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/test-research-cancel.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 研究任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/28-research-cancel.json` |
 | `scripts/fusion/test-research.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入 | 真实模型、真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/fusion/15-research.json` |
 | `scripts/fusion/test-service-recovery.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 服务故障注入与恢复；不发 QQ、不调模型 | 重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/35-service-recovery.json` |
-| `scripts/fusion/test-task-control.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/fusion/12-task-control.json` |
 | `scripts/fusion/backup-state.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 制作备份；--quiesce 会短暂停写并恢复服务 | 重启或停服务、写运行状态 | 是 | header | — |
-| `scripts/fusion/close-acceptance.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 验收结束后关闭 testIngress，不重置发送账本 | 写运行状态 | 是 | header | `docs/verification/fusion/16-closeout.json` |
-| `scripts/fusion/copy-domain-state.py` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 迁移领域状态库（迁移工具，不是日常命令） | 写运行状态 | 是 | code | `docs/verification/migration/04-domain-copy.json` |
 | `scripts/fusion/install-plugins.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 按锁文件安装受控第三方插件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/install-service.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 首次切换 systemd 单元到融合服务 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/link-dependencies.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 固定并链接本地 SDK 只读依赖 | 写运行状态 | 是 | header | — |
@@ -248,5 +232,5 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/stop-gateway.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 按环境证明停止隔离 Gateway | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Start-DSH.sh` | 启停脚本 | [9](../9_QQ融合助手架构与开发计划.md) | 启动 DSH Web 与融合助手；QQ 传输只检查不启停，旧消费者由 Conflicts 停掉 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | [9](../9_QQ融合助手架构与开发计划.md) | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
-
+| `scripts/fusion/lib/runtime-retention.mjs` | 运维库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 限定诊断日志预算与离线捕获生命周期；不访问业务库 | 写运行状态 | 否 | header | — |
 <!-- END GENERATED SCRIPT INDEX -->

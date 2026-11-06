@@ -12,7 +12,7 @@
 //      This split exists because "preserve every runtime-only key" silently made deletions
 //      impossible: a key deleted from the repo lived on forever in the runtime, and --check still
 //      reported success. Preserving is only correct for fields the host itself maintains.
-//   3. Every --apply leaves a timestamped openclaw.json.bak.<stamp> behind first.
+//   3. Every --apply preserves one private preimage under the unified backup root.
 //   4. --check exits non-zero when the runtime has drifted from the repo, including when a managed
 //      key exists in the runtime but was deleted from the repo.
 //
@@ -253,8 +253,9 @@ if (!APPLY) {
   process.exit(1);
 }
 
-const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-const backup = `${LIVE}.bak.${stamp}`;
+const rollbackRoot = '/home/afrangry/kurumi-backups/.working/config-sync';
+fs.mkdirSync(rollbackRoot, {recursive:true,mode:0o700});
+const backup = path.join(rollbackRoot, 'openclaw.before.json');
 fs.copyFileSync(LIVE, backup);
 fs.chmodSync(backup, 0o600);
 const temporary = `${LIVE}.tmp.${process.pid}`;
