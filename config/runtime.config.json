@@ -205,7 +205,8 @@
       "personal-planning",
       "personal-reminders",
       "kurumi-e7",
-      "kurumi-coding"
+      "kurumi-coding",
+      "deepseek"
     ],
     "load": {
       "paths": [
@@ -224,7 +225,8 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-planning",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-e7",
-        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-coding"
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-coding",
+        "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/deepseek-provider"
       ]
     },
     "entries": {
@@ -424,6 +426,9 @@
             "launcher": "/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run"
           }
         }
+      },
+      "deepseek": {
+        "enabled": true
       }
     },
     "slots": {

@@ -36,6 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
+import {isDeepStrictEqual} from 'node:util';
 import {PILOT_ROOT,DSH_HOME,hashFile,treeHash,discoverDatabases} from './lib/backup-layout.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
 import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery} from './lib/recovery-isolation.mjs';
@@ -275,6 +276,14 @@ check('assemble: databases placed at runtime paths', dbPlaced.length === dbs.len
 let cfg = null;
 try {
   cfg = JSON.parse(fs.readFileSync(path.join(backup, 'config/openclaw.json'), 'utf8'));
+  if(adaptSource){
+    const source=clones.get('kurumi-fusion');
+    const intent=JSON.parse(fs.readFileSync(source+'/config/runtime.config.json'));
+    const managed=intent._managed;delete intent._managed;
+    const {compileAccessConfig}=await import('file://'+source+'/chatbot/packages/access-control/config.js');
+    const canonical=compileAccessConfig(intent,JSON.parse(fs.readFileSync(source+'/config/access-control.json')));
+    for(const key of managed){if(key in canonical)cfg[key]=canonical[key];else delete cfg[key];}
+  }
   fs.copyFileSync(path.join(backup, 'config/openclaw.json'), path.join(runtime, 'openclaw.json'));
   check('assemble: runtime config loads', true, `${Object.keys(cfg).length} top-level keys`);
 } catch (e) {
@@ -311,8 +320,8 @@ if(!skipDeps){
 
 // 6d. Third-party plugin prefix rebuilt from the versioned lockfile (not copied from production).
 const pluginPrefix = path.join(runtime, 'plugins');
-const manifestSrc = path.join(backup, 'config/plugins.package.json');
-const lockSrc = path.join(backup, 'config/plugins.package-lock.json');
+const manifestSrc = adaptSource?clones.get('kurumi-fusion')+'/config/plugins.package.json':path.join(backup, 'config/plugins.package.json');
+const lockSrc = adaptSource?clones.get('kurumi-fusion')+'/config/plugins.package-lock.json':path.join(backup, 'config/plugins.package-lock.json');
 if (skipDeps) {
   console.log('SKIP plugin installation: materials-only mode');
 } else if (fs.existsSync(manifestSrc) && fs.existsSync(lockSrc)) {
@@ -405,6 +414,23 @@ if(cfg&&restoredRepo){
    check('sandbox build '+rel,build.status===0,build.status===0?'compiled':(build.stdout+build.stderr).slice(-1800));
   }
   if(results.some(r=>!r.ok))throw Error('Cannot start recovery probe: earlier check failed');
+  if(adaptSource){
+   const before=structuredClone(cfg);
+   const env=Object.entries(inertEnv).flatMap(([k,v])=>['--setenv',k,String(v)]);
+   const doctor=sh('bwrap',[...sandboxArgs(target),'--setenv','OPENCLAW_STATE_DIR',runtime,'--setenv','OPENCLAW_CONFIG_PATH',runtime+'/openclaw.json','--setenv','OPENCLAW_AGENT_DIR',runtime+'/agents/main/agent',...env,'/usr/bin/node',sdk+'/openclaw.mjs','doctor','--fix','--non-interactive','--yes','--no-workspace-suggestions'],{timeout:120000});
+   fs.writeFileSync(target+'/doctor.log',doctor.stdout+doctor.stderr,{mode:0o600});
+   cfg=JSON.parse(fs.readFileSync(runtime+'/openclaw.json'));assertNoProduction(cfg);
+   check('isolated official schema migration',doctor.status===0);
+   const protectedKeys=['agents','tools','commands','bindings','plugins','channels'];
+   check('migration preserves authorization and plugin intent',protectedKeys.every(k=>isDeepStrictEqual(before[k],cfg[k])));
+   const versions={};for(const name of fs.readdirSync(runtime+'/agents')){
+    const file=runtime+'/agents/'+name+'/agent/openclaw-agent.sqlite';if(!fs.existsSync(file))continue;
+    const db=new DatabaseSync(file,{readOnly:true});versions[name]=db.prepare('PRAGMA user_version').get().user_version;db.close();
+   }
+   fs.writeFileSync(target+'/migration-result.json',JSON.stringify({versions,configProtected:true}),{mode:0o600});
+   check('all retained agent schemas reach approved version',Object.values(versions).every(v=>v===release.agentSchemaVersion));
+   if(results.some(r=>!r.ok))throw Error('Upgrade migration validation failed; inspect private doctor.log');
+  }
   const probe=path.join(target,'recovery-probe.mjs');
   fs.copyFileSync(fileURLToPath(new URL('./recovery-probe.mjs',import.meta.url)),probe);
   const result=sh('bwrap',[...sandboxArgs(target),'/usr/bin/node',probe,target],{timeout:120000});

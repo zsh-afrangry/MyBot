@@ -60,3 +60,5 @@ QQ插件将宿主OpenClaw声明为可选peer：实际宿主版本由统一版本
 当前旧版恢复点：2026-11-06-20-11-38-R1，源码ce9835f / OpenClaw2026.9.7，25/25隔离恢复通过。旧Fusion快照与kurumi-archive物理目录已退役，必要独有源码历史集中在私密history/，它不承诺恢复旧A/B运行。五个独立KnowledgeMap备份保持原样。
 
 升级隔离演练可对R1指定`restore-verify.mjs --adapt-source <本地bundle> --adapt-sdk <工件tar.gz>`；两项必须成对，原R1不变，仅替换隔离副本代码/内核并迁移其数据库。此模式结果标为upgrade-rehearsal，不能登记成生产恢复点或替代R1/R2。
+
+适配演练按新源码的受管意图和身份配置生成隔离配置，按新锁文件安装外部插件，再在无生产路径/网络的命名空间运行官方doctor --fix；检查全部保留agent schema到批准版本、权限/插件意图不变后才启动。生产切换必须先准备回退状态，停Fusion，替换已验证工件/源码，安装锁定provider、同步受管配置、官方迁移后再启服务。

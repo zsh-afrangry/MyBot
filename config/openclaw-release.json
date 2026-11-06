@@ -1,5 +1,6 @@
 {
   "version": "2026.11.1",
   "nodeRange": ">=24.16.0 <25 || >=26.1.0",
-  "wsVersion": "8.22.0"
+  "wsVersion": "8.22.0",
+  "agentSchemaVersion": 27
 }

@@ -8,5 +8,6 @@ export const PLUGIN_PREFIX = path.join(STATE_DIR, 'plugins');
 
 /** Pinned third-party plugins. Bump deliberately and re-run acceptance afterwards. */
 export const PLUGINS = {
-  '@openclaw/tavily-plugin': '2026.9.7'
+  '@openclaw/tavily-plugin': '2026.9.7',
+  '@openclaw/deepseek-provider': '2026.11.1'
 };

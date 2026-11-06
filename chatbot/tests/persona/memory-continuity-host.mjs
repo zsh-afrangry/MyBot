@@ -22,11 +22,14 @@ const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const outIndex = process.argv.indexOf('--out'), out = outIndex < 0 ? null : process.argv[outIndex + 1];
 if (!out || !path.isAbsolute(out) || fs.existsSync(out)) throw Error('Require a new absolute --out evidence file');
 const live = process.argv.includes('--live');
+const providerIndex=process.argv.indexOf('--provider-fixture');
+const providerFixture=providerIndex<0?null:process.argv[providerIndex+1];
+if(providerFixture&&(live||!path.isAbsolute(providerFixture)||JSON.parse(fs.readFileSync(providerFixture+'/openclaw.plugin.json')).id!=='deepseek'))throw Error('Provider fixture requires the official DeepSeek plugin path and deterministic mode');
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-memory-host-'));
 const token = randomBytes(24).toString('hex'), bot = '900001';
 const report = {
-  at: new Date().toISOString(), live, model: 'local/deterministic', cases: [], requests: 0, maxRequests: 40,
+  at: new Date().toISOString(), live, providerFixture:Boolean(providerFixture), model: 'local/deterministic', cases: [], requests: 0, maxRequests: 40,
   toolCalls: [], toolErrors: [], modelChecks: [], mockSends: 0, usage: {promptTokens: 0, completionTokens: 0},
   boundary: 'Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model by default, optional official DeepSeek with --live, simulated OneBot. Synthetic conversations and temporary state only; no real QQ, mail, production write or production service restart.',
 };
@@ -65,6 +68,7 @@ const model = http.createServer(async (req, res) => {
   try {
     let raw = ''; for await (const chunk of req) raw += chunk;
     const body = JSON.parse(raw), messages = body.messages ?? [];
+    if(providerFixture)assert.equal(body.model,'deepseek-flash','Preserve the configured production model id');
     assert(activeTurn, 'unexpected background model request');
     assert(++report.requests <= report.maxRequests, 'model request budget exhausted');
     const json = JSON.stringify(body);
@@ -202,6 +206,14 @@ cfg.channels = {'kurumi-qq': {enabled: true, ownerId: OWNER, accessControl: poli
 cfg.plugins = {allow: ['kurumi-qq', 'kurumi-memory'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-qq'), path.join(repo, 'chatbot/plugins/kurumi-memory')]}, entries: {
   'kurumi-qq': {enabled: true}, 'kurumi-memory': {enabled: true, config: {continuity: {enabled: true, summaryTtlDays: 7, maxContextChars: 6000}, continuityPolicyAdapter: 'current-owner', continuityStoreAdapter: 'sqlite'}, hooks: {allowConversationAccess: true, allowPromptInjection: true}},
 }, slots: {memory: 'none'}};
+if(providerFixture){
+ const fixture=cfg.models.providers['memory-fixture'];delete cfg.models.providers['memory-fixture'];
+ fixture.models[0]={...fixture.models[0],id:'deepseek-flash',reasoning:true};cfg.models.providers.deepseek=fixture;
+ cfg.agents.defaults.model.primary='deepseek/deepseek-flash';
+ for(const agent of Object.values(cfg.agents.entries))agent.model.primary='deepseek/deepseek-flash';
+ cfg.plugins.allow.push('deepseek');cfg.plugins.load.paths.push(providerFixture);cfg.plugins.entries.deepseek={enabled:true};
+ report.model='deepseek/deepseek-flash via local deterministic provider endpoint';
+}
 cfg.session = {dmScope: 'per-channel-peer'}; cfg.cron = {enabled: false}; cfg.logging = {file: path.join(root, 'runtime.log')};
 cfg.tools = {deny: ['exec', 'process', 'message', 'sessions_spawn'], web: {search: {enabled: false}, fetch: {enabled: false}}};
 const compiled = compileAccessConfig(cfg, policy);

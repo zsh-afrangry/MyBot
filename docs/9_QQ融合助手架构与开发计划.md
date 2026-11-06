@@ -312,3 +312,5 @@ cd /opt/deepseek-harness
 启动输出同时显示DSH本地与Tailscale远端认证入口。远端域名读取dsh-web.service的`--trusted-host`（限定*.ts.net），使用HTTPS并保留本地入口路径和认证参数；沿用现有Tailscale Serve转发，不修改网络配置。
 
 返回[文档入口](README.md)。
+
+2026.11.1的DeepSeek由独立官方插件`@openclaw/deepseek-provider`提供，版本锁定在受管插件清单，并显式列入allow/load/entries；保留原deepseek/deepseek-flash与官方端点/凭据，不在迁移时联网临时选最新版。数据库24→27与共享库迁移须停写运行官方doctor；升级只替换npm包不能完成它。

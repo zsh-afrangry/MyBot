@@ -187,3 +187,5 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 生产配置包含本机路径，不能原样用于隔离启动。恢复工具会重映射配置、项目注册表和符号链接，换成测试凭据，并只在Bubblewrap中执行构建与Gateway探针。详见[验收总表](../docs/16_验收与测试总表.md)；不要直接运行恢复仓库中的生产启动脚本。
 
 返回[文档入口](../docs/README.md)。
+
+内核批准版本、Node范围、连接库和agent schema版本见`openclaw-release.json`。受控外部插件清单同时固定Tavily和2026.11.1独立DeepSeek provider；模型与工具授权仍由runtime.config/access-control维护，安装provider不授予新业务工具权限。
