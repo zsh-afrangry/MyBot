@@ -36,6 +36,7 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
+import {PILOT_ROOT,DSH_HOME,hashFile,treeHash,discoverDatabases} from './lib/backup-layout.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
 import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery} from './lib/recovery-isolation.mjs';
 
@@ -69,7 +70,7 @@ fs.mkdirSync(target, { recursive: true, mode: 0o700 });
 
 const expectedPath = path.join(backup, 'EXPECTED.json');
 const expected = fs.existsSync(expectedPath) ? JSON.parse(fs.readFileSync(expectedPath, 'utf8')) : null;
-if(!expected)throw Error('EXPECTED.json required; historical material needs a separately documented recovery procedure');
+if(expected?.formatVersion!==3)throw Error('Fusion v3 EXPECTED.json required; historical material needs its historical verifier');
 // --- 1. manifest ----------------------------------------------------------------------
 const manifestPath = path.join(backup, 'MANIFEST.sha256');
 if (fs.existsSync(manifestPath)) {
@@ -191,16 +192,7 @@ if (fs.existsSync(patchDir)) {
 
 // --- 5. database snapshots ------------------------------------------------------------
 const snapshotRoot = path.join(backup, 'state', 'runtime');
-const dbs = [];
-const walk = (dir, depth = 0) => {
-  if (depth > 12 || !fs.existsSync(dir)) return;
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) walk(p, depth + 1);
-    else if (e.name.endsWith('.sqlite')) dbs.push(p);
-  }
-};
-walk(snapshotRoot);
+const dbs=discoverDatabases(snapshotRoot,{skip:new Set()});
 let healthy = 0;
 const dbFailures = [];
 for (const p of dbs) {
@@ -248,10 +240,15 @@ try {
 }
 
 // 6b. Databases back to the paths the runtime expects (strip the absolute-path prefix).
+// The pilot root is external to runtime. Restore it separately; never strip a guessed prefix.
+rsync(path.join(backup,'external/pilot'),path.join(target,'pilot'));
+rsync(path.join(backup,'external/dsh-home'),path.join(target,'dsh-home'));
 const dbPlaced = [];
 for (const p of dbs) {
-  const rel = path.relative(snapshotRoot, p).replace(/^home\/[^/]+\/[^/]+\//, '');
-  const out = path.join(runtime, rel);
+  const original='/'+path.relative(snapshotRoot,p);
+  const out=remap(original,runtime,clones.get('kurumi-fusion'));
+  if(out===original||!out.startsWith(target+'/'))throw Error('Unknown database origin');
+  const rel=path.relative(runtime,out);
   fs.mkdirSync(path.dirname(out), { recursive: true, mode: 0o700 });
   fs.copyFileSync(p, out);
   fs.chmodSync(out, 0o600);
@@ -279,14 +276,21 @@ const credFiles = ['runtime-env.json', 'http-token', 'ws-token'].filter((f) => f
 check('assemble: token/credential files present', credFiles.length === 3, credFiles.join(', ') || 'none');
 
 
-const sdkArchive=arg('--sdk-archive','/home/afrangry/kurumi-backups/legacy-baselines-2026-10-05/2026-10-05-full-migration_openclaw-sdk-2026.9.7.tar.gz');
 const sdk=path.join(target,'sdk/openclaw');
 if(!skipDeps){
- const hash=createHash('sha256').update(fs.readFileSync(sdkArchive)).digest('hex');
- if(hash!=='202348542668ba28f7dbff49017e443f3b6ce21dce0ecc82d14926cf88ecbd75')throw Error('SDK recovery artifact hash mismatch');
- fs.mkdirSync(path.dirname(sdk),{recursive:true});
- const x=sh('tar',['-xzf',sdkArchive,'-C',path.dirname(sdk)]);if(x.status!==0)throw Error('SDK extraction failed');
- check('immutable SDK artifact restored',JSON.parse(fs.readFileSync(sdk+'/package.json')).version==='2026.9.7');
+ const destinations={'openclaw':path.dirname(sdk),'paper-python':runtime+'/venvs','dsh':target+'/dsh'};
+ for(const kind of Object.keys(destinations)){
+  const rec=expected.artifacts?.find(a=>a.kind===kind);
+  if(!rec||path.basename(rec.name)!==rec.name||!rec.name.endsWith('.tar.gz'))throw Error('Required immutable dependency missing');
+  const archive=path.join(path.dirname(backup),'artifacts',rec.name);
+  if(hashFile(archive)!==rec.sha256)throw Error('Immutable dependency hash mismatch: '+kind);
+  const listing=sh('tar',['-tzf',archive]);
+  if(listing.status!==0||listing.stdout.split('\n').filter(Boolean).some(n=>n.startsWith('/')||n.split('/').includes('..')||!n.startsWith(rec.rootName+'/')))throw Error('Unsafe dependency archive');
+  fs.mkdirSync(destinations[kind],{recursive:true,mode:0o700});
+  const x=sh('tar',['-xzf',archive,'-C',destinations[kind]]);if(x.status!==0)throw Error('Dependency extraction failed: '+kind);
+  check('immutable dependency restored: '+kind,treeHash(path.join(destinations[kind],rec.rootName))===rec.treeHash);
+ }
+ check('SDK matches approved backup release',JSON.parse(fs.readFileSync(sdk+'/package.json')).version===expected.approvedRelease.version);
 }
 
 // 6d. Third-party plugin prefix rebuilt from the versioned lockfile (not copied from production).
@@ -342,7 +346,15 @@ if(cfg&&restoredRepo){
  const registry=remap(JSON.parse(fs.readFileSync(runtime+'/projects.json')),runtime,restoredRepo);
  assertNoProduction(cfg);assertNoProduction(registry);
  fs.writeFileSync(runtime+'/projects.json',JSON.stringify(registry,null,2),{mode:0o600});
- remapLinks(runtime,runtime,restoredRepo);remapLinks(restoredRepo,runtime,restoredRepo);
+ remapLinks(runtime,runtime,restoredRepo);remapLinks(restoredRepo,runtime,restoredRepo);remapLinks(target+'/pilot',runtime,restoredRepo);
+ // Credential material is captured for disaster recovery but disabled before any test execution.
+ fs.writeFileSync(target+'/dsh-home/.credentials.yaml','{}\n',{mode:0o600});
+ for(const root of [target+'/pilot/state/backend/dsh-home',target+'/dsh-home/profiles/web']){
+  if(!fs.existsSync(root))continue;
+  for(const name of ['cordis.patch.yml','cordis.yml']){
+   const f=path.join(root,name);if(fs.existsSync(f))fs.writeFileSync(f,'[]\n',{mode:0o600});
+  }
+ }
  // A recovery verification copy cannot act as a live assistant, even outside the sandbox.
  cfg.cron={...cfg.cron,enabled:false};
  disablePaperRecovery(cfg,runtime);
@@ -423,7 +435,8 @@ const tableExpectations = {
 let opened = 0;
 const openFailures = [];
 for (const rel of dbPlaced) {
-  const out = path.join(runtime, rel);
+  const out = path.resolve(runtime, rel);
+  if(!out.startsWith(target+'/'))throw Error('Assembled database outside target');
   try {
     const db = new DatabaseSync(out, { readOnly: true });
     const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all().map((r) => r.name);
@@ -444,8 +457,8 @@ console.log(`\n${results.length - failed.length}/${results.length} checks passed
 console.log(`assembled runtime at: ${runtime}`);
 console.log(`restored repo at    : ${restoredRepo ?? '(none)'}`);
 console.log('No host service was changed; only an isolated Gateway probe may have run. No real QQ delivery.');
-console.log('Recovery inputs: backup, verifier harness and hash-pinned SDK archive; isolated execution cannot see production.');
-fs.writeFileSync(path.join(target,'verification.json'),JSON.stringify({backup,target,level:skipDeps?'materials-only':'isolated-gateway',ok:!failed.length,results},null,2),{mode:0o600});
+console.log('Recovery inputs: v3 backup, verifier harness and manifest-pinned dependency artifacts; isolated execution cannot see production.');
+fs.writeFileSync(path.join(target,'verification.json'),JSON.stringify({backup,target,manifestHash:hashFile(manifestPath),expectedHash:hashFile(expectedPath),coreVersion:expected.approvedRelease.version,level:skipDeps?'materials-only':'isolated-gateway',ok:!failed.length,results},null,2),{mode:0o600});
 if (failed.length) {
   console.error('\nRESULT: restore verification FAILED');
   for (const f of failed) console.error(`  - ${f.name}: ${f.detail}`);

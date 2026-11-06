@@ -16,7 +16,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { PLUGIN_PREFIX, PLUGINS } from './lib/plugins.mjs';
-import { REPO_ROOT } from './lib/legacy-source.mjs';
+import { REPO_ROOT } from './lib/runtime-paths.mjs';
 
 const CANONICAL_MANIFEST = path.join(REPO_ROOT, 'config/plugins.package.json');
 const CANONICAL_LOCK = path.join(REPO_ROOT, 'config/plugins.package-lock.json');

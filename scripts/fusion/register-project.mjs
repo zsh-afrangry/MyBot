@@ -34,7 +34,7 @@
 // maintaining the real registry is the default on purpose.
 import fs from 'node:fs';
 import path from 'node:path';
-import { STATE_DIR } from './lib/legacy-source.mjs';
+import { STATE_DIR } from './lib/runtime-paths.mjs';
 import { assertNotProtectedRoot, RUNTIME_STATE } from '../../chatbot/plugins/kurumi-tasks/protected-roots.js';
 
 const STATE = STATE_DIR;

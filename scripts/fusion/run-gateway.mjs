@@ -2,9 +2,10 @@
 import fs from 'node:fs';
 import {spawn,spawnSync} from 'node:child_process';
 import {pruneDiagnostics,clearGatewayCaptures} from './lib/runtime-retention.mjs';
+import {OPENCLAW_RELEASE} from './lib/openclaw-release.mjs';
 const state='/home/afrangry/.openclaw-fusion';
 const installed=JSON.parse(fs.readFileSync('/home/afrangry/.npm-global/lib/node_modules/openclaw/package.json'));
-if(installed.version!=='2026.9.7')throw Error('OpenClaw version changed; rerun contract acceptance first');
+if(installed.version!==OPENCLAW_RELEASE.version)throw Error('OpenClaw version changed; rerun contract acceptance first');
 const bridge=spawnSync('systemctl',['--user','is-active','qq-bridge.service'],{encoding:'utf8',timeout:3000});
 if(bridge.stdout?.trim()==='active')throw Error('Stop old qq-bridge.service before starting fusion (avoid double replies)');
 try{const old=JSON.parse(fs.readFileSync(`${state}/gateway-pid.json`));const oldEnv=fs.readFileSync(`/proc/${old.child}/environ`,'utf8');if(oldEnv.split('\0').includes(`OPENCLAW_STATE_DIR=${state}`))throw Error('Fusion Gateway already running');}catch(e){if(e.code!=='ENOENT')throw e;}

@@ -268,12 +268,6 @@
       ]
     },
     {
-      "path": "scripts/fusion/restore-legacy.sh",
-      "documents": [
-        "docs/12_目录资产与Git备份整理.md"
-      ]
-    },
-    {
       "path": "scripts/fusion/evidence-index.mjs",
       "documents": [
         "docs/16_验收与测试总表.md"

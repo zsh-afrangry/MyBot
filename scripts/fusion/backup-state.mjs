@@ -10,7 +10,7 @@
 //   patches/ uncommitted tracked changes, so the backup is not silently lossy
 //   config/  runtime config + credential plane + systemd units (mode 600)
 //   state/   consistent snapshots of every Fusion SQLite database + channel/agent JSON state
-// External KnowledgeMap MySQL must also be backed up; this is not a combined recovery point.
+// KnowledgeMap is an independent service: its database and source are outside this backup.
 //   meta/    git state, service state, versions, sizes
 //   MANIFEST.sha256 over everything
 //
@@ -24,9 +24,10 @@ import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {serviceLease,installBackupExitHandlers} from './lib/backup-service.mjs';
 import {captureWorkingTree} from './lib/working-tree-backup.mjs';
-import { REPO_ROOT, STATE_DIR } from './lib/legacy-source.mjs';
+import { REPO_ROOT, STATE_DIR } from './lib/runtime-paths.mjs';
 
-const BACKUP_ROOT = '/home/afrangry/kurumi-backups';
+import {BACKUP_ROOT,PILOT_ROOT,DSH_HOME,SDK_ROOT,SKIP_RUNTIME,skippedRuntime,discoverDatabases,ensureArtifact} from './lib/backup-layout.mjs';
+import {OPENCLAW_RELEASE} from './lib/openclaw-release.mjs';
 const argv = process.argv.slice(2);
 const labelIdx = argv.indexOf('--label');
 const label = (labelIdx >= 0 ? argv[labelIdx + 1] : 'manual') || 'manual';
@@ -35,7 +36,7 @@ const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
 const dest = path.join(BACKUP_ROOT, `${stamp}-${label}`);
 
 if (fs.existsSync(dest)) throw new Error(`Backup already exists, refusing to overwrite: ${dest}`);
-for (const d of ['git', 'patches', 'config', 'state', 'meta', 'tools']) {
+for (const d of ['git', 'patches', 'config', 'state', 'meta', 'external']) {
   fs.mkdirSync(path.join(dest, d), { recursive: true, mode: 0o700 });
 }
 
@@ -68,20 +69,23 @@ fs.writeFileSync(path.join(lock,'owner.json'),JSON.stringify({pid:process.pid,de
 const releaseLock=()=>{try{const owner=JSON.parse(fs.readFileSync(path.join(lock,'owner.json')));if(owner.pid===process.pid&&owner.dest===dest)fs.rmSync(lock,{recursive:true});}catch{}};
 process.once('exit',releaseLock);
 try {
+// Dependencies are immutable inputs; hash/archive before stopping writers to keep downtime short.
+const installed=JSON.parse(fs.readFileSync(SDK_ROOT+'/package.json'));
+if(installed.version!==OPENCLAW_RELEASE.version)throw Error('Installed SDK is not the approved release');
+const pythonRoot=STATE_DIR+'/venvs/paper-translation';
+const pythonVersion=sh(pythonRoot+'/bin/python',['-c','import platform;print(platform.python_version())']).stdout?.trim();
+if(!/^\d+\.\d+\.\d+$/.test(pythonVersion??''))throw Error('Paper Python environment unavailable');
+const dshVersion=JSON.parse(fs.readFileSync('/opt/deepseek-harness/node_modules/@deepseek-ai/dsh/package.json')).version;
+const artifacts=[];
+for(const [kind,version,source] of [['openclaw',installed.version,SDK_ROOT],['paper-python',pythonVersion,pythonRoot],['dsh',dshVersion,'/opt/deepseek-harness/node_modules']]){
+ artifacts.push(ensureArtifact(kind,version,source));log('immutable dependency captured: '+kind+' '+version);await new Promise(setImmediate);
+}
 if(QUIESCE)lease.stop();
 await new Promise(setImmediate);
 const untrackedCaptured = [];
 
 // ---------------------------------------------------------------- git bundles
-// The legacy trees were moved out of their active locations in step 7; look in the archive first
-// and fall back to the old paths so this script keeps working on either layout.
-const ARCHIVE = '/home/afrangry/kurumi-archive';
-const firstExisting = (...candidates) => candidates.find((p) => fs.existsSync(path.join(p, '.git'))) ?? null;
-const REPOS = [
-  ['kurumi-fusion', REPO_ROOT],
-  ['legacy-openclaw', firstExisting(`${ARCHIVE}/legacy-openclaw`, '/home/afrangry/.openclaw')],
-  ['qq-bridge', firstExisting(`${ARCHIVE}/qq-bridge`, '/home/afrangry/桌面/qq-bridge')]
-].filter(([, dir]) => dir);
+const REPOS = [['kurumi-fusion', REPO_ROOT]];
 for (const [name, dir] of REPOS) {
   const out = path.join(dest, 'git', `${name}.bundle`);
   const r = sh('git', ['-C', dir, 'bundle', 'create', out, '--all']);
@@ -95,10 +99,6 @@ for (const [name, dir] of REPOS) {
   untrackedCaptured.push(...captureWorkingTree(dir,path.join(dest,'patches'),name));
   await new Promise(setImmediate);
 }
-for (const [name, dir] of [['legacy-openclaw', `${ARCHIVE}/legacy-openclaw`], ['qq-bridge', `${ARCHIVE}/qq-bridge`]]) {
-  if (fs.existsSync(dir)) log(`archive ${name}: present at ${dir}`);
-}
-
 // ---------------------------------------------------------------- config plane
 const CFG = path.join(dest, 'config');
 const runtimeConfig=JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`));
@@ -106,7 +106,7 @@ const sharedBusiness=runtimeConfig.plugins?.entries?.['personal-reminder-list']?
 const externalBusiness=sharedBusiness?.dataSource==='knowledgemap'?{
  name:'KnowledgeMap',baseUrl:sharedBusiness.bridgeBaseUrl,databaseCaptured:false,
  tokenCaptured:fs.existsSync(sharedBusiness.bridgeTokenFile),
- recovery:'Also save KnowledgeMap MySQL and backend/.env; see docs/23 and KnowledgeMap docs/18.'
+ recovery:'Independent service; Fusion captures API settings and its token only. No KnowledgeMap database/source restore is performed.'
 }:null;
 const copies = [
   [`${STATE_DIR}/openclaw.json`, 'openclaw.json'],
@@ -132,7 +132,7 @@ for (const [src, name] of copies) {
 const unitDir = path.join(CFG, 'systemd');
 fs.mkdirSync(unitDir, { recursive: true, mode: 0o700 });
 for (const src of [
-  ...(fs.existsSync('/home/afrangry/.config/systemd/user') ? fs.readdirSync('/home/afrangry/.config/systemd/user').filter((f) => f.endsWith('.service')).map((f) => `/home/afrangry/.config/systemd/user/${f}`) : []),
+  ...['kurumi-fusion','snowluma','snowluma-qq','qq-bridge','openclaw-gateway'].map(name=>'/home/afrangry/.config/systemd/user/'+name+'.service'),
   '/etc/systemd/system/dsh-web.service'
 ]) {
   if (fs.existsSync(src)) fs.copyFileSync(src, path.join(unitDir, path.basename(src)));
@@ -141,19 +141,7 @@ log(`config: ${fs.readdirSync(CFG).length} entries + ${fs.readdirSync(unitDir).l
 
 // ---------------------------------------------------------------- consistent DBs
 const STATE_OUT = path.join(dest, 'state', 'runtime');
-let dbs = [];
-const walk = (dir, depth = 0) => {
-  if (depth > 4) return;
-  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-    const p = path.join(dir, e.name);
-    if (e.isDirectory()) {
-      if (e.name === 'tmp') continue;
-      walk(p, depth + 1);
-    } else if (e.name.endsWith('.sqlite')) dbs.push(p);
-  }
-};
-walk(STATE_DIR);
-dbs = [...new Set(dbs)].sort();
+const dbs=[...discoverDatabases(STATE_DIR),...discoverDatabases(PILOT_ROOT)].sort();
 let ok = 0;
 for (const src of dbs) {
   const out = path.join(STATE_OUT, src.replace(/^\//, ''));
@@ -182,16 +170,11 @@ log(`databases: ${ok}/${dbs.length} consistent snapshots`);
 // It is now the inverse: copy EVERY top-level entry except an explicit, justified skip list, so a
 // newly added runtime directory is captured by default. Databases are excluded here because they
 // are snapshotted consistently above.
-const SKIP_TOP_LEVEL = new Set([
-  'tmp', // transient work area
-  'plugins', // node_modules tree; its package.json + lockfile are captured under config/
-  'gateway.log', 'runtime.log', // logs; regenerated
-  'gateway-pid.json' // stale pid, meaningless after restore
-]);
+const SKIP_TOP_LEVEL = SKIP_RUNTIME;
 const stateCopyRoot = STATE_OUT.replace(/\/runtime$/, '');
 const copied = [];
 for (const e of fs.readdirSync(STATE_DIR, { withFileTypes: true })) {
-  if (SKIP_TOP_LEVEL.has(e.name)) continue;
+  if (skippedRuntime(e.name)) continue;
   // Host-specific credential material lives under config/ instead.
   if (['openclaw.json', 'runtime-env.json', 'http-token', 'ws-token', 'config-journal-fingerprint.key'].includes(e.name)) continue;
   await new Promise(setImmediate);
@@ -199,10 +182,10 @@ for (const e of fs.readdirSync(STATE_DIR, { withFileTypes: true })) {
   const rel = e.name;
   const out = path.join(stateCopyRoot, rel) + (e.isDirectory() ? '/' : '');
   if (e.isDirectory()) {
-    const r = sh('rsync', ['-a', '--exclude=*.sqlite*', '--exclude=*.log', '--exclude=node_modules', `${src}/`, out]);
+    const r = sh('rsync', ['-a', '--exclude=*.sqlite*', '--exclude=*.db', '--exclude=*.db-wal', '--exclude=*.db-shm', '--exclude=*.log', '--exclude=node_modules', '--exclude=__pycache__', '--exclude=.cache', `${src}/`, out]);
     if (r.status !== 0) fail(`state copy ${rel}`, r.stderr?.trim() || `rsync exit ${r.status}`);
     else copied.push(rel);
-  } else if (e.name.endsWith('.sqlite')) {
+  } else if (/\.(sqlite|db)(?:-(?:wal|shm))?$/.test(e.name)) {
     continue; // already snapshotted
   } else {
     try {
@@ -217,10 +200,26 @@ for (const e of fs.readdirSync(STATE_DIR, { withFileTypes: true })) {
 log(`runtime state copied (fail-safe, everything except skips): ${copied.sort().join(' ')}`);
 for (const skipped of SKIP_TOP_LEVEL) if (fs.existsSync(path.join(STATE_DIR, skipped))) log(`  skipped by design: ${skipped}`);
 
+// The coding pilot is the sole approved external writable project. Preserve its own Git and
+// current control state, not generated DSH sessions. Its database was snapshotted above.
+const pilotOut=path.join(dest,'external/pilot');
+fs.mkdirSync(pilotOut,{recursive:true,mode:0o700});
+const pilotCopy=sh('rsync',['-a','--exclude=*.sqlite*','--exclude=*.db*','--exclude=node_modules','--exclude=__pycache__',PILOT_ROOT+'/',pilotOut+'/']);
+if(pilotCopy.status!==0)fail('coding pilot copy','rsync failed');
+const dshFiles=['.credentials.yaml','.anonymous-user-id','profiles/web/cordis.patch.yml','profiles/web/cordis.yml','profiles/web/package.json','profiles/web/pnpm-workspace.yaml','profiles/web/pnpm-lock.yaml'];
+for(const rel of dshFiles){
+ const src=path.join(DSH_HOME,rel);if(!fs.existsSync(src))continue;
+ const out=path.join(dest,'external/dsh-home',rel);fs.mkdirSync(path.dirname(out),{recursive:true,mode:0o700});fs.copyFileSync(src,out);fs.chmodSync(out,0o600);
+}
+
 // Material that must exist for a restore to be usable. Missing entries are hard failures.
 // Paths are relative to the backup root: database snapshots keep their absolute layout under
 // state/runtime/, while copied runtime directories sit directly under state/.
 const REQUIRED = [
+  ['state/整理记录.md','sole global execution handbook'],
+  ['external/pilot/source/.git/HEAD','coding pilot repository'],
+  ['state/runtime/'+PILOT_ROOT.replace(/^\//,'')+'/state/coding.sqlite','coding control database'],
+  ['external/dsh-home/.credentials.yaml','current DSH credential plane'],
   ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['personal-reminder-list']?.enabled
     ? [['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminder-list/list.sqlite', 'reminder-list database']] : []),
   ['state/runtime/home/afrangry/.openclaw-fusion/state/openclaw.sqlite', 'core state database'],
@@ -292,6 +291,10 @@ fs.writeFileSync(path.join(dest, 'MANIFEST.sha256'), lines.join('\n') + '\n', { 
 // was actually collected. The verifier compares against this instead of just hashing whatever
 // happens to be present, so a missing required item cannot pass as "all files verified".
 const expected = {
+  formatVersion:3,
+  approvedRelease:OPENCLAW_RELEASE,
+  artifacts,
+  externalRoots:{pilot:PILOT_ROOT,dshHome:DSH_HOME},
   label,
   stamp,
   createdAt: new Date().toISOString(),
@@ -335,7 +338,7 @@ if (failures.length) {
 console.log(
   `backup ok: every required item present (cross-database consistency: ${QUIESCE ? 'quiesced' : 'concurrent — snapshots are per-database consistent only'})`
 );
-if(externalBusiness)console.log('Fusion material only: KnowledgeMap MySQL is NOT in this backup; save it separately before business recovery.');
+if(externalBusiness)console.log('Fusion material only: KnowledgeMap is an independent external service and is not restored.');
 fs.unlinkSync(incomplete);
 } finally {
  lease.restore();

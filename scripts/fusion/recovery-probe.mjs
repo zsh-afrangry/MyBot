@@ -3,7 +3,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
+import {spawn,spawnSync} from 'node:child_process';
+import {DatabaseSync} from 'node:sqlite';
 import http from 'node:http';
 import {createRequire} from 'node:module';
 import {setTimeout as delay} from 'node:timers/promises';
@@ -73,7 +74,21 @@ try{
   assert.equal(result.code,0,'Restored project check failed: '+result.output.slice(-1500));projectChecks++;
  }
 
- fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,realDelivery:false,cronEnabled:false},null,2));
+ // Check the real restored execution fence and empty development task store without running DSH.
+ const {projectPolicy}=await import('file://'+repo+'/chatbot/plugins/kurumi-coding/workspaces.js');
+ const {probeWriteFence}=await import('file://'+repo+'/chatbot/packages/coding-runtime/write-fence.js');
+ const coding=cfg.plugins.entries['kurumi-coding'].config;
+ projectPolicy(coding);probeWriteFence(coding.writeBoundary);
+ const pilotDb=new DatabaseSync(coding.root+'/coding.sqlite',{readOnly:true});
+ const codingTasks=Number(pilotDb.prepare('SELECT count(*) n FROM coding_tasks').get().n);pilotDb.close();assert.equal(codingTasks,0);
+ const python=cfg.plugins.entries['kurumi-papers'].config.python;
+ assert(python.startsWith(runtime+'/venvs/'));
+ const py=spawnSync(python,['-B','-c','import sys, babeldoc, pdf2zh_next, pymupdf; print(sys.version.split()[0])'],{encoding:'utf8',timeout:30000});
+ assert.equal(py.status,0,'Restored paper interpreter/imports failed: '+py.stderr.slice(-800));
+ const cronDb=new DatabaseSync(runtime+'/state/openclaw.sqlite',{readOnly:true});
+ const enabledJobs=Number(cronDb.prepare('SELECT count(*) n FROM cron_jobs WHERE enabled=1').get().n);cronDb.close();assert.equal(enabledJobs,5);
+
+ fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));
  console.log('Isolated Gateway health and all plugin imports passed; production paths and network inaccessible');
 }finally{
  if(!exited)child.kill('SIGTERM');

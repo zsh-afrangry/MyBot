@@ -1,8 +1,11 @@
 // Recovery verification is not production deployment. Only an empty private /tmp directory is allowed.
 import fs from 'node:fs';
 import path from 'node:path';
+import {PILOT_ROOT,DSH_HOME} from './backup-layout.mjs';
 export const PRODUCTION_STATE='/home/afrangry/.openclaw-fusion';
 export const PRODUCTION_REPO='/home/afrangry/kurumi-fusion';
+const DSH_ROOT='/opt/deepseek-harness';
+const productionRoots=[PRODUCTION_STATE,PRODUCTION_REPO,PILOT_ROOT,DSH_HOME,DSH_ROOT];
 export function newRecoveryTarget(requested){
  if(!requested)return fs.mkdtempSync('/tmp/kurumi-restore-');
  const p=path.resolve(requested),parent=path.dirname(p);
@@ -12,11 +15,12 @@ export function newRecoveryTarget(requested){
 export function remap(value,runtime,repo){
  if(Array.isArray(value))return value.map(x=>remap(x,runtime,repo));
  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([k,v])=>[k,remap(v,runtime,repo)]));
- if(typeof value==='string')for(const [from,to] of [[PRODUCTION_STATE,runtime],[PRODUCTION_REPO,repo]])if(value===from||value.startsWith(from+'/'))return to+value.slice(from.length);
+ const target=path.dirname(runtime);
+ if(typeof value==='string')for(const [from,to] of [[PRODUCTION_STATE,runtime],[PRODUCTION_REPO,repo],[PILOT_ROOT,target+'/pilot'],[DSH_HOME,target+'/dsh-home'],[DSH_ROOT,target+'/dsh']])if(value===from||value.startsWith(from+'/'))return to+value.slice(from.length);
  return value;
 }
 export function assertNoProduction(value){
- if(typeof value==='string'&&(value.includes(PRODUCTION_STATE)||value.includes(PRODUCTION_REPO)))throw Error('Active recovery configuration still references production');
+ if(typeof value==='string'&&productionRoots.some(p=>value.includes(p)))throw Error('Active recovery configuration still references production');
  if(value&&typeof value==='object')for(const v of Object.values(value))assertNoProduction(v);
 }
 // A recovery copy never starts paid paper jobs, even outside its test sandbox.

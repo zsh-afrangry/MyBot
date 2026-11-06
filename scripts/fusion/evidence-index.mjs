@@ -40,6 +40,12 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'scripts/fusion/backup-retention.mjs': ['运维写状态', '登记成功隔离恢复回执；默认预览，仅--apply淘汰多余已验证v3点，历史项目不自动删除', {auth: 1, writesState: 1}, 'header'],
+  'scripts/fusion/lib/backup-retention.mjs': ['库', '只读计算已验证v3点保留清单，拒绝旧证明/未完成/失败点', {readonly: 1}, 'header'],
+  'scripts/fusion/test/backup-retention.test.mjs': ['离线', '临时恢复点验证R1保护、失败/中断/旧证明排除和最近两点保留', {testDir: 1}, 'header'],
+  'scripts/fusion/lib/backup-layout.mjs': ['运维库', '不可变依赖工件与全深度SQLite发现；写统一备份位置', {writesState: 1}, 'header'],
+  'scripts/fusion/lib/openclaw-release.mjs': ['库', '读取唯一批准内核版本与Node范围', {readonly: 1}, 'header'],
+  'scripts/fusion/test/backup-layout.test.mjs': ['离线', '深层数据库覆盖、依赖工件重用/变化/破损拒绝；仅临时目录', {testDir: 1}, 'header'],
   'chatbot/tests/host-exec/policy.test.mjs': ['离线', '主人原生exec的真实文件写入边界、可信身份/撤权/成员隔离、环境与参数绕过、临时目录符号链接及受管配置回归；仅临时目录', {testDir: 1}, 'header'],
   'chatbot/tests/host-exec/acceptance-host.mjs': ['验收', '真实独立Gateway/QQ插件/原生exec：本地确定性模型与合成OneBot，核对目录/主机查询、实际写入边界、超时、成员拒绝与审计；无真实模型/QQ/DSH或生产写入', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
   'chatbot/scripts/prepare-coding-pilot.mjs': ['维护', '新建无远端合成Git项目和配置审阅草案；不apply、不启停生产服务、不调用模型或QQ', {testDir: 1}, 'header'],
@@ -206,7 +212,7 @@ const TABLE = {
   'scripts/fusion/lib/recovery-isolation.mjs': ['库', '隔离恢复的路径、凭据与共享业务禁用改写，仅写恢复副本', {testDir: 1}, 'header'],
   'scripts/fusion/lib/working-tree-backup.mjs': ['库', '已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar', {writesState: 1}, 'code'],
   'scripts/fusion/lib/backup-service.mjs': ['库', '备份期间停写并恢复服务', {restart: 1}, 'header'],
-  'scripts/fusion/lib/legacy-source.mjs': ['库', '解析旧 OpenClaw 源树路径（仅迁移脚本用）', {readonly: 1}, 'header'],
+  'scripts/fusion/lib/runtime-paths.mjs': ['库', '唯一源码与私密运行根目录常量，无旧系统回退', {readonly: 1}, 'header'],
   'chatbot/tests/acceptance/call-analysis.mjs': ['库', '旧验收调用观察工具（只观察，不证明写入）', {readonly: 1}, 'header'],
   'chatbot/tests/acceptance/domain-fixture.mjs': ['库', '旧验收领域夹具与工具定义', {readonly: 1}, 'code'],
   'chatbot/tests/acceptance/host-driver.mjs': ['库', '旧 harness Host 驱动，只开测试状态目录', {readonly: 1, testDir: 1}, 'code'],
@@ -216,7 +222,6 @@ const TABLE = {
   // ---- 写运行状态的运维工具：需操作者明确执行 ----
   'scripts/fusion/backup-state.mjs': ['运维写状态', '制作备份；--quiesce 会短暂停写并恢复服务', {auth: 1, writesState: 1, restart: 1}, 'header'],
   'scripts/fusion/restore-verify.mjs': ['运维写状态', '隔离恢复演练（只写新建 /tmp 目标）', {auth: 1, testDir: 1}, 'header'],
-  'scripts/fusion/restore-legacy.sh': ['运维写状态', '按 A/B 方案把旧系统复制回原路径（不自动启动）', {auth: 1, restart: 1}, 'header'],
   'scripts/fusion/recovery-probe.mjs': ['运维写状态', '仅供 restore-verify 在沙箱内启动 Gateway', {auth: 1, testDir: 1}, 'header'],
   'scripts/fusion/install-service.mjs': ['运维写状态', '首次切换 systemd 单元到融合服务', {auth: 1, restart: 1}, 'header'],
   'scripts/fusion/install-plugins.mjs': ['运维写状态', '按锁文件安装受控第三方插件', {auth: 1, writesState: 1}, 'header'],

@@ -199,7 +199,7 @@ node chatbot/scripts/import-paper-credentials.mjs --provider deepseek --source /
 
 默认导入只取中转-GPT 段的三个指定变量；`--provider deepseek` 只取显式 JSON 来源中的 `DEEPSEEK_API_KEY`，不复制邮件等其它变量。已有目标默认拒绝覆盖；显式 `--replace` 原子合并所选厂商并保留另一厂商，拒绝符号链接、非 0600 目标及未知旧字段，失败不改旧字节。不得把真实值放进文档、测试输出或提交。配置先改 `config/runtime.config.json` 再 sync-config，人格规则改模板再 sync-persona，不能手改运行副本。完整契约见 config/README。
 
-备份包含受管文档、任务及凭据；Python 环境虽可能被全运行目录备份采集，恢复后仍应按锁文件重建并验证路径。恢复演练副本会关闭 liveTranslationEnabled 并清空其活动论文凭据；不在本轮冒称已做新增功能的全量灾难恢复演练。
+备份包含当前受管文档、任务及凭据；Python 环境由统一内容寻址工件保存，恢复须在隔离目录验证解释器与关键包导入，不能只检查路径。锁文件中的packaging使用已安装26.3版本号，移除原Conda构建机的本地file URI；锁文件仍须另行重建验证，不能以工件解压等同于pip重建。恢复演练副本会关闭 liveTranslationEnabled 并清空其活动论文凭据；不在本轮冒称已做新增功能的全量灾难恢复演练。
 
 ## 测试命令与当前结果
 

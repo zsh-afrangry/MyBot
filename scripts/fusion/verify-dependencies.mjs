@@ -12,12 +12,13 @@
 //   4. the controlled third-party plugin prefix is installed at the expected versions.
 import fs from 'node:fs';
 import path from 'node:path';
-import { STATE_DIR, REPO_ROOT } from './lib/legacy-source.mjs';
+import { STATE_DIR, REPO_ROOT } from './lib/runtime-paths.mjs';
 import { PLUGINS } from './lib/plugins.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
+import {OPENCLAW_RELEASE} from './lib/openclaw-release.mjs';
 
 const SDK = '/home/afrangry/.npm-global/lib/node_modules/openclaw';
-const EXPECTED_SDK = '2026.9.7';
+const EXPECTED_SDK = OPENCLAW_RELEASE.version;
 const PACKAGES = lockedPackages(REPO_ROOT).map(p => p.relative);
 // Anything under these roots is archived/foreign and must never satisfy a runtime import.
 // kurumi-archive is where the legacy trees now live after step 7, so it MUST be listed here —

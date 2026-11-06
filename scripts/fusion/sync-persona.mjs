@@ -2,7 +2,7 @@
 // Never copies memory, personal facts, histories or credentials; no runtime/model configuration writes.
 import fs from 'node:fs';
 import path from 'node:path';
-import {STATE_DIR,REPO_ROOT} from './lib/legacy-source.mjs';
+import {STATE_DIR,REPO_ROOT} from './lib/runtime-paths.mjs';
 import {personaFiles,applyPersonaFile} from '../../chatbot/packages/access-control/workspaces.js';
 const argv=new Set(process.argv.slice(2)),apply=argv.has('--apply'),diff=apply||argv.has('--diff');
 const {files,roleFile}=personaFiles(REPO_ROOT,STATE_DIR),changes=[];

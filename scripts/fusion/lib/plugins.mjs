@@ -1,7 +1,7 @@
 // Declared third-party plugin set for the fusion runtime. Pure data: importing this module
 // performs no I/O, so both the installer and the verifier can share one source of truth.
 import path from 'node:path';
-import { STATE_DIR } from './legacy-source.mjs';
+import { STATE_DIR } from './runtime-paths.mjs';
 
 /** Controlled install prefix (its own package.json + package-lock.json live here). */
 export const PLUGIN_PREFIX = path.join(STATE_DIR, 'plugins');

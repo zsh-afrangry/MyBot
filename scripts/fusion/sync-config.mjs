@@ -22,7 +22,7 @@
 //   node scripts/fusion/sync-config.mjs --apply    # write the repo intent into the runtime
 import fs from 'node:fs';
 import path from 'node:path';
-import { STATE_DIR, REPO_ROOT } from './lib/legacy-source.mjs';
+import { STATE_DIR, REPO_ROOT } from './lib/runtime-paths.mjs';
 import {compileAccessConfig} from '../../chatbot/packages/access-control/config.js';
 
 const CANONICAL = path.join(REPO_ROOT, 'config/runtime.config.json');
