@@ -54,3 +54,5 @@ R1是整理后的升级前停写点，R2是新版验证点；R1在R2完整通过
 内核批准版本与Node范围统一在 `config/openclaw-release.json`，启动、依赖链接、依赖校验和备份共同读取；npm依赖声明仍按锁文件记录兼容约束。旧A/B恢复脚本及旧迁移源路径模块已经退役，历史可从Git追溯。
 
 实际隔离恢复成功后执行 `node scripts/fusion/backup-retention.mjs --record /tmp/<恢复目标>/verification.json`，生成与EXPECTED/MANIFEST哈希绑定的VERIFIED回执。默认只预览最近两个已验证v3点；`--apply`只淘汰该集合中的多余点，失败/中断点不冒充恢复点，旧项目材料不按此命令批量删除。整个统一根连同artifacts一起搬移才具备完整恢复输入，单独复制一个点不够。
+
+QQ插件将宿主OpenClaw声明为可选peer：实际宿主版本由统一版本源/依赖校验强制，插件自身npm ci只重建锁定的业务依赖，避免另装一份OpenClaw。首轮R1演练实际发现并修复此锁文件重建缺口，失败候选不登记为有效点。

@@ -23,5 +23,10 @@
       "label": "Kurumi QQ",
       "blurb": "Owner-only OneBot channel"
     }
+  },
+  "peerDependenciesMeta": {
+    "openclaw": {
+      "optional": true
+    }
   }
 }
