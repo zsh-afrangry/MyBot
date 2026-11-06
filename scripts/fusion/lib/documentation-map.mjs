@@ -61,7 +61,9 @@ export function walkFiles(root, base = '', {omit = OMIT} = {}) {
   for (const entry of fs.readdirSync(path.join(root, base), {withFileTypes: true})) {
     const rel = base ? `${base}/${entry.name}` : entry.name;
     if (entry.isDirectory()) {
-      if (!omit.has(entry.name)) out.push(...walkFiles(root, rel, {omit}));
+      if (!omit.has(entry.name) && !fs.existsSync(path.join(root, rel, '.git'))) {
+        out.push(...walkFiles(root, rel, {omit}));
+      }
     } else if (entry.isFile()) out.push(rel);
   }
   return out.sort();

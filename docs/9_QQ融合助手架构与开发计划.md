@@ -146,6 +146,8 @@ systemctl --user start kurumi-fusion.service
 
 ## 开发与验证
 
+文档与脚本归属检查只扫描本仓库；目录内含 `.git` 目录或工作树指针文件时视为另一个仓库边界，不递归扫描。普通嵌套目录仍纳入检查，避免用目录名排除掩盖游离脚本。
+
 开发目录与私有运行状态按[目录与资产](#当前资产)和[维护边界](#维护边界)区分。人格行为模板在`scripts/fusion/templates/AGENTS.md`，修改后按[配置同步](#配置同步)投影到私有workspace；人格来源仍由roles/config管理。
 
 先用`node scripts/fusion/link-dependencies.mjs`准备开发依赖。下表是按领域选择的离线构建/验证入口，不是一次全项目验收；确认消费方测试前先依次构建确认核心、确认入口和共享领域库。

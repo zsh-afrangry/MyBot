@@ -31,6 +31,19 @@ test('discovery includes nested helpers and misplaced scripts, excludes dependen
   assert.deepEqual(discoverMaintenanceSources(root), files.slice(0, 5).sort());
 });
 
+test('discovery respects nested repository and linked-worktree boundaries without hiding ordinary folders', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'fusion-doc-git-boundary-'));
+  t.after(() => fs.rmSync(root, {recursive: true, force: true}));
+  for (const rel of ['nested/repository', '.claude/worktrees/design', 'worktrees/ordinary']) {
+    fs.mkdirSync(path.join(root, rel), {recursive: true});
+    fs.writeFileSync(path.join(root, rel, 'check.mjs'), '// fixture\n');
+  }
+  fs.mkdirSync(path.join(root, 'nested/repository/.git'));
+  fs.writeFileSync(path.join(root, '.claude/worktrees/design/.git'), 'gitdir: /unused/fixture\n');
+  assert.deepEqual(walkFiles(root), ['worktrees/ordinary/check.mjs']);
+  assert.deepEqual(discoverMaintenanceSources(root), ['worktrees/ordinary/check.mjs']);
+});
+
 test('CLI verifies ownership and saved Markdown without touching the real repository', async (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'fusion-doc-index-'));
   t.after(() => fs.rmSync(root, {recursive: true, force: true}));
