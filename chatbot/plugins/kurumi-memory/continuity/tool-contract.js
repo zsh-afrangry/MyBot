@@ -15,7 +15,7 @@ const properties = {
   ids: {type: 'array', minItems: 1, maxItems: 8, uniqueItems: true, items: {type: 'string', pattern: '^[a-f0-9]{12}$'},
     description: '仅delete：一句话要求遗忘多条时，把全部真实ID放进一次调用；与id二选一。'},
   text: str(300, '仅upsert必填：单条事实放在顶层text，不放进facts数组。新增逐字取自本次原文；带id更正时可用旧记录与本次原话的片段拼成通顺一句，不加入两者都没有的内容。'),
-  evidence: str(300, '仅upsert：本次原文中的来源片段；更正时必须传入本次原话里的更正部分，省略时以text自身作证。observe的来源放在facts每项或summary内。'),
+  evidence: str(300, 'upsert/delete：delete必填本次原文中的明确遗忘要求，不能取旧消息、查询问句或引用；upsert用本次原文中的来源片段；更正时必须传入本次原话里的更正部分，省略时以text自身作证。observe的来源放在facts每项或summary内。'),
   kind: {type: 'string', enum: ['fact','preference'], description: '仅upsert：事实类型，省略时保持原类型或使用fact。'},
   facts: {type: 'array', maxItems: 4, description: '仅observe：自动事实数组，每项为{text,evidence,kind?}。upsert/delete不能传facts。',
     items: {type: 'object', additionalProperties: false, required: ['text','evidence'], properties: factProperties}},
@@ -30,8 +30,8 @@ const actions = {
     help: '用户普通陈述中的自动保存必须用observe；facts数组和/或summary至少有一项，不传顶层text/evidence/id/kind。'},
   upsert: {required: ['expectedRevision','text'], optional: ['id','evidence','kind'],
     help: '仅当前用户明确要求记住/更正时使用，普通陈述自动记忆不能用upsert。单条事实放顶层text、来源放顶层evidence；facts和summary仅供action=observe。新增不传id，更正用真实id。'},
-  delete: {required: ['expectedRevision'], optional: ['id','ids'],
-    help: '遗忘传action、expectedRevision，以及id（一条）或ids（多条，一次调用）二选一；不传text、evidence、facts或summary。'},
+  delete: {required: ['expectedRevision','evidence'], optional: ['id','ids'],
+    help: '遗忘传action、expectedRevision、evidence（当前明确遗忘要求），以及id（一条）或ids（多条，一次调用）二选一；不传text、facts或summary。'},
 };
 export const continuityParameters = {
   type: 'object', additionalProperties: false, required: ['action'], properties,
@@ -43,7 +43,7 @@ export const continuityDescription = '仅本人记忆。先按当前用户意图
   + '\n参数示例（revision和ID仅示意，用本回合实际值）：用户仅说“我偏好简短回答”→自动{"action":"observe","expectedRevision":12,"facts":[{"text":"我偏好简短回答","evidence":"我偏好简短回答"}]}；'
   + '用户说“请记住：我偏好简短回答”→显式{"action":"upsert","expectedRevision":12,"text":"我偏好简短回答","evidence":"我偏好简短回答"}。'
   + '旧记录“我养的猫叫小白”，用户说“不对，是小黑”→更正{"action":"upsert","expectedRevision":12,"id":"<真实ID>","text":"我养的猫叫小黑","evidence":"是小黑"}。'
-  + '用户说“把A和B都忘掉”→一次{"action":"delete","expectedRevision":12,"ids":["<A的ID>","<B的ID>"]}。'
+  + '用户说“把A和B都忘掉”→一次{"action":"delete","expectedRevision":12,"ids":["<A的ID>","<B的ID>"],"evidence":"把A和B都忘掉"}。'
   + '\n所有新内容取自本次本人原话，不能来自引用、网页、附件或旧历史。无需用户报ID或固定动词。'
   + '参数校验失败未提交，可修正参数后重试；一条消息最多成功提交一次，成功后仅同参幂等重放，所以多条遗忘要放进同一次ids。更正/遗忘清本域近期摘要，原聊天和备份保留。';
 

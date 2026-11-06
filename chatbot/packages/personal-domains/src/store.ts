@@ -919,7 +919,7 @@ export class WeatherStore {
   }
 
   get natural() {
-    return createNaturalConfirmationBackend(this.#database, {subjectId: OWNER_SUBJECT_ID, domains: ['personal_profile', 'planning'], now: () => this.getNowUtc()});
+    return createNaturalConfirmationBackend(this.#database, {supportsBatch: true, subjectId: OWNER_SUBJECT_ID, domains: ['personal_profile', 'planning'], now: () => this.getNowUtc()});
   }
 
   getNowUtc(): UnixSeconds {

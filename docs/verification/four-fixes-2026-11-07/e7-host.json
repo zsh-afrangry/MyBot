@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-06T22:21:41.298Z",
+  "boundary": "Real isolated Gateway/plugin loading, RPC catalog and graceful process stop. No model provider, external API, QQ network or production write. Tool handler/permission and timer behavior covered separately by offline tests.",
+  "stages": [
+    {
+      "enabled": true,
+      "state": "active",
+      "tools": [
+        "e7_data"
+      ],
+      "noInitialFetch": true,
+      "passed": true,
+      "gracefulStop": true
+    },
+    {
+      "enabled": false,
+      "state": "unloaded",
+      "tools": [],
+      "noInitialFetch": true,
+      "passed": true,
+      "gracefulStop": true
+    }
+  ],
+  "passed": true,
+  "finishedAt": "2026-11-06T22:22:01.078Z"
+}

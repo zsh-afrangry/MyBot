@@ -1,0 +1,78 @@
+{
+  "at": "2026-11-06T22:23:57.333Z",
+  "boundary": "Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model by default, optional official DeepSeek with --live, simulated OneBot. Synthetic conversations and temporary state only; no real QQ, mail, production write or production service restart.",
+  "passed": true,
+  "cases": [
+    {
+      "label": "owner-automatic-save",
+      "passed": true,
+      "captured": 1
+    },
+    {
+      "label": "owner-memory-injection",
+      "passed": true,
+      "context": {
+        "personal": true,
+        "fact": true
+      }
+    },
+    {
+      "label": "owner-after-new",
+      "passed": true
+    },
+    {
+      "label": "member-isolation",
+      "passed": true
+    },
+    {
+      "label": "owner-explicit-save",
+      "passed": true,
+      "revision": 2,
+      "contractVisible": true,
+      "malformedAttemptDidNotCommit": true
+    },
+    {
+      "label": "owner-blue-after-new",
+      "passed": true
+    },
+    {
+      "label": "owner-correction",
+      "passed": true,
+      "sameId": true,
+      "revision": 3
+    },
+    {
+      "label": "owner-green-after-new",
+      "passed": true
+    },
+    {
+      "label": "question-delete-rejected",
+      "passed": true,
+      "unchanged": true
+    },
+    {
+      "label": "owner-forget",
+      "passed": true,
+      "revision": 4
+    },
+    {
+      "label": "owner-forgotten-after-new",
+      "passed": true
+    },
+    {
+      "label": "batch-forget-single-commit",
+      "passed": true,
+      "deleted": 2
+    }
+  ],
+  "requests": 30,
+  "maxRequests": 40,
+  "mockSends": 0,
+  "childStopped": true,
+  "contractVisible": true,
+  "malformedAttemptDidNotCommit": true,
+  "limitations": {
+    "forgottenTextStillInOldContext": true,
+    "historyMaskImplemented": false
+  }
+}

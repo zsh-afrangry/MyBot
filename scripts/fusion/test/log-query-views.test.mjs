@@ -127,8 +127,8 @@ test('call pairing merges wrapper, real tool, access and result into one row', (
   assert.deepEqual(calls[0].nestedToolCallIds, ['tool_call_n1']);
   const lines = renderQuery(events, range).lines;
   assert.equal(lines.filter((line) => line.includes('[tool.call]')).length, 3);
-  assert.ok(lines.some((line) => line.includes('[tool.call] reminder_create（经 tool_call） 失败 CONFIG_INVALID 100ms 访问=tool_call:allow,reminder_create:allow')));
-  assert.ok(lines.some((line) => line.includes('email_send 拒绝 untrusted_identity_context')));
+  assert.ok(lines.some((line) => line.includes('[tool.call] reminder_create（经 tool_call） 失败 执行=error 业务=error CONFIG_INVALID 100ms 访问=tool_call:allow,reminder_create:allow')));
+  assert.ok(lines.some((line) => line.includes('email_send 拒绝 执行=deny 业务=error untrusted_identity_context')));
   assert.ok(!lines.some((line) => /\[(agent\.tool_|access\.tool)/u.test(line)), 'member rows are folded into [tool.call]');
   assert.equal(renderQuery(events, range).json.calls.length, 3);
 }));
@@ -143,7 +143,7 @@ test('turn view groups by run and shows /new as a segment marker', () => withRoo
   assert.equal(rendered.json.view, 'turns');
   const text = rendered.lines.join('\n');
   assert.match(text, /\/new 新会话（new）/u);
-  assert.match(text, /用户：提醒我明天开会\n {2}工具：reminder_create（经 tool_call） 失败 CONFIG_INVALID 100ms\n {2}工具：reminder_create（经 tool_call） 成功 60ms\n {2}回复：好的，已经记下了/u);
+  assert.match(text, /用户：提醒我明天开会\n {2}工具：reminder_create（经 tool_call） 失败 执行=error 业务=error CONFIG_INVALID 100ms\n {2}工具：reminder_create（经 tool_call） 成功 执行=ok 业务=ok 60ms\n {2}回复：好的，已经记下了/u);
 }));
 
 test('error view counts by code and keeps native WARN lines', () => withRoot((root) => {

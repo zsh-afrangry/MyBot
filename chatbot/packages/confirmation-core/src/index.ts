@@ -8,6 +8,6 @@ export { registerConfirmationBackend, confirmationBackendIds, recordRegisteredCo
 export type { ConfirmationBackend, ConfirmationBackendProvider, ConfirmationOutcome, ConfirmationDiagnostic } from './registry.js';
 export * from "./public-id.js";
 export { createNaturalConfirmationBackend, narrowNaturalConfirmationBackend } from './natural-store.js';
-export { listNaturalConfirmations, confirmNaturalProposal, naturalConfirmationTextAllowed } from './natural-service.js';
+export { listNaturalConfirmations, confirmNaturalProposal, confirmNaturalProposals, MAX_CONFIRMATION_TARGETS, naturalConfirmationTextAllowed } from './natural-service.js';
 export { prepareConfirmationPreview, recordConfirmationDelivery } from './presentation.js';
 export { captureNaturalConfirmationRequest, clearNaturalConfirmationRequest } from './current-request.js';

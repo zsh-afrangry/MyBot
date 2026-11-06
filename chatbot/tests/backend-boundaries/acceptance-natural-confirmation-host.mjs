@@ -31,7 +31,7 @@ const commit=(i=-1)=>{const r=select(i);return{proposal_id:r.proposalId,payload_
 function decode(value){for(let i=0;i<7;i++){if(typeof value==='string'){try{value=JSON.parse(value);continue;}catch{break;}}if(Array.isArray(value)&&value.length===1){value=value[0].text;continue;}if(value?.result){value=value.result;continue;}if(value?.content?.length===1){value=value.content[0].text;continue;}break;}return value;}
 const model=http.createServer(async(req,res)=>{
  try{
-  assert(active);assert(++report.requests<=70,'request budget');
+  assert(active);assert(++report.requests<=150,'request budget');
   let raw='';for await(const c of req)raw+=c;const body=JSON.parse(raw);
   // Model fixture transcripts are synthetic, retained only on a failed local fixture.
   fs.appendFileSync(path.join(root,'model-fixture.jsonl'),JSON.stringify(body)+'\n',{mode:0o600});
@@ -91,10 +91,29 @@ try{
  ],()=>{assert.equal(query("SELECT * FROM confirmation_proposals WHERE status='committed'").length,1);assert.equal(query('SELECT * FROM approval_grants WHERE consumed_at_utc IS NOT NULL').length,1);});
  await turn('two-previews-in-one-batch','再生成两个测试提醒',[propose('宿主测试乙'),propose('宿主测试丙')],sent=>{assert(JSON.stringify(sent).includes('宿主测试乙'));assert(JSON.stringify(sent).includes('宿主测试丙'));});
  await turn('ambiguous-bare-confirm-rejected','确认',[confirmation({ok:false,code:'confirmation_target_ambiguous'})]);
- await turn('explicit-reference-confirms-one','确认宿主测试丙那条',[confirmation(),['personal_reminder_commit',()=>commit(),{ok:true}]],()=>{assert.equal(query("SELECT * FROM confirmation_proposals WHERE status='committed'").length,2);});
+ await turn('Q09-original-reference-confirms-only-second','只确认刚才两项中的第二项，第一项先不要动。',[confirmation(),['personal_reminder_commit',()=>commit(),{ok:true}]],()=>{assert.equal(query("SELECT * FROM confirmation_proposals WHERE status='committed'").length,2);});
  await turn('negative-does-not-authorize','先别执行，我不确认',[confirmation({ok:false,code:'confirmation_not_explicit'},1)]);
  await turn('change-needs-new-preview','确认，不过改成九点',[confirmation({ok:false,code:'confirmation_not_explicit'},1)]);
- assert.equal(query('SELECT * FROM approval_grants').length,2);report.passed=true;
+ await turn('Q10-two-more-previews','再生成两个测试提醒',[propose('宿主Q10甲'),propose('宿主Q10乙')]);
+ const batchTargets=[select(-2),select(-1)];
+ await turn('Q10-one-message-two-commits','这两个都确认。',[
+  ['personal_confirmation',()=>({action:'confirm',domain:'personal_reminder',targets:batchTargets}),{ok:true}],
+  ['personal_reminder_commit',()=>commit(-2),{ok:true}],['personal_reminder_commit',()=>commit(-1),{ok:true}],
+ ],()=>{
+  const grants=query('SELECT confirmation_message_id FROM approval_grants WHERE proposal_id IN (?,?)',...batchTargets.map(p=>p.proposalId));
+  assert.equal(grants.length,2);assert.equal(new Set(grants.map(g=>g.confirmation_message_id)).size,1);
+  assert.equal(query("SELECT * FROM confirmation_proposals WHERE status='committed'").length,4);
+ });
+ await turn('Q13-newer-preview','生成一个比宿主测试乙更新的提醒',[propose('宿主Q13新项')]);
+ await turn('Q13-list-and-repreview-older','重新展示宿主测试乙的预览',[
+  ['personal_confirmation',{action:'list',domain:'personal_reminder'},{ok:true}],
+  ['personal_confirmation',()=>({action:'preview',...select(1)}),{ok:true}],
+ ],sent=>{assert(JSON.stringify(sent).includes('宿主测试乙'));assert(!JSON.stringify(sent).includes('MODEL_PARAPHRASE'));});
+ await turn('Q13-bare-assent-selects-represented-older','确认',[
+  confirmation({ok:true},1),['personal_reminder_commit',()=>commit(1),{ok:true}],
+ ],()=>{assert.equal(query('SELECT status FROM confirmation_proposals WHERE proposal_id=?',select(1).proposalId)[0].status,'committed');
+  assert.equal(query('SELECT status FROM confirmation_proposals WHERE proposal_id=?',select(-1).proposalId)[0].status,'pending');});
+ assert.equal(query('SELECT * FROM approval_grants').length,5);report.passed=true;
 }catch(error){report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;}
 finally{
  if(child.exitCode===null){child.kill('SIGTERM');let timer;await Promise.race([once(child,'exit'),new Promise(r=>{timer=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch{}r();},10000);})]);clearTimeout(timer);}

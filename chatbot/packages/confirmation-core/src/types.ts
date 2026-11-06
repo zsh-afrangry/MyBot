@@ -58,15 +58,25 @@ export interface ConfirmationPreview extends ConfirmationProposalRow {
   sourceMessageId: string | null;
   presentedAtUtc: number | null;
   presentationMessageId: string | null;
+  /** Durable presentation batch order; older/custom backends may omit it. */
+  presentationOrder?: number | null;
 }
 
 /** Domain-owned persistence; transport hooks can save previews, never approvals. */
 export interface NaturalConfirmationBackend {
+  /** Explicit opt-in; independent domain transactions, never a cross-store transaction. */
+  supportsBatch?: boolean;
   list(event: ConfirmationInboundEvent): ConfirmationPreview[];
   used(event: ConfirmationInboundEvent): NaturalConfirmationSelection[];
   savePreview(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, text: string): boolean;
-  presented(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, messageId: string): boolean;
+  presented(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, messageId: string, order?: number): boolean;
   confirm(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection): boolean;
+}
+
+export interface NaturalConfirmationResult {
+  ok: boolean;
+  code?: string;
+  idempotent?: boolean;
 }
 
 export type ConfirmationGrantCheck =

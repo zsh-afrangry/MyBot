@@ -24,7 +24,7 @@ export function validateQuery(raw) {
   keys(a, ['action', ...fields[a.action]]);
   if ('query' in a && (!string(a.query) || !normalize(a.query))) fail('invalid_query');
   if ('limit' in a && (!Number.isInteger(a.limit) || a.limit < 1 || a.limit > 10)) fail('invalid_query');
-  if ('cursor' in a && (!string(a.cursor, 256) || !/^[a-zA-Z0-9_-]+$/.test(a.cursor))) fail('invalid_cursor');
+  if ('cursor' in a && (!string(a.cursor, 512) || !/^[a-zA-Z0-9_-]+$/.test(a.cursor))) fail('invalid_cursor');
   if ('server' in a && !['国服', '国际服'].includes(a.server)) fail('invalid_query');
   if (['rankings', 'content'].includes(a.action)) validateReferenceQuery(a);
   if (['builds', 'reviews'].includes(a.action)) {

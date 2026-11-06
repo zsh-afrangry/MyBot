@@ -132,7 +132,7 @@ const model = http.createServer(async (req, res) => {
     } : null;
     const makeCall = (name, args) => ({id: 'contract-' + report.requests, type: 'function', function: {name, arguments: JSON.stringify(args)}});
     const memoryCall = args => available.includes('kurumi_memory') ? makeCall('kurumi_memory', args) : makeCall('dispatch_action', {id: 'kurumi_memory', args});
-    if (!live && ['owner-explicit-save','owner-correction','owner-forget'].includes(activeTurn.label)) {
+    if (!live && ['owner-explicit-save','owner-correction','owner-forget','owner-question-delete'].includes(activeTurn.label)) {
       const writes = memoryCalls.filter(args => ['upsert','delete'].includes(args.action));
       tool = null;
       if (!listed) tool = memoryCall({action: 'list'});
@@ -151,7 +151,16 @@ const model = http.createServer(async (req, res) => {
         assert(entry, 'actual target not returned by list');
         tool = memoryCall(activeTurn.label === 'owner-correction'
           ? {action: 'upsert', expectedRevision: listed.revision, id: entry.id, text: green, evidence: green}
-          : {action: 'delete', expectedRevision: listed.revision, id: entry.id});
+          : {action: 'delete', expectedRevision: listed.revision, id: entry.id, evidence: activeTurn.text});
+      }
+    }
+    if (!live && ['owner-batch-seed','owner-batch-forget'].includes(activeTurn.label)) {
+      tool = null;
+      if (!listed) tool = memoryCall({action:'list'});
+      else if (!memoryCalls.some(args => ['observe','delete'].includes(args.action))) {
+        tool = memoryCall(activeTurn.label === 'owner-batch-seed'
+          ? {action:'observe',expectedRevision:listed.revision,facts:['我喜欢合成红茶','我喜欢合成白茶'].map(text=>({text,evidence:text}))}
+          : {action:'delete',expectedRevision:listed.revision,ids:listed.entries.filter(e=>/合成[红白]茶/u.test(e.text)).map(e=>e.id),evidence:activeTurn.text});
       }
     }
     let message = tool ? {role: 'assistant', content: null, tool_calls: [tool]} : {role: 'assistant', content: 'MEMORY_HOST_FIXTURE_OK'};
@@ -288,9 +297,21 @@ try {
   if (live) assert.match(report.replies.at(-1).text, /绿/u);
   report.cases.push({label: 'owner-green-after-new', passed: true});
 
+  if (!live) {
+    const before = state();
+    await turn('owner-question-delete', OWNER, 'MEMORY_HOST_QUESTION 你忘掉我的合成书签颜色了吗？');
+    assert.deepEqual(state(), before, 'new question must not finish old deletion');
+    report.cases.push({label:'question-delete-rejected',passed:true,unchanged:true});
+  }
   await turn('owner-forget', OWNER, 'MEMORY_HOST_FORGET 请忘掉我的合成书签颜色这条长期记忆。');
   const forgotten = state(); assert.equal(forgotten.revision, 4); assert.deepEqual(forgotten.facts, initial.facts);
   report.cases.push({label: 'owner-forget', passed: true, revision: forgotten.revision});
+  if (!live) {
+    await turn('owner-history-gap', OWNER, 'MEMORY_HOST_HISTORY 你记得刚刚忘掉的内容吗？');
+    // Known limitation: source transcript is still visible until /new; do not mark masking as implemented.
+    assert(report.modelChecks.at(-1).greenInContext);
+    report.limitations={forgottenTextStillInOldContext:true,historyMaskImplemented:false};
+  }
   await resetOwner(); await turn('owner-forgotten-after-new', OWNER, 'MEMORY_HOST_READ_FORGOTTEN 你记得我的合成书签是什么颜色吗？');
   assert(!report.modelChecks.at(-1).blueInContext); assert(!report.modelChecks.at(-1).greenInContext);
   assert.deepEqual(state().facts, initial.facts); assert.equal(state().revision, 4);
@@ -301,6 +322,13 @@ try {
     assert.equal(report.toolErrors.length, 0, 'live model mixed action parameters');
   }
   report.cases.push({label: 'owner-forgotten-after-new', passed: true});
+  if (!live) {
+    await turn('owner-batch-seed', OWNER, 'MEMORY_HOST_BATCH_SAVE 我喜欢合成红茶，也喜欢合成白茶。我喜欢合成白茶。');
+    const before = state(); assert.equal(before.facts.length,3);
+    await turn('owner-batch-forget', OWNER, 'MEMORY_HOST_BATCH_FORGET 把红茶和白茶两条都忘掉');
+    assert.equal(state().revision,before.revision+1);assert.equal(state().facts.length,1);
+    report.cases.push({label:'batch-forget-single-commit',passed:true,deleted:2});
+  }
   report.passed = true;
 } catch (error) {report.passed = false; report.error = error.message; report.diagnosticsRoot = root; process.exitCode = 1;}
 finally {

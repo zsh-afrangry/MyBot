@@ -90,14 +90,32 @@ export function queryFingerprint(args) {
   const {cursor, limit, ...query} = args;
   return digest(canonical(query));
 }
+const faqSegmenter = new Intl.Segmenter('zh-CN', {granularity: 'word'});
+const queryStopWords = new Set(['为什么','怎么','如何','什么','是否','有关','相关','攻略','问题','请问','介绍','查询','关于','以及','哪个','哪些']);
+/** Bounded same-source recall candidates, never synonyms, guessed IDs or an empty whole-site query. */
+export function faqFallbackQueries(query) {
+  if (typeof query !== 'string') return [];
+  const segments = [...faqSegmenter.segment(query.normalize('NFKC'))], terms = [];
+  for (let i = 0; i < segments.length; i++) {
+    const part = segments[i]; if (!part.isWordLike) continue;
+    let term = part.segment;
+    // ICU can split a domain word such as 团战 into two single Han characters.
+    const next = segments[i + 1];
+    if (/^\p{Script=Han}$/u.test(term) && next && /^\p{Script=Han}$/u.test(next.segment)
+      && next.index === part.index + term.length) {term += next.segment; i++;}
+    if ([...term].length >= 2 && [...term].length <= 16 && term !== query && !queryStopWords.has(term)) terms.push(term);
+  }
+  return [...new Set(terms)].slice(0, 3);
+}
 export function contentCursor(args) {
   const f = queryFingerprint(args);
   if (!args.cursor) return {f, p: 1, o: 0, h: null};
   let c; try {c = JSON.parse(Buffer.from(args.cursor, 'base64url').toString('utf8'));} catch {fail('invalid_cursor');}
-  if (!object(c) || Object.keys(c).sort().join(',') !== 'f,h,o,p' || !Number.isInteger(c.p) || c.p < 1 || c.p > 1000
+  if (!object(c) || !['f,h,o,p','f,h,o,p,q'].includes(Object.keys(c).sort().join(',')) || !Number.isInteger(c.p) || c.p < 1 || c.p > 1000
     || !Number.isInteger(c.o) || c.o < 0 || c.o >= 10 || (c.h !== null && (typeof c.h !== 'string' || !/^[a-f0-9]{64}$/.test(c.h)))
     || (c.h === null && c.o !== 0)) fail('invalid_cursor');
   if (c.f !== f) fail('cursor_expired');
+  if ('q' in c && (args.kind !== 'faq' || !faqFallbackQueries(args.query).includes(c.q))) fail('invalid_cursor');
   return c;
 }
 export function contentPage(record, args, cursor) {

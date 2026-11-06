@@ -2,20 +2,20 @@ import {randomUUID} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {describe, expect, it} from 'vitest';
 import {
-  captureNaturalConfirmationRequest, clearNaturalConfirmationRequest, checkApprovalGrant, confirmNaturalProposal, createNaturalConfirmationBackend, listNaturalConfirmations,
+  captureNaturalConfirmationRequest, clearNaturalConfirmationRequest, checkApprovalGrant, confirmNaturalProposal, confirmNaturalProposals, MAX_CONFIRMATION_TARGETS, createNaturalConfirmationBackend, listNaturalConfirmations,
   naturalConfirmationTextAllowed, prepareConfirmationPreview, recordConfirmationDelivery,
   registerConfirmationBackend, registerConfirmationProposal, scopeFromInboundEvent,
   type ConfirmationInboundEvent, type NaturalConfirmationSelection,
 } from './index.js';
 
-function fixture() {
+function fixture(supportsBatch = true) {
   let time = Math.floor(Date.now() / 1000) * 1000;
   const db = new DatabaseSync(':memory:'), owner = '123456789';
   const event = (content = '确认', messageId: string = randomUUID()): ConfirmationInboundEvent => ({
     channel: 'kurumi-qq', senderId: owner, accountId: 'default', conversationId: `user:${owner}`,
     sessionKey: `agent:main:kurumi-qq:direct:${owner}`, messageId, content, timestamp: time, isGroup: false,
   });
-  const backend = createNaturalConfirmationBackend(db, {subjectId: 'owner', domains: ['notes', 'mail'], now: () => time / 1000});
+  const backend = createNaturalConfirmationBackend(db, {subjectId: 'owner', domains: ['notes', 'mail'], supportsBatch, now: () => time / 1000});
   const unregister = registerConfirmationBackend({id: randomUUID(), open: () => ({natural: backend,
     listInboundConfirmationCandidates: () => [], recordInboundConfirmation: () => false, close() {}})});
   const proposal = (domain = 'notes'): NaturalConfirmationSelection => {
@@ -31,7 +31,7 @@ function fixture() {
     return source;
   };
   return {db, event, proposal, present, backend, tick: (seconds: number) => {time += seconds * 1000;},
-    now: () => time, close: () => {unregister(); db.close();}};
+    now: () => time, close: () => {clearNaturalConfirmationRequest(event().sessionKey!); unregister(); db.close();}};
 }
 
 describe('natural confirmation with persisted previews and one-time grants', () => {
@@ -137,4 +137,93 @@ it.each(['不用确认了','我不确认','不要发送','他说：“确认”'
 });
 it.each(['确认','确认今晚八点那条','今晚八点那条确认','就按刚才那个提醒办','可以发送','确认取消那条提醒'])('accepts explicit natural assent: %s',text=>{
   expect(naturalConfirmationTextAllowed(text)).toBe(true);
+});
+
+describe('explicit bounded multi-target natural confirmation', () => {
+  it('authorizes two targets from the original Q10 sentence in the same message, without approving a third', () => {
+    const f=fixture();try {
+      const a=f.proposal(),b=f.proposal('mail'),c=f.proposal();for(const p of[a,b,c])f.present(p);
+      const e=f.event('这两个都确认。');captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({ok:true,status:'authorized',results:[{...a,ok:true},{...b,ok:true}]});
+      expect(confirmNaturalProposals(e,[b,a],f.now())).toMatchObject({ok:true,results:[{idempotent:true},{idempotent:true}]});
+      captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposals(e,[a,b,c],f.now())).toMatchObject({code:'confirmation_targets_locked'});
+      expect(confirmNaturalProposal(e,c,f.now())).toMatchObject({code:'confirmation_already_used'});
+      const grants=f.db.prepare('SELECT confirmation_message_id,proposal_id FROM approval_grants').all();
+      expect(grants).toHaveLength(2);expect(grants.every(g=>g.confirmation_message_id===e.messageId)).toBe(true);
+      for(const p of[a,b])expect(checkApprovalGrant(f.db,{...p,subjectId:'owner',scope:scopeFromInboundEvent(e)!,nowUtc:f.now()/1000,consume:true}).ok).toBe(true);
+      expect(checkApprovalGrant(f.db,{...c,subjectId:'owner',scope:scopeFromInboundEvent(e)!,nowUtc:f.now()/1000,consume:true}).ok).toBe(false);
+    }finally{f.close();}
+  });
+  it('does not extend a single-target approval into a batch in the same message', () => {
+    const f=fixture();try {const a=f.proposal(),b=f.proposal();f.present(a);f.present(b);const e=f.event('确认测试甲');captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposal(e,a,f.now()).ok).toBe(true);
+      expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({code:'confirmation_targets_locked'});
+      expect(f.db.prepare('SELECT COUNT(*) n FROM approval_grants').get()).toEqual({n:1});
+    }finally{f.close();}
+  });
+  it('reports a cancelled target separately and never replaces it or silently rolls back an authorized target', () => {
+    const f=fixture();try {const a=f.proposal(),b=f.proposal(),c=f.proposal();for(const p of[a,b,c])f.present(p);
+      f.db.prepare("UPDATE confirmation_proposals SET status='cancelled' WHERE proposal_id=?").run(b.proposalId);
+      const e=f.event('这两个都确认');captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({ok:false,status:'partial',results:[{ok:true},{ok:false,code:'proposal_unavailable'}]});
+      expect(confirmNaturalProposals(e,[a,c],f.now())).toMatchObject({code:'confirmation_targets_locked'});
+      expect(f.db.prepare('SELECT COUNT(*) n FROM approval_grants').get()).toEqual({n:1});
+    }finally{f.close();}
+  });
+  it('leaves domains that did not opt into multi-target confirmation at their single-target boundary', () => {
+    const f=fixture(false);try {const a=f.proposal(),b=f.proposal();f.present(a);f.present(b);const e=f.event('这两个都确认');captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({ok:false,results:[{code:'confirmation_batch_unsupported'},{code:'confirmation_batch_unsupported'}]});
+      expect(f.db.prepare('SELECT COUNT(*) n FROM approval_grants').get()).toEqual({n:0});
+    }finally{f.close();}
+  });
+  it('reports a storage exception after issuing a grant as unknown instead of retrying it', () => {
+    const f=fixture();try {const a=f.proposal(),b=f.proposal();f.present(a);f.present(b);const original=f.backend.confirm;
+      f.backend.confirm=(event,p)=>{const result=original(event,p);if(p.proposalId===b.proposalId)throw Error('after commit');return result;};
+      const e=f.event('这两个都确认');captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({ok:false,status:'partial',results:[{ok:true},{ok:false,code:'confirmation_outcome_unknown'}]});
+      expect(f.db.prepare('SELECT COUNT(*) n FROM approval_grants').get()).toEqual({n:2});
+    }finally{f.close();}
+  });
+  it('rejects bare ambiguity, duplicates, excessive targets and missing host capture before issuing grants', () => {
+    const f=fixture();try {const a=f.proposal(),b=f.proposal();f.present(a);f.present(b);let e=f.event();captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({code:'confirmation_target_ambiguous'});
+      e=f.event('这两个都确认');captureNaturalConfirmationRequest(e);
+      expect(confirmNaturalProposals(e,[a,a],f.now())).toMatchObject({code:'confirmation_invalid_targets'});
+      expect(confirmNaturalProposals(e,Array.from({length:MAX_CONFIRMATION_TARGETS+1},()=>f.proposal()),f.now())).toMatchObject({code:'confirmation_invalid_targets'});
+      clearNaturalConfirmationRequest(e.sessionKey!);
+      expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({code:'confirmation_targets_locked'});
+      expect(f.db.prepare('SELECT COUNT(*) n FROM approval_grants').get()).toEqual({n:0});
+    }finally{f.close();}
+  });
+});
+it.each(['只确认刚才两项中的第二项，第一项先不要动。','这两个都确认。'])('accepts the original explicit Q09/Q10 sentence: %s',text=>expect(naturalConfirmationTextAllowed(text)).toBe(true));
+it.each(['好的，知道了，先放着','我想问确认的意思','那如果我说确认呢','帮我转述他说确认'])('does not authorize feedback or discussion: %s',text=>expect(naturalConfirmationTextAllowed(text)).toBe(false));
+
+it('uses the newest grant when two different current messages confirm the same proposal within one second',()=>{
+ const f=fixture();try {const p=f.proposal();f.present(p);
+  const old=f.event('确认');captureNaturalConfirmationRequest(old);expect(confirmNaturalProposal(old,p,f.now()).ok).toBe(true);
+  const current=f.event('确认');captureNaturalConfirmationRequest(current);expect(confirmNaturalProposal(current,p,f.now()).ok).toBe(true);
+  expect(checkApprovalGrant(f.db,{...p,subjectId:'owner',scope:scopeFromInboundEvent(current)!,nowUtc:f.now()/1000,consume:true}).ok).toBe(true);
+  expect(f.db.prepare("SELECT confirmation_message_id FROM approval_grants WHERE status='consumed'").get()).toEqual({confirmation_message_id:current.messageId});
+ }finally{f.close();}
+});
+
+it('orders separate preview batches and re-presentation within the same UTC second',()=>{
+ const f=fixture();try {const a=f.proposal(),b=f.proposal();f.present(a);f.present(b);
+  expect(confirmNaturalProposal(f.event(),a,f.now())).toMatchObject({code:'confirmation_target_ambiguous'});
+  expect(confirmNaturalProposal(f.event(),b,f.now()).ok).toBe(true);
+  f.present(a); // no tick: previously presented_at_utc tied B and wrongly caused ambiguity
+  expect(confirmNaturalProposal(f.event(),a,f.now()).ok).toBe(true);
+ }finally{f.close();}
+});
+it('adds presentation order to legacy preview tables without losing stored evidence',()=>{
+ const db=new DatabaseSync(':memory:');try {
+  db.exec(`CREATE TABLE confirmation_previews(proposal_id TEXT PRIMARY KEY,payload_hash TEXT NOT NULL,preview_text TEXT NOT NULL,source_message_id TEXT NOT NULL,presented_at_utc INTEGER,presentation_message_id TEXT) STRICT;
+   INSERT INTO confirmation_previews VALUES('legacy','${'a'.repeat(64)}','legacy frozen preview','source',100,'receipt');`);
+  createNaturalConfirmationBackend(db,{subjectId:'owner',domains:['notes']});
+  createNaturalConfirmationBackend(db,{subjectId:'owner',domains:['notes']}); // idempotent migration
+  expect(db.prepare('SELECT preview_text,presented_at_utc,presentation_message_id,presentation_order FROM confirmation_previews').get())
+   .toEqual({preview_text:'legacy frozen preview',presented_at_utc:100,presentation_message_id:'receipt',presentation_order:null});
+ }finally{db.close();}
 });

@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-06T22:23:17.175Z",
+  "boundary": "Public FAQ read endpoints only; temporary public cache; no model, QQ, production writes.",
+  "search": {
+    "requestedQuery": "团战人数差防御塔血量",
+    "effectiveQuery": "团战",
+    "attemptedQueries": [
+      "团战人数差防御塔血量",
+      "团战"
+    ],
+    "matchMode": "keyword-fallback",
+    "candidatesOnly": true,
+    "note": "短词检索候选，必须按真实contentId读取正文并核对问题，不把候选当作答案。"
+  },
+  "total": 4,
+  "ids": [
+    "41",
+    "24",
+    "23",
+    "22"
+  ],
+  "sources": [
+    {
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "fetchedAt": "2026-11-06T22:23:18.007Z",
+      "checkedAt": "2026-11-06T22:23:18.007Z",
+      "upstreamUpdatedAt": null,
+      "stale": false
+    },
+    {
+      "url": "https://admin.e7.wiki/api/open/epicseven/faq/page",
+      "fetchedAt": "2026-11-06T22:23:18.758Z",
+      "checkedAt": "2026-11-06T22:23:18.758Z",
+      "upstreamUpdatedAt": null,
+      "stale": false
+    }
+  ],
+  "bytes": 2597,
+  "detail": {
+    "id": "41",
+    "title": "团战比对方少人时，防御塔的血量如何变化？",
+    "answerChars": 30,
+    "sourcePage": "https://e7.wiki/faq"
+  },
+  "passed": true
+}

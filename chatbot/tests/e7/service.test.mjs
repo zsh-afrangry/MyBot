@@ -280,3 +280,26 @@ test('reference modes and mixed or path-like IDs fail before any IO', async t =>
   ]) await assert.rejects(service.query(args), e => e.code === 'invalid_query');
   assert.equal(calls.length, 0); assert.equal(fs.readdirSync(root).length, 0);
 });
+
+test('FAQ compound query falls back within FAQ, binds pagination and retrieves only verified candidates', async t => {
+  const {service,calls}=setup(t,{read:async(kind,params)=>{
+    assert.equal(kind,'faq'); const found=params.query==='团战';
+    return {status:200,data:{list:found?Array.from({length:4},(_,i)=>({id:i+41,question:'团战防御塔人数差'+i,answer:'合成答案',analysis:''})):[],pagination:{page:params.page,size:10,total:found?4:0}}};
+  }});
+  const args={action:'content',kind:'faq',query:'团战人数差防御塔血量',limit:2};
+  const first=await service.query(args);assert.equal(first.data.search.matchMode,'keyword-fallback');assert.equal(first.data.search.effectiveQuery,'团战');
+  assert.deepEqual(first.data.search.attemptedQueries,[args.query,'团战']);assert.equal(first.data.items[0].contentId,'41');assert(first.data.search.candidatesOnly);
+  const next=await service.query({...args,cursor:first.data.nextCursor});assert.equal(next.data.items[0].contentId,'43');assert.equal(next.data.search.effectiveQuery,'团战');
+  const detail=await service.query({action:'content',kind:'faq',mode:'get',contentId:'41'});assert.equal(detail.data.answer,'合成答案');
+  assert.equal(calls.length,2,'cache is reused for cursor and get');
+  await assert.rejects(service.query({...args,query:'另一个问题',cursor:first.data.nextCursor}),e=>e.code==='cursor_expired');
+  const tampered=JSON.parse(Buffer.from(first.data.nextCursor,'base64url'));tampered.q='任意外部词';
+  await assert.rejects(service.query({...args,cursor:Buffer.from(JSON.stringify(tampered)).toString('base64url')}),e=>e.code==='invalid_cursor');
+});
+test('FAQ miss is bounded and explicit; upstream failure does not trigger retries or an empty success',async t=>{
+  const {service,calls}=setup(t,{read:async(kind,params)=>({status:200,data:{list:[],pagination:{page:params.page,size:10,total:0}}})});
+  const result=await service.query({action:'content',kind:'faq',query:'团战人数防御血量完全未知词'});
+  assert.equal(result.data.items.length,0);assert.equal(result.data.search.matchMode,'none');assert.match(result.data.search.note,/不代表站内没有/);assert(calls.length<=4);
+  const failing=setup(t,{read:async()=>{throw new E7Error('rate_limited')}});
+  await assert.rejects(failing.service.query({action:'content',kind:'faq',query:'团战人数差'}),e=>e.code==='rate_limited');assert.equal(failing.calls.length,1);
+});

@@ -8,7 +8,7 @@ import {digest, factDigest, canonical, limits, options, validateState} from './m
 import {assertContinuityArgs} from './tool-contract.js';
 const missingId = id => {throw Error(`记忆ID ${id} 不存在，请按本回合记忆参考或list核对真实ID；本次未提交`);};
 export function createContinuityRegistry() {
-  const registry = createAdapterRegistry({domain: 'memory-continuity', policyMethods: ['evidence','fact','summary'], storeMethods: ['read','write','close']});
+  const registry = createAdapterRegistry({domain: 'memory-continuity', policyMethods: ['evidence','fact','summary','deletion'], storeMethods: ['read','write','close']});
   registry.registerPolicy('current-owner', continuityPolicy); registry.registerStore('sqlite', openContinuityStore);
   return registry;
 }
@@ -56,6 +56,7 @@ export function createContinuityApplication({registry = createContinuityRegistry
         next.summaries = next.summaries.slice(-limits.summaries); summarySaved = true;
       }
     } else if (args.action === 'delete') {
+      selected.policy.deletion(args.evidence, request);
       // N5: one forget request may name several facts; all must exist before anything changes.
       const targets = (args.ids ?? [args.id]).map(id => next.facts.find(e => e.id === id) ?? missingId(id));
       next.generation++; next.summaries = [];

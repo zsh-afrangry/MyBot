@@ -186,7 +186,7 @@ export function checkApprovalGrant(
     SELECT grant_id, scope_json, issued_at_utc, expires_at_utc, status
     FROM approval_grants
     WHERE proposal_id = ? AND domain = ? AND subject_id = ? AND payload_hash = ?
-    ORDER BY issued_at_utc DESC
+    ORDER BY issued_at_utc DESC, rowid DESC
     LIMIT 1
   `).get(
     input.proposalId,

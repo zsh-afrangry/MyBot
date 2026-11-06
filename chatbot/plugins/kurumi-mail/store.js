@@ -342,7 +342,7 @@ export class MailStore {
   }
 
   get natural() {
-    return createNaturalConfirmationBackend(this.#db, {subjectId: OWNER_SUBJECT_ID, domains: [MAIL_DOMAIN], now: () => this.nowUtc()});
+    return createNaturalConfirmationBackend(this.#db, {supportsBatch: true, subjectId: OWNER_SUBJECT_ID, domains: [MAIL_DOMAIN], now: () => this.nowUtc()});
   }
 
   // ---------------------------------------------------------------- ConfirmationBackend protocol

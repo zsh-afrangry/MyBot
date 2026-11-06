@@ -4,7 +4,7 @@ import {E7Store, digest} from './store.js';
 import {E7Error, fail, settings, ttlFor, CATALOGS, normalize, nextRefresh, object} from './policy.js';
 import {validateQuery, validateData, dataCount, text, matchRows, cardProjection, artifactIdentity, heroProjection, artifactProjection, dictionaryProjection, pageRows, boundResult} from './query.js';
 import {buildProjection, reviewProjection, matchBuilds} from './query.js';
-import {rankingIdentity, rankingTiers, rankingEntries, contentProjection, contentCursor, contentPage} from './reference.js';
+import {rankingIdentity, rankingTiers, rankingEntries, contentProjection, contentCursor, contentPage, faqFallbackQueries} from './reference.js';
 
 const contentKey = (kind, contentId) => JSON.stringify(['contentLocator', {kind, contentId}]);
 
@@ -166,7 +166,7 @@ export class E7Service {
       let params, cursor;
       if (args.mode === 'search') {
         cursor = contentCursor(args);
-        params = {page: cursor.p, ...(args.query ? {query: args.query} : {})};
+        params = {page: cursor.p, ...((cursor.q ?? args.query) ? {query: cursor.q ?? args.query} : {})};
       } else {
         const locator = this.store.read(contentKey(args.kind, args.contentId));
         params = locator?.data;
@@ -175,9 +175,25 @@ export class E7Service {
         try {validateQuery({action: 'content', kind: args.kind, mode: 'search', ...('query' in params ? {query: params.query} : {})});}
         catch {fail('content_search_required');}
       }
-      const all = await get(kind, params);
+      let all = await get(kind, params);
+      const attemptedQueries = args.mode === 'search' ? [params.query ?? null] : [];
+      if (args.mode === 'search' && args.kind === 'faq' && args.query && !args.cursor && all.data.pagination.total === 0 && !all.warning) {
+        for (const query of faqFallbackQueries(args.query)) {
+          signal?.throwIfAborted();
+          params = {page: 1, query}; attemptedQueries.push(query);
+          all = await get(kind, params); cursor = {...cursor, q: query};
+          if (all.data.pagination.total > 0 || all.warning) break;
+        }
+      }
       rememberContent(args.kind, params, all);
-      if (args.mode === 'search') data = contentPage(all, args, cursor);
+      if (args.mode === 'search') {
+        data = contentPage(all, args, cursor);
+        data.search = {requestedQuery: args.query ?? null, effectiveQuery: params.query ?? null, attemptedQueries,
+          matchMode: !data.total ? 'none' : cursor.q ? 'keyword-fallback' : 'exact',
+          candidatesOnly: Boolean(cursor.q),
+          note: !data.total ? '仅已尝试关键词未命中，不代表站内没有资料；可澄清关键词。'
+            : cursor.q ? '短词检索候选，必须按真实contentId读取正文并核对问题，不把候选当作答案。' : '关键词结果，答案需按正文核对。'};
+      }
       else {
         const row = all.data.list.find(r => String(r.id) === args.contentId);
         if (!row) fail('content_locator_expired');

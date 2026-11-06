@@ -162,7 +162,7 @@ export class ReminderStore {
   }
 
   get natural() {
-    return createNaturalConfirmationBackend(this.#database, {subjectId: REMINDER_SUBJECT_ID, domains: ['personal_reminder'], now: () => this.getNowUtc()});
+    return createNaturalConfirmationBackend(this.#database, {supportsBatch: true, subjectId: REMINDER_SUBJECT_ID, domains: ['personal_reminder'], now: () => this.getNowUtc()});
   }
 
   getNowUtc(): number {

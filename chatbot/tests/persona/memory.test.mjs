@@ -27,7 +27,7 @@ function active(t, config = {}) {
   let clock=Date.parse('2026-10-20T00:00:00.000Z'),seq=0;
   const app=createContinuityApplication({config,now:()=>clock});
   const request=(raw,patch={})=>({raw,at:clock,messageId:String(++seq),ownerId:OWNER,sessionKey:key,sessionId:'session-fixture',runId:'run-'+seq,generation:app.read(f).generation,...patch});
-  const change=(args,raw,patch)=>app.change(f,{expectedRevision:app.read(f).revision,...args},request(raw,patch));
+  const change=(args,raw,patch)=>app.change(f,{expectedRevision:app.read(f).revision,...(args.action==='delete'?{evidence:raw}:{}),...args},request(raw,patch));
   return {...f,app,request,change,advance:ms=>clock+=ms};
 }
 function snapshot(f) {
@@ -120,17 +120,17 @@ test('one forget message removes several facts in a single all-or-nothing commit
   const saved=f.change({action:'observe',facts:texts.map(fact)},texts.join('，'));
   const before=snapshot(f),request=f.request('把红茶和绿茶都忘掉');
   for(const [args,error] of [
-    [{action:'delete',expectedRevision:1},/缺少id或ids/u],
-    [{action:'delete',expectedRevision:1,id:saved.ids[0],ids:[saved.ids[1]]},/二选一/u],
-    [{action:'delete',expectedRevision:1,ids:[]},/1至8项/u],
-    [{action:'delete',expectedRevision:1,ids:[saved.ids[0],saved.ids[0]]},/重复/u],
-    [{action:'delete',expectedRevision:1,ids:[saved.ids[0],'NOT-AN-ID']},/ID格式/u],
-    [{action:'delete',expectedRevision:1,ids:[saved.ids[0],'0000000000ff']},/0000000000ff.*不存在.*未提交/u],
+    [{action:'delete',evidence:'把红茶和绿茶都忘掉',expectedRevision:1},/缺少id或ids/u],
+    [{action:'delete',evidence:'把红茶和绿茶都忘掉',expectedRevision:1,id:saved.ids[0],ids:[saved.ids[1]]},/二选一/u],
+    [{action:'delete',evidence:'把红茶和绿茶都忘掉',expectedRevision:1,ids:[]},/1至8项/u],
+    [{action:'delete',evidence:'把红茶和绿茶都忘掉',expectedRevision:1,ids:[saved.ids[0],saved.ids[0]]},/重复/u],
+    [{action:'delete',evidence:'把红茶和绿茶都忘掉',expectedRevision:1,ids:[saved.ids[0],'NOT-AN-ID']},/ID格式/u],
+    [{action:'delete',evidence:'把红茶和绿茶都忘掉',expectedRevision:1,ids:[saved.ids[0],'0000000000ff']},/0000000000ff.*不存在.*未提交/u],
   ]){
     assert.throws(()=>f.app.change(f,args,request),error);
     assert.deepEqual(snapshot(f),before,'a rejected batch must not remove any fact');
   }
-  const args={action:'delete',expectedRevision:1,ids:saved.ids.slice(0,2)},result=f.app.change(f,args,request);
+  const args={action:'delete',evidence:'把红茶和绿茶都忘掉',expectedRevision:1,ids:saved.ids.slice(0,2)},result=f.app.change(f,args,request);
   assert.deepEqual(result.ids,saved.ids.slice(0,2));assert.equal(result.revision,2);
   const data=snapshot(f);
   assert.deepEqual(data.facts.map(e=>e.text),[texts[2]]);
@@ -254,7 +254,7 @@ test('plugin binds raw ingress, actual run/call, and current owner authority bef
   const result=await a.run({action:'observe',expectedRevision:0,facts:[fact('我喜欢绿茶')]});assert.equal(result.ok,true);
   const b=f.turn('看看引用',{BodyForAgent:'我喜欢咖啡'});
   await assert.rejects(b.run({action:'observe',expectedRevision:1,facts:[fact('我喜欢咖啡')]}),/本次本人/);
-  await assert.rejects(a.tool.execute('old',{action:'delete',id:result.ids[0],expectedRevision:1}),/实际宿主回合/);
+  await assert.rejects(a.tool.execute('old',{action:'delete',id:result.ids[0],expectedRevision:1,evidence:'忘掉'}),/实际宿主回合/);
   f.revoke();await assert.rejects(b.run({action:'list'}),/revoked invocation/);
 });
 test('member/unknown contexts, reset, lifecycle end and changed permissions cannot access owner writes',async t=>{
@@ -265,4 +265,15 @@ test('member/unknown contexts, reset, lifecycle end and changed permissions cann
   const b=f.turn('我喜欢咖啡');f.hooks.agent_end({runId:b.runId},{});await assert.rejects(b.run({action:'observe',expectedRevision:0,facts:[fact('我喜欢咖啡')]}),/实际宿主回合/);
   const c=f.turn('我喜欢红茶');f.config.channels['kurumi-qq'].accessControl.subjects.find(s=>s.role==='owner').permissions['memory.manage']=false;
   await assert.rejects(c.run({action:'observe',expectedRevision:0,facts:[fact('我喜欢红茶')]}),/owner private/);assert.equal(f.app.read(f).revision,0);
+});
+
+test('new question cannot finish an old forget; deletion evidence cannot be copied from old context',t=>{
+  const f=active(t),text='我喜欢合成蓝茶';
+  const saved=f.change({action:'upsert',text},'记住：'+text),before=snapshot(f);
+  const args={action:'delete',expectedRevision:1,ids:saved.ids,evidence:'忘掉蓝茶'};
+  for(const raw of ['你忘掉蓝茶了吗？','你还记得蓝茶吗','他说“忘掉蓝茶”','不要忘掉蓝茶','如果忘掉蓝茶会怎样']) {
+    assert.throws(()=>f.app.change(f,args,f.request(raw)));assert.deepEqual(snapshot(f),before);
+  }
+  assert.throws(()=>f.app.change(f,args,f.request('今天聊点别的')),/本次本人QQ原文/);
+  const result=f.app.change(f,args,f.request('请忘掉蓝茶'));assert(result.ok);assert.equal(f.app.read(f).entries.length,0);
 });

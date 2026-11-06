@@ -6,7 +6,7 @@ import { ensureConfirmationGateSchema } from './schema.js';
 
 /** The owning domain supplies the DB and transaction; no business tables are read here. */
 export function createNaturalConfirmationBackend(db: DatabaseSync, options: {
-  subjectId: string; domains: readonly string[]; now?: () => number;
+  subjectId: string; domains: readonly string[]; now?: () => number; supportsBatch?: boolean;
 }): NaturalConfirmationBackend {
   const now = () => Math.floor(options.now?.() ?? Date.now() / 1000);
   const selected = (row: ConfirmationPreview, choice: NaturalConfirmationSelection) => row.domain === choice.domain
@@ -18,13 +18,15 @@ export function createNaturalConfirmationBackend(db: DatabaseSync, options: {
       .filter(p => options.domains.includes(p.domain)).map(p => {
         const preview = db.prepare('SELECT * FROM confirmation_previews WHERE proposal_id = ? AND payload_hash = ?')
           .get(p.proposalId, p.payloadHash) as {preview_text: string; source_message_id: string;
-            presented_at_utc: number | null; presentation_message_id: string | null} | undefined;
+            presented_at_utc: number | null; presentation_message_id: string | null; presentation_order: number | null} | undefined;
         return {...p, previewText: preview?.preview_text ?? null, sourceMessageId: preview?.source_message_id ?? null,
-          presentedAtUtc: preview?.presented_at_utc ?? null, presentationMessageId: preview?.presentation_message_id ?? null};
+          presentedAtUtc: preview?.presented_at_utc ?? null, presentationMessageId: preview?.presentation_message_id ?? null,
+          presentationOrder: preview?.presentation_order ?? null};
       });
   };
   ensureConfirmationGateSchema(db);
   return {
+    supportsBatch: options.supportsBatch === true,
     list,
     used(event) {
       const scope = scopeFromInboundEvent(event);
@@ -41,14 +43,15 @@ export function createNaturalConfirmationBackend(db: DatabaseSync, options: {
       db.prepare(`INSERT INTO confirmation_previews (proposal_id, payload_hash, preview_text, source_message_id)
         VALUES (?, ?, ?, ?) ON CONFLICT(proposal_id) DO UPDATE SET payload_hash = excluded.payload_hash,
         preview_text = excluded.preview_text, source_message_id = excluded.source_message_id,
-        presented_at_utc = NULL, presentation_message_id = NULL`).run(choice.proposalId, choice.payloadHash, text, event.messageId);
+        presented_at_utc = NULL, presentation_message_id = NULL, presentation_order = NULL`).run(choice.proposalId, choice.payloadHash, text, event.messageId);
       return true;
     },
-    presented(event, choice, messageId) {
+    presented(event, choice, messageId, order = Date.now()) {
       if (!messageId || !list(event).some(p => selected(p, choice) && p.sourceMessageId === event.messageId)) return false;
-      return Number(db.prepare(`UPDATE confirmation_previews SET presented_at_utc = ?, presentation_message_id = ?
+      if (!Number.isSafeInteger(order) || order < 0) return false;
+      return Number(db.prepare(`UPDATE confirmation_previews SET presented_at_utc = ?, presentation_message_id = ?, presentation_order = ?
         WHERE proposal_id = ? AND payload_hash = ? AND source_message_id = ?`)
-        .run(now(), messageId, choice.proposalId, choice.payloadHash, event.messageId!).changes) === 1;
+        .run(now(), messageId, order, choice.proposalId, choice.payloadHash, event.messageId!).changes) === 1;
     },
     confirm(event, choice) {
       const scope = scopeFromInboundEvent(event);
@@ -73,10 +76,11 @@ export function createNaturalConfirmationBackend(db: DatabaseSync, options: {
 /** Profile and planning share a historical DB, but never own each other's proposals. */
 export function narrowNaturalConfirmationBackend(backend: NaturalConfirmationBackend, domain: string): NaturalConfirmationBackend {
   return {
+    supportsBatch: backend.supportsBatch === true,
     list: event => backend.list(event).filter(p => p.domain === domain),
     used: event => backend.used(event).filter(p => p.domain === domain),
     savePreview: (event, choice, text) => choice.domain === domain && backend.savePreview(event, choice, text),
-    presented: (event, choice, id) => choice.domain === domain && backend.presented(event, choice, id),
+    presented: (event, choice, id, order) => choice.domain === domain && backend.presented(event, choice, id, order),
     confirm: (event, choice) => choice.domain === domain && backend.confirm(event, choice),
   };
 }

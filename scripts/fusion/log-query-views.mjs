@@ -9,7 +9,7 @@ import {summarizeText} from '../../chatbot/packages/observability/index.js';
 /** Unclassified native log lines; hidden unless --raw or an explicit --kind asks for them. */
 export const RAW_KINDS = new Set(['openclaw.log', 'snowluma.log']);
 const CALL_KINDS = new Set(['agent.tool_call', 'agent.tool_result', 'agent.tool_nested', 'access.tool']);
-const WRAPPERS = new Set(['tool_call']);
+const WRAPPERS = new Set(['tool_call', 'dispatch_action']);
 const OUTCOME = {ok: '成功', error: '失败', deny: '拒绝', pending: '未返回'};
 // Member events stay out of the JSON form of a call; --expand reads them here.
 const MEMBERS = new WeakMap();
@@ -59,7 +59,7 @@ export function classifyError(text) {
 }
 
 const failed = (item) => item && (item.data.isError === true || item.data.summary?.ok === false
-  || ['error', 'failed'].includes(item.data.summary?.status));
+  || ['error', 'failed', 'rejected', 'blocked'].includes(item.data.summary?.status));
 
 /**
  * One row per model tool call. The outer `toolCallId` keys the call and its
@@ -97,10 +97,10 @@ export function pairCalls(events) {
     const outcome = denied || blocked ? 'deny' : error ? 'error' : result || nested.length ? 'ok' : 'pending';
     let errorCode;
     if (denied) errorCode = denied.data.code ?? 'denied';
-    else if (blocked) errorCode = 'blocked';
+    else if (blocked) errorCode = result?.data.summary?.code ?? nested.find(item => item.data.summary?.code)?.data.summary.code ?? 'blocked';
     else if (error) {
       const source = nested.find(failed) ?? result;
-      const code = source?.data.summary?.code;
+      const code = source?.data.summary?.code ?? source?.data.error?.code;
       errorCode = typeof code === 'string' && code ? code : classifyError(errorText(source?.data.error ?? result?.data.error));
     }
     const nestedDuration = nested.map((item) => item.data.durationMs).filter(Number.isFinite);
@@ -108,11 +108,16 @@ export function pairCalls(events) {
     const correlation = {...first.correlation, ...call?.correlation, toolCallId};
     delete correlation.parentToolCallId;
     const row = {
+      executionOutcome: denied || blocked ? 'deny' : members.some(item => item.data.isError === true) ? 'error' : result || nested.length ? 'ok' : 'pending',
+      businessOutcome: members.some(item => item.data.businessOutcome ? item.data.businessOutcome === 'error' : item.data.summary?.ok === false || ['error', 'failed', 'rejected', 'blocked'].includes(item.data.summary?.status)) ? 'error'
+        : members.some(item => item.data.businessOutcome ? item.data.businessOutcome === 'ok' : item.data.summary?.ok === true || ['ok', 'success', 'succeeded'].includes(item.data.summary?.status)) ? 'ok' : 'unknown',
       kind: 'tool.call', at: first.at, epochMs: first.epochMs, toolCallId, tool, declaredTool, outcome,
       ...(errorCode ? {errorCode} : {}),
       ...(durationMs !== undefined ? {durationMs} : {}),
       access: access.map((item) => ({tool: item.data.tool, decision: item.data.decision, code: item.data.code})),
       nestedToolCallIds: nested.map((item) => item.correlation.toolCallId).filter(Boolean),
+      requiresUserInput: members.some(item => item.data.summary?.requiresUserInput === true),
+      resultConflict: members.some(item => item.data.resultConflict === true),
       correlation,
     };
     MEMBERS.set(row, members);
@@ -240,8 +245,20 @@ export function auditTurns(turns) {
     }
     flush();
     const denied = turn.calls.filter((call) => call.outcome === 'deny').map((call) => ({tool: call.tool, code: call.errorCode, toolCallId: call.toolCallId}));
+    const failures = turn.calls.filter(call => call.outcome === 'error').map(call => ({tool: call.tool, code: call.errorCode, toolCallId: call.toolCallId}));
+    const recoveries = turn.calls.flatMap((call, index) => {
+      if (!['error', 'deny'].includes(call.outcome)) return [];
+      const later = turn.calls.slice(index + 1).find(next => next.tool === call.tool && next.outcome === 'ok');
+      return later ? [{tool: call.tool, failedToolCallId: call.toolCallId, recoveredToolCallId: later.toolCallId, code: call.errorCode}] : [];
+    });
+    // Observation only: a later call to the same tool after requiresUserInput.
+    // This flags the attempt, regardless of whether a business guard blocked it.
+    const clarificationRetries = turn.calls.flatMap((call, index) => call.requiresUserInput
+      ? turn.calls.slice(index + 1).filter(next => next.tool === call.tool).map(next => ({tool: call.tool,
+        barrierToolCallId: call.toolCallId, toolCallId: next.toolCallId, outcome: next.outcome, code: next.errorCode})) : []);
     return {at: turn.at, epochMs: turn.epochMs, session: turn.session, runId: turn.runId, qqMessageId: turn.qqMessageId,
-      tools: turn.calls.map((call) => call.tool), denied, retries, flagged: denied.length > 0 || retries.length > 0};
+      tools: turn.calls.map((call) => call.tool), denied, retries, failures, recoveries, clarificationRetries,
+      flagged: denied.length > 0 || failures.length > 0 || retries.length > 0 || clarificationRetries.length > 0};
   });
 }
 
@@ -263,13 +280,14 @@ export function formatEvent(eventValue, {full = false} = {}) {
     : eventValue.source === 'web-deepseek'
     ? [data.tool, data.status, data.code, data.httpStatus, data.resultCount ?? data.chars, `${data.durationMs}ms`].filter((value) => value !== undefined && value !== null && value !== '').join(' ')
     : MARKERS.has(eventValue.kind) ? markerText(eventValue)
+    : data.snapshotOfCurrentState ? JSON.stringify(data)
     : data.text ?? data.textPreview ?? data.content ?? data.message ?? data.tool ?? data.result ?? '';
   const suffix = body ? ` | ${clip(typeof body === 'string' ? body : JSON.stringify(body), 260, full)}` : '';
-  return `${localTime(eventValue.epochMs)} [${eventValue.kind}] ${eventValue.source}${ids ? ` (${ids})` : ''}${suffix}`;
+  return `${localTime(eventValue.epochMs)} [${eventValue.kind}] ${eventValue.source}${ids ? ` (${ids})` : ''}${suffix}${data.textCompleteness ? ` [${data.textCompleteness}${!full && String(data.text ?? '').length > 260 ? ', display-truncated' : ''}]` : ''}`;
 }
 
 function callSummary(call) {
-  return [call.tool + (call.declaredTool !== call.tool ? `（经 ${call.declaredTool}）` : ''), OUTCOME[call.outcome],
+  return [call.tool + (call.declaredTool !== call.tool ? `（经 ${call.declaredTool}）` : ''), OUTCOME[call.outcome], `执行=${call.executionOutcome} 业务=${call.businessOutcome}`,
     call.errorCode, call.durationMs !== undefined ? `${call.durationMs}ms` : undefined].filter(Boolean).join(' ');
 }
 
@@ -326,6 +344,9 @@ export function formatAudit(rows, {limit = Infinity} = {}) {
   return [`${rows.length} 个回合，${flagged.length} 个需要注意`, ...flagged.slice(0, limit).map((row) => {
     const notes = [
       ...row.denied.map((item) => `拒绝 ${item.tool}:${item.code}`),
+      ...row.failures.map(item => `失败 ${item.tool}:${item.code}`),
+      ...row.recoveries.map(item => `失败后成功 ${item.tool}:${item.code}`),
+      ...row.clarificationRetries.map(item => `要求用户补充后仍调用 ${item.tool}:${item.code ?? item.outcome}`),
       ...row.retries.map((item) => `重试 ${item.tool}×${item.attempts}（失败 ${item.failures}，最终${OUTCOME[item.finalOutcome]}）`),
     ];
     return `${localTime(row.epochMs)}${row.runId ? ` runId=${row.runId}` : ''} 工具=[${row.tools.join(',')}]${notes.length ? ` 注意：${notes.join('；')}` : ''}`;

@@ -36,6 +36,9 @@ import {
   RAW_KINDS,
 } from './log-query-views.mjs';
 
+import {normalizeToolResult} from './log-query-result.mjs';
+import {noTextProjection} from './log-query-privacy.mjs';
+
 export {formatEvent};
 
 export const DEFAULT_RUNTIME_ROOT = '/home/afrangry/.openclaw-fusion';
@@ -105,7 +108,7 @@ export function parseSnowLumaLine(line, file, lineNumber) {
       source: 'snowluma',
       kind: 'qq.inbound',
       correlation: correlationFrom({qqMessageId: inbound[2], senderId: sender}),
-      data: {level, senderLabel: inbound[1], text: inbound[3] ?? '', direction: 'inbound'},
+      data: {level, senderLabel: inbound[1], text: inbound[3] ?? '', direction: 'inbound', textCompleteness: 'preview-unknown'},
       sourceRef: sourceRef(file, lineNumber),
     });
   }
@@ -117,7 +120,7 @@ export function parseSnowLumaLine(line, file, lineNumber) {
       source: 'snowluma',
       kind: 'qq.outbound',
       correlation: correlationFrom({recipientId: outbound[1], replyToId: outbound[2]}),
-      data: {level, recipientId: outbound[1], replyToId: outbound[2] ?? null, text: outbound[3] ?? '', direction: 'outbound'},
+      data: {level, recipientId: outbound[1], replyToId: outbound[2] ?? null, text: outbound[3] ?? '', direction: 'outbound', textCompleteness: 'preview-unknown'},
       sourceRef: sourceRef(file, lineNumber),
     });
   }
@@ -148,7 +151,7 @@ export function readSnowLumaLogs(root, from, to) {
       const parsed = parseSnowLumaLine(line, file, index + 1);
       if (parsed) {
         output.push(parsed);
-        continuation = parsed.kind === 'qq.outbound' && parsed.data.text === '' ? parsed : undefined;
+        continuation = ['qq.outbound', 'qq.inbound'].includes(parsed.kind) ? parsed : undefined;
       } else if (continuation && line.trim() && !/^\d\d:\d\d:\d\d\s+/u.test(line)) {
         continuation.data.text = `${continuation.data.text}\n${line.trim()}`;
       } else if (/^\d\d:\d\d:\d\d\s+/u.test(line)) {
@@ -274,18 +277,10 @@ function transcriptText(content) {
   return content.filter((item) => item?.type === 'text').map((item) => item.text ?? '').join('\n');
 }
 
-function toolResultSummary(content) {
-  const text = transcriptText(content);
-  const parsed = parseJson(text);
-  const nested = parsed?.result?.details ?? parsed?.result ?? parsed?.details ?? parsed;
-  if (nested && typeof nested === 'object') {
-    const summary = {};
-    for (const key of ['ok', 'status', 'code', 'error', 'proposalId', 'reminder', 'reminderId', 'confirmationInstruction', 'idempotent']) {
-      if (nested[key] !== undefined) summary[key] = nested[key];
-    }
-    return {summary: redactValue(summary), correlation: namedIds(parsed), textPreview: summarizeText(text)};
-  }
-  return {summary: {}, correlation: {}, textPreview: summarizeText(text)};
+function toolResultSummary(message) {
+  const text = transcriptText(message.content);
+  return {...normalizeToolResult({...message, content: Array.isArray(message.content) ? message.content : [{type: 'text', text}]}),
+    correlation: namedIds(parseJson(text)), textPreview: summarizeText(text)};
 }
 
 /** Wrapped calls name the real tool in `arguments.id` (`openclaw:<plugin>:<tool>`
@@ -373,7 +368,7 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
             const argumentsValue = part.arguments ?? part.input ?? {};
             const ids = namedIds(argumentsValue);
             const declared = part.name ?? part.toolName ?? 'unknown';
-            const actual = declared === 'tool_call' ? wrappedToolName(argumentsValue?.id) ?? declared : declared;
+            const actual = ['tool_call', 'dispatch_action'].includes(declared) ? wrappedToolName(argumentsValue?.id) ?? declared : declared;
             push('agent.tool_call', {tool: actual, declaredTool: declared, arguments: redactValue(argumentsValue), ...(expand ? {expanded: {arguments: deepParseJson(argumentsValue)}} : {})},
               {...baseCorrelation, ...correlationFrom(ids), ...(part.id ? {toolCallId: String(part.id)} : {})});
           } else if (part?.type === 'text' && String(part.text ?? '').trim()) {
@@ -381,7 +376,7 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
           }
         }
       } else if (message.role === 'toolResult' || message.role === 'tool') {
-        const summary = toolResultSummary(message.content);
+        const summary = toolResultSummary(message);
         const wrapper = parseJson(transcriptText(message.content));
         const details = message.details && typeof message.details === 'object' ? message.details : {};
         const declared = message.toolName ?? message.name ?? 'unknown';
@@ -395,13 +390,12 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
       } else if (message.role === 'custom' && message.customType === 'openclaw.nested-tool.v1') {
         // One record per real tool behind a `tool_call` wrapper; the parent ID is the outer call.
         const details = message.details ?? {};
-        const result = details.result?.details && typeof details.result.details === 'object' ? details.result.details : {};
-        const resultSummary = {};
-        for (const key of ['ok', 'status', 'code', 'proposalId', 'reminderId', 'idempotent']) if (result[key] !== undefined && typeof result[key] !== 'object') resultSummary[key] = result[key];
+        const result = details.result ?? {};
+        const normalized = normalizeToolResult(result);
         const startedAt = Number(details.startedAt);
         const endedAt = Number(details.timestamp ?? message.timestamp);
         push('agent.tool_nested', {tool: details.toolName ?? 'unknown', isError: details.isError === true, status: details.isError === true ? 'error' : 'ok',
-          summary: redactValue(resultSummary), ...(result.error !== undefined ? {error: shortError(result.error)} : {}),
+          ...normalized,
           ...(Number.isFinite(startedAt) && Number.isFinite(endedAt) && endedAt >= startedAt ? {durationMs: endedAt - startedAt} : {}),
           ...(expand ? {expanded: {input: deepParseJson(details.input), result: deepParseJson(details.result)}} : {})},
         {...baseCorrelation, ...correlationFrom({...namedIds(result), runId: details.runId ?? baseCorrelation.runId}),
@@ -558,6 +552,19 @@ export function attachRuntimeCorrelation(events) {
   }
 }
 
+/** Current outbound ledger state, not a history of transitions or user read receipt. */
+export function readChannelDelivery(file, from, to) {
+  if (!fs.existsSync(file)) return [];
+  const db = new DatabaseSync(file, {readOnly: true});
+  try {
+    return db.prepare('SELECT id, status, message_id, at FROM outbound WHERE at BETWEEN ? AND ? ORDER BY at, id').all(from, to)
+      .map(row => event({at: row.at, source: 'channel-delivery', kind: 'qq.delivery_state',
+        correlation: correlationFrom({qqMessageId: row.message_id == null ? undefined : String(row.message_id)}),
+        data: {ledgerId: row.id, status: row.status, snapshotOfCurrentState: true},
+        sourceRef: sourceRef(file, 0, {table: 'outbound'})}));
+  } finally { db.close(); }
+}
+
 /** Spread-free append: `push(...list)` overflows the call stack once a source yields ~100k rows. */
 function append(target, items) {
   for (const item of items) target.push(item);
@@ -568,6 +575,7 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   const include = (name) => !wanted || wanted.has(name);
   const events = [];
   const windows = [];
+  if (include('channel-delivery')) append(events, readChannelDelivery(path.join(runtimeRoot, 'channel', 'channel.sqlite'), from, to));
   if (include('snowluma')) append(events, readSnowLumaLogs(snowlumaRoot, from, to));
   if (include('openclaw-runtime')) append(events, readRuntimeLog(path.join(runtimeRoot, 'runtime.log'), from, to));
   if (include('openclaw-receipt')) {
@@ -657,6 +665,7 @@ function usage() {
   --exclude-source <名称> 可重复；排除适配器
   --kind <前缀>       可重复；只看这些事件类型，前缀匹配（如 agent.tool_）
   --exclude-kind <前缀> 可重复；排除事件类型，前缀匹配
+  --no-text           仅输出白名单技术摘要，不含正文（保留关联ID）
   --raw               显示未分类的原生日志行（openclaw.log、snowluma.log，默认隐藏）
   --expand, --full    展开完整工具参数与结果、不截断文本（可能含聊天原文）
   --turns             按回合汇总：用户说 → 工具 → 回复，/new 与压缩显示为分段
@@ -674,7 +683,7 @@ function usage() {
 
 const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit'];
 const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds'};
-const BOOLEAN_FLAGS = {'--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit'};
+const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit'};
 
 function parseArgs(argv) {
   const result = {sources: [], excludeSources: [], kinds: [], excludeKinds: []};
@@ -710,7 +719,12 @@ export function runCli(argv = process.argv.slice(2), now = Date.now()) {
  * selected view. The default JSON keeps schemaVersion 1 fields and only adds
  * `hiddenRaw` and `calls`; view modes add a `view` field with their own data.
  */
-export function renderQuery(events, options = {}) {
+function queryLimit(value) {
+  const requested = Number(value ?? 500);
+  return Number.isFinite(requested) ? Math.max(1, Math.min(5000, Math.floor(requested))) : 500;
+}
+
+function renderQueryInternal(events, options = {}) {
   const {from, to, limit: rawLimit, raw = false, expand = false, turns, errors, audit} = options;
   const correlated = filterEvents(events, options);
   const viewFilters = {kinds: options.kinds ?? [], excludeKinds: options.excludeKinds ?? [], excludeSources: options.excludeSources ?? []};
@@ -718,8 +732,7 @@ export function renderQuery(events, options = {}) {
   const values = applyViewFilters(correlated, {...viewFilters, raw: raw || Boolean(errors)});
   const hiddenRaw = applyViewFilters(correlated, {...viewFilters, raw: true}).filter((item) => RAW_KINDS.has(item.kind)).length
     - values.filter((item) => RAW_KINDS.has(item.kind)).length;
-  const requestedLimit = Number(rawLimit ?? 500);
-  const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(5000, Math.floor(requestedLimit))) : 500;
+  const limit = queryLimit(rawLimit);
   const range = {from: new Date(from).toISOString(), to: new Date(to).toISOString()};
   const window = `（${localTime(from)} 至 ${localTime(to)}）`;
   const rawNote = hiddenRaw ? `，已隐藏原生日志 ${hiddenRaw} 行（--raw 显示）` : '';
@@ -753,6 +766,29 @@ export function renderQuery(events, options = {}) {
     json: {schemaVersion: 1, ...range, total: values.length, shown: selected.length, hiddenRaw, events: selected, calls},
     lines: [`链路事件 ${selected.length}/${values.length}${window}${rawNote}`, ...formatListing(selected, {expand, calls})],
   };
+}
+
+export function renderQuery(events, options = {}) {
+  const rendered = renderQueryInternal(events, options);
+  const value = rendered.json;
+  // Timeline limits count markers too; make truncation visible in every view.
+  const effectiveLimit = queryLimit(options.limit);
+  value.truncated = value.view === 'turns'
+    ? groupTurns(applyViewFilters(filterEvents(events, options), {...options, raw: options.raw})).timeline.length > effectiveLimit
+    : value.shown < value.total;
+  const annotate = item => {
+    if (!item || typeof item !== 'object') return;
+    if (item.data && typeof item.data.text === 'string') {
+      item.data = {...item.data, textLength: item.data.text.length, displayTruncated: !options.expand && item.data.text.length > 260};
+    }
+  };
+  for (const item of value.events ?? []) annotate(item);
+  if (options.noText) {
+    const projected = noTextProjection({...value, noText: true});
+    return {json: projected, lines: [JSON.stringify(projected, null, 2)]};
+  }
+  if (value.truncated) rendered.lines.push('结果已截短：请缩小时间范围或提高 --limit。');
+  return rendered;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

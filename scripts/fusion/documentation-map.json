@@ -335,6 +335,43 @@
       "evidence": [
         "docs/verification/persona-memory-2026-10-19/p2/README.md"
       ]
+    },
+    {
+      "path": "scripts/fusion/log-query-privacy.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md"
+      ],
+      "evidence": [
+        "docs/verification/four-fixes-2026-11-07/README.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/log-query-result.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md"
+      ],
+      "evidence": [
+        "docs/verification/four-fixes-2026-11-07/README.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/test/log-query-minimal.test.mjs",
+      "documents": [
+        "docs/18_跨模块链路日志查询.md"
+      ],
+      "evidence": [
+        "docs/verification/four-fixes-2026-11-07/README.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/backend-boundaries/natural-confirmation-permissions.test.mjs",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/24_统一身份与权限管理.md"
+      ],
+      "evidence": [
+        "docs/verification/four-fixes-2026-11-07/README.md"
+      ]
     }
   ],
   "runtimeSources": [
@@ -995,6 +1032,18 @@
         "docs/16_验收与测试总表.md",
         "docs/25_人格、记忆与会话连续性.md"
       ]
+    },
+    {
+      "prefix": "four-fixes-2026-11-07/",
+      "documents": [
+        "docs/16_验收与测试总表.md",
+        "docs/18_跨模块链路日志查询.md",
+        "docs/20_邮件能力与横切扩展.md",
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/27_E7数据插件设计.md"
+      ],
+      "category": "当前有效"
     }
   ]
 }

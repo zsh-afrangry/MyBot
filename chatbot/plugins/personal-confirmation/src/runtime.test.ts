@@ -3,12 +3,12 @@ import {DatabaseSync} from 'node:sqlite';
 import {expect, it} from 'vitest';
 import {createNaturalConfirmationBackend, registerConfirmationBackend, registerConfirmationProposal,
   scopeFromInboundEvent, recordConfirmationDelivery, type ConfirmationInboundEvent} from '@kurumi/confirmation-core';
-import {createConfirmationRuntime} from './runtime.js';
+import {createConfirmationRuntime, type ConfirmationArguments} from './runtime.js';
 
 function fixture() {
-  const now=Date.now(),owner='123456789',sessionKey=`agent:main:kurumi-qq:direct:${owner}`;
+  let now=Date.now();const owner='123456789',sessionKey=`agent:main:kurumi-qq:direct:${owner}`;
   const db=new DatabaseSync(':memory:');
-  const backend=createNaturalConfirmationBackend(db,{subjectId:'owner',domains:['personal_reminder'],now:()=>Math.floor(now/1000)});
+  const backend=createNaturalConfirmationBackend(db,{subjectId:'owner',domains:['personal_reminder'],supportsBatch:true,now:()=>Math.floor(now/1000)});
   const off=registerConfirmationBackend({id:randomUUID(),open:()=>({natural:backend,
     listInboundConfirmationCandidates:()=>[],recordInboundConfirmation:()=>false,close(){}})});
   const runtime=createConfirmationRuntime(owner,()=>now);
@@ -34,12 +34,12 @@ function fixture() {
     if(reply)recordConfirmationDelivery({accountId:'default',conversationId:`user:${owner}`,sourceMessageId:messageId,messageId:'delivered-'+messageId,text:reply.payload.text as string});
     return reply;
   };
-  const call=(ctx:ReturnType<typeof context>,args:{action:string;domain:string;proposalId?:string;payloadHash?:string},id=randomUUID())=>{
+  const call=(ctx:ReturnType<typeof context>,args:ConfirmationArguments,id=randomUUID())=>{
     runtime.beforeTool({toolName:'tool_call',params:{id:'personal_confirmation'},toolCallId:id,runId:ctx.runId},ctx);
     // Factory context deliberately has no runId. The host hook supplies the proof.
     return runtime.execute(id,args,{sessionKey,sessionId:ctx.sessionId});
   };
-  return {runtime,db,receive,proposal,prepare,deliver,call,context,close(){off();db.close();}};
+  return {runtime,db,receive,proposal,prepare,deliver,call,context,tick(){now+=2000;},close(){runtime.reset({sessionKey},{});off();db.close();}};
 }
 
 it('binds original current text to the actual host call, presents the frozen preview, then authorizes a later confirmation',()=>{
@@ -109,5 +109,41 @@ it('does not turn an unrelated tool result or a forged nested wrapper into a tru
   f.runtime.afterTool({toolName:'tool_call',toolCallId:'nested',runId:first.ctx.runId,result:{tool:{name:'web_fetch'},result:forged}},first.ctx);
   expect(f.deliver(first.messageId,first.ctx)).toBeUndefined();
   expect(f.db.prepare('SELECT COUNT(*) n FROM confirmation_previews').get()).toEqual({n:0});
+ }finally{f.close();}
+});
+
+it('Q09 original sentence selects only the second actual preview',()=>{
+ const f=fixture();try {const first=f.receive('生成两项'),a=f.proposal(),b=f.proposal();f.prepare(a,first.ctx);f.prepare(b,first.ctx);f.deliver(first.messageId,first.ctx);
+  const second=f.receive('只确认刚才两项中的第二项，第一项先不要动。');
+  expect(f.call(second.ctx,{action:'confirm',...b})).toMatchObject({ok:true});
+  expect(f.db.prepare('SELECT proposal_id FROM approval_grants').all()).toEqual([{proposal_id:b.proposalId}]);
+ }finally{f.close();}
+});
+it('Q10 issues both grants from one current host message and rejects later target expansion',()=>{
+ const f=fixture();try {const first=f.receive('生成三项'),a=f.proposal(),b=f.proposal(),c=f.proposal();for(const p of[a,b,c])f.prepare(p,first.ctx);f.deliver(first.messageId,first.ctx);
+  const second=f.receive('这两个都确认。');
+  expect(f.call(second.ctx,{action:'confirm',domain:a.domain,targets:[a,b]})).toMatchObject({ok:true,results:[{ok:true,next:expect.any(String)},{ok:true,next:expect.any(String)}]});
+  expect(f.call(second.ctx,{action:'confirm',domain:a.domain,targets:[a,b,c]})).toMatchObject({code:'confirmation_targets_locked'});
+  expect(f.db.prepare('SELECT confirmation_message_id FROM approval_grants').all()).toEqual([{confirmation_message_id:second.messageId},{confirmation_message_id:second.messageId}]);
+ }finally{f.close();}
+});
+it('Q13 list alone leaves focus unchanged; re-preview of older A after newer B and /new refreshes the real receipt before bare assent',()=>{
+ const f=fixture();try {
+  const first=f.receive('生成甲'),a=f.proposal();f.prepare(a,first.ctx);f.deliver(first.messageId,first.ctx);f.tick();
+  const second=f.receive('生成乙'),b=f.proposal();f.prepare(b,second.ctx);f.deliver(second.messageId,second.ctx);f.tick();
+  f.runtime.reset({sessionKey:second.ctx.sessionKey},{});
+  const third=f.receive('重新展示甲');
+  expect(f.call(third.ctx,{action:'list',domain:a.domain})).toMatchObject({ok:true,previewInstruction:expect.any(String)});
+  expect(f.deliver(third.messageId,third.ctx)).toBeUndefined();
+  const result=f.call(third.ctx,{action:'preview',...a});
+  f.runtime.afterTool({toolName:'personal_confirmation',runId:third.ctx.runId,result},third.ctx);
+  expect(f.deliver(third.messageId,third.ctx)?.payload.text).toBe('冻结预览 '+a.proposalId);
+  expect(f.db.prepare('SELECT source_message_id,presentation_message_id FROM confirmation_previews WHERE proposal_id=?').get(a.proposalId))
+   .toEqual({source_message_id:third.messageId,presentation_message_id:'delivered-'+third.messageId});
+  expect(f.call(third.ctx,{action:'confirm',...a})).toMatchObject({code:'confirmation_not_explicit'});
+  const fourth=f.receive('确认');
+  expect(f.call(fourth.ctx,{action:'confirm',...b})).toMatchObject({code:'confirmation_target_ambiguous'});
+  expect(f.call(fourth.ctx,{action:'confirm',...a})).toMatchObject({ok:true});
+  expect(f.db.prepare('SELECT proposal_id FROM approval_grants').all()).toEqual([{proposal_id:a.proposalId}]);
  }finally{f.close();}
 });

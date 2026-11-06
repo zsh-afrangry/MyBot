@@ -68,6 +68,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/backend-boundaries/capabilities.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 共享包依赖方向、四插件独立注册/实际宿主启停、历史DB确认隔离/授权与Cron兼容入口 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
 | `chatbot/tests/backend-boundaries/confirmation.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认公共接口、业务事务中消费/回滚、领域适配器生命周期和交互钩子组合 | 只读 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/domain.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 领域分层：实际记忆工具准入、存储独立、列表事务与审计/重放回滚 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/backend-boundaries/natural-confirmation-permissions.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 批量确认逐目标权限预检与未知域拒绝 | 只读 | 否 | offline | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `chatbot/tests/backend-boundaries/natural-confirmation.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 实际领域Store自然确认/提交/单次消费、当前消息撤销与邮件取消；临时SQLite，调度器为记录器 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/backend-boundaries/plugin-lifecycle.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 真实OpenClaw服务管理器验证论文异步停止/中止/不重放、邮件注销/重启/失败清理；无生产重启或外发 | 写临时测试目录 | 否 | header | `docs/verification/plugin-lifecycle-2026-10-19/README.md` |
 | `chatbot/tests/coding/acp.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 真实本地stdio权限关联、自有进程及检查进程树取消；离线对端，无模型或QQ | 重启或停服务、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
@@ -109,6 +110,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/test/backup-layout.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 深层数据库覆盖、依赖工件重用/变化/破损拒绝；仅临时目录 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/test/backup-retention.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 临时恢复点验证R1保护、失败/中断/旧证明排除和最近两点保留 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/test/documentation-map.test.mjs` | 离线 | [16](../16_验收与测试总表.md) | 文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库 | 写临时测试目录 | 否 | header | `docs/verification/documentation-2026-10-21/README.md` |
+| `scripts/fusion/test/log-query-minimal.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 合成隐私、只读账本、业务失败与预览完整性回归 | 写临时测试目录、只读 | 否 | offline | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `scripts/fusion/test/log-query-views.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 日志查询视图合成数据回归：过滤、调用配对、回合、错误、审计、展开 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/log-query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/recovery.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 备份/恢复工具单元与集成回归 | 只读 | 否 | offline | — |
@@ -140,6 +142,8 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/lib/recovery-isolation.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 隔离恢复的路径、凭据与共享业务禁用改写，仅写恢复副本 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/lib/runtime-paths.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 唯一源码与私密运行根目录常量，无旧系统回退 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/working-tree-backup.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar | 写运行状态 | 否 | code | — |
+| `scripts/fusion/log-query-privacy.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读日志输出字段白名单，关联后剔除正文与路径 | 只读 | 否 | header | `docs/verification/four-fixes-2026-11-07/README.md` |
+| `scripts/fusion/log-query-result.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读工具协议封装、业务结果与失败提取 | 只读 | 否 | header | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `scripts/fusion/log-query-views.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 日志查询的视图层（被 log-query.mjs 导入）：过滤、调用配对、回合、错误、审计 | 只读 | 否 | header | — |
 | `scripts/fusion/rpc.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | Gateway RPC 客户端库（被其他脚本导入） | 只读 | 否 | code | — |
 | `chatbot/scripts/access-control.mjs` | 只读运维 | [24](../24_统一身份与权限管理.md) | 严格校验统一身份权限并输出JSON/TSV矩阵，不改运行名单 | 只读 | 否 | header | — |

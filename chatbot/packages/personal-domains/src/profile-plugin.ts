@@ -60,13 +60,13 @@ export function createPlugin() {
             tool({
                 name: "personal_profile_change_propose",
                 label: "Propose a Profile change",
-                description: "Create a typed pending preview to set the owner's current Profile location after trusted GeoAPI disambiguation. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers. It never commits a profile change, alters trips, reminders, Cron, memory, or files.",
+                description: "Create a typed pending preview to set the owner's current Profile location after trusted GeoAPI disambiguation. If requiresUserInput=true (e.g. location_ambiguous), ask the user and END this turn; do not choose a candidate, rewrite the location or retry until a NEW user message. Confirmation domain=personal_profile. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers. It never commits a profile change, alters trips, reminders, Cron, memory, or files.",
                 parameters: profileChangeParameters,
                 optional: true,
                 factory: ({ toolContext, config }): AnyAgentTool => ({
                     name: "personal_profile_change_propose",
                     label: "Propose a Profile change",
-                    description: "Create a pending current_location.set preview for explicit owner statements such as 已经到了某地. A unique place is required before confirmation. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers.",
+                    description: "Create a pending current_location.set preview for explicit owner statements such as 已经到了某地. A unique place is required before confirmation. If requiresUserInput=true, ask the user and END this turn; never self-select or retry with rewritten location until a NEW user message. Confirmation domain=personal_profile. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers.",
                     parameters: profileChangeParameters,
                     async execute(_toolCallId, params, signal) {
                         if (!isTrustedOwnerPrivateQq(toolContext))

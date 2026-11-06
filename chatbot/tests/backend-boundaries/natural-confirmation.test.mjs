@@ -96,3 +96,96 @@ test('cancelled mail drafts disappear from the actual shared confirmation candid
  f.present(draft,'mail');assert.equal(f.mail.cancelDraft(draft.draftId),true);
  assert.equal(core.listNaturalConfirmations(f.event()).some(p=>p.proposalId===draft.draftId),false);
 });
+
+test('Q10 commits two actual reminders with one message, records two grants and schedules each exactly once',async t=>{
+ const f=fixture(t),a=proposeReminderCreate(f.reminders,f.create('Q10甲'),f.context),b=proposeReminderCreate(f.reminders,f.create('Q10乙',7200),f.context);
+ for(const p of[a,b])f.present(p,'personal_reminder');
+ const e=f.event('这两个都确认。');core.captureNaturalConfirmationRequest(e);
+ const choices=[a,b].map(p=>({domain:'personal_reminder',proposalId:p.proposalId,payloadHash:p.payloadHash}));
+ assert.equal(core.confirmNaturalProposals(e,choices,f.now*1000).ok,true);
+ for(const p of[a,b])assert.equal((await commitReminderProposal(f.reminders,f.input(p),f.context,f.scheduler)).ok,true);
+ for(const p of[a,b])assert.equal((await commitReminderProposal(f.reminders,f.input(p),f.context,f.scheduler)).idempotent,true);
+ assert.equal(getReminderState(f.reminders).activeReminders.length,2);assert.deepEqual(f.calls,['add','add']);
+});
+test('explicit cross-domain batch commits reminder and Profile independently, without authorizing an unselected trip',async t=>{
+ const f=fixture(t),a=proposeReminderCreate(f.reminders,f.create('多领域甲'),f.context);
+ const b=await proposeProfileChange(f.store,{lookupPlace:async()=>({...geoLookupFixture,location:[{...geoLookupFixture.location[0],name:'扬中',id:'101190704',lat:'32.2373',lon:'119.8281',adm1:'江苏省',adm2:'镇江市'}]})},
+  {schema_version:1,request:{kind:'current_location.set',location:{text:'扬中市'}}},undefined,f.scope);
+ const c=proposePlanningChange(f.store,{schema_version:1,request:{kind:'trip.create',destination:{text:'南京'}}},f.scope);
+ for(const [p,domain]of[[a,'personal_reminder'],[b,'personal_profile'],[c,'planning']])f.present(p,domain);
+ const e=f.event('这两个都确认。');core.captureNaturalConfirmationRequest(e);
+ const result=core.confirmNaturalProposals(e,[{domain:'personal_reminder',proposalId:a.proposalId,payloadHash:a.payloadHash},{domain:'personal_profile',proposalId:b.proposalId,payloadHash:b.payloadHash}],f.now*1000);
+ assert.equal(result.ok,true,JSON.stringify(result));
+ assert.equal((await commitReminderProposal(f.reminders,f.input(a),f.context,f.scheduler)).ok,true);
+ assert.equal(commitProfileChange(f.store,f.input(b),f.scope).ok,true);
+ assert.equal(commitPlanningProposal(f.store,f.input(c),f.scope).error.code,'approval_required');
+ assert.deepEqual(f.calls,['add']);assert.equal(getPlanningState(f.store).trips.length,0);
+});
+
+test('Profile natural-confirmation round trip restores the original location facts in temporary state',async t=>{
+ const f=fixture(t),initial=getProfileState(f.store).currentLocation,initialPlace=f.store.getCurrentLocation().place;
+ const changed={...geoLookupFixture,location:[{...geoLookupFixture.location[0],name:'扬中',id:'101190704',lat:'32.2373',lon:'119.8281',adm1:'江苏省',adm2:'镇江市'}]};
+ for(const [text,geo]of[['扬中市',changed],['天河区',geoLookupFixture]]){
+  const p=await proposeProfileChange(f.store,{lookupPlace:async()=>geo},{schema_version:1,request:{kind:'current_location.set',location:{text}}},undefined,f.scope);
+  assert.equal(p.status,'pending');f.present(p,'personal_profile');f.confirm(p,'personal_profile');
+  assert.equal(commitProfileChange(f.store,f.input(p),f.scope).ok,true);
+ }
+ const restored=getProfileState(f.store).currentLocation;
+ assert.equal(typeof initialPlace.qweatherLocationId,'string');
+ assert.equal(f.store.getCurrentLocation().place.qweatherLocationId,initialPlace.qweatherLocationId);
+ for(const key of['displayName','countryCode','timezone','precision'])assert.equal(restored[key],initial[key]);
+ assert.deepEqual(f.calls,[]);
+});
+
+test('a fresh process preserves previews but cannot consume an old unused natural grant',async t=>{
+ const {execFile}=await import('node:child_process'),{promisify}=await import('node:util');
+ const f=fixture(t),p=proposeReminderCreate(f.reminders,f.create('重启夹具'),f.context);f.present(p,'personal_reminder');f.confirm(p,'personal_reminder');
+ const urls=Object.fromEntries(['core','store','reminders'].map((name,i)=>[name,new URL(['../../packages/confirmation-core/dist/index.js','../../packages/personal-domains/dist/reminder-store.js','../../packages/personal-domains/dist/reminders.js'][i],import.meta.url).href]));
+ const program=`import assert from 'node:assert/strict';
+ import * as core from ${JSON.stringify(urls.core)};import {ReminderStore} from ${JSON.stringify(urls.store)};
+ import {commitReminderProposal} from ${JSON.stringify(urls.reminders)};
+ const store=new ReminderStore({stateDirectory:${JSON.stringify(path.join(f.root,'reminders'))},now:()=>${f.now}});
+ const off=core.registerConfirmationBackend({id:'reopened',open:()=>({natural:store.natural,listInboundConfirmationCandidates:()=>[],recordInboundConfirmation:()=>false,close(){}})});
+ try{const event=${JSON.stringify(f.event())},context=${JSON.stringify(f.context)};
+  assert.equal(core.listNaturalConfirmations(event).length,1);
+  let cronCalls=0;const scheduler={add:async()=>{cronCalls++;return{jobId:'isolated'};}};
+  const blocked=await commitReminderProposal(store,${JSON.stringify(f.input(p))},context,scheduler);
+  assert.equal(blocked.error.code,'confirmation_context_mismatch');assert.equal(cronCalls,0);
+  core.captureNaturalConfirmationRequest(event);
+  assert.equal(core.confirmNaturalProposal(event,${JSON.stringify({domain:'personal_reminder',proposalId:p.proposalId,payloadHash:p.payloadHash})},${f.now*1000}).ok,true);
+  assert.equal((await commitReminderProposal(store,${JSON.stringify(f.input(p))},context,scheduler)).ok,true);assert.equal(cronCalls,1);
+ }finally{off();store.close();}console.log('persistent-preview-and-new-message-passed');`;
+ const {stdout}=await promisify(execFile)(process.execPath,['--input-type=module','-e',program],{timeout:15000});
+ assert.match(stdout,/persistent-preview-and-new-message-passed/);assert.deepEqual(f.calls,[]);
+});
+
+test('one delivered batch across reminder and mail databases stays ambiguous and never lends a grant across domains',async t=>{
+ const f=fixture(t),reminder=proposeReminderCreate(f.reminders,f.create('跨库同批预览'),f.context);
+ const mail=createMailService(defaultMailPolicy).createDraft(f.mail,{to:'friend@example.test',subject:'跨库同批',text:'不发送'},f.scope,['friend@example.test']);
+ const source=f.event('同时生成两项'),selections=[{domain:'personal_reminder',proposalId:reminder.proposalId,payloadHash:reminder.payloadHash},{domain:'mail',proposalId:mail.draftId,payloadHash:mail.payloadHash}];
+ for(const [i,p]of[reminder,mail].entries())assert.equal(core.prepareConfirmationPreview(source,selections[i],p.previewText),true);
+ core.recordConfirmationDelivery({accountId:'default',conversationId:source.conversationId,sourceMessageId:source.messageId,messageId:randomUUID(),text:reminder.previewText+'\n\n'+mail.previewText});
+ const presented=core.listNaturalConfirmations(f.event());assert.equal(presented.length,2);assert.equal(presented[0].presentationOrder,presented[1].presentationOrder);
+ const bare=f.event('确认');core.captureNaturalConfirmationRequest(bare);
+ assert.equal(core.confirmNaturalProposal(bare,selections[0],f.now*1000).code,'confirmation_target_ambiguous');
+ f.confirm(reminder,'personal_reminder','只确认创建刚才的提醒，邮件先不要发。');
+ assert.equal((await commitReminderProposal(f.reminders,f.input(reminder),f.context,f.scheduler)).ok,true);
+ assert.equal(f.mail.consumeApproval({draftId:mail.draftId,scope:f.scope}).code,'approval_required');
+});
+
+for(const [label,options,accepted]of[['success',{},1],['authentication-failure',{failAuth:true},0],['DATA-accepted-but-receipt-lost',{dropAfterData:true},1]]){
+ test(`natural mail grant and loopback TLS SMTP: ${label}, never auto-resend`,async t=>{
+  const {MockSmtpServer,TEST_PASS,TEST_USER}=await import('../../plugins/kurumi-mail/test/helpers/mock-smtp.js');
+  const {defaultConnector}=await import('../../plugins/kurumi-mail/smtp.js');
+  const f=fixture(t),server=new MockSmtpServer(options),{host,port}=await server.start();t.after(()=>server.stop());
+  const ca=fs.readFileSync(new URL('../../plugins/kurumi-mail/test/fixtures/cert.pem',import.meta.url));
+  const service=createMailService(defaultMailPolicy),draft=service.createDraft(f.mail,{to:'friend@example.test',subject:'自然确认SMTP隔离',text:'仅发送到本机夹具'},f.scope,['friend@example.test']);
+  const ctx={scope:f.scope,config:{host,port,user:TEST_USER,authCode:TEST_PASS,configured:true},allowedRecipients:['friend@example.test'],connector:opts=>defaultConnector({...opts,tlsOptions:{ca,servername:'localhost'}})};
+  assert.equal((await service.sendDraft(f.mail,{draftId:draft.draftId},ctx)).code,'approval_required');assert.equal(server.sessions.length,0);
+  f.present(draft,'mail');f.confirm(draft,'mail','可以发送');
+  const first=await service.sendDraft(f.mail,{draftId:draft.draftId},ctx);
+  assert.equal(first.ok,label==='success');assert.equal(server.receivedCount,accepted);
+  const sessions=server.sessions.length;assert.equal((await service.sendDraft(f.mail,{draftId:draft.draftId},ctx)).ok,false);
+  assert.equal(server.sessions.length,sessions);assert.equal(server.receivedCount,accepted);
+ });
+}
