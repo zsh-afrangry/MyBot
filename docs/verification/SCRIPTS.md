@@ -107,8 +107,8 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/reminder-list/store.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 提醒列表领域状态、时间、授权、幂等、防重与固定 runner | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/web-deepseek/log-query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md)、[26](../26_基础能力插件边界整理与检索接入设计.md) | DeepSeek provider调用事件接入只读统一查询，不含query/Key | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/web-deepseek/providers.test.mjs` | 离线 | [26](../26_基础能力插件边界整理与检索接入设计.md) | DeepSeek Search/Fetch provider契约：注入fetch，参数/错误码/取消/并发/URL拒绝/凭据权限/包装/缓存/日志不泄露；无网络请求 | 写临时测试目录 | 否 | header | — |
-| `scripts/fusion/test/backup-layout.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 深层数据库覆盖、依赖工件重用/变化/破损拒绝；仅临时目录 | 写临时测试目录 | 否 | header | — |
-| `scripts/fusion/test/backup-retention.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 临时恢复点验证R1保护、失败/中断/旧证明排除和最近两点保留 | 写临时测试目录 | 否 | header | — |
+| `scripts/fusion/test/backup-layout.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 深层数据库覆盖、工件重用/变化/破损拒绝、Fusion独立范围与旧v3兼容；仅临时目录 | 写临时测试目录 | 否 | header | — |
+| `scripts/fusion/test/backup-retention.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 临时恢复点验证最近两点保留、旧证明拒绝、未完成工件引用保护和破损/缺失/越界拒绝 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/test/documentation-map.test.mjs` | 离线 | [16](../16_验收与测试总表.md) | 文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库 | 写临时测试目录 | 否 | header | `docs/verification/documentation-2026-10-21/README.md` |
 | `scripts/fusion/test/log-query-minimal.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 合成隐私、只读账本、业务失败与预览完整性回归 | 写临时测试目录、只读 | 否 | offline | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `scripts/fusion/test/log-query-views.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 日志查询视图合成数据回归：过滤、调用配对、回合、错误、审计、展开 | 只读 | 否 | offline | — |
@@ -132,7 +132,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/papers/mime-parse.py` | 库 | [22](../22_论文PDF翻译与文件投递.md) | 标准 email 解析器检查完整 SMTP MIME 的正文/附件名/解码字节哈希；只处理测试 stdin | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/dialogue-cases.mjs` | 库 | [23](../23_KnowledgeMap业务能力桥接.md) | 用户七句验收样例与字段期望（纯数据，无生产导入） | 只读 | 否 | header | — |
 | `chatbot/tests/reminder-list/production-guard.mjs` | 库 | [23](../23_KnowledgeMap业务能力桥接.md) | 只读比较生产列表与一次性提案/提醒逻辑数据，不输出私有记录 | 只读 | 否 | header | — |
-| `scripts/fusion/lib/backup-retention.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 只读计算已验证v3点保留清单，拒绝旧证明/未完成/失败点 | 只读 | 否 | header | — |
+| `scripts/fusion/lib/backup-retention.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 只读计算已验证v3点与工件保留清单，保护未完成引用、拒绝破损工件及不安全路径 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/backup-service.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 备份期间停写并恢复服务 | 重启或停服务 | 否 | header | — |
 | `scripts/fusion/lib/documentation-map.mjs` | 库 | [16](../16_验收与测试总表.md) | 只读文档归属、命名分组及维护源码发现；不执行扫描到的文件 | 只读 | 否 | header | `docs/verification/documentation-2026-10-21/README.md` |
 | `scripts/fusion/lib/fresh-id.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 生成不重复的 message id | 只读 | 否 | header | — |
@@ -225,7 +225,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/test-research-cancel.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 研究任务查询与取消 | 真实模型、建/改任务或提醒、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/28-research-cancel.json` |
 | `scripts/fusion/test-research.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 公开论文检索：真实模型 + web_search/web_fetch；无 QQ 输出、无记忆写入 | 真实模型、真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/fusion/15-research.json` |
 | `scripts/fusion/test-service-recovery.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 服务故障注入与恢复；不发 QQ、不调模型 | 重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/35-service-recovery.json` |
-| `scripts/fusion/backup-retention.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 登记成功隔离恢复回执；默认预览，仅--apply淘汰多余已验证v3点，历史项目不自动删除 | 写运行状态 | 是 | header | — |
+| `scripts/fusion/backup-retention.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 登记隔离恢复回执；默认预览，仅--apply淘汰多余已验证v3点及无引用已校验工件，独立项目不自动删除 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/backup-state.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 制作备份；--quiesce 会短暂停写并恢复服务 | 重启或停服务、写运行状态 | 是 | header | — |
 | `scripts/fusion/install-plugins.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 按锁文件安装受控第三方插件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/install-service.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 首次切换 systemd 单元到融合服务 | 重启或停服务 | 是 | header | — |

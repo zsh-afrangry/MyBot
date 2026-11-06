@@ -10,7 +10,8 @@
 //   patches/ uncommitted tracked changes, so the backup is not silently lossy
 //   config/  runtime config + credential plane + systemd units (mode 600)
 //   state/   consistent snapshots of every Fusion SQLite database + channel/agent JSON state
-// KnowledgeMap is an independent service: its database and source are outside this backup.
+// KnowledgeMap and DSH are independent projects: their source, data and installations are outside
+// this backup. Fusion-owned API settings/tokens and coding pilot state are captured.
 //   meta/    git state, service state, versions, sizes
 //   MANIFEST.sha256 over everything
 //
@@ -26,7 +27,7 @@ import {serviceLease,installBackupExitHandlers} from './lib/backup-service.mjs';
 import {captureWorkingTree} from './lib/working-tree-backup.mjs';
 import { REPO_ROOT, STATE_DIR } from './lib/runtime-paths.mjs';
 
-import {BACKUP_ROOT,PILOT_ROOT,DSH_HOME,SDK_ROOT,SKIP_RUNTIME,skippedRuntime,discoverDatabases,ensureArtifact} from './lib/backup-layout.mjs';
+import {BACKUP_ROOT,PILOT_ROOT,SDK_ROOT,SKIP_RUNTIME,skippedRuntime,discoverDatabases,ensureArtifact} from './lib/backup-layout.mjs';
 import {OPENCLAW_RELEASE} from './lib/openclaw-release.mjs';
 const argv = process.argv.slice(2);
 const labelIdx = argv.indexOf('--label');
@@ -75,9 +76,8 @@ if(installed.version!==OPENCLAW_RELEASE.version)throw Error('Installed SDK is no
 const pythonRoot=STATE_DIR+'/venvs/paper-translation';
 const pythonVersion=sh(pythonRoot+'/bin/python',['-c','import platform;print(platform.python_version())']).stdout?.trim();
 if(!/^\d+\.\d+\.\d+$/.test(pythonVersion??''))throw Error('Paper Python environment unavailable');
-const dshVersion=JSON.parse(fs.readFileSync('/opt/deepseek-harness/node_modules/@deepseek-ai/dsh/package.json')).version;
 const artifacts=[];
-for(const [kind,version,source] of [['openclaw',installed.version,SDK_ROOT],['paper-python',pythonVersion,pythonRoot],['dsh',dshVersion,'/opt/deepseek-harness/node_modules']]){
+for(const [kind,version,source] of [['openclaw',installed.version,SDK_ROOT],['paper-python',pythonVersion,pythonRoot]]){
  artifacts.push(ensureArtifact(kind,version,source));log('immutable dependency captured: '+kind+' '+version);await new Promise(setImmediate);
 }
 if(QUIESCE)lease.stop();
@@ -123,6 +123,11 @@ const copies = [
 ];
 if(externalBusiness&&!externalBusiness.tokenCaptured)fail('KnowledgeMap credential','configured token file missing');
 fs.writeFileSync(path.join(dest,'meta/external-business.json'),JSON.stringify(externalBusiness),{mode:0o600});
+const externalServices=[
+ {name:'KnowledgeMap',sourceCaptured:false,databaseCaptured:false,credentialScope:'Fusion API token only'},
+ {name:'DeepSeek Harness',installationCaptured:false,credentialsCaptured:false,interfaceConfigCaptured:true}
+];
+fs.writeFileSync(path.join(dest,'meta/external-services.json'),JSON.stringify(externalServices,null,2)+'\n',{mode:0o600});
 for (const [src, name] of copies) {
   if (fs.existsSync(src)) {
     fs.copyFileSync(src, path.join(CFG, name));
@@ -131,10 +136,7 @@ for (const [src, name] of copies) {
 }
 const unitDir = path.join(CFG, 'systemd');
 fs.mkdirSync(unitDir, { recursive: true, mode: 0o700 });
-for (const src of [
-  ...['kurumi-fusion','snowluma','snowluma-qq','qq-bridge','openclaw-gateway'].map(name=>'/home/afrangry/.config/systemd/user/'+name+'.service'),
-  '/etc/systemd/system/dsh-web.service'
-]) {
+for (const src of ['kurumi-fusion','snowluma','snowluma-qq','qq-bridge','openclaw-gateway'].map(name=>'/home/afrangry/.config/systemd/user/'+name+'.service')) {
   if (fs.existsSync(src)) fs.copyFileSync(src, path.join(unitDir, path.basename(src)));
 }
 log(`config: ${fs.readdirSync(CFG).length} entries + ${fs.readdirSync(unitDir).length} unit(s)`);
@@ -206,11 +208,6 @@ const pilotOut=path.join(dest,'external/pilot');
 fs.mkdirSync(pilotOut,{recursive:true,mode:0o700});
 const pilotCopy=sh('rsync',['-a','--exclude=*.sqlite*','--exclude=*.db*','--exclude=node_modules','--exclude=__pycache__',PILOT_ROOT+'/',pilotOut+'/']);
 if(pilotCopy.status!==0)fail('coding pilot copy','rsync failed');
-const dshFiles=['.credentials.yaml','.anonymous-user-id','profiles/web/cordis.patch.yml','profiles/web/cordis.yml','profiles/web/package.json','profiles/web/pnpm-workspace.yaml','profiles/web/pnpm-lock.yaml'];
-for(const rel of dshFiles){
- const src=path.join(DSH_HOME,rel);if(!fs.existsSync(src))continue;
- const out=path.join(dest,'external/dsh-home',rel);fs.mkdirSync(path.dirname(out),{recursive:true,mode:0o700});fs.copyFileSync(src,out);fs.chmodSync(out,0o600);
-}
 
 // Material that must exist for a restore to be usable. Missing entries are hard failures.
 // Paths are relative to the backup root: database snapshots keep their absolute layout under
@@ -219,7 +216,6 @@ const REQUIRED = [
   ['state/整理记录.md','sole global execution handbook'],
   ['external/pilot/source/.git/HEAD','coding pilot repository'],
   ['state/runtime/'+PILOT_ROOT.replace(/^\//,'')+'/state/coding.sqlite','coding control database'],
-  ['external/dsh-home/.credentials.yaml','current DSH credential plane'],
   ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['personal-reminder-list']?.enabled
     ? [['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminder-list/list.sqlite', 'reminder-list database']] : []),
   ['state/runtime/home/afrangry/.openclaw-fusion/state/openclaw.sqlite', 'core state database'],
@@ -292,9 +288,11 @@ fs.writeFileSync(path.join(dest, 'MANIFEST.sha256'), lines.join('\n') + '\n', { 
 // happens to be present, so a missing required item cannot pass as "all files verified".
 const expected = {
   formatVersion:3,
+  scope:'fusion-only',
   approvedRelease:OPENCLAW_RELEASE,
   artifacts,
-  externalRoots:{pilot:PILOT_ROOT,dshHome:DSH_HOME},
+  externalRoots:{pilot:PILOT_ROOT},
+  externalServices,
   label,
   stamp,
   createdAt: new Date().toISOString(),
@@ -338,7 +336,7 @@ if (failures.length) {
 console.log(
   `backup ok: every required item present (cross-database consistency: ${QUIESCE ? 'quiesced' : 'concurrent — snapshots are per-database consistent only'})`
 );
-if(externalBusiness)console.log('Fusion material only: KnowledgeMap is an independent external service and is not restored.');
+console.log('Fusion material only: independent KnowledgeMap and DSH projects are not captured or restored.');
 fs.unlinkSync(incomplete);
 } finally {
  lease.restore();

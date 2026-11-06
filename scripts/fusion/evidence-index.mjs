@@ -40,12 +40,12 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
-  'scripts/fusion/backup-retention.mjs': ['运维写状态', '登记成功隔离恢复回执；默认预览，仅--apply淘汰多余已验证v3点，历史项目不自动删除', {auth: 1, writesState: 1}, 'header'],
-  'scripts/fusion/lib/backup-retention.mjs': ['库', '只读计算已验证v3点保留清单，拒绝旧证明/未完成/失败点', {readonly: 1}, 'header'],
-  'scripts/fusion/test/backup-retention.test.mjs': ['离线', '临时恢复点验证R1保护、失败/中断/旧证明排除和最近两点保留', {testDir: 1}, 'header'],
+  'scripts/fusion/backup-retention.mjs': ['运维写状态', '登记隔离恢复回执；默认预览，仅--apply淘汰多余已验证v3点及无引用已校验工件，独立项目不自动删除', {auth: 1, writesState: 1}, 'header'],
+  'scripts/fusion/lib/backup-retention.mjs': ['库', '只读计算已验证v3点与工件保留清单，保护未完成引用、拒绝破损工件及不安全路径', {readonly: 1}, 'header'],
+  'scripts/fusion/test/backup-retention.test.mjs': ['离线', '临时恢复点验证最近两点保留、旧证明拒绝、未完成工件引用保护和破损/缺失/越界拒绝', {testDir: 1}, 'header'],
   'scripts/fusion/lib/backup-layout.mjs': ['运维库', '不可变依赖工件与全深度SQLite发现；写统一备份位置', {writesState: 1}, 'header'],
   'scripts/fusion/lib/openclaw-release.mjs': ['库', '读取唯一批准内核版本与Node范围', {readonly: 1}, 'header'],
-  'scripts/fusion/test/backup-layout.test.mjs': ['离线', '深层数据库覆盖、依赖工件重用/变化/破损拒绝；仅临时目录', {testDir: 1}, 'header'],
+  'scripts/fusion/test/backup-layout.test.mjs': ['离线', '深层数据库覆盖、工件重用/变化/破损拒绝、Fusion独立范围与旧v3兼容；仅临时目录', {testDir: 1}, 'header'],
   'chatbot/tests/host-exec/policy.test.mjs': ['离线', '主人原生exec的真实文件写入边界、可信身份/撤权/成员隔离、环境与参数绕过、临时目录符号链接及受管配置回归；仅临时目录', {testDir: 1}, 'header'],
   'chatbot/tests/host-exec/acceptance-host.mjs': ['验收', '真实独立Gateway/QQ插件/原生exec：本地确定性模型与合成OneBot，核对目录/主机查询、实际写入边界、超时、成员拒绝与审计；无真实模型/QQ/DSH或生产写入', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
   'chatbot/scripts/prepare-coding-pilot.mjs': ['维护', '新建无远端合成Git项目和配置审阅草案；不apply、不启停生产服务、不调用模型或QQ', {testDir: 1}, 'header'],

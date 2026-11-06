@@ -4,6 +4,13 @@ export const BACKUP_ROOT='/home/afrangry/kurumi-backups';
 export const PILOT_ROOT='/home/afrangry/.local/share/kurumi-coding-pilot-20261029';
 export const DSH_HOME='/var/lib/dsh/.dsh';
 export const SDK_ROOT='/home/afrangry/.npm-global/lib/node_modules/openclaw';
+// Unscoped v3 points retain their original DSH recovery contract; new points own only Fusion.
+export function artifactKindsForRestore(expected){
+ if(expected?.formatVersion!==3)throw Error('Fusion v3 EXPECTED.json required');
+ if(expected.scope===undefined)return ['openclaw','paper-python','dsh'];
+ if(expected.scope!=='fusion-only')throw Error('Unknown backup scope');
+ return ['openclaw','paper-python'];
+}
 export const SKIP_RUNTIME=new Set(['tmp','plugins','venvs','gateway.log','runtime.log','runtime.1.log','runtime.2.log','logs','gateway-pid.json','paper-acceptance','research-cache','cache']);
 export function skippedRuntime(name){return SKIP_RUNTIME.has(name)||/^openclaw\.json\.bak(?:\.|$)/.test(name)||/\.tmp\.\d+$/.test(name);}
 export function hashFile(file){const h=createHash('sha256'),b=Buffer.alloc(1024*1024),fd=fs.openSync(file,'r');try{let n;while((n=fs.readSync(fd,b,0,b.length,null)))h.update(b.subarray(0,n));}finally{fs.closeSync(fd);}return h.digest('hex');}

@@ -37,7 +37,7 @@ import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
-import {PILOT_ROOT,DSH_HOME,hashFile,treeHash,discoverDatabases} from './lib/backup-layout.mjs';
+import {artifactKindsForRestore,hashFile,treeHash,discoverDatabases} from './lib/backup-layout.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
 import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery} from './lib/recovery-isolation.mjs';
 
@@ -73,7 +73,11 @@ fs.mkdirSync(target, { recursive: true, mode: 0o700 });
 
 const expectedPath = path.join(backup, 'EXPECTED.json');
 const expected = fs.existsSync(expectedPath) ? JSON.parse(fs.readFileSync(expectedPath, 'utf8')) : null;
-if(expected?.formatVersion!==3)throw Error('Fusion v3 EXPECTED.json required; historical material needs its historical verifier');
+const artifactKinds=artifactKindsForRestore(expected);
+if(expected.scope==='fusion-only')check('independent project boundary',
+ !expected.artifacts?.some(a=>a.kind==='dsh')&&!fs.existsSync(path.join(backup,'external/dsh-home'))
+ &&!fs.existsSync(path.join(backup,'config/systemd/dsh-web.service')),
+ 'KnowledgeMap/DSH projects are outside the Fusion recovery scope');
 // --- 1. manifest ----------------------------------------------------------------------
 const manifestPath = path.join(backup, 'MANIFEST.sha256');
 if (fs.existsSync(manifestPath)) {
@@ -258,7 +262,7 @@ try {
 // 6b. Databases back to the paths the runtime expects (strip the absolute-path prefix).
 // The pilot root is external to runtime. Restore it separately; never strip a guessed prefix.
 rsync(path.join(backup,'external/pilot'),path.join(target,'pilot'));
-rsync(path.join(backup,'external/dsh-home'),path.join(target,'dsh-home'));
+if(expected.scope!=='fusion-only')rsync(path.join(backup,'external/dsh-home'),path.join(target,'dsh-home'));
 const dbPlaced = [];
 for (const p of dbs) {
   const original='/'+path.relative(snapshotRoot,p);
@@ -304,7 +308,7 @@ const sdk=path.join(target,'sdk/openclaw');
 const release=adaptSource?JSON.parse(fs.readFileSync(clones.get('kurumi-fusion')+'/config/openclaw-release.json')):expected.approvedRelease;
 if(!skipDeps){
  const destinations={'openclaw':path.dirname(sdk),'paper-python':runtime+'/venvs','dsh':target+'/dsh'};
- for(const kind of Object.keys(destinations)){
+ for(const kind of artifactKinds){
   const rec=kind==='openclaw'&&adaptSdk?JSON.parse(fs.readFileSync(adaptSdk+'.json')):expected.artifacts?.find(a=>a.kind===kind);
   if(!rec||path.basename(rec.name)!==rec.name||!rec.name.endsWith('.tar.gz'))throw Error('Required immutable dependency missing');
   const archive=kind==='openclaw'&&adaptSdk?path.resolve(adaptSdk):path.join(path.dirname(backup),'artifacts',rec.name);
@@ -372,7 +376,8 @@ if(cfg&&restoredRepo){
  assertNoProduction(cfg);assertNoProduction(registry);
  fs.writeFileSync(runtime+'/projects.json',JSON.stringify(registry,null,2),{mode:0o600});
  remapLinks(runtime,runtime,restoredRepo);remapLinks(restoredRepo,runtime,restoredRepo);remapLinks(target+'/pilot',runtime,restoredRepo);
- // Credential material is captured for disaster recovery but disabled before any test execution.
+ // Legacy DSH material is disabled; Fusion-only points use an empty placeholder, never host auth.
+ fs.mkdirSync(target+'/dsh-home',{recursive:true,mode:0o700});
  fs.writeFileSync(target+'/dsh-home/.credentials.yaml','{}\n',{mode:0o600});
  for(const root of [target+'/pilot/state/backend/dsh-home',target+'/dsh-home/profiles/web']){
   if(!fs.existsSync(root))continue;
