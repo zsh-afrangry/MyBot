@@ -121,7 +121,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/acceptance/domain-fixture.mjs` | 库 | [16](../16_验收与测试总表.md) | 旧验收领域夹具与工具定义 | 只读 | 否 | code | — |
 | `chatbot/tests/acceptance/host-driver.mjs` | 库 | [16](../16_验收与测试总表.md) | 旧 harness Host 驱动，只开测试状态目录 | 写临时测试目录、只读 | 否 | code | — |
 | `chatbot/tests/acceptance/model-driver.mjs` | 库 | [16](../16_验收与测试总表.md) | 旧 harness 模型驱动（构造模型客户端，显式读取 docs/archive/chatbot-AGENTS.md） | 真实模型 | 否 | code | — |
-| `chatbot/tests/acceptance/retrieval-config.mjs` | 库 | [16](../16_验收与测试总表.md) | 旧验收检索输出预算配置 | 只读 | 否 | header | — |
 | `chatbot/tests/access-control/fixtures.mjs` | 库 | [24](../24_统一身份与权限管理.md) | 构造合成QQ身份/显式权限与可信上下文，不导入生产名单 | 只读 | 否 | header | — |
 | `chatbot/tests/coding/acp-peer.mjs` | 库 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 离线测试子进程ACP对端与自有心跳进程，仅由协议测试启动，无模型或QQ | 重启或停服务、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/coding/fixtures.mjs` | 库 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 合成身份、临时Git及可注入ACP/投递夹具，不读取生产身份或凭据 | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
@@ -170,8 +169,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/acceptance/run-profile-geo.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 真实 GeoAPI + 隔离 Profile 库；无生产确认、无 QQ 投递 | 真实外部API、写临时测试目录 | 是 | header | `docs/verification/profile-geo-domain-acceptance.json` |
 | `chatbot/tests/acceptance/run-real-cron.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 隔离 Gateway 的真实 Cron 存储与确认钩子；确定性认知，无模型、无 QQ 网络 | 建/改任务或提醒、写临时测试目录 | 是 | boundary | — |
 | `chatbot/tests/acceptance/run-reminder-expiry.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 真实主模型有界循环 + 提醒提案工具 + 隔离库；非生产 Agent/QQ 验收 | 真实模型、建/改任务或提醒、写临时测试目录 | 是 | boundary | — |
-| `chatbot/tests/acceptance/run-retrieval-host.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 全新 Host 状态 + 原生工具 + 真实 API；无 QQ 发送、不碰生产库 | 真实模型、真实外部API、写临时测试目录 | 是 | boundary | — |
-| `chatbot/tests/acceptance/run-retrieval-smoke.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 检索注册冒烟：不启动 Gateway/频道，凭据为合成值 | 真实外部API、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/acceptance/run-retrieval-t2.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 真实 Tavily API（生产凭据）；无模型、无 Host、无 QQ 投递、不写生产库 | 真实外部API | 是 | boundary | — |
 | `chatbot/tests/acceptance/run-retrieval-t3.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 显式读取归档提示词；真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置 | 真实模型、真实外部API | 是 | boundary | — |
 | `chatbot/tests/acceptance/run.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 旧 harness 总入口：真实 Host 调度 + 合成 QQ 输入 + 确定性认知 + 假调度 | 写仓库内文件、写临时测试目录 | 是 | boundary | — |

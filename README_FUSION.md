@@ -1,47 +1,21 @@
 # Kurumi 融合助手
 
-OpenClaw 统一会话、后台任务与提醒；Kurumi 保留人格及个人领域能力；SnowLuma 提供 QQ 传输。
-**开发在 `/home/afrangry/kurumi-fusion`，运行数据在 `/home/afrangry/.openclaw-fusion`。**
+全局目标、待办与继续位置先读唯一执行手册 [整理记录.md](/home/afrangry/.openclaw-fusion/整理记录.md)。本文件只提供项目总览，功能规则从 [docs/README.md](docs/README.md) 进入。
 
-> **本文件是给人和工具的项目总览，不是规则正文。** 规则与操作细节只在 [`docs/`](docs/README.md) 维护，
-> 避免两处各写一份、随后互相漂移。改了命令、路径或契约时，改 `docs/` 对应文档，这里只保留指针。
+OpenClaw 提供会话和宿主能力，自研插件提供 Kurumi 个人领域功能，SnowLuma/QQ 提供传输。
 
-## 只需要记住这五条
+| 职责 | 位置 |
+| --- | --- |
+| 唯一日常源码仓库 | `/home/afrangry/kurumi-fusion`，main单线维护 |
+| 唯一私有运行目录 | `/home/afrangry/.openclaw-fusion`，身份、凭据、状态和人格投影 |
+| 统一恢复材料 | `/home/afrangry/kurumi-backups`，最近两个已验证恢复点、共享工件及必要离线源码历史 |
+| 独立业务依赖 | KnowledgeMap；不合入本仓库，不由Fusion恢复其源码或数据库 |
+| 受控编码试点 | 独立dsh-pilot窄根；保留执行所需Git，不能扩大为Fusion主仓库写权限 |
 
-| 用途 | 位置 | 规则在哪 |
-|---|---|---|
-| 开发新系统 | `/home/afrangry/kurumi-fusion` → 远端 `MyBot`（`git@github.com:zsh-afrangry/MyBot.git`） | [文档 12](docs/12_目录资产与Git备份整理.md) |
-| 新系统运行数据 | `/home/afrangry/.openclaw-fusion`（配置、凭据、会话、记忆、数据库、提醒、任务） | [config/README.md](config/README.md) |
-| 旧 bridge 二次开发 | 封存分支 `personal/main` + 标签 `seal/qq-bridge-personal-2026-10-05` | [旧系统回退](docs/12_目录资产与Git备份整理.md#旧系统回退) |
-| 恢复资料 | `/home/afrangry/kurumi-backups` | [文档 16](docs/16_验收与测试总表.md) |
-| 官方组件 | SnowLuma、DSH、OpenClaw 按固定版本与升级流程管理，不手工改动安装目录 | [依赖与升级恢复](docs/9_QQ融合助手架构与开发计划.md#固定依赖与升级恢复) |
+旧后台源码副本、旧功能工作树和 `kurumi-archive` 已退役。独有设计已收录、未上线修复有冻结标签；状态见全局手册。源码版本可本地追溯，远端写入另需明确授权。
 
-旧目录已移出活动位置的统一放在 `/home/afrangry/kurumi-archive`（详见其 `README.md`）。
+修改行为先改 `config/`、`roles/` 或插件源码，再按 [配置契约](config/README.md) 同步。凭据和聊天不进入源码Git。官方内核按 `config/openclaw-release.json` 固定，先隔离验证再切换。
 
-## MyBot 分支
+只服务显式登记的QQ私聊身份，成员仅有登记能力并回传自身；群聊和 `testIngress` 关闭。个人业务、主机执行与真实外发按 [文档24](docs/24_统一身份与权限管理.md) 和 [文档28](docs/28_本机编码工具委托与实验任务.md) 的边界执行。
 
-| 分支 | 内容 |
-|---|---|
-| `main` | 当前融合项目（本仓库） |
-
-旧 `.openclaw` 源码终点`f8319c1`已包含在`main`历史中；原`archive/legacy-openclaw`分支随本轮收拢清理，旧原件与恢复资料继续保留。分支整理的范围、检查和实际执行结果见[本轮记录](docs/verification/git-consolidation-2026-10-24/README.md)。
-
-## 四条边界（细节全在文档里）
-
-1. **仓库是意图，运行目录是事实。** 改行为改仓库再同步；密钥只改运行目录。命令与保证见
-   [配置契约](config/README.md)，不要按记忆里的旧命令操作。
-2. **本文件不重复自检、备份与恢复命令。** 四项自检与它们的证明范围见
-   [文档 16「日常自检」](docs/16_验收与测试总表.md#日常自检)，
-   备份、`--quiesce` 与隔离恢复的边界见[文档 16](docs/16_验收与测试总表.md)。
-3. **只服务显式登记的QQ私聊身份，回复与论文文件回传各自本人**；成员能力与隔离按[文档24](docs/24_统一身份与权限管理.md)，个人业务仍仅主人。群聊关闭，合成验收入口（`testIngress`）保持关闭；测试外发另须明确授权。
-4. **`scripts/fusion/test-*.mjs` 是验收脚本**，会真实发本人 QQ、创建任务或重启服务，不能当离线测试批量运行；
-   运行前取得授权、结束后正常取消任务并检查真实终态。**不要删任务账本**——它是投递对账依据。
-   脚本清单、副作用与授权要求见 [`docs/verification/SCRIPTS.md`](docs/verification/SCRIPTS.md)。
-   统一启停脚本 `scripts/fusion/launchers/{Start,Stop}-DSH.sh` 需要 sudo 密码，只启停 DSH 与 Fusion，
-   只检查并保留 SnowLuma/QQ 传输；请在合适时机手动执行。
-
-## 文档
-
-- [**文档入口（唯一阅读入口）**](docs/README.md)
-- [脚本与证据索引](docs/verification/SCRIPTS.md)
-- [验收与测试总表（权威入口）](docs/16_验收与测试总表.md)：验收结论、未验收项与批准延期项
+日常四项自检见 [文档16](docs/16_验收与测试总表.md#日常自检)，成套备份/恢复见 [文档12](docs/12_目录资产与Git备份整理.md)。脚本副作用见 [SCRIPTS.md](docs/verification/SCRIPTS.md)：真实模型、QQ、任务和启停脚本不能当离线测试批量运行。

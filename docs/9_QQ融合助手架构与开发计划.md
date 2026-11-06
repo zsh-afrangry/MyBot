@@ -67,13 +67,12 @@ flowchart TD
 | --- | --- |
 | 源码主仓库 | `/home/afrangry/kurumi-fusion`，保存源码与配置意图；Git 状态按[资产文档](12_目录资产与Git备份整理.md#git-与实时状态查询)实查 |
 | 私有运行状态 | `/home/afrangry/.openclaw-fusion`，凭据、会话、数据库和任务状态 |
-| 旧系统 A | `/home/afrangry/kurumi-archive/legacy-openclaw`，只作为回退材料 |
-| 旧系统 B | `/home/afrangry/kurumi-archive/qq-bridge`，配合 SnowLuma 和 DSH |
+| 旧系统历史 | 原A/B系统及物理归档已退役，必要独有源码历史保留在私密备份根history/ |
 | 共享业务 | `/home/afrangry/repository` 的 KnowledgeMap MySQL；`knowledgemap-assistant.service` 提供 loopback 3086 API |
 | QQ 传输 | `/home/afrangry/snowluma` 的受管服务 |
 | 恢复材料 | `/home/afrangry/kurumi-backups` |
 
-融合助手不依赖 `/home/afrangry/.openclaw`。旧系统封存与恢复统一见[资产与回退手册](12_目录资产与Git备份整理.md#旧系统回退)，不能直接从归档路径启动。
+融合助手不依赖 `/home/afrangry/.openclaw`。当前恢复与旧系统退役边界见[资产与回退手册](12_目录资产与Git备份整理.md#旧系统回退)，不再承诺旧A/B整套运行恢复。
 
 ## 能力边界
 

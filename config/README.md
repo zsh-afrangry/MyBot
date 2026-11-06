@@ -156,7 +156,7 @@ OpenClaw 每回合重新核对 bootstrap 文件；文档25的真实隔离宿主�
 ```bash
 node chatbot/scripts/memory-migrate.mjs  # 只读预览
 node chatbot/scripts/memory-migrate.mjs --apply \
-  --backup-root /home/afrangry/.openclaw-fusion/migration
+  --backup-root /home/afrangry/kurumi-backups/.working/memory-migration
 ```
 
 迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。开发记忆与原迁移副本已按2026-11-07全局清理授权移除；当前数据与恢复点以全局手册为准。记忆生命周期与遗忘边界见[文档25](../docs/25_人格、记忆与会话连续性.md#会话生命周期)。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。

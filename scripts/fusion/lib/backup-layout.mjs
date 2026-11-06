@@ -5,7 +5,7 @@ export const PILOT_ROOT='/home/afrangry/.local/share/kurumi-coding-pilot-2026102
 export const DSH_HOME='/var/lib/dsh/.dsh';
 export const SDK_ROOT='/home/afrangry/.npm-global/lib/node_modules/openclaw';
 export const SKIP_RUNTIME=new Set(['tmp','plugins','venvs','gateway.log','runtime.log','runtime.1.log','runtime.2.log','logs','gateway-pid.json','paper-acceptance','research-cache','cache']);
-export function skippedRuntime(name){return SKIP_RUNTIME.has(name)||name.startsWith('openclaw.json.bak.')||/\.tmp\.\d+$/.test(name);}
+export function skippedRuntime(name){return SKIP_RUNTIME.has(name)||/^openclaw\.json\.bak(?:\.|$)/.test(name)||/\.tmp\.\d+$/.test(name);}
 export function hashFile(file){const h=createHash('sha256'),b=Buffer.alloc(1024*1024),fd=fs.openSync(file,'r');try{let n;while((n=fs.readSync(fd,b,0,b.length,null)))h.update(b.subarray(0,n));}finally{fs.closeSync(fd);}return h.digest('hex');}
 export function treeHash(root){const h=createHash('sha256');function walk(dir,base=''){for(const e of fs.readdirSync(dir,{withFileTypes:true}).sort((a,b)=>a.name.localeCompare(b.name))){if(e.name==='__pycache__')continue;const rel=base?base+'/'+e.name:e.name,f=path.join(dir,e.name);if(e.isDirectory())walk(f,rel);else if(e.isSymbolicLink())h.update(JSON.stringify([rel,'link',fs.readlinkSync(f)])+'\n');else if(e.isFile())h.update(JSON.stringify([rel,fs.statSync(f).mode&0o777,hashFile(f)])+'\n');else throw Error('Unsupported artifact entry');}}walk(root);return h.digest('hex');}
 export function ensureArtifact(kind,version,source,store=path.join(BACKUP_ROOT,'artifacts')){

@@ -217,7 +217,6 @@ const TABLE = {
   'chatbot/tests/acceptance/domain-fixture.mjs': ['库', '旧验收领域夹具与工具定义', {readonly: 1}, 'code'],
   'chatbot/tests/acceptance/host-driver.mjs': ['库', '旧 harness Host 驱动，只开测试状态目录', {readonly: 1, testDir: 1}, 'code'],
   'chatbot/tests/acceptance/model-driver.mjs': ['库', '旧 harness 模型驱动（构造模型客户端，显式读取 docs/archive/chatbot-AGENTS.md）', {model: 1}, 'code'],
-  'chatbot/tests/acceptance/retrieval-config.mjs': ['库', '旧验收检索输出预算配置', {readonly: 1}, 'header'],
 
   // ---- 写运行状态的运维工具：需操作者明确执行 ----
   'scripts/fusion/backup-state.mjs': ['运维写状态', '制作备份；--quiesce 会短暂停写并恢复服务', {auth: 1, writesState: 1, restart: 1}, 'header'],
@@ -266,11 +265,9 @@ const TABLE = {
   'chatbot/tests/acceptance/run-reminder-expiry.mjs': ['遗留验收', '真实主模型有界循环 + 提醒提案工具 + 隔离库；非生产 Agent/QQ 验收', {auth: 1, model: 1, task: 1, testDir: 1}, 'boundary'],
   'chatbot/tests/acceptance/run-retrieval-t2.mjs': ['遗留验收', '真实 Tavily API（生产凭据）；无模型、无 Host、无 QQ 投递、不写生产库', {auth: 1, externalApi: 1}, 'boundary'],
   'chatbot/tests/acceptance/run-retrieval-t3.mjs': ['遗留验收', '显式读取归档提示词；真实模型 + 真实 Tavily + 真实 HTTP；无 Host、无 QQ 投递、不改生产配置', {auth: 1, model: 1, externalApi: 1}, 'boundary'],
-  'chatbot/tests/acceptance/run-retrieval-host.mjs': ['遗留验收', '全新 Host 状态 + 原生工具 + 真实 API；无 QQ 发送、不碰生产库', {auth: 1, model: 1, externalApi: 1, testDir: 1}, 'boundary'],
   'chatbot/tests/acceptance/run-fallback-failover.mjs': ['遗留验收', '主模型指向必然失败地址、fallback 用真实 deepseek', {auth: 1, model: 1, testDir: 1}, 'header'],
   'chatbot/tests/acceptance/run-profile-geo.mjs': ['遗留验收', '真实 GeoAPI + 隔离 Profile 库；无生产确认、无 QQ 投递', {auth: 1, externalApi: 1, testDir: 1}, 'header'],
   'chatbot/tests/acceptance/probe-profile-geo.py': ['遗留验收', 'GeoAPI provider 探测', {auth: 1, externalApi: 1, writesRepo: 1}, 'code'],
-  'chatbot/tests/acceptance/run-retrieval-smoke.mjs': ['遗留验收', '检索注册冒烟：不启动 Gateway/频道，凭据为合成值', {auth: 1, externalApi: 1, testDir: 1}, 'header'],
   'chatbot/tests/acceptance/verify-restart.mjs': ['遗留验收', '在新进程里重开测试目录并验证幂等；不重启任何服务', {readonly: 1, testDir: 1}, 'header'],
 };
 
