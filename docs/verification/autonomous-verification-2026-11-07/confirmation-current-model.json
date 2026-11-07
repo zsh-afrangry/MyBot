@@ -1,0 +1,142 @@
+{
+  "at": "2026-11-07T02:14:35.512Z",
+  "boundary": "Real isolated Gateway, actual configured official model and actual business tools/hooks/storage. Synthetic owner/messages and loopback QQ receipts only; no real QQ/SMTP or production write/restart.",
+  "cases": [
+    {
+      "label": "model-single-preview",
+      "passed": true,
+      "requests": 3,
+      "receiptCount": 1
+    },
+    {
+      "label": "model-question-is-not-assent",
+      "passed": true,
+      "requests": 1,
+      "receiptCount": 1
+    },
+    {
+      "label": "model-next-turn-single-assent",
+      "passed": true,
+      "requests": 5,
+      "receiptCount": 1
+    },
+    {
+      "label": "model-two-previews",
+      "passed": true,
+      "requests": 2,
+      "receiptCount": 1
+    },
+    {
+      "label": "model-ambiguous-assent",
+      "passed": true,
+      "requests": 1,
+      "receiptCount": 2
+    },
+    {
+      "label": "model-explicit-batch",
+      "passed": true,
+      "requests": 4,
+      "receiptCount": 1
+    },
+    {
+      "label": "model-change-baseline",
+      "passed": true,
+      "requests": 2,
+      "receiptCount": 1
+    },
+    {
+      "label": "model-change-needs-new-preview",
+      "passed": true,
+      "requests": 2,
+      "receiptCount": 1
+    },
+    {
+      "label": "model-negative-is-not-assent",
+      "passed": true,
+      "requests": 1,
+      "receiptCount": 2
+    }
+  ],
+  "requests": 21,
+  "primaryModel": "deepseek/deepseek-flash",
+  "modelCalls": [
+    {
+      "name": "tool_describe",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "tool_describe",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "tool_describe",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": "list",
+      "domain": "personal_reminder"
+    },
+    {
+      "name": "dispatch_action",
+      "action": "confirm",
+      "domain": "personal_reminder"
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": "list",
+      "domain": "personal_reminder"
+    },
+    {
+      "name": "dispatch_action",
+      "action": "confirm",
+      "domain": "personal_reminder"
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    },
+    {
+      "name": "dispatch_action",
+      "action": null,
+      "domain": null
+    }
+  ],
+  "passed": true,
+  "childStopped": true,
+  "finishedAt": "2026-11-07T02:15:23.910Z"
+}

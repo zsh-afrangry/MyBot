@@ -89,7 +89,7 @@ const TABLE = {
   'chatbot/plugins/personal-confirmation/src/runtime.test.ts': ['离线', '当前QQ原文与实际run/session/toolCall绑定、嵌套结果、冻结回复、同回合及失效拒绝', {testDir: 1}, 'code'],
   'chatbot/plugins/kurumi-qq/test/confirmation-receipts.test.js': ['离线', '真实loopback HTTP分段发送的全量/部分失败回执与无回执捕获；预览证明不签发授权', {testDir: 1}, 'header'],
   'chatbot/packages/personal-domains/src/test-fixtures.ts': ['库', '默认领域的离线QWeather/GeoAPI数据夹具', {readonly: 1}, 'code'],
-  'chatbot/tests/backend-boundaries/acceptance-natural-confirmation-host.mjs': ['验收', '真实隔离Gateway自然确认钩子/实际工具/SQLite/Cron及模拟QQ回执；确定性模型，无真实模型API、QQ、SMTP或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
+  'chatbot/tests/backend-boundaries/acceptance-natural-confirmation-host.mjs': ['验收', '真实隔离Gateway自然确认钩子/工具/SQLite/Cron与模拟QQ回执；默认确定性，显式--model用当前官方主模型，均无真实QQ/SMTP或生产写入', {restart: 1, testDir: 1, writesRepo: 1,model:1}, 'boundary'],
   'chatbot/tests/backend-boundaries/natural-confirmation.test.mjs': ['离线', '实际领域Store自然确认/提交/单次消费、当前消息撤销与邮件取消；临时SQLite，调度器为记录器', {testDir: 1}, 'header'],
   'chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs': ['验收', '真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入', {restart: 1, testDir: 1, writesRepo: 1}, 'boundary'],
   'chatbot/scripts/build-personal-plugins.mjs': ['构建', '构建共享领域TypeScript与版本化兼容CLI，仅写忽略的dist目录，无API/数据库/服务操作', {writesRepo: 1}, 'header'],

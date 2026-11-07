@@ -1,5 +1,5 @@
 // Real isolated Gateway, typed hooks, deferred tools, SQLite and loopback OneBot.
-// Cognition is deterministic. No model API, real QQ/SMTP or production state writes.
+// Default cognition is deterministic. Explicit --model uses the configured official model; still no real QQ/SMTP or production writes.
 // Requires a new absolute --out evidence file; failed fixtures stay in /tmp for diagnosis.
 import fs from 'node:fs';
 import http from 'node:http';
@@ -17,12 +17,23 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import assert from 'node:assert/strict';
 
-const progress=process.argv.includes('--progress');
+const progress=process.argv.includes('--progress'),realModel=process.argv.includes('--model');
+assert(!(progress&&realModel),'Choose deterministic --progress or explicit --model');
+let upstream;
+if(realModel){
+ const source=JSON.parse(fs.readFileSync(new URL('../../../config/runtime.config.json',import.meta.url)));
+ const primary=source.agents.entries.main.model?.primary??source.agents.defaults.model.primary;const [providerId,modelId]=primary.split('/'),provider=source.models.providers[providerId];
+ const privateEnv=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
+ assert.equal(new URL(provider.baseUrl).hostname,'api.deepseek.com');const key=privateEnv[provider.apiKey?.id];assert(key);
+ upstream={modelId,primary,url:provider.baseUrl.replace(/\/$/,'')+'/chat/completions',key};
+}
 const out=process.argv[process.argv.indexOf('--out')+1];
 if(!process.argv.includes('--out')||!path.isAbsolute(out??'')||fs.existsSync(out))throw Error('Require a new absolute --out');
 const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-natural-host-'));
 const owner='100001',bot='100002',token=randomBytes(24).toString('hex'),sends=[];
-const report={at:new Date().toISOString(),boundary:'Real isolated OpenClaw hooks, tools, domain storage, Cron and loopback QQ HTTP receipts. Deterministic cognition; no model provider or QQ network; no SMTP, production writes or production restart.',cases:[],requests:0};
+const report={at:new Date().toISOString(),boundary:'Real isolated OpenClaw hooks/tools/domain storage/Cron and loopback QQ HTTP receipts. Default deterministic cognition; explicit --model uses the real configured model (official provider). No real QQ/SMTP, production writes or production restart.',cases:[],requests:0};
+if(realModel){report.boundary='Real isolated Gateway, actual configured official model and actual business tools/hooks/storage. Synthetic owner/messages and loopback QQ receipts only; no real QQ/SMTP or production write/restart.';report.primaryModel=upstream.primary;}
+const seenModelCalls=new Set();
 let active,sequence=100,child;
 const dbfile=path.join(root,'state/personal-reminders/reminders.sqlite');
 function query(sql,...args){const db=new DatabaseSync(dbfile,{readOnly:true});try{return db.prepare(sql).all(...args);}finally{db.close();}}
@@ -34,6 +45,13 @@ const model=http.createServer(async(req,res)=>{
  try{
   assert(active);assert(++report.requests<=150,'request budget');
   let raw='';for await(const c of req)raw+=c;const body=JSON.parse(raw);
+  if(realModel){
+   assert(report.requests<=50,'real model request budget');
+   for(const m of body.messages??[])for(const c of m.tool_calls??[]){if(seenModelCalls.has(c.id))continue;seenModelCalls.add(c.id);let a;try{a=JSON.parse(c.function.arguments);}catch{a={};}report.modelCalls??=[];report.modelCalls.push({name:c.function.name,action:a.action??a.args?.action??null,domain:a.domain??a.args?.domain??null});}
+   const response=await fetch(upstream.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+upstream.key},signal:AbortSignal.timeout(60000),body:JSON.stringify({...body,model:upstream.modelId,max_tokens:2000,temperature:0})});
+   if(!response.ok)throw Error('Official model HTTP '+response.status);
+   res.writeHead(200,{'Content-Type':response.headers.get('content-type')??'application/json'});for await(const chunk of response.body)res.write(chunk);res.end();return;
+  }
   // Model fixture transcripts are synthetic, retained only on a failed local fixture.
   fs.appendFileSync(path.join(root,'model-fixture.jsonl'),JSON.stringify(body)+'\n',{mode:0o600});
   const all=JSON.stringify(body.messages);assert(all.includes('KURUMI_CONFIRMATION_CURRENT_USER'),'missing trusted current user prompt');
@@ -61,7 +79,7 @@ const onebot=http.createServer(async(req,res)=>{
 await new Promise(r=>onebot.listen(0,'127.0.0.1',r));const ws=new WebSocketServer({server:onebot});
 const probe=net.createServer();probe.listen(0,'127.0.0.1');await once(probe,'listening');const port=probe.address().port;await new Promise(r=>probe.close(r));
 for(const dir of ['workspace','channel','media'])fs.mkdirSync(path.join(root,dir));
-fs.writeFileSync(path.join(root,'workspace/AGENTS.md'),'Use the registered typed business tools.');
+fs.writeFileSync(path.join(root,'workspace/AGENTS.md'),realModel?fs.readFileSync(path.join(repo,'scripts/fusion/templates/AGENTS.md'),'utf8'):'Use the registered typed business tools.');
 for(const file of ['http-token','ws-token'])fs.writeFileSync(path.join(root,file),token,{mode:0o600});
 const ids=['kurumi-qq','personal-reminders','personal-confirmation'];
 const tools=['personal_confirmation','personal_reminder_propose','personal_reminder_commit'];
@@ -71,7 +89,7 @@ const cfg=compileAccessConfig({
  agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'}},entries:{main:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},tools:{profile:'full',allow:tools,deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
  channels:{'kurumi-qq':{enabled:true,httpUrl:`http://127.0.0.1:${onebot.address().port}`,wsUrl:`ws://127.0.0.1:${onebot.address().port}`,httpTokenFile:path.join(root,'http-token'),wsTokenFile:path.join(root,'ws-token'),stateDir:path.join(root,'channel'),mediaRoot:path.join(root,'media'),testIngress:true,dailySendLimit:100,segmentDelayMs:0}},
  plugins:{allow:ids,load:{paths:ids.map(id=>path.join(repo,'chatbot/plugins',id))},entries:Object.fromEntries(ids.map(id=>[id,{enabled:true,...(id==='personal-confirmation'?{hooks:{allowConversationAccess:true}}:{}),...(id==='personal-reminders'?{config:{reminderBackend:'native-service',reminderRunnerRoot:path.join(repo,'chatbot/plugins/personal-reminders')}}:{})}])),slots:{memory:'none'}},
- session:{dmScope:'per-channel-peer'},cron:{enabled:false},logging:{file:path.join(root,'runtime.log')},tools:{deny:['exec','process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},
+ session:{dmScope:'per-channel-peer'},cron:{enabled:false},logging:{file:path.join(root,'runtime.log')},tools:{...(realModel?{codeMode:false}:{}),deny:['exec','process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},
 },ownerPolicy(owner));
 fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(cfg),{mode:0o600});
 const fd=fs.openSync(path.join(root,'gateway.log'),'w',0o600);
@@ -80,10 +98,27 @@ const call=(method,params={},timeout=60000)=>callGatewayFromCli(method,{url:`ws:
 async function turn(label,text,steps,verify){active={label,steps,next:0,discovered:false};const start=sends.length;
  const result=await call('kurumi-qq.testInbound',{event:{post_type:'message',message_type:'private',self_id:Number(bot),user_id:Number(owner),message_id:++sequence,time:Math.floor(Date.now()/1000),message:[{type:'text',data:{text}}]}});
  assert(!report.modelError,report.modelError);assert(result.ok);assert.equal(active.next,steps.length);assert(!active.expected,'last tool result was not observed');await verify?.(sends.slice(start));report.cases.push({label,passed:true,toolCalls:steps.length,receiptCount:sends.length-start});console.log(JSON.stringify({case:label,passed:true}));}
+async function actualTurn(label,text,verify){
+ active={label};const start=sends.length,requests=report.requests;const result=await call('kurumi-qq.testInbound',{event:{post_type:'message',message_type:'private',self_id:Number(bot),user_id:Number(owner),message_id:++sequence,time:Math.floor(Date.now()/1000),message:[{type:'text',data:{text}}]}},180000);
+ assert(!report.modelError,report.modelError);assert(result.ok);await verify(sends.slice(start));report.cases.push({label,passed:true,requests:report.requests-requests,receiptCount:sends.length-start});console.log(JSON.stringify({case:label,passed:true}));
+}
+const count=(table,where='1')=>query('SELECT COUNT(*) n FROM '+table+' WHERE '+where)[0].n;
+async function actualCases(){
+ await actualTurn('model-single-preview','请帮我创建一个一次性提醒：2026年11月30日晚上八点，提醒我做合成验收甲。先给预览，不要直接提交。',sent=>{assert.equal(count('confirmation_proposals'),1);assert.equal(count('approval_grants'),0);assert.equal(count('confirmation_previews','presented_at_utc IS NOT NULL'),1);assert(JSON.stringify(sent).includes('合成验收甲'));});
+ await actualTurn('model-question-is-not-assent','你刚才说的确认是指什么？我只是问一下。',()=>{assert.equal(count('approval_grants'),0);assert.equal(count('confirmation_proposals',"status='committed'"),0);});
+ await actualTurn('model-next-turn-single-assent','确认。',()=>{assert.equal(count('confirmation_proposals',"status='committed'"),1);assert.equal(count('approval_grants','consumed_at_utc IS NOT NULL'),1);});
+ await actualTurn('model-two-previews','再创建两个一次性提醒：2026年11月30日晚上九点做合成验收乙，晚上十点做合成验收丙。先给这两项的预览。',sent=>{assert.equal(count('confirmation_proposals'),3);assert.equal(count('confirmation_proposals',"status='committed'"),1);assert(JSON.stringify(sent).includes('合成验收乙'));assert(JSON.stringify(sent).includes('合成验收丙'));});
+ await actualTurn('model-ambiguous-assent','确认。',()=>{assert.equal(count('confirmation_proposals',"status='committed'"),1);assert.equal(count('approval_grants'),1);});
+ await actualTurn('model-explicit-batch','刚才预览的合成验收乙和合成验收丙，这两项都确认。',()=>{assert.equal(count('confirmation_proposals',"status='committed'"),3);assert.equal(count('approval_grants','consumed_at_utc IS NOT NULL'),3);});
+ await actualTurn('model-change-baseline','创建一次性提醒：2026年11月30日晚上七点做合成验收丁，先给预览。',()=>{assert.equal(count('confirmation_proposals'),4);assert.equal(count('confirmation_proposals',"status='committed'"),3);});
+ await actualTurn('model-change-needs-new-preview','确认，不过把合成验收丁改到晚上七点半。',()=>{assert.equal(count('confirmation_proposals',"status='committed'"),3);assert.equal(count('approval_grants'),3);assert(count('confirmation_proposals')>=5);});
+ await actualTurn('model-negative-is-not-assent','先别执行，我还没有确认。',()=>{assert.equal(count('confirmation_proposals',"status='committed'"),3);assert.equal(count('approval_grants'),3);});
+}
 const propose=content=>['personal_reminder_propose',{schema_version:1,request:{kind:'reminder.create',content,schedule:{timezone:'Asia/Shanghai',local_date_time:'2026-11-30T20:00'}}},{ok:true}];
 const confirmation=(expected={ok:true},i=-1)=>['personal_confirmation',()=>({action:'confirm',...select(i)}),expected];
 try{
  let ready=false;for(let n=0;n<100;n++){try{await call('health',{},1000);ready=true;break;}catch{if(child.exitCode!==null)throw Error('isolated gateway exited');await new Promise(r=>setTimeout(r,300));}}assert(ready,'isolated gateway readiness');
+ if(realModel){await actualCases();report.passed=true;}else{
  await turn('same-message-cannot-confirm','生成一个测试提醒并直接确认',[propose('宿主测试甲'),confirmation({ok:false,code:'proposal_not_presented'})],sent=>{
   assert(sent.length>0);assert(JSON.stringify(sent).includes('模型自然说明'));assert(query('SELECT presented_at_utc FROM confirmation_previews')[0].presented_at_utc);assert.equal(query('SELECT * FROM approval_grants').length,0);
  });
@@ -115,6 +150,7 @@ try{
  ],()=>{assert.equal(query('SELECT status FROM confirmation_proposals WHERE proposal_id=?',select(1).proposalId)[0].status,'committed');
   assert.equal(query('SELECT status FROM confirmation_proposals WHERE proposal_id=?',select(-1).proposalId)[0].status,'pending');});
  assert.equal(query('SELECT * FROM approval_grants').length,5);report.progressRequested=progress;report.progressObserved=sends.some(s=>JSON.stringify(s).includes('我先核对已有信息'));if(progress)assert(report.progressObserved,'Explicit assistant progress must be visible');report.passed=true;
+ }
 }catch(error){report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;}
 finally{
  if(child.exitCode===null){child.kill('SIGTERM');let timer;await Promise.race([once(child,'exit'),new Promise(r=>{timer=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch{}r();},10000);})]);clearTimeout(timer);}

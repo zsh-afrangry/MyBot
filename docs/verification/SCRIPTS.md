@@ -19,6 +19,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 更新表格：运行 `node scripts/fusion/evidence-index.mjs --markdown`，只替换下方生成标记之间的内容，再执行 `--check-markdown`；不得手改生成表补文档/证据链接。新增脚本需登记分类和归属，新增证据组需登记元数据与INDEX；已登记证据目录中的回执继承目录归属。
 
 <!-- BEGIN GENERATED SCRIPT INDEX -->
+
 | 脚本 | 分组 | 归属文档 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `chatbot/packages/confirmation-core/src/confirmation.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认核心：提案校验、TTL、幂等与 grant 消费 | 只读 | 否 | offline | — |
@@ -200,7 +201,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/acceptance/verify-restart.mjs` | 遗留验收 | [16](../16_验收与测试总表.md) | 在新进程里重开测试目录并验证幂等；不重启任何服务 | 写临时测试目录、只读 | 否 | header | — |
 | `chatbot/tests/access-control/acceptance-host.mjs` | 验收 | [24](../24_统一身份与权限管理.md) | 真实隔离OpenClaw、本地确定性模型与模拟OneBot/翻译器：双身份、强制策略及后台交接；无真实API/QQ/邮件 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/access-control-2026-10-19/host.json` |
 | `chatbot/tests/backend-boundaries/acceptance-capabilities-host.mjs` | 验收 | [21](../21_后端职责分层与代码整理.md) | 真实隔离Gateway的四插件加载/逐个禁用、工具归属与确认后端RPC，无API/模型/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/capability-decoupling-2026-10-20/README.md` |
-| `chatbot/tests/backend-boundaries/acceptance-natural-confirmation-host.mjs` | 验收 | [21](../21_后端职责分层与代码整理.md) | 真实隔离Gateway自然确认钩子/实际工具/SQLite/Cron及模拟QQ回执；确定性模型，无真实模型API、QQ、SMTP或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | — |
+| `chatbot/tests/backend-boundaries/acceptance-natural-confirmation-host.mjs` | 验收 | [21](../21_后端职责分层与代码整理.md) | 真实隔离Gateway自然确认钩子/工具/SQLite/Cron与模拟QQ回执；默认确定性，显式--model用当前官方主模型，均无真实QQ/SMTP或生产写入 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | — |
 | `chatbot/tests/coding/acceptance-cancel-live.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 显式--live单个真实DSH任务与产品取消、心跳停止；无QQ、共享DSH服务或生产变更 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/coding/acceptance-directory-live.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 显式--live在已批准试点内调用真实DSH，普通非Git副本改名/后缀/终端检查，合成确认后隔离回写；无QQ或生产目录 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/coding/acceptance-host.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 真实隔离Gateway验证编码插件启用/禁用、工具目录与正常停止；不启动DSH，无模型/API/QQ或生产变更 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
@@ -253,4 +254,5 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | [9](../9_QQ融合助手架构与开发计划.md) | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/lib/backup-layout.mjs` | 运维库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 不可变依赖工件与全深度SQLite发现；写统一备份位置 | 写运行状态 | 否 | header | — |
 | `scripts/fusion/lib/runtime-retention.mjs` | 运维库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 限定诊断日志预算与离线捕获生命周期；不访问业务库 | 写运行状态 | 否 | header | — |
+
 <!-- END GENERATED SCRIPT INDEX -->
