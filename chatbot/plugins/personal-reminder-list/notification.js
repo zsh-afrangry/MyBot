@@ -20,9 +20,16 @@ export function registerDigestNotice(api,options,{loadItems,composeNotice,now=Da
       if(!digest?.count){respond(true,{});return;}
       const facts=digestFacts(digest.items,digest.at);
       const reply=await compose({request:{subjectId:owner.qq,agentId:'main',sessionKey:sessionFor(owner),accountId:'default',to:'user:'+owner.qq},
-        check,sourceTool:'personal_reminder_list_digest',facts:{kind:'scheduled_reminder_list',at:digest.at,items:digest.items},
-        instructions:'这是已设置的定时待办播报。自然提醒本人查看这些未完成事项，不更改事项状态，不把逾期说成已完成。正文后可由宿主补齐完整事实明细；不要声称已经发出。'});
-      check();const text=withFacts(reply.text,facts);
+        check,sourceTool:'personal_reminder_list_digest',facts:{kind:'scheduled_reminder_list_opening',at:digest.at,timezone:'Asia/Shanghai',count:digest.count},
+        instructions:'这是已设置的定时待办播报。只写一小段自然开场，沿用人格和当前关系，可提未完成数量；本轮完整清单由宿主紧接开场呈现一次。不要列举或概括任何具体事项，不从历史搬出标题、ID、DDL、内容或备注，不生成列表，不追问确认，不声称已经发出或更改状态。'});
+      check();
+      const opening=reply.text?.trim();
+      // This is a literal presentation check, never an authorization or chat-intent parser.
+      // A rejected opening cannot silently fall back to facts-only delivery.
+      if(!opening || /[\r\n]/u.test(opening) || digest.items.some(item=>
+        [item.id,...[item.title,item.content,item.note].filter(value=>typeof value==='string' && [...value.trim()].length>=4)]
+          .some(value=>typeof value==='string' && value.trim() && opening.includes(value.trim()))))throw Error('digest_opening_repeats_items');
+      const text=withFacts(opening,facts);
       if(Buffer.byteLength(text,'utf8')>500000)throw Error('digest_output_limit');
       const visible=store.finishDigestGeneration(digest.slotKey,text);
       respond(true,visible?{text}:{});

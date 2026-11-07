@@ -39,6 +39,32 @@ test('list notice preserves all immutable fields, is claimed once and does not e
  assert.deepEqual((await f.run({slot:'20:00'})).result,{});assert.equal(calls,1);
  assert.equal((await f.run({slot:'20:00',to:'user:other'})).ok,false);
 });
+test('list opening receives only current count/time and complete item facts appear once',async t=>{
+ const f=fixture(t);seedList(f.root,OWNER,f.now);f.due();
+ registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:opts=>new ListStore(opts)},{now:f.now,composeNotice:async input=>{
+  assert.deepEqual(Object.keys(input.facts).sort(),['at','count','kind','timezone']);assert.equal(input.facts.count,1);
+  assert(!JSON.stringify(input.facts).includes('合成事项'));assert(input.instructions.includes('不要列举或概括任何具体事项'));
+  return{text:'到时间了，来看看手头这件事吧。'};
+ }});
+ const r=await f.run({slot:'20:00'});assert(r.ok);
+ for(const value of ['合成事项','明细不能丢','越快越好'])assert.equal(r.result.text.split(value).length-1,1);
+ assert.equal(r.result.text.split('事项：').length-1,1);
+});
+test('short generic item fields do not suppress a natural opening',async t=>{
+ const f=fixture(t);seedList(f.root,OWNER,f.now);
+ const store=new ListStore({root:f.root,ownerId:OWNER,now:f.now});store.db.prepare('UPDATE items SET note=?').run('好');store.close();f.due();
+ registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:opts=>new ListStore(opts)},{now:f.now,composeNotice:async()=>({text:'准备好了，来看看今天待办吧。'})});
+ assert.equal((await f.run({slot:'20:00'})).ok,true);
+});
+test('item enumeration or literal item data in an opening fails unsent, never becomes a duplicate digest',async t=>{
+ for(const opening of ['还有这些事情。\n- 合成事项','合成事项还没有完成。','记得明细不能丢。','越快越好，继续加油。'])await t.test(opening,async t=>{
+  const f=fixture(t);seedList(f.root,OWNER,f.now);f.due();
+  registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:opts=>new ListStore(opts)},{now:f.now,composeNotice:async()=>({text:opening})});
+  const r=await f.run({slot:'20:00'});assert.equal(r.ok,false);assert(!r.result?.text);
+  assert.deepEqual((await f.run({slot:'20:00'})).result,{});
+  const store=new ListStore({root:f.root,ownerId:OWNER,now:f.now});try{const row=store.db.prepare('SELECT status,text FROM deliveries').get();assert.equal(row.status,'failed');assert.equal(row.text,'');}finally{store.close();}
+ });
+});
 test('list generation failure is separate from delivery, consumes no second attempt and emits no fixed fallback',async t=>{
  const f=fixture(t);seedList(f.root,OWNER,f.now);f.due();
  registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:opts=>new ListStore(opts)},{now:f.now,composeNotice:async()=>{throw Error('private model error');}});

@@ -1,0 +1,53 @@
+{
+  "at": "2026-11-07T08:53:41.341Z",
+  "status": "isolated_verified_production_pending",
+  "authorization": "User requested immediate list notice deduplication, the existing 18:00 slot at 17:00 today, observation then restoration to 18:00",
+  "offline": {
+    "passed": 63,
+    "failed": 0
+  },
+  "isolatedHost": {
+    "at": "2026-11-07T08:53:41.341Z",
+    "boundary": "Real isolated OpenClaw session/plugin/Cron execution and loopback QQ receipts; deterministic local model and synthetic domain clock. No external API, no model provider, no QQ network, no SMTP or production writes.",
+    "cases": [
+      {
+        "label": "existing-chat-persona-and-history",
+        "passed": true
+      },
+      {
+        "label": "bound-list-composition-and-deduplication",
+        "passed": true
+      },
+      {
+        "label": "bound-one-off-composition-and-deduplication",
+        "passed": true
+      },
+      {
+        "label": "runner-cannot-select-recipient",
+        "passed": true
+      },
+      {
+        "label": "unsupported-attachment-model-notice-without-old-artifact",
+        "passed": true
+      },
+      {
+        "label": "native-fixed-list-command-and-qq-receipt",
+        "passed": true
+      },
+      {
+        "label": "native-fixed-reminder-command-and-qq-receipt",
+        "passed": true
+      }
+    ],
+    "requests": 6,
+    "platformAccepted": 4,
+    "passed": true
+  },
+  "production": {
+    "date": "2026-11-07",
+    "temporarySlot": "17:00",
+    "restoreSlot": "18:00",
+    "observed": false
+  },
+  "boundary": "Synthetic fixture stores and loopback QQ in host verification. No real QQ from tests. Production observation is the explicitly authorized scheduled list only. No new tools, identities or external project changes."
+}
