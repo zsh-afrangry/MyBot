@@ -48,6 +48,19 @@ test('Draft freezes exact PDF bytes, survives reopen; previews contain only meta
  store.close();const reopened=app.openStore(storeOptions);t.after(()=>reopened.close());
  assert.deepEqual(reopened.readAttachments(draft.draftId)[0].content,pdf());
 });
+test('PDF rename affects a new draft only; an approved older draft sends its frozen name and bytes',async t=>{
+ const {app,store,docs,doc,scope,approve}=await setup(t),server=new MockSmtpServer();const address=await server.start();t.after(()=>server.stop());
+ const make=subject=>app.directives.createDraft(store,{to:RECIPIENT,subject,text:'附件',attachments:[{documentId:doc.id}]},scope,[RECIPIENT]);
+ const old=make('before rename');assert(old.ok);approve(old);const hash=old.payloadHash;
+ docs.rename(doc.id,{filename:'新论文.pdf',expectedVersion:0,key:'fixture-rename'});
+ const next=make('after rename');assert(next.ok);
+ assert.equal(store.readAttachments(old.draftId)[0].filename,'论文双语.pdf');
+ assert.equal(store.readAttachments(next.draftId)[0].filename,'新论文.pdf');
+ assert.equal(store.getDraft(old.draftId,scope).payloadHash,hash);
+ const sent=await app.directives.sendDraft(store,{draftId:old.draftId},{scope,allowedRecipients:[RECIPIENT],config:{...address,user:TEST_USER,authCode:TEST_PASS,configured:true},connector});
+ assert(sent.ok);const decoded=parseMime(server.messages[0].data);
+ assert.equal(decoded.attachments[0].filename,'论文双语.pdf');assert.equal(decoded.attachments[0].sha256,doc.sha256);
+});
 test('The store Uint8Array contract preserves the selected bytes and approval hash',async t=>{
  const {store,scope}=await setup(t),buffer=new Uint8Array([255,37,80,68,70,0]);
  const input=buffer.subarray(1,5);

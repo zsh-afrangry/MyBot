@@ -17,6 +17,7 @@ import {Documents} from '../../packages/documents/index.js';
 import {pdf} from './fixtures.mjs';
 
 const repo=fileURLToPath(new URL('../../../',import.meta.url));
+const renameOnly=process.argv.includes('--rename-only');
 const outArg=process.argv.indexOf('--out');
 const out=outArg<0?path.join(repo,'docs/verification/paper-translation-2026-10-17/host.json'):process.argv[outArg+1];
 if(!out||!path.isAbsolute(out)||fs.existsSync(out))throw Error('Use an absolute, new --out evidence file');
@@ -50,10 +51,12 @@ const cfg=compileAccessConfig(JSON.parse(fs.readFileSync(path.join(repo,'config/
 cfg.gateway={mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}};
 cfg.agents.defaults.workspace=path.join(root,'workspace');
 cfg.agents.entries={main:{...cfg.agents.entries.main,workspace:path.join(root,'workspace'),tools:{profile:'messaging',alsoAllow:['kurumi_document','kurumi_translate','kurumi_document_send'],deny:['read','write','edit','exec','process','message','sessions_spawn','automations']}}};
+cfg.bindings=(cfg.bindings??[]).filter(binding=>binding.agentId==='main');
 cfg.plugins={allow:['kurumi-qq','kurumi-papers'],load:{paths:[path.join(repo,'chatbot/plugins/kurumi-qq'),fixture]},entries:{'kurumi-qq':{enabled:true},'kurumi-papers':{enabled:true,config:{root:docs.root,python:'/unused',credentialsFile:'/unused',liveTranslationEnabled:true}}},slots:{memory:'none'}};
 cfg.tools={deny:cfg.tools.deny,fs:cfg.tools.fs,web:{search:{enabled:false},fetch:{enabled:false}}};
 cfg.cron={enabled:false};cfg.logging.file=path.join(root,'runtime.log');
 cfg.channels['kurumi-qq']={...cfg.channels['kurumi-qq'],httpUrl:`http://127.0.0.1:${server.address().port}`,wsUrl:`ws://127.0.0.1:${server.address().port}`,httpTokenFile:path.join(root,'http-token'),wsTokenFile:path.join(root,'ws-token'),stateDir:path.join(root,'channel'),mediaRoot:path.join(root,'media'),testIngress:true};
+if(renameOnly)cfg.channels['kurumi-qq'].accessControl.subjects.find(row=>row.qq===owner).permissions['papers.rename']=true;
 for(const dir of ['workspace','media','channel'])fs.mkdirSync(path.join(root,dir),{mode:0o700});
 for(const file of ['http-token','ws-token'])fs.writeFileSync(path.join(root,file),token,{mode:0o600});
 fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(cfg),{mode:0o600});
@@ -71,6 +74,17 @@ async function turn(label,text){
 try{
  let ready=false;for(let i=0;i<80;i++){try{await call('health',{},1000);ready=true;break;}catch{if(child.exitCode!==null)throw Error('Isolated Gateway exited');await new Promise(r=>setTimeout(r,500));}}
  assert(ready,'Isolated Gateway not ready');
+ if(renameOnly){
+  await turn('rename-display-by-real-id','把我已有的“验收论文.pdf”对外文件名改成“中文验收稿.pdf”，直接修改即可，不翻译，不发文件。请先查询真实文档ID和名称版本。');
+  assert.equal(docs.describe(document.id).filename,'中文验收稿.pdf');assert.equal(docs.describe(document.id).nameVersion,1);
+  assert.equal(docs.describe(document.id).sha256,document.sha256);assert.equal(uploads.length,0);
+  await turn('send-current-display-name','把刚改名为“中文验收稿.pdf”的这份PDF发给我，不翻译。');
+  assert.equal(uploads.length,1);assert.equal(uploads[0].name,'中文验收稿.pdf');
+  await call('sessions.reset',{key:`agent:main:kurumi-qq:direct:${owner}`,reason:'new'});
+  await turn('find-renamed-after-new','查一下我的“中文验收稿.pdf”是否还在，只查询，不发送、不翻译。');
+  assert.equal(uploads.length,1);assert.equal(docs.describe(document.id).nameVersion,1);
+  report.renamed={sameId:true,sameBytes:true,nameVersion:1,foundAfterNew:true,mockUploads:uploads.length};
+ }else{
  const listed=await turn('list-real-managed-id','帮我查一下已经收到的 PDF 文件，先不要翻译。');
  assert.match(JSON.stringify(listed.captured),/验收论文/);
  await turn('start-default-translation','把刚才那篇验收论文翻译成中文，用默认 GPT 翻译配置，不另外指定强度，只要一份中英对照的双语 PDF，直接发我 QQ。');
@@ -93,6 +107,7 @@ try{
  assert.deepEqual(Object.keys(deepseek.artifacts),['dual']);
  assert.equal(deepseek.deliveryTarget,'none');assert.equal(uploads.length,1);
  report.deepseekJob={documentId:deepseek.documentId,profile:deepseek.profile,status:deepseek.status,delivery:deepseek.delivery,usage:deepseek.usage};
+ }
  report.passed=true;
 }catch(error){report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;}
 finally{

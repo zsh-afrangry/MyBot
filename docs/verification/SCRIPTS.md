@@ -98,6 +98,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/papers/mail.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 受管附件快照、确认、完整性、大小限制及本地 TLS SMTP | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/notification.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 失败摘要先持久化、用量/配额区分、原会话无工具说明、中文兜底/后续上下文、撤权/取消/未知回执不重发 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/reliability_test.py` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 批次重试0–4次、冷却恢复/单探测/预算、本机HTTP正文空闲与总期限独立、实际取消/切渠道及安全诊断；无付费API或生产状态 | 写临时测试目录 | 否 | header | — |
+| `chatbot/tests/papers/rename.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 受管PDF名称CAS/幂等/权限隔离、字节及未来QQ发送，临时目录与模拟投递 | 无（离线） | 否 | header | — |
 | `chatbot/tests/papers/responses_test.py` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 原生 Responses、流式终态、用量/占位符、三凭据降级、有限重试和未知回执 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/source-boundary.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 下载/阅读/翻译隔离、旧缓存/哈希/路径/大小/取消与实际受管PDF检查 | 写临时测试目录 | 否 | header | `docs/verification/capability-decoupling-2026-10-20/README.md` |
 | `chatbot/tests/papers/worker.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 实际隔离进程的产物/路径、30分钟上限、正文空闲配置贯通、重试0–4及超时终止、恢复副本付费/凭据关闭 | 写临时测试目录 | 否 | header | — |

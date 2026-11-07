@@ -24,6 +24,13 @@ export function safeName(value) {
   return name.toLowerCase().endsWith('.pdf') ? name : name + '.pdf';
 }
 const boundedLimit = limit => Math.min(50, Math.max(1, Number.isInteger(limit) ? limit : 20));
+const failure = code => Object.assign(Error(code), {code});
+export function displayPdfName(value) {
+  if (typeof value !== 'string' || value !== value.trim() || !value || value.length > 160
+    || /[\p{Cc}/\\\u202a-\u202e\u2066-\u2069]/u.test(value) || !/\.pdf$/iu.test(value)
+    || !value.slice(0, -4).trim() || ['.', '..'].includes(value.slice(0, -4))) throw failure('invalid_pdf_display_name');
+  return value.normalize('NFC');
+}
 // Case/width/punctuation-insensitive form used for name lookup; keeps letters and digits of any script.
 export const searchText = value => String(value ?? '').normalize('NFKC').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 // Model- or source-supplied paper title: stored as untrusted display/search metadata only.
@@ -32,10 +39,15 @@ export function paperTitle(value) {
   const title = String(value).normalize('NFC').replace(/[\x00-\x1f\x7f\s]+/g, ' ').trim().slice(0, 300);
   return title || undefined;
 }
-export function atomicJson(file, value) {
+export function atomicJson(file, value, {exclusive = false} = {}) {
   const temp = file + '.' + randomUUID() + '.tmp';
-  fs.writeFileSync(temp, JSON.stringify(value, null, 2), {mode: 0o600, flag: 'wx'});
-  try { fs.renameSync(temp, file); } finally { fs.rmSync(temp, {force: true}); }
+  const fd = fs.openSync(temp, 'wx', 0o600);
+  try {
+    fs.writeFileSync(fd, JSON.stringify(value, null, 2)); fs.fsyncSync(fd);
+    if (exclusive) fs.linkSync(temp, file); else fs.renameSync(temp, file);
+    const dir = fs.openSync(path.dirname(file), 'r');
+    try { fs.fsyncSync(dir); } finally { fs.closeSync(dir); }
+  } finally { fs.closeSync(fd); fs.rmSync(temp, {force: true}); }
 }
 function regular(file) {
   const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW);
@@ -61,9 +73,32 @@ export class Documents {
     const file = path.join(this.root, 'files', id + '.pdf');
     const bytes = regular(file);
     if (bytes.length !== data.bytes || bytes.length > byteLimit(data.kind) || sha256(bytes) !== data.sha256) throw Error('Managed PDF integrity mismatch');
-    return {...data, path: file, content: bytes};
+    const {_nameReceipt, ...visible} = data;
+    return {...visible, nameVersion: data.nameVersion ?? 0, path: file, content: bytes};
   }
   describe(id) { const {path: ignored, content, ...data} = this.get(id); return data; }
+  rename(id, {filename, expectedVersion, key}) {
+    const name = displayPdfName(filename), file = this.recordFile(id);
+    if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 0) throw failure('document_name_version_required');
+    if (typeof key !== 'string' || !key || key.length > 500) throw failure('document_name_request_required');
+    const lock = file + '.rename.lock'; let fd;
+    try { fd = fs.openSync(lock, 'wx', 0o600); }
+    catch (error) { if (error.code === 'EEXIST') throw failure('document_name_busy'); throw error; }
+    try {
+      const current = this.describe(id), data = JSON.parse(regular(file));
+      const keyHash = sha256(Buffer.from(key)), payloadHash = sha256(Buffer.from(JSON.stringify([id, name, expectedVersion])));
+      if (data._nameReceipt?.keyHash === keyHash) {
+        if (data._nameReceipt.payloadHash !== payloadHash) throw failure('document_name_request_conflict');
+        return {document: current, duplicate: true, changed: data._nameReceipt.changed};
+      }
+      if (current.nameVersion !== expectedVersion) throw failure('document_name_version_conflict');
+      const changed = current.filename !== name;
+      const next = {...data, filename: name, nameVersion: current.nameVersion + Number(changed),
+        ...(changed ? {nameUpdatedAt: new Date().toISOString()} : {}), _nameReceipt: {keyHash, payloadHash, changed}};
+      atomicJson(file, next);
+      return {document: this.describe(id), duplicate: false, changed};
+    } finally { fs.closeSync(fd); fs.unlinkSync(lock); }
+  }
   records(kind) {
     return fs.readdirSync(path.join(this.root, 'records')).filter(n => /^(doc|pdf)_[a-f0-9]{32}\.json$/.test(n))
       .map(n => this.describe(n.slice(0, -5))).filter(d => !kind || d.kind === kind)
@@ -97,8 +132,10 @@ export class Documents {
       const file = path.join(this.root, 'files', id + '.pdf');
       try { fs.writeFileSync(file, bytes, {mode: 0o600, flag: 'wx'}); } catch (e) { if (e.code !== 'EEXIST') throw e; }
       if (sha256(regular(file)) !== hash) throw Error('PDF content collision');
-      const data = {id, kind, filename: safeName(filename), sha256: hash, bytes: bytes.length, pages: details.pages, source, ...(jobId ? {jobId} : {}), createdAt: new Date().toISOString()};
-      atomicJson(this.recordFile(id), data);
+      const data = {id, kind, filename: safeName(filename), nameVersion: 0, sha256: hash, bytes: bytes.length, pages: details.pages, source, ...(jobId ? {jobId} : {}), createdAt: new Date().toISOString()};
+      // A concurrent import must not overwrite an intervening name change for the same content ID.
+      try { atomicJson(this.recordFile(id), data, {exclusive: true}); }
+      catch (error) { if (error.code === 'EEXIST') return this.describe(id); throw error; }
       return data;
     } finally { fs.rmSync(staging, {recursive: true, force: true}); }
   }

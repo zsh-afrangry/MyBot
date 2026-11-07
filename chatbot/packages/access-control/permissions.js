@@ -5,6 +5,7 @@ export const SHARED_PERMISSIONS = Object.freeze([
   'papers.import', 'papers.read', 'papers.translate', 'papers.cancel',
 ]);
 export const OWNER_PERMISSIONS = Object.freeze([
+  'papers.rename',
   'commands.admin', 'access.manage', 'stickers.use', 'mail.status', 'mail.draft', 'mail.send', 'mail.history',
   'weather.read', 'profile.read', 'profile.manage', 'planning.read', 'planning.manage',
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
@@ -44,7 +45,7 @@ export function toolPermission(name, args = {}) {
   if (name === 'kurumi_code') return ['list', 'status', 'result', 'diff'].includes(args.action) ? 'tasks.read' : ['start', 'continue', 'cancel', 'rollback', 'reconcile', 'preview', 'merge'].includes(args.action) ? 'tasks.code' : undefined;
   if (name === 'kurumi_task') return args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read';
   if (name === 'automations') return ['list', 'get', 'status', 'runs'].includes(args.action) ? 'automations.read' : 'automations.manage';
-  if (name === 'kurumi_document') return args.action==='fetch'?'papers.import':['list','get','find'].includes(args.action)?'papers.read':undefined;
+  if (name === 'kurumi_document') return args.action==='rename'?'papers.rename':args.action==='fetch'?'papers.import':['list','get','find'].includes(args.action)?'papers.read':undefined;
   if (name === 'kurumi_translate') return ({start: 'papers.translate', status: 'papers.read', list: 'papers.read', cancel: 'papers.cancel'})[args.action];
   if (name === 'kurumi_document_send') return 'qq.file.reply';
   return undefined;

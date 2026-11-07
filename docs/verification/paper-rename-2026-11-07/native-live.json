@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-07T00:46:27.110Z",
+  "boundary": "Real OpenClaw and configured main model; actual PDF tools and job service, fixture translator and mock OneBot; isolated /tmp state. No real translation API request, QQ/mail delivery or production write.",
+  "passed": true,
+  "childStopped": true,
+  "renamed": {
+    "sameId": true,
+    "sameBytes": true,
+    "nameVersion": 1,
+    "foundAfterNew": true,
+    "mockUploads": 1
+  },
+  "cases": [
+    {
+      "label": "rename-display-by-real-id",
+      "passed": true
+    },
+    {
+      "label": "send-current-display-name",
+      "passed": true
+    },
+    {
+      "label": "find-renamed-after-new",
+      "passed": true
+    }
+  ]
+}
