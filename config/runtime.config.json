@@ -236,6 +236,10 @@
           "exec": {
             "writeBoundary": {
               "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
+              "additionalRoots": [
+                "/home/afrangry/下载",
+                "/home/afrangry/文档"
+              ],
               "launcher": "/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run"
             },
             "workdir": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/source",
