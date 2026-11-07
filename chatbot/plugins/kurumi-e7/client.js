@@ -68,12 +68,12 @@ export class E7Client {
     this.fetch = guardedFetch; this.timeoutMs = timeoutMs; this.maxBytes = maxResponseBytes;
     this.clock = clock; this.observe = observe; this.slot = limiter(2); this.cooldowns = new Map();
   }
-  async read(kind, params = {}, {signal, validators = {}} = {}) {
+  async read(kind, params = {}, {signal, validators = {}, trace} = {}) {
     const spec = endpoint(kind, params), host = new URL(spec.url).hostname;
     return this.slot(signal, async () => {
       if ((this.cooldowns.get(host)?.until ?? 0) > this.clock()) throw new E7Error('upstream_backoff');
       const timeout = AbortSignal.timeout(this.timeoutMs), combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
-      let guard, status = 0, bytes = 0;
+      let guard, status = 0, bytes = 0;const started=this.clock();
       try {
         const headers = {Accept: 'application/json', 'User-Agent': USER_AGENT};
         if (header(validators.etag)) headers['If-None-Match'] = validators.etag;
@@ -127,7 +127,7 @@ export class E7Client {
       } finally {
         try {await guard?.response?.body?.cancel();} catch {}
         await guard?.release();
-        try {this.observe({kind, method: spec.method, url: spec.url, status, bytes});} catch {}
+        try {this.observe({kind, method: spec.method, url: spec.url, status, bytes, durationMs:Math.max(0,this.clock()-started),correlation:trace});} catch {}
       }
     });
   }

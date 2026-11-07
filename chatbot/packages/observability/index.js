@@ -65,13 +65,19 @@ export function normalizeTraceEvent(input = {}) {
  * events. The caller owns the path and must opt in; the file is private by
  * default and every line is independently parseable.
  */
-export function createTraceSink(file, {mkdir = fs.mkdirSync, append = fs.appendFileSync, chmod = fs.chmodSync} = {}) {
+export function createTraceSink(file, {mkdir = fs.mkdirSync, append = fs.appendFileSync, chmod = fs.chmodSync, maxBytes = 0} = {}) {
+  if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) throw new Error('Invalid trace maxBytes');
   const target = path.resolve(file);
   return {
     file: target,
     emit(event) {
       mkdir(path.dirname(target), {recursive: true, mode: 0o700});
       const normalized = normalizeTraceEvent(event);
+      // Opt-in bounded diagnostics: one previous generation, never business ledgers.
+      if (maxBytes) {
+        try { if (fs.statSync(target).size >= maxBytes) fs.renameSync(target, `${target}.1`); }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
+      }
       append(target, `${JSON.stringify(normalized)}\n`, {encoding: 'utf8', mode: 0o600});
       try { chmod(target, 0o600); } catch { /* An existing read-only test sink may reject chmod. */ }
       return normalized;

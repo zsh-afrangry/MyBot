@@ -303,3 +303,16 @@ test('FAQ miss is bounded and explicit; upstream failure does not trigger retrie
   const failing=setup(t,{read:async()=>{throw new E7Error('rate_limited')}});
   await assert.rejects(failing.service.query({action:'content',kind:'faq',query:'团战人数差'}),e=>e.code==='rate_limited');assert.equal(failing.calls.length,1);
 });
+
+
+test('resource telemetry keeps per-consumer trusted correlation, 304/cache/fallback facts and no keyword or URL',async t=>{
+ const events=[];let mode='ok';const f=setup(t,{dependencies:{observe:e=>events.push(e)},read:(kind,params,opts,data)=>{
+  if(mode==='fail')throw new E7Error('network_failed');return mode==='304'?{status:304}:{status:200,data:kind==='faq'?{list:[],pagination:{page:params.page??1,size:10,total:0}}:data[kind],etag:'"fixture"'};
+ }}),first={runId:'actual-1',toolCallId:'call-1'},second={runId:'actual-2',toolCallId:'call-2'};
+ await f.service.query({action:'content',kind:'faq',query:'PRIVATE KEYWORD'},{trace:first});
+ await f.service.resource('cards',{}, {trace:first});await f.service.resource('cards',{}, {trace:second});
+ mode='304';await f.service.resource('cards',{}, {force:true,trace:first});mode='fail';await f.service.resource('cards',{}, {force:true,trace:second});
+ assert(events.some(e=>e.correlation.runId==='actual-2'&&e.data.cache==='fresh_cache'));
+ assert(events.some(e=>e.data.httpStatus===304&&e.data.cache==='revalidated'));assert(events.some(e=>e.data.stale&&e.data.cache==='stale_fallback'));
+ assert(!JSON.stringify(events).includes('PRIVATE'));assert(!JSON.stringify(events).includes('https:'));
+});

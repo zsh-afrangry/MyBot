@@ -4,7 +4,7 @@ export function createToolTrace(names, now = Date.now) {
   const allowed = new Set(names), calls = new Map();
   const nameOf = value => String(value ?? '').split(':').at(-1);
   const key = (ctx, id) => ctx.sessionKey && ctx.sessionId && id ? JSON.stringify([ctx.sessionKey, ctx.sessionId, id]) : undefined;
-  const target = (event, ctx) => nameOf(event.toolName ?? ctx.toolName) === 'tool_call'
+  const target = (event, ctx) => ['tool_call','dispatch_action'].includes(nameOf(event.toolName ?? ctx.toolName))
     ? nameOf(event.params?.id) : nameOf(event.toolName ?? ctx.toolName);
   return {
     attach(api) {
@@ -16,11 +16,11 @@ export function createToolTrace(names, now = Date.now) {
         for (const [k, value] of calls) if (now() - value.at >= 300000) calls.delete(k);
         while (calls.size >= 1024) calls.delete(calls.keys().next().value);
         calls.set(identity, {runId, name, at: now()});
-      }, {matcher: [...names, 'tool_call']});
+      }, {matcher: [...names, 'tool_call', 'dispatch_action']});
       api.on('after_tool_call', (event, ctx) => {
         const identity = key(ctx, event.toolCallId ?? ctx.toolCallId);
         if (identity && allowed.has(target(event, ctx))) calls.delete(identity);
-      }, {matcher: [...names, 'tool_call']});
+      }, {matcher: [...names, 'tool_call', 'dispatch_action']});
       for (const hook of ['session_end', 'before_reset']) api.on(hook, (event, ctx = {}) => {
         const sessionId = ctx.sessionId ?? event.sessionId, sessionKey = ctx.sessionKey ?? event.sessionKey;
         for (const k of calls.keys()) {

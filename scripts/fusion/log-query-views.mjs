@@ -37,8 +37,8 @@ export function matchesKind(kind, patterns = []) {
   return patterns.some((pattern) => kind.startsWith(String(pattern).replace(/\*$/u, '')));
 }
 
-export function applyViewFilters(events, {kinds = [], excludeKinds = [], excludeSources = [], raw = false} = {}) {
-  return events.filter((item) => (raw || !RAW_KINDS.has(item.kind) || (kinds.length && matchesKind(item.kind, kinds)))
+export function applyViewFilters(events, {kinds = [], excludeKinds = [], excludeSources = [], raw = false, showKnown=false} = {}) {
+  return events.filter((item) => (raw || showKnown&&item.data?.known || !RAW_KINDS.has(item.kind) || (kinds.length && matchesKind(item.kind, kinds)))
     && (!kinds.length || matchesKind(item.kind, kinds))
     && !matchesKind(item.kind, excludeKinds)
     && !excludeSources.includes(item.source));

@@ -2,8 +2,8 @@
 // minimization, not anonymization: retained opaque IDs can still identify people.
 const containers = new Set(['events', 'calls', 'timeline', 'turns', 'items', 'access', 'nestedToolCallIds',
   'denied', 'retries', 'failures', 'recoveries', 'clarificationRetries', 'correlation', 'data', 'summary',
-  'diagnostics', 'functions', 'schemas', 'tools', 'fingerprints', 'targetResults']);
-const identifiers = new Set(['sessionId', 'sessionKey', 'session', 'runId', 'traceId', 'spanId', 'parentSpanId',
+  'diagnostics', 'functions', 'schemas', 'tools', 'fingerprints', 'targetResults', 'modelTurns', 'models', 'usage', 'sources', 'settings', 'ids']);
+const identifiers = new Set(['id', 'receiptId', 'sessionId', 'sessionKey', 'session', 'runId', 'traceId', 'spanId', 'parentSpanId',
   'qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'cronJobId', 'taskId', 'conversationId',
   'senderId', 'recipientId', 'eventKey', 'draftId', 'grantId', 'confirmationMessageId', 'sourceMessageId',
   'presentationMessageId', 'toolCallId', 'parentToolCallId', 'failedToolCallId', 'recoveredToolCallId',
@@ -11,7 +11,7 @@ const identifiers = new Set(['sessionId', 'sessionKey', 'session', 'runId', 'tra
 const labels = new Set(['source', 'kind', 'view', 'tool', 'declaredTool', 'outcome', 'errorCode', 'code',
   'status', 'hostStatus', 'decision', 'permission', 'domain', 'actionKind', 'action', 'failureCode',
   'consumptionResult', 'lastStatus', 'lastDeliveryStatus', 'scheduleKind', 'sessionTarget', 'correlationQuality',
-  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness']);
+  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache']);
 const dates = new Set(['at', 'from', 'to', 'snapshotAt', 'scheduleAt', 'recordedAt']);
 const facts = new Set(['schemaVersion', 'epochMs', 'durationMs', 'count', 'total', 'shown', 'hiddenRaw', 'orphanEvents',
   'flagged', 'textLength', 'displayTruncated', 'limit', 'offset', 'nextOffset', 'truncated', 'noText', 'enabled', 'ok', 'isError', 'idempotent',
@@ -19,7 +19,7 @@ const facts = new Set(['schemaVersion', 'epochMs', 'durationMs', 'count', 'total
   'attempts', 'failures', 'outbound', 'errors', 'denied', 'aborted', 'pid', 'quoteLoaded', 'replyToAvailableToAgent',
   'replyToIsQuote', 'isTailDispatch', 'loadedSurfaceKnown', 'activeProcessVerified', 'createdAtMs', 'updatedAtMs', 'nextRunAtMs', 'lastRunAtMs', 'presentationOrder',
   'createdAtUtc', 'updatedAtUtc', 'committedAtUtc', 'expiresAtUtc', 'issuedAtUtc', 'consumedAtUtc', 'presentedAtUtc', 'sentAtUtc',
-  'scheduledAtUtc', 'dispatchedAtUtc', 'deliveredAtUtc']);
+  'scheduledAtUtc', 'dispatchedAtUtc', 'deliveredAtUtc', 'version', 'generation', 'revision', 'revisionBefore', 'revisionAfter', 'summaries', 'bytes', 'nameVersion', 'available', 'metadataOnly', 'totalRows', 'hiddenKnown', 'failureRate', 'averageDurationMs', 'measured', 'startedAtMs', 'finishedAtMs', 'exitCodeAvailable', 'exitCode', 'known', 'usageAvailable', 'input', 'output', 'cacheRead', 'cacheWrite', 'totalTokens', 'inputTokens', 'outputTokens', 'fallbackKnown', 'cacheHit', 'stale', 'resultCount', 'missing', 'compacted', 'tokensBefore', 'tokensAfter', 'summaryChars']);
 const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_:.+-]{1,500}$/u.test(value);
 const label = value => typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,120}$/u.test(value);
 

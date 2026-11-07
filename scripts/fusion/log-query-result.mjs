@@ -6,7 +6,7 @@ import {createHash} from 'node:crypto';
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
 const failureStatus = value => ['error', 'failed', 'rejected', 'blocked'].includes(value);
 const FIELDS = ['ok', 'status', 'code', 'proposalId', 'payloadHash', 'reminderId', 'draftId',
-  'grantId', 'idempotent', 'requiresUserInput'];
+  'grantId', 'idempotent', 'requiresUserInput', 'resultCount', 'total', 'count', 'stale', 'truncated', 'missing', 'httpStatus', 'cacheHit', 'coverage'];
 
 function json(value) {
   if (typeof value !== 'string') return value;
@@ -30,7 +30,7 @@ export function normalizeToolResult(value) {
   visit(value);
   const summary = {};
   for (const node of layers) for (const key of FIELDS) {
-    if (['string', 'number', 'boolean'].includes(typeof node[key])) summary[key] = node[key];
+    if (['string', 'number', 'boolean'].includes(typeof node[key]) && (key!=='coverage'||/^[a-zA-Z0-9_.:-]{1,80}$/.test(String(node[key])))) summary[key] = node[key];
   }
   for (const node of layers) for (const key of ['reminder', 'confirmationInstruction', 'error']) {
     if (node[key] !== undefined) summary[key] = node[key];

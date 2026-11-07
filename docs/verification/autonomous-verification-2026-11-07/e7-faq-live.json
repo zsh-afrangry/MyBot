@@ -1,0 +1,32 @@
+{
+  "finishedAt": "2026-11-07T01:35:22.167Z",
+  "model": "deepseek/deepseek-flash",
+  "passed": true,
+  "cacheReuseWithoutHttp": true,
+  "boundary": "actual public E7 HTTP and configured main model; direct tool handlers; no production QQ or full Gateway transport",
+  "queryCases": 13,
+  "modelCases": [
+    {
+      "label": "content-faq",
+      "passed": true,
+      "requests": 3,
+      "replyCharacters": 279,
+      "replySha256": "0f448ceff0045cb4b52cf47402972c9a48ba867daea9c7bc5e1cac9fe2d0605f",
+      "calls": 2
+    }
+  ],
+  "reportKeys": [
+    "at",
+    "boundary",
+    "userAgent",
+    "requests",
+    "queries",
+    "modelCases",
+    "phase",
+    "cacheReuseWithoutHttp",
+    "model",
+    "modelCaseSelection",
+    "passed",
+    "finishedAt"
+  ]
+}

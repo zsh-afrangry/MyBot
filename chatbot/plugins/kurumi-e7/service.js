@@ -19,8 +19,8 @@ function waitFor(promise, signal) {
 }
 
 export class E7Service {
-  constructor(config, {client, store, clock = Date.now, timers = {set: setTimeout, clear: clearTimeout}, onRefresh = () => {}} = {}) {
-    this.config = settings(config); this.client = client ?? new E7Client(this.config); this.store = store ?? new E7Store(this.config.cacheRoot);
+  constructor(config, {client, store, clock = Date.now, timers = {set: setTimeout, clear: clearTimeout}, onRefresh = () => {}, observe=()=>{}} = {}) {
+    this.config = settings(config); this.observe=observe;this.client = client ?? new E7Client({...this.config,observe:event=>{try{observe({kind:'e7.http',correlation:event.correlation??{},data:{resource:event.kind,method:event.method,httpStatus:event.status||null,bytes:event.bytes,durationMs:event.durationMs}});}catch{}}}); this.store = store ?? new E7Store(this.config.cacheRoot);
     this.clock = clock; this.timers = timers; this.onRefresh = onRefresh;
     this.flights = new Map(); this.controller = new AbortController(); this.closed = false; this.started = false;
   }
@@ -53,24 +53,26 @@ export class E7Service {
     }
     this.onRefresh(results); return results;
   }
-  async resource(kind, params = {}, {signal, force = false} = {}) {
+  async resource(kind, params = {}, {signal, force = false, trace} = {}) {
     if (this.closed) fail('service_stopped');
     signal?.throwIfAborted();
     const key = JSON.stringify([kind, params]);
     if (!this.flights.has(key)) {
-      const task = this.load(kind, params, key, force);
+      const task = this.load(kind, params, key, force,trace);
       this.flights.set(key, task);
       task.finally(() => {if (this.flights.get(key) === task) this.flights.delete(key);}).catch(() => {});
     }
-    return waitFor(this.flights.get(key), signal);
+    const started=this.clock();try{
+      const result=await waitFor(this.flights.get(key), signal);try{this.observe({kind:'e7.resource',correlation:trace??{},data:{resource:kind,cache:result.cacheMode,httpStatus:result.httpStatus,stale:result.stale,durationMs:Math.max(0,this.clock()-started)}});}catch{}return result;
+    }catch(error){try{this.observe({kind:'e7.resource',correlation:trace??{},data:{resource:kind,status:'failed',code:error instanceof E7Error?error.code:'upstream_failed',durationMs:Math.max(0,this.clock()-started)}});}catch{}throw error;}
   }
-  async load(kind, params, key, force) {
+  async load(kind, params, key, force,trace) {
     let old = this.store.read(key);
     if (old) {try {validateData(kind, old.data, params);} catch {old = null;}}
     const result = (record, stale = false, warning) => ({...record, stale, ...(warning ? {warning} : {})});
-    if (old && !force && this.clock() - old.checkedAt < ttlFor(kind, this.config)) return result(old);
+    if (old && !force && this.clock() - old.checkedAt < ttlFor(kind, this.config)) return {...result(old),cacheMode:'fresh_cache'};
     try {
-      const response = await this.client.read(kind, params, {signal: this.controller.signal, validators: old ?? {}});
+      const response = await this.client.read(kind, params, {signal: this.controller.signal, validators: old ?? {},trace});
       let record;
       if (response.status === 304) {
         if (!old) fail('unexpected_not_modified');
@@ -82,17 +84,17 @@ export class E7Service {
         record = {data, hash, fetchedAt: old?.hash === hash ? old.fetchedAt : this.clock(), checkedAt: this.clock(), url: endpoint(kind, params).url,
           etag: response.etag, lastModified: response.lastModified};
       }
-      this.controller.signal.throwIfAborted(); this.store.write(key, record); return result(record);
+      this.controller.signal.throwIfAborted(); this.store.write(key, record); return {...result(record),cacheMode:response.status===304?'revalidated':'fetched',httpStatus:response.status};
     } catch (error) {
       if (this.controller.signal.aborted) throw new E7Error('cancelled');
-      if (old) return result(old, true, error instanceof E7Error ? error.code : 'upstream_failed');
+      if (old) return {...result(old, true, error instanceof E7Error ? error.code : 'upstream_failed'),cacheMode:'stale_fallback'};
       throw error instanceof E7Error ? error : new E7Error('upstream_failed');
     }
   }
-  async query(raw, {signal} = {}) {
+  async query(raw, {signal,trace} = {}) {
     const args = validateQuery(raw), resources = [];
     const get = async (kind, params = {}) => {
-      const r = await this.resource(kind, params, {signal}); resources.push(r); return r;
+      const r = await this.resource(kind, params, {signal,trace}); resources.push(r); return r;
     };
     const rememberContent = (kind, params, record) => {
       signal?.throwIfAborted();

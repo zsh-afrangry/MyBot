@@ -1,3 +1,5 @@
+import {createToolTrace} from '../../packages/observability/tool-trace.js';
+import {auditMemoryCall} from '../../packages/observability/memory-audit.js';
 import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/index.js';
 import {createMemoryApplication} from './application.js';
 import {trustedMemoryText} from './inbound.js';
@@ -29,6 +31,7 @@ export function createMemoryPlugin({registry, continuityRegistry} = {}) {return 
       if(api.pluginConfig.system?.enabled===true)registerMemorySystem(api);
       return;
     }
+    const telemetry=createToolTrace(['kurumi_memory']);telemetry.attach(api);
     const application = createMemoryApplication({registry, policyAdapter: api.pluginConfig?.policyAdapter, storeAdapter: api.pluginConfig?.storeAdapter});
     const permits = new Map();
     api.on('reply_dispatch', event => {
@@ -44,7 +47,7 @@ export function createMemoryPlugin({registry, continuityRegistry} = {}) {return 
     api.registerTool({contextVersion: 2, create: ctx => {
       const permit = permits.get(ctx.sessionKey);
       return {...declaration,
-        async execute(_callId, args, signal) {
+        async execute(_callId, args, signal) {return auditMemoryCall({api,ctx,callId:_callId,args,runId:telemetry.resolve(ctx,_callId,'kurumi_memory')},async()=>{
           const cfg = ctx.getRuntimeConfig?.() ?? api.config;
           if (!ownerAuthorized(ctx, cfg, ['list','search'].includes(args.action)?'memory.read':'memory.manage')) throw Error('Memory requires owner private context');
           ctx.assertInvocationCurrent();
@@ -60,7 +63,7 @@ export function createMemoryPlugin({registry, continuityRegistry} = {}) {return 
             result = application.changeMemory(workspace, args, permit);
           }
           return {content: [{type: 'text', text: JSON.stringify(result)}]};
-        },
+        });},
       };
     }}, {name: 'kurumi_memory', optional: true});
   },

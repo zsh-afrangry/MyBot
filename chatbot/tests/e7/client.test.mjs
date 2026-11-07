@@ -108,3 +108,10 @@ test('actual local HTTP streaming exercises POST, parsing and body limits throug
   const result = await client.read('gameNews'); assert.equal(result.data.pagination.total, 0);
   assert.equal(requests[0].method, 'POST'); assert.equal(JSON.parse(requests[0].body).size, 10);
 });
+
+
+test('HTTP telemetry includes the supplied host correlation and measured time for 304 without response content',async()=>{
+ const events=[],trace={runId:'host-1',toolCallId:'call-1'};let now=100;
+ const f=setup(()=>{now=125;return json(null,304);},{clock:()=>now,observe:e=>events.push(e)});
+ await f.client.read('cards',{}, {trace});assert.equal(events[0].correlation,trace);assert.equal(events[0].durationMs,25);assert.equal(events[0].status,304);assert.equal(events[0].bytes,0);
+});

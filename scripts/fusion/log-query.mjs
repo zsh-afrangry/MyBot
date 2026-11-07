@@ -38,6 +38,7 @@ import {
 
 import {normalizeToolResult} from './log-query-result.mjs';
 import {noTextProjection} from './log-query-privacy.mjs';
+import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries} from './log-query-diagnostics.mjs';
 
 export {formatEvent};
 
@@ -333,7 +334,8 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
       const push = (kind, data, correlation = baseCorrelation) => output.push(event({at, source: 'openclaw-session', kind, correlation, data, sourceRef: ref}));
       const contents = Array.isArray(message.content) ? message.content : [];
       // Session segment markers: /new keeps the sessionId, so it is only visible here.
-      if (record.type === 'reset') push('session.reset', {reason: record.reason ?? null});
+      if(record.type==='model_change')push('session.model_change',{provider:record.provider,model:record.modelId,fallbackKnown:false});
+      else if (record.type === 'reset') push('session.reset', {reason: record.reason ?? null});
       else if (record.type === 'compaction') {
         push('session.compaction', {tokensBefore: record.tokensBefore ?? null, tokensAfter: record.tokensAfter ?? null,
           summaryChars: String(record.summary ?? '').length, fromHook: record.fromHook === true});
@@ -345,6 +347,11 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
       if (message.role === 'user') {
         push('agent.inbound', {text: transcriptText(message.content), role: 'user'});
       } else if (message.role === 'assistant') {
+        const usage=message.usage;
+        if(usage||message.provider||message.model){
+          const counters={};for(const key of ['input','output','cacheRead','cacheWrite','totalTokens','inputTokens','outputTokens'])if(Number.isFinite(usage?.[key]))counters[key]=usage[key];
+          push('agent.model_usage',{provider:message.provider,model:message.model,stopReason:message.stopReason??null,usage:counters,usageAvailable:!!usage});
+        }
         if (message.errorMessage) push('agent.model_error', {stopReason: message.stopReason ?? null, provider: message.provider, model: message.model, error: shortError(message.errorMessage)});
         for (const part of contents) {
           if (part?.type === 'toolCall' || part?.type === 'tool_use') {
@@ -558,6 +565,7 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   const include = (name) => !wanted || wanted.has(name);
   const events = [];
   const windows = [];
+  if (include('cron-runs')) append(events, readCronRuns(runtimeRoot,from,to));
   if (include('channel-delivery')) append(events, readChannelDelivery(path.join(runtimeRoot, 'channel', 'channel.sqlite'), from, to));
   if (include('snowluma')) append(events, readSnowLumaLogs(snowlumaRoot, from, to));
   if (include('openclaw-runtime')) append(events, readRuntimeLog(path.join(runtimeRoot, 'runtime.log'), from, to));
@@ -577,7 +585,9 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   }
   if (include('personal-reminders')) append(events, readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to));
   if (include('personal-reminder-list')) append(events, readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to));
-  if (include('trace-events')) append(events, readTraceFile(path.join(runtimeRoot, 'channel', 'trace-events.jsonl'), from, to));
+  for (const [source, basename] of [['trace-events','trace-events.jsonl'],['e7','e7-events.jsonl'],['kurumi-memory','memory-events.jsonl']]) {
+    if (include(source)) for (const suffix of ['.1','']) append(events,readTraceFile(path.join(runtimeRoot,'channel',basename+suffix),from,to));
+  }
   if (include('access-control')) append(events, readTraceFile(path.join(runtimeRoot,'channel','access-events.jsonl'),from,to));
   if (include('papers')) {
     // Configured managed root, with a portable default for isolated tests/restores.
@@ -606,6 +616,11 @@ function containsEvent(eventValue, text) {
 }
 
 export function filterEvents(events, filters = {}) {
+  if(filters.peer){
+    if(!/^\d{5,12}$/.test(filters.peer))throw Error('Invalid peer');
+    events=events.filter(e=>e.correlation.senderId===filters.peer||e.correlation.recipientId===filters.peer||String(e.correlation.sessionKey??'').endsWith(':kurumi-qq:direct:'+filters.peer));
+  }
+  if(filters.lastTurns!==undefined)events=selectRecentTurns(events,Number(filters.lastTurns));
   const idFilters = ['messageId', 'proposalId', 'runId', 'sessionKey', 'reminderId'];
   const requested = idFilters.filter((name) => filters[name]);
   if (!requested.length) return events.filter((item) => !filters.contains || containsEvent(item, filters.contains));
@@ -638,6 +653,17 @@ function usage() {
 
   --from <时间>       起始时间（带时区 ISO；无时区按 Asia/Shanghai）
   --to <时间>         结束时间
+  --since <30m|2h|1d>  相对时间窗，不与--from组合
+  --peer <QQ>         只看对应私聊/可信收发账号，不推测身份
+  --last-turns <N>    当前时间窗内最近N个模型回合
+  --snapshot <类型>   memory/reminders/reminder-list/documents/cron，只读当前状态
+  --stats             当前筛选范围的来源/工具失败率、耗时和模型用量
+  --format <格式>     text/table/markdown；表格只显示技术字段
+  --fields <列,...>   time,source,kind,tool,outcome,durationMs,runId,messageId
+  --offset <N>        固定时间窗内按行分页，nextOffset为后续页
+  --show-known        展开精确识别的可选模型目录刷新警告
+  --follow            持续只读跟随，Ctrl+C退出（JSON为一行一个包）
+  --interval <毫秒>   跟随间隔100..60000，默认1000
   --contains <文本>   按事件内容筛选
   --message-id <ID>   按 QQ 消息 ID 筛选（自动带出同一链路的事件）
   --proposal-id <ID>  按提醒提案筛选
@@ -664,9 +690,9 @@ function usage() {
 `;
 }
 
-const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit'];
+const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval'];
 const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds'};
-const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit'};
+const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit', '--stats':'stats', '--follow':'follow', '--show-known':'showKnown'};
 
 function parseArgs(argv) {
   const result = {sources: [], excludeSources: [], kinds: [], excludeKinds: []};
@@ -674,27 +700,42 @@ function parseArgs(argv) {
     const arg = argv[index];
     if (arg === '--help') return {...result, help: true};
     if (BOOLEAN_FLAGS[arg]) { result[BOOLEAN_FLAGS[arg]] = true; continue; }
-    const [flag, inline] = String(arg).split('=', 2);
+    const equal=String(arg).indexOf('=');
+    const [flag,inline]=equal<0?[String(arg),undefined]:[String(arg).slice(0,equal),String(arg).slice(equal+1)];
     if (!VALUE_FLAGS.includes(flag)) throw new Error(`未知参数：${arg}`);
     const value = inline ?? argv[++index];
     if (value === undefined) throw new Error(`缺少参数值：${flag}`);
     const key = flag.slice(2).replace(/-([a-z])/gu, (_, letter) => letter.toUpperCase());
     if (LIST_FLAGS[flag]) result[LIST_FLAGS[flag]].push(value); else result[key] = value;
   }
-  if (['turns', 'errors', 'audit'].filter((name) => result[name]).length > 1) throw new Error('--turns、--errors、--audit 只能选一个');
+  if (['turns', 'errors', 'audit', 'stats', 'snapshot'].filter((name) => result[name]).length > 1) throw new Error('turns/errors/audit/stats/snapshot只能选一个');
+  if(result.format&&!['text','table','markdown'].includes(result.format))throw Error('Invalid format');
+  if((result.fields||result.format&&result.format!=='text')&&(result.turns||result.errors||result.audit||result.stats||result.snapshot))throw Error('Table formatting requires event view');
+  if(result.since&&result.from)throw Error('since and from are mutually exclusive');
+  if(result.snapshot&&(result.peer||result.lastTurns||result.contains||result.messageId||result.runId||result.sessionKey||result.proposalId||result.reminderId||result.sources.length||result.kinds.length))throw Error('snapshot is current owner state; event filters cannot be combined');
+  if(result.follow&&(result.snapshot||result.lastTurns||result.offset||result.to))throw Error('follow cannot combine snapshot/last-turns/offset/to');
   return result;
 }
 
 export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   const args = parseArgs(argv);
   if (args.help) { console.log(usage()); return 0; }
-  const from = parseQueryInstant(args.from, now - 60 * 60 * 1000);
-  const to = parseQueryInstant(args.to, now);
-  if (!Number.isFinite(from) || !Number.isFinite(to) || from > to) throw new Error('时间范围无效');
-  const events = collectEvents({from, to, runtimeRoot: args.runtimeRoot ?? DEFAULT_RUNTIME_ROOT, snowlumaRoot: args.snowlumaRoot ?? DEFAULT_SNOWLUMA_ROOT, sources: args.sources.length ? args.sources : undefined, expand: Boolean(args.expand)});
-  const rendered = renderQuery(events, {...args, from, to});
-  console.log(args.json ? JSON.stringify(rendered.json, null, 2) : rendered.lines.join('\n'));
-  return 0;
+  const duration=args.since?parseDuration(args.since):60*60*1000;
+  const from = parseQueryInstant(args.from, now - duration),to = parseQueryInstant(args.to, now);
+  if ((args.from&&!Number.isFinite(parseQueryInstant(args.from,NaN)))||(args.to&&!Number.isFinite(parseQueryInstant(args.to,NaN)))||!Number.isFinite(from)||!Number.isFinite(to)||from>to)throw Error('时间范围无效');
+  const runtimeRoot=args.runtimeRoot??DEFAULT_RUNTIME_ROOT;
+  if(args.snapshot){const value=stateSnapshot(runtimeRoot,args.snapshot,{expand:args.expand,now});console.log(JSON.stringify(args.noText?noTextProjection(value):value,null,2));return 0;}
+  const read=(start,end)=>collectEvents({from:start,to:end,runtimeRoot,snowlumaRoot:args.snowlumaRoot??DEFAULT_SNOWLUMA_ROOT,sources:args.sources.length?args.sources:undefined,expand:Boolean(args.expand)});
+  const emit=(events,start,end,following=false)=>{let offset=Number(args.offset??0);do{const rendered=renderQuery(events,{...args,offset,from:start,to:end});console.log(args.json?JSON.stringify(rendered.json,null,following?0:2):rendered.lines.join('\n'));offset=following?rendered.json.nextOffset:null;}while(offset!=null);};
+  if(args.follow){
+    const controller=new AbortController(),stop=()=>controller.abort();process.once('SIGINT',stop);process.once('SIGTERM',stop);
+    return followQueries({from,read,emit:(events,start,end)=>emit(events,start,end,true),intervalMs:Number(args.interval??1000),signal:controller.signal}).finally(()=>{process.removeListener('SIGINT',stop);process.removeListener('SIGTERM',stop);});
+  }
+  emit(read(from,to),from,to);return 0;
+}
+export function parseDuration(value){
+ const match=/^([1-9]\d*)(s|m|h|d)$/.exec(value??'');if(!match)throw Error('Invalid since duration');
+ const ms=Number(match[1])*({s:1000,m:60000,h:3600000,d:86400000}[match[2]]);if(!Number.isSafeInteger(ms)||ms>366*86400000)throw Error('since exceeds 366 days');return ms;
 }
 
 /**
@@ -709,44 +750,49 @@ function queryLimit(value) {
 
 function renderQueryInternal(events, options = {}) {
   const {from, to, limit: rawLimit, raw = false, expand = false, turns, errors, audit} = options;
-  const correlated = filterEvents(events, options);
-  const viewFilters = {kinds: options.kinds ?? [], excludeKinds: options.excludeKinds ?? [], excludeSources: options.excludeSources ?? []};
+  const correlated = filterEvents(events, options).map(knownWarning);
+  const viewFilters = {kinds: options.kinds ?? [], excludeKinds: options.excludeKinds ?? [], excludeSources: options.excludeSources ?? [],showKnown:options.showKnown};
   // --errors keeps native WARN/ERROR lines; they are often the only trace of a host failure.
-  const values = applyViewFilters(correlated, {...viewFilters, raw: raw || Boolean(errors)});
-  const hiddenRaw = applyViewFilters(correlated, {...viewFilters, raw: true}).filter((item) => RAW_KINDS.has(item.kind)).length
+  const knownFiltered=options.showKnown?correlated:correlated.filter(e=>!e.data.known);
+  const hiddenKnown=correlated.length-knownFiltered.length;
+  const values = applyViewFilters(knownFiltered, {...viewFilters, raw: raw || Boolean(errors)});
+  const hiddenRaw = applyViewFilters(knownFiltered, {...viewFilters, raw: true}).filter((item) => RAW_KINDS.has(item.kind)).length
     - values.filter((item) => RAW_KINDS.has(item.kind)).length;
-  const limit = queryLimit(rawLimit);
+  const limit = queryLimit(rawLimit),offset=Number(options.offset??0);
+  if(!Number.isSafeInteger(offset)||offset<0)throw Error('Invalid offset');
+  const page=rows=>({offset,nextOffset:offset+limit<rows.length?offset+limit:null,totalRows:rows.length,truncated:offset+limit<rows.length});
   const range = {from: new Date(from).toISOString(), to: new Date(to).toISOString()};
   const window = `（${localTime(from)} 至 ${localTime(to)}）`;
   const rawNote = hiddenRaw ? `，已隐藏原生日志 ${hiddenRaw} 行（--raw 显示）` : '';
+  if(options.stats){const stats=queryStatistics(values);return{json:{schemaVersion:1,...range,hiddenKnown,...stats},lines:[JSON.stringify(stats,null,2)]};}
   if (turns || audit) {
     const grouped = groupTurns(values);
     if (audit) {
       const rows = auditTurns(grouped.turns);
       const flagged = rows.filter((row) => row.flagged);
       return {
-        json: {schemaVersion: 1, view: 'audit', ...range, total: rows.length, flagged: flagged.length, shown: Math.min(limit, rows.length), turns: rows.slice(0, limit)},
-        lines: formatAudit(rows, {limit}).map((line, index) => index ? line : `审计 ${line}${window}`),
+        json: {schemaVersion: 1, view: 'audit', ...range, total: rows.length, flagged: flagged.length, shown: rows.slice(offset,offset+limit).length, ...page(rows), hiddenKnown, turns: rows.slice(offset, offset+limit)},
+        lines: formatAudit(rows.slice(offset), {limit}).map((line, index) => index ? line : `审计 ${line}${window}`),
       };
     }
-    const timeline = grouped.timeline.slice(0, limit);
+    const timeline = grouped.timeline.slice(offset, offset+limit);
     return {
-      json: {schemaVersion: 1, view: 'turns', ...range, total: grouped.turns.length, shown: timeline.filter((item) => item.kind === 'turn').length, hiddenRaw, orphanEvents: grouped.orphanEvents, timeline},
+      json: {schemaVersion: 1, view: 'turns', ...range, total: grouped.turns.length, shown: timeline.filter((item) => item.kind === 'turn').length, hiddenRaw, hiddenKnown, ...page(grouped.timeline), orphanEvents: grouped.orphanEvents, timeline},
       lines: [`回合 ${grouped.turns.length}${window}${rawNote}`, ...formatTurns({timeline, orphanEvents: grouped.orphanEvents}, {full: expand})],
     };
   }
   if (errors) {
     const found = collectErrors(values);
-    const items = found.items.slice(0, limit);
+    const items = found.items.slice(offset,offset+limit);
     return {
-      json: {schemaVersion: 1, view: 'errors', ...range, total: found.items.length, shown: items.length, counts: found.counts, items},
+      json: {schemaVersion: 1, view: 'errors', ...range, total: found.items.length, shown: items.length, counts: found.counts, hiddenKnown, ...page(found.items), items},
       lines: [`错误与拒绝 ${items.length}/${found.items.length}${window}`, ...formatErrors({items, counts: found.counts})],
     };
   }
-  const selected = values.slice(0, limit);
+  const selected = values.slice(offset,offset+limit);
   const calls = pairCalls(selected);
   return {
-    json: {schemaVersion: 1, ...range, total: values.length, shown: selected.length, hiddenRaw, events: selected, calls},
+    json: {schemaVersion: 1, ...range, total: values.length, shown: selected.length, hiddenRaw, hiddenKnown, ...page(values), events: selected, calls},
     lines: [`链路事件 ${selected.length}/${values.length}${window}${rawNote}`, ...formatListing(selected, {expand, calls})],
   };
 }
@@ -754,11 +800,6 @@ function renderQueryInternal(events, options = {}) {
 export function renderQuery(events, options = {}) {
   const rendered = renderQueryInternal(events, options);
   const value = rendered.json;
-  // Timeline limits count markers too; make truncation visible in every view.
-  const effectiveLimit = queryLimit(options.limit);
-  value.truncated = value.view === 'turns'
-    ? groupTurns(applyViewFilters(filterEvents(events, options), {...options, raw: options.raw})).timeline.length > effectiveLimit
-    : value.shown < value.total;
   const annotate = item => {
     if (!item || typeof item !== 'object') return;
     if (item.data && typeof item.data.text === 'string') {
@@ -770,10 +811,12 @@ export function renderQuery(events, options = {}) {
     const projected = noTextProjection({...value, noText: true});
     return {json: projected, lines: [JSON.stringify(projected, null, 2)]};
   }
-  if (value.truncated) rendered.lines.push('结果已截短：请缩小时间范围或提高 --limit。');
+  if(options.fields||options.format==='table'||options.format==='markdown')rendered.lines=tabularEvents(value.events??[],options);
+  if(value.hiddenKnown)rendered.lines.push('已折叠明确识别的可选目录警告 '+value.hiddenKnown+' 条（--show-known 展开）。');
+  if (value.truncated) rendered.lines.push('结果已截短：固定--from/--to后使用--offset '+value.nextOffset+'，或缩小时间范围/提高--limit。');
   return rendered;
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { process.exitCode = runCli(); } catch (error) { console.error(`log-query: ${error.message}`); process.exitCode = 2; }
+  try { process.exitCode = await runCli(); } catch (error) { console.error(`log-query: ${error.message}`); process.exitCode = 2; }
 }

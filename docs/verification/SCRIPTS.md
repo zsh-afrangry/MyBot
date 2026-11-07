@@ -115,6 +115,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/test/backup-layout.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 深层数据库覆盖、工件重用/变化/破损拒绝、Fusion独立范围与旧v3兼容；仅临时目录 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/test/backup-retention.test.mjs` | 离线 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 临时恢复点验证最近两点保留、旧证明拒绝、未完成工件引用保护和破损/缺失/越界拒绝 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/test/documentation-map.test.mjs` | 离线 | [16](../16_验收与测试总表.md) | 文档归属、缺失目标、未登记文件与生成表漂移的正负回归，仅临时仓库 | 写临时测试目录 | 否 | header | `docs/verification/documentation-2026-10-21/README.md` |
+| `scripts/fusion/test/log-query-diagnostics.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 合成五类快照/读库不变、隐私、账号/分页、模型计数、真实CLI跟随/SIGINT及记忆审计，无外部服务 | 写临时测试目录 | 否 | header | `docs/verification/autonomous-verification-2026-11-07/README.md` |
 | `scripts/fusion/test/log-query-minimal.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 合成隐私、只读账本、业务失败与预览完整性回归 | 写临时测试目录、只读 | 否 | offline | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `scripts/fusion/test/log-query-views.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 日志查询视图合成数据回归：过滤、调用配对、回合、错误、审计、展开 | 只读 | 否 | offline | — |
 | `scripts/fusion/test/log-query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md) | 跨 SnowLuma/OpenClaw/提醒来源的链路事件适配、关联与脱敏 | 只读 | 否 | offline | — |
@@ -149,6 +150,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/lib/recovery-isolation.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 隔离恢复的路径、凭据与共享业务禁用改写，仅写恢复副本 | 写临时测试目录 | 否 | header | — |
 | `scripts/fusion/lib/runtime-paths.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 唯一源码与私密运行根目录常量，无旧系统回退 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/working-tree-backup.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar | 写运行状态 | 否 | code | — |
+| `scripts/fusion/log-query-diagnostics.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读SQLite/文件快照、Cron状态、分页/表格/统计与可中止去重跟随，不调用业务服务或外部接口 | 只读 | 否 | header | `docs/verification/autonomous-verification-2026-11-07/README.md` |
 | `scripts/fusion/log-query-privacy.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读日志输出字段白名单，关联后剔除正文与路径 | 只读 | 否 | header | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `scripts/fusion/log-query-result.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读工具协议封装、业务结果与失败提取 | 只读 | 否 | header | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `scripts/fusion/log-query-views.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 日志查询的视图层（被 log-query.mjs 导入）：过滤、调用配对、回合、错误、审计 | 只读 | 否 | header | — |

@@ -65,7 +65,7 @@ async function modelAcceptance() {
   const policy = ownerPolicy(), config = {channels: {'kurumi-qq': {ownerId: policy.subjects[0].qq, accessControl: policy}}};
   const ctx = context(policy.subjects[0]); ctx.getRuntimeConfig = () => config;
   let factory;
-  createE7Plugin({serviceFactory: () => service}).register({config, pluginConfig: {}, registerService() {}, registerTool: f => {factory = f;}});
+  createE7Plugin({serviceFactory: () => service}).register({config, pluginConfig: {}, on(){}, registerService() {}, registerTool: f => {factory = f;}});
   const tool = factory.create(ctx);
   const system = fs.readFileSync(path.join(repo, 'scripts/fusion/templates/AGENTS.md'), 'utf8') +
     '\n本轮为隔离验收，仅提供e7_data。按工具真实结果回答，查名称先search再用真实ID。需要专属装备、可用性或公告正文但来源缺失时说明边界。当前时间：' + new Date().toISOString();

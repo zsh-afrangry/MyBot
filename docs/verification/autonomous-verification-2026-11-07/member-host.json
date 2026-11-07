@@ -1,0 +1,59 @@
+{
+  "at": "2026-11-07T01:33:34.334Z",
+  "boundary": "Real isolated OpenClaw; local deterministic model/OneBot and fixture translator; temporary state only. No QQ network, no model provider, no production write.",
+  "cases": [
+    {
+      "label": "member actual trusted sender and private catalog",
+      "passed": true
+    },
+    {
+      "label": "owner compatibility",
+      "passed": true
+    },
+    {
+      "label": "mandatory host policy denies unmapped exposed tool",
+      "passed": true
+    },
+    {
+      "label": "mandatory host policy denies revoked import before HTTP",
+      "passed": true
+    },
+    {
+      "label": "member background PDF bound to original QQ",
+      "passed": true
+    },
+    {
+      "label": "other subject cannot inspect member job",
+      "passed": true
+    },
+    {
+      "label": "member /new uses own native session and leaves files/jobs",
+      "passed": true
+    },
+    {
+      "label": "member prompts contain no owner memory and native sensitive tools are absent",
+      "passed": true
+    },
+    {
+      "label": "owner task mints a trusted background lane and preserves configured tool access",
+      "passed": true
+    },
+    {
+      "label": "preferred Code Mode model retains configured direct tool surface",
+      "passed": true
+    },
+    {
+      "label": "scheduled weather reaches trusted inner tool and local platform receipt",
+      "passed": true
+    },
+    {
+      "label": "trusted host policy audit proves calls reached enforceable boundary",
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "modelRequests": 30,
+  "childStopped": true,
+  "ownerMemorySeenInMemberPrompts": false,
+  "fixtureUploads": 1
+}

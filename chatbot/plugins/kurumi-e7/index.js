@@ -1,5 +1,8 @@
 // OpenClaw composition only. Query implementation and lifecycle: docs/27.
 import fs from 'node:fs';
+import path from 'node:path';
+import {createTraceSink} from '../../packages/observability/index.js';
+import {createToolTrace} from '../../packages/observability/tool-trace.js';
 import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
 import {wrapExternalContent} from 'openclaw/plugin-sdk/security-runtime';
 import {assertToolAccess} from '../../packages/access-control/index.js';
@@ -45,15 +48,18 @@ const MESSAGES = {
   upstream_backoff: '站点访问仍在退避等待中', timeout: '读取站点超时', network_failed: '暂时无法连接站点', cancelled: '查询已取消',
   not_found: '来源没有这份资料', invalid_response: '来源资料结构异常，未覆盖有效缓存', catalog_shrank: '目录数量异常，已保留原缓存',
 };
-export function createE7Plugin({serviceFactory = config => new E7Service(config)} = {}) {
+export function createE7Plugin({serviceFactory = (config,dependencies) => new E7Service(config,dependencies)} = {}) {
   const plugin = {id: 'kurumi-e7', name: 'E7 public wiki data', register(api) {
-    const service = serviceFactory(api.pluginConfig);
+    const telemetry=createToolTrace(['e7_data']);telemetry.attach(api);
+    const traceRoot=api.config.channels?.['kurumi-qq']?.stateDir;
+    const emit=(api.registrationMode==='full'||api.registrationMode===undefined)&&typeof traceRoot==='string'&&path.isAbsolute(traceRoot)?createTraceSink(path.join(traceRoot,'e7-events.jsonl'), {maxBytes:4*1024*1024}).emit:()=>{};
+    const service = serviceFactory(api.pluginConfig,{observe:event=>emit({source:'e7',...event})});
     api.registerService({id: 'kurumi-e7-refresh', start: () => service.start(), stop: () => service.stop()});
     api.registerTool({contextVersion: 2, create: ctx => ({...E7_TOOL, async execute(callId, args = {}, signal) {
       try {
         const config = () => ctx.getRuntimeConfig?.() ?? api.config;
         assertToolAccess(ctx, config(), E7_TOOL.name, args); ctx.assertInvocationCurrent(); signal?.throwIfAborted();
-        const result = await service.query(args, {signal});
+        const result = await service.query(args, {signal,trace:{sessionKey:ctx.sessionKey,sessionId:ctx.sessionId,toolCallId:callId,runId:telemetry.resolve(ctx,callId,'e7_data')}});
         ctx.assertInvocationCurrent(); signal?.throwIfAborted(); assertToolAccess(ctx, config(), E7_TOOL.name, args);
         return {content: [{type: 'text', text: wrapExternalContent(JSON.stringify(result), {source: 'api', taskName: 'E7·WIKI', includeWarning: true})}]};
       } catch (error) {
