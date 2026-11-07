@@ -1,0 +1,141 @@
+{
+  "backup": "/home/afrangry/kurumi-backups/2026-11-07-02-07-08-R5-autonomous",
+  "manifestHash": "90ab5760dde8a88ac9f52a7687516185bc34e16f463f84e3ef250c8c7750fbe8",
+  "expectedHash": "cbf71f65eba7d5a5f3782f71ef1e6e3a3ecf0a216cf3329cbb233828f4279460",
+  "verifierHead": "6e94a19a900bdeca7a95a096f4dd472da8d00785",
+  "coreVersion": "2026.11.1",
+  "level": "isolated-gateway",
+  "ok": true,
+  "results": [
+    {
+      "name": "independent project boundary",
+      "ok": true,
+      "detail": "KnowledgeMap/DSH projects are outside the Fusion recovery scope"
+    },
+    {
+      "name": "manifest (441 files)",
+      "ok": true,
+      "detail": "all match"
+    },
+    {
+      "name": "required content (18 entries)",
+      "ok": true,
+      "detail": "all present"
+    },
+    {
+      "name": "expected databases (17)",
+      "ok": true,
+      "detail": "all present"
+    },
+    {
+      "name": "bundle kurumi-fusion valid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "clone kurumi-fusion matches expected refs",
+      "ok": true,
+      "detail": "HEAD 6e94a19a, 1 branch(es), 3 tag(s)"
+    },
+    {
+      "name": "database snapshots (17)",
+      "ok": true,
+      "detail": "17 healthy"
+    },
+    {
+      "name": "assemble: all runtime directories copied",
+      "ok": true,
+      "detail": "14 entr(ies): agents channel documents media openclaw.json.last-good paper-credentials.json plugin-skills projects.json research-workspace state tools users workspace 整理记录.md"
+    },
+    {
+      "name": "assemble: databases placed at runtime paths",
+      "ok": true,
+      "detail": "17 database(s)"
+    },
+    {
+      "name": "assemble: runtime config loads",
+      "ok": true,
+      "detail": "15 top-level keys"
+    },
+    {
+      "name": "assemble: token/credential files present",
+      "ok": true,
+      "detail": "runtime-env.json, http-token, ws-token"
+    },
+    {
+      "name": "immutable dependency restored: openclaw",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "immutable dependency restored: paper-python",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "immutable dependency restored: exec-fence",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "SDK matches approved source release",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "assemble: plugin prefix rebuilt from lockfile",
+      "ok": true,
+      "detail": "2 package(s) via npm ci"
+    },
+    {
+      "name": "load: restored repo dependencies installed",
+      "ok": true,
+      "detail": "8/8 package(s) via npm ci from restored lockfiles"
+    },
+    {
+      "name": "all active configuration roots remapped; delivery disabled",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "sandbox build chatbot/packages/confirmation-core",
+      "ok": true,
+      "detail": "compiled"
+    },
+    {
+      "name": "sandbox build chatbot/packages/personal-domains",
+      "ok": true,
+      "detail": "compiled"
+    },
+    {
+      "name": "sandbox build chatbot/plugins/kurumi-e7",
+      "ok": true,
+      "detail": "compiled"
+    },
+    {
+      "name": "sandbox build chatbot/plugins/personal-confirmation",
+      "ok": true,
+      "detail": "compiled"
+    },
+    {
+      "name": "sandbox build chatbot/plugins/personal-weather",
+      "ok": true,
+      "detail": "compiled"
+    },
+    {
+      "name": "isolated Gateway startup, plugin imports and production exclusion",
+      "ok": true,
+      "detail": "Isolated Gateway health and all plugin imports passed; production paths and network inaccessible"
+    },
+    {
+      "name": "load: restored memory readable via restored source",
+      "ok": true,
+      "detail": "revision 30, 0 entr(ies), source repos/kurumi-fusion/chatbot/plugins/kurumi-memory/store.js"
+    },
+    {
+      "name": "load: assembled databases open in place",
+      "ok": true,
+      "detail": "17 opened"
+    }
+  ]
+}
