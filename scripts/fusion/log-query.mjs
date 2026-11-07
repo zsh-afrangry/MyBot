@@ -38,7 +38,7 @@ import {
 
 import {normalizeToolResult} from './log-query-result.mjs';
 import {noTextProjection} from './log-query-privacy.mjs';
-import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries} from './log-query-diagnostics.mjs';
+import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries,readStoredQQMessages} from './log-query-diagnostics.mjs';
 
 export {formatEvent};
 
@@ -560,7 +560,7 @@ function append(target, items) {
   for (const item of items) target.push(item);
 }
 
-export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, snowlumaRoot = DEFAULT_SNOWLUMA_ROOT, sources, expand = false} = {}) {
+export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, snowlumaRoot = DEFAULT_SNOWLUMA_ROOT, sources, expand = false, messageId,peer} = {}) {
   const wanted = sources ? new Set(sources) : undefined;
   const include = (name) => !wanted || wanted.has(name);
   const events = [];
@@ -604,6 +604,7 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   if (include('knowledgemap')) {
     for (const file of ['trace.jsonl.1', 'trace.jsonl']) append(events, readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to));
   }
+  if(wanted?.has('snowluma-messages')) append(events,readStoredQQMessages(snowlumaRoot,runtimeRoot,from,to,{messageId,peer,expand,previews:events.filter(e=>e.source==='snowluma')}));
   attachSessionCorrelation(events, windows);
   attachTurnCorrelation(events);
   attachRuntimeCorrelation(events);
@@ -670,7 +671,7 @@ function usage() {
   --run-id <ID>       按后台/模型运行 ID 筛选
   --session-key <键>  按 OpenClaw 会话筛选
   --reminder-id <ID>  按提醒 ID 筛选
-  --source <名称>     可重复；限制为适配器名称
+  --source <名称>     可重复；限制为适配器名称。snowluma-messages须显式选择并附message-id/peer
   --exclude-source <名称> 可重复；排除适配器
   --kind <前缀>       可重复；只看这些事件类型，前缀匹配（如 agent.tool_）
   --exclude-kind <前缀> 可重复；排除事件类型，前缀匹配
@@ -725,7 +726,7 @@ export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   if ((args.from&&!Number.isFinite(parseQueryInstant(args.from,NaN)))||(args.to&&!Number.isFinite(parseQueryInstant(args.to,NaN)))||!Number.isFinite(from)||!Number.isFinite(to)||from>to)throw Error('时间范围无效');
   const runtimeRoot=args.runtimeRoot??DEFAULT_RUNTIME_ROOT;
   if(args.snapshot){const value=stateSnapshot(runtimeRoot,args.snapshot,{expand:args.expand,now});console.log(JSON.stringify(args.noText?noTextProjection(value):value,null,2));return 0;}
-  const read=(start,end)=>collectEvents({from:start,to:end,runtimeRoot,snowlumaRoot:args.snowlumaRoot??DEFAULT_SNOWLUMA_ROOT,sources:args.sources.length?args.sources:undefined,expand:Boolean(args.expand)});
+  const read=(start,end)=>collectEvents({from:start,to:end,runtimeRoot,snowlumaRoot:args.snowlumaRoot??DEFAULT_SNOWLUMA_ROOT,sources:args.sources.length?args.sources:undefined,expand:Boolean(args.expand),messageId:args.messageId,peer:args.peer});
   const emit=(events,start,end,following=false)=>{let offset=Number(args.offset??0);do{const rendered=renderQuery(events,{...args,offset,from:start,to:end});console.log(args.json?JSON.stringify(rendered.json,null,following?0:2):rendered.lines.join('\n'));offset=following?rendered.json.nextOffset:null;}while(offset!=null);};
   if(args.follow){
     const controller=new AbortController(),stop=()=>controller.abort();process.once('SIGINT',stop);process.once('SIGTERM',stop);

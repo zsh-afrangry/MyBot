@@ -4,7 +4,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {createHash} from 'node:crypto';
-import {normalizeTraceEvent,correlationFrom} from '../../chatbot/packages/observability/index.js';
+import {normalizeTraceEvent,correlationFrom,redactText} from '../../chatbot/packages/observability/index.js';
+import {allowedMembers,sessionFor} from '../../chatbot/packages/access-control/index.js';
 import {pairCalls,collectErrors,localTime,groupTurns} from './log-query-views.mjs';
 const readJson = file => JSON.parse(fs.readFileSync(file,'utf8'));
 const exists = file => fs.existsSync(file);
@@ -110,4 +111,42 @@ export async function followQueries({read,emit,from,to=Date.now,intervalMs=1000,
   cursor=Math.max(from,end-5000);for(const [key,at]of seen)if(at<cursor)seen.delete(key);
   await new Promise(resolve=>{if(signal?.aborted)return resolve();const done=()=>{clearTimeout(timer);signal?.removeEventListener('abort',done);resolve();};const timer=setTimeout(done,intervalMs);signal?.addEventListener('abort',done,{once:true});});
  }
+}
+
+// Explicitly selected private-message source. Never scans unrelated contacts,
+// groups or media tables and never exposes raw data/URLs, even with expand.
+export function readStoredQQMessages(snowlumaRoot,runtimeRoot,from,to,{messageId,peer,expand=false,previews=[]}={}) {
+ if(!messageId&&!peer)throw Error('snowluma-messages requires message-id or peer');
+ if(messageId&&(!/^-?[1-9]\d{0,15}$/.test(messageId)||!Number.isSafeInteger(Number(messageId))))throw Error('Invalid stored QQ message id');
+ if(peer&&!/^\d{5,12}$/.test(peer))throw Error('Invalid peer');
+ const subjects=allowedMembers(config(runtimeRoot)),byPeer=new Map(subjects.map(r=>[r.qq,r]));
+ if(peer&&!byPeer.has(peer))throw Error('Stored QQ peer is not enabled in Fusion');
+ const root=path.join(snowlumaRoot,'runtime','data'),events=[];
+ if(!exists(root))return events;
+ for(const entry of fs.readdirSync(root,{withFileTypes:true})) {
+  if(!entry.isDirectory()||!/^\d{5,12}$/.test(entry.name))continue;
+  const file=path.join(root,entry.name,'messages.db');if(!exists(file)||fs.lstatSync(file).isSymbolicLink())continue;
+  database(file,db=>{
+   const where=['is_group=0','timestamp>=?','timestamp<=?'],params=[Math.floor(from/1000),Math.floor(to/1000)];
+   if(messageId){where.push('message_hash=?');params.push(Number(messageId));}
+   if(peer){where.push('session_id=?');params.push(Number(peer));}
+   else {where.push('session_id IN ('+subjects.map(()=>'?').join(',')+')');params.push(...subjects.map(r=>Number(r.qq)));}
+   for(const row of db.prepare('SELECT message_hash,session_id,private_direction,timestamp,data FROM messages WHERE '+where.join(' AND ')+' ORDER BY timestamp,message_hash').all(...params)) {
+    let record;try{record=JSON.parse(row.data);}catch{continue;}
+    const id=String(row.message_hash),subject=byPeer.get(String(row.session_id)),bot=String(record.self_id);
+    if(!subject||record.message_type!=='private'||bot!==entry.name||String(record.message_id)!==id||!Array.isArray(record.message))continue;
+    const sender=String(record.user_id),outbound=sender===bot;
+    if(outbound?(row.private_direction!==1||String(record.target_id)!==subject.qq):(sender!==subject.qq||![-1,0].includes(row.private_direction)))continue;
+    const at=row.timestamp*1000;if(!Number.isSafeInteger(at)||at<from||at>to)continue;
+    const text=record.message.filter(s=>s.type==='text'&&typeof s.data?.text==='string').map(s=>s.data.text).join('');
+    const safe=redactText(text),preview=previews.find(e=>e.correlation.qqMessageId===id&&e.correlation[outbound?'recipientId':'senderId']===subject.qq&&e.kind===(outbound?'qq.outbound':'qq.inbound'))?.data.text;
+    const storedComparison=typeof preview!=='string'?'unavailable':preview===safe?'equal':safe.startsWith(preview)?'prefix':'different';
+    events.push(normalizeTraceEvent({at,source:'snowluma-messages',kind:'qq.stored_message',
+     correlation:correlationFrom({qqMessageId:id,sessionKey:sessionFor(subject),senderId:sender,recipientId:outbound?subject.qq:bot}),
+     data:{direction:outbound?'outbound':'inbound',textLength:text.length,bytes:Buffer.byteLength(text),sha256:createHash('sha256').update(text).digest('hex'),storedComparison,textCompleteness:'stored-text-segments',snapshotOfCurrentState:true,...(expand?{text:safe}:{})},
+     sourceRef:{path:file,table:'messages'}}));
+   }
+  });
+ }
+ return events;
 }

@@ -11,7 +11,7 @@ const identifiers = new Set(['id', 'receiptId', 'sessionId', 'sessionKey', 'sess
 const labels = new Set(['source', 'kind', 'view', 'tool', 'declaredTool', 'outcome', 'errorCode', 'code',
   'status', 'hostStatus', 'decision', 'permission', 'domain', 'actionKind', 'action', 'failureCode',
   'consumptionResult', 'lastStatus', 'lastDeliveryStatus', 'scheduleKind', 'sessionTarget', 'correlationQuality',
-  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache']);
+  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache', 'direction', 'storedComparison']);
 const dates = new Set(['at', 'from', 'to', 'snapshotAt', 'scheduleAt', 'recordedAt']);
 const facts = new Set(['schemaVersion', 'epochMs', 'durationMs', 'count', 'total', 'shown', 'hiddenRaw', 'orphanEvents',
   'flagged', 'textLength', 'displayTruncated', 'limit', 'offset', 'nextOffset', 'truncated', 'noText', 'enabled', 'ok', 'isError', 'idempotent',

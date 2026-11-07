@@ -1,9 +1,10 @@
 // Offline docs/18 diagnostics: synthetic SQLite/files/events, no services or external APIs.
 import test from 'node:test';import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {DatabaseSync} from 'node:sqlite';import {spawn} from 'node:child_process';import {once} from 'node:events';import {fileURLToPath} from 'node:url';import {createHash} from 'node:crypto';
-import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries} from '../log-query-diagnostics.mjs';
+import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries,readStoredQQMessages} from '../log-query-diagnostics.mjs';
 import {collectEvents,renderQuery,parseDuration,runCli} from '../log-query.mjs';
 import {normalizeTraceEvent,createTraceSink} from '../../../chatbot/packages/observability/index.js';
+import {withAccess} from '../../../chatbot/tests/access-control/fixtures.mjs';
 import {auditMemoryCall} from '../../../chatbot/packages/observability/memory-audit.js';
 const at=Date.parse('2026-11-07T09:00:00+08:00'),peer='100001',key='agent:main:kurumi-qq:direct:'+peer;
 const event=(kind,n,data={},correlation={})=>normalizeTraceEvent({at:at+n,source:'openclaw-session',kind,correlation:{sessionKey:key,...correlation},data});
@@ -116,4 +117,27 @@ test('bounded diagnostic generations retain one private queryable predecessor', 
  const result=renderQuery(collectEvents({runtimeRoot:root,snowlumaRoot:root,sources:['e7'],from:at-1000,to:at+1000}),{from:at-1000,to:at+1000}).json;
  assert.deepEqual(result.events.map(e=>e.correlation.runId),['second','third']);
  assert.throws(()=>createTraceSink(file,{maxBytes:-1}),/maxBytes/);
+});
+
+function storedFixture(t){
+ const f=setup(t);withAccess(f.cfg);fs.writeFileSync(path.join(f.root,'openclaw.json'),JSON.stringify(f.cfg));
+ const bot='100002',file=db(f.root,'runtime/data/'+bot+'/messages.db','CREATE TABLE messages(message_hash INTEGER,is_group INTEGER,session_id INTEGER,private_direction INTEGER,timestamp INTEGER,data TEXT)');
+ const d=new DatabaseSync(file);const base={time:at/1000,self_id:Number(bot),post_type:'message',message_type:'private',message_id:-21,user_id:Number(peer),message:[{type:'text',data:{text:'PRIVATE LINE\n第二行'}},{type:'image',data:{url:'https://example.test/?rkey=DO_NOT_COPY'}}],raw_message:'DO_NOT_COPY_RAW'};
+ const insert=(id,patch={},row={})=>d.prepare('INSERT INTO messages VALUES(?,?,?,?,?,?)').run(id,row.group??0,row.peer??Number(peer),row.direction??0,at/1000,JSON.stringify({...base,message_id:id,...patch}));
+ insert(-21);insert(-22,{user_id:Number(bot),target_id:Number(peer)},{direction:1});insert(-23,{}, {group:1});insert(-24,{user_id:100009},{peer:100009});insert(-25,{user_id:Number(bot),target_id:100009},{direction:1});insert(-26,{self_id:100003});insert(-27,{message_id:9000});insert(-28,{}, {direction:3});d.close();return{...f,file};
+}
+test('stored QQ messages are explicit scoped read-only text summaries; no group, foreign peer or media leak',t=>{
+ const f=storedFixture(t),before=hash(f.file),options={peer};
+ assert.throws(()=>readStoredQQMessages(f.root,f.root,at-1000,at+1000),/requires message-id or peer/);
+ assert.throws(()=>readStoredQQMessages(f.root,f.root,at-1000,at+1000,{peer:'100009'}),/not enabled/);
+ assert.throws(()=>readStoredQQMessages(f.root,f.root,at-1000,at+1000,{messageId:'9999999999999999'}),/Invalid/);
+ const rows=readStoredQQMessages(f.root,f.root,at-1000,at+1000,options);assert.equal(rows.length,2);assert(!JSON.stringify(rows).includes('PRIVATE'));assert(!JSON.stringify(rows).includes('DO_NOT_COPY'));assert(rows.every(e=>e.data.textCompleteness==='stored-text-segments'));assert.equal(rows[1].data.direction,'inbound');assert.equal(rows[0].data.direction,'outbound');
+ const full=readStoredQQMessages(f.root,f.root,at-1000,at+1000,{messageId:'-21',expand:true});assert.equal(full[0].data.text,'PRIVATE LINE\n第二行');assert(!JSON.stringify(full).includes('DO_NOT_COPY'));assert.equal(full[0].data.sha256,createHash('sha256').update('PRIVATE LINE\n第二行').digest('hex'));assert.equal(hash(f.file),before);
+});
+test('stored messages compare only matching ID, direction and peer; no text/time correlation',t=>{
+ const f=storedFixture(t),preview=normalizeTraceEvent({at,source:'snowluma',kind:'qq.inbound',correlation:{qqMessageId:'-21',senderId:peer},data:{text:'PRIVATE LINE'}});
+ const read=previews=>readStoredQQMessages(f.root,f.root,at-1000,at+1000,{messageId:'-21',previews})[0].data.storedComparison;
+ assert.equal(read([preview]),'prefix');assert.equal(read([{...preview,data:{text:'PRIVATE LINE\n第二行'}}]),'equal');assert.equal(read([{...preview,data:{text:'different'}}]),'different');assert.equal(read([{...preview,correlation:{qqMessageId:'-21',senderId:'100009'}}]),'unavailable');
+ assert.equal(collectEvents({runtimeRoot:fixture(t),snowlumaRoot:f.root,from:at-1000,to:at+1000}).filter(e=>e.source==='snowluma-messages').length,0);
+ const rows=collectEvents({runtimeRoot:f.root,snowlumaRoot:f.root,from:at-1000,to:at+1000,sources:['snowluma-messages'],messageId:'-21',expand:true});assert.equal(rows.length,1);assert(!JSON.stringify(renderQuery(rows,{from:at-1000,to:at+1000,noText:true}).json).includes('PRIVATE'));
 });
