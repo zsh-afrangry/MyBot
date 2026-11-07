@@ -1,0 +1,138 @@
+{
+  "at": "2026-11-07T02:05:29.812Z",
+  "sourceHead": "5d2eae321c45e3319af3f813b415368f0b44bad0",
+  "productionReloadedAt": "2026-11-07T10:05:01+08:00",
+  "buildPackages": 5,
+  "checks": {
+    "health": true,
+    "issues": [],
+    "dependencies": true,
+    "config": true,
+    "persona": true
+  },
+  "gateway": true,
+  "qq": {
+    "online": true,
+    "good": true
+  },
+  "channel": [
+    {
+      "running": true,
+      "connected": true
+    }
+  ],
+  "testIngress": false,
+  "testMethodDisabled": true,
+  "knowledgeMapContractAvailable": true,
+  "databases": {
+    "channelDatabase": "ok",
+    "weatherDatabase": "ok",
+    "remindersDatabase": "ok",
+    "reminderListDatabase": "ok"
+  },
+  "runtimeCatalogAndCron": {
+    "at": "2026-11-07T02:05:29.812Z",
+    "e7Runtime": "active",
+    "e7Tools": [
+      "e7_data"
+    ],
+    "sourceReadActions": [
+      "search",
+      "hero",
+      "artifact",
+      "dictionary",
+      "codes",
+      "news",
+      "builds",
+      "reviews",
+      "rankings",
+      "content",
+      "gvg",
+      "fates",
+      "packs"
+    ],
+    "cron": [
+      {
+        "id": "2bd8e62c-2bf0-4a45-b231-34e39d2ee400",
+        "enabled": true,
+        "schedule": {
+          "expr": "30 10 * * *",
+          "kind": "cron",
+          "tz": "Asia/Shanghai"
+        }
+      },
+      {
+        "id": "23c06aa8-96f2-47c7-9adf-9a6f1291bb28",
+        "enabled": true,
+        "schedule": {
+          "kind": "cron",
+          "expr": "0 12 * * *",
+          "tz": "Asia/Shanghai",
+          "staggerMs": 0
+        },
+        "timeout": 75,
+        "noOutput": 70
+      },
+      {
+        "id": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+        "enabled": true,
+        "schedule": {
+          "kind": "cron",
+          "expr": "0 18 * * *",
+          "tz": "Asia/Shanghai",
+          "staggerMs": 0
+        },
+        "timeout": 75,
+        "noOutput": 70
+      },
+      {
+        "id": "1ad1bb0e-e393-4fe1-874a-f659b9187721",
+        "enabled": true,
+        "schedule": {
+          "kind": "cron",
+          "expr": "0 0 * * *",
+          "tz": "Asia/Shanghai",
+          "staggerMs": 0
+        },
+        "timeout": 75,
+        "noOutput": 70
+      },
+      {
+        "id": "a8170ce7-c907-4180-8c01-6dd2c954dc41",
+        "enabled": true,
+        "schedule": {
+          "kind": "cron",
+          "expr": "0 8 * * *",
+          "tz": "Asia/Shanghai",
+          "staggerMs": 0
+        },
+        "timeout": 75,
+        "noOutput": 70
+      },
+      {
+        "id": "86a8cc2f-6b77-4a11-ad78-b3ea1d2bdbd3",
+        "enabled": false,
+        "schedule": {
+          "kind": "every",
+          "everyMs": 1800000,
+          "anchorMs": 1411718
+        }
+      }
+    ]
+  },
+  "startup": {
+    "at": "2026-11-07T02:06:16.181Z",
+    "from": "2026-11-07T02:05:01.000Z",
+    "rows": 104,
+    "dep0151": 0,
+    "errorFatal": 0,
+    "warnings": 9,
+    "startupSqlite": 5,
+    "blockedOptionalCatalogOrFeed": 2,
+    "eventLoop": 2
+  },
+  "independentServicesUnchanged": true,
+  "newMemoryAndRenameGrants": false,
+  "codeMode": false,
+  "pushed": false
+}

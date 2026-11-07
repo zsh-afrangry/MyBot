@@ -24,3 +24,7 @@
 完整消息只读适配新增两组回归，拒绝群聊、陌生人、错误bot/方向/目标/ID，默认不扫库，展开不含媒体或原始envelope，--no-text再次剥除文本；通过真实运行messages.db精确ID读出1条存储记录，仅显示长度/哈希等元数据，不复制正文。@kurumi/access-control补main入口消除本项目的DEP0151警告，未改变权限内容；宿主启动负载与可选目录网络阻断不混作已修复。
 
 [E7第二批2C](e7-2c/README.md)：gvg/fates/packs已实现并完成离线、实际公开接口与当前主模型技术验证；真实QQ客户端体验仍单列。
+
+## 最终生产加载
+
+[部署摘要](deployment.json)：源码5d2eae3于10:05加载，5包构建与四检通过；E7唯一只读工具、原Cron ID/时刻、Code Mode/testIngress及未授予记忆/rename权限均核对。SnowLuma、QQ、DSH InvocationID不变。DEP0151入口警告已消失，观测窗口ERROR/FATAL为0；SQLite启动慢保留、事件循环启动与可选目录/插件feed网络防护告警仍保留，未以隐藏全部警告冒充修复。恢复点实时结论只见运行根手册及各点VERIFIED。
