@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 5,
+  "revision": 6,
   "subjects": [
     {
       "qq": "365999865",
@@ -20,6 +20,7 @@
         "papers.read": true,
         "papers.translate": true,
         "papers.cancel": true,
+        "papers.rename": true,
         "stickers.use": true,
         "mail.status": true,
         "mail.draft": true,
