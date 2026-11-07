@@ -448,7 +448,8 @@
       "testIngress": false,
       "dailySendLimit": 500,
       "naturalSegments": true,
-      "segmentDelayMs": 450
+      "segmentDelayMs": 450,
+      "replyToMode": "off"
     }
   },
   "tools": {

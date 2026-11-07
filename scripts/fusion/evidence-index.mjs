@@ -42,6 +42,7 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const TABLE = {
   'scripts/fusion/log-query-diagnostics.mjs': ['库','只读SQLite/文件快照、Cron状态、分页/表格/统计与可中止去重跟随，不调用业务服务或外部接口',{readonly:1},'header'],
   'scripts/fusion/test/log-query-diagnostics.test.mjs': ['离线','合成五类快照/读库不变、隐私、账号/分页、模型计数、真实CLI跟随/SIGINT及记忆审计，无外部服务',{testDir:1},'header'],
+  'chatbot/tests/response/acceptance-threading-host.mjs': ['验收','真实隔离Gateway/SDK引用模式和显式标签、分段/默认普通发送及陌生人群聊拒绝，确定性模型/本地OneBot，无真实QQ或生产写入',{testDir:1,restart:1},'header'],
   'chatbot/tests/response/acceptance-host.mjs': ['验收','隔离真实Gateway/Cron/固定CLI及模拟QQ回执，确定性模型；核对原会话人格/近期聊天、通知/目标与去重，无真实API/QQ或生产写入',{testDir:1,restart:1},'header'],
   'chatbot/tests/response/fixtures.mjs': ['库','合成提醒/列表提案及可信确认，临时状态，无真实模型/QQ',{testDir:1},'header'],
   'chatbot/tests/response/notification.test.mjs': ['离线','真实临时SQLite的模型说明/冻结事实、生成失败、版本/权限变化、去重与只读RPC参数回归',{testDir:1},'header'],

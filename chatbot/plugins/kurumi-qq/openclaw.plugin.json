@@ -70,6 +70,11 @@
             "minimum": 100,
             "maximum": 4000
           },
+          "replyToMode": {
+            "type": "string",
+            "enum": ["off", "first", "all"],
+            "default": "off"
+          },
           "testIngress": {
             "type": "boolean"
           },

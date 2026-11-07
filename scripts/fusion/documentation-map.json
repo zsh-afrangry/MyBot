@@ -3,6 +3,16 @@
   "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
   "scriptOwners": [
     {
+      "path": "chatbot/tests/response/acceptance-threading-host.mjs",
+      "documents": [
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "evidence": [
+        "docs/verification/autonomous-verification-2026-11-07/README.md"
+      ]
+    },
+    {
       "path": "scripts/fusion/test/log-query-diagnostics.test.mjs",
       "documents": [
         "docs/18_跨模块链路日志查询.md"
@@ -500,7 +510,9 @@
         "docs/18_跨模块链路日志查询.md",
         "docs/24_统一身份与权限管理.md",
         "docs/27_E7数据插件设计.md",
-        "docs/16_验收与测试总表.md"
+        "docs/16_验收与测试总表.md",
+        "docs/9_QQ融合助手架构与开发计划.md",
+        "config/README.md"
       ]
     },
     {

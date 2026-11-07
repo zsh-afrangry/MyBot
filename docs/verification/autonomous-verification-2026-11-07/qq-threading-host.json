@@ -1,0 +1,46 @@
+{
+  "at": "2026-11-07T01:43:30.387Z",
+  "boundary": "Real isolated Gateway, native replyToMode/tag processing and loopback OneBot receipts. Synthetic owner and deterministic local model; no external model/API/QQ or production writes.",
+  "cases": [
+    {
+      "label": "ordinary-off-has-no-implicit-current-quote",
+      "passed": true,
+      "receipts": 1,
+      "replyIds": []
+    },
+    {
+      "label": "explicit-earlier-reference-preserved",
+      "passed": true,
+      "receipts": 1,
+      "replyIds": [
+        "201"
+      ]
+    },
+    {
+      "label": "explicit-current-directive-still-supported",
+      "passed": true,
+      "receipts": 1,
+      "replyIds": [
+        "203"
+      ]
+    },
+    {
+      "label": "segmented-explicit-quote-only-on-first-part",
+      "passed": true,
+      "receipts": 4,
+      "replyIds": [
+        "201"
+      ]
+    },
+    {
+      "label": "quote-policy-does-not-open-group-or-stranger",
+      "passed": true,
+      "receipts": 0,
+      "replyIds": []
+    }
+  ],
+  "requests": 4,
+  "passed": true,
+  "childStopped": true,
+  "finishedAt": "2026-11-07T01:43:44.096Z"
+}

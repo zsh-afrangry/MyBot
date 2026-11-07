@@ -12,9 +12,10 @@ export const plugin={
  id:CHANNEL,meta:{id:CHANNEL,label:'Kurumi QQ',selectionLabel:'Kurumi QQ (OneBot)',docsPath:'/channels/kurumi-qq',blurb:'QQ private channel with explicit identity permissions'},
  capabilities:{chatTypes:['direct'],media:true,threads:false,reactions:false},
  config:{listAccountIds:()=>['default'],resolveAccount:account,inspectAccount:cfg=>({enabled:cfg.channels?.[CHANNEL]?.enabled===true,configured:!!cfg.channels?.[CHANNEL]?.httpTokenFile}),isEnabled:a=>a.enabled,isConfigured:a=>!!a.httpTokenFile,resolveAllowFrom:({cfg})=>allowedMembers(account(cfg)).map(row=>row.qq)},
+ threading:{resolveReplyToMode:({cfg})=>cfg.channels?.[CHANNEL]?.replyToMode??'off',allowExplicitReplyTagsWhenOff:true},
  reload:{configPrefixes:[`channels.${CHANNEL}`]},
  messaging:{normalizeTarget:raw=>String(raw).replace(/^kurumi-qq:/,''),targetResolver:{looksLikeId:raw=>/^(?:user:)?\d+$/.test(raw),hint:'user:<authorized QQ>'}},
- agentPrompt:{inboundFormattingHints:()=>['使用自然中文和适合 QQ 的简短段落。不要输出内部工具日志。任务未实际完成时不要声称已完成。']},
+ agentPrompt:{inboundFormattingHints:()=>['使用自然中文和适合 QQ 的简短段落。默认普通发送；仅为明确回复较早消息或区分话题才使用显式引用标签。不要输出内部工具日志。任务未实际完成时不要声称已完成。']},
  outbound:{deliveryMode:'direct',textChunkLimit:4000,resolveTarget:({to})=>to?{ok:true,to}:{ok:false,error:Error('Authorized target required')},sendText:args=>sendPayload(args),sendMedia:args=>sendPayload(args)},
  gateway:{startAccount:async ctx=>{
   const a=ctx.account;const login=await onebot(a,'get_login_info',{});const selfId=String(login.user_id);
