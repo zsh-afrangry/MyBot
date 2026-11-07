@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawnSync,spawn} from 'node:child_process';
 import {serviceLease} from '../lib/backup-service.mjs';
 import {captureWorkingTree} from '../lib/working-tree-backup.mjs';
-import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs} from '../lib/recovery-isolation.mjs';
+import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs,disableOwnerFileRecovery} from '../lib/recovery-isolation.mjs';
 import {lockedPackages} from '../lib/package-manifests.mjs';
 const tmp=()=>fs.mkdtempSync('/tmp/kurumi-recovery-test-');
 function mock(initial,failStart=false){let state=initial;const calls=[];const run=(_cmd,args)=>{if(args.includes('show'))return {status:0,stdout:state};if(args.includes('stop')){calls.push('stop');state='inactive';return {status:0};}if(args.includes('start')){calls.push('start');if(failStart)return {status:1};state='active';return {status:0};}throw Error('unexpected');};return {run,calls};}
@@ -59,4 +59,12 @@ test('Fusion recovery owns its execution fence without remapping the independent
  assert.equal(legacy.writeBoundary.launcher,'/tmp/r/dsh/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run');
  const owned=remap({launcher:'/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'},'/tmp/r/runtime','/tmp/r/repo',{execFenceRoot:'/tmp/r/runtime/tools/fence'});
  assert.equal(owned.launcher,'/tmp/r/runtime/tools/fence/bin/landlock-run');
+});
+test('recovery copy revokes external ordinary-file roots and cwd while preserving coding and owner identity',()=>{
+ const cfg={plugins:{entries:{'kurumi-qq':{config:{exec:{writeBoundary:{root:'/tmp/r/pilot',additionalRoots:['/home/afrangry/下载','/home/afrangry/文档']},workdir:'/home/afrangry/文档',timeoutSeconds:60}}},'kurumi-coding':{config:{writeBoundary:{root:'/tmp/r/pilot'}}}}},channels:{'kurumi-qq':{ownerId:'fixture'}}};
+ const coding=structuredClone(cfg.plugins.entries['kurumi-coding']),channel=structuredClone(cfg.channels);
+ disableOwnerFileRecovery(cfg);assert.equal(cfg.plugins.entries['kurumi-qq'].config.exec.workdir,'/tmp/r/pilot/source');
+ assert.equal(cfg.plugins.entries['kurumi-qq'].config.exec.writeBoundary.additionalRoots,undefined);
+ assert.deepEqual(cfg.plugins.entries['kurumi-coding'],coding);assert.deepEqual(cfg.channels,channel);
+ const legacy=structuredClone(cfg);disableOwnerFileRecovery(cfg);assert.deepEqual(cfg,legacy);
 });

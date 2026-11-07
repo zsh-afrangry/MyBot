@@ -1,0 +1,102 @@
+{
+  "at": "2026-11-07T13:38:10.505Z",
+  "boundary": "Real isolated Gateway/QQ plugin/native exec with local deterministic model and synthetic OneBot. No model provider, external API, QQ network or production write; DSH is not launched. Ordinary-file write confinement only.",
+  "cases": [
+    {
+      "label": "native exec accepts display title and default-directory query returns actual output without DSH",
+      "passed": true
+    },
+    {
+      "label": "native exec selects the requested task worktree rather than confusing it with source",
+      "passed": true
+    },
+    {
+      "label": "host memory query works and payload does not inherit provider environment",
+      "passed": true
+    },
+    {
+      "label": "ordinary writes inside the approved directory work",
+      "passed": true
+    },
+    {
+      "label": "native daily file operations read/edit/copy/move/rename suffix between registered Chinese directories without Git",
+      "passed": true
+    },
+    {
+      "label": "explicit file deletion and empty-directory removal run through native exec",
+      "passed": true
+    },
+    {
+      "label": "selected no-clobber commands preserve an existing target and retain skipped move source",
+      "passed": true
+    },
+    {
+      "label": "extra workdir still cannot write outside registered roots",
+      "passed": true
+    },
+    {
+      "label": "extra workdir cannot write through a symlink to an unregistered directory",
+      "passed": true
+    },
+    {
+      "label": "replacement of a registered root with a symlink denies the entire next invocation",
+      "passed": true
+    },
+    {
+      "label": "actual native execution cannot write an outside file",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks env before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks elevated before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks cwd before native launch",
+      "passed": true
+    },
+    {
+      "label": "mandatory gate blocks node before native launch",
+      "passed": true
+    },
+    {
+      "label": "native process timeout terminates the payload before a later write",
+      "passed": true
+    },
+    {
+      "label": "exposed synthetic member native exec still fails owner permission in an ordinary-file root",
+      "passed": true
+    },
+    {
+      "label": "audit records final allow/deny and scope without raw command or provider credentials",
+      "passed": true
+    }
+  ],
+  "fence": {
+    "backend": "landlock",
+    "enforcement": "partial",
+    "writeRoot": "/tmp/kurumi-native-exec-host-9XMvyW/approved",
+    "writeRoots": [
+      "/tmp/kurumi-native-exec-host-9XMvyW/approved",
+      "/tmp/kurumi-native-exec-host-9XMvyW/下载 ' 普通",
+      "/tmp/kurumi-native-exec-host-9XMvyW/文档 空格"
+    ]
+  },
+  "nativeExecAudit": {
+    "allowed": 11,
+    "denied": 5
+  },
+  "ordinaryFiles": {
+    "registeredRoots": 3,
+    "gitRequired": false,
+    "externalFilesUnchanged": true,
+    "noRealUserFiles": true
+  },
+  "passed": true,
+  "modelRequests": 34,
+  "finishedAt": "2026-11-07T13:38:32.044Z",
+  "childStopped": true
+}

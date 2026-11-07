@@ -143,6 +143,41 @@ test('Owner USER points facts to continuity memory, not the MEMORY.md notice', t
   assert(user.includes('kurumi_memory') && user.includes('KURUMI_PERSONAL_MEMORY_V2'));
 });
 
+test('Owner file scope follows managed config without entering member prompts', t => {
+  const f = fixture(t), file = path.join(f.repo, 'config/runtime.config.json');
+  const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
+  const exec = cfg.plugins.entries['kurumi-qq'].config.exec;
+  const extra = ['/tmp/OWNER_DOWNLOAD_SCOPE/中文 空格', '/tmp/OWNER_DOC_SCOPE/引号"和$&'];
+  exec.writeBoundary.additionalRoots = extra; exec.workdir = extra[0];
+  fs.writeFileSync(file, JSON.stringify(cfg));
+  const projected = personaFiles(f.repo, f.state).files;
+  const owner = projected.get(path.join(f.state, 'workspace/AGENTS.md'));
+  assert(owner.includes(JSON.stringify([exec.writeBoundary.root, ...extra])));
+  assert(owner.includes(JSON.stringify(exec.workdir)));
+  assert(!owner.includes('<!-- owner-exec-scope -->'));
+  for (const id of [MEMBER, OTHER]) {
+    const payload = [...projected].filter(([name]) => name.includes(`/users/${id}/`)).map(([, text]) => text).join('\n');
+    assert(!payload.includes('OWNER_DOWNLOAD_SCOPE') && !payload.includes('OWNER_DOC_SCOPE'));
+  }
+  delete exec.writeBoundary.additionalRoots;
+  fs.writeFileSync(file, JSON.stringify(cfg));
+  assert(!personaFiles(f.repo, f.state).files.get(path.join(f.state, 'workspace/AGENTS.md')).includes('OWNER_DOC_SCOPE'));
+});
+
+test('Missing scope marker and malformed scope fail before persona files are written', t => {
+  const f = fixture(t), file = path.join(f.repo, 'scripts/fusion/templates/AGENTS.md');
+  const original = fs.readFileSync(file, 'utf8');
+  fs.writeFileSync(file, original.replace('<!-- owner-exec-scope -->', ''));
+  assert.throws(() => personaFiles(f.repo, f.state), /persona_exec_scope_marker_mismatch/u);
+  fs.writeFileSync(file, original);
+  const configFile = path.join(f.repo, 'config/runtime.config.json');
+  const cfg = JSON.parse(fs.readFileSync(configFile, 'utf8'));
+  cfg.plugins.entries['kurumi-qq'].config.exec.writeBoundary.additionalRoots = '/tmp/NOT_AN_ARRAY';
+  fs.writeFileSync(configFile, JSON.stringify(cfg));
+  assert.throws(() => personaFiles(f.repo, f.state), /invalid_persona_exec_scope/u);
+  assert(!fs.existsSync(f.state));
+});
+
 test('Projection destination symlinks cannot redirect persona writes', t => {
   const f = fixture(t), outside = path.join(f.root, 'outside'); fs.mkdirSync(outside);
   fs.mkdirSync(f.state); fs.symlinkSync(outside, path.join(f.state, 'workspace'));

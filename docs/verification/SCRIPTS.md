@@ -19,7 +19,6 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 更新表格：运行 `node scripts/fusion/evidence-index.mjs --markdown`，只替换下方生成标记之间的内容，再执行 `--check-markdown`；不得手改生成表补文档/证据链接。新增脚本需登记分类和归属，新增证据组需登记元数据与INDEX；已登记证据目录中的回执继承目录归属。
 
 <!-- BEGIN GENERATED SCRIPT INDEX -->
-
 | 脚本 | 分组 | 归属文档 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `chatbot/packages/confirmation-core/src/confirmation.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认核心：提案校验、TTL、幂等与 grant 消费 | 只读 | 否 | offline | — |
@@ -83,7 +82,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/e7/client.test.mjs` | 离线 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | E7精确读路径、可信代理策略、限流/拒绝退避、并发与解压后大小上限；仅注入guard与本地HTTP | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/e7/plugin.test.mjs` | 离线 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | E7真实处理器的本人权限、撤权复核、外部不可信边界与长正文完整工具预算、每日定时器与停止；仅合成上下文 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/e7/service.test.mjs` | 离线 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | E7十类查询/七个角色视图、配装单位/筛选与测评分类/空值、榜单未知类型/完整续页、攻略FAQ稳定ID/跨页/重启定位、原子缓存/304/降级/停止；仅合成资料 | 写临时测试目录 | 否 | header | — |
-| `chatbot/tests/host-exec/policy.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md) | 主人原生exec的真实文件写入边界、可信身份/撤权/成员隔离、环境与参数绕过、临时目录符号链接及受管配置回归；仅临时目录 | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/owner-exec-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/qq-2124-title-fix-2026-10-30/README.md` |
+| `chatbot/tests/host-exec/policy.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md) | 主人原生exec的真实文件写入边界、可信身份/撤权/成员隔离、环境与参数绕过、临时目录符号链接及受管配置回归；仅临时目录 | 写临时测试目录 | 否 | header | `docs/verification/coding-autonomous-2026-11-07/ordinary-files.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/owner-exec-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/qq-2124-title-fix-2026-10-30/README.md` |
 | `chatbot/tests/knowledgemap/bills.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 账单声明一致、真实钩子runId映射、当前请求隔离和消息幂等键 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 固定API客户端、可信请求、参数映射、共享播报与切换防旧写 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产 | 写临时测试目录 | 否 | header | — |
@@ -209,7 +208,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/coding/acceptance-results-live.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 显式--live在获准试点目录内调用真实DSH，核对实际输出/独立Python检查/结果分页和通知正文；无真实QQ、生产任务或合入 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/e7/acceptance-host.mjs` | 验收 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | 真实隔离Gateway验证E7插件启用/禁用、工具目录及正常停止，无模型/API/QQ网络或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | — |
 | `chatbot/tests/e7/acceptance-live.mjs` | 验收 | [27](../27_E7数据插件设计.md)、[24](../24_统一身份与权限管理.md) | 显式--live读取E7公开HTTP/临时缓存，--community-only选配装/测评、--reference-only选榜单/攻略/FAQ；可选--model调用现行官方模型与真实处理器，无QQ或生产写入 | 真实模型、真实外部API、写仓库内文件、写临时测试目录 | 否 | header | — |
-| `chatbot/tests/host-exec/acceptance-host.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md) | 真实独立Gateway/QQ插件/原生exec：本地确定性模型与合成OneBot，核对目录/主机查询、实际写入边界、超时、成员拒绝与审计；无真实模型/QQ/DSH或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/owner-exec-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/qq-2124-title-fix-2026-10-30/README.md` |
+| `chatbot/tests/host-exec/acceptance-host.mjs` | 验收 | [28](../28_本机编码工具委托与实验任务.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md) | 真实独立Gateway/QQ插件/原生exec：本地确定性模型与合成OneBot，核对目录/主机查询、实际写入边界、超时、成员拒绝与审计；无真实模型/QQ/DSH或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | header | `docs/verification/coding-autonomous-2026-11-07/ordinary-files.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/owner-exec-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/qq-2124-title-fix-2026-10-30/README.md` |
 | `chatbot/tests/knowledgemap/acceptance-bills-live.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 第二轮真实模型/生产API/MySQL/网页增改删查、歧义及天气runId；合成入站不发QQ | 真实模型、真实外部API、重启或停服务、写运行状态、写仓库内文件 | 是 | header | — |
 | `chatbot/tests/knowledgemap/acceptance-host.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实模型与隔离OpenClaw/原生调度、临时HTTP业务库、模拟OneBot | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/knowledgemap/acceptance-live.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实模型/生产API/MySQL/网页与一次本人QQ播报；短暂测试入口、精确测试行清理并保留回执 | 真实模型、真实外部API、真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/knowledgemap-bridge-2026-10-17/live.json` |
@@ -254,5 +253,4 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | [9](../9_QQ融合助手架构与开发计划.md) | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/lib/backup-layout.mjs` | 运维库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 不可变依赖工件与全深度SQLite发现；写统一备份位置 | 写运行状态 | 否 | header | — |
 | `scripts/fusion/lib/runtime-retention.mjs` | 运维库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 限定诊断日志预算与离线捕获生命周期；不访问业务库 | 写运行状态 | 否 | header | — |
-
 <!-- END GENERATED SCRIPT INDEX -->

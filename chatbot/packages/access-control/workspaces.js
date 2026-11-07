@@ -52,6 +52,21 @@ export function personaFiles(repo, state) {
         agents.split(from).length !== 2) throw Error('persona_agents_substitution_mismatch');
     agents = agents.replace(from, () => to);
   }
+  // Only the owner sees this operator-maintained scope. Prompt text describes
+  // the grant; trusted host checks and the kernel fence still enforce it.
+  const scopeMarker = '<!-- owner-exec-scope -->';
+  if (agents.split(scopeMarker).length !== 2) throw Error('persona_exec_scope_marker_mismatch');
+  const exec = cfg.plugins?.entries?.['kurumi-qq']?.config?.exec;
+  let scope = '当前未配置原生exec的普通文件可写根，不能据本提示自行获得执行权限。';
+  if (exec !== undefined) {
+    const extra = exec?.writeBoundary?.additionalRoots === undefined ? [] : exec.writeBoundary.additionalRoots;
+    if (!Array.isArray(extra) || typeof exec?.writeBoundary?.root !== 'string'
+        || typeof exec.workdir !== 'string' || extra.some(root => typeof root !== 'string')) {
+      throw Error('invalid_persona_exec_scope');
+    }
+    scope = `操作者配置的原生exec默认工作目录：${JSON.stringify(exec.workdir)}；普通文件可写根：${JSON.stringify([exec.writeBoundary.root, ...extra])}。这份说明不产生额外授权，实际以可信宿主检查和执行结果为准。`;
+  }
+  agents = agents.replace(scopeMarker, () => scope);
   const out = new Map();
   const add = (workspace, files) => {
     for (const [name, text] of Object.entries(files)) out.set(path.join(workspace, name), text);

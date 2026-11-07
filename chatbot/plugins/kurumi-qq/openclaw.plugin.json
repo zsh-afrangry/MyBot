@@ -20,6 +20,7 @@
             "required": ["root", "launcher"],
             "properties": {
               "root": {"type": "string", "minLength": 2},
+              "additionalRoots": {"type": "array", "maxItems": 16, "uniqueItems": true, "items": {"type": "string", "minLength": 2}},
               "launcher": {"type": "string", "minLength": 1}
             }
           },

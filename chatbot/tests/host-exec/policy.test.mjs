@@ -118,3 +118,35 @@ test('source enables only owner native exec; member agents, background agents an
   assert.equal(config.channels['kurumi-qq'].testIngress,false);
   assert.equal(config.plugins.entries['kurumi-qq'].config.exec.writeBoundary.root,config.plugins.entries['kurumi-coding'].config.writeBoundary.root);
 });
+
+test('ordinary files use registered directories without Git: read/edit/copy/move/suffix/delete and Chinese names across roots', t => {
+  const f=fixture(t), downloads=path.join(f.root,"下载 '普通"), documents=path.join(f.root,'文档 空格');
+  fs.mkdirSync(downloads);fs.mkdirSync(documents);f.config.writeBoundary.additionalRoots=[downloads,documents];
+  const content='合成文件内容\n';fs.writeFileSync(path.join(downloads,'原 名.txt'),content);
+  const r=f.run(`set -eu\ncat -- '原 名.txt'\nprintf '追加' >> '原 名.txt'\ncp -n -- '原 名.txt' ${quote(path.join(documents,'副本.txt'))}\nmkdir -- ${quote(path.join(documents,'子目录'))}\nmv -n -- '原 名.txt' ${quote(path.join(documents,'子目录','改 后缀.log'))}\ncp -n -- ${quote(path.join(documents,'副本.txt'))} '待删.txt'\nrm -- '待删.txt'\nprintf FILE_OPERATIONS_OK`,{workdir:downloads});
+  assert.equal(r.status,0,r.stderr);assert(r.stdout.includes(content));assert(r.stdout.includes('FILE_OPERATIONS_OK'));
+  assert.equal(fs.readFileSync(path.join(documents,'子目录','改 后缀.log'),'utf8'),content+'追加');
+  assert.equal(fs.readFileSync(path.join(documents,'副本.txt'),'utf8'),content+'追加');
+  assert(!fs.existsSync(path.join(downloads,'原 名.txt')));assert(!fs.existsSync(path.join(downloads,'待删.txt')));
+  assert(!fs.existsSync(path.join(downloads,'.git')));assert(!fs.existsSync(path.join(documents,'.git')));
+  const p=confineOwnerExec({command:'mktemp',workdir:documents},f.config);assert.deepEqual(p.scope.writeRoots,[f.allowed,downloads,documents]);
+  const tmp=f.run('mktemp',{workdir:documents});assert.equal(tmp.status,0,tmp.stderr);assert(tmp.stdout.startsWith(path.join(f.allowed,'state/tmp')));
+});
+test('all registered roots retain outside-write and symlink refusal; command parameters cannot grant a directory',t=>{
+  const f=fixture(t), extra=path.join(f.root,'资料'), outside=path.join(f.root,'unregistered');fs.mkdirSync(extra);fs.mkdirSync(outside);
+  f.config.writeBoundary.additionalRoots=[extra];fs.writeFileSync(path.join(outside,'keep'),'unchanged');fs.symlinkSync(outside,path.join(extra,'escape'));
+  for(const command of [`touch ${quote(path.join(outside,'new'))}`,`printf bad > ${quote(path.join(outside,'keep'))}`,`truncate -s 0 ${quote(path.join(outside,'keep'))}`,`rm ${quote(path.join(outside,'keep'))}`,`mv ${quote(path.join(outside,'keep'))} ${quote(path.join(outside,'renamed'))}`,'touch escape/new']){
+    assert.notEqual(f.run(command,{workdir:extra}).status,0,command);
+  }
+  assert.equal(fs.readFileSync(path.join(outside,'keep'),'utf8'),'unchanged');assert.deepEqual(fs.readdirSync(outside),['keep']);
+  for(const parameters of [{additionalRoots:[outside]},{writeRoots:[outside]},{writeBoundary:{root:outside}}])assert.equal(confineOwnerExec({command:'true',...parameters},f.config).blockReason,'invalid_owner_exec_parameters');
+  assert.equal(confineOwnerExec({command:'true',workdir:path.join(extra,'escape')},f.config).blockReason,'owner_exec_workdir_outside_boundary');
+});
+test('missing, replaced, overlapping or broad registered roots fail closed for the entire invocation',t=>{
+  const f=fixture(t), extra=path.join(f.root,'资料'), outside=path.join(f.root,'unregistered');fs.mkdirSync(extra);fs.mkdirSync(outside);
+  for(const roots of [null,'not-an-array',{},[extra,extra],[f.allowed],[path.join(f.allowed,'source')],['/'],[path.dirname(launcher)],[path.join(f.root,'missing')]]){
+    assert(confineOwnerExec({command:'true'},{...f.config,writeBoundary:{...f.config.writeBoundary,additionalRoots:roots}}).block);
+  }
+  f.config.writeBoundary.additionalRoots=[extra];fs.renameSync(extra,extra+'-original');fs.symlinkSync(outside,extra);
+  assert(confineOwnerExec({command:'touch canary'},f.config).block);assert.deepEqual(fs.readdirSync(outside),[]);
+});

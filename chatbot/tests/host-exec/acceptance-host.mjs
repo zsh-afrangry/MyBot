@@ -22,7 +22,10 @@ if (!out || !path.isAbsolute(out) || fs.existsSync(out)) throw Error('Require a 
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-native-exec-host-'));
 const allowed = path.join(root, 'approved'), source = path.join(allowed, 'source'), worktree = path.join(allowed, 'worktrees', 'fixture');
+const downloads = path.join(root,"下载 ' 普通"), documents = path.join(root,'文档 空格'), outsideFiles = path.join(root,'unregistered-files');
 fs.mkdirSync(source, {recursive: true}); fs.mkdirSync(worktree, {recursive: true});
+for (const directory of [downloads,documents,outsideFiles]) fs.mkdirSync(directory);
+fs.symlinkSync(outsideFiles,path.join(documents,'outside-link'));
 fs.writeFileSync(path.join(source, 'DIRECT_SOURCE_SENTINEL.txt'), 'fixture');
 fs.writeFileSync(path.join(worktree, 'DIRECT_WORKTREE_SENTINEL.py'), 'fixture');
 const canary = path.join(root, 'outside-write'), token = randomBytes(24).toString('hex'), bot = '900001';
@@ -32,13 +35,19 @@ const plans = Object.fromEntries(Object.entries({
   worktree: {command: 'pwd; ls -1', workdir: worktree},
   host: {command: "free -h; printf 'CREDENTIAL=%s\\n' \"${PROVIDER_CREDENTIAL_FIXTURE-unset}\""},
   write: {command: "printf 'inside' > inside.txt"},
+  files: {workdir:downloads,command:`set -eu\nprintf '合成内容' > '原 始.txt'\ncat -- '原 始.txt'\nprintf '追加' >> '原 始.txt'\ncp -n -- '原 始.txt' ${q(path.join(documents,'副 本.txt'))}\nmkdir -- ${q(path.join(documents,'子目录'))}\nmv -n -- '原 始.txt' ${q(path.join(documents,'子目录','新 名.log'))}\nprintf FILE_OPERATIONS_OK`},
+  cleanup: {workdir:documents,command:"set -eu\nmkdir -p -- '待清理/子目录'\nprintf fixture > '待清理/子目录/待删.txt'\nrm -- '待清理/子目录/待删.txt'\nrmdir -- '待清理/子目录' '待清理'\nprintf DIRECTORY_CLEANUP_OK"},
+  collision: {workdir:downloads,command:`set -eu\nprintf preserve > '保留.txt'\ncp -n -- '保留.txt' ${q(path.join(documents,'副 本.txt'))}\nmv -n -- '保留.txt' ${q(path.join(documents,'副 本.txt'))}\nprintf COLLISION_PRESERVED`},
+  extraOutside: {workdir:documents,command:`printf escape > ${q(canary)}`},
+  extraSymlink: {workdir:documents,command:'touch outside-link/symlink-write'},
+  replacedRoot: {workdir:documents,command:'touch must-not-run'},
   outside: {command: `printf 'escape' > ${q(canary)}`},
   env: {command: `touch ${q(canary)}`, env: {BASH_ENV: '/outside-startup'}},
   elevated: {command: `touch ${q(canary)}`, elevated: true},
   cwd: {command: `touch ${q(canary)}`, workdir: root},
   node: {command: `touch ${q(canary)}`, host: 'node', node: 'unapproved'},
   timeout: {command: 'sleep 5; touch late.txt', timeoutSeconds: 1},
-  member: {command: 'touch member-ran.txt'},
+  member: {command: 'touch member-ran.txt',workdir:documents},
 }).map(([name,params])=>[name,{title:'Native exec fixture '+name,...params}]));
 const report = {at: new Date().toISOString(), boundary: 'Real isolated Gateway/QQ plugin/native exec with local deterministic model and synthetic OneBot. No model provider, external API, QQ network or production write; DSH is not launched. Ordinary-file write confinement only.', cases: []};
 let modelRequests = 0;
@@ -75,7 +84,7 @@ const onebot = http.createServer(async (req,res) => {
 });
 onebot.listen(0,'127.0.0.1'); await once(onebot,'listening'); const ws = new WebSocketServer({server:onebot});
 const socket = net.createServer(); socket.listen(0,'127.0.0.1'); await once(socket,'listening'); const port = socket.address().port; await new Promise(r=>socket.close(r));
-const boundary = {root:allowed,launcher:'/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'};
+const boundary = {root:allowed,additionalRoots:[downloads,documents],launcher:'/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'};
 report.fence = probeWriteFence(boundary);
 const policy = ownerPolicy(); policy.subjects.push(memberRow());
 let config = {
@@ -118,19 +127,36 @@ try {
   await check('native exec selects the requested task worktree rather than confusing it with source',async()=>{const r=await turn('worktree');assert(r.includes('DIRECT_WORKTREE_SENTINEL.py'),r);assert(!r.includes('DIRECT_SOURCE_SENTINEL.txt'));});
   await check('host memory query works and payload does not inherit provider environment',async()=>{const r=await turn('host');assert(r.includes('Mem:'),r);assert(r.includes('CREDENTIAL=unset'));assert(!r.includes('not-a-real-secret'));});
   await check('ordinary writes inside the approved directory work',async()=>{await turn('write');assert.equal(fs.readFileSync(path.join(source,'inside.txt'),'utf8'),'inside');});
+  await check('native daily file operations read/edit/copy/move/rename suffix between registered Chinese directories without Git',async()=>{
+    const r=await turn('files');assert(r.includes('FILE_OPERATIONS_OK'),r);
+    assert.equal(fs.readFileSync(path.join(documents,'子目录','新 名.log'),'utf8'),'合成内容追加');
+    assert.equal(fs.readFileSync(path.join(documents,'副 本.txt'),'utf8'),'合成内容追加');
+    assert(!fs.existsSync(path.join(downloads,'原 始.txt')));assert(!fs.existsSync(path.join(downloads,'.git')));assert(!fs.existsSync(path.join(documents,'.git')));
+  });
+  await check('explicit file deletion and empty-directory removal run through native exec',async()=>{const r=await turn('cleanup');assert(r.includes('DIRECTORY_CLEANUP_OK'),r);assert(!fs.existsSync(path.join(documents,'待清理')));});
+  await check('selected no-clobber commands preserve an existing target and retain skipped move source',async()=>{await turn('collision');assert.equal(fs.readFileSync(path.join(documents,'副 本.txt'),'utf8'),'合成内容追加');assert.equal(fs.readFileSync(path.join(downloads,'保留.txt'),'utf8'),'preserve');});
+  await check('extra workdir still cannot write outside registered roots',async()=>{const r=await turn('extraOutside');assert(/denied|permitted/i.test(r),r);assert(!fs.existsSync(canary));});
+  await check('extra workdir cannot write through a symlink to an unregistered directory',async()=>{await turn('extraSymlink');assert.deepEqual(fs.readdirSync(outsideFiles),[]);});
+  await check('replacement of a registered root with a symlink denies the entire next invocation',async()=>{
+    fs.renameSync(downloads,downloads+'-original');fs.symlinkSync(outsideFiles,downloads);
+    try {const r=await turn('replacedRoot');assert(r.includes('owner_exec_boundary_unavailable'),r);assert(!fs.existsSync(path.join(documents,'must-not-run')));assert.deepEqual(fs.readdirSync(outsideFiles),[]);}
+    finally{fs.unlinkSync(downloads);fs.renameSync(downloads+'-original',downloads);}
+  });
   await check('actual native execution cannot write an outside file',async()=>{const r=await turn('outside');assert(!fs.existsSync(canary));assert(/denied|permitted/i.test(r),r);});
   for (const [name,code] of [['env','owner_exec_environment_not_allowed'],['elevated','owner_exec_mode_not_allowed'],['cwd','owner_exec_workdir_outside_boundary'],['node','owner_exec_host_not_allowed']]) {
     await check('mandatory gate blocks '+name+' before native launch',async()=>{const r=await turn(name);assert(r.includes(code)||(name==='node'&&r.includes('Validation failed')&&r.includes('host: must be equal')),r);assert(!fs.existsSync(canary));});
   }
   await check('native process timeout terminates the payload before a later write',async()=>{const r=await turn('timeout');assert(!fs.existsSync(path.join(source,'late.txt')));assert(/time|signal|terminated/i.test(r),r);});
-  await check('exposed synthetic member native exec still fails owner permission',async()=>{const r=await turn('member',MEMBER);assert(r.includes('capability_not_allowed'),r);assert(!fs.existsSync(path.join(source,'member-ran.txt')));});
+  await check('exposed synthetic member native exec still fails owner permission in an ordinary-file root',async()=>{const r=await turn('member',MEMBER);assert(r.includes('capability_not_allowed'),r);assert(!fs.existsSync(path.join(documents,'member-ran.txt')));});
   const audit = fs.readFileSync(path.join(root,'channel/access-events.jsonl'),'utf8').trim().split('\n').map(JSON.parse).filter(x=>x.data.tool==='exec');
   await check('audit records final allow/deny and scope without raw command or provider credentials',async()=>{
     assert(audit.some(x=>x.data.decision==='allow'&&x.data.execution?.writeRoot===allowed));
+    assert(audit.some(x=>x.data.decision==='allow'&&x.data.execution?.writeRoots?.length===3&&x.data.execution.workdir===documents));
     assert(audit.some(x=>x.data.code==='capability_not_allowed'));
     assert(!JSON.stringify(audit).includes('CREDENTIAL=')&&!JSON.stringify(audit).includes('not-a-real-secret'));
   });
   report.nativeExecAudit = {allowed:audit.filter(x=>x.data.decision==='allow').length,denied:audit.filter(x=>x.data.decision==='deny').length};
+  report.ordinaryFiles={registeredRoots:3,gitRequired:false,externalFilesUnchanged:fs.readdirSync(outsideFiles).length===0,noRealUserFiles:true};
   report.passed = true;
 } catch (error) {report.passed=false;report.error=error.message;report.diagnosticDirectory=root;process.exitCode=1;}
 finally {

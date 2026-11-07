@@ -2,7 +2,7 @@
 // This is an ordinary-file write fence, not network or process isolation. Contract: docs/28.
 import fs from 'node:fs';
 import path from 'node:path';
-import {confinedProcess, probeWriteFence, fencedDirectory} from '../coding-runtime/write-fence.js';
+import {confinedProcess, probeWriteFence, fencedDirectory, writeFenceRoots} from '../coding-runtime/write-fence.js';
 
 const fail = code => {throw Object.assign(Error(code), {code});};
 const inside = (file, root) => file === root || file.startsWith(root + path.sep);
@@ -27,7 +27,8 @@ export function confineOwnerExec(params, config) {
     const requested = params.workdir ?? config.workdir;
     if (typeof requested !== 'string' || !requested || requested.includes('\0')) fail('invalid_owner_exec_workdir');
     const workdir = fs.realpathSync(path.resolve(config.workdir, requested));
-    if (!inside(workdir, boundary.root) || !fs.statSync(workdir).isDirectory()) fail('owner_exec_workdir_outside_boundary');
+    const roots = writeFenceRoots(boundary);
+    if (!roots.some(root => inside(workdir, root)) || !fs.statSync(workdir).isDirectory()) fail('owner_exec_workdir_outside_boundary');
     const timeout = params.timeoutSeconds ?? config.timeoutSeconds;
     if (typeof timeout !== 'number' || !Number.isFinite(timeout) || timeout <= 0 || timeout > config.timeoutSeconds) fail('owner_exec_timeout_out_of_range');
     const home = fencedDirectory(boundary, 'state/owner-exec');
@@ -42,7 +43,7 @@ export function confineOwnerExec(params, config) {
     // Preserve it without incorporating it into the command, environment, or access audit.
     return {params: {...(params.title !== undefined ? {title: params.title} : {}), command: [process.command, ...process.args].map(quote).join(' '), workdir,
       host: 'gateway', elevated: false, pty: false, background: false, timeoutSeconds: timeout},
-      scope: {writeRoot: boundary.root, workdir, timeoutSeconds: timeout}};
+      scope: {writeRoot: boundary.root, writeRoots: roots, workdir, timeoutSeconds: timeout}};
   } catch (error) {
     return {block: true, blockReason: error?.code?.startsWith('owner_exec_') || error?.code?.startsWith('invalid_owner_exec_')
       ? error.code : 'owner_exec_boundary_unavailable'};

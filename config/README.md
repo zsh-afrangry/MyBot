@@ -72,6 +72,8 @@
 
 `sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
 
+主人普通文件管理复用`plugins.entries.kurumi-qq.config.exec`：`writeBoundary.root`保留试点及运行临时目录，可选`additionalRoots`登记具体批准的资料目录。模型参数不能添加根，旧配置无此字段时保持单根；`sync-persona.mjs`从同一配置向主人AGENTS投影默认workdir及可写根，成员不接收这些目录。新增根须取得具体范围决定后再同步配置/人格并重启Fusion；普通文件与受管资料、覆盖/删除及实际执行边界见[文档28](../docs/28_本机编码工具委托与实验任务.md#第二期普通文件管理的接入契约)。
+
 ### 只读核对
 
 ```bash

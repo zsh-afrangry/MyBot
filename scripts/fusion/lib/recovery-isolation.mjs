@@ -24,6 +24,14 @@ export function assertNoProduction(value){
  if(typeof value==='string'&&productionRoots.some(p=>value.includes(p)))throw Error('Active recovery configuration still references production');
  if(value&&typeof value==='object')for(const v of Object.values(value))assertNoProduction(v);
 }
+// User documents are not Fusion recovery assets. Even an accidentally started
+// verification copy must not inherit ordinary-file grants or their default cwd.
+export function disableOwnerFileRecovery(cfg){
+ const exec=cfg.plugins?.entries?.['kurumi-qq']?.config?.exec;
+ if(!exec?.writeBoundary||exec.writeBoundary.additionalRoots===undefined)return;
+ delete exec.writeBoundary.additionalRoots;
+ exec.workdir=path.join(exec.writeBoundary.root,'source');
+}
 // A recovery copy never starts paid paper jobs, even outside its test sandbox.
 export function disablePaperRecovery(cfg,runtime){
  const paper=cfg.plugins?.entries?.['kurumi-papers']?.config;
