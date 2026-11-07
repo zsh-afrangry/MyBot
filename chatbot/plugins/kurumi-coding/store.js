@@ -68,7 +68,7 @@ export class CodingStore {
     return this.transaction(() => {
       this.invalidate(task.id);
       const proposalId = randomUUID(), payloadHash = digest(JSON.stringify(payload)), at = Math.floor(Date.now() / 1000);
-      registerConfirmationProposal(this.db, {proposalId, payloadHash, domain: 'coding', actionKind: 'coding.merge', subjectId: 'owner',
+      registerConfirmationProposal(this.db, {proposalId, payloadHash, domain: 'coding', actionKind: payload.directoryPlan ? 'coding.writeback' : 'coding.merge', subjectId: 'owner',
         scope, createdAtUtc: at, expiresAtUtc: at + 86400});
       this.db.prepare('INSERT INTO coding_previews VALUES (?,?,?,?)').run(proposalId, task.id, JSON.stringify(payload), text);
       return {ok: true, status: 'pending', domain: 'coding', proposalId, payloadHash, previewText: text};

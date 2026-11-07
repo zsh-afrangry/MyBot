@@ -6,6 +6,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/acp-client.js';
 import {validateWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {digest, fail} from './policy.js';
+import {directoryState, copyDirectory} from './directory-workspaces.js';
 
 export function executionEnv() {
   const env = {};
@@ -45,10 +46,16 @@ export function projectPolicy(config) {
   for (const p of config.projects) {
     if (!/^[a-z][a-z0-9-]{0,39}$/.test(p.id) || ids.has(p.id)) throw fail('invalid_project_id');
     ids.add(p.id); canonical(p.root);
-    if (git(p.root, 'rev-parse', '--show-toplevel').trim() !== p.root) throw fail('invalid_project_root');
-    if (!/^[a-zA-Z0-9][a-zA-Z0-9/_-]*$/.test(p.branch ?? '')) throw fail('invalid_project_branch');
-    git(p.root, 'rev-parse', '--verify', `refs/heads/${p.branch}^{commit}`);
-    if (git(p.root, 'remote').trim() || fs.existsSync(path.join(p.root, '.gitmodules'))) throw fail('pilot_requires_synthetic_local_repository');
+    if (p.kind !== undefined && !['git', 'directory'].includes(p.kind)) throw fail('invalid_project_kind');
+    if (p.kind === 'directory') {
+      directoryState(p.root);
+      if (spawnSync('/usr/bin/git', ['-C', p.root, 'rev-parse', '--show-toplevel'], {env: executionEnv(), stdio: 'ignore'}).status === 0) throw fail('directory_is_inside_git');
+    } else {
+      if (git(p.root, 'rev-parse', '--show-toplevel').trim() !== p.root) throw fail('invalid_project_root');
+      if (!/^[a-zA-Z0-9][a-zA-Z0-9/_-]*$/.test(p.branch ?? '')) throw fail('invalid_project_branch');
+      git(p.root, 'rev-parse', '--verify', `refs/heads/${p.branch}^{commit}`);
+      if (git(p.root, 'remote').trim() || fs.existsSync(path.join(p.root, '.gitmodules'))) throw fail('pilot_requires_synthetic_local_repository');
+    }
     if (!Array.isArray(p.checks) || !p.checks.length || p.checks.some(c => !/^[\w .-]{1,100}$/.test(c.name ?? '') || !Array.isArray(c.argv) || !path.isAbsolute(c.argv[0] ?? '') || c.argv.some(a => typeof a !== 'string' || a.includes('\0'))
       || (c.timeoutMs !== undefined && (!Number.isSafeInteger(c.timeoutMs) || c.timeoutMs <= 0))
       || (c.skipExitCode !== undefined && (!Number.isSafeInteger(c.skipExitCode) || c.skipExitCode < 1 || c.skipExitCode > 255)))) throw fail('invalid_project_checks');
@@ -60,6 +67,15 @@ export function projectPolicy(config) {
 export function createWorkspace(config, project, id) {
   fs.mkdirSync(config.worktrees, {recursive: true, mode: 0o700});
   const cwd = path.join(config.worktrees, id), branch = `codex/qq-${id}`;
+  if (project.kind === 'directory') {
+    const directoryBaseline = directoryState(project.root);
+    copyDirectory(project.root, cwd, directoryBaseline);
+    git(cwd, 'init', '-b', branch); git(cwd, 'add', '-f', '-A', '--', '.');
+    git(cwd, '-c', 'user.name=Kurumi', '-c', 'user.email=kurumi@localhost', 'commit', '--allow-empty', '-m', 'Private experiment baseline');
+    if (JSON.stringify(directoryState(project.root)) !== JSON.stringify(directoryBaseline)) throw fail('directory_changed_during_copy');
+    const base = git(cwd, 'rev-parse', 'HEAD').trim();
+    return {cwd, branch, base, verifiedCommit: base, workspaceKind: 'directory', directoryBaseline};
+  }
   const base = git(project.root, 'rev-parse', `refs/heads/${project.branch}`).trim();
   git(project.root, 'worktree', 'add', '-b', branch, cwd, base);
   return {cwd, branch, base, verifiedCommit: base};
@@ -71,12 +87,21 @@ export function assertTaskLocation(config, project, task) {
     if (!inside(file, config.writeBoundary.root) || file === config.writeBoundary.root) throw fail('coding_paths_outside_write_boundary');
   }
   if (task.cwd !== path.join(config.worktrees, task.id) || task.branch !== `codex/qq-${task.id}`) throw fail('task_workspace_changed');
-  assertRepository(project, task.cwd);
+  if (project.kind === 'directory') {
+    if (task.workspaceKind !== 'directory' || !Array.isArray(task.directoryBaseline)) throw fail('task_project_changed');
+    if (!fs.statSync(project.root).isDirectory()) throw fail('task_project_changed');
+    if (fs.realpathSync(git(task.cwd, 'rev-parse', '--path-format=absolute', '--git-common-dir').trim()) !== path.join(task.cwd, '.git')) throw fail('task_project_changed');
+  } else {
+    if (task.workspaceKind === 'directory') throw fail('task_project_changed');
+    assertRepository(project, task.cwd);
+  }
 }
-export function assertCandidateLocation(config, project, cwd) {
+export function assertCandidateLocation(config, project, cwd, task) {
   canonical(cwd);
   if (path.dirname(cwd) !== config.worktrees || !/^candidate-[a-f0-9-]{36}$/.test(path.basename(cwd))) throw fail('candidate_workspace_changed');
-  assertRepository(project, cwd);
+  if (project.kind === 'directory') {
+    assertTaskLocation(config, project, task); assertRepository({root: task.cwd}, cwd);
+  } else assertRepository(project, cwd);
 }
 function assertRepository(project, cwd) {
   if (git(cwd, 'rev-parse', '--show-toplevel').trim() !== cwd) throw fail('task_workspace_changed');

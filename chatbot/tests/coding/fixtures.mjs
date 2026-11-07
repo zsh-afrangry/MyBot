@@ -27,6 +27,8 @@ export async function fixture(t, options = {}) {
   fs.writeFileSync(path.join(source, 'notes.txt'), 'notes baseline\n');
   git(source, 'add', '.'); git(source, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost', 'commit', '-m', 'Synthetic baseline');
   const baseline = git(source, 'rev-parse', 'HEAD').trim();
+  if (options.directoryProject) fs.rmSync(path.join(source, '.git'), {recursive: true});
+  options.sourceSetup?.(source);
   const checks = path.join(root, 'check.mjs');
   fs.writeFileSync(checks, `import assert from 'node:assert/strict'; import {pathToFileURL} from 'node:url'; import path from 'node:path';\nconst {value} = await import(pathToFileURL(path.join(process.env.CODING_WORKTREE, 'value.mjs'))); assert.ok(Number.isInteger(value) && value > 0); console.log('registered fixture check passed');\n`);
   const config = withAccess({channels: {'kurumi-qq': {ownerId: owner, stateDir: path.join(root, 'channel')}}}, owner);
@@ -35,6 +37,7 @@ export async function fixture(t, options = {}) {
     projects: [{id: 'fixture', root: source, branch: 'main', checks: [{name: 'independent check', argv: [process.execPath, checks]}]}]};
   // The fake DSH home must be separate from the registered project, as in the real runtime.
   pluginConfig.dsh.home = path.join(root, 'dsh'); fs.mkdirSync(pluginConfig.dsh.home);
+  if (options.directoryProject) {pluginConfig.projects[0].kind = 'directory'; delete pluginConfig.projects[0].branch;}
   options.configure?.(pluginConfig);
   const calls = [], events = [], deliveries = [], hooks = {}, services = [], tools = {};
   let service;

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-11-07T00:10:55.681Z",
+  "actualDsh": true,
+  "actualQq": false,
+  "ownerConfirmation": "synthetic-local-fixture-only",
+  "privateArtifacts": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/kurumi-coding-CV5pFY",
+  "cases": [
+    {
+      "name": "actual_dsh_private_directory_and_terminal",
+      "ok": true,
+      "state": "ready",
+      "checks": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "independent check",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 36
+          }
+        ]
+      }
+    },
+    {
+      "name": "confirmation_required_original_unchanged",
+      "ok": true
+    },
+    {
+      "name": "confirmed_fenced_writeback_no_original_git",
+      "ok": true,
+      "state": "written_back"
+    }
+  ],
+  "ok": true
+}

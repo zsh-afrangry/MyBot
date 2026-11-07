@@ -13,13 +13,16 @@
 
 | 层次 | 结果 | 材料 |
 | --- | --- | --- |
-| 离线及真实本地进程 | 87/87；包含6个新增重启/孤儿进程/过期PID/中断合入用例，以及原编码、权限、结果、exec、恢复回归 | `node --test chatbot/tests/coding/*.test.mjs chatbot/tests/host-exec/policy.test.mjs chatbot/tests/access-control/policy.test.mjs scripts/fusion/test/recovery.test.mjs` |
+| 离线及真实本地进程 | 95/95；包含8个无Git文件回写及6个新增重启/孤儿进程/过期PID/中断合入用例，以及原编码、权限、结果、exec、恢复回归 | `node --test chatbot/tests/coding/*.test.mjs chatbot/tests/host-exec/policy.test.mjs chatbot/tests/access-control/policy.test.mjs scripts/fusion/test/recovery.test.mjs` |
 | 实际DSH/模型，2轮 | clamp修改与独立检查、中文/空格文件改名与后缀变化、逐字内容不变、真实终端输出、同session续接、无确认拒绝、合成确认后本地合入；原目录未提交/暂存/未跟踪文件保持 | [dsh-flow.json](dsh-flow.json) |
 | 实际DSH/模型，1轮 | 真实长命令心跳增长；取消后本任务运行树与心跳停止，原目录不变 | [dsh-cancel.json](dsh-cancel.json) |
 | 实际DSH/模型，1轮 | Python原地排序独立检查通过，真实执行输出分页、通知同源且不重发；源分支未合入 | [dsh-python-result.json](dsh-python-result.json) |
+| 实际DSH/模型，1轮 | 非Git目录复制、真实终端改名/后缀检查、确认前原目录不变、合成确认后隔离回写；原目录没有`.git` | [dsh-directory.json](dsh-directory.json) |
 | 真实隔离Gateway/确定性本地模型 | 12项终端/工作目录/写入边界/超时/身份用例通过 | [owner-exec-host.json](owner-exec-host.json) |
 | 真实隔离Gateway | 编码插件启用/禁用两阶段、目录与工具catalog、停止释放服务锁通过；无实际模型 | [coding-host.json](coding-host.json) |
 
 最初工作树未装构建依赖而出现模块缺失，按8份锁文件`npm ci --ignore-scripts`并完成5包构建后再执行全部回归；不将首次启动失败算通过。重启测试初次夹具清理时目录先被测试框架移除，遗留2个明确归属的测试进程；按实际身份停止并补齐夹具清理后87例完整退出通过。没有停止共享DSH或其他用户会话。
 
-这些证据证明本轮技术流程，不等于真实QQ平台收件、其他后端、项目外写入、系统提权、自动合入或长期体验验收。无Git回写、真实仓库登记/硬化、额外审批等待等仍按文档28及唯一手册继续，不因本轮成功自动开放。
+无Git目录只支持已登记、规范路径的普通文件与目录；完整基线包含内容哈希和权限，Git忽略文件与二进制可复制，原有空目录保留。链接、特殊文件、嵌套Git及文件/目录类型转换拒绝。当前仍只登记原Git试点，没有登记或开放其他目录。回写有私有前像与日志；失败回滚只恢复本次路径，中断后只核对、不自动重放。多文件回写不是文件系统原子事务，归属不明或并发修改保留`needs_reconciliation`供核查。测试发现文件变目录可被Git表达为删除加新增，已增加最终类型核对并回归通过。
+
+这些证据证明本轮技术流程，不等于真实QQ平台收件、其他后端、项目外写入、系统提权、自动合入或长期体验验收。真实仓库或新无Git目录登记/硬化、额外审批等待等仍按文档28及唯一手册继续，不因本轮成功自动开放。

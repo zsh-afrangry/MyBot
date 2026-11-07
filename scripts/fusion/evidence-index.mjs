@@ -43,6 +43,8 @@ const TABLE = {
   'scripts/fusion/install-exec-fence.mjs': ['运维写状态', '默认核对；--apply导入完整哈希固定的Fusion原生隔离依赖，保留许可证，不修改DSH或同步配置', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/lib/exec-fence.mjs': ['库', '核对Fusion自有原生依赖版本、完整树指纹与Landlock探针，不更改授权范围', {readonly: 1}, 'header'],
   'chatbot/tests/coding/reconciliation.test.mjs': ['离线', '真实本地进程/Git/SQLite的重启核对、孤儿组归属、PID复用拒绝、只取消本任务与中断合入事实核对；合成任务，无模型或QQ', {testDir: 1, restart: 1}, 'header'],
+  'chatbot/tests/coding/directory.test.mjs': ['离线', '无Git副本、中文改名/后缀、二进制及空目录、基线冲突、确认回写、失败回滚与重启只核对；真实本地文件/Git/SQLite及写入隔离，无模型或QQ', {testDir: 1, writesRepo: 1}, 'header'],
+  'chatbot/tests/coding/acceptance-directory-live.mjs': ['验收', '显式--live在已批准试点内调用真实DSH，普通非Git副本改名/后缀/终端检查，合成确认后隔离回写；无QQ或生产目录', {auth: 1, model: 1, testDir: 1, writesRepo: 1, restart: 1}, 'header'],
   'scripts/fusion/backup-retention.mjs': ['运维写状态', '登记隔离恢复回执；默认预览，仅--apply淘汰多余已验证v3点及无引用已校验工件，独立项目不自动删除', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/lib/backup-retention.mjs': ['库', '只读计算已验证v3点与工件保留清单，保护未完成引用、拒绝破损工件及不安全路径', {readonly: 1}, 'header'],
   'scripts/fusion/test/backup-retention.test.mjs': ['离线', '临时恢复点验证最近两点保留、旧证明拒绝、未完成工件引用保护和破损/缺失/越界拒绝', {testDir: 1}, 'header'],

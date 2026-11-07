@@ -10,6 +10,7 @@ import {PermissionAudit} from './permissions.js';
 import {CodingResultRecorder, readCodingResult, completionText} from './results.js';
 import {projectPolicy, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, git, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
 import {digest, fail, taskText} from './policy.js';
+import {directoryState, directoryPlan, prepareDirectoryWriteback, runDirectoryWriteback, directoryWritebackState} from './directory-workspaces.js';
 
 export class CodingService {
   constructor(config, {authorize, sendText, trace = () => {}, clientFactory = args => new AcpClient(args)} = {}) {
@@ -39,6 +40,7 @@ export class CodingService {
     } catch (error) { fs.unlinkSync(this.lockFile); throw error; }
   }
   project(id) { const p = this.config.projects.find(p => p.id === id); if (!p) throw fail('unknown_coding_project'); return p; }
+  target(project) { return project.kind === 'directory' ? {kind: 'directory', files: directoryState(project.root)} : targetState(project); }
   task(id, requester) {
     const task = this.store.get(id);
     if (!task || task.requester.subjectId !== requester.subjectId || task.requester.sessionKey !== requester.sessionKey) throw fail('unknown_coding_task');
@@ -51,8 +53,8 @@ export class CodingService {
       data: {projectId: task.projectId, backend: 'dsh-acp', state: task.state, ...(task.externalSessionId ? {externalSessionId: task.externalSessionId} : {}), ...data}});
   }
   describe(task) {
-    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation} = task;
-    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation};
+    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind} = task;
+    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind: workspaceKind ?? 'git'};
   }
   list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
   status(id, requester) { return this.describe(this.task(id, requester)); }
@@ -180,6 +182,7 @@ export class CodingService {
     const hash = digest(JSON.stringify({id, text, requester}));
     const old = this.store.findCommand(key);
     if (old) { if (old.task_id !== id || old.hash !== hash) throw fail('coding_request_key_conflict'); return this.describe(task); }
+    if (task.state === 'needs_reconciliation' && task.mergeProposalId) throw fail('merge_reconciliation_required');
     if (!['ready', 'check_failed', 'failed', 'cancelled', 'needs_permission', 'needs_reconciliation', 'interrupted', 'rolled_back'].includes(task.state) || this.active.has(id)) throw fail('coding_task_busy');
     const runtime = inspectOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
     if (!runtime.verified) throw fail('runtime_reconciliation_unverified');
@@ -190,7 +193,8 @@ export class CodingService {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
     const entry = this.active.get(id);
     if (!entry) {
-      if (['cancelled', 'merged'].includes(task.state)) return this.describe(task);
+      if (['cancelled', 'merged', 'written_back'].includes(task.state)) return this.describe(task);
+      if (task.state === 'needs_reconciliation' && task.mergeProposalId) throw fail('merge_reconciliation_required');
       const runtime = await stopOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
       if (!runtime.verified || !runtime.stopped) throw fail(runtime.reason ?? 'cancel_requires_runtime_reconciliation');
       this.store.invalidate(id); this.store.save({...task, state: 'cancelled', runtimeIdentity: undefined, runtimeProcesses: undefined});
@@ -222,9 +226,18 @@ export class CodingService {
     if (observed.verified && observed.stopped) {
       assertWorkspace(task);
       if (task.stateBeforeReconciliation === 'merging' || task.reason === 'merge_result_requires_check') {
-        const preview = this.store.getPreview(task.mergeProposalId), project = this.project(task.projectId), target = targetState(project);
-        if (!preview || preview.payload.candidate !== task.mergeCandidate || target.branch !== project.branch) throw fail('merge_reconciliation_unverified');
-        if (target.head === preview.payload.candidate) {
+        const preview = this.store.getPreview(task.mergeProposalId), project = this.project(task.projectId), target = this.target(project);
+        if (!preview || preview.payload.candidate !== task.mergeCandidate) throw fail('merge_reconciliation_unverified');
+        if (project.kind === 'directory') {
+          const transaction = task.directoryWriteback;
+          if (transaction && (path.dirname(path.dirname(transaction.file)) !== path.join(this.config.root, 'tasks', id)
+            || !/^writeback-[a-f0-9-]{36}$/.test(path.basename(path.dirname(transaction.file))) || path.basename(transaction.file) !== 'journal.json')) throw fail('invalid_directory_writeback');
+          const state = transaction ? directoryWritebackState(transaction, project)
+            : JSON.stringify(target) === JSON.stringify(preview.payload.target) ? 'ready' : undefined;
+          if (!state) throw fail('directory_writeback_requires_reconciliation');
+          changes = {...changes, state, reason: state === 'ready' ? 'writeback_not_applied_preview_again' : undefined, candidate: state === 'ready' ? undefined : task.candidate};
+        } else if (target.branch !== project.branch) throw fail('merge_reconciliation_unverified');
+        else if (target.head === preview.payload.candidate) {
           assertDirtyPreserved(project, preview.payload.target);
           if (target.status !== preview.payload.target.status || target.diff !== preview.payload.target.diff) throw fail('merge_reconciliation_unverified');
           changes = {...changes, state: 'merged', mergeCommit: target.head, reason: undefined};
@@ -255,29 +268,38 @@ export class CodingService {
     if (this.projectLocks.has(project.id)) throw fail('project_merge_busy');
     this.projectLocks.add(project.id);
     try {
-      const target = targetState(project);
-      if (target.branch !== project.branch) throw fail('target_branch_changed');
+      const directory = project.kind === 'directory', target = this.target(project);
+      if (!directory && target.branch !== project.branch) throw fail('target_branch_changed');
+      if (directory && JSON.stringify(target.files) !== JSON.stringify(task.directoryBaseline)) throw fail('directory_source_changed');
       const candidateDir = path.join(this.config.worktrees, `candidate-${randomUUID()}`);
-      git(project.root, 'worktree', 'add', '--detach', candidateDir, target.head);
       const commits = git(task.cwd, 'rev-list', '--reverse', `${task.base}..${task.verifiedCommit}`).trim().split('\n').filter(Boolean);
       if (!commits.length) throw fail('no_coding_changes');
-      try { git(candidateDir, '-c', 'user.name=Kurumi', '-c', 'user.email=kurumi@localhost', 'cherry-pick', ...commits); }
-      catch { throw fail('merge_conflict'); }
+      if (directory) {
+        git(task.cwd, 'worktree', 'add', '--detach', candidateDir, task.verifiedCommit);
+        for (const row of task.directoryBaseline) if (row.kind === 'directory' && !fs.existsSync(path.join(candidateDir, row.name))) fs.mkdirSync(path.join(candidateDir, row.name), {recursive: true, mode: row.mode});
+      } else {
+        git(project.root, 'worktree', 'add', '--detach', candidateDir, target.head);
+        try {git(candidateDir, '-c', 'user.name=Kurumi', '-c', 'user.email=kurumi@localhost', 'cherry-pick', ...commits);}
+        catch {throw fail('merge_conflict');}
+      }
       const checkedHash = workingHash(candidateDir), checkPlan = structuredClone(project.checks);
       const checks = await runChecks({...project, checks: checkPlan}, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'), undefined, this.config.writeBoundary);
       if (!checks.ok) throw fail('candidate_checks_failed');
       this.task(id, requester); this.authorize(requester, 'tasks.code');
       if (this.active.has(id) || this.store.get(id).verifiedCommit !== task.verifiedCommit || this.store.get(id).state !== 'ready') throw fail('coding_task_not_ready');
-      if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch
+      if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch || this.project(task.projectId).kind !== project.kind
         || JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
       if (workingHash(candidateDir) !== checkedHash) throw fail('checked_candidate_changed');
-      if (JSON.stringify(targetState(project)) !== JSON.stringify(target)) throw fail('target_changed_during_checks');
+      if (JSON.stringify(this.target(project)) !== JSON.stringify(target)) throw fail('target_changed_during_checks');
       const candidate = git(candidateDir, 'rev-parse', 'HEAD').trim();
-      const diff = git(candidateDir, 'diff', '--no-ext-diff', target.head, candidate, '--');
-      assertNoUntrackedOverwrite(project, target.head, candidate);
-      const paths = git(candidateDir, 'diff', '--name-only', target.head, candidate, '--').trim().split('\n');
-      const payload = {taskId: id, projectId: project.id, projectRoot: project.root, taskCommit: task.verifiedCommit, target, candidate, diffHash: digest(diff), candidateDir, checks};
-      const previewText = `编码任务待确认合入\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${project.branch} @ ${target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + '=通过').join('；')}\n目标当前有未提交内容：${target.status ? '有，合入不得覆盖' : '无'}\n差异SHA256：${payload.diffHash}\n请审阅差异后确认本地合入；不包含push。`;
+      const diffBase = directory ? task.base : target.head;
+      const diff = git(candidateDir, 'diff', '--no-ext-diff', diffBase, candidate, '--');
+      if (!directory) assertNoUntrackedOverwrite(project, target.head, candidate);
+      const plan = directory ? directoryPlan(project, task, candidateDir, git) : undefined;
+      const paths = directory ? plan.changes.map(c => c.name) : git(candidateDir, 'diff', '--name-only', target.head, candidate, '--').trim().split('\n');
+      const payload = {taskId: id, projectId: project.id, projectRoot: project.root, taskCommit: task.verifiedCommit, target, candidate, diffBase,
+        diffHash: digest(diff), candidateDir, checks, ...(directory ? {directoryPlan: plan} : {})};
+      const previewText = `${directory ? '实验目录待确认回写' : '编码任务待确认合入'}\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${directory ? project.root : project.branch + ' @ ' + target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + (r.skipped ? '=不适用' : '=通过')).join('；')}\n${directory ? '原目录基线一致，回写前再次核对；原目录不建立Git。' : '目标当前有未提交内容：' + (target.status ? '有，合入不得覆盖' : '无')}\n差异SHA256：${payload.diffHash}\n请审阅差异后确认${directory ? '目录回写' : '本地合入'}；不包含push。`;
       const result = this.store.preview(task, payload, previewText, scope);
       this.store.save({...task, candidate}); this.event(task, 'coding.merge_preview', {candidate, proposalId: result.proposalId, payloadHash: result.payloadHash});
       return result;
@@ -291,15 +313,16 @@ export class CodingService {
     try {
       const preview = this.store.getPreview(proposalId);
       if (!preview || preview.taskId !== id || task.state !== 'ready' || preview.payload.taskCommit !== task.verifiedCommit) throw fail('merge_not_pending');
-      if (preview.payload.projectRoot !== project.root || preview.payload.target.branch !== project.branch) throw fail('merge_preview_stale');
+      const directory = project.kind === 'directory';
+      if (preview.payload.projectRoot !== project.root || (directory ? !preview.payload.directoryPlan : preview.payload.target.branch !== project.branch)) throw fail('merge_preview_stale');
       assertWorkspace(task);
       if (git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
-      if (JSON.stringify(targetState(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
+      if (JSON.stringify(this.target(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
       const assertCandidate = () => {
-        assertCandidateLocation(this.config, this.project(task.projectId), preview.payload.candidateDir);
+        assertCandidateLocation(this.config, this.project(task.projectId), preview.payload.candidateDir, task);
         if (git(preview.payload.candidateDir, 'rev-parse', 'HEAD').trim() !== preview.payload.candidate
           || git(preview.payload.candidateDir, 'status', '--porcelain=v1').trim()
-          || digest(git(preview.payload.candidateDir, 'diff', '--no-ext-diff', preview.payload.target.head, preview.payload.candidate, '--')) !== preview.payload.diffHash) throw fail('candidate_changed');
+          || digest(git(preview.payload.candidateDir, 'diff', '--no-ext-diff', preview.payload.diffBase ?? preview.payload.target.head, preview.payload.candidate, '--')) !== preview.payload.diffHash) throw fail('candidate_changed');
       };
       assertCandidate();
       const checkPlan = structuredClone(project.checks), checkedHash = workingHash(preview.payload.candidateDir);
@@ -307,27 +330,35 @@ export class CodingService {
         path.join(this.config.root, 'tasks', id, 'merge-checks.log'), undefined, this.config.writeBoundary);
       const current = this.task(id, requester); this.authorize(requester, 'tasks.code'); assertCurrent();
       if (current.state !== 'ready' || current.verifiedCommit !== task.verifiedCommit || this.active.has(id)) throw fail('merge_preview_stale');
-      if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch
+      if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch || this.project(task.projectId).kind !== project.kind
         || JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
       assertWorkspace(current); assertCandidate();
       if (workingHash(preview.payload.candidateDir) !== checkedHash) throw fail('checked_candidate_changed');
-      if (JSON.stringify(targetState(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
+      if (JSON.stringify(this.target(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
       this.store.save({...current, mergeChecks: {...checks, candidate: preview.payload.candidate, at: new Date().toISOString()}});
       this.event(this.store.get(id), 'coding.merge_checked', {ok: checks.ok, checkCount: checks.rows.length});
       if (!checks.ok) throw fail('candidate_checks_failed');
-      assertNoUntrackedOverwrite(project, preview.payload.target.head, preview.payload.candidate);
+      if (directory) {
+        if (JSON.stringify(directoryPlan(project, task, preview.payload.candidateDir, git)) !== JSON.stringify(preview.payload.directoryPlan)) throw fail('candidate_changed');
+      } else assertNoUntrackedOverwrite(project, preview.payload.target.head, preview.payload.candidate);
       assertCurrent(); const payload = this.store.claimMerge(task, proposalId, scope);
       this.event(this.store.get(id), 'coding.merge_authorized', {proposalId});
       try {
-        git(project.root, 'merge', '--ff-only', payload.candidate);
-        if (git(project.root, 'rev-parse', 'HEAD').trim() !== payload.candidate || git(project.root, 'symbolic-ref', '--short', 'HEAD').trim() !== project.branch) throw fail('merge_result_requires_check');
-        assertDirtyPreserved(project, payload.target);
+        if (directory) {
+          const transaction = prepareDirectoryWriteback(this.config.root, project, task, payload.candidateDir, payload.directoryPlan);
+          this.store.save({...this.store.get(id), directoryWriteback: transaction});
+          runDirectoryWriteback(this.config.writeBoundary, project, transaction);
+        } else {
+          git(project.root, 'merge', '--ff-only', payload.candidate);
+          if (git(project.root, 'rev-parse', 'HEAD').trim() !== payload.candidate || git(project.root, 'symbolic-ref', '--short', 'HEAD').trim() !== project.branch) throw fail('merge_result_requires_check');
+          assertDirtyPreserved(project, payload.target);
+        }
       } catch {
         this.store.save({...this.store.get(id), state: 'needs_reconciliation', reason: 'merge_result_requires_check'});
         throw fail('merge_result_requires_check');
       }
-      this.store.save({...this.store.get(id), state: 'merged', mergeCommit: payload.candidate});
-      this.event(this.store.get(id), 'coding.merged', {candidate: payload.candidate});
+      this.store.save({...this.store.get(id), state: directory ? 'written_back' : 'merged', mergeCommit: directory ? undefined : payload.candidate, reason: undefined});
+      this.event(this.store.get(id), directory ? 'coding.written_back' : 'coding.merged', {candidate: payload.candidate});
       return this.describe(this.store.get(id));
     } finally { this.projectLocks.delete(project.id); }
   }
