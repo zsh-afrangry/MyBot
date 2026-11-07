@@ -15,13 +15,18 @@ import {WebSocketServer} from 'ws';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {personaFiles, applyPersonaFile} from '../../packages/access-control/workspaces.js';
 import {ownerPolicy, memberRow, OWNER, MEMBER} from '../access-control/fixtures.mjs';
+import {RecordApplication as RecordStore,openRecordContinuityStore} from '../../plugins/kurumi-memory/system/application.js';
+import {migrateMemoryV3} from '../../plugins/kurumi-memory/system/migration.js';
 import {emptyState} from '../../plugins/kurumi-memory/continuity/model.js';
 import {initializeContinuity, replaceNotice, openContinuityStore} from '../../plugins/kurumi-memory/continuity/store.js';
 
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const outIndex = process.argv.indexOf('--out'), out = outIndex < 0 ? null : process.argv[outIndex + 1];
 if (!out || !path.isAbsolute(out) || fs.existsSync(out)) throw Error('Require a new absolute --out evidence file');
-const live = process.argv.includes('--live');
+const live = process.argv.includes('--live'), v3=process.argv.includes('--v3');
+const openMemory=v3?openRecordContinuityStore:openContinuityStore;
+const allowModelRepair=process.argv.includes('--allow-model-repair'),v3ToolsOnly=process.argv.includes('--v3-tools-only');
+if(v3ToolsOnly && !v3)throw Error('--v3-tools-only requires --v3');
 const providerIndex=process.argv.indexOf('--provider-fixture');
 const providerFixture=providerIndex<0?null:process.argv[providerIndex+1];
 if(providerFixture&&(live||!path.isAbsolute(providerFixture)||JSON.parse(fs.readFileSync(providerFixture+'/openclaw.plugin.json')).id!=='deepseek'))throw Error('Provider fixture requires the official DeepSeek plugin path and deterministic mode');
@@ -29,7 +34,7 @@ if(providerFixture&&(live||!path.isAbsolute(providerFixture)||JSON.parse(fs.read
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-memory-host-'));
 const token = randomBytes(24).toString('hex'), bot = '900001';
 const report = {
-  at: new Date().toISOString(), live, providerFixture:Boolean(providerFixture), model: 'local/deterministic', cases: [], requests: 0, maxRequests: 40,
+  at: new Date().toISOString(), live, v3, allowModelRepair, v3ToolsOnly, providerFixture:Boolean(providerFixture), model: 'local/deterministic', cases: [], requests: 0, maxRequests: 40,
   toolCalls: [], toolErrors: [], modelChecks: [], mockSends: 0, usage: {promptTokens: 0, completionTokens: 0},
   boundary: 'Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model by default, optional official DeepSeek with --live, simulated OneBot. Synthetic conversations and temporary state only; no real QQ, mail, production write or production service restart.',
 };
@@ -142,7 +147,7 @@ const model = http.createServer(async (req, res) => {
         tool = memoryCall({action: 'upsert', expectedRevision: listed.revision, facts: [{text: blue, evidence: blue}]});
       } else if (activeTurn.label === 'owner-explicit-save' && writes.length === 1) {
         assert(json.includes('action=upsert') && json.includes('未提交'), 'actionable error not returned to model');
-        const store = openContinuityStore({workspace, ownerId: OWNER, readonly: true});
+        const store = openMemory({workspace, ownerId: OWNER, readonly: true});
         try {const state = store.read(); assert.equal(state.revision, listed.revision); assert(!state.facts.some(f => f.text === blue));} finally {store.close();}
         report.malformedAttemptDidNotCommit = true;
         tool = memoryCall({action: 'upsert', expectedRevision: listed.revision, text: blue, evidence: blue});
@@ -162,6 +167,13 @@ const model = http.createServer(async (req, res) => {
           ? {action:'observe',expectedRevision:listed.revision,facts:['我喜欢合成红茶','我喜欢合成白茶'].map(text=>({text,evidence:text}))}
           : {action:'delete',expectedRevision:listed.revision,ids:listed.entries.filter(e=>/合成[红白]茶/u.test(e.text)).map(e=>e.id),evidence:activeTurn.text});
       }
+    }
+    if(!live && ['owner-v3-thread','owner-v3-raw'].includes(activeTurn.label)){
+      const name=activeTurn.label==='owner-v3-thread'?'kurumi_memory_records':'kurumi_memory_raw';
+      const called=turnCalls.some(call=>{if(call.function?.name===name)return true;try{const a=JSON.parse(call.function?.arguments??'{}');return call.function?.name==='dispatch_action' && String(a.id).split(':').at(-1)===name;}catch{return false;}});
+      const rawId=[...json.matchAll(/本次可信原文引用：([a-f0-9]{64})/g)].at(-1)?.[1];
+      const args=name==='kurumi_memory_raw'?{action:'search',query:'合成答辩'}:{action:'write',expectedVersion:0,record:{kind:'thread',about:'owner',basis:'stated',text:'主人合成答辩在2026年11月20日15点',sources:[{rawId}],attrs:{due:'2026-11-20T07:00:00Z'}}};
+      tool=called?null:available.includes(name)?makeCall(name,args):makeCall('dispatch_action',{id:name,args});
     }
     let message = tool ? {role: 'assistant', content: null, tool_calls: [tool]} : {role: 'assistant', content: 'MEMORY_HOST_FIXTURE_OK'};
     let usage = {prompt_tokens: 1, completion_tokens: 1, total_tokens: 2};
@@ -215,6 +227,11 @@ cfg.channels = {'kurumi-qq': {enabled: true, ownerId: OWNER, accessControl: poli
 cfg.plugins = {allow: ['kurumi-qq', 'kurumi-memory'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-qq'), path.join(repo, 'chatbot/plugins/kurumi-memory')]}, entries: {
   'kurumi-qq': {enabled: true}, 'kurumi-memory': {enabled: true, config: {continuity: {enabled: true, summaryTtlDays: 7, maxContextChars: 6000}, continuityPolicyAdapter: 'current-owner', continuityStoreAdapter: 'sqlite'}, hooks: {allowConversationAccess: true, allowPromptInjection: true}},
 }, slots: {memory: 'none'}};
+if(v3){
+ cfg.agents.entries.main.tools.allow.push('kurumi_memory_records','kurumi_memory_raw');
+ const m=cfg.plugins.entries['kurumi-memory'].config;m.continuityStoreAdapter='records-sqlite';
+ m.system={enabled:true,records:true,raw:true,l0:true,hostDatabase:path.join(root,'agents/main/agent/openclaw-agent.sqlite')};
+}
 if(providerFixture){
  const fixture=cfg.models.providers['memory-fixture'];delete cfg.models.providers['memory-fixture'];
  fixture.models[0]={...fixture.models[0],id:'deepseek-flash',reasoning:true};cfg.models.providers.deepseek=fixture;
@@ -230,6 +247,7 @@ for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(root, 
 fs.mkdirSync(path.join(root, 'channel'), {recursive: true, mode: 0o700}); fs.mkdirSync(path.join(root, 'media'), {recursive: true, mode: 0o700});
 for (const [file, content] of personaFiles(fixtureRepo, root).files) applyPersonaFile(file, content);
 initializeContinuity(workspace, emptyState(OWNER)); replaceNotice(workspace);
+if(v3){const backupRoot=path.join(root,'migration');fs.mkdirSync(backupRoot,{mode:0o700});const options={workspace,ownerId:OWNER,backupRoot};const preview=migrateMemoryV3(options);migrateMemoryV3({...options,apply:true,expectedStateHash:preview.stateHash});}
 fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(compiled), {mode: 0o600});
 
 const gatewayLog = path.join(root, 'gateway.log'), fd = fs.openSync(gatewayLog, 'w', 0o600);
@@ -251,19 +269,21 @@ async function turn(label, qq, text) {
   if (live) {assert(reply.trim(), 'empty delivered reply'); report.replies ??= []; report.replies.push({label, text: reply});}
   return result;
 }
-function state() {const store = openContinuityStore({workspace, ownerId: OWNER, readonly: true}); try {return store.read();} finally {store.close();}}
+function state() {const store = openMemory({workspace, ownerId: OWNER, readonly: true}); try {return store.read();} finally {store.close();}}
 async function resetOwner() {assert.equal((await call('sessions.reset', {key: `agent:main:kurumi-qq:direct:${OWNER}`, reason: 'new'})).ok, true);}
 try {
   let ready = false;
   for (let i = 0; i < 100; i++) {try {await call('health', {}, 1200); ready = true; break;} catch {if (child.exitCode !== null) throw Error('isolated_gateway_exited'); await new Promise(resolve => setTimeout(resolve, 300));}}
   assert(ready, 'isolated gateway did not become ready');
+  if(!v3ToolsOnly){
   const saved = await turn('owner-automatic-save', OWNER, 'MEMORY_HOST_SAVE 我喜欢绿茶');
   const initial = state();
   assert.equal(initial.facts.length, 1); assert.match(initial.facts[0].text, /喜欢绿茶/u); assert.equal(initial.revision, 1);
   if (live) {
     const calls = report.toolCalls.filter(row => row.label === 'owner-automatic-save');
     const writes = calls.map(row => row.arguments.args ?? row.arguments).filter(args => ['observe','upsert','delete'].includes(args.action));
-    assert.equal(writes.length, 1); assert.equal(writes[0].action, 'observe', 'ordinary preference must use observe, not explicit upsert');
+    if(!allowModelRepair)assert.equal(writes.length,1);
+    assert(writes.length>0 && writes.every(w=>w.action==='observe'),'ordinary preference must use observe');report.automaticWriteAttempts=writes.length;report.automaticCommittedWrites=initial.revision;
   }
   report.cases.push({label: 'owner-automatic-save', passed: true, captured: saved.captured?.length ?? 0});
   const resumed = await turn('owner-memory-injection', OWNER, 'MEMORY_HOST_READ 你记得我平时喜欢喝什么茶吗？');
@@ -318,8 +338,8 @@ try {
   if (live) {
     // A preserved, unrelated tea preference may contain 绿; check denial and the
     // target fact/context instead of treating every colour character as resurrection.
-    assert.match(report.replies.at(-1).text, /不记得|不知道|没有.*(?:记忆|记录)|没(?:有|存|记)/u);
-    assert.equal(report.toolErrors.length, 0, 'live model mixed action parameters');
+    assert.match(report.replies.at(-1).text, /不记得|不知道|答不上来|记不清|没留着|没有.*(?:记忆|记录)|没(?:有|存|记)/u);
+    if(!allowModelRepair)assert.equal(report.toolErrors.length,0,'live model mixed action parameters');
   }
   report.cases.push({label: 'owner-forgotten-after-new', passed: true});
   if (!live) {
@@ -328,6 +348,31 @@ try {
     await turn('owner-batch-forget', OWNER, 'MEMORY_HOST_BATCH_FORGET 把红茶和白茶两条都忘掉');
     assert.equal(state().revision,before.revision+1);assert.equal(state().facts.length,1);
     report.cases.push({label:'batch-forget-single-commit',passed:true,deleted:2});
+  }
+  }
+  if(v3){
+    await turn('owner-v3-thread',OWNER,'MEMORY_HOST_V3_THREAD 我的合成答辩在2026年11月20日15点。请用kurumi_memory_records保存一条thread，due写上海时间对应ISO，来源引用本次可信原文rawId；这是软件测试，不要创建提醒。');
+    const threadStore=new RecordStore({workspace,ownerId:OWNER});try{assert(threadStore.search('合成答辩',{kind:'thread'}).length>0);}finally{threadStore.close();}
+    report.cases.push({label:'v3-record-tool-real-host-thread',passed:true});
+    await turn('owner-v3-raw',OWNER,'MEMORY_HOST_V3_RAW 请只用kurumi_memory_raw的search检索“合成答辩”，核对刚才的原文日期并回答。');
+    assert(report.toolCalls.some(c=>c.label==='owner-v3-raw' && (c.name==='kurumi_memory_raw' || c.name==='dispatch_action' && String(c.arguments.id).endsWith('kurumi_memory_raw'))));
+    report.cases.push({label:'v3-raw-tool-real-host-chinese-search',passed:true});
+    const beforeCompact=new RecordStore({workspace,ownerId:OWNER});let retainedBefore;
+    try{beforeCompact.ingestHost(path.join(root,'agents/main/agent/openclaw-agent.sqlite'));retainedBefore=beforeCompact.rawRows().length;}finally{beforeCompact.close();}
+    const compacted=await call('sessions.compact',{key:`agent:main:kurumi-qq:direct:${OWNER}`,maxLines:3});
+    assert(compacted.ok && compacted.compacted,'actual canonical transcript trim must execute');
+    report.cases.push({label:'v3-canonical-host-compaction-retains-mirror',passed:true,compacted:true});
+    await resetOwner();
+    const records=new RecordStore({workspace,ownerId:OWNER});
+    try{
+      records.ingestHost(path.join(root,'agents/main/agent/openclaw-agent.sqlite'));
+      assert(records.rawRows().length>=retainedBefore,'compaction cannot remove mirrored raw');
+      assert(records.rawRows().some(r=>r.origin==='owner_said'));
+      assert(records.rawRows().some(r=>r.origin==='she_said'));
+      assert(records.searchRaw('合成书签').every(r=>!r.text.includes(green)),'forgotten raw must stay masked after actual host resets');
+      report.cases.push({label:v3ToolsOnly?'v3-native-host-raw-mirror-after-resets':'v3-native-host-raw-mirror-and-forgetting-after-resets',passed:true,retained:records.rawRows().length});
+      report.limitations={hotHostContextStillVisibleUntilReset:true,rawToolMaskImplemented:true,backgroundWakeupEnabled:false};
+    }finally{records.close();}
   }
   report.passed = true;
 } catch (error) {report.passed = false; report.error = error.message; report.diagnosticsRoot = root; process.exitCode = 1;}

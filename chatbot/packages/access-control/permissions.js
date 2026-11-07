@@ -8,7 +8,7 @@ export const OWNER_PERMISSIONS = Object.freeze([
   'commands.admin', 'access.manage', 'stickers.use', 'mail.status', 'mail.draft', 'mail.send', 'mail.history',
   'weather.read', 'profile.read', 'profile.manage', 'planning.read', 'planning.manage',
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
-  'memory.read', 'memory.manage', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
+  'memory.read', 'memory.manage', 'memory.raw.read', 'memory.organize', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
   'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'host.exec',
 ]);
 export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
@@ -39,6 +39,8 @@ export function toolPermission(name, args = {}) {
   if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content'].includes(args.action) ? 'e7.read' : undefined;
   if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';
+  if (name === 'kurumi_memory_records') return ['search','get','history'].includes(args.action)?'memory.read':['write','revise','supersede','retract','forget'].includes(args.action)?'memory.manage':undefined;
+  if (name === 'kurumi_memory_raw') return ['around','search'].includes(args.action)?'memory.raw.read':undefined;
   if (name === 'kurumi_code') return ['list', 'status', 'result', 'diff'].includes(args.action) ? 'tasks.read' : ['start', 'continue', 'cancel', 'rollback', 'reconcile', 'preview', 'merge'].includes(args.action) ? 'tasks.code' : undefined;
   if (name === 'kurumi_task') return args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read';
   if (name === 'automations') return ['list', 'get', 'status', 'runs'].includes(args.action) ? 'automations.read' : 'automations.manage';

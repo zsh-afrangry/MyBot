@@ -1,0 +1,153 @@
+{
+  "at": "2026-11-07T00:30:28.834Z",
+  "live": true,
+  "v3": true,
+  "providerFixture": false,
+  "model": "deepseek/deepseek-flash",
+  "cases": [
+    {
+      "label": "owner-automatic-save",
+      "passed": true,
+      "captured": 1
+    },
+    {
+      "label": "owner-memory-injection",
+      "passed": true,
+      "context": {
+        "personal": true,
+        "fact": true
+      }
+    },
+    {
+      "label": "owner-after-new",
+      "passed": true
+    },
+    {
+      "label": "member-isolation",
+      "passed": true
+    },
+    {
+      "label": "owner-explicit-save",
+      "passed": true,
+      "revision": 2
+    },
+    {
+      "label": "owner-blue-after-new",
+      "passed": true
+    },
+    {
+      "label": "owner-correction",
+      "passed": true,
+      "sameId": true,
+      "revision": 3
+    },
+    {
+      "label": "owner-green-after-new",
+      "passed": true
+    },
+    {
+      "label": "owner-forget",
+      "passed": true,
+      "revision": 4
+    },
+    {
+      "label": "owner-forgotten-after-new",
+      "passed": true
+    },
+    {
+      "label": "v3-native-host-raw-mirror-and-forgetting-after-resets",
+      "passed": true,
+      "retained": 98
+    }
+  ],
+  "requests": 20,
+  "maxRequests": 40,
+  "mockSends": 0,
+  "usage": {
+    "promptTokens": 218471,
+    "completionTokens": 1933
+  },
+  "limitations": {
+    "hotHostContextStillVisibleUntilReset": true,
+    "rawToolMaskImplemented": true,
+    "backgroundWakeupEnabled": false
+  },
+  "boundary": "Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model by default, optional official DeepSeek with --live, simulated OneBot. Synthetic conversations and temporary state only; no real QQ, mail, production write or production service restart.",
+  "passed": true,
+  "childStopped": true,
+  "toolActions": [
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory",
+      "action": null,
+      "label": "owner-automatic-save"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "observe",
+      "label": "owner-automatic-save"
+    },
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory",
+      "action": null,
+      "label": "owner-explicit-save"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "upsert",
+      "label": "owner-explicit-save"
+    },
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory",
+      "action": null,
+      "label": "owner-correction"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "upsert",
+      "label": "owner-correction"
+    },
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory",
+      "action": null,
+      "label": "owner-forget"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "delete",
+      "label": "owner-forget"
+    },
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory",
+      "action": null,
+      "label": "owner-forgotten-after-new"
+    },
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory_raw",
+      "action": null,
+      "label": "owner-forgotten-after-new"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "search",
+      "label": "owner-forgotten-after-new"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory_raw",
+      "action": "search",
+      "label": "owner-forgotten-after-new"
+    }
+  ],
+  "toolErrorCount": 0
+}

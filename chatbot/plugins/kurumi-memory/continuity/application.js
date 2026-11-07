@@ -4,12 +4,14 @@ import {createAdapterRegistry} from '../../../packages/domain-adapters/index.js'
 import {normalize} from '../model.js';
 import {continuityPolicy} from './policy.js';
 import {openContinuityStore} from './store.js';
+import {openRecordContinuityStore} from '../system/application.js';
 import {digest, factDigest, canonical, limits, options, validateState} from './model.js';
 import {assertContinuityArgs} from './tool-contract.js';
 const missingId = id => {throw Error(`记忆ID ${id} 不存在，请按本回合记忆参考或list核对真实ID；本次未提交`);};
 export function createContinuityRegistry() {
   const registry = createAdapterRegistry({domain: 'memory-continuity', policyMethods: ['evidence','fact','summary','deletion'], storeMethods: ['read','write','close']});
   registry.registerPolicy('current-owner', continuityPolicy); registry.registerStore('sqlite', openContinuityStore);
+  registry.registerStore('records-sqlite', openRecordContinuityStore);
   return registry;
 }
 export function createContinuityApplication({registry = createContinuityRegistry(), policyAdapter = 'current-owner', storeAdapter = 'sqlite', config = {}, now = Date.now} = {}) {

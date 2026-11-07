@@ -1,0 +1,71 @@
+{
+  "at": "2026-11-07T00:35:44.332Z",
+  "live": true,
+  "v3": true,
+  "providerFixture": false,
+  "model": "deepseek/deepseek-flash",
+  "cases": [
+    {
+      "label": "v3-record-tool-real-host-thread",
+      "passed": true
+    },
+    {
+      "label": "v3-raw-tool-real-host-chinese-search",
+      "passed": true
+    },
+    {
+      "label": "v3-canonical-host-compaction-retains-mirror",
+      "passed": true,
+      "compacted": true
+    },
+    {
+      "label": "v3-native-host-raw-mirror-after-resets",
+      "passed": true,
+      "retained": 31
+    }
+  ],
+  "requests": 6,
+  "maxRequests": 40,
+  "mockSends": 0,
+  "usage": {
+    "promptTokens": 69394,
+    "completionTokens": 782
+  },
+  "limitations": {
+    "hotHostContextStillVisibleUntilReset": true,
+    "rawToolMaskImplemented": true,
+    "backgroundWakeupEnabled": false
+  },
+  "boundary": "Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model by default, optional official DeepSeek with --live, simulated OneBot. Synthetic conversations and temporary state only; no real QQ, mail, production write or production service restart.",
+  "passed": true,
+  "childStopped": true,
+  "allowModelRepair": true,
+  "v3ToolsOnly": true,
+  "toolActions": [
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory_records",
+      "action": null,
+      "label": "owner-v3-thread"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory_records",
+      "action": "write",
+      "label": "owner-v3-thread"
+    },
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory_raw",
+      "action": null,
+      "label": "owner-v3-raw"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory_raw",
+      "action": "search",
+      "label": "owner-v3-raw"
+    }
+  ],
+  "toolErrorCount": 0
+}

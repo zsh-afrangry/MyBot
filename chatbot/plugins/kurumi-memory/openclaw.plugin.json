@@ -16,9 +16,13 @@
       }},
       "continuityPolicyAdapter": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$"},
       "continuityStoreAdapter": {"type": "string", "pattern": "^[a-z][a-z0-9-]{0,47}$"}
+      ,"system": {"type":"object","additionalProperties":false,"properties":{
+        "enabled":{"type":"boolean"},"records":{"type":"boolean"},"raw":{"type":"boolean"},"l0":{"type":"boolean"},
+        "organizer":{"const":false},"hostDatabase":{"type":"string"}
+      }}
     },
     "additionalProperties": false
   },
-  "contracts": {"tools": ["kurumi_memory"]},
-  "toolMetadata": {"kurumi_memory": {"optional": true}}
+  "contracts": {"tools": ["kurumi_memory","kurumi_memory_records","kurumi_memory_raw"]},
+  "toolMetadata": {"kurumi_memory": {"optional": true},"kurumi_memory_records":{"optional":true},"kurumi_memory_raw":{"optional":true}}
 }

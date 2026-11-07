@@ -192,3 +192,7 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 返回[文档入口](../docs/README.md)。
 
 内核批准版本、Node范围、连接库和agent schema版本见`openclaw-release.json`。受控外部插件清单同时固定Tavily和2026.11.1独立DeepSeek provider；模型与工具授权仍由runtime.config/access-control维护，安装provider不授予新业务工具权限。
+
+### 新版记忆的待授权切换
+
+文档29阶段1–3源码与独立验收已具备，生产继续P2。`records-sqlite`须先停写、预览/备份并显式迁移，不能热切换或静默回退。`system.enabled/records/raw/l0`缺省关闭；原文工具另需`memory.raw.read`和main白名单具体同意。N3后台身份尚未确定，`system.organizer`只能false，不注册后台整理工具。操作、回退及证据见[文档29](../docs/29_记忆系统.md)。

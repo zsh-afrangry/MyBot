@@ -1,0 +1,216 @@
+{
+  "at": "2026-11-07T00:40:20.661Z",
+  "live": false,
+  "v3": true,
+  "providerFixture": false,
+  "model": "local/deterministic",
+  "cases": [
+    {
+      "label": "owner-automatic-save",
+      "passed": true,
+      "captured": 1
+    },
+    {
+      "label": "owner-memory-injection",
+      "passed": true,
+      "context": {
+        "personal": true,
+        "fact": true
+      }
+    },
+    {
+      "label": "owner-after-new",
+      "passed": true
+    },
+    {
+      "label": "member-isolation",
+      "passed": true
+    },
+    {
+      "label": "owner-explicit-save",
+      "passed": true,
+      "revision": 2,
+      "contractVisible": true,
+      "malformedAttemptDidNotCommit": true
+    },
+    {
+      "label": "owner-blue-after-new",
+      "passed": true
+    },
+    {
+      "label": "owner-correction",
+      "passed": true,
+      "sameId": true,
+      "revision": 3
+    },
+    {
+      "label": "owner-green-after-new",
+      "passed": true
+    },
+    {
+      "label": "question-delete-rejected",
+      "passed": true,
+      "unchanged": true
+    },
+    {
+      "label": "owner-forget",
+      "passed": true,
+      "revision": 4
+    },
+    {
+      "label": "owner-forgotten-after-new",
+      "passed": true
+    },
+    {
+      "label": "batch-forget-single-commit",
+      "passed": true,
+      "deleted": 2
+    },
+    {
+      "label": "v3-record-tool-real-host-thread",
+      "passed": true
+    },
+    {
+      "label": "v3-raw-tool-real-host-chinese-search",
+      "passed": true
+    },
+    {
+      "label": "v3-canonical-host-compaction-retains-mirror",
+      "passed": true,
+      "compacted": true
+    },
+    {
+      "label": "v3-native-host-raw-mirror-and-forgetting-after-resets",
+      "passed": true,
+      "retained": 165
+    }
+  ],
+  "requests": 34,
+  "maxRequests": 40,
+  "mockSends": 0,
+  "usage": {
+    "promptTokens": 0,
+    "completionTokens": 0
+  },
+  "limitations": {
+    "hotHostContextStillVisibleUntilReset": true,
+    "rawToolMaskImplemented": true,
+    "backgroundWakeupEnabled": false
+  },
+  "boundary": "Real isolated OpenClaw and real kurumi-memory/kurumi-qq plugins; deterministic model by default, optional official DeepSeek with --live, simulated OneBot. Synthetic conversations and temporary state only; no real QQ, mail, production write or production service restart.",
+  "passed": true,
+  "childStopped": true,
+  "allowModelRepair": false,
+  "v3ToolsOnly": false,
+  "toolActions": [
+    {
+      "tool": "tool_search",
+      "target": null,
+      "action": null,
+      "label": "owner-automatic-save"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "observe",
+      "label": "owner-automatic-save"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "list",
+      "label": "owner-explicit-save"
+    },
+    {
+      "tool": "tool_describe",
+      "target": "kurumi_memory",
+      "action": null,
+      "label": "owner-explicit-save"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "upsert",
+      "label": "owner-explicit-save"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "upsert",
+      "label": "owner-explicit-save"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "list",
+      "label": "owner-correction"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "upsert",
+      "label": "owner-correction"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "list",
+      "label": "owner-question-delete"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "delete",
+      "label": "owner-question-delete"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "list",
+      "label": "owner-forget"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "delete",
+      "label": "owner-forget"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "list",
+      "label": "owner-batch-seed"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "observe",
+      "label": "owner-batch-seed"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "list",
+      "label": "owner-batch-forget"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory",
+      "action": "delete",
+      "label": "owner-batch-forget"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory_records",
+      "action": "write",
+      "label": "owner-v3-thread"
+    },
+    {
+      "tool": "dispatch_action",
+      "target": "kurumi_memory_raw",
+      "action": "search",
+      "label": "owner-v3-raw"
+    }
+  ],
+  "toolErrorCount": 2
+}

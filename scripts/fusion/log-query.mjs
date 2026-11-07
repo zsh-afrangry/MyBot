@@ -11,7 +11,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
-import {zstdDecompressSync} from 'node:zlib';
+import {readHostRecords} from '../../chatbot/packages/session-records/index.js';
 import {fileURLToPath} from 'node:url';
 import {
   correlationFrom,
@@ -316,27 +316,10 @@ function attachInboundRun(events) {
 
 function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
   const output = [];
-  let db;
-  try { db = new DatabaseSync(dbFile, {readOnly: true}); } catch { return {events: output, windows: []}; }
   try {
-    let windows = [];
-    try {
-      windows = db.prepare(`SELECT session_id AS sessionId, session_key AS sessionKey,
-        created_at AS createdAt, updated_at AS updatedAt, channel, account_id AS accountId,
-        chat_type AS chatType, primary_conversation_id AS conversationId
-        FROM session_windows WHERE updated_at >= ? AND created_at <= ?`).all(from, to);
-    } catch { /* Older agent databases may not have session_windows. */ }
-    let rows;
-    try {
-      rows = db.prepare(`SELECT session_id AS sessionId, seq, event_json AS eventJson,
-        event_zstd AS eventZstd, created_at AS createdAt
-        FROM transcript_events WHERE created_at BETWEEN ? AND ? ORDER BY created_at, seq`).all(from, to);
-    } catch { return {events: output, windows}; }
+    const {rows, windows} = readHostRecords(dbFile, {from, to});
     for (const row of rows) {
-      let raw = row.eventJson;
-      try { if (!raw && row.eventZstd) raw = zstdDecompressSync(row.eventZstd).toString('utf8'); } catch { continue; }
-      let record;
-      try { record = JSON.parse(raw); } catch { continue; }
+      const record = row.record;
       const message = record.message ?? {};
       const window = windows.find((candidate) => candidate.sessionId === row.sessionId);
       const baseCorrelation = correlationFrom({
@@ -405,7 +388,7 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
     }
     attachInboundRun(output);
     return {events: output, windows};
-  } finally { db.close(); }
+  } catch { return {events: output, windows: []}; }
 }
 
 function agentDatabases(root) {

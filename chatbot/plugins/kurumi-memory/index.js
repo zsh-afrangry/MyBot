@@ -3,6 +3,7 @@ import {createMemoryApplication} from './application.js';
 import {trustedMemoryText} from './inbound.js';
 import {normalize} from './model.js';
 import {registerContinuity} from './continuity/plugin.js';
+import {registerMemorySystem} from './system/plugin.js';
 
 const declaration = {
   name: 'kurumi_memory',
@@ -24,7 +25,9 @@ export function createMemoryPlugin({registry, continuityRegistry} = {}) {return 
   register(api) {
     if (api.pluginConfig?.continuity?.enabled === true) {
       if (api.pluginConfig.policyAdapter || api.pluginConfig.storeAdapter) throw Error('Continuity mode cannot select legacy memory adapters');
-      return registerContinuity(api, {registry: continuityRegistry});
+      registerContinuity(api, {registry: continuityRegistry});
+      if(api.pluginConfig.system?.enabled===true)registerMemorySystem(api);
+      return;
     }
     const application = createMemoryApplication({registry, policyAdapter: api.pluginConfig?.policyAdapter, storeAdapter: api.pluginConfig?.storeAdapter});
     const permits = new Map();
