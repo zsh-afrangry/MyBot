@@ -37,7 +37,7 @@ export function toolPermission(name, args = {}) {
     return ['list', 'preview', 'confirm'].includes(args.action) ? permissions[args.domain]?.[args.action === 'confirm' ? 1 : 0] : undefined;
   }
   if (direct[name]) return direct[name];
-  if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content'].includes(args.action) ? 'e7.read' : undefined;
+  if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content', 'gvg', 'fates', 'packs'].includes(args.action) ? 'e7.read' : undefined;
   if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';
   if (name === 'kurumi_memory_records') return ['search','get','history'].includes(args.action)?'memory.read':['write','revise','supersede','retract','forget'].includes(args.action)?'memory.manage':undefined;

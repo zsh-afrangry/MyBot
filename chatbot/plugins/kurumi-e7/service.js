@@ -6,6 +6,8 @@ import {validateQuery, validateData, dataCount, text, matchRows, cardProjection,
 import {buildProjection, reviewProjection, matchBuilds} from './query.js';
 import {rankingIdentity, rankingTiers, rankingEntries, contentProjection, contentCursor, contentPage, faqFallbackQueries} from './reference.js';
 
+import {queryGameplay} from './gameplay.js';
+
 const contentKey = (kind, contentId) => JSON.stringify(['contentLocator', {kind, contentId}]);
 
 function waitFor(promise, signal) {
@@ -146,6 +148,7 @@ export class E7Service {
         if (args.action === 'reviews' && data.items.some(r => !r.content)) missingFields.push('items.content');
       }
     }
+    if(['gvg','fates','packs'].includes(args.action))({data,missingFields,status}=await queryGameplay(args,{get,pageRows}));
     if (args.action === 'rankings') {
       const all = await get('rankings');
       const rows = all.data.filter(r => !args.objectType || r.type === args.objectType);

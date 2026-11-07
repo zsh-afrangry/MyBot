@@ -1,6 +1,9 @@
 // Bounded model acceptance questions/assertions only; importing never calls a model or network. docs/27.
 import assert from 'node:assert/strict';
 export const modelCases = [
+    ['gvg-hot','查E7wiki热门GVG防守的前两条，说明查询覆盖范围和胜率能否保证可靠。',row=>{assert(row.calls.some(c=>c.args.action==='gvg'&&c.args.view==='hot_defenses'));assert.match(row.reply,/100|一百/u);assert.match(row.reply,/不能|不代表|无法|不保证|不等于/u);assert.match(row.reply,/胜率|样本/u);}],
+    ['fates-candidates','查混沌宿命赛季pvp_rta_chaos_s1中残影的菲奥雷托（remnant-violet）的候选宿命，简短说明普通候选和recTier推荐各有多少，各举一个例子并注明E7wiki来源，不要把全部候选都叫推荐。',row=>{assert(row.calls.some(c=>c.args.action==='fates'&&c.args.view==='hero_fates'&&c.args.heroCode==='remnant-violet'&&c.args.seasonId==='pvp_rta_chaos_s1'));assert.match(row.reply,/候选/u);assert.match(row.reply,/推荐/u);}],
+    ['packs-value','查E7wiki礼包列表，然后打开第一条详情，说明其中的道具数量和站点估值。币种、比率公式、实时商城价格能确定吗？',row=>{assert(row.calls.some(c=>c.args.action==='packs'&&(!c.args.mode||c.args.mode==='list')));assert(row.calls.some(c=>c.args.action==='packs'&&c.args.mode==='get'&&c.args.packId));assert.match(row.reply,/币种/u);assert.match(row.reply,/公式/u);assert.match(row.reply,/未|不能|无法|不明/u);}],
     ['hero-ambiguous', '查一下莉莉的技能。', row => {assert(row.calls.some(c => c.args.action === 'search' && c.args.kind === 'hero')); assert(!row.calls.some(c => c.args.action === 'hero')); assert.match(row.reply, /哪|几位|选择|指的是|具体|确认/u);}],
     ['hero-skills', '查一下梅铃的技能。', row => {assert(row.calls.some(c => c.args.action === 'search')); assert(row.calls.some(c => c.args.action === 'hero' && c.args.heroCode === 'mei-lin' && (!c.args.view || c.args.view === 'skills'))); assert.match(row.reply, /火龙拳|升龙脚|火龙升天/u);}],
     ['hero-stats', '梅铃的基础面板是多少？这些数值算了装备吗？', row => {assert(row.calls.some(c => c.args.action === 'hero' && c.args.view === 'stats')); assert.match(row.reply, /1208|1,208/u); assert.match(row.reply, /不含|不包含|未.*装备|没有.*装备|未计入|不计/u);}],

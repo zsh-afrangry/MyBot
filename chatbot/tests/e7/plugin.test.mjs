@@ -15,10 +15,10 @@ function register(service) {
 }
 
 test('only implemented read actions are registered, with no image/member/future-action capability', () => {
-  assert.deepEqual(E7_TOOL.parameters.properties.action.enum, ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content']);
+  assert.deepEqual(E7_TOOL.parameters.properties.action.enum, ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content', 'gvg', 'fates', 'packs']);
   assert(OWNER_PERMISSIONS.includes('e7.read')); assert(!SHARED_PERMISSIONS.includes('e7.read'));
   for (const action of E7_TOOL.parameters.properties.action.enum) assert.equal(toolPermission('e7_data', {action}), 'e7.read');
-  for (const action of ['image', 'gvg', 'filter', 'toString', undefined]) assert.equal(toolPermission('e7_data', {action}), undefined);
+  for (const action of ['image', 'filter', 'toString', undefined]) assert.equal(toolPermission('e7_data', {action}), undefined);
   assert.equal(toolPermission('e7_image'), undefined);
 });
 

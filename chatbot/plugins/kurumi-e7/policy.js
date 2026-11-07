@@ -2,7 +2,7 @@
 import path from 'node:path';
 import OpenCC from 'opencc-js';
 
-export const ACTIONS = Object.freeze(['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content']);
+export const ACTIONS = Object.freeze(['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content', 'gvg', 'fates', 'packs']);
 export const HERO_VIEWS = Object.freeze(['skills', 'stats', 'multipliers', 'devotion', 'exclusive', 'profile', 'overview']);
 export const CATALOGS = Object.freeze(['cards', 'summary', 'artifacts', 'effects', 'items']);
 export const RESULT_BYTES = 16 * 1024;
@@ -31,5 +31,5 @@ export function nextRefresh(now, time) {
   return date.getTime();
 }
 
-export const ttlFor = (kind, config) => ['codes', 'gameNews', 'wikiUpdates'].includes(kind)
+export const ttlFor = (kind, config) => ['codes', 'gameNews', 'wikiUpdates', 'gvgHomework', 'gvgHot'].includes(kind)
   ? config.liveTtlMinutes * 60000 : config.detailTtlHours * 3600000;

@@ -316,3 +316,55 @@ test('resource telemetry keeps per-consumer trusted correlation, 304/cache/fallb
  assert(events.some(e=>e.data.httpStatus===304&&e.data.cache==='revalidated'));assert(events.some(e=>e.data.stale&&e.data.cache==='stale_fallback'));
  assert(!JSON.stringify(events).includes('PRIVATE'));assert(!JSON.stringify(events).includes('https:'));
 });
+
+
+test('GVG verifies every page before local orderless exact/contains filtering and binds cursors to normalized teams',async t=>{
+ const {service,calls}=setup(t);const base={action:'gvg',defenseHeroCodes:['test-hero-3','test-hero-1','test-hero-2'],limit:2};
+ const r=await service.query(base);assert.equal(r.data.total,51);assert.equal(r.data.coverage.fetched,102);assert.equal(r.data.coverage.scope,'complete_verified_pages');assert.equal(r.data.items[0].strategy,'合成操作');assert.equal(r.data.items[0].observations.reliableWinRate,null);
+ const next=await service.query({...base,defenseHeroCodes:[...base.defenseHeroCodes].reverse(),cursor:r.data.nextCursor});assert.equal(next.data.items[0].id,'5');
+ assert.equal((await service.query({...base,defenseHeroCodes:['test-hero-1']})).data.total,0);
+ assert.equal((await service.query({...base,defenseHeroCodes:['test-hero-1'],match:'contains'})).data.total,102);
+ assert.equal((await service.query({...base,offenseHeroCodes:['test-hero-5','test-hero-6','test-hero-7']})).data.total,51);
+ await assert.rejects(service.query({...base,match:'contains',cursor:r.data.nextCursor}),e=>e.code==='cursor_expired');
+ assert.deepEqual(calls.filter(c=>c.kind==='gvgHomework').map(c=>c.params.page),[1,2]);assert(!JSON.stringify(r).includes('invalid.test'));
+});
+
+test('GVG refuses changed, duplicate, truncated or excessive catalogs instead of reporting an incomplete match',async t=>{
+ for(const mode of ['changed','duplicate','truncated','excessive']){
+  const {service}=setup(t,{read:async(kind,params,opts,data)=>{let rows=data.gvgHomework.slice(((params.page??1)-1)*100,(params.page??1)*100),total=102;
+   if(mode==='changed'&&params.page===2)total=103;if(mode==='duplicate'&&params.page===2)rows=[data.gvgHomework[0],data.gvgHomework[101]];if(mode==='truncated')rows=rows.slice(0,10);if(mode==='excessive')total=3001;
+   return {status:200,data:{list:rows,pagination:{page:params.page,size:100,total}}};}});
+  await assert.rejects(service.query({action:'gvg'}),e=>e.code===(mode==='excessive'?'gvg_catalog_too_large':'gvg_snapshot_changed'));
+ }
+});
+
+test('hot defenses disclose top100 scope, never infer reliable win rates and use short TTL',async t=>{
+ const {service,now,calls}=setup(t);const args={action:'gvg',view:'hot_defenses'};
+ const r=await service.query(args);assert.equal(r.data.coverage.scope,'upstream_top_100');assert.equal(r.data.coverage.totalAvailable,null);assert.equal(r.data.items[0].reliableWinRate,null);
+ now.value+=31*60000;await service.query(args);assert.equal(calls.filter(c=>c.kind==='gvgHot').length,2);
+});
+
+test('fates validate seasons and actor binding, preserve conditions and separate recommendation from candidates/unknown tiers',async t=>{
+ const {service,calls,data,now}=setup(t);
+ const unknown=await service.query({action:'fates',seasonId:'unknown'});assert.equal(unknown.status,'not_found');assert.deepEqual(unknown.data.availableSeasons,['season-1','season-2']);assert.equal(calls.length,1);
+ const list=await service.query({action:'fates',seasonId:'season-1'});assert.equal(list.data.total,1);assert.equal(list.data.items[0].condition,'触发条件');assert.equal(list.data.items[0].statValue,'10%');
+ const heroes=await service.query({action:'fates',view:'recommended_heroes',seasonId:'season-1'});assert.equal(heroes.data.items[0].knownTier,true);
+ const q={action:'fates',view:'hero_fates',seasonId:'season-1',heroCode:'test-hero-1',limit:1};
+ const first=await service.query(q);assert.equal(first.data.items[0].recommended,true);assert.deepEqual(first.data.recommendationCounts,{recommended:1,candidate:1,unknown:1});
+ const second=await service.query({...q,cursor:first.data.nextCursor,limit:2});assert.deepEqual(second.data.items.map(r=>r.recommended),[false,null]);assert(second.data.items.every(r=>r.id===null));assert.deepEqual(second.data.items.map(r=>r.fateId),['fate-2','fate-3']);assert(second.missingFields.includes('recommendationTier'));
+ now.value+=25*3600000;data.heroFates.heroCode='test-hero-2';const stale=await service.query(q);assert.equal(stale.stale,true);assert(stale.sources.some(s=>s.warning==='invalid_response'));assert.deepEqual(stale.data,first.data);
+ await assert.rejects(service.query({...q,heroCode:'unknown-hero'}),e=>e.code==='unknown_hero');assert(!calls.some(c=>c.params.heroCode==='unknown-hero'));
+});
+
+test('pack IDs and numerical inputs are validated while source valuation gaps and item values stay explicit',async t=>{
+ const {service,data,now}=setup(t);const list=await service.query({action:'packs',limit:1});assert.equal(list.data.total,2);assert(list.data.nextCursor);assert.equal(list.data.items[0].currency,null);
+ const r=await service.query({action:'packs',mode:'get',packId:'1'});assert.equal(r.data.price,'6.00');assert.equal(r.data.items[0].quantity,3);assert.equal(r.data.items[0].unitSkyStoneValue,40);assert.equal(r.data.items[0].totalSkyStoneValue,120);assert.equal(r.data.valuationBasis.ratioFormula,null);assert.deepEqual(r.missingFields,['currency','ratioFormula']);assert(!JSON.stringify(r).includes('item.png'));
+ assert.equal((await service.query({action:'packs',mode:'get',packId:'999'})).status,'not_found');
+ now.value+=25*3600000;data.packs[0].itemBreakdown[0].quantity=-1;const stale=await service.query({action:'packs',mode:'get',packId:'1'});assert(stale.stale);assert.equal(stale.data.items[0].quantity,3);
+});
+
+test('2C rejects mixed/unsafe inputs before IO and malformed responses cannot poison the cache',async t=>{
+ const {service,calls}=setup(t);
+ for(const args of [{action:'gvg',defenseHeroCodes:[]},{action:'gvg',defenseHeroCodes:['test-hero-1','test-hero-1']},{action:'gvg',view:'hot_defenses',offenseHeroCodes:['test-hero-1']},{action:'gvg',match:'any'},{action:'gvg',url:'https://evil.invalid'},{action:'fates',seasonId:'x?evil'},{action:'fates',seasonId:'season-1',heroCode:'test-hero-1'},{action:'fates',view:'hero_fates',seasonId:'season-1'},{action:'packs',mode:'get',packId:'../x'},{action:'packs',mode:'get',packId:'1',limit:2},{action:'packs',packId:'1'}])await assert.rejects(service.query(args),e=>e.code==='invalid_query');assert.equal(calls.length,0);
+ const {service:invalid}=setup(t,{read:async()=>({status:200,data:null})});await assert.rejects(invalid.query({action:'gvg'}),e=>e.code==='invalid_response');
+});

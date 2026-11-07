@@ -1,0 +1,1795 @@
+{
+  "at": "2026-11-07T02:02:46.396Z",
+  "boundary": "Real public E7 HTTP, temporary public-data cache. Optional configured official model and actual v2 tool handlers with synthetic trusted owner context. No QQ send or production write; not full model/Gateway/QQ inbound.",
+  "userAgent": "kurumi-e7/0.1 (personal read-only wiki client)",
+  "requests": [
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1307044,
+      "durationMs": 2458,
+      "at": "2026-11-07T02:02:48.859Z",
+      "parameters": {
+        "page": 1
+      },
+      "dataSha256": "5035aef160554aa4a878bdb5cf07a0652c38f5d9e84a4c1e02db7555e94c27d7",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1209828,
+      "durationMs": 2189,
+      "at": "2026-11-07T02:02:51.070Z",
+      "parameters": {
+        "page": 2
+      },
+      "dataSha256": "5d29be77647b9038689caa66429c24df4850d0f79070750e5f2a61f1b0fda120",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1049879,
+      "durationMs": 1983,
+      "at": "2026-11-07T02:02:53.071Z",
+      "parameters": {
+        "page": 3
+      },
+      "dataSha256": "4a907451ddad422bcb8e9c84db464ca89eda92d94235817d253da6cff0b89045",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1047642,
+      "durationMs": 1902,
+      "at": "2026-11-07T02:02:54.988Z",
+      "parameters": {
+        "page": 4
+      },
+      "dataSha256": "439e0d1c2160d0ee0218d4a50f84c05b3ca00ae76b17dc4b41b372bbc7047c8a",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1026398,
+      "durationMs": 1892,
+      "at": "2026-11-07T02:02:56.897Z",
+      "parameters": {
+        "page": 5
+      },
+      "dataSha256": "9f2983bc3068cf694206e750dd240cee509b9eec8951d375939fc3e5e9d8cfc0",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1054297,
+      "durationMs": 1908,
+      "at": "2026-11-07T02:02:58.819Z",
+      "parameters": {
+        "page": 6
+      },
+      "dataSha256": "512c9eb1039d005b110ffbf67cb7834907d156f9a2324fbc44ffe51089d3236c",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1067561,
+      "durationMs": 2038,
+      "at": "2026-11-07T02:03:00.871Z",
+      "parameters": {
+        "page": 7
+      },
+      "dataSha256": "6854765de20509e8c82c13419ce21f05e4df9602c4dd926a08d0d10500d839cb",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 1073560,
+      "durationMs": 2176,
+      "at": "2026-11-07T02:03:03.064Z",
+      "parameters": {
+        "page": 8
+      },
+      "dataSha256": "fbc4fdef8fc8895874ad655327f44f2493f3414c0c9d31bcd80bc81dfa87e559",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHomework",
+      "method": "POST",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+      "status": 200,
+      "bytes": 772083,
+      "durationMs": 1889,
+      "at": "2026-11-07T02:03:04.969Z",
+      "parameters": {
+        "page": 9
+      },
+      "dataSha256": "c7a5f56418d8260f4351e5fe20ca2478f5da93dcb91856e3c364c7f03f848f7a",
+      "conditional": false
+    },
+    {
+      "kind": "cards",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+      "status": 200,
+      "bytes": 98055,
+      "durationMs": 1071,
+      "at": "2026-11-07T02:03:06.134Z",
+      "parameters": {},
+      "dataSha256": "1866924d67a8f13ce59bc88e638349aa0a70b23ceac95a8a8f59972aafd38e53",
+      "conditional": false
+    },
+    {
+      "kind": "gvgHot",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gvg_defense/hot-defenses?limit=100",
+      "status": 200,
+      "bytes": 509950,
+      "durationMs": 1382,
+      "at": "2026-11-07T02:03:07.651Z",
+      "parameters": {},
+      "dataSha256": "8c301eb29f1b3e35d06f5c4ececa90918ab53c255dcb8411605041d7721450a1",
+      "conditional": false
+    },
+    {
+      "kind": "fates",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+      "status": 200,
+      "bytes": 66537,
+      "durationMs": 930,
+      "at": "2026-11-07T02:03:08.593Z",
+      "parameters": {},
+      "dataSha256": "fce59bc3f2d652f4ce0ab1976839722a04f2e9cba9f05d0b3b26fe659f04b568",
+      "conditional": false
+    },
+    {
+      "kind": "fateHeroes",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-heroes?seasonId=pvp_rta_chaos_s1",
+      "status": 200,
+      "bytes": 4611,
+      "durationMs": 774,
+      "at": "2026-11-07T02:03:09.374Z",
+      "parameters": {
+        "seasonId": "pvp_rta_chaos_s1"
+      },
+      "dataSha256": "8e90ce5329f7d683ed6504744a6f11d6cb9c10f77f5c494422368d6818db6f0d",
+      "conditional": false
+    },
+    {
+      "kind": "heroFates",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+      "status": 200,
+      "bytes": 19556,
+      "durationMs": 813,
+      "at": "2026-11-07T02:03:10.197Z",
+      "parameters": {
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      },
+      "dataSha256": "e083ab29fd37a71b90df3d010e901557a6cfe09a18a096ac7e0a785ad6daeb21",
+      "conditional": false
+    },
+    {
+      "kind": "packs",
+      "method": "GET",
+      "url": "https://admin.e7.wiki/api/open/epicseven/gift-pack/list",
+      "status": 200,
+      "bytes": 15926,
+      "durationMs": 833,
+      "at": "2026-11-07T02:03:11.045Z",
+      "parameters": {},
+      "dataSha256": "e967d3eff38415f66b54efb4af293ecceb12ef0aa50a0b17d177533b7d5932c9",
+      "conditional": false
+    }
+  ],
+  "queries": [
+    {
+      "label": "gvg-complete-page1",
+      "args": {
+        "action": "gvg",
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "gvg",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:48.867Z",
+            "checkedAt": "2026-11-07T02:02:48.867Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:51.075Z",
+            "checkedAt": "2026-11-07T02:02:51.075Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:53.074Z",
+            "checkedAt": "2026-11-07T02:02:53.074Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:54.992Z",
+            "checkedAt": "2026-11-07T02:02:54.992Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:56.900Z",
+            "checkedAt": "2026-11-07T02:02:56.900Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:58.822Z",
+            "checkedAt": "2026-11-07T02:02:58.822Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:00.876Z",
+            "checkedAt": "2026-11-07T02:03:00.876Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:03.069Z",
+            "checkedAt": "2026-11-07T02:03:03.069Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:04.972Z",
+            "checkedAt": "2026-11-07T02:03:04.972Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 5192,
+        "sha256": "406fc0f538c3216573c88baa32f369800fbc806b8bd71dcdce6a1cfc91eb467f",
+        "total": 871,
+        "items": [
+          {
+            "id": "887",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "821",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "coverage": {
+          "scope": "complete_verified_pages",
+          "fetched": 871,
+          "totalAvailable": 871,
+          "note": "固定每页100条、最多3000条，核对总数/重复ID后在本地按无槽位顺序的阵容筛选；分页不是上游跨页事务。"
+        }
+      }
+    },
+    {
+      "label": "gvg-page2",
+      "args": {
+        "action": "gvg",
+        "limit": 2,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "gvg",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:48.867Z",
+            "checkedAt": "2026-11-07T02:02:48.867Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:51.075Z",
+            "checkedAt": "2026-11-07T02:02:51.075Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:53.074Z",
+            "checkedAt": "2026-11-07T02:02:53.074Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:54.992Z",
+            "checkedAt": "2026-11-07T02:02:54.992Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:56.900Z",
+            "checkedAt": "2026-11-07T02:02:56.900Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:58.822Z",
+            "checkedAt": "2026-11-07T02:02:58.822Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:00.876Z",
+            "checkedAt": "2026-11-07T02:03:00.876Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:03.069Z",
+            "checkedAt": "2026-11-07T02:03:03.069Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:04.972Z",
+            "checkedAt": "2026-11-07T02:03:04.972Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 5319,
+        "sha256": "a5f55ff5a655d7b0a7b54236aaeaeb438794005c89bc02d8012db74995f20fd1",
+        "total": 871,
+        "items": [
+          {
+            "id": "903",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "902",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "coverage": {
+          "scope": "complete_verified_pages",
+          "fetched": 871,
+          "totalAvailable": 871,
+          "note": "固定每页100条、最多3000条，核对总数/重复ID后在本地按无槽位顺序的阵容筛选；分页不是上游跨页事务。"
+        }
+      }
+    },
+    {
+      "label": "gvg-exact-team",
+      "args": {
+        "action": "gvg",
+        "defenseHeroCodes": [
+          "rinak",
+          "frieren",
+          "lisette"
+        ],
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "gvg",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:48.867Z",
+            "checkedAt": "2026-11-07T02:02:48.867Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:51.075Z",
+            "checkedAt": "2026-11-07T02:02:51.075Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:53.074Z",
+            "checkedAt": "2026-11-07T02:02:53.074Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:54.992Z",
+            "checkedAt": "2026-11-07T02:02:54.992Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:56.900Z",
+            "checkedAt": "2026-11-07T02:02:56.900Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:58.822Z",
+            "checkedAt": "2026-11-07T02:02:58.822Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:00.876Z",
+            "checkedAt": "2026-11-07T02:03:00.876Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:03.069Z",
+            "checkedAt": "2026-11-07T02:03:03.069Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:04.972Z",
+            "checkedAt": "2026-11-07T02:03:04.972Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 5691,
+        "sha256": "f9eab3b1effa5be5f7129156038a4191f56ab2efdb18798f4f14008342656f26",
+        "total": 3,
+        "items": [
+          {
+            "id": "887",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "900",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "coverage": {
+          "scope": "complete_verified_pages",
+          "fetched": 871,
+          "totalAvailable": 871,
+          "note": "固定每页100条、最多3000条，核对总数/重复ID后在本地按无槽位顺序的阵容筛选；分页不是上游跨页事务。"
+        }
+      }
+    },
+    {
+      "label": "gvg-reordered-team",
+      "args": {
+        "action": "gvg",
+        "defenseHeroCodes": [
+          "lisette",
+          "frieren",
+          "rinak"
+        ],
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "gvg",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:48.867Z",
+            "checkedAt": "2026-11-07T02:02:48.867Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:51.075Z",
+            "checkedAt": "2026-11-07T02:02:51.075Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:53.074Z",
+            "checkedAt": "2026-11-07T02:02:53.074Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:54.992Z",
+            "checkedAt": "2026-11-07T02:02:54.992Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:56.900Z",
+            "checkedAt": "2026-11-07T02:02:56.900Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:58.822Z",
+            "checkedAt": "2026-11-07T02:02:58.822Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:00.876Z",
+            "checkedAt": "2026-11-07T02:03:00.876Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:03.069Z",
+            "checkedAt": "2026-11-07T02:03:03.069Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:04.972Z",
+            "checkedAt": "2026-11-07T02:03:04.972Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 5691,
+        "sha256": "f9eab3b1effa5be5f7129156038a4191f56ab2efdb18798f4f14008342656f26",
+        "total": 3,
+        "items": [
+          {
+            "id": "887",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "900",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "coverage": {
+          "scope": "complete_verified_pages",
+          "fetched": 871,
+          "totalAvailable": 871,
+          "note": "固定每页100条、最多3000条，核对总数/重复ID后在本地按无槽位顺序的阵容筛选；分页不是上游跨页事务。"
+        }
+      }
+    },
+    {
+      "label": "gvg-contains-partial",
+      "args": {
+        "action": "gvg",
+        "defenseHeroCodes": [
+          "rinak"
+        ],
+        "match": "contains",
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "gvg",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:48.867Z",
+            "checkedAt": "2026-11-07T02:02:48.867Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:51.075Z",
+            "checkedAt": "2026-11-07T02:02:51.075Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:53.074Z",
+            "checkedAt": "2026-11-07T02:02:53.074Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:54.992Z",
+            "checkedAt": "2026-11-07T02:02:54.992Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:56.900Z",
+            "checkedAt": "2026-11-07T02:02:56.900Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:02:58.822Z",
+            "checkedAt": "2026-11-07T02:02:58.822Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:00.876Z",
+            "checkedAt": "2026-11-07T02:03:00.876Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:03.069Z",
+            "checkedAt": "2026-11-07T02:03:03.069Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_homework/page",
+            "fetchedAt": "2026-11-07T02:03:04.972Z",
+            "checkedAt": "2026-11-07T02:03:04.972Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 5201,
+        "sha256": "50dbe7f5ff70a4c4e0851ae57b1ca9401fe235d6ba758b09a6c12d093d639b4b",
+        "total": 145,
+        "items": [
+          {
+            "id": "887",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "884",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "coverage": {
+          "scope": "complete_verified_pages",
+          "fetched": 871,
+          "totalAvailable": 871,
+          "note": "固定每页100条、最多3000条，核对总数/重复ID后在本地按无槽位顺序的阵容筛选；分页不是上游跨页事务。"
+        }
+      }
+    },
+    {
+      "label": "gvg-hot",
+      "args": {
+        "action": "gvg",
+        "view": "hot_defenses",
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "gvg",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gvg_defense/hot-defenses?limit=100",
+            "fetchedAt": "2026-11-07T02:03:07.653Z",
+            "checkedAt": "2026-11-07T02:03:07.653Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1411,
+        "sha256": "c1f16d74978ff77732b531b23e3ca3a2544a34fab0b9a933a604304d0bc8fe0b",
+        "total": 100,
+        "items": [
+          {
+            "id": "3",
+            "name": null,
+            "server": null
+          },
+          {
+            "id": "193",
+            "name": null,
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "coverage": {
+          "scope": "upstream_top_100",
+          "fetched": 100,
+          "totalAvailable": null,
+          "note": "只筛来源热门防守前100条，不等于全部防守；不把热度或来源winRate解释为可靠胜率。"
+        }
+      }
+    },
+    {
+      "label": "fates-list",
+      "args": {
+        "action": "fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1053,
+        "sha256": "4af3855f184affca29e5330eb85be8a9ecb4e43708672ff6c6e4dd8a1050bb44",
+        "total": 162,
+        "items": [
+          {
+            "id": "1",
+            "name": "黑马",
+            "server": null
+          },
+          {
+            "id": "8",
+            "name": "自爆",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1"
+      }
+    },
+    {
+      "label": "fates-page2",
+      "args": {
+        "action": "fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "limit": 2,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1118,
+        "sha256": "2e7aebca3743701361066b88a8c00a005bf42c4426c14149bb3fc6101096b462",
+        "total": 162,
+        "items": [
+          {
+            "id": "9",
+            "name": "尘卷风",
+            "server": null
+          },
+          {
+            "id": "10",
+            "name": "属性强化",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1"
+      }
+    },
+    {
+      "label": "fates-recommended-heroes",
+      "args": {
+        "action": "fates",
+        "view": "recommended_heroes",
+        "seasonId": "pvp_rta_chaos_s1",
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-heroes?seasonId=pvp_rta_chaos_s1",
+            "fetchedAt": "2026-11-07T02:03:09.374Z",
+            "checkedAt": "2026-11-07T02:03:09.374Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 1191,
+        "sha256": "d06f33dfef0e59adfd59cf601f3ef82999fb6f5afac6b84ae9f310e62ced7777",
+        "total": 25,
+        "items": [
+          {
+            "id": "remnant-violet",
+            "name": "残影的菲奥雷托",
+            "server": null
+          },
+          {
+            "id": "landy",
+            "name": "兰蒂",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1"
+      }
+    },
+    {
+      "label": "fates-hero-page",
+      "args": {
+        "action": "fates",
+        "view": "hero_fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet",
+        "limit": 10
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+            "fetchedAt": "2026-11-07T02:03:10.197Z",
+            "checkedAt": "2026-11-07T02:03:10.197Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4491,
+        "sha256": "2789dbe3778c0b198975f46ee2b74302e2bfb5cfe8c993d54520667b56c1f54e",
+        "total": 66,
+        "items": [
+          {
+            "id": "11",
+            "name": "没有你的立足之地",
+            "server": null
+          },
+          {
+            "id": "10",
+            "name": "三位一体",
+            "server": null
+          },
+          {
+            "id": "12",
+            "name": "第二秘技",
+            "server": null
+          },
+          {
+            "id": "9",
+            "name": "无限残影",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "三体",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "加速",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "朝三暮四",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "幻想尽头的走秀",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "同归于尽",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "里安娜路西艾拉",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      }
+    },
+    {
+      "label": "fates-hero-page",
+      "args": {
+        "action": "fates",
+        "view": "hero_fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+            "fetchedAt": "2026-11-07T02:03:10.197Z",
+            "checkedAt": "2026-11-07T02:03:10.197Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4294,
+        "sha256": "a0ebe17af1123f3a120abdae2a76da233ea9e1ccf14b94b9b6528c6c97b333b7",
+        "total": 66,
+        "items": [
+          {
+            "id": "remnant-violet",
+            "name": "百发百中",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "守护者的惩罚",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "沉默誓约",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "跳弹",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "集中",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "吸收灵魂",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "唯快不破",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "充足资源",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "黑魔术",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "终极BOSS",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      }
+    },
+    {
+      "label": "fates-hero-page",
+      "args": {
+        "action": "fates",
+        "view": "hero_fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+            "fetchedAt": "2026-11-07T02:03:10.197Z",
+            "checkedAt": "2026-11-07T02:03:10.197Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4459,
+        "sha256": "f6bf5871b0b1fda8b2f3a235bcfe045736ecc3f28b016fdf73f49ba431234a10",
+        "total": 66,
+        "items": [
+          {
+            "id": "remnant-violet",
+            "name": "无法阻挡",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "殊死抗战",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "背水一战",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "诡计骰子",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "准超人化",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "PVP专家",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "套娃",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "堂堂正正",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "搞定了吗？",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "血玉髓",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      }
+    },
+    {
+      "label": "fates-hero-page",
+      "args": {
+        "action": "fates",
+        "view": "hero_fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+            "fetchedAt": "2026-11-07T02:03:10.197Z",
+            "checkedAt": "2026-11-07T02:03:10.197Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4364,
+        "sha256": "7753fc7fe50ef6bc3c6171b643d112ffdbd5db9bd2081ed3f7aaca81792c0f15",
+        "total": 66,
+        "items": [
+          {
+            "id": "remnant-violet",
+            "name": "缚影",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "解除限制",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "必杀连锁",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "快如疾风",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "稳重如山",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "黑马",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "自爆",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "尘卷风",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "属性强化",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "属性护盾",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      }
+    },
+    {
+      "label": "fates-hero-page",
+      "args": {
+        "action": "fates",
+        "view": "hero_fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+            "fetchedAt": "2026-11-07T02:03:10.197Z",
+            "checkedAt": "2026-11-07T02:03:10.197Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4103,
+        "sha256": "9f4491e805419feadf7dcb4be36021cdac433675fdc190f0941d19c8d2e4003a",
+        "total": 66,
+        "items": [
+          {
+            "id": "remnant-violet",
+            "name": "腕力大师",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "幸运饼干",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "箭矢无眼",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "友情羁绊",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "无懈可击",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "乘风",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "变色龙",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "时间静止！",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "合作",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "大祭司",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      }
+    },
+    {
+      "label": "fates-hero-page",
+      "args": {
+        "action": "fates",
+        "view": "hero_fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+            "fetchedAt": "2026-11-07T02:03:10.197Z",
+            "checkedAt": "2026-11-07T02:03:10.197Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 4159,
+        "sha256": "9eedcb412739b1e528f468dacdf0a8e0ecde20dacff7c5be9d83ec5abcde9e88",
+        "total": 66,
+        "items": [
+          {
+            "id": "remnant-violet",
+            "name": "破甲",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "夯实基本功",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "歇一口气",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "防止再次死亡服务",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "乌龟架势",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "守卫者破坏专家",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "慎重攻击",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "无痛挨打法",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "惩戒",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "不讲武德",
+            "server": null
+          }
+        ],
+        "hasNext": true,
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      }
+    },
+    {
+      "label": "fates-hero-page",
+      "args": {
+        "action": "fates",
+        "view": "hero_fates",
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet",
+        "limit": 10,
+        "cursor": "[previous nextCursor]"
+      },
+      "result": {
+        "status": "ok",
+        "action": "fates",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/fate-list",
+            "fetchedAt": "2026-11-07T02:03:08.594Z",
+            "checkedAt": "2026-11-07T02:03:08.594Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/hero/card-list",
+            "fetchedAt": "2026-11-07T02:03:06.135Z",
+            "checkedAt": "2026-11-07T02:03:06.135Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          },
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/chaos_fate/recommend-hero-fates?seasonId=pvp_rta_chaos_s1&heroCode=remnant-violet",
+            "fetchedAt": "2026-11-07T02:03:10.197Z",
+            "checkedAt": "2026-11-07T02:03:10.197Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 2998,
+        "sha256": "391e9c199664112e4211a8e1a0212ceea38d75724a06188bb80c798a52a60608",
+        "total": 66,
+        "items": [
+          {
+            "id": "remnant-violet",
+            "name": "预支",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "魂灵术士",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "席格勒赛斯",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "抵抗叛乱",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "食死徒",
+            "server": null
+          },
+          {
+            "id": "remnant-violet",
+            "name": "肾上腺素飙升",
+            "server": null
+          }
+        ],
+        "hasNext": false,
+        "seasonId": "pvp_rta_chaos_s1",
+        "heroCode": "remnant-violet"
+      }
+    },
+    {
+      "label": "packs-list",
+      "args": {
+        "action": "packs",
+        "limit": 2
+      },
+      "result": {
+        "status": "ok",
+        "action": "packs",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [
+          "currency",
+          "ratioFormula"
+        ],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gift-pack/list",
+            "fetchedAt": "2026-11-07T02:03:11.045Z",
+            "checkedAt": "2026-11-07T02:03:11.045Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 886,
+        "sha256": "1c4de0f41f46401cf8b0febf8db63431506b8e2b6536622bdc9a6290fb7beb93",
+        "total": 29,
+        "items": [
+          {
+            "id": "18",
+            "name": "叶子礼包1",
+            "server": null
+          },
+          {
+            "id": "21",
+            "name": "叶子礼包1+2+3",
+            "server": null
+          }
+        ],
+        "hasNext": true
+      }
+    },
+    {
+      "label": "packs-detail",
+      "args": {
+        "action": "packs",
+        "mode": "get",
+        "packId": "18"
+      },
+      "result": {
+        "status": "ok",
+        "action": "packs",
+        "source": "E7·WIKI",
+        "stale": false,
+        "missingFields": [
+          "currency",
+          "ratioFormula"
+        ],
+        "sources": [
+          {
+            "url": "https://admin.e7.wiki/api/open/epicseven/gift-pack/list",
+            "fetchedAt": "2026-11-07T02:03:11.045Z",
+            "checkedAt": "2026-11-07T02:03:11.045Z",
+            "upstreamUpdatedAt": null,
+            "stale": false
+          }
+        ],
+        "bytes": 855,
+        "sha256": "754c654d9781aa2ce07423569e1d55ad15ad4f149d733dd923b7d1d381139881",
+        "total": null,
+        "items": [
+          {
+            "id": null,
+            "name": "叶子",
+            "server": null
+          }
+        ],
+        "hasNext": false,
+        "packId": "18",
+        "itemCount": 1,
+        "valuationBasis": {
+          "source": "E7·WIKI",
+          "realtimePriceVerified": false,
+          "ratioFormula": null,
+          "note": "站点按道具天青石估值计算；保留来源单价/数量/总值。币种和比率公式未注明，不推算或作为实时商城价格/购买建议。"
+        }
+      }
+    }
+  ],
+  "modelCases": [
+    {
+      "label": "gvg-hot",
+      "input": "查E7wiki热门GVG防守的前两条，说明查询覆盖范围和胜率能否保证可靠。",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "gvg",
+            "view": "hot_defenses",
+            "limit": 2
+          },
+          "resultBytes": 1733,
+          "resultSha256": "b186a2b31d039fa32fd48858378a85d0760261f54b66af46104255a807ef23b3",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 2,
+      "passed": true,
+      "replyCharacters": 621,
+      "replySha256": "ee8e8558a9a6142f3e86d7ca1d3c313e1dcb029133a76c5c1e4c2251d409d3d2"
+    },
+    {
+      "label": "fates-candidates",
+      "input": "查混沌宿命赛季pvp_rta_chaos_s1中残影的菲奥雷托（remnant-violet）的候选宿命，简短说明普通候选和recTier推荐各有多少，各举一个例子并注明E7wiki来源，不要把全部候选都叫推荐。",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "fates",
+            "seasonId": "pvp_rta_chaos_s1",
+            "heroCode": "remnant-violet",
+            "view": "hero_fates"
+          },
+          "resultBytes": 3162,
+          "resultSha256": "4bd1bef5cf770b0a3b5ce3f567b5286be2dc39248a446fd5fae3e82c9424f80e",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "search",
+            "kind": "hero",
+            "query": "残影的菲奥雷托"
+          },
+          "resultBytes": 926,
+          "resultSha256": "cbb796bb39eed504beb1d42ec018fb206e86c5b9789936d96dc54bc65ec1b5f7",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 2,
+      "passed": true,
+      "replyCharacters": 501,
+      "replySha256": "3388e90f0ac5c1823d45cb3de1dc4220556833a8c069afdda66b1e8b79401c06"
+    },
+    {
+      "label": "packs-value",
+      "input": "查E7wiki礼包列表，然后打开第一条详情，说明其中的道具数量和站点估值。币种、比率公式、实时商城价格能确定吗？",
+      "calls": [
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "packs",
+            "mode": "list"
+          },
+          "resultBytes": 1564,
+          "resultSha256": "2128850062b7720b7fcb53a111fc8d94e8773705f07a4d5ecf2f1f25ff58631d",
+          "untrustedBoundary": true
+        },
+        {
+          "name": "e7_data",
+          "args": {
+            "action": "packs",
+            "mode": "get",
+            "packId": "18"
+          },
+          "resultBytes": 1177,
+          "resultSha256": "f567e75b6006fe15470e7753b54e7e475393fea46bc372f45be32e56b3861cce",
+          "untrustedBoundary": true
+        }
+      ],
+      "requests": 3,
+      "passed": true,
+      "replyCharacters": 659,
+      "replySha256": "6a1e955bb2b7fad09678f5aee735798dc963586fcf62d2ea67c97f01a210f94a"
+    }
+  ],
+  "phase": "2C",
+  "recommendationClassification": {
+    "seasonId": "pvp_rta_chaos_s1",
+    "heroCode": "remnant-violet",
+    "recommended": 4,
+    "candidate": 62,
+    "unknown": 0
+  },
+  "cacheReuseWithoutHttp": true,
+  "model": "deepseek/deepseek-flash",
+  "modelCaseSelection": [
+    "gvg-hot",
+    "fates-candidates",
+    "packs-value"
+  ],
+  "passed": true,
+  "finishedAt": "2026-11-07T02:03:28.213Z"
+}

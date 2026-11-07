@@ -1,6 +1,6 @@
 # 验证证据索引
 
-- [自主诊断与分层复验2026-11-07](autonomous-verification-2026-11-07/README.md)：日志P1/P2、只读快照、真实隔离E7/成员宿主及公开FAQ+当前主模型；真人客户端与长期体验单列。
+- [自主诊断与分层复验2026-11-07](autonomous-verification-2026-11-07/README.md)：日志P1/P2、只读快照、真实隔离E7/成员宿主及公开FAQ+当前主模型；[第二批2C](autonomous-verification-2026-11-07/e7-2c/README.md)的玩法/估值、公开接口与模型技术验证；真人客户端与长期体验单列。
 
 - [统一表达与通知2026-11-07](unified-expression-2026-11-07/README.md)：共享说明/确认事实/QQ进度、真实隔离Gateway和固定Cron、工具执行负向探针；模型与平台为模拟。
 

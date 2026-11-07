@@ -1,4 +1,4 @@
-// Explicit --live public HTTP acceptance; --community-only/--reference-only select 2A/2B; optional --model uses the configured official model.
+// Explicit --live public HTTP acceptance; --community-only/--reference-only/--gameplay-only select 2A/2B/2C; optional --model uses the configured official model.
 // Temporary public cache and new --out evidence only. No QQ delivery or production state writes.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -18,7 +18,8 @@ const out = process.argv[process.argv.indexOf('--out') + 1];
 if (!process.argv.includes('--live') || !process.argv.includes('--out') || !path.isAbsolute(out ?? '') || fs.existsSync(out)) throw Error('Require --live and a new absolute --out');
 const communityOnly = process.argv.includes('--community-only');
 const referenceOnly = process.argv.includes('--reference-only');
-assert(!(communityOnly && referenceOnly), 'Choose at most one phase selector');
+const gameplayOnly=process.argv.includes('--gameplay-only');
+assert([communityOnly,referenceOnly,gameplayOnly].filter(Boolean).length<=1, 'Choose at most one phase selector');
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const runtimeEnv = JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
 for (const name of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy'])
@@ -38,7 +39,8 @@ function brief(result) {
   const d = result.data;
   return {status: result.status, action: result.action, source: result.source, stale: result.stale, missingFields: result.missingFields, sources: result.sources,
     bytes: Buffer.byteLength(JSON.stringify(result)), sha256: digest(result),
-    ...(d?.items ? {total: d.total ?? null, items: d.items.map(r => ({id: r.id ?? r.heroCode ?? r.artifactId ?? r.entryId ?? r.rankingId ?? r.contentId ?? r.objectCode ?? null, name: r.name ?? r.title ?? null, server: r.server ?? null})), hasNext: Boolean(d.nextCursor)} : {}),
+    ...(d?.items ? {total: d.total ?? null, items: d.items.map(r => ({id: r.id ?? r.heroCode ?? r.artifactId ?? r.entryId ?? r.packId ?? r.fateId ?? r.rankingId ?? r.contentId ?? r.objectCode ?? null, name: r.name ?? r.title ?? null, server: r.server ?? null})), hasNext: Boolean(d.nextCursor)} : {}),
+    ...(d?.coverage?{coverage:d.coverage}:{}),...(d?.seasonId?{seasonId:d.seasonId}:{}),...(d?.packId?{packId:d.packId,itemCount:d.items?.length,valuationBasis:d.valuationBasis}:{}),
     ...(d?.rankingId ? {rankingId: d.rankingId, objectType: d.objectType, entryCount: d.entryCount, tierCount: d.tierCount} : {}),
     ...(d?.contentId ? {contentId: d.contentId, kind: d.kind, author: d.author, updatedAt: d.updatedAt, imageDependency: d.imageDependency,
       contentCharacters: d.content?.length, answerCharacters: d.answer?.length, detailUrl: d.detailUrl, sourcePage: d.sourcePage} : {}),
@@ -72,8 +74,8 @@ async function modelAcceptance() {
   const definition = {type: 'function', function: {name: E7_TOOL.name, description: E7_TOOL.description, parameters: E7_TOOL.parameters}};
 
   const selection = process.argv.includes('--cases') ? process.argv[process.argv.indexOf('--cases') + 1]?.split(',')
-    : cases.filter(c => referenceOnly ? /^(?:rankings|content)-/.test(c[0])
-      : communityOnly ? /^(?:builds|reviews)-/.test(c[0]) : !/^(?:builds|reviews|rankings|content)-/.test(c[0])).map(c => c[0]);
+    : cases.filter(c => gameplayOnly?/^(?:gvg|fates|packs)-/.test(c[0]):referenceOnly ? /^(?:rankings|content)-/.test(c[0])
+      : communityOnly ? /^(?:builds|reviews)-/.test(c[0]) : !/^(?:builds|reviews|rankings|content|gvg|fates|packs)-/.test(c[0])).map(c => c[0]);
   assert(selection?.length && selection.every(label => cases.some(c => c[0] === label)), 'Unknown --cases selection');
   report.modelCaseSelection = selection;
   for (const [label, input, verify] of cases.filter(c => selection.includes(c[0]))) {
@@ -99,7 +101,7 @@ async function modelAcceptance() {
       }
     }
     assert(row.passed, 'Exceeded bounded tool rounds');
-    if (communityOnly || referenceOnly) {row.replyCharacters = row.reply.length; row.replySha256 = digest(row.reply); delete row.reply;}
+    if (communityOnly || referenceOnly || gameplayOnly) {row.replyCharacters = row.reply.length; row.replySha256 = digest(row.reply); delete row.reply;}
     console.log(JSON.stringify({modelCase: label, passed: true, calls: row.calls.length}));
   }
 }
@@ -165,8 +167,32 @@ async function referenceAcceptance() {
   await service.query({action: 'content', kind: 'faq', mode: 'get', contentId: filtered.data.items[0].contentId});
   assert.equal(report.requests.length, before); report.cacheReuseWithoutHttp = true;
 }
+async function gameplayAcceptance(){
+ report.phase='2C';
+ const first=await query('gvg-complete-page1',{action:'gvg',limit:2});assert(first.data.total>2);assert.equal(first.data.coverage.fetched,first.data.total);assert.equal(first.data.coverage.scope,'complete_verified_pages');
+ const second=await query('gvg-page2',{action:'gvg',limit:2,cursor:first.data.nextCursor});assert(!second.data.items.some(r=>first.data.items.some(p=>p.id===r.id)));
+ const codes=first.data.items[0].defense.map(h=>h.heroCode);assert.equal(codes.length,3);
+ const exact=await query('gvg-exact-team',{action:'gvg',defenseHeroCodes:codes,limit:2});assert(exact.data.total>0);assert(exact.data.items.every(r=>codes.every(c=>r.defense.some(h=>h.heroCode===c))));
+ const reverse=await query('gvg-reordered-team',{action:'gvg',defenseHeroCodes:[...codes].reverse(),limit:2});assert.deepEqual(reverse.data,exact.data);
+ const partial=await query('gvg-contains-partial',{action:'gvg',defenseHeroCodes:codes.slice(0,1),match:'contains',limit:2});assert(partial.data.total>=exact.data.total);
+ const hot=await query('gvg-hot',{action:'gvg',view:'hot_defenses',limit:2});assert.equal(hot.data.coverage.scope,'upstream_top_100');assert(hot.data.items.every(r=>r.reliableWinRate===null));
+ const all=await service.resource('fates');const seasonId=all.data[0].season_id;
+ const fates=await query('fates-list',{action:'fates',seasonId,limit:2});assert(fates.data.total>2);
+ const fateNext=await query('fates-page2',{action:'fates',seasonId,limit:2,cursor:fates.data.nextCursor});assert(!fateNext.data.items.some(r=>fates.data.items.some(p=>p.id===r.id)));
+ const heroes=await query('fates-recommended-heroes',{action:'fates',view:'recommended_heroes',seasonId,limit:2});assert(heroes.data.items.length);
+ const heroCode=heroes.data.items[0].heroCode;
+ let cursor,counts={recommended:0,candidate:0,unknown:0};do{
+  const r=await query('fates-hero-page',{action:'fates',view:'hero_fates',seasonId,heroCode,limit:10,...(cursor?{cursor}:{})});
+  for(const row of r.data.items)counts[row.recommended===true?'recommended':row.recommended===false?'candidate':'unknown']++;cursor=r.data.nextCursor;
+ }while(cursor);
+ report.recommendationClassification={seasonId,heroCode,...counts};assert(counts.recommended>0&&counts.candidate>0);
+ const packs=await query('packs-list',{action:'packs',limit:2});assert(packs.data.items.length);
+ const pack=await query('packs-detail',{action:'packs',mode:'get',packId:packs.data.items[0].packId});assert(pack.data.items.length);assert.equal(pack.data.currency,null);assert.equal(pack.data.valuationBasis.ratioFormula,null);assert.equal(pack.data.valuationBasis.realtimePriceVerified,false);
+ const before=report.requests.length;await service.query({action:'gvg',limit:1});await service.query({action:'packs'});assert.equal(report.requests.length,before);report.cacheReuseWithoutHttp=true;
+}
 try {
-  if (communityOnly) await communityAcceptance();
+  if (gameplayOnly)await gameplayAcceptance();
+  else if (communityOnly) await communityAcceptance();
   else if (referenceOnly) await referenceAcceptance();
   else {
   const found = await query('traditional-name-search', {action: 'search', kind: 'hero', query: '梅鈴'});

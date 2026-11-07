@@ -42,8 +42,8 @@ test('Every current main tool is mapped; new tools and dangerous native/member o
   assert.equal(hook(c,owner,name,args),undefined,name);
  }
  assert(hook(c,member,'e7_data',{action:'codes'}));
- for(const action of ['builds','reviews','rankings','content']){assert.equal(hook(c,owner,'e7_data',{action}),undefined);assert(hook(c,member,'e7_data',{action}));}
- for(const action of ['image','gvg',undefined])assert(hook(c,owner,'e7_data',{action}));
+ for(const action of ['builds','reviews','rankings','content','gvg','fates','packs']){assert.equal(hook(c,owner,'e7_data',{action}),undefined);assert(hook(c,member,'e7_data',{action}));}
+ for(const action of ['image','filter',undefined])assert(hook(c,owner,'e7_data',{action}));
  for(const action of ['list','status','result','diff','start','continue','cancel','rollback','reconcile','preview','merge']){assert.equal(hook(c,owner,'kurumi_code',{action}),undefined);assert(hook(c,member,'kurumi_code',{action}));}
  for(const action of ['exec','push',undefined])assert(hook(c,owner,'kurumi_code',{action}));
 });

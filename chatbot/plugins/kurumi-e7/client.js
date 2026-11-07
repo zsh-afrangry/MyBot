@@ -11,6 +11,17 @@ export function endpoint(kind, params = {}) {
     artifacts: '/open/epicseven/artifact/artifact-list', items: '/open/epicseven/item-dictionary/by-category',
   };
   if (Object.hasOwn(fixed, kind)) return {url: API + fixed[kind], method: 'GET', envelope: kind !== 'summary'};
+  if (kind === 'gvgHomework') {
+    const page=params.page??1;
+    if(!Number.isInteger(page)||page<1||page>30)fail('invalid_query');
+    return {url:API+'/open/epicseven/gvg_homework/page',method:'POST',envelope:true,body:{page,size:100}};
+  }
+  if(kind==='gvgHot')return {url:API+'/open/epicseven/gvg_defense/hot-defenses?limit=100',method:'GET',envelope:true};
+  if(kind==='fates'||kind==='packs')return {url:API+'/open/epicseven/'+(kind==='fates'?'chaos_fate/fate-list':'gift-pack/list'),method:'GET',envelope:true};
+  if(kind==='fateHeroes'||kind==='heroFates'){
+    if(typeof params.seasonId!=='string'||!/^[A-Za-z0-9_-]{1,80}$/.test(params.seasonId)||(kind==='heroFates'&&(typeof params.heroCode!=='string'||!codePattern.test(params.heroCode))))fail('invalid_query');
+    return {url:API+'/open/epicseven/chaos_fate/'+(kind==='fateHeroes'?'recommend-heroes':'recommend-hero-fates')+'?seasonId='+encodeURIComponent(params.seasonId)+(kind==='heroFates'?'&heroCode='+encodeURIComponent(params.heroCode):''),method:'GET',envelope:true};
+  }
   if (kind === 'hero') {
     if (!codePattern.test(params.heroCode ?? '')) fail('invalid_query');
     return {url: `${ASSETS}/static/heroes/${params.heroCode}.json`, method: 'GET', envelope: false};

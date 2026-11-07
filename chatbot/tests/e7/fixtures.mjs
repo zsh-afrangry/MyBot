@@ -36,6 +36,12 @@ export function bodies() {
       category: '["综合攻略"]', tags: '["测试"]', content: '<p>第一段 A&amp;B</p><p>第二段&#x3002;</p><img src="https://invalid.test/image.png"><script>HIDDEN-SCRIPT</script><style>HIDDEN-STYLE</style>'})), pagination: {page: 1, size: 10, total: 12}},
     faq: {list: Array.from({length: 12}, (_, n) => ({id: String(n + 1), question: '合成FAQ' + n, answer: '合成答案' + n, analysis: null,
       tags: '["问答"]', author: '合成署名', updateTime: '2026-10-28 05:00:00'})), pagination: {page: 1, size: 10, total: 12}},
+    gvgHomework:Array.from({length:102},(_,n)=>({id:n+1,defenseHero1:'test-hero-1',defenseHero2:'test-hero-2',defenseHero3:n%2?'test-hero-4':'test-hero-3',offenseHero1:'test-hero-5',offenseHero2:'test-hero-6',offenseHero3:'test-hero-7',strategy:'<p>合成操作</p><img src="https://invalid.test/image">',note:'样本说明',author:'合成作者',updateTime:'2026-11-07 00:00:00',win:1,lose:0,offenseHero1Equipment:'合成面板'})),
+    gvgHot:[{id:1,defenseHero1:'test-hero-1',defenseHero2:'test-hero-2',defenseHero3:'test-hero-3',weight:10,searchCount:3,winRate:99,description:'合成热门说明'}],
+    fates:[{id:1,chaos_fate_id:'fate-1',season_id:'season-1',fate_name:'合成宿命',fate_desc:'<p>合成效果</p>',type:'rare',tier:'1',condition:'触发条件',fate_stat_value:'10%'},{id:2,chaos_fate_id:'fate-2',season_id:'season-2',fate_name:'次赛季宿命',fate_desc:'合成效果'}],
+    fateHeroes:{seasonId:'season-1',seasons:['season-1','season-2'],tiers:['T0','T1'],heroes:[{id:1,hero_code:'test-hero-1',name:'测试甲',tier:'T0',fateCount:3,remark:'站点推荐'}]},
+    heroFates:{seasonId:'season-1',heroCode:'test-hero-1',items:['T0','','future-tier'].map((recTier,n)=>({id:n?null:1,hero_code:'test-hero-1',chaos_fate_id:'fate-'+(n+1),fate_name:'合成宿命'+n,fate_desc:'合成效果',tier:'1',type:'rare',source:'hero',recTier}))},
+    packs:[{packId:1,packName:'合成礼包',packPrice:'6.00',totalSkyStoneValue:120,valueRatio:3.41,itemBreakdown:[{itemId:1,itemName:'测试物品',quantity:3,unitPrice:40,totalPrice:120,itemIcon:'https://invalid.test/item.png'}]},{packId:2,packName:'合成礼包2',packPrice:'12.00',totalSkyStoneValue:null,valueRatio:null,itemBreakdown:[]}],
     gameNews: {list: Array.from({length: 10}, (_, n) => ({id: n + 1, title: '测试公告' + n, server: 2, url: '/event/test-' + n + '.pdf'})), pagination: {page: 1, size: 10, total: 12}},
   };
 }
@@ -47,6 +53,7 @@ export function setup(t, options = {}) {
     if (options.read) return options.read(kind, params, opts, data);
     let body = kind === 'hero' ? hero(Number(params.heroCode.split('-').at(-1)))
       : kind === 'gameNews' && params.page === 2 ? {list: data.gameNews.list.slice(0, 2), pagination: {page: 2, size: 10, total: 12}} : data[kind];
+    if(kind==='gvgHomework'){const page=params.page??1;body={list:data.gvgHomework.slice((page-1)*100,page*100),pagination:{page,size:100,total:data.gvgHomework.length}};}
     if (['guides', 'faq'].includes(kind)) {
       const rows = data[kind].list.filter(r => !params.query || (r.title ?? r.question).includes(params.query));
       const page = params.page ?? 1;

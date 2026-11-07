@@ -3,6 +3,7 @@ import {ACTIONS, HERO_VIEWS, RESULT_BYTES, codePattern, fail, object, normalize}
 import {digest} from './store.js';
 import {text} from './text.js';
 import {validateReferenceQuery, validateReferenceData} from './reference.js';
+import {GAMEPLAY_KINDS,validateGameplayQuery,validateGameplayData,gameplayRows} from './gameplay.js';
 export {text} from './text.js';
 
 export const ATTRIBUTES = ['fire', 'ice', 'wind', 'light', 'dark'];
@@ -19,6 +20,7 @@ export function validateQuery(raw) {
     artifact: ['artifactId', 'view'], dictionary: ['kind', 'query', 'entryId', 'limit', 'cursor'],
     codes: ['server', 'limit'], news: ['kind', 'server', 'limit', 'cursor'],
     builds: ['heroCode', 'filters', 'limit', 'cursor'], reviews: ['heroCode', 'category', 'limit', 'cursor'],
+    gvg:['view','defenseHeroCodes','offenseHeroCodes','match','limit','cursor'], fates:['view','seasonId','heroCode','limit','cursor'],packs:['mode','packId','limit','cursor'],
     rankings: ['mode', 'rankingId', 'objectType', 'limit', 'cursor'], content: ['kind', 'mode', 'query', 'contentId', 'limit', 'cursor'],
   };
   keys(a, ['action', ...fields[a.action]]);
@@ -26,6 +28,7 @@ export function validateQuery(raw) {
   if ('limit' in a && (!Number.isInteger(a.limit) || a.limit < 1 || a.limit > 10)) fail('invalid_query');
   if ('cursor' in a && (!string(a.cursor, 512) || !/^[a-zA-Z0-9_-]+$/.test(a.cursor))) fail('invalid_cursor');
   if ('server' in a && !['国服', '国际服'].includes(a.server)) fail('invalid_query');
+  if(['gvg','fates','packs'].includes(a.action))validateGameplayQuery(a);
   if (['rankings', 'content'].includes(a.action)) validateReferenceQuery(a);
   if (['builds', 'reviews'].includes(a.action)) {
     if (typeof a.heroCode !== 'string' || !codePattern.test(a.heroCode)) fail('invalid_query');
@@ -72,6 +75,7 @@ export function validateQuery(raw) {
 const listOf = (value, kind) => kind === 'items' ? Object.values(value).flat() : ['gameNews', 'guides', 'faq'].includes(kind) ? value.list : value;
 export function validateData(kind, data, params = {}) {
   const invalid = () => fail('invalid_response');
+  if(GAMEPLAY_KINDS.includes(kind))return validateGameplayData(kind,data,params);
   if (['rankings', 'guides', 'faq'].includes(kind)) return validateReferenceData(kind, data, params);
   if (kind === 'hero') {
     if (!object(data) || data.code !== params.heroCode || !string(data.name, 200) || !Array.isArray(data.skills) || !object(data.stats)) invalid();
@@ -103,7 +107,7 @@ export function validateData(kind, data, params = {}) {
   }
   return data;
 }
-export const dataCount = (kind, data) => kind === 'hero' ? 1 : listOf(data, kind).length;
+export const dataCount = (kind, data) => kind === 'hero' ? 1 : (GAMEPLAY_KINDS.includes(kind)?gameplayRows(kind,data):listOf(data, kind)).length;
 
 const pick = (v, names) => Object.fromEntries(names.map(k => [k, v?.[k] ?? null]));
 const names = row => [row.name, row.name_en, row.nameEn, row.name_zht, row.code, ...(String(row.nicknames ?? '').split(/[,，;；]/))].filter(Boolean);
@@ -214,7 +218,7 @@ export function boundResult(result) {
     const walk = (v, key = '', depth = 0) => {
       if (depth > 12) {truncated = true; return null;}
       if (typeof v === 'string') {
-        const max = /^(?:id|heroCode|artifactId|entryId|rankingId|contentId|tierId|objectCode|code|url|sourcePage|detailUrl|nextCursor|fetchedAt|upstreamUpdatedAt|hash|key|source|status)$/.test(key) ? 1024 : limit;
+        const max = /^(?:id|heroCode|artifactId|entryId|rankingId|contentId|fateId|seasonId|packId|itemId|tierId|objectCode|code|url|sourcePage|detailUrl|nextCursor|fetchedAt|upstreamUpdatedAt|hash|key|source|status)$/.test(key) ? 1024 : limit;
         if ([...v].length <= max) return v;
         truncated = true; const prefix = [...v].slice(0, max).join('');
         const paragraph = prefix.lastIndexOf('\n'); return (paragraph > max / 2 ? prefix.slice(0, paragraph) : prefix) + '…';

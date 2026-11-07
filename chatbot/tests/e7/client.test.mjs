@@ -115,3 +115,15 @@ test('HTTP telemetry includes the supplied host correlation and measured time fo
  const f=setup(()=>{now=125;return json(null,304);},{clock:()=>now,observe:e=>events.push(e)});
  await f.client.read('cards',{}, {trace});assert.equal(events[0].correlation,trace);assert.equal(events[0].durationMs,25);assert.equal(events[0].status,304);assert.equal(events[0].bytes,0);
 });
+
+
+test('2C uses only fixed bounded gameplay reads and validated season/hero query values',async()=>{
+ const f=setup(()=>json({code:1000,data:[]}));
+ for(const [kind,params] of [['gvgHomework',{page:2}],['gvgHot',{}],['fates',{}],['fateHeroes',{seasonId:'season-1'}],['heroFates',{seasonId:'season-1',heroCode:'test-hero-1'}],['packs',{}]])await f.client.read(kind,params);
+ assert.deepEqual(JSON.parse(f.calls[0].init.body),{page:2,size:100});assert(f.calls[1].url.endsWith('/hot-defenses?limit=100'));
+ assert(f.calls[3].url.endsWith('/recommend-heroes?seasonId=season-1'));assert(f.calls[4].url.endsWith('/recommend-hero-fates?seasonId=season-1&heroCode=test-hero-1'));
+ assert(f.calls.slice(1).every(c=>c.init.method==='GET'&&!c.init.body));
+ for(const page of [0,31,'1',Infinity])await rejects(f.client.read('gvgHomework',{page}),'invalid_query');
+ for(const seasonId of [undefined,'../secret','x&heroCode=other','https://evil.invalid'])await rejects(f.client.read('fateHeroes',{seasonId}),'invalid_query');
+ await rejects(f.client.read('heroFates',{seasonId:'season-1',heroCode:'../x'}),'invalid_query');assert.equal(f.calls.length,6);
+});
