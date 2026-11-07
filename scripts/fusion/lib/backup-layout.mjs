@@ -3,7 +3,8 @@ import fs from 'node:fs';import path from 'node:path';import{createHash,randomUU
 export const BACKUP_ROOT='/home/afrangry/kurumi-backups';
 export const PILOT_ROOT='/home/afrangry/.local/share/kurumi-coding-pilot-20261029';
 export const DSH_HOME='/var/lib/dsh/.dsh';
-export const EXEC_FENCE_ROOT='/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64';
+export const EXEC_FENCE_ROOT='/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64';
+export const LEGACY_EXEC_FENCE_ROOT='/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64';
 export const SDK_ROOT='/home/afrangry/.npm-global/lib/node_modules/openclaw';
 // Unscoped v3 points retain their original DSH recovery contract; new points own only Fusion.
 export function artifactKindsForRestore(expected){

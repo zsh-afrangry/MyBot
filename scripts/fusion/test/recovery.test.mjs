@@ -57,4 +57,6 @@ test('Fusion recovery owns its execution fence without remapping the independent
  assert.equal(got.dsh.command,'/tmp/r/dsh/node_modules/.bin/dsh');assertNoProduction(got);
  const legacy=remap(input,'/tmp/r/runtime','/tmp/r/repos/kurumi-fusion');
  assert.equal(legacy.writeBoundary.launcher,'/tmp/r/dsh/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run');
+ const owned=remap({launcher:'/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'},'/tmp/r/runtime','/tmp/r/repo',{execFenceRoot:'/tmp/r/runtime/tools/fence'});
+ assert.equal(owned.launcher,'/tmp/r/runtime/tools/fence/bin/landlock-run');
 });

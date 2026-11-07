@@ -1,0 +1,15 @@
+{
+  "at": "2026-11-06T23:56:01.713Z",
+  "actualDsh": true,
+  "actualQq": false,
+  "prompts": 1,
+  "privateArtifacts": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/kurumi-coding-faS68d",
+  "productionChanged": false,
+  "ok": true,
+  "taskId": "8177252b-36a1-4621-afde-6bf328610ec3",
+  "externalSessionId": "e023d9d2-fbdd-42b5-9725-7874818b870f",
+  "state": "cancelled",
+  "heartbeatStopped": true,
+  "ownRuntimeStopped": true,
+  "originalUnchanged": true
+}

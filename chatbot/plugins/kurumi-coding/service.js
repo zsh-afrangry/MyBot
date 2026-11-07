@@ -2,7 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {randomUUID} from 'node:crypto';
-import {AcpClient, processIdentity, sameProcess} from '../../packages/coding-runtime/acp-client.js';
+import {AcpClient, processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/acp-client.js';
+import {inspectOwnedRuntime, stopOwnedRuntime} from '../../packages/coding-runtime/reconciliation.js';
 import {probeWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
@@ -30,7 +31,7 @@ export class CodingService {
     try {
       this.store = new CodingStore(this.config.root);
       for (const task of this.store.list()) if (['queued', 'running', 'checking', 'cancelling', 'merging'].includes(task.state)) {
-        this.store.save({...task, state: 'needs_reconciliation', reason: 'restart_requires_state_check'});
+        this.store.save({...task, state: 'needs_reconciliation', reason: 'restart_requires_state_check', stateBeforeReconciliation: task.state});
         const round = task.executionRoundId && this.store.result(task.id, task.executionRoundId);
         if (round) this.store.saveResult(task.id, {...round, state: 'needs_reconciliation', reason: 'restart_requires_state_check', interruptedAt: new Date().toISOString()});
       }
@@ -50,8 +51,8 @@ export class CodingService {
       data: {projectId: task.projectId, backend: 'dsh-acp', state: task.state, ...(task.externalSessionId ? {externalSessionId: task.externalSessionId} : {}), ...data}});
   }
   describe(task) {
-    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId} = task;
-    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId};
+    const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation} = task;
+    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation};
   }
   list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
   status(id, requester) { return this.describe(this.task(id, requester)); }
@@ -80,6 +81,12 @@ export class CodingService {
     entry.monitor = setInterval(() => {
       try {this.authorize(task.requester, 'tasks.code');}
       catch {this.requestStop(entry, 'authorization_revoked');}
+      try {
+        if (sameProcess(entry.client?.identity)) {
+          const current = this.store.get(task.id);
+          this.store.save({...current, runtimeProcesses: descendants(entry.client.identity.pid).filter(sameProcess)});
+        }
+      } catch { /* Missing process facts remain explicitly unverified after restart. */ }
     }, 1000); entry.monitor.unref();
     entry.done = this.execute(task.id, text, entry).catch(error => {
       const current = this.store.get(task.id);
@@ -116,6 +123,7 @@ export class CodingService {
     entry.client = client; update({runtimeIdentity: client.identity});
     try {
       await client.initialize(); entry.controller.signal.throwIfAborted();
+      if (sameProcess(client.identity)) update({runtimeIdentity: processIdentity(client.identity.pid), runtimeProcesses: descendants(client.identity.pid).filter(sameProcess)});
       const externalSessionId = await client.open(task.cwd, {sessionId: task.externalSessionId, model: dsh.model});
       update({externalSessionId}); entry.controller.signal.throwIfAborted(); this.event(task, 'coding.session_bound');
       const round = this.store.result(id, roundId);
@@ -139,11 +147,12 @@ export class CodingService {
       if (denied) { update({state: 'needs_permission', reason: 'extra_backend_permission_required'}); this.event(task, 'coding.needs_permission'); await this.notify(task); return; }
       if (result.stopReason !== 'end_turn') throw fail('coding_turn_incomplete');
       this.authorize(task.requester, 'tasks.code'); assertWorkspace(task);
-      update({state: 'checking'}); this.event(task, 'coding.checking');
+      update({state: 'checking', runtimeIdentity: undefined, runtimeProcesses: undefined}); this.event(task, 'coding.checking');
       const snapshotPath = snapshot(task, path.join(directory, 'snapshots', randomUUID()));
       update({snapshotPath});
       const checkedHash = workingHash(task.cwd), checkPlan = structuredClone(project.checks);
-      const checks = await runChecks({...project, checks: checkPlan}, task.cwd, path.join(directory, 'checks.log'), entry.controller.signal, this.config.writeBoundary);
+      const checks = await runChecks({...project, checks: checkPlan}, task.cwd, path.join(directory, 'checks.log'), entry.controller.signal, this.config.writeBoundary,
+        runtime => update({runtimeIdentity: runtime?.identity, runtimeProcesses: runtime?.processes}));
       assertTaskLocation(this.config, this.project(task.projectId), task);
       if (JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
       if (workingHash(task.cwd) !== checkedHash) throw fail('checked_tree_changed');
@@ -151,7 +160,7 @@ export class CodingService {
       if (!checks.ok) { update({state: 'check_failed', reason: 'registered_checks_failed'}); await this.notify(task); return; }
       this.authorize(task.requester, 'tasks.code'); entry.controller.signal.throwIfAborted();
       const verifiedCommit = commitUnit(task, checkedHash);
-      update({verifiedCommit, state: 'ready', runtimeIdentity: undefined}); this.event(task, 'coding.ready', {verifiedCommit});
+      update({verifiedCommit, state: 'ready', runtimeIdentity: undefined, runtimeProcesses: undefined}); this.event(task, 'coding.ready', {verifiedCommit});
       await this.notify(task);
     } catch (error) {
       if (entry.cancelRequested) {
@@ -171,8 +180,10 @@ export class CodingService {
     const hash = digest(JSON.stringify({id, text, requester}));
     const old = this.store.findCommand(key);
     if (old) { if (old.task_id !== id || old.hash !== hash) throw fail('coding_request_key_conflict'); return this.describe(task); }
-    if (!['ready', 'check_failed', 'failed', 'cancelled', 'needs_permission', 'needs_reconciliation', 'rolled_back'].includes(task.state) || this.active.has(id)) throw fail('coding_task_busy');
-    if (sameProcess(task.runtimeIdentity)) throw fail('original_runtime_still_running');
+    if (!['ready', 'check_failed', 'failed', 'cancelled', 'needs_permission', 'needs_reconciliation', 'interrupted', 'rolled_back'].includes(task.state) || this.active.has(id)) throw fail('coding_task_busy');
+    const runtime = inspectOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
+    if (!runtime.verified) throw fail('runtime_reconciliation_unverified');
+    if (!runtime.stopped) throw fail('original_runtime_still_running');
     assertWorkspace(task); this.store.command(key, id, hash); this.store.invalidate(id); this.launch(task, text); return this.describe(this.store.get(id));
   }
   async cancel(id, requester) {
@@ -180,8 +191,10 @@ export class CodingService {
     const entry = this.active.get(id);
     if (!entry) {
       if (['cancelled', 'merged'].includes(task.state)) return this.describe(task);
-      if (sameProcess(task.runtimeIdentity)) throw fail('cancel_requires_runtime_reconciliation');
-      this.store.invalidate(id); this.store.save({...task, state: 'cancelled'}); this.event(this.store.get(id), 'coding.cancelled', {stopped: true});
+      const runtime = await stopOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
+      if (!runtime.verified || !runtime.stopped) throw fail(runtime.reason ?? 'cancel_requires_runtime_reconciliation');
+      this.store.invalidate(id); this.store.save({...task, state: 'cancelled', runtimeIdentity: undefined, runtimeProcesses: undefined});
+      this.finishResult(this.store.get(id)); this.event(this.store.get(id), 'coding.cancelled', {stopped: true});
       return this.describe(this.store.get(id));
     }
     this.requestStop(entry); this.store.save({...task, state: 'cancelling'}); this.event(this.store.get(id), 'coding.cancel_requested');
@@ -190,11 +203,44 @@ export class CodingService {
   }
   rollback(id, requester) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
-    if (this.active.has(id) || !['check_failed', 'failed', 'cancelled', 'needs_permission'].includes(task.state) || sameProcess(task.runtimeIdentity)) throw fail('coding_task_busy');
+    if (this.active.has(id) || !['check_failed', 'failed', 'cancelled', 'needs_permission', 'interrupted'].includes(task.state)) throw fail('coding_task_busy');
+    const runtime = inspectOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
+    if (!runtime.verified || !runtime.stopped) throw fail('runtime_reconciliation_unverified');
     const snapshotPath = snapshot(task, path.join(this.config.root, 'tasks', id, 'snapshots', randomUUID()));
     rollbackUnit(task); this.store.invalidate(id);
     this.store.save({...task, state: 'rolled_back', snapshotPath, reason: undefined});
     this.event(this.store.get(id), 'coding.rolled_back'); return this.describe(this.store.get(id));
+  }
+  reconcile(id, requester) {
+    const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    if (this.active.has(id)) throw fail('coding_task_busy');
+    if (task.state !== 'needs_reconciliation') return this.describe(task);
+    const observed = inspectOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
+    const reconciliation = {at: new Date().toISOString(), verified: observed.verified, stopped: observed.stopped,
+      processCount: observed.processes.length, ...(observed.reason ? {reason: observed.reason} : {})};
+    let changes = {reconciliation};
+    if (observed.verified && observed.stopped) {
+      assertWorkspace(task);
+      if (task.stateBeforeReconciliation === 'merging' || task.reason === 'merge_result_requires_check') {
+        const preview = this.store.getPreview(task.mergeProposalId), project = this.project(task.projectId), target = targetState(project);
+        if (!preview || preview.payload.candidate !== task.mergeCandidate || target.branch !== project.branch) throw fail('merge_reconciliation_unverified');
+        if (target.head === preview.payload.candidate) {
+          assertDirtyPreserved(project, preview.payload.target);
+          if (target.status !== preview.payload.target.status || target.diff !== preview.payload.target.diff) throw fail('merge_reconciliation_unverified');
+          changes = {...changes, state: 'merged', mergeCommit: target.head, reason: undefined};
+        } else if (JSON.stringify(target) === JSON.stringify(preview.payload.target)) {
+          changes = {...changes, state: 'ready', reason: 'merge_not_applied_preview_again', candidate: undefined};
+        } else throw fail('merge_reconciliation_unverified');
+      } else {
+        const snapshotPath = snapshot(task, path.join(this.config.root, 'tasks', id, 'snapshots', randomUUID()));
+        changes = {...changes, state: 'interrupted', reason: 'execution_stopped_no_replay', snapshotPath};
+      }
+      changes = {...changes, runtimeIdentity: undefined, runtimeProcesses: undefined};
+      this.store.invalidate(id);
+    }
+    this.store.save({...task, ...changes}); this.finishResult(this.store.get(id));
+    this.event(this.store.get(id), 'coding.reconciled', {verified: observed.verified, stopped: observed.stopped});
+    return this.describe(this.store.get(id));
   }
   diff(id, requester) {
     const task = this.task(id, requester); assertWorkspace(task);

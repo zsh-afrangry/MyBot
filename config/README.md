@@ -25,6 +25,7 @@
 | `.openclaw-fusion/channel/` | 频道账本、贴纸目录、发送回执 | ❌ 仅私有备份 |
 | `.openclaw-fusion/agents/` | 各 Agent 的原生会话 SQLite、保留的历史 JSONL 等资料；读取归属见文档25 | ❌ 仅私有备份 |
 | `.openclaw-fusion/research-workspace/`、`research-cache/` | 后台研究的隔离工作区与可重建缓存（旧代码工作区/检查夹具已退役） | ❌ 仅私有备份 |
+| `.openclaw-fusion/tools/node-addon-system-linux-x64/` | 固定版本/树指纹的Fusion自有执行隔离原生包，含许可证；由`install-exec-fence.mjs`导入，两个launcher引用须对齐 | ❌ 私有工件备份；不依赖DSH安装生命周期 |
 | `.openclaw-fusion/plugins/` | 受控第三方插件安装（由仓库锁文件重建） | ❌ 可重建 |
 | `.openclaw-fusion/paper-credentials.json` | 论文翻译凭据，0600；默认DeepSeek官方的`DEEPSEEK_API_KEY`，显式GPT选用014 → 030 → 040独立池；按本次厂商选取 | ❌ 仅私有备份 |
 | `.openclaw-fusion/documents/` | 受管 PDF、任务/产物记录、论文链路事件及模型/字体/译文缓存 | ❌ 仅私有备份；缓存可重建 |

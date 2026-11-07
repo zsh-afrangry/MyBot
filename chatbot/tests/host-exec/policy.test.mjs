@@ -12,7 +12,7 @@ import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {toolPermission} from '../../packages/access-control/index.js';
 import {withAccess, memberRow, context, OWNER} from '../access-control/fixtures.mjs';
 
-const launcher = '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run';
+const launcher = '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run';
 const quote = s => "'" + s.replaceAll("'", "'\\''") + "'";
 function fixture(t) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "kurumi-exec-'fixture-"));

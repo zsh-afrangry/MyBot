@@ -75,7 +75,7 @@ const onebot = http.createServer(async (req,res) => {
 });
 onebot.listen(0,'127.0.0.1'); await once(onebot,'listening'); const ws = new WebSocketServer({server:onebot});
 const socket = net.createServer(); socket.listen(0,'127.0.0.1'); await once(socket,'listening'); const port = socket.address().port; await new Promise(r=>socket.close(r));
-const boundary = {root:allowed,launcher:'/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'};
+const boundary = {root:allowed,launcher:'/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'};
 report.fence = probeWriteFence(boundary);
 const policy = ownerPolicy(); policy.subjects.push(memberRow());
 let config = {

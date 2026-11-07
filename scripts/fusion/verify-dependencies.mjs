@@ -16,6 +16,7 @@ import { STATE_DIR, REPO_ROOT } from './lib/runtime-paths.mjs';
 import { PLUGINS } from './lib/plugins.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
 import {OPENCLAW_RELEASE} from './lib/openclaw-release.mjs';
+import {FENCE_ROOT, FENCE_RELEASE, verifyExecFence} from './lib/exec-fence.mjs';
 
 const SDK = '/home/afrangry/.npm-global/lib/node_modules/openclaw';
 const EXPECTED_SDK = OPENCLAW_RELEASE.version;
@@ -33,6 +34,16 @@ const FORBIDDEN = [
 
 const problems = [];
 const notes = [];
+try {
+  const fence = verifyExecFence();
+  const config = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config/runtime.config.json')));
+  for (const id of ['kurumi-qq', 'kurumi-coding']) {
+    const entry = config.plugins.entries[id].config;
+    const boundary = id === 'kurumi-qq' ? entry.exec.writeBoundary : entry.writeBoundary;
+    if (boundary.launcher !== path.join(FENCE_ROOT, 'bin/landlock-run')) throw Error('Configured launcher is not Fusion-owned');
+  }
+  notes.push(`execution fence ${FENCE_RELEASE.name}@${FENCE_RELEASE.version}: approved tree, ${fence.enforcement}, Fusion-owned`);
+} catch (error) {problems.push(`execution fence: ${error.message} (run install-exec-fence.mjs --apply)`);}
 
 // --- 1. no dependency may resolve out of the legacy tree -------------------------------
 function walkLinks(dir, depth = 0) {

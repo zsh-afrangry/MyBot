@@ -3,16 +3,17 @@ import fs from 'node:fs';
 import {spawn} from 'node:child_process';
 import {EventEmitter} from 'node:events';
 import {setTimeout as delay} from 'node:timers/promises';
+const bootId = fs.readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim();
 
 export function processIdentity(pid) {
   try {
     const fields = fs.readFileSync(`/proc/${pid}/stat`, 'utf8').split(') ').slice(1).join(') ').split(' ');
-    return {pid: Number(pid), parent: Number(fields[1]), start: fields[19], state: fields[0]};
+    return {pid: Number(pid), parent: Number(fields[1]), group: Number(fields[2]), session: Number(fields[3]), start: fields[19], state: fields[0], bootId};
   } catch { return null; }
 }
 export function sameProcess(identity) {
   const current = identity && processIdentity(identity.pid);
-  return !!current && current.start === identity.start && current.state !== 'Z';
+  return !!current && current.start === identity.start && (!identity.bootId || current.bootId === identity.bootId) && current.state !== 'Z';
 }
 export function descendants(pid) {
   const rows = fs.readdirSync('/proc').filter(n => /^\d+$/.test(n)).map(processIdentity).filter(Boolean);

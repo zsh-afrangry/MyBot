@@ -22,7 +22,7 @@ const check = path.join(root, 'fixed-check.mjs');
 fs.writeFileSync(check, `import assert from 'node:assert/strict'; import path from 'node:path'; import {pathToFileURL} from 'node:url';
 const m = await import(pathToFileURL(path.join(process.env.CODING_WORKTREE,'math.mjs'))); assert.equal(m.sum(2,3),5); assert.equal(m.sum(-2,1),-1); assert.equal(m.sum(0,0),0);
 if (typeof m.clamp === 'function') {for(const [x,a,b,w] of [[-2,0,10,0],[5,0,10,5],[15,0,10,10],[1.5,0,2,1.5],[2,2,2,2]]) assert.equal(m.clamp(x,a,b),w); assert.throws(()=>m.clamp(1,3,2),RangeError);} console.log('fixed pilot checks passed');\n`, {mode: 0o600});
-const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'}, root: path.join(root, 'state'), worktrees: path.join(root, 'worktrees'),
+const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'}, root: path.join(root, 'state'), worktrees: path.join(root, 'worktrees'),
   dsh: {command: '/opt/deepseek-harness/node_modules/.bin/dsh', home: '/var/lib/dsh/.dsh', model: ['deepseek-official', 'deepseek-flash']},
   projects: [{id: 'dsh-pilot', root: source, branch: 'main', checks: [{name: 'fixed pilot assertions', argv: [process.execPath, check]}, {name: 'project node tests', argv: [process.execPath, '--test']},
     {name: 'independent python quicksort', argv: ['/usr/bin/python3', '-B', '/home/afrangry/kurumi-fusion/chatbot/scripts/check-coding-pilot-python.py'], skipExitCode: 77, timeoutMs: 15000}]}]};

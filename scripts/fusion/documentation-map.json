@@ -3,6 +3,24 @@
   "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
   "scriptOwners": [
     {
+      "path": "scripts/fusion/install-exec-fence.mjs",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/28_本机编码工具委托与实验任务.md",
+        "config/README.md"
+      ],
+      "evidence": [
+        "docs/verification/coding-autonomous-2026-11-07/README.md"
+      ]
+    },
+    {
+      "path": "scripts/fusion/lib/exec-fence.mjs",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "config/README.md"
+      ]
+    },
+    {
       "prefix": "chatbot/tests/host-exec/",
       "documents": [
         "docs/28_本机编码工具委托与实验任务.md",
@@ -420,6 +438,15 @@
     }
   ],
   "evidenceOwners": [
+    {
+      "prefix": "coding-autonomous-2026-11-07/",
+      "documents": [
+        "docs/28_本机编码工具委托与实验任务.md",
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md"
+      ],
+      "category": "当前有效"
+    },
     {
       "prefix": "chatbot-agents-archive-2026-10-28/",
       "documents": [

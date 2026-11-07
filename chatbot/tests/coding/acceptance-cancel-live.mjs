@@ -5,14 +5,15 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {setTimeout as delay} from 'node:timers/promises';
-import {fixture} from './fixtures.mjs';
+import {fixture, liveConfig} from './fixtures.mjs';
 import {AcpClient, sameProcess} from '../../packages/coding-runtime/acp-client.js';
 import {targetState} from '../../plugins/kurumi-coding/workspaces.js';
 if (!process.argv.includes('--live')) throw Error('Explicit --live required: one real model turn. No QQ messages are sent.');
 const output = process.argv.find(a => a.startsWith('--output='))?.slice('--output='.length);
 if (!output || !path.isAbsolute(output) || fs.existsSync(output)) throw Error('New absolute --output= report path required');
-const f = await fixture(null, {clientFactory: args => new AcpClient(args), configure(config) {
-  config.dsh = {command: '/opt/deepseek-harness/node_modules/.bin/dsh', home: '/var/lib/dsh/.dsh', model: ['deepseek-official', 'deepseek-flash']};
+const live = liveConfig();
+const f = await fixture(null, {parent: live.parent, clientFactory: args => new AcpClient(args), configure(config) {
+  config.dsh = live.dsh;
 }});
 const report = {at: new Date().toISOString(), actualDsh: true, actualQq: false, prompts: 1, privateArtifacts: f.root, productionChanged: false};
 try {

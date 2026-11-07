@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-11-06T23:56:01.731Z",
+  "actualDsh": true,
+  "actualQq": false,
+  "privateArtifacts": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/kurumi-coding-YB0nwW",
+  "productionChanged": false,
+  "prompts": 1,
+  "cases": [
+    {
+      "name": "actual_execution_output_and_paging",
+      "ok": true,
+      "pages": 13,
+      "actualOutputChars": 1682
+    },
+    {
+      "name": "same_result_recording_notification_no_duplicate",
+      "ok": true,
+      "bodyHash": "5af0f344cf2d3f77c0fa9d1be8060584c40362107c0a5778ae0b97259f82dda9"
+    },
+    {
+      "name": "source_unchanged_no_merge_or_push",
+      "ok": true
+    }
+  ],
+  "taskId": "9f53e175-a7f6-4c36-9aa0-6ab090e849f5",
+  "externalSessionId": "3cc97da6-a3e8-4312-b115-5b94f77416c8",
+  "roundId": "df08baec-025f-4be8-9a50-4df0a6f3fffb",
+  "state": "ready",
+  "verifiedCommit": "eed42e3f8a59f0d04206e0cd20269141752603bd",
+  "hostChecks": {
+    "ok": true,
+    "rows": [
+      {
+        "name": "independent check",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 38
+      },
+      {
+        "name": "independent python quicksort",
+        "code": 0,
+        "signal": null,
+        "elapsedMs": 40
+      }
+    ]
+  },
+  "permissionRequests": 0,
+  "ok": true,
+  "finishedAt": "2026-11-06T23:56:16.412Z"
+}

@@ -11,6 +11,12 @@ import {git} from '../../plugins/kurumi-coding/workspaces.js';
 import * as core from '../../packages/confirmation-core/dist/index.js';
 export {core};
 export const owner = '100001', member = '100002';
+export function liveConfig() {
+  const config = JSON.parse(fs.readFileSync(new URL('../../../config/runtime.config.json', import.meta.url)));
+  const plugin = config.plugins.entries['kurumi-coding'].config, parent = plugin.writeBoundary.root;
+  if (parent !== '/home/afrangry/.local/share/kurumi-coding-pilot-20261029' || fs.realpathSync(parent) !== parent) throw Error('Live validation requires the explicitly approved pilot folder');
+  return {parent, dsh: plugin.dsh};
+}
 export async function fixture(t, options = {}) {
   const root = fs.mkdtempSync(path.join(options.parent ?? os.tmpdir(), 'kurumi-coding-'));
   fs.chmodSync(root, 0o700);
@@ -25,7 +31,7 @@ export async function fixture(t, options = {}) {
   fs.writeFileSync(checks, `import assert from 'node:assert/strict'; import {pathToFileURL} from 'node:url'; import path from 'node:path';\nconst {value} = await import(pathToFileURL(path.join(process.env.CODING_WORKTREE, 'value.mjs'))); assert.ok(Number.isInteger(value) && value > 0); console.log('registered fixture check passed');\n`);
   const config = withAccess({channels: {'kurumi-qq': {ownerId: owner, stateDir: path.join(root, 'channel')}}}, owner);
   config.channels['kurumi-qq'].accessControl.subjects.push(memberRow(member));
-  const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'}, root: path.join(root, 'state'), worktrees: path.join(root, 'worktrees'), dsh: {command: process.execPath, home: root, model: ['fixture', 'fixture']},
+  const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'}, root: path.join(root, 'state'), worktrees: path.join(root, 'worktrees'), dsh: {command: process.execPath, home: root, model: ['fixture', 'fixture']},
     projects: [{id: 'fixture', root: source, branch: 'main', checks: [{name: 'independent check', argv: [process.execPath, checks]}]}]};
   // The fake DSH home must be separate from the registered project, as in the real runtime.
   pluginConfig.dsh.home = path.join(root, 'dsh'); fs.mkdirSync(pluginConfig.dsh.home);

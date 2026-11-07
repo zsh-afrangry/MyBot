@@ -236,7 +236,7 @@
           "exec": {
             "writeBoundary": {
               "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
-              "launcher": "/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run"
+              "launcher": "/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run"
             },
             "workdir": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/source",
             "timeoutSeconds": 60
@@ -423,7 +423,7 @@
           ],
           "writeBoundary": {
             "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
-            "launcher": "/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run"
+            "launcher": "/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run"
           }
         }
       },

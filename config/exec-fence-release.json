@@ -1,0 +1,8 @@
+{
+  "name": "@deepseek-ai/node-addon-system-linux-x64",
+  "version": "0.1.2",
+  "treeHash": "f3a1bd6cee2e8e7bf4e745d131ac9195e834539db7f2d0a4a0ba9c8b126328ac",
+  "license": "BSD-3-Clause",
+  "platform": "linux",
+  "arch": "x64"
+}

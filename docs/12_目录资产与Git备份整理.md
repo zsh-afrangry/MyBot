@@ -4,6 +4,8 @@
 
 本文维护资产与恢复契约。当前阶段、指定版本、恢复点和任务状态以唯一全局手册 [整理记录.md](/home/afrangry/.openclaw-fusion/整理记录.md) 为准。历史材料中的体积、SHA、运行结论仅属于当时范围，不能当作当前恢复证明。
 
+Fusion执行隔离原生包固定在`.openclaw-fusion/tools/node-addon-system-linux-x64`，由`config/exec-fence-release.json`约束版本/完整树指纹，`install-exec-fence.mjs`负责校验导入；含许可证、单独进入exec-fence工件。它与DSH整体安装生命周期分离，不改变现有试点写入权限。操作后核对两个launcher及依赖自检，验证依据见[本轮编码报告](verification/coding-autonomous-2026-11-07/README.md)。
+
 ## 资产归属
 
 | 资产 | 位置 | 边界 |

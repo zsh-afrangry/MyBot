@@ -31,7 +31,7 @@ test('the write fence allows its folder and denies outside create, overwrite, tr
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-write-fence-')), root = path.join(base, 'allowed'), outside = path.join(base, 'outside');
   t.after(() => fs.rmSync(base, {recursive: true, force: true})); fs.mkdirSync(root); fs.mkdirSync(outside);
   const sentinel = path.join(outside, 'sentinel'); fs.writeFileSync(sentinel, 'retain'); fs.symlinkSync(outside, path.join(root, 'escape'));
-  const boundary = {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'};
+  const boundary = {root, launcher: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'};
   assert.equal(probeWriteFence(boundary).backend, 'landlock');
   const code = `const fs=require('fs'),assert=require('assert/strict'),path=require('path'); const [root,out]=process.argv.slice(1);
 fs.writeFileSync(path.join(root,'allowed'),'yes'); const file=path.join(out,'sentinel'); assert.equal(fs.readFileSync(file,'utf8'),'retain');
@@ -45,7 +45,7 @@ for(const f of [()=>fs.writeFileSync(path.join(out,'new'),'x'),()=>fs.writeFileS
 test('registered checks inherit the same write boundary', async t => {
   const base = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-check-fence-')), root = path.join(base, 'allowed'); fs.mkdirSync(root);
   t.after(() => fs.rmSync(base, {recursive: true, force: true}));
-  const boundary = {root, launcher: '/opt/deepseek-harness/node_modules/@deepseek-ai/node-addon-system-linux-x64/bin/landlock-run'};
+  const boundary = {root, launcher: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'};
   const outside = path.join(base, 'must-not-exist');
   const checks = await runChecks({checks: [{name: 'outside write', argv: [process.execPath, '-e', 'require("fs").writeFileSync(process.argv[1],"x")', outside]}]}, root, path.join(root, 'check.log'), undefined, boundary);
   assert.equal(checks.ok, false); assert.equal(fs.existsSync(outside), false);

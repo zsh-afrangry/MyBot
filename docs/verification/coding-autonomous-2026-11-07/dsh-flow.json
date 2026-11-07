@@ -1,0 +1,114 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-11-06T23:55:09.984Z",
+  "type": "product-pilot-local",
+  "actualDsh": true,
+  "actualQq": false,
+  "ownerConfirmation": "synthetic-local-fixture-only",
+  "privateArtifacts": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/kurumi-coding-qofuEr",
+  "prompts": 2,
+  "cases": [
+    {
+      "name": "baseline_missing_requested_feature",
+      "ok": true,
+      "checkExit": 1
+    },
+    {
+      "name": "start_and_query",
+      "ok": true,
+      "taskId": "63f66e0b-7dcb-49e8-9905-69dda250026d",
+      "baseline": "2df6a4d90428a693868c572dd187e698f6f00416",
+      "isolatedCwd": true
+    },
+    {
+      "name": "actual_coding_registered_checks_commit",
+      "ok": true,
+      "state": "ready",
+      "checks": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "fixed clamp assertions",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 35
+          },
+          {
+            "name": "project node tests",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 104
+          }
+        ]
+      },
+      "commit": "cb13974ae2b6815ffb340afc5d13e5c2a11fceb9",
+      "externalSessionId": "3e903f0f-7ac5-4586-ae1f-cbdb920919a1"
+    },
+    {
+      "name": "real_terminal_rename_suffix_and_exact_content",
+      "ok": true,
+      "sourceUnchanged": true,
+      "outputRecorded": true
+    },
+    {
+      "name": "same_session_continuation",
+      "ok": true,
+      "externalSessionId": "3e903f0f-7ac5-4586-ae1f-cbdb920919a1",
+      "checks": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "fixed clamp assertions",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 38
+          },
+          {
+            "name": "project node tests",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 102
+          }
+        ]
+      },
+      "commit": "d8978e133ba16f7f6c916ff6ce4224513a3f517f"
+    },
+    {
+      "name": "no_merge_before_owner_fixture_approval",
+      "ok": true,
+      "proposalId": "919f8fbb-e9f4-43cf-8de7-5c848658a93b",
+      "payloadHash": "8189ec8397e92ad218b761c95197f263497f828a406cf0ad1c25b174b6c3f7c9"
+    },
+    {
+      "name": "confirmed_local_fixture_merge_dirty_preserved",
+      "ok": true,
+      "candidate": "fc81fc34e41a8cc49421db5c04943bed5997b224",
+      "checks": {
+        "ok": true,
+        "rows": [
+          {
+            "name": "fixed clamp assertions",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 29
+          },
+          {
+            "name": "project node tests",
+            "code": 0,
+            "signal": null,
+            "elapsedMs": 95
+          }
+        ]
+      }
+    },
+    {
+      "name": "recording_delivery_and_trusted_trace",
+      "ok": true,
+      "messages": 2,
+      "linkedEvents": 50,
+      "transport": "recording-adapter-only-no-real-QQ"
+    }
+  ],
+  "productionChanged": false,
+  "ok": true
+}

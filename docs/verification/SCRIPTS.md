@@ -19,6 +19,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 更新表格：运行 `node scripts/fusion/evidence-index.mjs --markdown`，只替换下方生成标记之间的内容，再执行 `--check-markdown`；不得手改生成表补文档/证据链接。新增脚本需登记分类和归属，新增证据组需登记元数据与INDEX；已登记证据目录中的回执继承目录归属。
 
 <!-- BEGIN GENERATED SCRIPT INDEX -->
+
 | 脚本 | 分组 | 归属文档 | 用途 | 副作用 | 需要授权 | 分类依据 | 证据位置 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `chatbot/packages/confirmation-core/src/confirmation.test.ts` | 离线 | [21](../21_后端职责分层与代码整理.md) | 确认核心：提案校验、TTL、幂等与 grant 消费 | 只读 | 否 | offline | — |
@@ -74,6 +75,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/coding/acp.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 真实本地stdio权限关联、自有进程及检查进程树取消；离线对端，无模型或QQ | 重启或停服务、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/coding/flow.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 实际编码工具处理器与Git/SQLite/确认/日志：身份、基线、幂等、检查、回档、合入与重启；注入ACP和投递 | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/coding/policy-compatibility.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 配置升级后的旧任务读写兼容、实际目录与仓库绑定、当前合入检查及确认消费边界；注入ACP和投递 | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
+| `chatbot/tests/coding/reconciliation.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 真实本地进程/Git/SQLite的重启核对、孤儿组归属、PID复用拒绝、只取消本任务与中断合入事实核对；合成任务，无模型或QQ | 重启或停服务、写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/coding/results.test.mjs` | 离线 | [28](../28_本机编码工具委托与实验任务.md)、[21](../21_后端职责分层与代码整理.md)、[24](../24_统一身份与权限管理.md) | 实际结果持久化、分页脱敏、轮次/身份隔离、重启核对、通知去重与Python宿主门禁；注入ACP和投递 | 写临时测试目录 | 否 | header | `docs/verification/coding-delegation-plan-2026-10-28/policy-compatibility-2026-10-30/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md`<br>`docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md` |
 | `chatbot/tests/domain-adapters/integration.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 真实领域工具替换策略/存储；调度与固定 runner 一致、无静默回退 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/domain-adapters/registry.test.mjs` | 离线 | [21](../21_后端职责分层与代码整理.md) | 领域适配器注册/注销、启动选择、同步契约和失败拒绝 | 只读 | 否 | header | — |
@@ -135,6 +137,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/lib/backup-retention.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 只读计算已验证v3点与工件保留清单，保护未完成引用、拒绝破损工件及不安全路径 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/backup-service.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 备份期间停写并恢复服务 | 重启或停服务 | 否 | header | — |
 | `scripts/fusion/lib/documentation-map.mjs` | 库 | [16](../16_验收与测试总表.md) | 只读文档归属、命名分组及维护源码发现；不执行扫描到的文件 | 只读 | 否 | header | `docs/verification/documentation-2026-10-21/README.md` |
+| `scripts/fusion/lib/exec-fence.mjs` | 库 | [12](../12_目录资产与Git备份整理.md)、[README.md](../../config/README.md) | 核对Fusion自有原生依赖版本、完整树指纹与Landlock探针，不更改授权范围 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/fresh-id.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 生成不重复的 message id | 只读 | 否 | header | — |
 | `scripts/fusion/lib/openclaw-release.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 读取唯一批准内核版本与Node范围 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/package-manifests.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 只读发现仓库自有锁文件包及构建声明，供依赖检查与隔离恢复共同使用 | 只读 | 否 | header | — |
@@ -227,6 +230,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/test-service-recovery.mjs` | 验收 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 服务故障注入与恢复；不发 QQ、不调模型 | 重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/migration/35-service-recovery.json` |
 | `scripts/fusion/backup-retention.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 登记隔离恢复回执；默认预览，仅--apply淘汰多余已验证v3点及无引用已校验工件，独立项目不自动删除 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/backup-state.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 制作备份；--quiesce 会短暂停写并恢复服务 | 重启或停服务、写运行状态 | 是 | header | — |
+| `scripts/fusion/install-exec-fence.mjs` | 运维写状态 | [12](../12_目录资产与Git备份整理.md)、[28](../28_本机编码工具委托与实验任务.md)、[README.md](../../config/README.md) | 默认核对；--apply导入完整哈希固定的Fusion原生隔离依赖，保留许可证，不修改DSH或同步配置 | 写运行状态 | 是 | header | `docs/verification/coding-autonomous-2026-11-07/README.md` |
 | `scripts/fusion/install-plugins.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 按锁文件安装受控第三方插件 | 写运行状态 | 是 | header | — |
 | `scripts/fusion/install-service.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 首次切换 systemd 单元到融合服务 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/link-dependencies.mjs` | 运维写状态 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 固定并链接本地 SDK 只读依赖 | 写运行状态 | 是 | header | — |
@@ -239,4 +243,5 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/launchers/Stop-DSH.sh` | 启停脚本 | [9](../9_QQ融合助手架构与开发计划.md) | 停止融合助手与 DSH Web；不停止 QQ 传输 | 重启或停服务 | 是 | header | — |
 | `scripts/fusion/lib/backup-layout.mjs` | 运维库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 不可变依赖工件与全深度SQLite发现；写统一备份位置 | 写运行状态 | 否 | header | — |
 | `scripts/fusion/lib/runtime-retention.mjs` | 运维库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 限定诊断日志预算与离线捕获生命周期；不访问业务库 | 写运行状态 | 否 | header | — |
+
 <!-- END GENERATED SCRIPT INDEX -->

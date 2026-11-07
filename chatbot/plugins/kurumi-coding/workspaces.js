@@ -88,7 +88,7 @@ export function assertWorkspace(task) {
     || git(task.cwd, 'symbolic-ref', '--short', 'HEAD').trim() !== task.branch) throw fail('task_workspace_changed');
   if (git(task.cwd, 'rev-parse', 'HEAD').trim() !== task.verifiedCommit) throw fail('unexpected_task_commit');
 }
-export async function runChecks(project, cwd, file, signal, boundary) {
+export async function runChecks(project, cwd, file, signal, boundary, onRuntime = () => {}) {
   const rows = [];
   for (const check of project.checks) {
     signal?.throwIfAborted();
@@ -98,6 +98,11 @@ export async function runChecks(project, cwd, file, signal, boundary) {
       const confined = boundary ? confinedProcess(boundary, check.argv[0], check.argv.slice(1), cwd) : {command: check.argv[0], args: check.argv.slice(1), env: {}};
       const child = spawn(confined.command, confined.args, {cwd, env: {...executionEnv(), ...confined.env, CODING_WORKTREE: cwd}, detached: true, stdio: ['ignore', 'pipe', 'pipe']});
       const identity = processIdentity(child.pid);
+      const publish = () => {
+        if (sameProcess(identity)) onRuntime({identity: processIdentity(identity.pid), processes: descendants(identity.pid).filter(sameProcess)});
+      };
+      publish();
+      const monitor = setInterval(publish, 500); monitor.unref();
       let killed = false, timedOut = false, captured = [], hard;
       const kill = () => {
         if (killed) return;
@@ -112,7 +117,7 @@ export async function runChecks(project, cwd, file, signal, boundary) {
       const timer = check.timeoutMs ? setTimeout(() => {timedOut = true; kill();}, check.timeoutMs) : undefined;
       signal?.addEventListener('abort', kill, {once: true});
       if (signal?.aborted) kill();
-      const cleanup = () => {clearTimeout(timer); clearTimeout(hard); signal?.removeEventListener('abort', kill);};
+      const cleanup = () => {clearTimeout(timer); clearTimeout(hard); clearInterval(monitor); signal?.removeEventListener('abort', kill);};
       out.on('error', e => {kill(); reject(e);});
       child.once('error', e => {cleanup(); out.end(); reject(e);});
       child.once('close', async (code, sig) => {
@@ -121,6 +126,7 @@ export async function runChecks(project, cwd, file, signal, boundary) {
           if (i === 10) for (const p of captured) if (sameProcess(p)) try {process.kill(p.pid, 'SIGKILL');} catch (e) {if (e.code !== 'ESRCH') reject(e);}
           await delay(100);
         }
+        if (captured.every(p => !sameProcess(p))) onRuntime(undefined);
         resolve({code, signal: sig, ...(timedOut ? {timedOut: true} : {}), ...(killed ? {stopped: captured.every(p => !sameProcess(p))} : {})});
       });
     });
