@@ -179,7 +179,7 @@ export class PaperService {
           this.check(job,'qq.notify');
           job.notification = {status:'pending'};this.save(job);
           job.notification = await this.notify(summary,id,this.binding(job),signal);
-        } catch { job.notification = {status:'failed_or_unknown'}; }
+        } catch (error) { job.notification = {status:/^assistant_notice_/.test(error?.code ?? '')?'generation_failed':'failed_or_unknown'}; }
         this.save(job);
         this.trace({kind:'paper.notification',correlation:{taskId:id,...job.correlation},data:job.notification});
       }

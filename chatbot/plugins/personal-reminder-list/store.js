@@ -123,7 +123,19 @@ export class ListStore {
       const output = formatDigest(items, slot.at), status = output ? 'prepared' : 'skipped';
       this.db.prepare('INSERT INTO deliveries VALUES(?,?,?,?,?,?,?,NULL)').run(slot.key, slot.at, settings.version, status, JSON.stringify(items.map(i => i.id)), output, this.now());
       this.audit('digest.' + status, null, {slotKey: slot.key, count: items.length});
-      return {slotKey: slot.key, text: output, count: items.length};
+      return {slotKey: slot.key, at:slot.at, items, text: output, count: items.length};
+    });
+  }
+  finishDigestGeneration(slotKey, text, error) {
+    return this.transaction(() => {
+      const row=this.db.prepare("SELECT * FROM deliveries WHERE slot_key=? AND status='prepared'").get(slotKey);
+      if(!row)return false;
+      const settings=this.settings();
+      const stale=!settings.enabled || settings.version!==row.settings_version || !settings.times.includes(slotKey.slice(11));
+      const status=stale?'skipped':error?'failed':'prepared';
+      this.db.prepare('UPDATE deliveries SET status=?,text=?,updated_ms=? WHERE slot_key=?').run(status,status==='prepared'?text:'',this.now(),slotKey);
+      this.audit('notice.'+(stale?'settings_changed':error?'generation_failed':'generated'),null,{slotKey,...(error?{code:'assistant_notice_generation_failed'}:{})});
+      return status==='prepared';
     });
   }
   observeDeliveries(jobId, runs) {

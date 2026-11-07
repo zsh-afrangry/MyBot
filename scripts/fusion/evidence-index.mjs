@@ -40,6 +40,9 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/response/acceptance-host.mjs': ['验收','隔离真实Gateway/Cron/固定CLI及模拟QQ回执，确定性模型；核对原会话人格/近期聊天、通知/目标与去重，无真实API/QQ或生产写入',{testDir:1,restart:1},'header'],
+  'chatbot/tests/response/fixtures.mjs': ['库','合成提醒/列表提案及可信确认，临时状态，无真实模型/QQ',{testDir:1},'header'],
+  'chatbot/tests/response/notification.test.mjs': ['离线','真实临时SQLite的模型说明/冻结事实、生成失败、版本/权限变化、去重与只读RPC参数回归',{testDir:1},'header'],
   'scripts/fusion/install-exec-fence.mjs': ['运维写状态', '默认核对；--apply导入完整哈希固定的Fusion原生隔离依赖，保留许可证，不修改DSH或同步配置', {auth: 1, writesState: 1}, 'header'],
   'scripts/fusion/lib/exec-fence.mjs': ['库', '核对Fusion自有原生依赖版本、完整树指纹与Landlock探针，不更改授权范围', {readonly: 1}, 'header'],
   'chatbot/tests/papers/rename.test.mjs': ['离线','受管PDF名称CAS/幂等/权限隔离、字节及未来QQ发送，临时目录与模拟投递',{writesTemp:1},'header'],

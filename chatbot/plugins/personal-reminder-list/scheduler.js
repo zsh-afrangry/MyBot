@@ -4,7 +4,7 @@ import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import {createListApplication} from './application.js';
 
 export const DECLARATION_PREFIX = 'kurumi.reminder-list.daily:';
-export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite', dataSource = 'sqlite', bridgeBaseUrl, bridgeTokenFile}) {
+export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite', dataSource = 'sqlite', bridgeBaseUrl, bridgeTokenFile, port = 18890}) {
   // OpenClaw can import this module from a disposable plugin capture. Never
   // derive a persisted Cron executable from import.meta.url: deployment config
   // owns the backend root and the executable suffix is fixed by this domain.
@@ -15,10 +15,10 @@ export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite', da
     enabled: true, schedule: {kind: 'cron', expr: `${minute} ${hour} * * *`, tz: 'Asia/Shanghai', staggerMs: 0},
     sessionTarget: 'isolated', wakeMode: 'now',
     payload: {kind: 'command', argv: [process.execPath, resolve(repo, 'scripts/reminder-list.mjs'), 'run', '--slot', time],
-      cwd: repo, env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: ownerId,
+      cwd: repo, env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: ownerId, OPENCLAW_GATEWAY_PORT:String(port),
         ...(storeAdapter !== 'sqlite' ? {KURUMI_LIST_STORE_ADAPTER: storeAdapter} : {}),
         ...(dataSource === 'knowledgemap' ? {KURUMI_LIST_DATA_SOURCE: dataSource, KURUMI_KM_BASE_URL: bridgeBaseUrl, KURUMI_KM_TOKEN_FILE: bridgeTokenFile} : {})},
-      timeoutSeconds: 20, noOutputTimeoutSeconds: 10, outputMaxBytes: 524288},
+      timeoutSeconds: 75, noOutputTimeoutSeconds: 70, outputMaxBytes: 524288},
     delivery: {mode: 'announce', channel: 'kurumi-qq', to: `user:${ownerId}`, accountId: 'default'},
     deleteAfterRun: false,
   };

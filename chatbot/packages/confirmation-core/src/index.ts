@@ -9,5 +9,5 @@ export type { ConfirmationBackend, ConfirmationBackendProvider, ConfirmationOutc
 export * from "./public-id.js";
 export { createNaturalConfirmationBackend, narrowNaturalConfirmationBackend } from './natural-store.js';
 export { listNaturalConfirmations, confirmNaturalProposal, confirmNaturalProposals, MAX_CONFIRMATION_TARGETS, naturalConfirmationTextAllowed } from './natural-service.js';
-export { prepareConfirmationPreview, recordConfirmationDelivery } from './presentation.js';
+export { freezeConfirmationFacts, prepareConfirmationPreview, recordConfirmationDelivery } from './presentation.js';
 export { captureNaturalConfirmationRequest, clearNaturalConfirmationRequest } from './current-request.js';

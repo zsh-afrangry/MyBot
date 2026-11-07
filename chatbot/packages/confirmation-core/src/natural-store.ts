@@ -18,10 +18,11 @@ export function createNaturalConfirmationBackend(db: DatabaseSync, options: {
       .filter(p => options.domains.includes(p.domain)).map(p => {
         const preview = db.prepare('SELECT * FROM confirmation_previews WHERE proposal_id = ? AND payload_hash = ?')
           .get(p.proposalId, p.payloadHash) as {preview_text: string; source_message_id: string;
-            presented_at_utc: number | null; presentation_message_id: string | null; presentation_order: number | null} | undefined;
+            presented_at_utc: number | null; presentation_message_id: string | null; presentation_order: number | null; facts_json: string | null} | undefined;
         return {...p, previewText: preview?.preview_text ?? null, sourceMessageId: preview?.source_message_id ?? null,
           presentedAtUtc: preview?.presented_at_utc ?? null, presentationMessageId: preview?.presentation_message_id ?? null,
-          presentationOrder: preview?.presentation_order ?? null};
+          presentationOrder: preview?.presentation_order ?? null,
+          ...(preview?.facts_json ? {presentationFacts:JSON.parse(preview.facts_json) as string[]} : {})};
       });
   };
   ensureConfirmationGateSchema(db);
@@ -37,13 +38,13 @@ export function createNaturalConfirmationBackend(db: DatabaseSync, options: {
         }>).filter(r => options.domains.includes(r.domain) && scopesMatch(JSON.parse(r.scope_json), scope))
         .map(r => ({proposalId: r.proposal_id, payloadHash: r.payload_hash, domain: r.domain}));
     },
-    savePreview(event, choice, text) {
+    savePreview(event, choice, text, facts) {
       if (!event.messageId || typeof text !== 'string' || !text.trim() || text.length > 120000
-        || !list(event).some(p => selected(p, choice))) return false;
-      db.prepare(`INSERT INTO confirmation_previews (proposal_id, payload_hash, preview_text, source_message_id)
-        VALUES (?, ?, ?, ?) ON CONFLICT(proposal_id) DO UPDATE SET payload_hash = excluded.payload_hash,
+        || !list(event).some(p => selected(p, choice)) || facts && (!facts.length || facts.some(f=>typeof f!=='string'||!f) || facts.join('\n')!==text)) return false;
+      db.prepare(`INSERT INTO confirmation_previews (proposal_id, payload_hash, preview_text, source_message_id, facts_json)
+        VALUES (?, ?, ?, ?, ?) ON CONFLICT(proposal_id) DO UPDATE SET payload_hash = excluded.payload_hash,
         preview_text = excluded.preview_text, source_message_id = excluded.source_message_id,
-        presented_at_utc = NULL, presentation_message_id = NULL, presentation_order = NULL`).run(choice.proposalId, choice.payloadHash, text, event.messageId);
+        facts_json = excluded.facts_json, presented_at_utc = NULL, presentation_message_id = NULL, presentation_order = NULL`).run(choice.proposalId, choice.payloadHash, text, event.messageId, facts ? JSON.stringify(facts) : null);
       return true;
     },
     presented(event, choice, messageId, order = Date.now()) {
@@ -79,7 +80,7 @@ export function narrowNaturalConfirmationBackend(backend: NaturalConfirmationBac
     supportsBatch: backend.supportsBatch === true,
     list: event => backend.list(event).filter(p => p.domain === domain),
     used: event => backend.used(event).filter(p => p.domain === domain),
-    savePreview: (event, choice, text) => choice.domain === domain && backend.savePreview(event, choice, text),
+    savePreview: (event, choice, text, facts) => choice.domain === domain && backend.savePreview(event, choice, text, facts),
     presented: (event, choice, id, order) => choice.domain === domain && backend.presented(event, choice, id, order),
     confirm: (event, choice) => choice.domain === domain && backend.confirm(event, choice),
   };

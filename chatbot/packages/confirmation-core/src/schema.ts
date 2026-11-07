@@ -46,7 +46,8 @@ export const CONFIRMATION_GATE_SCHEMA_SQL = String.raw`
     source_message_id TEXT NOT NULL,
     presented_at_utc INTEGER,
     presentation_message_id TEXT,
-    presentation_order INTEGER
+    presentation_order INTEGER,
+    facts_json TEXT
   ) STRICT;
 
   CREATE TABLE IF NOT EXISTS natural_confirmation_grants (
@@ -62,5 +63,10 @@ export function ensureConfirmationGateSchema(database: DatabaseSync): void {
   if (!hasOrder()) {
     try { database.exec('ALTER TABLE confirmation_previews ADD COLUMN presentation_order INTEGER'); }
     catch (error) { if (!hasOrder()) throw error; } // Another opener may have just migrated the same DB.
+  }
+  const hasFacts = () => (database.prepare('PRAGMA table_info(confirmation_previews)').all() as {name: string}[]).some(row => row.name === 'facts_json');
+  if (!hasFacts()) {
+    try { database.exec('ALTER TABLE confirmation_previews ADD COLUMN facts_json TEXT'); }
+    catch (error) { if (!hasFacts()) throw error; }
   }
 }

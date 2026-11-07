@@ -25,9 +25,9 @@ export function buildReminderCronAddParams(input: ReminderCronAddInput): Record<
       kind: "command",
       argv: [process.execPath, "dist/reminder-cli.js", "deliver", "--id", input.reminderId],
       cwd: REMINDER_PLUGIN_ROOT,
-      timeoutSeconds: 20,
-      noOutputTimeoutSeconds: 10,
-      outputMaxBytes: 4096,
+      timeoutSeconds: 75,
+      noOutputTimeoutSeconds: 70,
+      outputMaxBytes: 32768,
     },
     delivery: {
       mode: "announce",

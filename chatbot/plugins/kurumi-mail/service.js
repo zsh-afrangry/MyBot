@@ -1,3 +1,4 @@
+import { freezeConfirmationFacts } from '@kurumi/confirmation-core';
 // Application write entry for kurumi-mail.
 //
 // Order is the safety story and is deliberate:
@@ -46,19 +47,18 @@ export function createMailService(policy, {resolveAttachment} = {}) {
       }
       const expiresAtDisplay = {local: new Date(created.expiresAtUtc * 1000 + 8 * 3600000).toISOString().replace('Z', '+08:00'), timezone: 'Asia/Shanghai'};
       const draft = store.getDraft(created.draftId);
-      const previewText = [
-        '待确认邮件（尚未发送）：', `收件人：${input.to.join(', ')}`, `抄送：${(input.cc ?? []).join(', ') || '无'}`,
-        `主题：${input.subject}`, '正文：', input.text,
+      const presentation = freezeConfirmationFacts([
+        '状态：待确认，尚未发送', `收件人：${input.to.join(', ')}`, `抄送：${(input.cc ?? []).join(', ') || '无'}`,
+        `主题：${input.subject}`, '正文：\n'+input.text,
         ...(draft?.attachments ?? []).map(a => `附件：${a.filename}（${a.bytes}字节，SHA256 ${a.sha256}）`),
         `提案确认截止：${expiresAtDisplay.local}（Asia/Shanghai）`,
-        '确认这份预览后才会发送；有多项时请说明哪一项。', '确认',
-      ].join('\n');
+      ]);
       return {
         ok: true,
         status: "needs_confirmation",
         proposalId: created.draftId,
         payloadHash: created.payloadHash,
-        previewText,
+        ...presentation,
         expiresAtDisplay,
         draftId: created.draftId,
         confirmationInstruction: "确认",

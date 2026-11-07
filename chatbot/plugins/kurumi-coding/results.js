@@ -67,9 +67,3 @@ export function readCodingResult(store, task, {roundId = task.executionRoundId, 
     page: {section, source: section === 'execution' ? 'acp_execution_tool_results' : 'agent_report_not_host_verification',
       text: safe.slice(offset, offset + limit).join(''), offset, nextOffset: offset + limit < safe.length ? offset + limit : null, totalChars: safe.length}};
 }
-
-export function completionText(task, result) {
-  const checks = task.checks?.rows.map(row => `${row.name}=${row.skipped ? '不适用' : row.code === 0 && !row.timedOut ? '通过' : '失败'}`).join('；') ?? '未完成';
-  const output = result?.available && result.page.text ? `实际执行工具输出${result.page.offset > 0 ? '（末尾片段）' : ''}：\n${result.page.text}${result.page.nextOffset !== null || result.page.offset > 0 ? '\n（完整输出可用result分页查询）' : ''}` : '本轮未记录可回传的执行工具输出。';
-  return resultText(`编码任务 ${task.id}\n项目：${task.projectId}\n状态：${task.state}\n执行轮次：${task.executionRoundId ?? '历史任务'}\n宿主检查：${checks}\n提交：${task.verifiedCommit}\n变更文件：${result?.changedFiles?.join('、') || '见diff或尚未记录'}\n额外权限请求：${task.permissionSummary?.requests ?? 0}次，已批准0次\n${output}\n${task.state === 'ready' ? task.workspaceKind === 'directory' ? '等待审阅与确认目录回写，尚未修改原目录。' : '等待审阅与确认合入，尚未修改目标分支。' : '可查询status及result核对当前状态和结果。'}`);
-}

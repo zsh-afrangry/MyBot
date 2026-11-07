@@ -28,7 +28,7 @@ test('non-Git copy includes ignored/binary files and empty directories; confirme
   }});
   const before = directoryState(f.source), {task, preview} = await prepared(f);
   assert.equal(task.workspaceKind, 'directory'); assert.deepEqual(directoryState(f.source), before);
-  assert.match(preview.previewText, /确认目录回写/); assert.match(f.deliveries[0].text, /尚未修改原目录/);
+  assert.match(preview.previewText, /确认后目录回写/); assert.match(f.deliveries[0].text, /尚未修改原目录/);
   await assert.rejects(f.run({action: 'merge', taskId: task.id, proposalId: preview.proposalId}), /approval_required/);
   assert.deepEqual(directoryState(f.source), before);
   f.approve(preview); const done = await f.run({action: 'merge', taskId: task.id, proposalId: preview.proposalId});

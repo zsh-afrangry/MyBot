@@ -17,6 +17,7 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import assert from 'node:assert/strict';
 
+const progress=process.argv.includes('--progress');
 const out=process.argv[process.argv.indexOf('--out')+1];
 if(!process.argv.includes('--out')||!path.isAbsolute(out??'')||fs.existsSync(out))throw Error('Require a new absolute --out');
 const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-natural-host-'));
@@ -42,7 +43,7 @@ const model=http.createServer(async(req,res)=>{
   const step=active.steps[active.next];let tool;
   if(step){if(!active.discovered){tool=['tool_search',{query:step[0],limit:1}];active.discovered=true;}
    else{tool=['dispatch_action',{id:step[0],args:typeof step[1]==='function'?step[1]():step[1]}];active.expected=step[2];active.next++;active.discovered=false;}}
-  const message=tool?{role:'assistant',content:null,tool_calls:[{id:'call_'+report.requests,type:'function',function:{name:tool[0],arguments:JSON.stringify(tool[1])}}]}:{role:'assistant',content:'MODEL_PARAPHRASE_MUST_BE_REPLACED'};
+  const message=tool?{role:'assistant',content:progress?'我先核对已有信息，再处理这一步。':null,tool_calls:[{id:'call_'+report.requests,type:'function',function:{name:tool[0],arguments:JSON.stringify(tool[1])}}]}:{role:'assistant',content:'模型自然说明：请核对这些信息，再告诉我是否确认。'};
   const usage={prompt_tokens:1,completion_tokens:1,total_tokens:2};res.setHeader('content-type',body.stream?'text/event-stream':'application/json');
   if(body.stream){const base={id:'chatcmpl-natural',object:'chat.completion.chunk',created:1,model:'fixture'};
    res.write('data: '+JSON.stringify({...base,choices:[{index:0,delta:{...message,...(tool?{tool_calls:message.tool_calls.map((c,index)=>({...c,index}))}:{})},finish_reason:null}]})+'\n\n');
@@ -84,7 +85,7 @@ const confirmation=(expected={ok:true},i=-1)=>['personal_confirmation',()=>({act
 try{
  let ready=false;for(let n=0;n<100;n++){try{await call('health',{},1000);ready=true;break;}catch{if(child.exitCode!==null)throw Error('isolated gateway exited');await new Promise(r=>setTimeout(r,300));}}assert(ready,'isolated gateway readiness');
  await turn('same-message-cannot-confirm','生成一个测试提醒并直接确认',[propose('宿主测试甲'),confirmation({ok:false,code:'proposal_not_presented'})],sent=>{
-  assert(sent.length>0);assert(!JSON.stringify(sent).includes('MODEL_PARAPHRASE'));assert(query('SELECT presented_at_utc FROM confirmation_previews')[0].presented_at_utc);assert.equal(query('SELECT * FROM approval_grants').length,0);
+  assert(sent.length>0);assert(JSON.stringify(sent).includes('模型自然说明'));assert(query('SELECT presented_at_utc FROM confirmation_previews')[0].presented_at_utc);assert.equal(query('SELECT * FROM approval_grants').length,0);
  });
  await turn('next-message-bare-confirm-commits','确认',[
   ['personal_confirmation',{action:'list',domain:'personal_reminder'},{ok:true}],confirmation(),['personal_reminder_commit',()=>commit(),{ok:true}],
@@ -108,12 +109,12 @@ try{
  await turn('Q13-list-and-repreview-older','重新展示宿主测试乙的预览',[
   ['personal_confirmation',{action:'list',domain:'personal_reminder'},{ok:true}],
   ['personal_confirmation',()=>({action:'preview',...select(1)}),{ok:true}],
- ],sent=>{assert(JSON.stringify(sent).includes('宿主测试乙'));assert(!JSON.stringify(sent).includes('MODEL_PARAPHRASE'));});
+ ],sent=>{assert(JSON.stringify(sent).includes('宿主测试乙'));assert(JSON.stringify(sent).includes('模型自然说明'));});
  await turn('Q13-bare-assent-selects-represented-older','确认',[
   confirmation({ok:true},1),['personal_reminder_commit',()=>commit(1),{ok:true}],
  ],()=>{assert.equal(query('SELECT status FROM confirmation_proposals WHERE proposal_id=?',select(1).proposalId)[0].status,'committed');
   assert.equal(query('SELECT status FROM confirmation_proposals WHERE proposal_id=?',select(-1).proposalId)[0].status,'pending');});
- assert.equal(query('SELECT * FROM approval_grants').length,5);report.passed=true;
+ assert.equal(query('SELECT * FROM approval_grants').length,5);report.progressRequested=progress;report.progressObserved=sends.some(s=>JSON.stringify(s).includes('我先核对已有信息'));if(progress)assert(report.progressObserved,'Explicit assistant progress must be visible');report.passed=true;
 }catch(error){report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;}
 finally{
  if(child.exitCode===null){child.kill('SIGTERM');let timer;await Promise.race([once(child,'exit'),new Promise(r=>{timer=setTimeout(()=>{try{process.kill(-child.pid,'SIGKILL');}catch{}r();},10000);})]);clearTimeout(timer);}

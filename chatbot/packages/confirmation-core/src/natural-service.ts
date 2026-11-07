@@ -30,10 +30,10 @@ export function listNaturalConfirmations(event: ConfirmationInboundEvent): Confi
   return withBackends(event, stores => stores.flatMap(s => s.rows));
 }
 
-export function saveConfirmationPreview(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, text: string): boolean {
+export function saveConfirmationPreview(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, text: string, facts?: string[]): boolean {
   return withBackends(event, stores => {
     const found = stores.flatMap(s => s.rows.filter(p => matches(p, selection)).map(() => s.backend));
-    return found.length === 1 && found[0]!.savePreview(event, selection, text);
+    return found.length === 1 && found[0]!.savePreview(event, selection, text, facts);
   });
 }
 

@@ -164,14 +164,14 @@ test('digest claim survives restart, settings edits cannot redeliver same slot; 
   clock('2026-10-11T12:02:00+08:00'); assert.equal(store.claimDigest('12:00'), undefined);
   clock('2026-10-12T08:00:10+08:00'); assert.ok(store.claimDigest('08:00'));
 });
-test('empty, paused and removed times are silent; arbitrary CLI args rejected', t => {
+test('fixed runner accepts only a slot and never supplies content or recipient', async t => {
   const {root, store, now, permit} = fixture(t), outputs = [];
-  const opts = {env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: OWNER}, now, write: x => outputs.push(x)};
-  assert.equal(main(['run', '--slot', '08:00'], opts), 0); assert.equal(outputs.length, 0);
+  const opts = {env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: OWNER}, now, write: x => outputs.push(x),request:async(method,params)=>{assert.equal(method,'personal-reminder-list.compose');assert.deepEqual(params,{slot:'08:00'});return{};}};
+  assert.equal(await main(['run', '--slot', '08:00'], opts), 0); assert.equal(outputs.length, 0);
   manageList(store, {action: 'pause'}, permit('暂停提醒列表', 'pause'));
   assert.equal(store.claimDigest('12:00'), undefined);
-  assert.throws(() => main(['run', '--slot', '08:00', '--to', 'other'], opts));
-  assert.throws(() => main(['run', '--slot', '24:00'], opts));
+  await assert.rejects(() => main(['run', '--slot', '08:00', '--to', 'other'], opts));
+  await assert.rejects(() => main(['run', '--slot', '24:00'], opts));
 });
 test('delivery observation matches time/day; unknown or failed never automatically retry', t => {
   const {store, add, clock, now} = fixture(t); add('投递'); store.claimDigest('08:00');

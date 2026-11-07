@@ -1,3 +1,4 @@
+import { freezeConfirmationFacts } from "@kurumi/confirmation-core";
 import { createHash } from "node:crypto";
 import { WeatherError, type WeatherErrorCode } from "./errors.js";
 import { formatTimestamp } from "./time-display.js";
@@ -89,6 +90,7 @@ export interface ProfileChangeProposalResult {
   proposalId: string;
   payloadHash: string;
   previewText: string;
+  presentationFacts?: string[];
   /**
    * The exact sentence the owner must send back to approve this proposal. It is
    * returned verbatim so the model relays it instead of inventing a protocol of
@@ -269,12 +271,6 @@ export async function proposeProfileChange(
   });
   // Natural assent is resolved by the shared tool against the delivered frozen preview.
   const confirmationInstruction = "确认";
-  const previewText = [
-    basePreview,
-    `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-    "请确认这份预览；有多项时说明要确认哪一项。确认后才会更新：",
-    confirmationInstruction,
-  ].join("\n");
 
   return {
     ok: true,
@@ -283,7 +279,7 @@ export async function proposeProfileChange(
     kind: "current_location_set",
     proposalId: created.proposalId,
     payloadHash: created.payloadHash,
-    previewText,
+    ...freezeConfirmationFacts([basePreview, `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`]),
     confirmationInstruction,
     canonicalFacts: {
       domain: "personal_profile",
@@ -450,7 +446,7 @@ function buildLocationPreview(
   target: Omit<ProfileLocationSummary, "source" | "confirmedAtUtc" | "revision">,
 ): string {
   return [
-    "已生成待确认个人资料变更：",
+    "操作：更新当前所在地（待确认，未提交）",
     `当前所在地：${current.displayName} → ${target.displayName}`,
     `时区：${target.timezone}`,
     "生效：确认提交时立即生效。",

@@ -17,7 +17,7 @@ const proposalDomains: Record<string, string> = {
   personal_reminder_cancel_propose: 'personal_reminder', personal_profile_change_propose: 'personal_profile',
   personal_planning_change_propose: 'planning', email_draft: 'mail', kurumi_code: 'coding',
 };
-export const NATURAL_CONFIRMATION_RULES = `一次性提醒、Profile/行程、邮件和编码合入使用自然语言二次确认，不要求用户抄确认码。先展示工具返回的冻结预览，再等下一条本人消息。
+export const NATURAL_CONFIRMATION_RULES = `一次性提醒、Profile/行程、邮件和编码合入使用自然语言二次确认，不要求用户抄确认码。先展示工具返回的冻结事实，再等下一条本人消息；开场、解释与确认邀请用你自己的口吻组织。presentationFacts各块必须完整保留，可调整各块顺序，邮件正文/附件不改写；宿主补齐遗漏的关键事实。不要把待确认说成已经执行。
 personal_confirmation的domain必须显式填写：一次性提醒=personal_reminder，个人资料/Profile=personal_profile，行程=planning，邮件=mail，编码=coding（仅单项）。不要写reminder/reminders/weather_travel，也不要省略domain；这是不同于工具名的固定枚举。
 确认时先用action=list及对应domain读取真实候选，根据currentUserText和已展示预览解析意图/指代。唯一一项用真实proposalId/payloadHash调用action=confirm，再调用原领域commit/email_send。明确“这两个都确认”等有限多项时，一次action=confirm传完整targets数组（每项domain/proposalId/payloadHash，最多16项，外层domain为第一项domain）；只执行逐项ok=true的后续提交，逐项核实并报告结果。不得先确认一项后用同一消息追加另一项，不扩展到全部历史待确认；失败/未知项不自动重试，不只处理第一项就报告全成功。
 用户说“重看/重新展示/再发一次预览”时，action=list只供定位，必须继续action=preview传选中项真实domain/proposalId/payloadHash；不要从list自行改写预览。成功展示回执才刷新确认焦点，/new后也一样。
@@ -33,7 +33,7 @@ export function createConfirmationRuntime(ownerId: string, now = Date.now) {
   let current: Request | undefined;
   const calls = new Map<string, Request>();
   const wrapperCalls = new Map<string, {request: Request; target: string}>();
-  const previews = new Map<string, {at: number; texts: Map<string, string>}>();
+  const previews = new Map<string, {at: number; texts: Map<string, {text: string; facts: string[]}>}>();
   const callKey = (ctx: Context, id: unknown) => JSON.stringify([ctx.sessionKey, ctx.sessionId, id]);
   const active = (r: Request | undefined): r is Request => !!r && current === r && now() >= r.at && now() - r.at < 300000;
   const isCurrentRun = (ctx: Context, run?: string) => active(current) && current.runId === (ctx.runId ?? run)
@@ -102,20 +102,26 @@ export function createConfirmationRuntime(ownerId: string, now = Date.now) {
       if (typeof domain !== 'string' || typeof proposalId !== 'string' || typeof payloadHash !== 'string'
         || !/^[a-f0-9-]{36}$/iu.test(proposalId) || !/^[a-f0-9]{64}$/u.test(payloadHash)) return;
       try {
-        if (!prepareConfirmationPreview(current!.event, {domain, proposalId, payloadHash}, result.previewText)) return;
+        const facts = Array.isArray(result.presentationFacts) && result.presentationFacts.length
+          && result.presentationFacts.every(f=>typeof f==='string' && f) && result.presentationFacts.join('\n')===result.previewText
+          ? result.presentationFacts as string[] : [result.previewText];
+        if (!prepareConfirmationPreview(current!.event, {domain, proposalId, payloadHash}, result.previewText, facts)) return;
         prune();
         while (previews.size >= 64) previews.delete(previews.keys().next().value!);
         const id = JSON.stringify([current!.event.sessionKey, current!.runId]);
-        const entry = previews.get(id) ?? {at: now(), texts: new Map<string, string>()};
-        entry.texts.set(proposalId, result.previewText); previews.set(id, entry);
+        const entry = previews.get(id) ?? {at: now(), texts: new Map<string, {text: string; facts: string[]}>()};
+        entry.texts.set(proposalId, {text:result.previewText,facts}); previews.set(id, entry);
       } catch { /* No saved preview means no natural authorization. */ }
     },
     beforeReply(event: {sessionKey?: string; runId?: string; channel?: string; kind: string; payload: Result}) {
       prune();
       const id = JSON.stringify([event.sessionKey, event.runId]), preview = previews.get(id);
-      if (!preview || event.kind !== 'final' || event.channel !== 'kurumi-qq' || event.payload.mediaUrl || event.payload.mediaUrls) return;
+      if (!preview || event.kind !== 'final' || event.channel !== 'kurumi-qq' || event.payload.mediaUrl || event.payload.mediaUrls
+        || event.payload.isReasoning || event.payload.isError || event.payload.isCommentary || typeof event.payload.text!=='string' || !event.payload.text.trim()
+        || ['NO_REPLY','HEARTBEAT_OK'].includes(event.payload.text.trim())) return;
       previews.delete(id);
-      return {payload: {...event.payload, text: [...preview.texts.values()].join('\n\n')}};
+      const text=event.payload.text,missing=[...preview.texts.values()].flatMap(p=>p.facts).filter(f=>!text.includes(f));
+      return {payload: {...event.payload, text: [text,...missing].join('\n\n')}};
     },
     execute(callId: string, args: ConfirmationArguments, ctx: Context) {
       const request = calls.get(callKey(ctx, callId));
@@ -138,7 +144,7 @@ export function createConfirmationRuntime(ownerId: string, now = Date.now) {
       if (!selected) return {ok: false, code: 'proposal_unavailable'};
       const selection: NaturalConfirmationSelection = {domain: args.domain, proposalId: selected.proposalId, payloadHash: selected.payloadHash};
       if (args.action === 'preview') return selected.previewText ? {ok: true, status: 'pending', ...selection,
-        previewText: selected.previewText} : {ok: false, code: 'proposal_needs_new_preview'};
+        previewText: selected.previewText, ...(selected.presentationFacts?{presentationFacts:selected.presentationFacts}:{})} : {ok: false, code: 'proposal_needs_new_preview'};
       if (args.action !== 'confirm') return {ok: false, code: 'invalid_action'};
       const result = confirmNaturalProposal(request.event, selection, now());
       return {...result, ...selection, ...(result.ok ? {status: 'authorized', next: `Call ${nextCommit(selection.domain)}. This has not executed the business action.`} : {})};

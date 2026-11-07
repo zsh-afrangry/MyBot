@@ -37,7 +37,7 @@ function fixture(t, sender = OWNER) {
     fs.writeFileSync(path.join(workspace, 'AGENTS.md'), '<!-- kurumi-isolated-member-v1 -->');
   }
   const docs = new Documents(path.join(root, 'documents'));
-  const observed = {dispatches: 0, delivered: [], contexts: []};
+  const observed = {dispatches: 0, delivered: [], contexts: [], notices: []};
   const agentId = sender === OWNER ? 'main' : 'qq-user-' + sender;
   const sessionKey = `agent:${agentId}:kurumi-qq:direct:${sender}`;
   const runtime = {channel: {
@@ -50,6 +50,7 @@ function fixture(t, sender = OWNER) {
   const event = {post_type: 'message', message_type: 'private', self_id: Number(BOT), user_id: Number(sender),
     message_id: -500, message: [file('SOUL.md')]};
   return {root, cfg, docs, observed, args: {cfg, runtime, event, selfId: BOT,
+    composeNotice:async input=>{input.check();observed.notices.push(input);return{text:'模型接收说明 '+JSON.stringify(input.facts)};},
     deliverOverride: async payload => {observed.delivered.push(payload);}}};
 }
 
@@ -58,49 +59,49 @@ function parseResults(ctx) {
   assert(match, 'Missing attachment facts'); return JSON.parse(match[1]);
 }
 
-test('Markdown with an old translated artifact never enters the model or sends that artifact', async t => {
+test('Markdown with an old translated artifact uses an isolated assistant notice without entering business dispatch or sending that artifact', async t => {
   const {args, docs, observed, root} = fixture(t);
   await docs.add(pdf('Previously translated paper'), {kind: 'artifact', filename: 'old-dual.pdf'}, {inspect});
   args.runtime.channel.reply.dispatchReplyWithBufferedBlockDispatcher = async () => {throw Error('Old-history business tools must not run');};
   const result = await handleInbound(args);
-  assert.equal(result.modelDispatched, false); assert.equal(result.attachmentReply, true);
-  assert.equal(observed.delivered.length, 1); assert.match(observed.delivered[0].text, /SOUL\.md.*只接受PDF/);
+  assert.equal(result.modelDispatched, true); assert.equal(result.attachmentReply, true);
+  assert.equal(observed.delivered.length, 1); assert.match(observed.delivered[0].text, /SOUL\.md.*unsupported_type/);
   assert(!observed.delivered[0].mediaUrl); assert.equal(docs.list({kind: 'artifact'}).length, 1);
   assert.deepEqual(fs.readdirSync(path.join(docs.root, 'jobs')), []);
   assert.equal((await handleInbound(args)).duplicate, true); assert.equal(observed.delivered.length, 1);
   const events = fs.readFileSync(path.join(docs.root, 'events.jsonl'), 'utf8').trim().split('\n').map(JSON.parse);
   assert.equal(events[0].data.status, 'unsupported_type'); assert.equal(events[0].data.fileType, 'md');
-  assert.equal(events[0].data.filename, undefined); assert.equal(events.at(-1).data.modelDispatched, false);
+  assert.equal(events[0].data.filename, undefined); assert.equal(events.at(-1).data.modelDispatched, true);
   const queried = filterEvents(collectEvents({runtimeRoot: root, sources: ['papers'], from: 0, to: Date.now() + 1000}), {messageId: '-500'});
   assert.deepEqual(queried.map(e => e.kind).sort(), ['paper.qq_ingress_route', 'paper.qq_receive']);
   assert(queried.every(e => !JSON.stringify(e).includes('SOUL.md')));
 });
 
-test('Direct notice preserves recipient isolation for members and offline-file notices', async t => {
+test('Assistant notice preserves recipient isolation for members and offline-file notices', async t => {
   const {args, observed, docs} = fixture(t, MEMBER);
   args.event = {post_type: 'notice', notice_type: 'offline_file', self_id: Number(BOT), user_id: Number(MEMBER), file: {id: 'offline', name: 'notes.md'}};
-  assert.equal((await handleInbound(args)).modelDispatched, false);
+  assert.equal((await handleInbound(args)).modelDispatched, true);
   assert.equal(observed.delivered[0].to, 'user:' + MEMBER); assert.equal(observed.dispatches, 0);
   assert.equal(docs.list().length, 0); assert.equal((await handleInbound(args)).duplicate, true);
 });
 
-test('Whitespace-only text plus failed attachments uses the direct receive notice', async t => {
+test('Whitespace-only text plus failed attachments uses the assistant receive notice', async t => {
   const {args, observed} = fixture(t); args.event.message.unshift({type: 'text', data: {text: ' \n\t'}});
-  assert.equal((await handleInbound(args)).modelDispatched, false); assert.equal(observed.dispatches, 0);
+  assert.equal((await handleInbound(args)).modelDispatched, true); assert.equal(observed.dispatches, 0);
 });
 
-test('Receive failures have distinct facts and remain outside the model for attachment-only input', async t => {
+test('Receive failures have distinct facts and remain outside business dispatch for attachment-only input', async t => {
   for (const [code, status, text] of [
-    ['pdf_download_failed', 'download_failed', /下载失败/],
-    ['invalid_pdf', 'validation_failed', /校验失败/],
-    ['pdf_validation_failed', 'validation_failed', /校验失败/],
-    ['pdf_size_limit_exceeded', 'rejected', /超过25 MiB/],
-    ['capability_not_allowed', 'rejected', /没有文件导入权限/],
-    ['invalid_file_metadata', 'rejected', /文件信息无效/],
-    ['unrecognized_upstream_code', 'import_failed', /未成功登记/],
+    ['pdf_download_failed', 'download_failed', /download_failed/],
+    ['invalid_pdf', 'validation_failed', /validation_failed/],
+    ['pdf_validation_failed', 'validation_failed', /validation_failed/],
+    ['pdf_size_limit_exceeded', 'rejected', /pdf_size_limit_exceeded/],
+    ['capability_not_allowed', 'rejected', /capability_not_allowed/],
+    ['invalid_file_metadata', 'rejected', /invalid_file_metadata/],
+    ['unrecognized_upstream_code', 'import_failed', /pdf_import_failed/],
   ]) await t.test(code, async t => {
     const {args, observed} = fixture(t); args.event.message = [file()]; args.stageFile = async () => {throw failure(code);};
-    assert.equal((await handleInbound(args)).modelDispatched, false); assert.equal(observed.dispatches, 0);
+    assert.equal((await handleInbound(args)).modelDispatched, true); assert.equal(observed.dispatches, 0);
     assert.match(observed.delivered[0].text, text); assert(!observed.delivered[0].text.includes('credentials'));
     args.event = {...args.event, message_id: -501, message: [{type: 'text', data: {text: '这个文件接收成功了吗？'}}, file()]};
     await handleInbound(args); const result = parseResults(observed.contexts[0])[0];
@@ -130,10 +131,10 @@ test('A successfully staged image keeps dialogue processing; failed images alone
   for (const success of [true, false]) await t.test(String(success), async t => {
     const {args, observed} = fixture(t); args.event.message.push({type: 'image', data: {file: 'fixture'}});
     args.stageMedia = async () => {if (!success) throw Error('unavailable'); return {path: '/fixture/image.png', contentType: 'image/png'};};
-    assert.equal((await handleInbound(args)).modelDispatched, success);
+    assert.equal((await handleInbound(args)).modelDispatched, true);
     assert.equal(observed.dispatches, Number(success));
     if (success) assert.equal(observed.contexts[0].media.length, 1);
-    else assert.match(observed.delivered[0].text, /图片未能加载/);
+    else assert.match(observed.delivered[0].text, /imageFailures.*1/);
   });
 });
 
@@ -247,4 +248,16 @@ test('A lost direct-notice receipt stays unknown and duplicate ingress cannot re
   const ledger = new Ledger(cfg.channels['kurumi-qq'].stateDir);
   try {assert.equal(ledger.db.prepare('SELECT status FROM outbound').get().status, 'unknown'); assert.equal(ledger.db.prepare('SELECT status FROM inbound').get().status, 'failed');}
   finally {ledger.close();}
+});
+
+
+test('attachment explanation failure stays unsent and never uses a fixed fallback or old artifact', async t => {
+  const {args, observed, docs, cfg} = fixture(t);
+  await docs.add(pdf('Old artifact'), {kind:'artifact',filename:'old.pdf'}, {inspect});
+  args.composeNotice = async () => {throw Object.assign(Error('private model detail'),{code:'assistant_notice_run_failed'});};
+  await assert.rejects(handleInbound(args),/private model detail/);
+  assert.equal(observed.delivered.length,0);assert.equal(observed.dispatches,0);
+  assert.equal((await handleInbound(args)).duplicate,true);assert.equal(docs.list({kind:'artifact'}).length,1);
+  const ledger = new Ledger(cfg.channels['kurumi-qq'].stateDir);
+  try {assert.equal(ledger.db.prepare('SELECT status FROM inbound').get().status,'failed');assert.equal(ledger.db.prepare('SELECT COUNT(*) AS n FROM outbound').get().n,0);}finally{ledger.close();}
 });

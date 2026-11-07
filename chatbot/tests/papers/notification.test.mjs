@@ -23,7 +23,7 @@ function setup(overrides={}) {
   const runtime={agent:{
     resolveAgentWorkspaceDir:()=>'/fixture/workspace',resolveAgentDir:()=>'/fixture/agent',
     session:{resolveStorePath:()=>'/fixture/store',getSessionEntryAsync:async()=>({sessionId:'fixture-current-session'}),runWithWorkAdmission:async({signal},run)=>run(signal)},
-    runEmbeddedAgent:async args=>{calls.runs.push(args);return {payloads:[{text:'本篇达到本地单篇用量上限，尚无完整译文。'}]};},
+    runEmbeddedAgent:async args=>{calls.runs.push(args);return {payloads:[{text:'本篇达到本地单篇用量上限，尚无完整译文。'+jobId}]};},
   }};
   const deps={runtime,workflow:{enqueueNextTurnInjection:async value=>{calls.injections.push(value);return{enqueued:true};}},
     config,authorize:(request,permission)=>{assert.equal(request,binding);calls.checks.push(permission);},
@@ -85,26 +85,24 @@ test('The bound existing chat receives a tool-free explanation and exactly one p
   assert(calls.checks.filter(p=>p==='qq.notify').length>=3);
 });
 
-test('Host failure/empty response falls back to diagnostic Chinese and queues already-notified context',async()=>{
+test('Host failure/empty response is not notified and has no fixed-text fallback',async()=>{
   for(const result of [null,{payloads:[]},{meta:{aborted:true},payloads:[{text:'not successful'}]},{payloads:[{text:'NO_REPLY'}]},{payloads:[{text:'reasoning only',isReasoning:true}]}]){
     const {calls,deps}=setup();deps.runtime.agent.runEmbeddedAgent=async()=>{if(result===null)throw Error('private upstream error');return result;};
-    const receipt=await createFailureNotifier(deps)(failureSummary(failed()),jobId,binding);
-    assert.equal(receipt.mode,'fallback');assert.equal(receipt.contextQueued,true);assert.equal(calls.sends.length,1);
-    assert.match(calls.sends[0].text,/300,963 \/ 300,000/);assert(!calls.sends[0].text.includes('private'));
-    assert.equal(calls.injections[0].sessionKey,binding.sessionKey);assert.equal(calls.injections[0].agentId,binding.agentId);assert.match(calls.injections[0].text,/不重复播报/);
+    await assert.rejects(createFailureNotifier(deps)(failureSummary(failed()),jobId,binding),/assistant_notice_/);
+    assert.equal(calls.sends.length,0);assert.equal(calls.injections.length,0);
   }
 });
 
-test('A missing chat falls back without creating a replacement session or using the owner route',async()=>{
+test('A missing chat refuses without creating a replacement session or using the owner route',async()=>{
   const {calls,deps}=setup();deps.runtime.agent.session.getSessionEntryAsync=async()=>undefined;
-  const receipt=await createFailureNotifier(deps)(failureSummary(failed()),jobId,binding);
-  assert.equal(receipt.mode,'fallback');assert.equal(calls.runs.length,0);assert.equal(calls.sends[0].to,binding.to);
+  await assert.rejects(createFailureNotifier(deps)(failureSummary(failed()),jobId,binding),{code:'assistant_notice_session_missing'});
+  assert.equal(calls.runs.length,0);assert.equal(calls.sends.length,0);
 });
 
 test('Revocation during explanation, cancellation and an unknown send receipt never cause another send',async()=>{
   const {calls,deps}=setup();let permitted=true;
   deps.authorize=()=>{if(!permitted)throw Error('revoked');};
-  deps.runtime.agent.runEmbeddedAgent=async()=>{permitted=false;return{payloads:[{text:'result'}]};};
+  deps.runtime.agent.runEmbeddedAgent=async()=>{permitted=false;return{payloads:[{text:'result '+jobId}]};};
   await assert.rejects(createFailureNotifier(deps)(failureSummary(failed()),jobId,binding),/revoked/);assert.equal(calls.sends.length,0);
   const stopped=new AbortController();stopped.abort();
   await assert.rejects(createFailureNotifier(deps)(failureSummary(failed()),jobId,binding,stopped.signal));
@@ -113,14 +111,14 @@ test('Revocation during explanation, cancellation and an unknown send receipt ne
   assert.equal(lost.calls.sends.length,1);assert.equal(lost.calls.injections.length,0);
 });
 
-test('Explanation timeout falls back, while a service abort suppresses the fallback',async()=>{
+test('Explanation timeout and service abort suppress publication without fallback',async()=>{
   const first=setup({timeoutMs:10});
   first.deps.runtime.agent.runEmbeddedAgent=async({abortSignal})=>new Promise((_,reject)=>abortSignal.addEventListener('abort',()=>reject(abortSignal.reason),{once:true}));
   // Keep the test alive; AbortSignal.timeout does not itself retain the process event loop.
   const keepAlive=setInterval(()=>{},1000);
   try {
-    assert.equal((await createFailureNotifier(first.deps)(failureSummary(failed()),jobId,binding)).mode,'fallback');
-    assert.equal(first.calls.sends.length,1);
+    await assert.rejects(createFailureNotifier(first.deps)(failureSummary(failed()),jobId,binding),{code:'assistant_notice_run_failed'});
+    assert.equal(first.calls.sends.length,0);
     const second=setup(),controller=new AbortController();
     second.deps.runtime.agent.runEmbeddedAgent=async({abortSignal})=>new Promise((_,reject)=>{controller.abort();reject(abortSignal.reason);});
     await assert.rejects(createFailureNotifier(second.deps)(failureSummary(failed()),jobId,binding,controller.signal));

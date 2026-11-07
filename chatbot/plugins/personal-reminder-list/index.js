@@ -2,6 +2,7 @@ import {createListApplication, stateRoot} from './application.js';
 import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/index.js';
 import {createListIntake} from './intake.js';
 import {createScheduler} from './scheduler.js';
+import {registerDigestNotice} from './notification.js';
 import {readFileSync} from 'node:fs';
 import {registerRemoteList} from './remote.js';
 import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
@@ -54,6 +55,7 @@ export function createReminderListPlugin({registry} = {}) {
       }, {matcher: ['personal_reminder_propose', 'personal_reminder_commit', 'personal_reminder_change_propose', 'personal_reminder_change_commit', 'personal_reminder_cancel_propose', 'personal_reminder_cancel_commit', 'automations']});
       api.on('before_reset', (event, ctx) => intake.end(event, ctx));
       api.on('session_end', (event, ctx) => intake.end(event, ctx));
+      registerDigestNotice(api,options);
       api.registerService({id: 'personal-reminder-list-scheduler', start: () => scheduler.start(), stop: () => scheduler.stop()});
     }
     for (const declaration of toolDeclarations) {

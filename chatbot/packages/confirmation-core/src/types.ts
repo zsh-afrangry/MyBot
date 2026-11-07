@@ -55,6 +55,7 @@ export interface NaturalConfirmationSelection {
 
 export interface ConfirmationPreview extends ConfirmationProposalRow {
   previewText: string | null;
+  presentationFacts?: string[];
   sourceMessageId: string | null;
   presentedAtUtc: number | null;
   presentationMessageId: string | null;
@@ -68,7 +69,7 @@ export interface NaturalConfirmationBackend {
   supportsBatch?: boolean;
   list(event: ConfirmationInboundEvent): ConfirmationPreview[];
   used(event: ConfirmationInboundEvent): NaturalConfirmationSelection[];
-  savePreview(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, text: string): boolean;
+  savePreview(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, text: string, facts?: string[]): boolean;
   presented(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, messageId: string, order?: number): boolean;
   confirm(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection): boolean;
 }

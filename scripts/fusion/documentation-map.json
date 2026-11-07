@@ -3,6 +3,22 @@
   "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
   "scriptOwners": [
     {
+      "prefix": "chatbot/packages/response-core/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/tests/response/",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/23_KnowledgeMap业务能力桥接.md"
+      ],
+      "evidence": [
+        "docs/verification/unified-expression-2026-11-07/README.md"
+      ]
+    },
+    {
       "prefix": "chatbot/tests/memory/",
       "documents": [
         "docs/29_记忆系统.md",
@@ -459,6 +475,16 @@
     }
   ],
   "evidenceOwners": [
+    {
+      "prefix": "unified-expression-2026-11-07/",
+      "category": "当前有效",
+      "documents": [
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/22_论文PDF翻译与文件投递.md",
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/23_KnowledgeMap业务能力桥接.md"
+      ]
+    },
     {
       "prefix": "coding-autonomous-2026-11-07/",
       "documents": [

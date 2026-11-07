@@ -1,3 +1,4 @@
+import {registerReminderNotice} from './reminder-notification.js';
 import { Type } from 'typebox';
 import { jsonResult } from 'openclaw/plugin-sdk/agent-runtime';
 import type { AnyAgentTool } from 'openclaw/plugin-sdk/plugin-entry';
@@ -338,6 +339,7 @@ export function createPlugin() {
         register(api);
         if (api.registrationMode !== 'full')
             return;
+        registerReminderNotice(api);
         registerInteractionHooks(api, { proposalTools: ['personal_reminder_propose', 'personal_reminder_change_propose', 'personal_reminder_cancel_propose'] });
         registerDomainBackend(api, { id: 'personal-reminder', domain: 'personal_reminder', open: () => new ReminderStore({ stateDirectory: reminderStateDirectory() }) });
         if (api.pluginConfig?.reminderBackend === 'native-service') {

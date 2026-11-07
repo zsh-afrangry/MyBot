@@ -1,3 +1,4 @@
+import { freezeConfirmationFacts } from "@kurumi/confirmation-core";
 import { formatDateTime as formatPlanningDateTime, formatTimestamp } from "./time-display.js";
 // Preserve the existing planning export for callers and regression tests.
 export { formatDateTime as formatPlanningDateTime } from "./time-display.js";
@@ -117,6 +118,7 @@ export interface PlanningChangeProposalResult {
   status: "pending";
   kind: "trip_create";
   previewText: string;
+  presentationFacts?: string[];
   /** Exact sentence the owner must send back to approve this proposal. */
   confirmationInstruction: string;
   canonicalFacts: {
@@ -401,11 +403,6 @@ export function proposePlanningChange(
     ...(scope === undefined ? {} : { scope }),
   });
   const confirmationInstruction = "确认";
-  const previewText = [
-    basePreview,
-    "请确认这份预览；有多项时说明要确认哪一项。确认后才会提交：",
-    confirmationInstruction,
-  ].join("\n");
 
   return {
     ok: true,
@@ -414,7 +411,7 @@ export function proposePlanningChange(
     payloadHash: created.payloadHash,
     status: "pending",
     kind: "trip_create",
-    previewText,
+    ...freezeConfirmationFacts([basePreview]),
     confirmationInstruction,
     canonicalFacts,
     derivedEffects: [],
@@ -793,7 +790,7 @@ function buildProposalPreview(
   warnings: string[],
 ): string {
   const lines = [
-    "待确认的出行计划提案",
+    "操作：新增行程（待确认，未提交）",
     `- 标题：${facts.title}`,
     `- 目的地：${facts.destination.text}`,
     `- 当前天气参考地：${facts.origin.displayName}`,
@@ -801,7 +798,6 @@ function buildProposalPreview(
     `- 出发信息：${formatWindow(facts.departure)}`,
     `- 到达信息：${formatWindow(facts.arrival)}`,
     "- 当前动作：只保存待确认提案，不修改地点、行程、提醒时间或定时任务。",
-    "- 下一步：主人发送本提案的规范确认文本后，才可调用提交工具保存行程。",
     "- 当前行程仅支持新增；提交后不能修改或补全这条记录。",
   ];
   if (missingFields.length > 0) {

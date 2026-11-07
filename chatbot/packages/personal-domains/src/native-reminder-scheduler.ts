@@ -79,7 +79,7 @@ export function createNativeReminderScheduler(options: {
         throw new Error('Reminder registration does not match approved domain state');
       // The fixed builder obtains executable/cwd from this installed plugin.
       const params=buildReminderCronAddParams(input);
-      params.payload={...params.payload as Record<string,unknown>,cwd:pluginRoot};
+      params.payload={...params.payload as Record<string,unknown>,cwd:pluginRoot,env:{OPENCLAW_GATEWAY_PORT:String(options.port)}};
       const result=await request('cron.add',params) as {id?:string;jobId?:string;job?:{id?:string}};
       const jobId=result?.id??result?.jobId??result?.job?.id;if(!jobId)throw new Error('Missing managed Cron identity');
       return {jobId};

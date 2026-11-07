@@ -1,4 +1,5 @@
 // Explicit asynchronous boundary. SQLite here owns only settings/receipts, not items.
+import {registerDigestNotice} from './notification.js';
 import {ListStore} from './store.js';
 import {createListService} from './service.js';
 import {defaultListPolicy} from './policy.js';
@@ -27,7 +28,7 @@ export class ListControlStore extends ListStore {
       this.db.prepare('INSERT INTO deliveries VALUES(?,?,?,?,?,?,?,NULL)').run(slot.key, slot.at, settings.version,
         status, JSON.stringify(items.map(i => i.id)), output, this.now());
       this.audit('digest.' + status, null, {slotKey: slot.key, count: items.length, dataSource: 'knowledgemap'});
-      return {slotKey: slot.key, text: output, count: items.length};
+      return {slotKey: slot.key, at:slot.at, items, text: output, count: items.length};
     });
   }
 }
@@ -108,6 +109,7 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
         block: true, blockReason: '本次已选择提醒列表维护；失败须说明或澄清，不能改建一次性提醒或自动化任务',
       };
     }, {matcher: ['personal_reminder_propose', 'personal_reminder_commit', 'personal_reminder_change_propose', 'personal_reminder_change_commit', 'personal_reminder_cancel_propose', 'personal_reminder_cancel_commit', 'automations']});
+    registerDigestNotice(api,options,{loadItems:async()=> (await client.allTasks()).map(taskItem)});
     api.registerService({id: 'personal-reminder-list-scheduler', start: () => scheduler.start(), stop: () => scheduler.stop()});
   }
   for (const declaration of declarations) api.registerTool({contextVersion: 2, create: ctx => {

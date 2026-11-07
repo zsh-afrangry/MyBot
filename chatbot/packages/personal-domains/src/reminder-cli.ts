@@ -2,16 +2,15 @@
 
 import { pathToFileURL } from "node:url";
 
-import { reminderStateDirectory } from "./paths.js";
-import { ReminderStore } from "./reminder-store.js";
+import {requestAssistantNotice} from "../../response-core/index.js";
 
 /**
  * The only executable a reminder Cron job may run. It accepts a UUID generated
- * by the plugin, reads the frozen record, and prints one fixed-format line for
- * Gateway announce delivery. It never invokes an LLM or accepts content/to/URL
- * from argv.
+ * by the plugin. The authenticated domain endpoint claims the frozen record
+ * and generates its bound assistant notice for native announce delivery.
+ * Content/to/URL are never accepted from argv; generation failure prints nothing.
  */
-export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
+export async function main(argv: string[] = process.argv.slice(2), options:Parameters<typeof requestAssistantNotice>[2]={}): Promise<number> {
   const [command, ...args] = argv;
   if (command !== "deliver") {
     process.stderr.write("usage: reminder-cli deliver --id <uuid>\n");
@@ -22,17 +21,12 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     process.stderr.write("invalid reminder id\n");
     return 2;
   }
-  const store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
   try {
-    const reminder = store.claimForDelivery(reminderId, store.getNowUtc());
-    // Cancelled, duplicated, or prematurely fired jobs deliberately produce no
-    // message. A second delivery must never be created from this process.
-    if (!reminder) return 0;
-    process.stdout.write(`提醒时间到了：${reminder.content}\n`);
+    const result=await requestAssistantNotice('personal-reminder.compose',{id:reminderId},options);
+    if(result.text)process.stdout.write(result.text+'\n');
     return 0;
-  } finally {
-    store.close();
-  }
+  }catch{process.stderr.write('Reminder notice generation unavailable; inspect domain/Cron receipts\n');return 1;}
+
 }
 
 function readReminderId(args: string[]): string | undefined {

@@ -1,4 +1,4 @@
-// Attachment facts and deterministic receive notices; never infer chat intent. Contract: docs/22.
+// Attachment facts and routing; never infer chat intent. Contract: docs/22.
 import {stagePdf} from './files.js';
 
 const MAX_ATTACHMENTS = 3;
@@ -56,18 +56,4 @@ export function attachmentContext(results) {
 export function shouldReplyToFailedAttachments(msg, results, media) {
   return results.length > 0 && !results.some(x => x.status === 'registered')
     && !msg.text.trim() && msg.replyId == null && media.length === 0;
-}
-
-export function attachmentNotice(results) {
-  return results.map(result => {
-    const name = '附件“' + result.filename + '”';
-    if (result.status === 'not_processed') return `另有${result.count}个附件未处理：单条消息最多接收3个文件。`;
-    if (result.status === 'unsupported_type') return `${name}暂不支持读取，当前文件入口只接受PDF。`;
-    if (result.code === 'pdf_size_limit_exceeded') return `${name}超过25 MiB，未接收；请上传较小的PDF。`;
-    if (result.status === 'download_failed') return `${name}下载失败，未取得可用PDF；请重新上传。`;
-    if (result.status === 'validation_failed') return `${name}校验失败；请上传未加密、内容有效且页数不超过500页的PDF。`;
-    if (['capability_not_allowed', 'identity_not_enabled'].includes(result.code)) return `${name}未接收，当前身份没有文件导入权限。`;
-    if (result.status === 'rejected') return `${name}的文件信息无效，未接收；请重新上传PDF。`;
-    return `${name}未成功登记，暂不可用；请稍后重新上传PDF。`;
-  }).join('\n');
 }

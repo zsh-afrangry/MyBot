@@ -439,6 +439,16 @@ export class ReminderStore {
     return changed;
   }
 
+  markNoticeGenerationFailed(reminderId:string,atUtc:number):void {
+    this.#assertOpen();
+    this.#transaction(()=>{
+      const changed=Number(this.#database.prepare("UPDATE reminders SET status='failed',failure_code='assistant_notice_generation_failed',updated_at_utc=? WHERE reminder_id=? AND subject_id=? AND status='delivering'").run(atUtc,reminderId,REMINDER_SUBJECT_ID).changes);
+      if(!changed)return;
+      this.#database.prepare("UPDATE reminder_retry_state SET retry_status='exhausted',next_retry_at_utc=NULL,lease_until_utc=NULL,last_failure_code='assistant_notice_generation_failed',updated_at_utc=? WHERE reminder_id=?").run(atUtc,reminderId);
+      this.insertAudit({action:'reminder.notice_generation_failed',entityType:'reminder',entityId:reminderId,proposalId:null,summary:{code:'assistant_notice_generation_failed'},atUtc});
+    });
+  }
+
   markReminderFailed(input: { reminderId: string; code: string; atUtc: number }): boolean {
     this.#assertOpen();
     const changed = this.#transaction(() => {

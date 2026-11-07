@@ -168,7 +168,7 @@ test('shared natural-confirmation runtime delivers the coding preview and author
   const preview = await f.run({action: 'preview', taskId: task.id});
   runtime.afterTool({toolName: 'kurumi_code', runId: first.runId, result: {content: [{type: 'text', text: JSON.stringify(preview)}]}}, first);
   const reply = runtime.beforeReply({runId: first.runId, sessionKey: first.sessionKey, channel: 'kurumi-qq', kind: 'final', payload: {text: 'model paraphrase'}});
-  assert.equal(reply.payload.text, preview.previewText);
+  assert.equal(reply.payload.text, 'model paraphrase\n\n'+preview.previewText);
   core.recordConfirmationDelivery({accountId: 'default', conversationId: 'user:100001', sourceMessageId: 'coding-preview-source', messageId: 'coding-preview-delivered', text: reply.payload.text});
   runtime.end({}, first);
   const next = receive('确认合入此测试任务', 'coding-owner-confirm', 'coding-confirm-run');

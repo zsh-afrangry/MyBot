@@ -51,7 +51,7 @@ Responses未完成时仅保存白名单的响应状态、未完成原因及实�
 
 DeepSeek上限依据2026-10-27查阅的[官方模型元数据](https://api-docs.deepseek.com/api/list-models/)及[Responses参数/未完成原因](https://api-docs.deepseek.com/api/create-response/)。这次修复不自动启动付费重译，真实输出与QQ说明仍需对应任务复验。
 
-后台仅将该摘要交给实际请求人绑定的原会话/Agent，调用宿主注册插件的会话运行入口生成解释。本次说明回合禁用全部工具，不自动重译、调预算、换厂商或重发文件，不开放QQ助手原有禁用能力。运行前和发送前分别复核身份/权限，成员结果不改发给主人。模型不可用、超时或无有效回复时，用同一摘要生成中文兜底；发出兜底后为下一聊天回合注入已通知的结果，避免助手失去上下文。外发只经QQ公开投递接口及既有幂等账本；外发回执未知不另发第二条兜底。通知状态与翻译/文件投递状态分别保存，重启不自动重放。
+后台仅将该摘要交给实际请求人绑定的原会话/Agent，经共享`response-core`与公开会话准入生成说明，沿用该会话人格、近期聊天和模型。说明回合关闭工具执行，运行前后与发送前复核身份/权限；不自动重译、调预算、换厂商或重发文件，成员结果不改发给主人。11.1可能保留发现/回放schema，但负向探针确认业务执行被拒绝，见[统一表达证据](verification/unified-expression-2026-11-07/README.md)。模型不可用、超时或没有有效最终回复时记录`generation_failed`，不发固定兜底、不假记已通知。成功说明与平台受理/未知分别记账，经QQ公开接口与原幂等键投递；未知不补发，重启不自动重放。
 
 实现与部署依据见[默认渠道与失败说明](verification/paper-translation-2026-10-17/default-deepseek-notification-2026-10-27/README.md)、[输出限制与延迟通知修复](verification/paper-translation-2026-10-17/output-limit-2026-10-27/README.md)；原失败依据保留在[17:03调查](verification/paper-translation-2026-10-17/qq-retest-2026-10-27-1703/README.md)。[N22](待办清单.md#n22-论文默认渠道与失败说明)按主人确认闭合，18:36起的生产翻译/QQ回传及失败通知的不同验证范围见[闭合证据](verification/paper-translation-2026-10-17/qq-success-2026-10-27-1835/README.md)和[验收总表](16_验收与测试总表.md#分领域验收摘要)。本次不把官方渠道成功当成030用量异常已修复。
 
@@ -81,7 +81,7 @@ flowchart LR
 | `kurumi_document` | list/get 返回受管 PDF/产物摘要；find 按 `query` 查本人已有 PDF 的文件名/记录题名/来源 URL（含 arXiv 编号），不读正文；fetch 复用公开论文下载器，可带模型查到的 `title`。只有题名时先 find，无命中再检索准确 URL 后 fetch |
 | `kurumi_translate` | start/status/list/cancel，使用真实 documentId/jobId；返回排队不代表完成，生成与投递分状态 |
 | `kurumi_document_send` | 只接受受管文档/产物 ID，投递可信请求人自身 QQ；不接收任意路径、URL 或模型指定的其它收件人 |
-| QQ 入站 | 校验已登记身份与机器人私聊元数据；file 消息和 offline_file 通知。附件逐项提供类型/状态/错误码，成功PDF另有受管ID/页数；纯失败无文字/引用/有效媒体时直接反馈，其余保留当前文字交模型 |
+| QQ 入站 | 校验已登记身份与机器人私聊元数据；file 消息和 offline_file 通知。附件逐项提供类型/状态/错误码，成功PDF另有受管ID/页数；纯失败无文字/引用/有效媒体时生成绑定会话的模型说明，其余保留当前文字走正常对话 |
 | 邮件 | 将受管 `documentId` 交给 `email_draft`，预览并按原规则确认后 `email_send`；附件数量/大小、固定字节与确认hash归[文档20](20_邮件能力与横切扩展.md#受管-pdf-附件) |
 
 三份窄工具加入main的alsoAllow；通用read/write/edit/process/message/sessions_spawn仍禁用。主人原生exec遵守[文档28的试点边界](28_本机编码工具委托与实验任务.md#主人原生exec)，不用于直接改写受管PDF或绕过论文工具。主人已授权本需求实现及真实本人测试，工具扩展已提前说明。论文正文、文件名、网页不是身份或授权来源；服务端参数来自受管配置，模型不能传端点、密钥或命令。
@@ -94,7 +94,7 @@ flowchart LR
 - 网站沿用 `arxiv.org`、`export.arxiv.org`、`aclanthology.org`、`openreview.net`、`proceedings.mlr.press`、`proceedings.neurips.cc` 的 HTTPS 白名单，不自动登录或跟重定向。
 - QQ 文件 URL 从已鉴权 OneBot 的 get_private_file_url 取得，忽略正文/上传数据中的任意 URL；只允许已登记QQ CDN，或公开IPv4的固定`/asn.com/`路径。HTTP先升级HTTPS；IPv4保持路由地址并以固定`multimedia.nt.qq.com.cn`做SNI/证书校验，不跟重定向、不关闭TLS验证。内网/保留IP拒绝。实际回取348896字节与原SHA256一致，但不是主人上传事件。
 - 每条消息最多处理前3项文件，超量明确标为未处理；只支持PDF，非PDF不下载、不读取正文。`qq_attachment_results`保留安全截断的文件名、扩展名标签和每项结果；标签为不可信数据，不是指令。状态为`registered/unsupported_type/rejected/download_failed/validation_failed/import_failed/not_processed`，仅`registered`包含本次真实文档ID。
-- 收到文件不等于请求翻译：成功PDF结合本次文字和前文明确的待续请求处理，用途未知先问；失败附件不能用历史PDF顶替。只有失败附件且无文字、引用或成功媒体时，由频道通过原发送账本直接反馈，不派发模型，未知回执不自动重发。引用未加载也保留对话路径，不以关键词正则决定业务意图。
+- 收到文件不等于请求翻译：成功PDF结合本次文字和前文明确的待续请求处理，用途未知先问；失败附件不能用历史PDF顶替。只有失败附件且无文字、引用或成功媒体时，由频道生成绑定会话的模型说明，不派发业务工具；生成失败无固定兜底，投递沿用原账本，未知回执不自动重发。引用未加载也保留对话路径，不以关键词正则决定业务意图。
 - 带文字或有效媒体的附件消息仍交模型；明确要求重发旧稿时可按实际ID发送。`paper.qq_receive`记录类型/状态/错误码和成功ID，`paper.qq_ingress_route`记录是否派发模型；可按QQ消息ID统一查询，不落文件名、正文或签名URL。
 - 任务状态：queued → running → succeeded / failed / cancelled / interrupted。可信会话与调用 ID 生成幂等键；同键不同参数拒绝，重放不再付费。
 - succeeded 只证明产物已登记；delivery 另记 not_requested / dispatching / platform_accepted / failed_or_unknown。中断投递不重新运行翻译，重启遗留 dispatching 标为未知，不重发。

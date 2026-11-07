@@ -431,7 +431,7 @@ describe("personal reminders", () => {
     }
   });
 
-  it("claims a due reminder once and prints deterministic text without a model call", async () => {
+  it("fixed runner forwards only a reminder ID and prints only a generated result", async () => {
     const baseDirectory = createDirectory();
     const stateDirectory = reminderStateDirectory({ OPENCLAW_STATE_DIR: baseDirectory });
     const store = new ReminderStore({ stateDirectory, now: () => NOW_UTC });
@@ -454,15 +454,14 @@ describe("personal reminders", () => {
       process.env.OPENCLAW_STATE_DIR = baseDirectory;
       const output = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
       try {
-        const originalNow = Date.now;
-        Date.now = () => Date.parse("2026-08-12T12:31:00Z");
-        expect(await reminderCliMain(["deliver", "--id", scheduled.reminder.reminderId])).toBe(0);
-        expect(await reminderCliMain(["deliver", "--id", scheduled.reminder.reminderId])).toBe(0);
-        expect(output).toHaveBeenCalledTimes(1);
-        expect(output).toHaveBeenCalledWith("提醒时间到了：起身活动\n");
-        // Fixed runner text must stay neutral; addressing belongs to the persona layer.
-        expect(String(output.mock.calls[0]?.[0])).not.toContain("主人");
-        Date.now = originalNow;
+        let count=0;
+        const request=async(method:string,params:Record<string,unknown>)=>{
+          expect(method).toBe('personal-reminder.compose');expect(params).toEqual({id:scheduled.reminder.reminderId});
+          return ++count===1?{text:'模型提醒：起身活动'}:{};
+        };
+        expect(await reminderCliMain(['deliver','--id',scheduled.reminder.reminderId],{request})).toBe(0);
+        expect(await reminderCliMain(['deliver','--id',scheduled.reminder.reminderId],{request})).toBe(0);
+        expect(output).toHaveBeenCalledExactlyOnceWith('模型提醒：起身活动\n');
       } finally {
         output.mockRestore();
         if (previousStateDirectory === undefined) delete process.env.OPENCLAW_STATE_DIR;

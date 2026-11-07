@@ -56,7 +56,7 @@ export async function fixture(t, options = {}) {
     async stop() { this.closed = true; }
     async cancellationStopped() { await this.stop(); return true; }
   }
-  createCodingPlugin({clientFactory: options.clientFactory ?? (args => new Peer(args)), trace: e => events.push(e), delivery: {async sendText(message) {
+  createCodingPlugin({composeNotice: options.composeNotice ?? (async facts => `合成模型通知 ${facts.taskId}\n状态：${facts.state}\n${facts.result?.page?.text ?? ''}\n${facts.hostChecks?.rows?.map(r=>r.name+'='+ (r.skipped?'不适用':r.code===0?'通过':'失败')).join('；')??''}\n${facts.workspaceKind==='directory'?'尚未修改原目录':'尚未修改目标分支'}`), clientFactory: options.clientFactory ?? (args => new Peer(args)), trace: e => events.push(e), delivery: {async sendText(message) {
     deliveries.push(message); return options.delivery ? options.delivery(message) : {channel: 'kurumi-qq', messageId: String(deliveries.length)};
   }}, onService: s => service = s}).register({config, pluginConfig, registrationMode: 'full', logger: {info() {}, warn() {}},
     on: (name, fn) => (hooks[name] ??= []).push(fn), registerTool: (factory, meta) => tools[meta.name] = factory,

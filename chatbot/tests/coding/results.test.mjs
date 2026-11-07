@@ -97,7 +97,7 @@ test('revoked result-read permission blocks completion content before any delive
   }});
   const task = await start(f); await f.service.idle(task.id);
   const current = f.service.store.get(task.id);
-  assert.equal(current.state, 'ready'); assert.equal(current.delivery.state, 'unknown'); assert.equal(f.deliveries.length, 0);
+  assert.equal(current.state, 'ready'); assert.equal(current.delivery.state, 'generation_failed'); assert.equal(f.deliveries.length, 0);
   await assert.rejects(f.run({action: 'result', taskId: task.id}), /capability_not_allowed/);
   assert.equal(f.calls.filter(call => call.method === 'prompt').length, 1);
 });
@@ -195,4 +195,15 @@ test('a skip code requires explicit registration and entirely skipped checks nev
   assert.equal(absent.ok, false); assert.equal(absent.rows[0].skipped, undefined);
   const skipped = await runChecks({checks: [{...check, skipExitCode: 77}]}, f.source, path.join(f.root, 'all-skipped.log'), undefined, f.pluginConfig.writeBoundary);
   assert.equal(skipped.ok, false); assert.equal(skipped.rows[0].skipped, true);
+});
+
+
+test('a delayed generation failure cannot overwrite notification state belonging to a newer execution round', async t => {
+  let enter,release;const entered=new Promise(r=>enter=r),gate=new Promise(r=>release=r);
+  const f=await fixture(t,{composeNotice:async()=>{enter();await gate;throw Error('old generation failed');},behavior:async({peer})=>execution(peer,'first round output')});
+  const task=await start(f);await entered;
+  const latest=f.service.store.get(task.id),newRound='11111111-1111-4111-8111-111111111111';
+  f.service.store.save({...latest,executionRoundId:newRound,delivery:{state:'platform_accepted',key:'new-round',roundId:newRound,messageId:'42'}});
+  release();await f.service.idle(task.id);
+  assert.equal(f.service.store.get(task.id).delivery.key,'new-round');assert.equal(f.service.store.get(task.id).delivery.state,'platform_accepted');assert.equal(f.deliveries.length,0);
 });

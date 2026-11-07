@@ -1,3 +1,4 @@
+import { freezeConfirmationFacts } from "@kurumi/confirmation-core";
 import { formatTimestamp } from "./time-display.js";
 import { createHash } from "node:crypto";
 
@@ -118,6 +119,7 @@ export interface ReminderProposalResult {
   status: "pending";
   kind: "reminder_create" | "reminder_cancel" | "reminder_update";
   previewText: string;
+  presentationFacts?: string[];
   /** Exact sentence the owner must send back to approve this proposal. */
   confirmationInstruction: string;
   canonicalFacts: {
@@ -271,15 +273,13 @@ export function proposeReminderCreate(
     payloadHash,
     status: "pending",
     kind: "reminder_create",
-    previewText: [
-      "主人，已生成一份待确认提醒提案：",
+    ...freezeConfirmationFacts([
+      "操作：创建一次性提醒（待确认，未执行）",
       `- 时间：${payload.schedule.localDateTime}（${REMINDER_TIMEZONE}，一次）`,
       `- 内容：${payload.content}`,
       "- 投递：仅主人 QQ 私聊",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-      "确认这份预览后才会创建定时任务；有多项时请说明哪一项：",
-      "确认",
-    ].join("\n"),
+    ]),
     confirmationInstruction: "确认",
     canonicalFacts: {
       kind: "reminder.create",
@@ -343,15 +343,13 @@ export function proposeReminderCancellation(
     payloadHash,
     status: "pending",
     kind: "reminder_cancel",
-    previewText: [
-      "主人，已生成一份待确认的取消提醒提案：",
+    ...freezeConfirmationFacts([
+      "操作：取消一次性提醒（待确认，未执行）",
       `- 原时间：${formatShanghaiDateTime(reminder.scheduledAtUtc)}（${REMINDER_TIMEZONE}）`,
       `- 原内容：${reminder.content}`,
       "- 影响：仅取消这条尚未投递的主人私聊提醒",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-      "确认这份预览后才会取消提醒；有多项时请说明哪一项：",
-      "确认",
-    ].join("\n"),
+    ]),
     confirmationInstruction: "确认",
     canonicalFacts: { kind: "reminder.cancel", reminderId: reminder.reminderId },
     derivedEffects: [{ kind: "reminder.cancel", target: "owner_qq_private" }],
@@ -436,17 +434,15 @@ export function proposeReminderUpdate(
     payloadHash,
     status: "pending",
     kind: "reminder_update",
-    previewText: [
-      "主人，已生成一份待确认的提醒修改提案：",
+    ...freezeConfirmationFacts([
+      "操作：修改一次性提醒（待确认，未执行）",
       `- 原时间：${formatShanghaiDateTime(reminder.scheduledAtUtc)}（${REMINDER_TIMEZONE}）`,
       `- 新时间：${nextLocalDateTime}（${REMINDER_TIMEZONE}）`,
       `- 原内容：${reminder.content}`,
       `- 新内容：${nextContent}`,
       "- 影响：在原有受限定时任务上原地更新，不会创建第二条提醒",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
-      "确认这份预览后才会应用修改；有多项时请说明哪一项：",
-      "确认",
-    ].join("\n"),
+    ]),
     confirmationInstruction: "确认",
     canonicalFacts: {
       kind: "reminder.update",

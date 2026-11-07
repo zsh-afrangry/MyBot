@@ -7,14 +7,14 @@ import {inspectOwnedRuntime, stopOwnedRuntime} from '../../packages/coding-runti
 import {probeWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
-import {CodingResultRecorder, readCodingResult, completionText} from './results.js';
+import {CodingResultRecorder, readCodingResult} from './results.js';
 import {projectPolicy, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, git, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
 import {digest, fail, taskText} from './policy.js';
 import {directoryState, directoryPlan, prepareDirectoryWriteback, runDirectoryWriteback, directoryWritebackState} from './directory-workspaces.js';
 
 export class CodingService {
-  constructor(config, {authorize, sendText, trace = () => {}, clientFactory = args => new AcpClient(args)} = {}) {
-    this.config = config; this.authorize = authorize; this.sendText = sendText; this.trace = trace;
+  constructor(config, {authorize, sendText, composeNotice, trace = () => {}, clientFactory = args => new AcpClient(args)} = {}) {
+    this.config = config; this.authorize = authorize; this.sendText = sendText; this.composeNotice = composeNotice; this.trace = trace;
     this.clientFactory = clientFactory; this.active = new Map(); this.projectLocks = new Set(); this.started = false;
   }
   start() {
@@ -299,10 +299,10 @@ export class CodingService {
       const paths = directory ? plan.changes.map(c => c.name) : git(candidateDir, 'diff', '--name-only', target.head, candidate, '--').trim().split('\n');
       const payload = {taskId: id, projectId: project.id, projectRoot: project.root, taskCommit: task.verifiedCommit, target, candidate, diffBase,
         diffHash: digest(diff), candidateDir, checks, ...(directory ? {directoryPlan: plan} : {})};
-      const previewText = `${directory ? '实验目录待确认回写' : '编码任务待确认合入'}\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${directory ? project.root : project.branch + ' @ ' + target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + (r.skipped ? '=不适用' : '=通过')).join('；')}\n${directory ? '原目录基线一致，回写前再次核对；原目录不建立Git。' : '目标当前有未提交内容：' + (target.status ? '有，合入不得覆盖' : '无')}\n差异SHA256：${payload.diffHash}\n请审阅差异后确认${directory ? '目录回写' : '本地合入'}；不包含push。`;
+      const previewText = `${directory ? '实验目录待确认回写' : '编码任务待确认合入'}\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${directory ? project.root : project.branch + ' @ ' + target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + (r.skipped ? '=不适用' : '=通过')).join('；')}\n${directory ? '原目录基线一致，回写前再次核对；原目录不建立Git。' : '目标当前有未提交内容：' + (target.status ? '有，合入不得覆盖' : '无')}\n差异SHA256：${payload.diffHash}\n执行范围：仅${directory ? '确认后目录回写' : '确认后本地合入'}；不包含push。`;
       const result = this.store.preview(task, payload, previewText, scope);
       this.store.save({...task, candidate}); this.event(task, 'coding.merge_preview', {candidate, proposalId: result.proposalId, payloadHash: result.payloadHash});
-      return result;
+      return {...result,presentationFacts:[previewText]};
     } finally { this.projectLocks.delete(project.id); }
   }
   async merge(id, proposalId, requester, scope, assertCurrent) {
@@ -370,6 +370,8 @@ export class CodingService {
     task = current;
     const key = `coding:${task.id}:${task.executionRoundId ?? task.verifiedCommit}:${task.state}`;
     if (task.delivery?.key === key) return;
+    this.store.save({...task,delivery:{state:'generating',key,roundId:task.executionRoundId}});
+    let sending = false;
     try {
       this.authorize(task.requester, 'tasks.read');
       this.authorize(task.requester, 'qq.reply');
@@ -377,16 +379,28 @@ export class CodingService {
       this.finishResult(task);
       let result = readCodingResult(this.store, task, {limit: 1800});
       if (result.available && result.page.nextOffset !== null) result = readCodingResult(this.store, task, {offset: Math.max(0, result.page.totalChars - 1800), limit: 1800});
-      const text = completionText(task, result), bodyHash = digest(text);
+      if (!this.composeNotice) throw fail('assistant_notice_unavailable');
+      const text = await this.composeNotice({taskId:task.id,projectId:task.projectId,state:task.state,workspaceKind:task.workspaceKind,
+        roundId:task.executionRoundId,reason:task.reason,hostChecks:task.checks,verifiedCommit:task.verifiedCommit,
+        permissionSummary:task.permissionSummary,result},task.requester);
+      if(typeof text!=='string' || !text.trim() || text.length>3500 || !text.includes(task.id))throw fail('assistant_notice_reply_missing');
+      const latest=this.store.get(task.id);
+      if(!this.started || latest.executionRoundId!==task.executionRoundId || latest.state!==task.state)throw fail('notification_task_changed');
+      this.authorize(task.requester,'tasks.read');this.authorize(task.requester,'qq.reply');
+      const bodyHash = digest(text);
       if (result.available) this.store.saveResult(task.id, {...this.store.result(task.id, result.roundId), notification: {key, text, bodyHash}});
       this.store.save({...this.store.get(task.id), delivery: {state: 'sending', key, roundId: task.executionRoundId, bodyHash}});
+      sending = true;
       const receipt = await this.sendText({to: task.requester.to, text, key});
       if (receipt?.channel !== 'kurumi-qq' || typeof receipt.messageId !== 'string' || !/^-?[1-9][0-9]*$/.test(receipt.messageId)) throw fail('missing_delivery_receipt');
+      if(this.store.get(task.id).delivery?.key!==key || this.store.get(task.id).executionRoundId!==task.executionRoundId)return;
       this.store.save({...this.store.get(task.id), delivery: {...this.store.get(task.id).delivery, state: 'platform_accepted', messageId: receipt.messageId}});
       this.event(this.store.get(task.id), 'coding.delivery', {state: 'platform_accepted'});
     } catch (e) {
-      this.store.save({...this.store.get(task.id), delivery: {...this.store.get(task.id).delivery, key, roundId: task.executionRoundId, state: 'unknown', code: e.code ?? 'delivery_failed'}});
-      this.event(this.store.get(task.id), 'coding.delivery', {state: 'unknown'});
+      if(this.store.get(task.id).delivery?.key!==key || this.store.get(task.id).executionRoundId!==task.executionRoundId)return;
+      const state = sending ? 'unknown' : 'generation_failed';
+      this.store.save({...this.store.get(task.id), delivery: {...this.store.get(task.id).delivery, key, roundId: task.executionRoundId, state, code: e.code ?? 'delivery_failed'}});
+      this.event(this.store.get(task.id), 'coding.delivery', {state});
     }
   }
   finishResult(task) {

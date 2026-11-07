@@ -45,12 +45,37 @@ function fixture() {
 it('binds original current text to the actual host call, presents the frozen preview, then authorizes a later confirmation',()=>{
  const f=fixture();try {
   const first=f.receive('请创建测试提醒'),p=f.proposal();f.prepare(p,first.ctx);
-  expect(f.deliver(first.messageId,first.ctx)?.payload.text).toBe('冻结预览 '+p.proposalId);
+  expect(f.deliver(first.messageId,first.ctx)?.payload.text).toBe('模型改写\n\n冻结预览 '+p.proposalId);
   f.runtime.end({},first.ctx);
   const second=f.receive('确认');
   expect(f.call(second.ctx,{action:'list',domain:p.domain})).toMatchObject({ok:true,proposals:[{proposalId:p.proposalId,presentedAtUtc:expect.any(Number)}]});
   expect(f.call(second.ctx,{action:'confirm',...p})).toMatchObject({ok:true,status:'authorized'});
   expect(f.db.prepare('SELECT status FROM approval_grants').get()).toEqual({status:'pending'});
+ }finally{f.close();}
+});
+it('keeps model expression and fact order, persists immutable fragments, and rejects an incomplete display receipt',()=>{
+ const f=fixture();try {
+  const first=f.receive('创建提醒'),p=f.proposal(),facts=['时间：2026-11-30 20:00（Asia/Shanghai）','内容：合成测试','状态：待确认，未执行'];
+  f.runtime.afterTool({toolName:'personal_reminder_propose',runId:first.ctx.runId,
+   result:{ok:true,status:'pending',...p,previewText:facts.join('\n'),presentationFacts:facts}},first.ctx);
+  const model='我把信息整理好了。\n'+[...facts].reverse().join('\n')+'\n这样安排可以吗？';
+  const reply=f.runtime.beforeReply({runId:first.ctx.runId,sessionKey:first.ctx.sessionKey,channel:'kurumi-qq',kind:'final',payload:{text:model}});
+  expect(reply?.payload.text).toBe(model);
+  expect(JSON.parse(f.db.prepare('SELECT facts_json FROM confirmation_previews').get()!.facts_json as string)).toEqual(facts);
+  const receipt={accountId:'default',conversationId:'user:123456789',sourceMessageId:first.messageId,messageId:'visible'};
+  recordConfirmationDelivery({...receipt,text:facts.slice(1).join('\n')});
+  expect(f.db.prepare('SELECT presented_at_utc FROM confirmation_previews').get()!.presented_at_utc).toBe(null);
+  recordConfirmationDelivery({...receipt,text:model});f.runtime.end({},first.ctx);
+  const second=f.receive('确认');expect(f.call(second.ctx,{action:'confirm',...p}).ok).toBe(true);
+ }finally{f.close();}
+});
+it('does not replace silence or failed model generation with a facts-only notification',()=>{
+ const f=fixture();try {
+  const first=f.receive('创建'),p=f.proposal();f.prepare(p,first.ctx);
+  for(const payload of [{text:''},{text:'NO_REPLY'},{text:'生成错误',isError:true},{text:'内部推理',isReasoning:true},{text:'只是进度',isCommentary:true}]){
+   expect(f.runtime.beforeReply({runId:first.ctx.runId,sessionKey:first.ctx.sessionKey,channel:'kurumi-qq',kind:'final',payload})).toBe(undefined);
+  }
+  expect(f.db.prepare('SELECT presented_at_utc FROM confirmation_previews').get()!.presented_at_utc).toBe(null);
  }finally{f.close();}
 });
 it('does not authorize with unbound, wrong run, old turn, changed session or reset contexts',()=>{
@@ -88,7 +113,7 @@ it('recognizes nested tool_call proposal results without trusting arbitrary tool
   const first=f.receive('创建'),p=f.proposal();
   f.runtime.beforeTool({toolName:'tool_call',params:{id:'personal_reminder_propose'},toolCallId:'proposal-wrapper',runId:first.ctx.runId},first.ctx);
   f.runtime.afterTool({toolName:'tool_call',toolCallId:'proposal-wrapper',runId:first.ctx.runId,result:{content:[{type:'text',text:JSON.stringify({tool:{name:'personal_reminder_propose'},result:{content:[{type:'text',text:JSON.stringify({ok:true,status:'pending',...p,previewText:'嵌套冻结预览'})}]}})}]}},first.ctx);
-  expect(f.deliver(first.messageId,first.ctx)?.payload.text).toBe('嵌套冻结预览');
+  expect(f.deliver(first.messageId,first.ctx)?.payload.text).toBe('模型改写\n\n嵌套冻结预览');
   const second=f.receive('确认');expect(f.call(second.ctx,{action:'confirm',...p}).ok).toBe(true);
  }finally{f.close();}
 });
@@ -137,7 +162,7 @@ it('Q13 list alone leaves focus unchanged; re-preview of older A after newer B a
   expect(f.deliver(third.messageId,third.ctx)).toBeUndefined();
   const result=f.call(third.ctx,{action:'preview',...a});
   f.runtime.afterTool({toolName:'personal_confirmation',runId:third.ctx.runId,result},third.ctx);
-  expect(f.deliver(third.messageId,third.ctx)?.payload.text).toBe('冻结预览 '+a.proposalId);
+  expect(f.deliver(third.messageId,third.ctx)?.payload.text).toBe('模型改写\n\n冻结预览 '+a.proposalId);
   expect(f.db.prepare('SELECT source_message_id,presentation_message_id FROM confirmation_previews WHERE proposal_id=?').get(a.proposalId))
    .toEqual({source_message_id:third.messageId,presentation_message_id:'delivered-'+third.messageId});
   expect(f.call(third.ctx,{action:'confirm',...a})).toMatchObject({code:'confirmation_not_explicit'});
