@@ -103,7 +103,7 @@ flowchart LR
 
 ### 受管PDF重命名（关联需求）
 
-状态：**已实现并离线验收，生产`papers.rename`尚未授予**；任务归[N24](待办清单.md#n24)。原需求范围见[范围记录](verification/paper-translation-2026-10-17/pdf-rename-scope-2026-10-28/README.md)，本轮证据见[改名验收](verification/paper-rename-2026-11-07/README.md)。
+状态：**已实现并完成离线、真实隔离宿主/主模型技术验证，生产`papers.rename`尚未授予**；任务归[N24](待办清单.md#n24)。原需求范围见[范围记录](verification/paper-translation-2026-10-17/pdf-rename-scope-2026-10-28/README.md)，本轮证据见[改名验收](verification/paper-rename-2026-11-07/README.md)。
 
 `kurumi_document action=rename`只维护当前用户受管PDF的对外名称；先get/find取得真实`documentId`与`nameVersion`，提交`filename`、`expectedVersion`。它不接受路径、通用命令或他人目标。首期权限为owner-only的`papers.rename`，未获得该权限的主人及所有成员均拒绝；已有读取/导入权限不隐式授权。
 
