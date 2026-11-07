@@ -1,0 +1,64 @@
+{
+  "at": "2026-11-07T15:23:39.828899+00:00",
+  "baseHead": "9b98c9c3fbb6e4f0c6bfda71d94fac503ccf0bc8",
+  "sourceHashesRecordedAfterSuccessfulHostRun": true,
+  "sourceSha256": {
+    "chatbot/packages/proactive-core/policy.js": "4d2af30fb145ff247a218baf36e944caac9c8e265aecf5e3872a83206d3a7407",
+    "chatbot/packages/proactive-core/store.js": "629409cb369e4eb77b4b39bce8656fa8e6a7a964702942e4fc25040625011252",
+    "chatbot/packages/proactive-core/authority.js": "41c8c3fe90e9966e97570f0e1d5a79f0989eec4114c661208d8ed4dd7350a195",
+    "chatbot/packages/proactive-core/service.js": "6ae8f561c0a68e9c5e88e4953b8f1ec5b4bb44af8a3f86e3248224f6c30e672c",
+    "chatbot/tests/proactive/core.test.mjs": "9ffcec3704b457ee205b8822f893a56c4a47fec9c7888a70dd0b3214fb1a007b",
+    "chatbot/tests/proactive/acceptance-authority-host.mjs": "49af651fe55d136e665016435a88cdda7ebcf7063a66476c64245ca3dd8afd60"
+  },
+  "mechanism": {
+    "command": "node --test chatbot/tests/proactive/core.test.mjs",
+    "exitCode": 0,
+    "passed": 24,
+    "failed": 0
+  },
+  "host": {
+    "passed": true,
+    "cases": 10,
+    "localDeterministicRequests": 18,
+    "childStopped": true,
+    "output": "host.json"
+  },
+  "fixtureRepairs": [
+    "First fixture generation contained an incorrectly escaped newline; no model request was made.",
+    "Second fixture omitted the required trustedToolPolicies manifest contract; final factory guard refused execution. The explicit contract was added; all final host cases passed."
+  ],
+  "boundaries": {
+    "productionConfigurationChanged": false,
+    "productionPluginRegistered": false,
+    "existingQQPolicyModified": false,
+    "actualModelAPIUsed": false,
+    "realQQUsed": false,
+    "N2Opened": false,
+    "schedulingChoiceMadeForUser": false
+  },
+  "sourceScope": "N3 common foundation only; production context, domain adapters, scheduler, control and routing integration are unfinished.",
+  "closeoutChecks": {
+    "at": "2026-11-07T15:24:57.493100+00:00",
+    "documentationMapTests": {
+      "passed": 10,
+      "failed": 0
+    },
+    "scriptIndex": {
+      "entries": 234,
+      "matchesGeneratedMarkdown": true
+    },
+    "evidenceCoverage": {
+      "files": 195,
+      "allOwned": true
+    },
+    "fourChecks": {
+      "health": 0,
+      "dependencies": 0,
+      "config": 0,
+      "persona": 0
+    },
+    "productionConfigurationMatchesB2": true,
+    "allFiveServiceInvocationsMatchB2": true,
+    "sourceFingerprintsMatch": true
+  }
+}

@@ -40,6 +40,8 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/proactive/core.test.mjs': ['离线', 'N3可信运行凭据、真实临时SQLite租约/并发/暂停/抢占/深夜依据/未知回执与重启；无模型、QQ或生产访问', {testDir: 1}, 'header'],
+  'chatbot/tests/proactive/acceptance-authority-host.mjs': ['验收', 'N3公共SDK真实隔离Gateway和本地确定性模型/合成工具：活跃运行授权、伪造来源、会话/策略/前台抢占与越权拒绝；fixture策略尚未接生产QQ，无真实模型/QQ或生产访问', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
   'scripts/fusion/log-query-diagnostics.mjs': ['库','只读SQLite/文件快照、Cron状态、分页/表格/统计与可中止去重跟随，不调用业务服务或外部接口',{readonly:1},'header'],
   'scripts/fusion/test/log-query-diagnostics.test.mjs': ['离线','合成五类快照/读库不变、隐私、账号/分页、模型计数、真实CLI跟随/SIGINT及记忆审计，无外部服务',{testDir:1},'header'],
   'chatbot/tests/response/acceptance-threading-host.mjs': ['验收','真实隔离Gateway/SDK引用模式和显式标签、分段/默认普通发送及陌生人群聊拒绝，确定性模型/本地OneBot，无真实QQ或生产写入',{testDir:1,restart:1},'header'],

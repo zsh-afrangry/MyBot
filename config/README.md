@@ -198,3 +198,7 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 ### 新版记忆的待授权切换
 
 文档29阶段1–3源码与独立验收已具备，生产继续P2。`records-sqlite`须先停写、预览/备份并显式迁移，不能热切换或静默回退。`system.enabled/records/raw/l0`缺省关闭；原文工具另需`memory.raw.read`和main白名单具体同意。N3后台身份尚未确定，`system.organizer`只能false，不注册后台整理工具。操作、回退及证据见[文档29](../docs/29_记忆系统.md)。
+
+### N3开发基础不自动启用
+
+当前只开发`proactive-core`及独立验证入口，`runtime.config.json`没有新增主动唤醒插件/周期/白名单，`heartbeat.every=0m`、Code Mode和main禁用项维持。后台资格必须由受管身份/用途与可信宿主凭据组合授予，不能用模型参数或提示词代替；具体生产配置、暂停入口、上下文与主动外发须在方案审定后接线。新增私密执行库应随Fusion数据库发现进入下一成套恢复点；目前没有创建生产数据库或定时器。N2 organizer仍关闭。规则见文档24/25。
