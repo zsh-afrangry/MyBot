@@ -1,0 +1,139 @@
+{
+  "at": "2026-11-07T13:50:06.204Z",
+  "authorization": {
+    "source": "Owner asked to implement N23 phase-two ordinary file management; ongoing local development and Fusion validation authorized.",
+    "scope": "Backward-compatible implementation and owner template deployed with the original single writable root. Additional production directories remain undecided."
+  },
+  "deployedSourceCommit": "89fde76a58412952ee0fc378c03f10fa4f4b7bce",
+  "implementationVerification": {
+    "relevantRegressions": {
+      "passed": 112,
+      "failed": 0
+    },
+    "personaAndAccessControl": {
+      "passed": 48,
+      "failed": 0,
+      "overlapsPreviousSuite": true
+    },
+    "isolatedNativeGateway": {
+      "passed": 18,
+      "localModelRequests": 34,
+      "liveProvider": false,
+      "realQQ": false
+    },
+    "documentationMapRegressions": {
+      "passed": 10,
+      "failed": 0
+    }
+  },
+  "production": {
+    "before": {
+      "at": "2026-11-07T13:48:37.807Z",
+      "configSHA256": "98f09be392ace8bfbf2f7238e9a4fc0dcaa43399051e3fba84159bc5bdd7ead1",
+      "cronDeclarationsSHA256": "1100b54561f437fc4710b077f0f3f5bc9960353d723c439ea2294a5a2f83d786",
+      "cron": {
+        "total": 6,
+        "enabled": 5
+      },
+      "nativeExtraRoots": [],
+      "services": {
+        "kurumi-fusion.service": {
+          "ActiveState": "active",
+          "InvocationID": "a3e4f08fe1fe406f902e6e3506a5aba6"
+        },
+        "snowluma.service": {
+          "ActiveState": "active",
+          "InvocationID": "c071f2a6548e4bc68c80c113e709c3b6"
+        },
+        "snowluma-qq.service": {
+          "ActiveState": "active",
+          "InvocationID": "913587c120d4451a9bb372e5c9742b73"
+        },
+        "knowledgemap-assistant.service": {
+          "ActiveState": "active",
+          "InvocationID": "2f262f9a8217442395c48aff373402e2"
+        },
+        "dsh-web.service": {
+          "ActiveState": "active",
+          "InvocationID": "419230df853d4321b3ab48f091d69639"
+        }
+      }
+    },
+    "after": {
+      "at": "2026-11-07T13:50:06.204Z",
+      "configSHA256": "98f09be392ace8bfbf2f7238e9a4fc0dcaa43399051e3fba84159bc5bdd7ead1",
+      "cronDeclarationsSHA256": "1100b54561f437fc4710b077f0f3f5bc9960353d723c439ea2294a5a2f83d786",
+      "cron": {
+        "total": 6,
+        "enabled": 5
+      },
+      "nativeExtraRoots": [],
+      "services": {
+        "kurumi-fusion.service": {
+          "ActiveState": "active",
+          "InvocationID": "3c062dcf790040dab004770722678dfe",
+          "ExecMainStartTimestamp": "Sat 2026-11-07 21:49:26 CST"
+        },
+        "snowluma.service": {
+          "ActiveState": "active",
+          "InvocationID": "c071f2a6548e4bc68c80c113e709c3b6"
+        },
+        "snowluma-qq.service": {
+          "ActiveState": "active",
+          "InvocationID": "913587c120d4451a9bb372e5c9742b73"
+        },
+        "knowledgemap-assistant.service": {
+          "ActiveState": "active",
+          "InvocationID": "2f262f9a8217442395c48aff373402e2"
+        },
+        "dsh-web.service": {
+          "ActiveState": "active",
+          "InvocationID": "419230df853d4321b3ab48f091d69639"
+        }
+      },
+      "unregisteredDirectoryDecisions": [
+        {
+          "directory": "/home/afrangry/下载",
+          "decision": "owner_exec_workdir_outside_boundary",
+          "payloadLaunched": false
+        },
+        {
+          "directory": "/home/afrangry/文档",
+          "decision": "owner_exec_workdir_outside_boundary",
+          "payloadLaunched": false
+        }
+      ]
+    },
+    "configBytesUnchanged": true,
+    "cronDeclarationsUnchanged": true,
+    "onlyFusionRestarted": true,
+    "changedPersonaFiles": [
+      "workspace/AGENTS.md"
+    ],
+    "finalChecks": {
+      "health": {
+        "exitCode": 0
+      },
+      "dependencies": {
+        "exitCode": 0
+      },
+      "config": {
+        "exitCode": 0
+      },
+      "persona": {
+        "exitCode": 0
+      }
+    },
+    "gateway": true,
+    "qqOnline": true,
+    "qqConnected": true,
+    "testIngress": false
+  },
+  "cleanup": {
+    "retiredTemporaryDependencyLinks": 13,
+    "isolatedHostStopped": true,
+    "temporaryFixturesRetired": true,
+    "temporaryReceiptRetired": true
+  },
+  "remaining": "Owner to choose concrete ordinary-file directories before granting them; production still uses the original pilot. No real user-file fixture, paid request, QQ/mail test, DSH change, N2 migration or remote write."
+}
