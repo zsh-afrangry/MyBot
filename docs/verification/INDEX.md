@@ -6,7 +6,7 @@
 
 - [记忆系统v3独立验收](memory-system-2026-11-07/README.md)：记录/迁移/遮罩/游标、真实隔离宿主及模型观察；生产尚未切换。
 
-- [编码委托独立验收与恢复补齐](coding-autonomous-2026-11-07/README.md)：真实DSH五轮、Git及无Git目录、中文文件改名/后缀、续接/取消/结果与受控合入、重启核对及Fusion自有执行隔离依赖；[第二期普通文件管理](coding-autonomous-2026-11-07/ordinary-files.md)记录多目录原生exec、主人范围投影及隔离恢复撤除资料根的回归/Gateway证据，新增生产目录待具体决定。
+- [编码委托独立验收与恢复补齐](coding-autonomous-2026-11-07/README.md)：真实DSH五轮、Git及无Git目录、中文文件改名/后缀、续接/取消/结果与受控合入、重启核对及Fusion自有执行隔离依赖；[第二期普通文件管理](coding-autonomous-2026-11-07/ordinary-files.md)记录多目录原生exec、主人范围投影及隔离恢复撤除资料根的回归/Gateway证据，主人具体批准的下载/文档两目录已启用，实际配置只读核对、成员/未登记目录拒绝与四检通过。
 
 本目录只存放测试输出、验收回执和复核报告，不定义运行规则。规则从[文档入口](../README.md)进入，判定见[文档16](../16_验收与测试总表.md)。本页按主题导航，文件/目录归属的唯一数据源为[documentation-map.json](../../scripts/fusion/documentation-map.json)。新增证据组同时登记两处；已登记目录中的文件继承归属。**脚本的归属、副作用与授权要求见[SCRIPTS.md](SCRIPTS.md)**。
 

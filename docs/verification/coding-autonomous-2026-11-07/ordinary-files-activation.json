@@ -1,0 +1,165 @@
+{
+  "at": "2026-11-07T14:30:55.519Z",
+  "authorization": {
+    "date": "2026-11-07",
+    "source": "Owner explicitly selected Downloads and Documents after the concrete phase-two scope proposal.",
+    "additionalRoots": [
+      "/home/afrangry/下载",
+      "/home/afrangry/文档"
+    ],
+    "operations": [
+      "read",
+      "create/edit",
+      "copy",
+      "move",
+      "rename/suffix",
+      "explicit delete",
+      "directory maintenance"
+    ],
+    "identity": "Existing owner private-chat host.exec only",
+    "unchangedScopes": [
+      "DSH project registry",
+      "member/background/Cron permissions",
+      "managed business data",
+      "system administration"
+    ]
+  },
+  "deployedSourceCommit": "52de52fff27d07baa5013539c7a62bc8098d67ec",
+  "previousSourceCommit": "0f836bd0cdc2bc1bf91f0d6897036686149af183",
+  "configuration": {
+    "changedFields": [
+      "plugins.entries.kurumi-qq.config.exec.writeBoundary.additionalRoots"
+    ],
+    "sha256Before": "98f09be392ace8bfbf2f7238e9a4fc0dcaa43399051e3fba84159bc5bdd7ead1",
+    "sha256After": "51c9bd5c24fe8e8491ab1dd1407e5af59bb3305fcf544ba1b7f5a54e7500ea08",
+    "allOtherConfigurationDeepEqual": true,
+    "policyRevision": 6,
+    "policyRevisionUnchanged": true,
+    "defaultWorkdirUnchanged": true,
+    "primaryWriteRootUnchanged": true,
+    "codingConfigUnchanged": true,
+    "persona": {
+      "inventoriedFiles": 16,
+      "changedFiles": [
+        "workspace/AGENTS.md"
+      ],
+      "unchangedFiles": 15,
+      "managedPersonaFiles": 12
+    }
+  },
+  "verification": {
+    "existingFocusedRegressions": {
+      "passed": 40,
+      "failed": 0,
+      "command": "node --test chatbot/tests/host-exec/policy.test.mjs chatbot/tests/persona/projection.test.mjs",
+      "realUserFileFixtures": false
+    },
+    "previousIsolatedGateway": {
+      "casesPassed": 18,
+      "rerun": false,
+      "reason": "Implementation unchanged; this activation changes only two operator-selected roots."
+    },
+    "authorizationDecisions": [
+      {
+        "role": "owner",
+        "decision": "allowed"
+      },
+      {
+        "role": "member",
+        "decision": "capability_not_allowed"
+      },
+      {
+        "role": "member",
+        "decision": "capability_not_allowed"
+      }
+    ],
+    "nativeDirectoryChecks": [
+      {
+        "directory": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/source",
+        "sharedOwnerAuthorization": "allowed",
+        "nativeCommand": "pwd",
+        "exitCode": 0,
+        "returnedExpectedDirectory": true,
+        "userFileWrite": false
+      },
+      {
+        "directory": "/home/afrangry/下载",
+        "sharedOwnerAuthorization": "allowed",
+        "nativeCommand": "pwd",
+        "exitCode": 0,
+        "returnedExpectedDirectory": true,
+        "userFileWrite": false
+      },
+      {
+        "directory": "/home/afrangry/文档",
+        "sharedOwnerAuthorization": "allowed",
+        "nativeCommand": "pwd",
+        "exitCode": 0,
+        "returnedExpectedDirectory": true,
+        "userFileWrite": false
+      }
+    ],
+    "unregisteredDirectoryDecisions": [
+      {
+        "directory": "/home/afrangry/桌面",
+        "decision": "owner_exec_workdir_outside_boundary",
+        "payloadLaunched": false
+      },
+      {
+        "directory": "/home/afrangry/kurumi-fusion",
+        "decision": "owner_exec_workdir_outside_boundary",
+        "payloadLaunched": false
+      },
+      {
+        "directory": "/home/afrangry/.openclaw-fusion",
+        "decision": "owner_exec_workdir_outside_boundary",
+        "payloadLaunched": false
+      }
+    ],
+    "method": "Shared authorizer and the production configuration's real native write-fence execution with pwd only; no live model/QQ tool round trip in this activation.",
+    "finalChecks": {
+      "health": {
+        "exitCode": 0
+      },
+      "dependencies": {
+        "exitCode": 0
+      },
+      "config": {
+        "exitCode": 0
+      },
+      "persona": {
+        "exitCode": 0
+      }
+    }
+  },
+  "protectedState": {
+    "userFileOperations": "No user file created, read, moved, edited or deleted; only pwd in the approved directories.",
+    "cron": {
+      "total": 6,
+      "enabled": 5,
+      "declarationsSHA256Before": "1100b54561f437fc4710b077f0f3f5bc9960353d723c439ea2294a5a2f83d786",
+      "declarationsSHA256After": "1100b54561f437fc4710b077f0f3f5bc9960353d723c439ea2294a5a2f83d786",
+      "unchanged": true
+    },
+    "onlyFusionRestarted": true,
+    "fusionStart": "Sat 2026-11-07 22:29:50 CST",
+    "externalServiceInvocationsUnchanged": true,
+    "qqOnline": true,
+    "testIngress": false,
+    "noRemoteWrite": true,
+    "noPaidRequests": true
+  },
+  "rollbackProtection": {
+    "preimageSha256": "98f09be392ace8bfbf2f7238e9a4fc0dcaa43399051e3fba84159bc5bdd7ead1",
+    "retiredAfterVerification": true,
+    "previousConfigurationByteReconstructableByRemovingApprovedField": true,
+    "previousIntentCommit": "0f836bd",
+    "newFullRecoveryPointCreated": false,
+    "priorR7R6Unchanged": true
+  },
+  "limitations": [
+    "The real kernel reports partial enforcement; this is the verified ordinary-file write boundary, not full system-side-effect isolation.",
+    "No-clobber and deletion intent are model behavior rules; generic exec does not prove arbitrary shell semantics.",
+    "Ordinary user directories do not become Fusion backup assets. Real QQ client experience remains a separate observation."
+  ]
+}
