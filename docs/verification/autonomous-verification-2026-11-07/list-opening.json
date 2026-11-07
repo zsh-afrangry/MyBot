@@ -1,6 +1,6 @@
 {
   "at": "2026-11-07T08:53:41.341Z",
-  "status": "isolated_verified_production_pending",
+  "status": "production_verified_and_schedule_restored",
   "authorization": "User requested immediate list notice deduplication, the existing 18:00 slot at 17:00 today, observation then restoration to 18:00",
   "offline": {
     "passed": 63,
@@ -44,10 +44,47 @@
     "passed": true
   },
   "production": {
-    "date": "2026-11-07",
-    "temporarySlot": "17:00",
-    "restoreSlot": "18:00",
-    "observed": false
+    "observedAt": "2026-11-07T09:00:04.000Z",
+    "status": "passed",
+    "slot": "2026-11-07T17:00",
+    "platformAccepted": true,
+    "storedFullMessageChecked": true,
+    "messageId": "-5310097",
+    "messageChars": 284,
+    "messageSha256": "d5f2d756b93675700fb284453cd46b658bb090ee17fe31c78cececf5d134ed1e",
+    "openingChars": 30,
+    "openingParagraphs": 1,
+    "itemCount": 4,
+    "itemIdsAndOrderMatchClaim": true,
+    "eachItemHeaderOnce": true,
+    "noItemTitlesOrIdsInOpening": true,
+    "platformBodyMatchesFrozenDelivery": true,
+    "domainStatus": "delivered",
+    "cronStatus": "ok",
+    "cronJobId": "087903ca-153a-4f27-ac7e-b5beb581ffba",
+    "generatedEvents": 1,
+    "platformMessages": 1,
+    "modelRuns": 1,
+    "models": [
+      "deepseek-flash"
+    ],
+    "boundary": "Full stored platform text and frozen domain delivery compared locally; no private item text is saved in this evidence. Platform acceptance and storage do not prove client read/visual appearance."
   },
-  "boundary": "Synthetic fixture stores and loopback QQ in host verification. No real QQ from tests. Production observation is the explicitly authorized scheduled list only. No new tools, identities or external project changes."
+  "boundary": "Synthetic fixture stores and loopback QQ in host verification. No real QQ from tests. Production observation is the explicitly authorized scheduled list only. No new tools, identities or external project changes.",
+  "implementationCommit": "d1a4560",
+  "restoration": {
+    "at": "2026-11-07T09:00:57.727Z",
+    "restored": true,
+    "times": [
+      "00:00",
+      "08:00",
+      "12:00",
+      "18:00"
+    ],
+    "previousJobId": "12df2be6-a477-4369-9b08-f76c4e3623a5",
+    "restoredJobId": "22de6fce-8165-4b91-9abd-3c7157a8cc01",
+    "nextRunAt": "2026-11-07T10:00:00.000Z",
+    "otherJobsUnchanged": true
+  },
+  "closeoutAutomationDeleted": true
 }
