@@ -1,0 +1,116 @@
+{
+  "at": "2026-11-07T13:18:08.468Z",
+  "authorization": {
+    "date": "2026-11-07",
+    "source": "Owner explicitly confirmed papers.rename after the reviewed activation proposal.",
+    "scope": [
+      "Existing owner only: papers.rename=true",
+      "Policy revision 5 -> 6",
+      "Sync configuration, restart Fusion only, independently verify"
+    ],
+    "excluded": [
+      "Member grants",
+      "Generic filesystem/exec permission expansion",
+      "New writable roots",
+      "Real QQ/mail test delivery",
+      "Paid translation",
+      "N2 production migration or tools"
+    ]
+  },
+  "deployedSourceCommit": "7cadee95719d822c0294eaebc84eebb9cd552ec3",
+  "policySha256": "905c83df85bc4161fd3e7c77218a5917da16ef0d1b48c2cb14687af858069ed0",
+  "policy": {
+    "beforeRevision": 5,
+    "afterRevision": 6,
+    "changedFields": [
+      "revision",
+      "subjects[role=owner].permissions.papers.rename"
+    ],
+    "otherConfigurationUnchanged": true,
+    "checkMethod": "Shared authorizer against actual production configuration, after a new Fusion service invocation",
+    "decisions": [
+      {
+        "role": "owner",
+        "decision": "allowed"
+      },
+      {
+        "role": "member",
+        "decision": "capability_not_allowed"
+      },
+      {
+        "role": "member",
+        "decision": "capability_not_allowed"
+      }
+    ]
+  },
+  "verification": {
+    "accessControlRegressions": {
+      "passed": 20,
+      "failed": 0,
+      "command": "node --test chatbot/tests/access-control/*.test.mjs"
+    },
+    "previousPaperMechanismEvidence": {
+      "offlinePassed": 37,
+      "isolatedGatewayModelCasesPassed": 3,
+      "rerun": false,
+      "reason": "No implementation changes; existing mechanism evidence remains applicable."
+    },
+    "finalChecks": {
+      "dependencies": {
+        "exitCode": 0
+      },
+      "config": {
+        "exitCode": 0
+      },
+      "persona": {
+        "exitCode": 0
+      },
+      "health": {
+        "exitCode": 0
+      }
+    },
+    "gateway": true,
+    "qqOnline": true,
+    "qqConnected": true,
+    "testIngress": false,
+    "testMethodDisabled": true,
+    "serviceStartedAt": "2026-11-07T13:16:53Z",
+    "credentialsUnchanged": true,
+    "documentsUnchanged": true,
+    "cronUnchanged": true,
+    "onlyFusionRestarted": true
+  },
+  "stateProtection": {
+    "documents": {
+      "filesBefore": 0,
+      "filesAfter": 0,
+      "fingerprintBefore": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "fingerprintAfter": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "realProductionRenamePerformed": false
+    },
+    "cron": {
+      "total": 6,
+      "enabled": 5,
+      "contractSha256Before": "17bd5f1b3d0eb47d230317f04e639504b7fb2c5336e5f0ad7286ce2a0911bdae",
+      "contractSha256After": "17bd5f1b3d0eb47d230317f04e639504b7fb2c5336e5f0ad7286ce2a0911bdae"
+    },
+    "configSha256Before": "5e772f147c39a0601c8a9b8b2a0e9952f0669e1dfc78b9a60dfb2405b05ef4b2",
+    "configSha256After": "98f09be392ace8bfbf2f7238e9a4fc0dcaa43399051e3fba84159bc5bdd7ead1",
+    "credentialsUnchanged": true,
+    "externalServicesNotRestarted": true
+  },
+  "deploymentPreimage": {
+    "preimageSha256": "5e772f147c39a0601c8a9b8b2a0e9952f0669e1dfc78b9a60dfb2405b05ef4b2",
+    "verifiedSha256": "5e772f147c39a0601c8a9b8b2a0e9952f0669e1dfc78b9a60dfb2405b05ef4b2",
+    "previousConfigurationInVerifiedR7": true,
+    "retiredVerifiedDeploymentPreimage": true,
+    "priorVerifiedRecoveryPoint": "2026-11-07-12-04-35-R7-B1",
+    "priorConfigurationPath": "config/openclaw.json"
+  },
+  "boundaries": [
+    "No real production PDF rename or QQ/mail delivery was performed in this activation.",
+    "Client filename presentation and actual receipt remain separate experience checks.",
+    "This does not complete N23 phase-two ordinary file management outside the approved pilot.",
+    "N2 remains user-deferred and incomplete."
+  ]
+}
