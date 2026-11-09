@@ -19,7 +19,11 @@ export class WakeStore {
         epoch INTEGER NOT NULL, created INTEGER NOT NULL, expires INTEGER NOT NULL,
         status TEXT NOT NULL, binding TEXT NOT NULL, text_hash TEXT, receipt TEXT, reason TEXT,
         UNIQUE(scope,event_key));
-      CREATE INDEX IF NOT EXISTS wake_active ON wake_run(scope,status,expires);`);
+      CREATE INDEX IF NOT EXISTS wake_active ON wake_run(scope,status,expires);
+      CREATE TABLE IF NOT EXISTS wake_message (
+        message_key TEXT PRIMARY KEY, run_id TEXT NOT NULL, call_id TEXT NOT NULL,
+        text_hash TEXT NOT NULL, created INTEGER NOT NULL, status TEXT NOT NULL, receipt TEXT,
+        UNIQUE(run_id,call_id));`);
   }
   close() {this.db.close();}
   transaction(fn) {
@@ -37,6 +41,8 @@ export class WakeStore {
   }
   recover(now) {
     time(now);
+    this.db.prepare(`UPDATE wake_message SET status='unknown' WHERE status='sending'
+      AND run_id IN (SELECT run_id FROM wake_run WHERE expires<=?)`).run(now);
     // Only expired leases: a second connection cannot cancel a live process.
     return this.db.prepare(`UPDATE wake_run SET status=CASE WHEN status='sending' THEN 'unknown' ELSE 'interrupted' END,
       reason='lease_expired' WHERE status IN ('running','sending') AND expires<=?`).run(now).changes;
@@ -81,7 +87,7 @@ export class WakeStore {
     });
   }
   finish(id,status,reason=null) {
-    if (!['silent','failed','cancelled'].includes(status)) throw error('invalid_wake_result');
+    if (!['silent','completed','failed','cancelled'].includes(status)) throw error('invalid_wake_result');
     this.db.prepare("UPDATE wake_run SET status=?,reason=? WHERE run_id=? AND status='running'").run(status,reason,id);
     return this.get(id);
   }
@@ -92,5 +98,29 @@ export class WakeStore {
     this.db.prepare("UPDATE wake_run SET status=?,receipt=? WHERE run_id=? AND status IN ('sending','unknown')")
       .run(confirmed?'delivered':'unknown',JSON.stringify(receipt),id);
     return this.get(id);
+  }
+  beginMessage(id,callId,textHash,now) {
+    if (typeof callId!=='string'||!callId||callId.length>180) throw error('invalid_wake_call');
+    return this.transaction(()=>{
+      this.assertLive(id,now);
+      const prior=this.db.prepare('SELECT * FROM wake_message WHERE run_id=? AND call_id=?').get(id,callId);
+      if (prior) {
+        if (prior.text_hash!==textHash) throw error('wake_call_reused');
+        return {...prior,duplicate:true};
+      }
+      const key='proactive:'+id+':'+callId;
+      this.db.prepare('INSERT INTO wake_message VALUES(?,?,?,?,?,?,NULL)').run(key,id,callId,textHash,now,'sending');
+      return this.db.prepare('SELECT * FROM wake_message WHERE message_key=?').get(key);
+    });
+  }
+  messageReceipt(key,value) {
+    const sent=value?.status==='sent'&&typeof value.messageId==='string'&&value.messageId.length>0&&value.messageId.length<=160;
+    this.db.prepare("UPDATE wake_message SET status=?,receipt=? WHERE message_key=? AND status IN ('sending','unknown')")
+      .run(sent?'delivered':'unknown',JSON.stringify(sent?{status:'sent',messageId:value.messageId}:{status:'unknown'}),key);
+    return this.db.prepare('SELECT * FROM wake_message WHERE message_key=?').get(key);
+  }
+  messages(id) {
+    return this.db.prepare('SELECT message_key,status,receipt FROM wake_message WHERE run_id=? ORDER BY created,rowid').all(id)
+      .map(row=>({...row,receipt:row.receipt?JSON.parse(row.receipt):null}));
   }
 }

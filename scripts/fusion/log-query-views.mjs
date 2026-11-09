@@ -196,6 +196,7 @@ function subsystemCode(value) {
 /** Classify one non-call event for --errors; undefined means not an error. */
 function eventError(item) {
   const data = item.data ?? {};
+  if(item.source==='proactive'&&item.kind==='proactive.delivery'&&data.status==='unknown')return {type:'business_error',code:'wake_delivery_unknown'};
   if (item.kind === 'agent.model_error') return {type: 'model_error', code: `model_${data.stopReason ?? 'error'}`};
   if (item.kind === 'agent.prompt_error') return {type: 'model_error', code: 'prompt_error'};
   if (item.kind === 'agent.turn_aborted') return {type: 'turn_aborted', code: 'turn_aborted'};

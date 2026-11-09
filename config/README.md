@@ -197,11 +197,15 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 
 ### 新版记忆的待授权切换
 
-文档29阶段1–3源码与独立验收已具备，生产继续P2。`records-sqlite`须先停写、预览/备份并显式迁移，不能热切换或静默回退。`system.enabled/records/raw/l0`缺省关闭；原文工具另需`memory.raw.read`和main白名单具体同意。N3后台身份尚未确定，`system.organizer`只能false，不注册后台整理工具。操作、回退及证据见[文档29](../docs/29_记忆系统.md)。
+文档29阶段1–3源码与独立验收已具备，生产继续P2。`records-sqlite`须先停写、预览/备份并显式迁移，不能热切换或静默回退。`system.enabled/records/raw/l0`缺省关闭；原文工具另需`memory.raw.read`和main白名单具体同意。N3可信用途凭据已有独立实现，但不授权N2整理；`system.organizer`继续只能false，不注册后台整理工具。操作、回退及证据见[文档29](../docs/29_记忆系统.md)。
 
-### N3开发基础不自动启用
+### N3自主行动的可选配置（生产未启用）
 
-当前只开发`proactive-core`及独立验证入口，`runtime.config.json`没有新增主动唤醒插件/周期/白名单，`heartbeat.every=0m`、Code Mode和main禁用项维持。后台资格必须由受管身份/用途与可信宿主凭据组合授予，不能用模型参数或提示词代替；具体生产配置、暂停入口、上下文与主动外发须在方案审定后接线。新增私密执行库应随Fusion数据库发现进入下一成套恢复点；目前没有创建生产数据库或定时器。N2 organizer仍关闭。规则见文档24/25。
+N3由现有QQ插件中的`proactive/`组件装配，不新增插件/进程。禁用示例见`config/proactive.example.json`，配置位置为`plugins.entries.kurumi-qq.config.proactive`。`runtime.config.json`当前没有该键、main没有`kurumi_proactive`、身份未授予四项proactive权限；生产仍未创建N3库/定时器。原生`heartbeat.every=0m`、Code Mode、main禁用项及既有Cron保持。
+
+启用候选须一起审阅：intervalMs/timeoutMs、night明确时段/时区/真实主人活动新鲜度、reads四类只读用途、publicSearch及notifyEnabled；仅主人显式`proactive.use/notify/read/manage`和main新增窄工具`kurumi_proactive`，不解禁read/write/exec/message等原生能力。参数修改使活跃凭据失效，重新装配后生效；暂停跨重启保留。示例的30分钟/60秒、23–08点/15分钟是待审核参数，不是已批准生产取值。具体功能/权限契约见文档25/24。
+
+启用后唯一新增状态为运行根`state/proactive/proactive.sqlite`（执行/逐条回执/来源证明/独立自身记录）与轮换技术日志`trace.jsonl(.1)`，无第二份用户任务事实。统一备份的SQLite发现会收录该库；上线前后分别制作并验证成套恢复点，不将仅Git提交视作私密记录备份。停机中止并收束后台/在途投递；未知回执留账、不自动补发。回退先暂停/撤销用途，再按同步契约关闭组件，保留账本和记录；不删库。N2 organizer继续关闭。
 
 ## 主人只读日志工具
 

@@ -3,6 +3,47 @@
   "description": "文档归属的唯一数据源。scripts以精确路径/最长目录前缀覆盖；evidence以互斥明确文件/目录归属。副作用分类仍由evidence-index中的TABLE维护。 evidence字段如有提供则替代源码路径提取，避免把临时夹具路径当验收产物。",
   "scriptOwners": [
     {
+      "path": "chatbot/tests/proactive/engine.test.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/24_统一身份与权限管理.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "evidence": [
+        "docs/verification/proactive-runtime-2026-11-10/README.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/proactive/adapters.test.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/24_统一身份与权限管理.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "evidence": [
+        "docs/verification/proactive-runtime-2026-11-10/README.md"
+      ]
+    },
+    {
+      "path": "chatbot/tests/proactive/acceptance-runtime-host.mjs",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/24_统一身份与权限管理.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "evidence": [
+        "docs/verification/proactive-runtime-2026-11-10/README.md"
+      ]
+    },
+    {
+      "prefix": "chatbot/plugins/kurumi-qq/proactive/",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/24_统一身份与权限管理.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ]
+    },
+    {
       "prefix": "chatbot/tests/log-query/",
       "documents": [
         "docs/18_跨模块链路日志查询.md",
@@ -558,6 +599,18 @@
   ],
   "evidenceOwners": [
     {
+      "prefix": "proactive-runtime-2026-11-10/",
+      "documents": [
+        "docs/25_人格、记忆与会话连续性.md",
+        "docs/24_统一身份与权限管理.md",
+        "docs/21_后端职责分层与代码整理.md",
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md",
+        "docs/18_跨模块链路日志查询.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "qq-log-query-2026-11-10/",
       "documents": [
         "docs/18_跨模块链路日志查询.md",
@@ -707,8 +760,7 @@
     {
       "prefix": "proactive-design-2026-10-29/",
       "documents": [
-        "docs/25_人格、记忆与会话连续性.md",
-        "docs/临时_主动唤醒与自主行动设计.md"
+        "docs/25_人格、记忆与会话连续性.md"
       ],
       "category": "当前有效"
     },

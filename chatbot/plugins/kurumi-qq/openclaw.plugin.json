@@ -9,6 +9,18 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "proactive": {
+        "type":"object","additionalProperties":false,
+        "required":["enabled","revision","intervalMs","timeoutMs","notifyEnabled","reads","publicSearch","night"],
+        "properties":{
+          "enabled":{"type":"boolean","default":false},"revision":{"type":"integer","minimum":1},
+          "intervalMs":{"type":"integer","minimum":60000,"maximum":86400000},"timeoutMs":{"type":"integer","minimum":1000,"maximum":120000},
+          "notifyEnabled":{"type":"boolean"},"reads":{"type":"array","uniqueItems":true,"items":{"type":"string","enum":["weather","planning","reminders","reminder_list"]}},
+          "publicSearch":{"type":"boolean"},"night":{"type":"object","additionalProperties":false,"required":["startMinute","endMinute","timeZone","activityMaxAgeMs"],"properties":{
+            "startMinute":{"type":"integer","minimum":0,"maximum":1439},"endMinute":{"type":"integer","minimum":0,"maximum":1439},"timeZone":{"type":"string"},"activityMaxAgeMs":{"type":"integer","minimum":1}
+          }}
+        }
+      },
       "exec": {
         "type": "object",
         "additionalProperties": false,
@@ -102,6 +114,7 @@
   },
   "contracts": {
     "tools": [
+      "kurumi_proactive",
       "kurumi_test_wait",
       "kurumi_sticker"
     ],
@@ -110,6 +123,7 @@
     ]
   },
   "toolMetadata": {
+    "kurumi_proactive":{"optional":true},
     "kurumi_test_wait": {
       "optional": true
     },

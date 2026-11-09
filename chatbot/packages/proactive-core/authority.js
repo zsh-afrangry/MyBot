@@ -36,6 +36,22 @@ export function createWakeAuthority({store,authorize,now=Date.now}) {
       return result;
     },
     assertCurrent,
+    resolve(ctx) {
+      const handle=active.get(ctx?.runId);assertCurrent(handle,ctx);return handle;
+    },
+    prepareMessage(handle,callId,text) {
+      text=decision({kind:'notify',text}).text;
+      const run=assertCurrent(handle);
+      if (!run.binding.notifyEnabled) throw error('wake_notify_not_allowed');
+      assertContactTime(run.binding.night,now(),store.control(run.scope).last_activity);
+      const row=store.beginMessage(run.run_id,callId,digest(text),now());
+      return {key:row.message_key,duplicate:!!row.duplicate,status:row.status,route:structuredClone(run.binding.route),
+        recordReceipt:value=>store.messageReceipt(row.message_key,value),
+        assertCurrent:()=>{
+          const fresh=assertCurrent(handle);
+          assertContactTime(fresh.binding.night,now(),store.control(fresh.scope).last_activity);
+        }};
+    },
     toolDecision(event,ctx) {
       try {
         const handle=active.get(ctx?.runId),run=assertCurrent(handle,ctx);

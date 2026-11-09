@@ -11,6 +11,7 @@ export const OWNER_PERMISSIONS = Object.freeze([
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
   'memory.read', 'memory.manage', 'memory.raw.read', 'memory.organize', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
   'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'host.exec', 'logs.read',
+  'proactive.read', 'proactive.manage', 'proactive.use', 'proactive.notify',
 ]);
 export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
 export const MEMBER_TOOLS = Object.freeze(['session_status', 'web_search', 'web_fetch', 'kurumi_document', 'kurumi_translate', 'kurumi_document_send']);
@@ -37,6 +38,9 @@ export function toolPermission(name, args = {}) {
     return ['list', 'preview', 'confirm'].includes(args.action) ? permissions[args.domain]?.[args.action === 'confirm' ? 1 : 0] : undefined;
   }
   if (direct[name]) return direct[name];
+  if (name === 'kurumi_proactive') return ['status','records'].includes(args.action)?'proactive.read'
+    :['pause','resume','record_put','record_remove'].includes(args.action)?'proactive.manage'
+    :['query','remember','forget','sources'].includes(args.action)?'proactive.use':args.action==='notify'?'proactive.notify':undefined;
   if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content', 'gvg', 'fates', 'packs'].includes(args.action) ? 'e7.read' : undefined;
   if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
   if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';

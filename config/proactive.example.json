@@ -1,0 +1,15 @@
+{
+  "enabled": false,
+  "revision": 1,
+  "intervalMs": 1800000,
+  "timeoutMs": 60000,
+  "notifyEnabled": false,
+  "reads": ["weather", "planning", "reminders", "reminder_list"],
+  "publicSearch": true,
+  "night": {
+    "startMinute": 1380,
+    "endMinute": 480,
+    "timeZone": "Asia/Shanghai",
+    "activityMaxAgeMs": 900000
+  }
+}

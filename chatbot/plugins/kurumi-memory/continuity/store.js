@@ -5,7 +5,6 @@ import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import {STATE_RELATIVE, MEMORY_NOTICE, validateState} from './model.js';
-const schema = fs.readFileSync(new URL('./schema.sql', import.meta.url), 'utf8');
 function regular(file, missing = false) {
   try {if (!fs.lstatSync(file).isFile() || fs.lstatSync(file).isSymbolicLink()) throw Error('Memory state must be a regular file');}
   catch (error) {if (!(missing && error.code === 'ENOENT')) throw error;}
@@ -30,6 +29,7 @@ export function replaceNotice(workspace) {
   try {fs.renameSync(tmp, notice); fsyncDirectory(workspace);} finally {fs.rmSync(tmp, {force: true});}
 }
 export function initializeContinuity(workspace, state) {
+  const schema = fs.readFileSync(new URL('./schema.sql', import.meta.url), 'utf8');
   validateState(state);
   const {file, directory} = memoryPaths(workspace, true), tmp = file + '.' + randomBytes(8).toString('hex') + '.tmp';
   if (fs.existsSync(file)) throw Error('Personal memory already exists');

@@ -16,6 +16,19 @@ for(const [name,file] of [['channel','channel/channel.sqlite'],['weather','state
  try{const db=new DatabaseSync(state+'/'+file,{readOnly:true});try{const check=db.prepare('PRAGMA quick_check').get();r[name+'Database']=Object.values(check)[0];if(r[name+'Database']!=='ok')issue(name+' database integrity error');if(name==='channel'){r.outbound=db.prepare('SELECT status,COUNT(*) count FROM outbound GROUP BY status').all();r.recentAttempts=db.prepare('SELECT COUNT(*) n FROM outbound WHERE at>=?').get(Date.now()-86400000).n;r.dailyLimit=cfg.channels['kurumi-qq'].dailySendLimit??120;if(r.recentAttempts>=r.dailyLimit)issue('QQ daily send quota exhausted');r.recentFailedInbound=db.prepare("SELECT COUNT(*) n FROM inbound WHERE status='failed' AND at>=?").get(Date.now()-86400000).n;}}finally{db.close();}}catch{issue(name+' database could not be checked');}
 }
 const sharedList=cfg.plugins?.entries?.['personal-reminder-list']?.config;
+if(cfg.plugins?.entries?.['kurumi-qq']?.config?.proactive?.enabled){
+ try{
+  r.proactive=await rpc('kurumi-proactive.status',{},5000);
+  if(!r.proactive.control||!r.proactive.scheduler?.started)issue('Proactive service is unavailable');
+  const db=new DatabaseSync(state+'/state/proactive/proactive.sqlite',{readOnly:true});
+  try{
+   r.proactive.database=Object.values(db.prepare('PRAGMA quick_check').get())[0];
+   if(r.proactive.database!=='ok')issue('Proactive database integrity error');
+   r.proactive.unknownMessages=db.prepare("SELECT COUNT(*) AS n FROM wake_message WHERE status='unknown'").get().n;
+   if(r.proactive.unknownMessages)issue('Proactive delivery receipts require reconciliation');
+  }finally{db.close();}
+ }catch{issue('Proactive state could not be checked');}
+}
 if(sharedList?.dataSource==='knowledgemap'){
  try{const source=readListSource(state);if(!source||source.baseUrl!==sharedList.bridgeBaseUrl||source.tokenFile!==sharedList.bridgeTokenFile)issue('Reminder-list cutover marker is missing or differs from configuration');
  const status=await new KnowledgeMapClient({baseUrl:sharedList.bridgeBaseUrl,tokenFile:sharedList.bridgeTokenFile,trace(){}}).request('/api/assistant/status');r.knowledgeMap={ok:status.ok,contract:status.contract,domains:status.domains};if(status.ok!==true||status.contract!==1)issue('KnowledgeMap business contract is unavailable');

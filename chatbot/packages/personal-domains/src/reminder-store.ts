@@ -9,6 +9,7 @@ import {
 } from "node:fs";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import {readOnlyLocation} from './read-only.js';
 
 import {
   checkApprovalGrant,
@@ -110,6 +111,7 @@ export interface ReminderSummary {
 }
 
 export interface ReminderStoreOptions {
+  readOnly?: boolean;
   stateDirectory: string;
   now?: () => number;
 }
@@ -128,6 +130,14 @@ export class ReminderStore {
   #now: () => number;
 
   constructor(options: ReminderStoreOptions) {
+    if (options.readOnly) {
+      const location=readOnlyLocation(options.stateDirectory,DATABASE_FILE_NAME);
+      this.stateDirectory=location.directory;this.databasePath=location.file;
+      this.#now=options.now??currentUnixSeconds;
+      this.#database=new DatabaseSync(this.databasePath,{readOnly:true});
+      this.#database.exec('PRAGMA busy_timeout=5000');
+      return;
+    }
     this.stateDirectory = prepareStateDirectory(options.stateDirectory);
     this.databasePath = join(this.stateDirectory, DATABASE_FILE_NAME);
     this.#now = options.now ?? currentUnixSeconds;

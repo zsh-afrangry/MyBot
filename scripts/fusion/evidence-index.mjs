@@ -40,6 +40,9 @@ const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 
 // [group, purpose, flags, basis]
 const TABLE = {
+  'chatbot/tests/proactive/engine.test.mjs': ['离线', 'N3完整编排、来源/自身记录CAS/期限/分页、多次通知/未知回执、短期上下文和固定调度；合成临时SQLite，无真实模型/QQ或生产访问', {testDir: 1}, 'header'],
+  'chatbot/tests/proactive/adapters.test.mjs': ['离线', 'N3实际P2/领域只读与临时HTTP、库哈希不变/不建库、权限/发现/生命周期及日志查询；无真实模型/QQ或生产访问', {testDir: 1}, 'header'],
+  'chatbot/tests/proactive/acceptance-runtime-host.mjs': ['验收', '现有QQ唯一策略/N3组件与真实隔离Gateway/公共SDK、P2/四类读取、逐条投递、主人维护/暂停/恢复/重启/抢占；确定性模型和loopback，无真实API/QQ或生产访问', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/log-query/query.test.mjs': ['离线', '真实只读CLI与实际工具处理器；合成日志、身份/撤权、脱敏分页、并发/取消/超时；无模型/QQ/生产写入', {testDir:1}, 'header'],
   'chatbot/tests/log-query/acceptance-host.mjs': ['验收', '真实隔离Gateway启用/禁用、工具目录与正常停止；无模型/API/QQ或生产写入', {restart:1,testDir:1,writesRepo:1}, 'boundary'],
   'chatbot/tests/proactive/core.test.mjs': ['离线', 'N3可信运行凭据、真实临时SQLite租约/并发/暂停/抢占/深夜依据/未知回执与重启；无模型、QQ或生产访问', {testDir: 1}, 'header'],

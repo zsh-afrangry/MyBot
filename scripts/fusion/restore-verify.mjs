@@ -39,7 +39,7 @@ import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
 import {artifactKindsForRestore,hashFile,treeHash,discoverDatabases} from './lib/backup-layout.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
-import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery,disableOwnerFileRecovery} from './lib/recovery-isolation.mjs';
+import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery,disableOwnerFileRecovery,disableProactiveRecovery} from './lib/recovery-isolation.mjs';
 
 const argv = process.argv.slice(2);
 const arg = (name, fallback = null) => {
@@ -373,6 +373,7 @@ if(cfg&&restoredRepo){
  const fence=expected.scope==='fusion-only'?expected.artifacts.find(a=>a.kind==='exec-fence'):null;
  cfg=remap(cfg,runtime,restoredRepo,fence?{execFenceRoot:runtime+'/tools/'+fence.rootName}:{});
  disableOwnerFileRecovery(cfg);
+ disableProactiveRecovery(cfg);
  disableKnowledgeMapRecovery(cfg,runtime);
  const registry=remap(JSON.parse(fs.readFileSync(runtime+'/projects.json')),runtime,restoredRepo);
  assertNoProduction(cfg);assertNoProduction(registry);

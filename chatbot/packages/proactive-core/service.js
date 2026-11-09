@@ -20,7 +20,7 @@ export function createWakeService({authority,runModel,sendText}) {
       try {
         const result=decision(await abortable(()=>runModel({runId:run.run_id,binding:structuredClone(run.binding),signal:scopeSignal}),scopeSignal));
         authority.assertCurrent(handle);
-        if (result.kind==='silent') return {status:authority.complete(handle,'silent').status,runId:run.run_id};
+        if (result.kind!=='notify') return {status:authority.complete(handle,result.kind==='done'?'completed':'silent').status,runId:run.run_id};
         const delivery=authority.prepareDelivery(handle,result.text);sending=true;
         const receipt=await abortable(()=>Promise.resolve(sendText({route:delivery.route,key:delivery.key,text:result.text,signal:scopeSignal,
           assertCurrent:()=>{scopeSignal.throwIfAborted();delivery.assertCurrent();}})).then(receipt=>{

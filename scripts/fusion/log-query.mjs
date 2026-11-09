@@ -604,6 +604,9 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   if (include('knowledgemap')) {
     for (const file of ['trace.jsonl.1', 'trace.jsonl']) append(events, readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to));
   }
+  if (include('proactive')) {
+    for (const file of ['trace.jsonl.1','trace.jsonl']) append(events,readTraceFile(path.join(runtimeRoot,'state','proactive',file),from,to));
+  }
   if(wanted?.has('snowluma-messages')) append(events,readStoredQQMessages(snowlumaRoot,runtimeRoot,from,to,{messageId,peer,expand,previews:events.filter(e=>e.source==='snowluma')}));
   attachSessionCorrelation(events, windows);
   attachTurnCorrelation(events);

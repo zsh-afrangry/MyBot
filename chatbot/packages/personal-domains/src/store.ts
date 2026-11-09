@@ -10,6 +10,7 @@ import {
 import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import {readOnlyLocation} from './read-only.js';
 
 import { PlanningRepository } from "./planning-repository.js";
 import { ProfileRepository } from "./profile-repository.js";
@@ -316,6 +317,7 @@ const INITIAL_SCHEMA_SQL = String.raw`
 export type UnixSeconds = number;
 
 export interface WeatherStoreOptions {
+  readOnly?: boolean;
   /** Dedicated state directory. The store enforces mode 0700 on this directory. */
   stateDirectory: string;
   /** Injectable clock for deterministic migrations/tests. Value is Unix seconds. */
@@ -750,6 +752,14 @@ export class WeatherStore {
   #now: () => UnixSeconds;
 
   constructor(options: WeatherStoreOptions) {
+    if (options.readOnly) {
+      const location=readOnlyLocation(options.stateDirectory,DATABASE_FILE_NAME);
+      this.stateDirectory=location.directory;this.databasePath=location.file;
+      this.#now=options.now??currentUnixSeconds;
+      this.#database=new DatabaseSync(this.databasePath,{readOnly:true});
+      this.#database.exec('PRAGMA busy_timeout=5000');
+      return;
+    }
     this.stateDirectory = prepareStateDirectory(options.stateDirectory);
     this.databasePath = join(this.stateDirectory, DATABASE_FILE_NAME);
     this.#now = options.now ?? currentUnixSeconds;

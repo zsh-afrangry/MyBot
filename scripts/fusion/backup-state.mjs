@@ -186,7 +186,7 @@ for (const e of fs.readdirSync(STATE_DIR, { withFileTypes: true })) {
   const rel = e.name;
   const out = path.join(stateCopyRoot, rel) + (e.isDirectory() ? '/' : '');
   if (e.isDirectory()) {
-    const r = sh('rsync', ['-a', '--exclude=*.sqlite*', '--exclude=*.db', '--exclude=*.db-wal', '--exclude=*.db-shm', '--exclude=*.log', '--exclude=node_modules', '--exclude=__pycache__', '--exclude=.cache', `${src}/`, out]);
+    const r = sh('rsync', ['-a', '--exclude=*.sqlite*', '--exclude=*.db', '--exclude=*.db-wal', '--exclude=*.db-shm', '--exclude=*.log', '--exclude=/proactive/trace.jsonl*', '--exclude=node_modules', '--exclude=__pycache__', '--exclude=.cache', `${src}/`, out]);
     if (r.status !== 0) fail(`state copy ${rel}`, r.stderr?.trim() || `rsync exit ${r.status}`);
     else copied.push(rel);
   } else if (/\.(sqlite|db)(?:-(?:wal|shm))?$/.test(e.name)) {
@@ -216,6 +216,8 @@ if(pilotCopy.status!==0)fail('coding pilot copy','rsync failed');
 // state/runtime/, while copied runtime directories sit directly under state/.
 const REQUIRED = [
   ['state/整理记录.md','sole global execution handbook'],
+  ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['kurumi-qq']?.config?.proactive?.enabled
+    ? [['state/runtime/home/afrangry/.openclaw-fusion/state/proactive/proactive.sqlite','N3 control, delivery and self-record database']] : []),
   ['external/pilot/source/.git/HEAD','coding pilot repository'],
   ['state/runtime/'+PILOT_ROOT.replace(/^\//,'')+'/state/coding.sqlite','coding control database'],
   ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['personal-reminder-list']?.enabled

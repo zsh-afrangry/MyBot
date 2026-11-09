@@ -24,6 +24,11 @@ export function assertNoProduction(value){
  if(typeof value==='string'&&productionRoots.some(p=>value.includes(p)))throw Error('Active recovery configuration still references production');
  if(value&&typeof value==='object')for(const v of Object.values(value))assertNoProduction(v);
 }
+// Restoring state is never authorization to run autonomous models or sends.
+export function disableProactiveRecovery(cfg){
+ const proactive=cfg.plugins?.entries?.['kurumi-qq']?.config?.proactive;
+ if(proactive)proactive.enabled=false;
+}
 // User documents are not Fusion recovery assets. Even an accidentally started
 // verification copy must not inherit ordinary-file grants or their default cwd.
 export function disableOwnerFileRecovery(cfg){

@@ -1,0 +1,154 @@
+{
+  "date": "2026-11-10 Asia/Shanghai",
+  "sourceBase": "c2a9b7c; independent owner-log-tool commits through 12c09ee preserved; final N3 changes local on canonical main",
+  "boundary": "Synthetic fixtures, temporary SQLite, actual public SDK/Gateway and loopback HTTP/OneBot; no paid model, real QQ or production N3 activation.",
+  "regression": {
+    "command": "node --test chatbot/tests/proactive/{core,lifecycle,engine,adapters}.test.mjs chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/access-control/{policy,isolation}.test.mjs chatbot/tests/persona/{memory,projection}.test.mjs scripts/fusion/test/log-query{,-views,-minimal,-diagnostics}.test.mjs",
+    "passed": 191,
+    "failed": 0,
+    "n3Subset": 62,
+    "finalRerun": "191/191 after explicit main tool-limit guard and late-receipt/no-stale-context regression"
+  },
+  "recovery": {
+    "command": "node --test scripts/fusion/test/recovery.test.mjs scripts/fusion/test/backup-layout.test.mjs",
+    "passed": 17,
+    "failed": 0,
+    "scope": "Temporary data, mock service leases, SQLite discovery including N3 and recovery-switch isolation; no actual backup/restore run."
+  },
+  "personalDomains": {
+    "build": "npm --prefix chatbot/packages/personal-domains run build",
+    "tests": "npm --prefix chatbot/packages/personal-domains test -- src/store.test.ts src/weather-service.test.ts src/planning.test.ts src/reminders.test.ts",
+    "passed": 35,
+    "failed": 0
+  },
+  "production": {
+    "checks": {
+      "health": true,
+      "dependencies": true,
+      "configDiff": true,
+      "personaDiff": true
+    },
+    "configurationSha256": "8c4ecce5c03e7b619f8703be045da4c7dd3a7c93aa363469aa165575717f8400",
+    "fusionInvocationID": "e8c5c16b75504c1cba919bd3346f3598",
+    "fusionSince": "2026-11-10 00:38:08 Asia/Shanghai",
+    "proactiveEnabled": false,
+    "n3GrantsAdded": false,
+    "caveat": "Existing Cron/business failures remain open; green infrastructure health is not broadcast acceptance.",
+    "beforeIndependentLogActivation": {
+      "configurationSha256": "51c9bd5c24fe8e8491ab1dd1407e5af59bb3305fcf544ba1b7f5a54e7500ea08",
+      "fusionInvocationID": "201eaa17933b49248394055e049a8c96",
+      "fusionSince": "2026-11-07 23:01:59 Asia/Shanghai"
+    },
+    "independentActivation": "Owner log-tool task enabled logs.read and restarted Fusion; N3 remains absent/disabled with no proactive grants. No N3 deployment, restart, QQ or paid-model call was performed by this task."
+  },
+  "failedHostAttempts": [
+    {
+      "attempt": 1,
+      "passedCases": 0,
+      "localModelRequests": 0,
+      "error": "Isolated Gateway exited",
+      "causeAndResolution": "Fixture omitted existing reminder-list backendRoot; schema refused startup.",
+      "childStopped": true
+    },
+    {
+      "attempt": 2,
+      "passedCases": 0,
+      "localModelRequests": 0,
+      "error": "N3 service readiness timeout",
+      "causeAndResolution": "Broad P2 application import unnecessarily pulled schema asset/N2 application graph; changed to narrow read model and lazy schema read in initializer.",
+      "childStopped": true
+    },
+    {
+      "attempt": 3,
+      "passedCases": 1,
+      "localModelRequests": 65,
+      "error": "{\"status\":\"failed\",\"runId\":\"c8eb0255-d5e0-4c44-8ec3-437bdb62d6e6\",\"reason\":\"wake_aborted\",\"messages\":[]}\n+ actual - expected\n\n+ 'failed'\n- 'completed'\n",
+      "causeAndResolution": "QQ policy composition incorrectly treated undefined (allow) as missing provider via nullish coalescing. Fixed explicit provider branch. Model fixture retry bound also corrected.",
+      "childStopped": true
+    },
+    {
+      "attempt": 4,
+      "passedCases": 1,
+      "localModelRequests": 5,
+      "error": "{\"status\":\"silent\",\"runId\":\"279adc5b-aaae-41d6-9655-6fa0a89a95f8\",\"messages\":[]}\n+ actual - expected\n\n+ 'silent'\n- 'completed'\n",
+      "causeAndResolution": "Same undefined-allow policy composition defect; no effects.",
+      "childStopped": true
+    },
+    {
+      "attempt": 5,
+      "passedCases": 1,
+      "localModelRequests": 5,
+      "error": "{\"status\":\"silent\",\"runId\":\"3d7924e5-bd22-4850-9c3b-fe3d223c6ff2\",\"messages\":[]}\n+ actual - expected\n\n+ 'silent'\n- 'completed'\n",
+      "causeAndResolution": "Same undefined-allow policy composition defect; no effects.",
+      "childStopped": true
+    },
+    {
+      "attempt": 6,
+      "passedCases": 1,
+      "localModelRequests": 5,
+      "error": "{\"status\":\"silent\",\"runId\":\"837fa8bd-6809-4757-a2ea-02fe308d900d\",\"messages\":[]}\n+ actual - expected\n\n+ 'silent'\n- 'completed'\n",
+      "causeAndResolution": "Same undefined-allow policy composition defect; no effects.",
+      "childStopped": true
+    },
+    {
+      "attempt": 7,
+      "passedCases": 1,
+      "localModelRequests": 5,
+      "error": "{\"status\":\"silent\",\"runId\":\"47a890a8-a702-4217-8ede-c8d4ca28e0aa\",\"messages\":[]}\n+ actual - expected\n\n+ 'silent'\n- 'completed'\n",
+      "causeAndResolution": "Same undefined-allow policy composition defect; no effects.",
+      "childStopped": true
+    },
+    {
+      "attempt": 8,
+      "passedCases": 6,
+      "localModelRequests": 13,
+      "error": "Actual owner control did not converge: pause",
+      "causeAndResolution": "Fixture lacked production per-channel-peer dmScope; actual inbound route did not match.",
+      "childStopped": true
+    },
+    {
+      "attempt": 9,
+      "passedCases": 6,
+      "localModelRequests": 15,
+      "error": "Actual owner control did not converge: pause",
+      "causeAndResolution": "Fixture lacked native owner projection; switched to actual compileAccessConfig rather than faking owner.",
+      "childStopped": true
+    },
+    {
+      "attempt": 10,
+      "passedCases": 9,
+      "localModelRequests": 19,
+      "error": "Expected values to be strictly equal:\n+ actual - expected\n\n+ 'failed'\n- 'cancelled'\n",
+      "causeAndResolution": "Persisted foreground cancellation was correct but work-admission wrapper reported failed; now preserves cancelled on aborted admission.",
+      "childStopped": true
+    }
+  ],
+  "sourceHashes": {
+    "chatbot/packages/proactive-core/authority.js": "416922aed08f97af06bf1ea5ce1df8a0876ec4a23584018ea512acf349aa4dcb",
+    "chatbot/packages/proactive-core/context.js": "73112fb1eb964d772fb3b20007d290efcd44d8d0e142ffeccf5a824b50c43f14",
+    "chatbot/packages/proactive-core/engine.js": "9feb54a4d0ec4296e118a586d92b491f315eeccb30f0639bfc098144b23082b9",
+    "chatbot/packages/proactive-core/lifecycle.js": "bbd04b2195882ea5927adbdebe091f82bef1268c797f5d4a206cf5a3647aed6a",
+    "chatbot/packages/proactive-core/policy.js": "c0ca464707297817fe413f55dc2b3c7ed7649fd2abed2cd61e0aabc2cea572bb",
+    "chatbot/packages/proactive-core/records.js": "ba7972e5ba5230e4c3a31182409ecf25a29653438064146073d27bdc3d51dbef",
+    "chatbot/packages/proactive-core/scheduler.js": "cb8652cefdbf685caea48bbe37df7d8a20bee8cb499101a108d257904d1f2dea",
+    "chatbot/packages/proactive-core/service.js": "1f30fb8e6f1ed5284aea68c39427ad79980d922b0bb41c4bf1e8fd0227ce71d0",
+    "chatbot/packages/proactive-core/store.js": "85989dba843e1e78143f336ac0098a201966fbbd877d19b09622ed69cf570e06",
+    "chatbot/plugins/kurumi-qq/proactive/adapters.js": "42adb9d720122df7995ddaa68aeff3dfa7c65c3969211f82aa10dbf021e0602e",
+    "chatbot/plugins/kurumi-qq/proactive/host.js": "22648e9cd1c6764c149acdd6da184798714d13e62e191720871d23ed0c0979f5",
+    "chatbot/plugins/kurumi-qq/proactive/index.js": "b221fa651bf947b93f0f643b668521e7ed9cb4221c2f9b5a514d6c3db736730f"
+  },
+  "documentation": {
+    "scriptIndex": 240,
+    "evidenceIndex": 206,
+    "temporaryDesignMergedInto": "docs/25_人格、记忆与会话连续性.md#n3主动唤醒与自主行动",
+    "temporaryDesignDeleted": true,
+    "ownershipTestsPassed": 10,
+    "localLinkTargetsChecked": 375,
+    "missingLocalTargets": 0
+  },
+  "temporaryDiagnostics": {
+    "retired": 10,
+    "allFailedAttemptChildrenStopped": true,
+    "productionDeletion": false
+  }
+}

@@ -1,0 +1,94 @@
+{
+  "at": "2026-11-09T16:51:59.247Z",
+  "boundary": "Actual QQ mandatory policy and N3 component/public SDK; synthetic loopback model/OneBot/business peers and temporary P2/SQLite. No production state, external API or QQ network. Behavioral judgment and owner experience are outside this evidence.",
+  "cases": [
+    {
+      "label": "actual-disabled-ingress-production-composition-starts-with-explicit-fixture-grants",
+      "passed": true
+    },
+    {
+      "label": "actual-SDK-query-four-domains-self-record-two-speeches-and-factual-receipts",
+      "passed": true,
+      "messages": [
+        "delivered",
+        "delivered"
+      ]
+    },
+    {
+      "label": "same-event-replay-never-repeats-native-tools-or-platform-effects",
+      "passed": true
+    },
+    {
+      "label": "actual-model-can-choose-silence-with-existing-self-record",
+      "passed": true
+    },
+    {
+      "label": "native-web-fetch-SSRF-refusal-is-observed-as-failed-attempt-source-without-loopback-read",
+      "passed": true
+    },
+    {
+      "label": "model-cannot-select-recipient-or-owner-authority",
+      "passed": true
+    },
+    {
+      "label": "real-HTTP-uncertainty-retained-and-not-automatically-retried",
+      "passed": true
+    },
+    {
+      "label": "actual-OneBot-inbound-QQ-policy-and-owner-tool-pause-background",
+      "passed": true
+    },
+    {
+      "label": "pause-and-ledgers-survive-actual-Gateway-restart-without-replay",
+      "passed": true
+    },
+    {
+      "label": "actual-owner-views-corrects-and-deletes-self-record-with-CAS-and-content-wiped-tombstone",
+      "passed": true
+    },
+    {
+      "label": "actual-owner-resume-allows-new-opportunity",
+      "passed": true
+    },
+    {
+      "label": "actual-foreground-admission-preempts-detached-background-model",
+      "passed": true
+    },
+    {
+      "label": "actual-foreground-session-reset-fences-composition-without-fabricating-owner-activity",
+      "passed": true
+    }
+  ],
+  "modelRequests": 30,
+  "businessRequests": [
+    {
+      "path": "/api/assistant/tasks",
+      "method": "GET",
+      "runId": true
+    },
+    {
+      "path": "/api/assistant/weather/current",
+      "method": "GET",
+      "runId": true
+    },
+    {
+      "path": "/api/assistant/weather/daily",
+      "method": "GET",
+      "runId": true
+    },
+    {
+      "path": "/api/assistant/weather/hourly",
+      "method": "GET",
+      "runId": true
+    },
+    {
+      "path": "/api/assistant/weather/alerts",
+      "method": "GET",
+      "runId": true
+    }
+  ],
+  "platformRequests": 9,
+  "passed": true,
+  "childStopped": true,
+  "finishedAt": "2026-11-09T16:52:35.381Z"
+}

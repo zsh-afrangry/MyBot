@@ -1,8 +1,9 @@
-// N3 development foundation only. The composition root supplies trusted policy,
+// N3 purpose authority. The composition root supplies trusted policy,
 // actual host session identity and domain adapters; no production tools are granted.
 import {createHash} from 'node:crypto';
 
 export const error = code => Object.assign(new Error(code), {code});
+export const isWakeSession=ctx=>/^agent:main:kurumi-proactive:[0-9]{5,12}$/.test(ctx?.sessionKey??'');
 export const digest = value => createHash('sha256').update(value).digest('hex');
 export const time = value => {
   if (!Number.isSafeInteger(value) || value < 0) throw error('invalid_time');
@@ -48,10 +49,10 @@ export function assertContactTime(policy, now, lastActivityAt) {
   if (night && (!Number.isSafeInteger(lastActivityAt) || now < lastActivityAt || now-lastActivityAt > policy.activityMaxAgeMs)) throw error('night_activity_required');
 }
 export function decision(value) {
-  if (!object(value) || !['silent','notify'].includes(value.kind)
+  if (!object(value) || !['silent','notify','done'].includes(value.kind)
     || Object.keys(value).some(k => !['kind','text'].includes(k))
-    || (value.kind === 'silent' && value.text !== undefined)) throw error('invalid_wake_decision');
-  if (value.kind === 'silent') return {kind:'silent'};
+    || (value.kind !== 'notify' && value.text !== undefined)) throw error('invalid_wake_decision');
+  if (value.kind !== 'notify') return {kind:value.kind};
   if (typeof value.text !== 'string' || !value.text.trim() || value.text.trim().length > 2000
     || ['NO_REPLY','HEARTBEAT_OK'].includes(value.text.trim())) throw error('invalid_wake_decision');
   return {kind:'notify',text:value.text.trim()};

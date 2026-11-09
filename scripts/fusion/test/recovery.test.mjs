@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawnSync,spawn} from 'node:child_process';
 import {serviceLease} from '../lib/backup-service.mjs';
 import {captureWorkingTree} from '../lib/working-tree-backup.mjs';
-import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs,disableOwnerFileRecovery} from '../lib/recovery-isolation.mjs';
+import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs,disableOwnerFileRecovery,disableProactiveRecovery} from '../lib/recovery-isolation.mjs';
 import {lockedPackages} from '../lib/package-manifests.mjs';
 const tmp=()=>fs.mkdtempSync('/tmp/kurumi-recovery-test-');
 function mock(initial,failStart=false){let state=initial;const calls=[];const run=(_cmd,args)=>{if(args.includes('show'))return {status:0,stdout:state};if(args.includes('stop')){calls.push('stop');state='inactive';return {status:0};}if(args.includes('start')){calls.push('start');if(failStart)return {status:1};state='active';return {status:0};}throw Error('unexpected');};return {run,calls};}
@@ -67,4 +67,14 @@ test('recovery copy revokes external ordinary-file roots and cwd while preservin
  assert.equal(cfg.plugins.entries['kurumi-qq'].config.exec.writeBoundary.additionalRoots,undefined);
  assert.deepEqual(cfg.plugins.entries['kurumi-coding'],coding);assert.deepEqual(cfg.channels,channel);
  const legacy=structuredClone(cfg);disableOwnerFileRecovery(cfg);assert.deepEqual(cfg,legacy);
+});
+
+test('recovery explicitly disables autonomous opportunities while preserving copied ledgers and unrelated settings',()=>{
+ const original={plugins:{entries:{'kurumi-qq':{config:{proactive:{enabled:true,notifyEnabled:true,intervalMs:1800000},exec:{workdir:'/fixture'}}}}}};
+ const copy=structuredClone(original);disableProactiveRecovery(copy);
+ assert.equal(copy.plugins.entries['kurumi-qq'].config.proactive.enabled,false);
+ assert.equal(original.plugins.entries['kurumi-qq'].config.proactive.enabled,true);
+ assert.equal(copy.plugins.entries['kurumi-qq'].config.proactive.notifyEnabled,true);
+ assert.deepEqual(copy.plugins.entries['kurumi-qq'].config.exec,original.plugins.entries['kurumi-qq'].config.exec);
+ const legacy={plugins:{entries:{}}};disableProactiveRecovery(legacy);assert.deepEqual(legacy,{plugins:{entries:{}}});
 });
