@@ -96,4 +96,4 @@ node scripts/fusion/evidence-index.mjs --check-markdown  # 生成表不能手改
 
 - [受管PDF名称维护](paper-rename-2026-11-07/README.md)：37项离线与3项真实宿主/模型通过；主人批准后revision6仅给主人启用，20项权限回归及部署自验通过，真人收件单列。
 
-- [QQ主人只读日志工具](qq-log-query-2026-11-10/README.md)：固定CLI复用、权限隔离、输出脱敏、取消/超时及隔离Gateway工具发现；主人已批准并生产启用，实际工具发现/固定CLI/四检通过，真实QQ待主人提问验收。
+- [QQ主人只读日志工具](qq-log-query-2026-11-10/README.md)：固定CLI复用、权限隔离、输出脱敏、取消/超时及隔离Gateway工具发现；主人首次QQ发现捕获路径故障，现已修复部署；完整隔离宿主4类实际查询/回执及生产捕获适配器4类查询通过，真实QQ待重试。

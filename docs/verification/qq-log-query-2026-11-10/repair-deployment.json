@@ -1,0 +1,64 @@
+{
+  "at": "2026-11-09T17:15:16.050Z",
+  "source": "f79a204",
+  "onlyConfigDelta": "plugins.entries.kurumi-logs.config.backendRoot",
+  "revision": 7,
+  "permissionsUnchanged": true,
+  "N3Enabled": false,
+  "N3DatabaseCreated": false,
+  "cronDeclarationsUnchanged": true,
+  "independentServicesUnchanged": true,
+  "Fusion": "ActiveState=active\nInvocationID=9e49300232604984a665445a2c7512f2",
+  "pluginState": "active",
+  "productionCapturedAdapterQueries": [
+    {
+      "name": "default",
+      "status": "ok",
+      "total": 124,
+      "shown": 50
+    },
+    {
+      "name": "six_hours",
+      "status": "ok",
+      "total": 124,
+      "shown": 15
+    },
+    {
+      "name": "stats",
+      "status": "ok",
+      "total": 124,
+      "shown": null
+    },
+    {
+      "name": "errors",
+      "status": "ok",
+      "total": 54,
+      "shown": 20
+    }
+  ],
+  "queryBoundary": "Actual new production captured query adapter and fixed backend, real technical-only log reads; not a real QQ/model invocation. Full handler and SDK mapping covered by isolated host acceptance.",
+  "realQQAcceptance": "pending_owner_retest",
+  "noRealMessagesOrModelCalls": true,
+  "postChecks": [
+    {
+      "tool": "health",
+      "exit": 0,
+      "reportedOk": true,
+      "issues": [],
+      "cronLastStatusErrors": 3
+    },
+    {
+      "tool": "verify-dependencies",
+      "exit": 0
+    },
+    {
+      "tool": "sync-config",
+      "exit": 0
+    },
+    {
+      "tool": "sync-persona",
+      "exit": 0
+    }
+  ],
+  "validatedOwnPreimageRemoved": true
+}
