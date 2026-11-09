@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-09T18:04:30.901Z",
+  "boundary": "Real isolated Gateway/captured plugin, actual QQ mandatory policy and owner ingress, deterministic local model, fixed CLI read of synthetic logs, loopback replies and enabled/disabled lifecycle. No model provider, no external API, no QQ network, no production write or production service restart.",
+  "stages": [
+    {
+      "enabled": true,
+      "queries": [],
+      "modelRequests": 4,
+      "capturedModuleObserved": true,
+      "failure": {
+        "name": "Error",
+        "message": "Unterminated string in JSON at position 2523 (line 1 column 2524)"
+      },
+      "gracefulStop": false
+    }
+  ],
+  "passed": false,
+  "error": {
+    "name": "Error",
+    "message": "Unterminated string in JSON at position 2523 (line 1 column 2524)"
+  },
+  "finishedAt": "2026-11-09T18:04:52.783Z",
+  "diagnosticDirectory": "/tmp/kurumi-logs-host-fV2Baf",
+  "diagnosticDirectoryRemoved": true,
+  "failureAnalysis": "Host automatically truncated a 20000-byte CJK-heavy fragment, breaking tool-result JSON; use 3000-byte lossless content fragments, verified in expanded-host.json. The first harness masked its parse failure with the stop assertion; the second preserves the parse error."
+}

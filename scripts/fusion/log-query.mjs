@@ -37,7 +37,7 @@ import {
 } from './log-query-views.mjs';
 
 import {normalizeToolResult} from './log-query-result.mjs';
-import {noTextProjection} from './log-query-privacy.mjs';
+import {noTextProjection,normalizeQueryEvent,paginateQueryContent} from './log-query-privacy.mjs';
 import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries,readStoredQQMessages} from './log-query-diagnostics.mjs';
 
 export {formatEvent};
@@ -94,7 +94,8 @@ function parseSnowLumaDate(file, time) {
 }
 
 // Kept as a pure line parser so unit tests and future file tailers can reuse it.
-export function parseSnowLumaLine(line, file, lineNumber) {
+export function parseSnowLumaLine(line, file, lineNumber, options = {}) {
+  const event = input => normalizeQueryEvent({...input,...(options.fullContent && options.expand ? {original:line} : {})},options);
   const match = String(line).match(/^(\d\d:\d\d:\d\d)\s+(\S+)\s+(.*)$/u);
   if (!match) return undefined;
   const [, clock, level, detail] = match;
@@ -126,7 +127,7 @@ export function parseSnowLumaLine(line, file, lineNumber) {
     });
   }
 
-  if (detail.includes('[Bridge.Action]') || level === 'WARN' || level === 'ERROR') {
+  if (options.fullContent || detail.includes('[Bridge.Action]') || level === 'WARN' || level === 'ERROR') {
     return event({
       at,
       source: 'snowluma',
@@ -138,7 +139,7 @@ export function parseSnowLumaLine(line, file, lineNumber) {
   return undefined;
 }
 
-export function readSnowLumaLogs(root, from, to) {
+export function readSnowLumaLogs(root, from, to, options = {}) {
   const dir = path.join(root, 'runtime', 'logs');
   if (!fs.existsSync(dir)) return [];
   const files = fs.readdirSync(dir)
@@ -149,12 +150,14 @@ export function readSnowLumaLogs(root, from, to) {
   for (const file of files) {
     let continuation;
     linesOf(file).forEach((line, index) => {
-      const parsed = parseSnowLumaLine(line, file, index + 1);
+      const parsed = parseSnowLumaLine(line, file, index + 1, options);
       if (parsed) {
         output.push(parsed);
-        continuation = ['qq.outbound', 'qq.inbound'].includes(parsed.kind) ? parsed : undefined;
+        continuation = ['qq.outbound', 'qq.inbound'].includes(parsed.kind) || options.fullContent && parsed.kind === 'snowluma.log' ? parsed : undefined;
       } else if (continuation && line.trim() && !/^\d\d:\d\d:\d\d\s+/u.test(line)) {
-        continuation.data.text = `${continuation.data.text}\n${line.trim()}`;
+        const key=continuation.kind==='snowluma.log'?'message':'text';
+        continuation.data[key] = `${continuation.data[key]}\n${options.fullContent ? line : line.trim()}`;
+        if(options.fullContent && options.expand)continuation.original+='\n'+line;
       } else if (/^\d\d:\d\d:\d\d\s+/u.test(line)) {
         continuation = undefined;
       }
@@ -181,9 +184,10 @@ function runtimeCorrelation(record, nested) {
   return correlation;
 }
 
-export function parseRuntimeLine(line, file, lineNumber) {
+export function parseRuntimeLine(line, file, lineNumber, options = {}) {
   let record;
   try { record = JSON.parse(line); } catch { return undefined; }
+  const event = input => normalizeQueryEvent({...input,...(options.fullContent && options.expand ? {original:record} : {})},options);
   const at = parseLocalDateTime(record.time ?? record._meta?.date ?? record._meta?.runtimeDate);
   if (!Number.isFinite(at)) return undefined;
   const subsystem = parseJson(record['0'])?.subsystem ?? String(record['0'] ?? 'openclaw');
@@ -212,9 +216,9 @@ export function parseRuntimeLine(line, file, lineNumber) {
   });
 }
 
-export function readRuntimeLog(file, from, to) {
+export function readRuntimeLog(file, from, to, options = {}) {
   if (!fs.existsSync(file)) return [];
-  return linesOf(file).map((line, index) => parseRuntimeLine(line, file, index + 1)).filter(Boolean)
+  return linesOf(file).map((line, index) => parseRuntimeLine(line, file, index + 1, options)).filter(Boolean)
     .filter((item) => item.epochMs >= from && item.epochMs <= to);
 }
 
@@ -247,9 +251,10 @@ function receiptData(record) {
   return data;
 }
 
-export function parseReceiptLine(line, file, lineNumber) {
+export function parseReceiptLine(line, file, lineNumber, options = {}) {
   let record;
   try { record = JSON.parse(line); } catch { return undefined; }
+  const event = input => normalizeQueryEvent({...input,...(options.fullContent && options.expand ? {original:record} : {})},options);
   const at = epochMs(record.at ?? record.timestamp ?? record.createdAt);
   const base = path.basename(file);
   const sourceName = base.replace(/-receipts\.jsonl$/u, '');
@@ -266,9 +271,9 @@ export function parseReceiptLine(line, file, lineNumber) {
   });
 }
 
-export function readReceiptFile(file, from, to) {
+export function readReceiptFile(file, from, to, options = {}) {
   if (!fs.existsSync(file)) return [];
-  return linesOf(file).map((line, index) => parseReceiptLine(line, file, index + 1)).filter(Boolean)
+  return linesOf(file).map((line, index) => parseReceiptLine(line, file, index + 1, options)).filter(Boolean)
     .filter((item) => item.epochMs >= from && item.epochMs <= to);
 }
 
@@ -278,10 +283,10 @@ function transcriptText(content) {
   return content.filter((item) => item?.type === 'text').map((item) => item.text ?? '').join('\n');
 }
 
-function toolResultSummary(message) {
+function toolResultSummary(message, {fullContent = false} = {}) {
   const text = transcriptText(message.content);
   return {...normalizeToolResult({...message, content: Array.isArray(message.content) ? message.content : [{type: 'text', text}]}),
-    correlation: namedIds(parseJson(text)), textPreview: summarizeText(text)};
+    correlation: namedIds(parseJson(text)), textPreview: fullContent ? text : summarizeText(text)};
 }
 
 /** Wrapped calls name the real tool in `arguments.id` (`openclaw:<plugin>:<tool>`
@@ -292,8 +297,9 @@ function wrappedToolName(value) {
   return undefined;
 }
 
-function shortError(value) {
+function shortError(value, {fullContent = false} = {}) {
   if (value === undefined || value === null || value === '') return undefined;
+  if (fullContent) return value;
   if (typeof value === 'object') return redactValue({code: value.code, message: value.message === undefined ? undefined : summarizeText(value.message, 160)});
   return summarizeText(value, 160);
 }
@@ -315,7 +321,8 @@ function attachInboundRun(events) {
   }
 }
 
-function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
+function transcriptEvents(dbFile, from, to, {expand = false, fullContent = false} = {}) {
+  const event = input => normalizeQueryEvent(input,{fullContent});
   const output = [];
   try {
     const {rows, windows} = readHostRecords(dbFile, {from, to});
@@ -331,7 +338,7 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
       });
       const at = record.timestamp ?? row.createdAt;
       const ref = sourceRef(dbFile, row.seq, {table: 'transcript_events', sessionId: row.sessionId});
-      const push = (kind, data, correlation = baseCorrelation) => output.push(event({at, source: 'openclaw-session', kind, correlation, data, sourceRef: ref}));
+      const push = (kind, data, correlation = baseCorrelation) => output.push(event({at, source: 'openclaw-session', kind, correlation, data, sourceRef: ref,...(fullContent && expand ? {original:record} : {})}));
       const contents = Array.isArray(message.content) ? message.content : [];
       // Session segment markers: /new keeps the sessionId, so it is only visible here.
       if(record.type==='model_change')push('session.model_change',{provider:record.provider,model:record.modelId,fallbackKnown:false});
@@ -340,7 +347,7 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
         push('session.compaction', {tokensBefore: record.tokensBefore ?? null, tokensAfter: record.tokensAfter ?? null,
           summaryChars: String(record.summary ?? '').length, fromHook: record.fromHook === true});
       } else if (record.type === 'custom' && record.customType === 'openclaw:prompt-error') {
-        push('agent.prompt_error', {provider: record.data?.provider, model: record.data?.model, error: shortError(record.data?.error)});
+        push('agent.prompt_error', {provider: record.data?.provider, model: record.data?.model, error: shortError(record.data?.error,{fullContent})});
       } else if (record.type === 'custom_message' && record.customType === 'openclaw:turn-aborted') {
         push('agent.turn_aborted', {});
       }
@@ -352,21 +359,21 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
           const counters={};for(const key of ['input','output','cacheRead','cacheWrite','totalTokens','inputTokens','outputTokens'])if(Number.isFinite(usage?.[key]))counters[key]=usage[key];
           push('agent.model_usage',{provider:message.provider,model:message.model,stopReason:message.stopReason??null,usage:counters,usageAvailable:!!usage});
         }
-        if (message.errorMessage) push('agent.model_error', {stopReason: message.stopReason ?? null, provider: message.provider, model: message.model, error: shortError(message.errorMessage)});
+        if (message.errorMessage) push('agent.model_error', {stopReason: message.stopReason ?? null, provider: message.provider, model: message.model, error: shortError(message.errorMessage,{fullContent})});
         for (const part of contents) {
           if (part?.type === 'toolCall' || part?.type === 'tool_use') {
             const argumentsValue = part.arguments ?? part.input ?? {};
             const ids = namedIds(argumentsValue);
             const declared = part.name ?? part.toolName ?? 'unknown';
             const actual = ['tool_call', 'dispatch_action'].includes(declared) ? wrappedToolName(argumentsValue?.id) ?? declared : declared;
-            push('agent.tool_call', {tool: actual, declaredTool: declared, arguments: redactValue(argumentsValue), ...(expand ? {expanded: {arguments: deepParseJson(argumentsValue)}} : {})},
+            push('agent.tool_call', {tool: actual, declaredTool: declared, arguments: fullContent ? argumentsValue : redactValue(argumentsValue), ...(expand ? {expanded: {arguments: deepParseJson(argumentsValue)}} : {})},
               {...baseCorrelation, ...correlationFrom(ids), ...(part.id ? {toolCallId: String(part.id)} : {})});
           } else if (part?.type === 'text' && String(part.text ?? '').trim()) {
             push('agent.reply', {text: part.text, role: 'assistant'});
           }
         }
       } else if (message.role === 'toolResult' || message.role === 'tool') {
-        const summary = toolResultSummary(message);
+        const summary = toolResultSummary(message,{fullContent});
         const wrapper = parseJson(transcriptText(message.content));
         const details = message.details && typeof message.details === 'object' ? message.details : {};
         const declared = message.toolName ?? message.name ?? 'unknown';
@@ -374,7 +381,7 @@ function transcriptEvents(dbFile, from, to, {expand = false} = {}) {
         const status = message.isError === true ? 'error' : 'ok';
         push('agent.tool_result', {tool, ...summary, declaredTool: declared, isError: message.isError === true, status,
           ...(details.status !== undefined ? {hostStatus: details.status} : {}),
-          ...(details.error !== undefined ? {error: shortError(details.error)} : {}),
+          ...(details.error !== undefined ? {error: shortError(details.error,{fullContent})} : {}),
           ...(expand ? {expanded: {content: deepParseJson(transcriptText(message.content)), details: deepParseJson(details)}} : {})},
         {...baseCorrelation, ...correlationFrom(summary.correlation), ...(message.toolCallId ? {toolCallId: String(message.toolCallId)} : {})});
       } else if (message.role === 'custom' && message.customType === 'openclaw.nested-tool.v1') {
@@ -404,7 +411,9 @@ function agentDatabases(root) {
   return fs.readdirSync(agents).map((id) => path.join(agents, id, 'agent', 'openclaw-agent.sqlite')).filter(fs.existsSync);
 }
 
-function readReminderDatabase(file, from, to) {
+function readReminderDatabase(file, from, to, options = {}) {
+  const event = input => normalizeQueryEvent(input,options);
+  const retain = value => options.fullContent ? value : redactValue(value);
   const output = [];
   let db;
   try { db = new DatabaseSync(file, {readOnly: true}); } catch { return output; }
@@ -422,22 +431,22 @@ function readReminderDatabase(file, from, to) {
       expires_at_utc AS expiresAtUtc, created_at_utc AS createdAtUtc, committed_at_utc AS committedAtUtc,
       result_reminder_id AS reminderId FROM reminder_proposals
       WHERE (created_at_utc BETWEEN ? AND ?) OR (committed_at_utc BETWEEN ? AND ?)`, [...range, ...range], (row) => {
-      output.push(event({at: row.createdAtUtc * 1000, source: 'personal-reminders', kind: 'reminder.proposal_state', correlation: correlationFrom(row), data: {...redactValue(row), snapshotOfCurrentState: true}, sourceRef: sourceRef(file, 0, {table: 'reminder_proposals'})}));
+      output.push(event({at: row.createdAtUtc * 1000, source: 'personal-reminders', kind: 'reminder.proposal_state', correlation: correlationFrom(row), data: {...retain(row), snapshotOfCurrentState: true}, sourceRef: sourceRef(file, 0, {table: 'reminder_proposals'})}));
     });
     emitRows(`SELECT reminder_id AS reminderId, status, content, scheduled_at_utc AS scheduledAtUtc,
       cron_job_id AS cronJobId, created_at_utc AS createdAtUtc, updated_at_utc AS updatedAtUtc,
       dispatched_at_utc AS dispatchedAtUtc, delivered_at_utc AS deliveredAtUtc, failure_code AS failureCode
-      FROM reminders WHERE updated_at_utc BETWEEN ? AND ?`, range, (row) => event({at: (row.deliveredAtUtc ?? row.updatedAtUtc ?? row.createdAtUtc) * 1000, source: 'personal-reminders', kind: row.status === 'delivered' ? 'reminder.delivered' : 'reminder.state', correlation: correlationFrom(row), data: {...redactValue(row), snapshotOfCurrentState: true}, sourceRef: sourceRef(file, 0, {table: 'reminders'})}));
+      FROM reminders WHERE updated_at_utc BETWEEN ? AND ?`, range, (row) => event({at: (row.deliveredAtUtc ?? row.updatedAtUtc ?? row.createdAtUtc) * 1000, source: 'personal-reminders', kind: row.status === 'delivered' ? 'reminder.delivered' : 'reminder.state', correlation: correlationFrom(row), data: {...retain(row), snapshotOfCurrentState: true}, sourceRef: sourceRef(file, 0, {table: 'reminders'})}));
     emitRows(`SELECT proposal_id AS proposalId, confirmation_message_id AS confirmationMessageId,
       issued_at_utc AS issuedAtUtc, consumed_at_utc AS consumedAtUtc, status, consumption_result AS result
-      FROM approval_grants WHERE (issued_at_utc BETWEEN ? AND ?) OR (consumed_at_utc BETWEEN ? AND ?)`, [...range, ...range], (row) => event({at: (row.consumedAtUtc ?? row.issuedAtUtc) * 1000, source: 'personal-reminders', kind: 'confirmation.grant', correlation: correlationFrom(row), data: redactValue(row), sourceRef: sourceRef(file, 0, {table: 'approval_grants'})}));
+      FROM approval_grants WHERE (issued_at_utc BETWEEN ? AND ?) OR (consumed_at_utc BETWEEN ? AND ?)`, [...range, ...range], (row) => event({at: (row.consumedAtUtc ?? row.issuedAtUtc) * 1000, source: 'personal-reminders', kind: 'confirmation.grant', correlation: correlationFrom(row), data: retain(row), sourceRef: sourceRef(file, 0, {table: 'approval_grants'})}));
     emitRows(`SELECT id, action, entity_type AS entityType, entity_id AS entityId,
       proposal_id AS proposalId, summary_json AS summaryJson, created_at_utc AS createdAtUtc
       FROM reminder_audit_log WHERE created_at_utc BETWEEN ? AND ?`, range, (row) => {
       const summary = parseJson(row.summaryJson);
       const kind = String(row.action ?? 'reminder.audit').replace(/_/gu, '.');
       const correlation = correlationFrom({...row, reminderId: row.entityType === 'reminder' ? row.entityId : undefined});
-      return event({at: row.createdAtUtc * 1000, source: 'personal-reminders', kind, correlation, data: {action: row.action, entityType: row.entityType, summary: redactValue(summary)}, sourceRef: sourceRef(file, 0, {table: 'reminder_audit_log', id: row.id})});
+      return event({at: row.createdAtUtc * 1000, source: 'personal-reminders', kind, correlation, data: {action: row.action, entityType: row.entityType, summary: retain(summary)}, sourceRef: sourceRef(file, 0, {table: 'reminder_audit_log', id: row.id})});
     });
   } finally { db.close(); }
   return output.filter((item) => item.epochMs >= from && item.epochMs <= to);
@@ -445,7 +454,8 @@ function readReminderDatabase(file, from, to) {
 
 /** Reminder-list audit is already bound to the trusted message at write time.
  * Scheduled digest events have a slot/cron identity and no inferred QQ turn. */
-export function readReminderListDatabase(file, from, to) {
+export function readReminderListDatabase(file, from, to, options = {}) {
+  const event = input => normalizeQueryEvent(input,options);
   if (!fs.existsSync(file)) return [];
   const db = new DatabaseSync(file, {readOnly: true});
   try {
@@ -456,18 +466,18 @@ export function readReminderListDatabase(file, from, to) {
         correlation: correlationFrom({qqMessageId: row.qq_message_id, sessionKey: row.session_key,
           runId: row.run_id, reminderId: row.item_id, eventKey: details.slotKey, cronJobId: details.cronJobId}),
         data: {action: row.action, status: details.after?.status, previousStatus: details.before?.status,
-          count: details.count, settings: details.settings, reason: details.reason},
+          count: details.count, settings: details.settings, reason: details.reason,...(options.fullContent ? {details} : {})},
         sourceRef: sourceRef(file, 0, {table: 'audit', id: row.id})});
     });
   } finally { db.close(); }
 }
 
-function readTraceFile(file, from, to) {
+function readTraceFile(file, from, to, options = {}) {
   if (!fs.existsSync(file)) return [];
   return linesOf(file).flatMap((line, index) => {
     try {
       const value = JSON.parse(line);
-      const parsed = normalizeTraceEvent({...value, sourceRef: value.sourceRef ?? sourceRef(file, index + 1)});
+      const parsed = normalizeQueryEvent({...value, sourceRef: value.sourceRef ?? sourceRef(file, index + 1)},options);
       return parsed.epochMs >= from && parsed.epochMs <= to ? [parsed] : [];
     } catch { return []; }
   });
@@ -543,7 +553,8 @@ export function attachRuntimeCorrelation(events) {
 }
 
 /** Current outbound ledger state, not a history of transitions or user read receipt. */
-export function readChannelDelivery(file, from, to) {
+export function readChannelDelivery(file, from, to, options = {}) {
+  const event = input => normalizeQueryEvent(input,options);
   if (!fs.existsSync(file)) return [];
   const db = new DatabaseSync(file, {readOnly: true});
   try {
@@ -560,21 +571,24 @@ function append(target, items) {
   for (const item of items) target.push(item);
 }
 
-export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, snowlumaRoot = DEFAULT_SNOWLUMA_ROOT, sources, expand = false, messageId,peer} = {}) {
+export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, snowlumaRoot = DEFAULT_SNOWLUMA_ROOT, sources, expand = false, fullContent = false, messageId,peer} = {}) {
+  const contentOptions={expand,fullContent};
   const wanted = sources ? new Set(sources) : undefined;
   const include = (name) => !wanted || wanted.has(name);
   const events = [];
   const windows = [];
-  if (include('cron-runs')) append(events, readCronRuns(runtimeRoot,from,to));
-  if (include('channel-delivery')) append(events, readChannelDelivery(path.join(runtimeRoot, 'channel', 'channel.sqlite'), from, to));
-  if (include('snowluma')) append(events, readSnowLumaLogs(snowlumaRoot, from, to));
-  if (include('openclaw-runtime')) append(events, readRuntimeLog(path.join(runtimeRoot, 'runtime.log'), from, to));
+  if (include('cron-runs')) append(events, readCronRuns(runtimeRoot,from,to,contentOptions));
+  if (include('channel-delivery')) append(events, readChannelDelivery(path.join(runtimeRoot, 'channel', 'channel.sqlite'), from, to,contentOptions));
+  if (include('snowluma')) append(events, readSnowLumaLogs(snowlumaRoot, from, to,contentOptions));
+  if (include('openclaw-runtime') && fs.existsSync(runtimeRoot)) {
+    for(const name of fs.readdirSync(runtimeRoot).filter(n=>/^runtime(?:\.\d+)?\.log$/u.test(n)).sort())append(events,readRuntimeLog(path.join(runtimeRoot,name),from,to,contentOptions));
+  }
   if (include('openclaw-receipt')) {
-    for (const name of ['task-receipts.jsonl', 'reminder-receipts.jsonl', 'native-tool-receipts.jsonl']) append(events, readReceiptFile(path.join(runtimeRoot, 'channel', name), from, to));
+    for (const name of ['task-receipts.jsonl', 'reminder-receipts.jsonl', 'native-tool-receipts.jsonl']) append(events, readReceiptFile(path.join(runtimeRoot, 'channel', name), from, to,contentOptions));
   }
   if (include('openclaw-session')) {
     for (const dbFile of agentDatabases(runtimeRoot)) {
-      const result = transcriptEvents(dbFile, from, to, {expand});
+      const result = transcriptEvents(dbFile, from, to, contentOptions);
       append(events, result.events); append(windows, result.windows);
     }
   } else if (include('snowluma')) {
@@ -583,29 +597,29 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
     const result = transcriptEvents(mainDb, from, to);
     append(windows, result.windows);
   }
-  if (include('personal-reminders')) append(events, readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to));
-  if (include('personal-reminder-list')) append(events, readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to));
+  if (include('personal-reminders')) append(events, readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to,contentOptions));
+  if (include('personal-reminder-list')) append(events, readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to,contentOptions));
   for (const [source, basename] of [['trace-events','trace-events.jsonl'],['e7','e7-events.jsonl'],['kurumi-memory','memory-events.jsonl']]) {
-    if (include(source)) for (const suffix of ['.1','']) append(events,readTraceFile(path.join(runtimeRoot,'channel',basename+suffix),from,to));
+    if (include(source)) for (const suffix of ['.1','']) append(events,readTraceFile(path.join(runtimeRoot,'channel',basename+suffix),from,to,contentOptions));
   }
-  if (include('access-control')) append(events, readTraceFile(path.join(runtimeRoot,'channel','access-events.jsonl'),from,to));
+  if (include('access-control')) append(events, readTraceFile(path.join(runtimeRoot,'channel','access-events.jsonl'),from,to,contentOptions));
   if (include('papers')) {
     // Configured managed root, with a portable default for isolated tests/restores.
     let root = path.join(runtimeRoot, 'documents');
     try { root = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-papers'].config.root ?? root; } catch {}
-    append(events, readTraceFile(path.join(root, 'events.jsonl'), from, to));
+    append(events, readTraceFile(path.join(root, 'events.jsonl'), from, to,contentOptions));
   }
   if (include('web-deepseek')) {
     // Only a configured trace file exists; the provider writes nothing by default.
     let file;
     try { file = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-web-deepseek'].config.traceFile; } catch {}
-    if (typeof file === 'string' && path.isAbsolute(file)) append(events, readTraceFile(file, from, to));
+    if (typeof file === 'string' && path.isAbsolute(file)) append(events, readTraceFile(file, from, to,contentOptions));
   }
   if (include('knowledgemap')) {
-    for (const file of ['trace.jsonl.1', 'trace.jsonl']) append(events, readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to));
+    for (const file of ['trace.jsonl.1', 'trace.jsonl']) append(events, readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to,contentOptions));
   }
   if (include('proactive')) {
-    for (const file of ['trace.jsonl.1','trace.jsonl']) append(events,readTraceFile(path.join(runtimeRoot,'state','proactive',file),from,to));
+    for (const file of ['trace.jsonl.1','trace.jsonl']) append(events,readTraceFile(path.join(runtimeRoot,'state','proactive',file),from,to,contentOptions));
   }
   if(wanted?.has('snowluma-messages')) append(events,readStoredQQMessages(snowlumaRoot,runtimeRoot,from,to,{messageId,peer,expand,previews:events.filter(e=>e.source==='snowluma')}));
   attachSessionCorrelation(events, windows);
@@ -619,6 +633,13 @@ function containsEvent(eventValue, text) {
   return JSON.stringify(eventValue).toLocaleLowerCase('zh-CN').includes(String(text).toLocaleLowerCase('zh-CN'));
 }
 
+function matchesQuery(item,filters) {
+  if(filters.levels?.length && !filters.levels.some(level=>String(item.data?.level ?? '').toUpperCase()===String(level).toUpperCase()))return false;
+  if(filters.contains && !containsEvent(item,filters.contains))return false;
+  const terms=filters.keywords ?? [];
+  return !terms.length || (filters.keywordMode==='all' ? terms.every(term=>containsEvent(item,term)) : terms.some(term=>containsEvent(item,term)));
+}
+
 export function filterEvents(events, filters = {}) {
   if(filters.peer){
     if(!/^\d{5,12}$/.test(filters.peer))throw Error('Invalid peer');
@@ -627,7 +648,7 @@ export function filterEvents(events, filters = {}) {
   if(filters.lastTurns!==undefined)events=selectRecentTurns(events,Number(filters.lastTurns));
   const idFilters = ['messageId', 'proposalId', 'runId', 'sessionKey', 'reminderId'];
   const requested = idFilters.filter((name) => filters[name]);
-  if (!requested.length) return events.filter((item) => !filters.contains || containsEvent(item, filters.contains));
+  if (!requested.length) return events.filter((item) => matchesQuery(item,filters));
   const seeds = events.filter((item) => requested.every((name) => Object.values(item.correlation).some((value) => String(value) === String(filters[name]))));
   const selected = new Set(seeds);
   // Correlation closure joins a QQ turn to its tool result and a reminder
@@ -649,7 +670,7 @@ export function filterEvents(events, filters = {}) {
       for (const candidate of index.get(value) ?? []) if (!selected.has(candidate)) { selected.add(candidate); queue.push(candidate); }
     }
   }
-  return events.filter((item) => selected.has(item) && (!filters.contains || containsEvent(item, filters.contains)));
+  return events.filter((item) => selected.has(item) && matchesQuery(item,filters));
 }
 
 function usage() {
@@ -657,7 +678,7 @@ function usage() {
 
   --from <时间>       起始时间（带时区 ISO；无时区按 Asia/Shanghai）
   --to <时间>         结束时间
-  --since <30m|2h|1d>  相对时间窗，不与--from组合
+  --since <30m|2h|30d|all> 相对时间窗或全部留存历史，不与--from组合
   --peer <QQ>         只看对应私聊/可信收发账号，不推测身份
   --last-turns <N>    当前时间窗内最近N个模型回合
   --snapshot <类型>   memory/reminders/reminder-list/documents/cron，只读当前状态
@@ -669,6 +690,11 @@ function usage() {
   --follow            持续只读跟随，Ctrl+C退出（JSON为一行一个包）
   --interval <毫秒>   跟随间隔100..60000，默认1000
   --contains <文本>   按事件内容筛选
+  --keyword <文本>    可重复；按完整记录字面检索，no-text不降低召回
+  --keyword-mode <any|all> 多关键词命中任意/全部，默认any
+  --level <级别>      可重复；按原生级别筛选，如ERROR/FATAL
+  --context-before <N> 命中前事件数0..1000，邻居不按关键词/类型/级别过滤
+  --context-after <N> 命中后事件数0..1000，仍限本次时间/来源
   --message-id <ID>   按 QQ 消息 ID 筛选（自动带出同一链路的事件）
   --proposal-id <ID>  按提醒提案筛选
   --run-id <ID>       按后台/模型运行 ID 筛选
@@ -678,7 +704,11 @@ function usage() {
   --exclude-source <名称> 可重复；排除适配器
   --kind <前缀>       可重复；只看这些事件类型，前缀匹配（如 agent.tool_）
   --exclude-kind <前缀> 可重复；排除事件类型，前缀匹配
-  --no-text           仅输出白名单技术摘要，不含正文（保留关联ID）
+  --no-text           显式选择无正文技术摘要，保留原样代码/关联ID
+  --full-content      读取登记来源已有完整内容，不追加查询脱敏
+  --output-bytes <N>  JSON内容分段预算2000..524288字节，不删除字段
+  --content-offset <N> 照抄nextContentOffset，固定时间/筛选/行页继续取内容
+  --content-hash <值> 照抄contentHash；内容变化则重新读该页
   --raw               显示未分类的原生日志行（openclaw.log、snowluma.log，默认隐藏）
   --expand, --full    展开完整工具参数与结果、不截断文本（可能含聊天原文）
   --turns             按回合汇总：用户说 → 工具 → 回复，/new 与压缩显示为分段
@@ -694,12 +724,12 @@ function usage() {
 `;
 }
 
-const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval'];
-const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds'};
-const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit', '--stats':'stats', '--follow':'follow', '--show-known':'showKnown'};
+const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval','--keyword','--keyword-mode','--level','--context-before','--context-after','--output-bytes','--content-offset','--content-hash'];
+const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds','--keyword':'keywords','--level':'levels'};
+const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit', '--stats':'stats', '--follow':'follow', '--show-known':'showKnown','--full-content':'fullContent'};
 
 function parseArgs(argv) {
-  const result = {sources: [], excludeSources: [], kinds: [], excludeKinds: []};
+  const result = {sources: [], excludeSources: [], kinds: [], excludeKinds: [], keywords:[], levels:[]};
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--help') return {...result, help: true};
@@ -718,18 +748,21 @@ function parseArgs(argv) {
   if(result.since&&result.from)throw Error('since and from are mutually exclusive');
   if(result.snapshot&&(result.peer||result.lastTurns||result.contains||result.messageId||result.runId||result.sessionKey||result.proposalId||result.reminderId||result.sources.length||result.kinds.length))throw Error('snapshot is current owner state; event filters cannot be combined');
   if(result.follow&&(result.snapshot||result.lastTurns||result.offset||result.to))throw Error('follow cannot combine snapshot/last-turns/offset/to');
+  if(result.keywordMode && !['any','all'].includes(result.keywordMode))throw Error('Invalid keyword mode');
+  for(const name of ['contextBefore','contextAfter','contentOffset','outputBytes'])if(result[name]!==undefined){result[name]=Number(result[name]);if(!Number.isSafeInteger(result[name])||result[name]<0||['contextBefore','contextAfter'].includes(name)&&result[name]>1000)throw Error('Invalid '+name);}
+  if((result.contextBefore||result.contextAfter)&&(result.stats||result.turns||result.audit||result.snapshot))throw Error('Context requires events/errors view');
   return result;
 }
 
 export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   const args = parseArgs(argv);
   if (args.help) { console.log(usage()); return 0; }
-  const duration=args.since?parseDuration(args.since):60*60*1000;
-  const from = parseQueryInstant(args.from, now - duration),to = parseQueryInstant(args.to, now);
+  const duration=args.since && args.since!=='all'?parseDuration(args.since):60*60*1000;
+  const from = parseQueryInstant(args.from, args.since==='all'?0:now - duration),to = parseQueryInstant(args.to, now);
   if ((args.from&&!Number.isFinite(parseQueryInstant(args.from,NaN)))||(args.to&&!Number.isFinite(parseQueryInstant(args.to,NaN)))||!Number.isFinite(from)||!Number.isFinite(to)||from>to)throw Error('时间范围无效');
   const runtimeRoot=args.runtimeRoot??DEFAULT_RUNTIME_ROOT;
   if(args.snapshot){const value=stateSnapshot(runtimeRoot,args.snapshot,{expand:args.expand,now});console.log(JSON.stringify(args.noText?noTextProjection(value):value,null,2));return 0;}
-  const read=(start,end)=>collectEvents({from:start,to:end,runtimeRoot,snowlumaRoot:args.snowlumaRoot??DEFAULT_SNOWLUMA_ROOT,sources:args.sources.length?args.sources:undefined,expand:Boolean(args.expand),messageId:args.messageId,peer:args.peer});
+  const read=(start,end)=>collectEvents({from:start,to:end,runtimeRoot,snowlumaRoot:args.snowlumaRoot??DEFAULT_SNOWLUMA_ROOT,sources:args.sources.length?args.sources:undefined,expand:Boolean(args.expand || args.fullContent),fullContent:Boolean(args.fullContent),messageId:args.messageId,peer:args.peer});
   const emit=(events,start,end,following=false)=>{let offset=Number(args.offset??0);do{const rendered=renderQuery(events,{...args,offset,from:start,to:end});console.log(args.json?JSON.stringify(rendered.json,null,following?0:2):rendered.lines.join('\n'));offset=following?rendered.json.nextOffset:null;}while(offset!=null);};
   if(args.follow){
     const controller=new AbortController(),stop=()=>controller.abort();process.once('SIGINT',stop);process.once('SIGTERM',stop);
@@ -739,7 +772,7 @@ export function runCli(argv = process.argv.slice(2), now = Date.now()) {
 }
 export function parseDuration(value){
  const match=/^([1-9]\d*)(s|m|h|d)$/.exec(value??'');if(!match)throw Error('Invalid since duration');
- const ms=Number(match[1])*({s:1000,m:60000,h:3600000,d:86400000}[match[2]]);if(!Number.isSafeInteger(ms)||ms>366*86400000)throw Error('since exceeds 366 days');return ms;
+ const ms=Number(match[1])*({s:1000,m:60000,h:3600000,d:86400000}[match[2]]);if(!Number.isSafeInteger(ms)||!Number.isFinite(new Date(Date.now()-ms).getTime()))throw Error('Invalid since duration');return ms;
 }
 
 /**
@@ -750,6 +783,17 @@ export function parseDuration(value){
 function queryLimit(value) {
   const requested = Number(value ?? 500);
   return Number.isFinite(requested) ? Math.max(1, Math.min(5000, Math.floor(requested))) : 500;
+}
+
+function addQueryContext(value, events, anchors, options) {
+  const before=options.contextBefore ?? 0, after=options.contextAfter ?? 0;
+  if(!before && !after)return value;
+  const key=e=>JSON.stringify([e.source,e.kind,e.at,e.sourceRef,e.correlation]);
+  const keys=new Set(anchors.map(key)),pool=events.filter(e=>!(options.excludeSources??[]).includes(e.source));
+  const selected=new Set();let matched=0;
+  for(let n=0;n<pool.length;n++)if(keys.has(key(pool[n]))){matched++;for(let i=Math.max(0,n-before);i<=Math.min(pool.length-1,n+after);i++)selected.add(i);}
+  return {...value,contextBefore:before,contextAfter:after,contextAnchors:matched,
+    contextEvents:pool.filter((_,n)=>selected.has(n)).map(e=>({...e,contextRole:keys.has(key(e))?'match':'neighbor'})),contextWithinQueryWindow:true};
 }
 
 function renderQueryInternal(events, options = {}) {
@@ -786,17 +830,17 @@ function renderQueryInternal(events, options = {}) {
     };
   }
   if (errors) {
-    const found = collectErrors(values);
+    const found = collectErrors(values,undefined,{details:Boolean(options.fullContent || options.contextBefore || options.contextAfter),fullContent:Boolean(options.fullContent)});
     const items = found.items.slice(offset,offset+limit);
     return {
-      json: {schemaVersion: 1, view: 'errors', ...range, total: found.items.length, shown: items.length, counts: found.counts, hiddenKnown, ...page(found.items), items},
+      json: addQueryContext({schemaVersion: 1, view: 'errors', ...range, total: found.items.length, shown: items.length, counts: found.counts, hiddenKnown, ...page(found.items), items,...(found.recordCount!==undefined?{recordCount:found.recordCount,correlationGroups:found.correlationGroups,countBasis:found.countBasis}:{})},events,items.flatMap(item=>item.details??[]),options),
       lines: [`错误与拒绝 ${items.length}/${found.items.length}${window}`, ...formatErrors({items, counts: found.counts})],
     };
   }
   const selected = values.slice(offset,offset+limit);
   const calls = pairCalls(selected);
   return {
-    json: {schemaVersion: 1, ...range, total: values.length, shown: selected.length, hiddenRaw, hiddenKnown, ...page(values), events: selected, calls},
+    json: addQueryContext({schemaVersion: 1, ...range, total: values.length, shown: selected.length, hiddenRaw, hiddenKnown, ...page(values), events: selected, calls},events,selected,options),
     lines: [`链路事件 ${selected.length}/${values.length}${window}${rawNote}`, ...formatListing(selected, {expand, calls})],
   };
 }
@@ -811,10 +855,20 @@ export function renderQuery(events, options = {}) {
     }
   };
   for (const item of value.events ?? []) annotate(item);
+  if (options.fullContent && !options.expand) {
+    const surface=event=>{const {original,...rest}=event;const {expanded,...data}=rest.data??{};return {...rest,...(rest.data?{data}:{})};};
+    if(value.events)value.events=value.events.map(surface);
+    if(value.contextEvents)value.contextEvents=value.contextEvents.map(surface);
+    if(value.items)value.items=value.items.map(item=>({...item,...(item.details?{details:item.details.map(surface)}:{})}));
+    value.detailsExpanded=false;
+  } else if(options.fullContent)value.detailsExpanded=true;
   if (options.noText) {
     const projected = noTextProjection({...value, noText: true});
-    return {json: projected, lines: [JSON.stringify(projected, null, 2)]};
+    const paged=paginateQueryContent(projected,options);
+    return {json: paged, lines: [JSON.stringify(paged, null, 2)]};
   }
+  const paged=paginateQueryContent(value,options);
+  if(paged!==value)return {json:paged,lines:[JSON.stringify(paged)]};
   if(options.fields||options.format==='table'||options.format==='markdown')rendered.lines=tabularEvents(value.events??[],options);
   if(value.hiddenKnown)rendered.lines.push('已折叠明确识别的可选目录警告 '+value.hiddenKnown+' 条（--show-known 展开）。');
   if (value.truncated) rendered.lines.push('结果已截短：固定--from/--to后使用--offset '+value.nextOffset+'，或缩小时间范围/提高--limit。');

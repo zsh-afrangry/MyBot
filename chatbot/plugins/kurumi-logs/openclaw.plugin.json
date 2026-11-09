@@ -2,7 +2,7 @@
   "id": "kurumi-logs",
   "name": "Read-only diagnostics",
   "version": "0.1.0",
-  "description": "Owner-private bounded technical-only log queries; no raw content, arbitrary files or repair execution",
+  "description": "Owner-authorized read-only log search, full diagnostics, optional summary, context and complete paginated content; no arbitrary files or repair execution",
   "activation": {
     "onStartup": true
   },

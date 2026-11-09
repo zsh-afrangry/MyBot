@@ -1,0 +1,45 @@
+{
+  "boundary": "Synthetic offline handler/CLI and isolated host only. No real model provider, QQ network, external API or production write.",
+  "unit": {
+    "tests": 70,
+    "passed": 70,
+    "failed": 0,
+    "durationMs": 2482.991474,
+    "command": "node --test chatbot/tests/log-query/query.test.mjs chatbot/tests/access-control/policy.test.mjs chatbot/tests/access-control/log-query.test.mjs chatbot/tests/reminder-list/log-query.test.mjs chatbot/tests/web-deepseek/log-query.test.mjs scripts/fusion/test/log-query.test.mjs scripts/fusion/test/log-query-views.test.mjs scripts/fusion/test/log-query-minimal.test.mjs scripts/fusion/test/log-query-diagnostics.test.mjs"
+  },
+  "fullHost": {
+    "passed": true,
+    "report": "expanded-host.json",
+    "cases": 9,
+    "toolQueries": 26,
+    "localDeterministicModelRequests": 35,
+    "loopbackReplies": 9,
+    "sourceHashesUnchanged": true,
+    "enabledDisabledLifecycle": true
+  },
+  "previousHostFailuresRetained": [
+    "expanded-host-first.json",
+    "expanded-host-second.json"
+  ],
+  "retentionFacts": {
+    "previousQuery7DayLimit": "ff4206d plugin policy; removed",
+    "existingOperationalPruner": "logs/ and runtime.N.log rotations: default 7 days/60MiB; unchanged",
+    "noUniformRetentionPromise": "primary runtime.log, session and business stores have independent retention"
+  },
+  "pluginBuildPassed": true,
+  "syntaxChecksPassed": true,
+  "documentationTests": {
+    "tests": 10,
+    "passed": 10,
+    "failed": 0
+  },
+  "indexes": {
+    "scripts": 240,
+    "evidence": 216,
+    "coveragePassed": true,
+    "savedMarkdownPassed": true
+  },
+  "diffCheckPassed": true,
+  "ownQASymlinksAndTapRemoved": true,
+  "failedHostDiagnosticDirectoriesRemoved": true
+}

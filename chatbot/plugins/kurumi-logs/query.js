@@ -1,13 +1,20 @@
-// Fixed CLI adapter; no shell, arbitrary script, raw text mode or caller-supplied roots.
+// Fixed CLI adapter; complete authorized log content, no shell or caller-supplied roots.
 import {spawn} from 'node:child_process';
 import path from 'node:path';
 import {LogQueryError} from './policy.js';
 export function cliArguments(config, q) {
   // The host captures plugin modules outside the source tree. Only the trusted
   // deployment root locates this fixed backend; import.meta.url cannot do so.
-  const args = [path.join(config.backendRoot,'scripts/fusion/log-query.mjs'),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--no-text'];
+  // OpenClaw's smallest automatic live result budget is 16k weighted chars.
+  // Rare CJK can cost four weighted chars per UTF-8 byte. Keep each fragment
+  // below 3k bytes plus the tool envelope; cursors retain the entire result.
+  const args = [path.join(config.backendRoot,'scripts/fusion/log-query.mjs'),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--full-content','--show-known','--output-bytes','3000'];
   for (const source of q.sources) args.push('--source',source);
   for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
+  for (const [key,flag] of [['contains','--contains'],['keywordMode','--keyword-mode'],['contextBefore','--context-before'],['contextAfter','--context-after'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) if(q[key] !== undefined)args.push(`${flag}=${q[key]}`);
+  for (const keyword of q.keywords ?? []) args.push(`--keyword=${keyword}`);
+  for (const level of q.levels ?? []) args.push(`--level=${level}`);
+  for (const [key,flag] of [['noText','--no-text'],['expand','--expand'],['raw','--raw']]) if(q[key])args.push(flag);
   if (q.view === 'stats') args.push('--stats');
   else { args.push('--limit',String(q.limit),'--offset',String(q.offset)); if (q.view === 'errors') args.push('--errors'); }
   return args;
@@ -15,7 +22,7 @@ export function cliArguments(config, q) {
 export function readQuery(config, q, {signal, timeoutMs = 10000, maxBytes = 512 * 1024} = {}) {
   signal?.throwIfAborted();
   return new Promise((resolve,reject) => {
-    let child, timer, forceTimer, failure, bytes=0; const chunks=[];
+    let child, timer, forceTimer, failure, bytes=0; const chunks=[], errors=[];
     const stop = code => {
       failure ??= new LogQueryError(code);
       child?.kill('SIGTERM');
@@ -35,13 +42,13 @@ export function readQuery(config, q, {signal, timeoutMs = 10000, maxBytes = 512 
     const consume = (chunk,keep) => {
       bytes += chunk.length;
       if (bytes > maxBytes) stop('output_limit');
-      else if (keep && !failure) chunks.push(chunk);
+      else if (!failure) (keep ? chunks : errors).push(chunk);
     };
     child.stdout.on('data',b => consume(b,true)); child.stderr.on('data',b => consume(b,false));
-    child.once('error',() => {failure ??= new LogQueryError('query_failed');});
+    child.once('error',error => {failure ??= new LogQueryError('query_failed',{phase:'spawn',code:error.code,message:error.message});});
     child.once('close',code => {
       if (failure) return finish(failure);
-      if (code !== 0) return finish(new LogQueryError('query_failed'));
+      if (code !== 0) return finish(new LogQueryError('query_failed',{phase:'query',exitCode:code,stderr:Buffer.concat(errors).toString('utf8')}));
       try { finish(null,JSON.parse(Buffer.concat(chunks).toString('utf8'))); }
       catch { finish(new LogQueryError('invalid_response')); }
     });

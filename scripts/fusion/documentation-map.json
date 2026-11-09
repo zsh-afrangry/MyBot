@@ -520,7 +520,8 @@
         "docs/18_跨模块链路日志查询.md"
       ],
       "evidence": [
-        "docs/verification/four-fixes-2026-11-07/README.md"
+        "docs/verification/four-fixes-2026-11-07/README.md",
+        "docs/verification/qq-log-query-2026-11-10/README.md"
       ]
     },
     {

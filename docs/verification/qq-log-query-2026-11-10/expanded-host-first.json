@@ -1,0 +1,22 @@
+{
+  "at": "2026-11-09T18:01:55.552Z",
+  "boundary": "Real isolated Gateway/captured plugin, actual QQ mandatory policy and owner ingress, deterministic local model, fixed CLI read of synthetic logs, loopback replies and enabled/disabled lifecycle. No model provider, no external API, no QQ network, no production write or production service restart.",
+  "stages": [
+    {
+      "enabled": true,
+      "queries": [],
+      "modelRequests": 5,
+      "capturedModuleObserved": true,
+      "gracefulStop": false
+    }
+  ],
+  "passed": false,
+  "error": {
+    "name": "AssertionError",
+    "message": "Expected values to be strictly equal:\n\ntrue !== false\n"
+  },
+  "finishedAt": "2026-11-09T18:02:17.351Z",
+  "diagnosticDirectory": "/tmp/kurumi-logs-host-YB8LDR",
+  "diagnosticDirectoryRemoved": true,
+  "failureAnalysis": "Host automatically truncated a 20000-byte CJK-heavy fragment, breaking tool-result JSON; use 3000-byte lossless content fragments, verified in expanded-host.json. The first harness masked its parse failure with the stop assertion; the second preserves the parse error."
+}

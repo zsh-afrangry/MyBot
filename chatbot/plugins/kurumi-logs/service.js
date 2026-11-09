@@ -1,26 +1,15 @@
 // Read-only query orchestration. Only the fixed CLI adapter opens diagnostic sources.
-import {noTextProjection} from '../../packages/observability/query-privacy.js';
 import {settings,queryOptions,LogQueryError,RESULT_BYTES} from './policy.js';
 import {readQuery} from './query.js';
 export function technicalResult(value, q, maxBytes = RESULT_BYTES - 1800) {
   if (!value || value.schemaVersion !== 1 || !Number.isSafeInteger(value.total) || value.total < 0) throw new LogQueryError('invalid_response');
-  const result = noTextProjection(value);
-  delete result.calls;
   const key = q.view === 'errors' ? 'items' : 'events';
-  if (q.view !== 'stats' && !Array.isArray(result[key])) throw new LogQueryError('invalid_response');
-  const original = result[key]?.length;
-  while (Buffer.byteLength(JSON.stringify(result)) > maxBytes) {
-    if (!result[key]?.length) throw new LogQueryError('output_limit');
-    result[key].pop();
-  }
-  if (original !== undefined) {
-    const shown = result[key].length;
-    if (original > 0 && shown === 0) throw new LogQueryError('output_limit');
-    result.shown = shown;
-    result.nextOffset = q.offset + shown < result.totalRows ? q.offset + shown : null;
-    result.truncated = result.nextOffset !== null;
-  }
-  return {status:'ok',coverage:'stored_events_only',queriedSources:q.sources,...result};
+  if (!value.chunked && q.view !== 'stats' && !Array.isArray(value[key])) throw new LogQueryError('invalid_response');
+  const result={status:'ok',coverage:'stored_events_only',queriedSources:q.sources,...value};
+  // The backend paginates serialized content before crossing the child boundary.
+  // No field allowlist, character filter, deletion of calls or silent row trimming.
+  if (Buffer.byteLength(JSON.stringify(result)) > maxBytes) throw new LogQueryError('output_limit');
+  return result;
 }
 export class LogQueryService {
   #busy = false;

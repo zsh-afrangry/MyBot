@@ -80,7 +80,7 @@ test('memory auditing preserves result/error and logs no query, evidence, raw te
  assert.equal(collectEvents({runtimeRoot:f.root,sources:['kurumi-memory'],from:0,to:Date.now()+1000}).length,2);assert.equal(values[0].correlation.runId,undefined);
 });
 test('relative-time validation and CLI option combinations fail clearly',()=>{
- assert.equal(parseDuration('30m'),1800000);for(const s of ['0m','-1h','2years','10000d'])assert.throws(()=>parseDuration(s));
+ assert.equal(parseDuration('30m'),1800000);assert.equal(parseDuration('10000d'),10000*86400000);for(const s of ['0m','-1h','2years','999999999999999999999d'])assert.throws(()=>parseDuration(s));
  assert.throws(()=>runCli(['--since','30m','--from','2026-01-01']),/mutually exclusive/);assert.throws(()=>runCli(['--follow','--offset','1']));assert.throws(()=>runCli(['--format','unknown']));assert.throws(()=>runCli(['--from','not a date']));
 });
 

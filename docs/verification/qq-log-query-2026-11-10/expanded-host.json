@@ -1,0 +1,89 @@
+{
+  "at": "2026-11-09T18:09:25.409Z",
+  "boundary": "Real isolated Gateway/captured plugin, actual QQ mandatory policy and owner ingress, deterministic local model, fixed CLI read of synthetic logs, loopback replies and enabled/disabled lifecycle. No model provider, no external API, no QQ network, no production write or production service restart.",
+  "stages": [
+    {
+      "enabled": true,
+      "queries": [
+        {
+          "mode": "default",
+          "passed": true,
+          "fragments": 7,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "six_hours",
+          "passed": true,
+          "fragments": 7,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "stats",
+          "passed": true,
+          "fragments": 1,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "errors",
+          "passed": true,
+          "fragments": 1,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "summary",
+          "passed": true,
+          "fragments": 1,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "keywords",
+          "passed": true,
+          "fragments": 1,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "context",
+          "passed": true,
+          "fragments": 1,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "history",
+          "passed": true,
+          "fragments": 1,
+          "completeContentVerified": true
+        },
+        {
+          "mode": "large",
+          "passed": true,
+          "fragments": 6,
+          "completeContentVerified": true
+        }
+      ],
+      "modelRequests": 35,
+      "capturedModuleObserved": true,
+      "ownerQueriesAudited": 26,
+      "loopbackReplies": 9,
+      "sourceUnchanged": true,
+      "testIngressDisabled": true,
+      "state": "active",
+      "tools": [
+        "kurumi_logs"
+      ],
+      "passed": true,
+      "gracefulStop": true
+    },
+    {
+      "enabled": false,
+      "queries": [],
+      "modelRequests": 0,
+      "noInitialFetch": true,
+      "state": "unloaded",
+      "tools": [],
+      "passed": true,
+      "gracefulStop": true
+    }
+  ],
+  "passed": true,
+  "finishedAt": "2026-11-09T18:09:54.490Z"
+}

@@ -2,26 +2,28 @@
 // minimization, not anonymization: retained opaque IDs can still identify people.
 const containers = new Set(['events', 'calls', 'timeline', 'turns', 'items', 'access', 'nestedToolCallIds',
   'denied', 'retries', 'failures', 'recoveries', 'clarificationRetries', 'correlation', 'data', 'summary',
-  'diagnostics', 'functions', 'schemas', 'tools', 'fingerprints', 'targetResults', 'modelTurns', 'models', 'usage', 'sources', 'settings', 'ids']);
+  'diagnostics', 'functions', 'schemas', 'tools', 'fingerprints', 'targetResults', 'modelTurns', 'models', 'usage', 'sources', 'settings', 'ids', 'contextEvents']);
 const identifiers = new Set(['id', 'receiptId', 'sessionId', 'sessionKey', 'session', 'runId', 'traceId', 'spanId', 'parentSpanId',
   'qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'cronJobId', 'taskId', 'conversationId',
-  'senderId', 'recipientId', 'eventKey', 'draftId', 'grantId', 'confirmationMessageId', 'sourceMessageId',
+  'senderId', 'recipientId', 'eventKey', 'draftId', 'grantId', 'confirmationMessageId', 'sourceMessageId', 'groupId',
   'presentationMessageId', 'toolCallId', 'parentToolCallId', 'failedToolCallId', 'recoveredToolCallId',
   'barrierToolCallId', 'loadId', 'sha256', 'resultFingerprint', 'ledgerId']);
 const labels = new Set(['source', 'kind', 'view', 'tool', 'declaredTool', 'outcome', 'errorCode', 'code',
   'type', 'level', 'subsystem', 'status', 'hostStatus', 'decision', 'permission', 'domain', 'actionKind', 'action', 'failureCode',
   'consumptionResult', 'lastStatus', 'lastDeliveryStatus', 'scheduleKind', 'sessionTarget', 'correlationQuality',
-  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache', 'direction', 'storedComparison']);
+  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache', 'direction', 'storedComparison', 'contextRole', 'countBasis']);
 const dates = new Set(['at', 'from', 'to', 'snapshotAt', 'scheduleAt', 'recordedAt']);
 const facts = new Set(['schemaVersion', 'epochMs', 'durationMs', 'count', 'total', 'shown', 'hiddenRaw', 'orphanEvents',
   'flagged', 'textLength', 'displayTruncated', 'limit', 'offset', 'nextOffset', 'truncated', 'noText', 'enabled', 'ok', 'isError', 'idempotent',
-  'requiresUserInput', 'resultConflict', 'structuredOutcome', 'snapshotOfCurrentState', 'partialPage',
+  'requiresUserInput', 'resultConflict', 'structuredOutcome', 'snapshotOfCurrentState', 'partialPage','recordCount','correlationGroups','contextBefore','contextAfter','contextAnchors','contextWithinQueryWindow','detailsExpanded',
   'attempts', 'failures', 'outbound', 'errors', 'denied', 'aborted', 'pid', 'quoteLoaded', 'replyToAvailableToAgent',
   'replyToIsQuote', 'isTailDispatch', 'loadedSurfaceKnown', 'activeProcessVerified', 'createdAtMs', 'updatedAtMs', 'nextRunAtMs', 'lastRunAtMs', 'presentationOrder',
   'createdAtUtc', 'updatedAtUtc', 'committedAtUtc', 'expiresAtUtc', 'issuedAtUtc', 'consumedAtUtc', 'presentedAtUtc', 'sentAtUtc',
   'scheduledAtUtc', 'dispatchedAtUtc', 'deliveredAtUtc', 'version', 'generation', 'revision', 'revisionBefore', 'revisionAfter', 'summaries', 'bytes', 'nameVersion', 'available', 'metadataOnly', 'totalRows', 'hiddenKnown', 'failureRate', 'averageDurationMs', 'measured', 'startedAtMs', 'finishedAtMs', 'exitCodeAvailable', 'exitCode', 'known', 'usageAvailable', 'input', 'output', 'cacheRead', 'cacheWrite', 'totalTokens', 'inputTokens', 'outputTokens', 'fallbackKnown', 'cacheHit', 'stale', 'resultCount', 'missing', 'compacted', 'tokensBefore', 'tokensAfter', 'summaryChars']);
-const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_:.+-]{1,500}$/u.test(value);
-const label = value => typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,120}$/u.test(value);
+// Summary is opt-in presentation, not an authorization boundary. Preserve
+// identifiers/codes verbatim: Unicode, slashes and spaces are valid diagnostics.
+const identifier = value => typeof value === 'string';
+const label = value => typeof value === 'string';
 
 export function noTextProjection(value, key = '') {
   if (value === null) return !key || containers.has(key) || identifiers.has(key) || labels.has(key) || dates.has(key) || facts.has(key) ? null : undefined;

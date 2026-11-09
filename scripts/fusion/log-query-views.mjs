@@ -194,7 +194,7 @@ function subsystemCode(value) {
 }
 
 /** Classify one non-call event for --errors; undefined means not an error. */
-function eventError(item) {
+function eventError(item, {fullContent = false} = {}) {
   const data = item.data ?? {};
   if(item.source==='proactive'&&item.kind==='proactive.delivery'&&data.status==='unknown')return {type:'business_error',code:'wake_delivery_unknown'};
   if (item.kind === 'agent.model_error') return {type: 'model_error', code: `model_${data.stopReason ?? 'error'}`};
@@ -207,26 +207,28 @@ function eventError(item) {
   if (Number.isFinite(http) && (http < 200 || http >= 300) && http !== 304) return {type: 'business_error', code: `http_${http}`};
   if (data.ok === false || ['error', 'failed', 'generation_failed'].includes(data.status) || /(?:^|[.])generation_failed$/.test(item.kind) || data.failureCode) {
     const code = String(data.code ?? data.failureCode ?? data.error ?? data.status ?? 'failed');
-    return {type: 'business_error', code: /^[\w.:-]{1,60}$/u.test(code) ? code : 'business_error'};
+    return {type: 'business_error', code: fullContent || /^[\w.:-]{1,60}$/u.test(code) ? code : 'business_error'};
   }
   return undefined;
 }
 
 /** Failed/denied calls plus host warnings and failed backend records, with counts by code. */
-export function collectErrors(events, calls = pairCalls(events)) {
+export function collectErrors(events, calls = pairCalls(events), {details = false, fullContent = false} = {}) {
   const items = calls.filter((call) => call.outcome === 'error' || call.outcome === 'deny').map((call) => ({
     type: call.outcome === 'deny' ? 'access_denied' : call.errorCode === 'validation' ? 'validation' : 'tool_error',
     code: call.errorCode, at: call.at, epochMs: call.epochMs, tool: call.tool, toolCallId: call.toolCallId, correlation: call.correlation,
+    ...(details ? {groupId:'tool:'+call.toolCallId,details:callMembers(call)} : {}),
   }));
   for (const item of events) {
     if (CALL_KINDS.has(item.kind) && item.correlation.toolCallId) continue;
-    const found = eventError(item);
-    if (found) items.push({...found, at: item.at, epochMs: item.epochMs, kind: item.kind, source: item.source, correlation: item.correlation, sourceRef: item.sourceRef});
+    const found = eventError(item,{fullContent});
+    if (found) items.push({...found, at: item.at, epochMs: item.epochMs, kind: item.kind, source: item.source, correlation: item.correlation, sourceRef: item.sourceRef,
+      ...(details ? {groupId:item.correlation.toolCallId?'tool:'+item.correlation.toolCallId:'record:'+items.length,details:[item]} : {})});
   }
   items.sort((a, b) => a.epochMs - b.epochMs);
   const counts = {};
   for (const item of items) counts[item.code] = (counts[item.code] ?? 0) + 1;
-  return {items, counts};
+  return {items, counts,...(details?{recordCount:items.length,correlationGroups:new Set(items.map(i=>i.groupId)).size,countBasis:'records'}:{})};
 }
 
 /** Per turn: denied tools (overreach attempts) and consecutive retries of the same tool after a failure. */

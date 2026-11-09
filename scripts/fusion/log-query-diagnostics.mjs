@@ -5,6 +5,7 @@ import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {createHash} from 'node:crypto';
 import {normalizeTraceEvent,correlationFrom,redactText} from '../../chatbot/packages/observability/index.js';
+import {normalizeQueryEvent} from './log-query-privacy.mjs';
 import {allowedMembers,sessionFor} from '../../chatbot/packages/access-control/index.js';
 import {pairCalls,collectErrors,localTime,groupTurns} from './log-query-views.mjs';
 const readJson = file => JSON.parse(fs.readFileSync(file,'utf8'));
@@ -49,13 +50,13 @@ export function stateSnapshot(root,kind,{expand=false,now=Date.now()}={}) {
  });
  return {schemaVersion:1,view:'snapshot',kind,snapshotAt:new Date(now).toISOString(),snapshotOfCurrentState:true,...data,...(Array.isArray(data.items)?{count:data.items.length}:{})};
 }
-export function readCronRuns(root,from,to){
+export function readCronRuns(root,from,to,options={}){
  const result=database(path.join(root,'state','openclaw.sqlite'),db=>{
   if(!table(db,'cron_run_receipts'))return[];
-  return db.prepare('SELECT receipt_id,job_id,request_run_id,status,started_at_ms,finished_at_ms,delivery_attempt_state FROM cron_run_receipts WHERE started_at_ms BETWEEN ? AND ? OR finished_at_ms BETWEEN ? AND ? ORDER BY started_at_ms,receipt_id').all(from,to,from,to).map(r=>normalizeTraceEvent({
+  return db.prepare('SELECT receipt_id,job_id,request_run_id,status,started_at_ms,finished_at_ms,delivery_attempt_state FROM cron_run_receipts WHERE started_at_ms BETWEEN ? AND ? OR finished_at_ms BETWEEN ? AND ? ORDER BY started_at_ms,receipt_id').all(from,to,from,to).map(r=>normalizeQueryEvent({
    at:r.finished_at_ms??r.started_at_ms,source:'cron-runs',kind:'cron.run_state',correlation:correlationFrom({cronJobId:r.job_id,runId:r.request_run_id}),
    data:{receiptId:r.receipt_id,status:r.status,startedAtMs:r.started_at_ms,finishedAtMs:r.finished_at_ms,durationMs:r.finished_at_ms==null?null:r.finished_at_ms-r.started_at_ms,exitCode:null,exitCodeAvailable:false,deliveryState:r.delivery_attempt_state,snapshotOfCurrentState:true}
-  }));
+  },options));
  });return Array.isArray(result)?result:[];
 }
 export function knownWarning(item){

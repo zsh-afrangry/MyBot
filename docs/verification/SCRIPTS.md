@@ -86,7 +86,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/knowledgemap/bills.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 账单声明一致、真实钩子runId映射、当前请求隔离和消息幂等键 | 只读 | 否 | header | — |
 | `chatbot/tests/knowledgemap/bridge.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 固定API客户端、可信请求、参数映射、共享播报与切换防旧写 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/knowledgemap/http.test.mjs` | 离线 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实本机HTTP与临时FastAPI/SQLite双入口集成，不访问生产 | 写临时测试目录 | 否 | header | — |
-| `chatbot/tests/log-query/query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md)、[16](../16_验收与测试总表.md) | 真实只读CLI与实际工具处理器；合成日志、身份/撤权、脱敏分页、并发/取消/超时；无模型/QQ/生产写入 | 写临时测试目录 | 否 | header | `docs/verification/qq-log-query-2026-11-10/README.md` |
+| `chatbot/tests/log-query/query.test.mjs` | 离线 | [18](../18_跨模块链路日志查询.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md)、[16](../16_验收与测试总表.md) | 真实只读CLI与实际工具处理器；合成日志、身份/撤权、关键词/上下文/完整内容分段、并发/取消/超时；无模型/QQ/生产写入 | 写临时测试目录 | 否 | header | `docs/verification/qq-log-query-2026-11-10/README.md` |
 | `chatbot/tests/memory/system.test.mjs` | 离线 | [29](../29_记忆系统.md)、[25](../25_人格、记忆与会话连续性.md)、[24](../24_统一身份与权限管理.md) | 合成记忆v3迁移/回退、真实SQLite/trigram、版本/来源/遮罩/游标/作息与实际工具权限，测试目录内操作，无模型或QQ | 写临时测试目录 | 否 | header | `docs/verification/memory-system-2026-11-07/README.md` |
 | `chatbot/tests/papers/concurrency_test.py` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 网络4/6并发上限与额外请求排队、乱序回执/不可变快照、预算、终态取消、共享冷却/频率与并发原子写入；注入HTTP/临时目录 | 写临时测试目录 | 否 | header | — |
 | `chatbot/tests/papers/credentials.test.mjs` | 离线 | [22](../22_论文PDF翻译与文件投递.md) | 厂商配置冲突、凭据隔离、原子导入/轮换与保留其它池；仅合成凭据 | 写临时测试目录 | 否 | header | — |
@@ -156,7 +156,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `scripts/fusion/lib/runtime-paths.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 唯一源码与私密运行根目录常量，无旧系统回退 | 只读 | 否 | header | — |
 | `scripts/fusion/lib/working-tree-backup.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | 已跟踪修改的 Git 补丁归档；被 backup-state 调用时写 patches/ 与 untracked.tar | 写运行状态 | 否 | code | — |
 | `scripts/fusion/log-query-diagnostics.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读SQLite/文件快照、Cron状态、分页/表格/统计与可中止去重跟随，不调用业务服务或外部接口 | 只读 | 否 | header | `docs/verification/autonomous-verification-2026-11-07/README.md` |
-| `scripts/fusion/log-query-privacy.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读日志输出字段白名单，关联后剔除正文与路径 | 只读 | 否 | header | `docs/verification/four-fixes-2026-11-07/README.md` |
+| `scripts/fusion/log-query-privacy.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 显式无正文摘要、完整查询归一化及JSON内容分段/哈希游标，不改写入sink | 只读 | 否 | header | `docs/verification/four-fixes-2026-11-07/README.md`<br>`docs/verification/qq-log-query-2026-11-10/README.md` |
 | `scripts/fusion/log-query-result.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 只读工具协议封装、业务结果与失败提取 | 只读 | 否 | header | `docs/verification/four-fixes-2026-11-07/README.md` |
 | `scripts/fusion/log-query-views.mjs` | 库 | [18](../18_跨模块链路日志查询.md) | 日志查询的视图层（被 log-query.mjs 导入）：过滤、调用配对、回合、错误、审计 | 只读 | 否 | header | — |
 | `scripts/fusion/rpc.mjs` | 库 | [9](../9_QQ融合助手架构与开发计划.md)、[16](../16_验收与测试总表.md) | Gateway RPC 客户端库（被其他脚本导入） | 只读 | 否 | code | — |
@@ -219,7 +219,7 @@ node --test scripts/fusion/test/documentation-map.test.mjs
 | `chatbot/tests/knowledgemap/acceptance-live.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实模型/生产API/MySQL/网页与一次本人QQ播报；短暂测试入口、精确测试行清理并保留回执 | 真实模型、真实外部API、真实QQ外发、建/改任务或提醒、重启或停服务、写运行状态、写仓库内文件 | 是 | header | `docs/verification/knowledgemap-bridge-2026-10-17/live.json` |
 | `chatbot/tests/knowledgemap/acceptance-model.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 真实模型、实际v2工具及临时HTTP/SQLite，无QQ/生产写入 | 真实模型、写仓库内文件、写临时测试目录 | 是 | header | — |
 | `chatbot/tests/knowledgemap/recovery.mjs` | 验收 | [23](../23_KnowledgeMap业务能力桥接.md) | 今晚Git工作树和SQLite备份的临时目录恢复，不启动旧服务 | 写临时测试目录 | 是 | header | — |
-| `chatbot/tests/log-query/acceptance-host.mjs` | 验收 | [18](../18_跨模块链路日志查询.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md)、[16](../16_验收与测试总表.md) | 真实隔离Gateway捕获插件、QQ策略/入站、本地确定性模型、实际CLI查询与回执及启用/禁用；无真实模型/API/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/qq-log-query-2026-11-10/README.md` |
+| `chatbot/tests/log-query/acceptance-host.mjs` | 验收 | [18](../18_跨模块链路日志查询.md)、[24](../24_统一身份与权限管理.md)、[21](../21_后端职责分层与代码整理.md)、[16](../16_验收与测试总表.md) | 真实隔离Gateway捕获插件、QQ策略/入站、本地确定性模型、实际CLI关键词/全文/上下文/历史/内容分段与回执及启用/禁用；无真实模型/API/QQ或生产写入 | 重启或停服务、写仓库内文件、写临时测试目录 | 否 | boundary | `docs/verification/qq-log-query-2026-11-10/README.md` |
 | `chatbot/tests/papers/acceptance-api.py` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 合成短文逐个实测翻译渠道；读取私密凭据，仅向 --out 写结果，无 QQ/邮件外发 | 真实模型、真实外部API、写仓库内文件 | 是 | header | `docs/verification/paper-translation-2026-10-17/README.md` |
 | `chatbot/tests/papers/acceptance-download.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实公开论文 HTTP 下载与隔离 PDF 校验；私密验收目录 | 真实外部API、写运行状态、写仓库内文件 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/README.md`<br>`docs/verification/paper-translation-2026-10-17/download.json` |
 | `chatbot/tests/papers/acceptance-file-ingress.mjs` | 验收 | [22](../22_论文PDF翻译与文件投递.md) | 真实隔离OpenClaw/聊天模型、附件入站与双身份论文编排；合成下载/翻译/OneBot，无生产写入或真实外发 | 真实模型、重启或停服务、写仓库内文件、写临时测试目录 | 是 | boundary | `docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/README.md` |
