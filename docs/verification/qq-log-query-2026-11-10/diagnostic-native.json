@@ -1,0 +1,53 @@
+{
+  "at": "2026-11-09T19:55:55.998Z",
+  "boundary": "Real isolated OpenClaw session/plugin/Cron execution and loopback QQ receipts; deterministic local model and synthetic domain clock. No external API, no model provider, no QQ network, no SMTP or production writes.",
+  "cases": [
+    {
+      "label": "existing-chat-persona-and-history",
+      "passed": true
+    },
+    {
+      "label": "bound-list-composition-and-deduplication",
+      "passed": true
+    },
+    {
+      "label": "bound-one-off-composition-and-deduplication",
+      "passed": true
+    },
+    {
+      "label": "runner-cannot-select-recipient",
+      "passed": true
+    },
+    {
+      "label": "unsupported-attachment-model-notice-without-old-artifact",
+      "passed": true
+    },
+    {
+      "label": "native-fixed-list-command-and-qq-receipt",
+      "passed": true
+    },
+    {
+      "label": "native-fixed-reminder-command-and-qq-receipt",
+      "passed": true
+    },
+    {
+      "label": "native-failed-opening-diagnostic-and-error-notice-not-list",
+      "passed": true
+    }
+  ],
+  "requests": 7,
+  "platformAccepted": 4,
+  "failureDiagnostic": {
+    "generationTranscriptMatched": true,
+    "specificCode": "digest_opening_multiline",
+    "stackRecorded": true,
+    "runReferenceRecorded": true,
+    "sessionReferenceRecorded": true,
+    "cronStatus": "error",
+    "exitCode": 1,
+    "errorNotificationDelivered": true,
+    "listStatus": "failed",
+    "listTextBytes": 0
+  },
+  "passed": true
+}

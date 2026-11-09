@@ -174,18 +174,18 @@ test('fixed runner accepts only a slot and never supplies content or recipient',
   await assert.rejects(() => main(['run', '--slot', '24:00'], opts));
 });
 test('delivery observation matches time/day; unknown or failed never automatically retry', t => {
-  const {store, add, clock, now} = fixture(t); add('投递'); store.claimDigest('08:00');
-  store.observeDeliveries({id: 'job-wrong-time', time: '12:00'}, [{runAtMs: now(), delivered: true}]);
+  const {store, add, clock, now} = fixture(t); add('投递'); const first=store.claimDigest('08:00');store.finishDigestGeneration(first.slotKey,'自然开场\n'+first.text);
+  store.observeDeliveries({id: 'job-wrong-time', time: '12:00'}, [{runAtMs: now(), status: 'ok', delivered: true}]);
   assert.equal(store.db.prepare('SELECT status FROM deliveries').get().status, 'prepared');
-  store.observeDeliveries({id: 'job', time: '08:00'}, [{runAtMs: now() - 86400000, delivered: true}]);
+  store.observeDeliveries({id: 'job', time: '08:00'}, [{runAtMs: now() - 86400000, status: 'ok', delivered: true}]);
   assert.equal(store.db.prepare('SELECT status FROM deliveries').get().status, 'prepared');
-  store.observeDeliveries({id: 'job', time: '08:00'}, [{runAtMs: now() + 1000, status: 'ok', deliveryStatus: 'not-delivered'}, {runAtMs: now(), delivered: true}]);
+  store.observeDeliveries({id: 'job', time: '08:00'}, [{runAtMs: now() + 1000, status: 'ok', deliveryStatus: 'not-delivered'}, {runAtMs: now(), status: 'ok', delivered: true}]);
   assert.equal(store.db.prepare('SELECT status FROM deliveries').get().status, 'delivered');
-  clock('2026-10-11T12:00:05+08:00'); store.claimDigest('12:00');
+  clock('2026-10-11T12:00:05+08:00'); const second=store.claimDigest('12:00');store.finishDigestGeneration(second.slotKey,'自然开场\n'+second.text);
   clock(now() + 360000); store.markUnobserved();
   assert.equal(store.db.prepare("SELECT status FROM deliveries WHERE slot_key LIKE '%12:00'").get().status, 'unknown');
   assert.equal(store.claimDigest('12:00'), undefined);
-  store.observeDeliveries({id: 'late-receipt', time: '12:00'}, [{runAtMs: now() - 360000, delivered: true}]);
+  store.observeDeliveries({id: 'late-receipt', time: '12:00'}, [{runAtMs: now() - 360000, status: 'ok', delivered: true}]);
   assert.equal(store.db.prepare("SELECT status FROM deliveries WHERE slot_key LIKE '%12:00'").get().status, 'delivered');
 });
 test('trusted original text only: deny strangers/groups/cron/tails/stale/instruction samples', () => {
@@ -195,4 +195,20 @@ test('trusted original text only: deny strangers/groups/cron/tails/stale/instruc
   assert.equal(listIntent(ctx, OWNER, {isTailDispatch: true}, now), undefined);
   assert.equal(listIntent(ctx, OWNER, {sendPolicy: 'deny'}, now), undefined);
   assert.ok(listIntent({...ctx, RawBody: '我在提醒列表中查党员材料事项做好了'}, OWNER, {}, now).actions.has('complete'));
+});
+
+test('delivered command error is not a delivered list; empty failed generation never upgrades',t=>{
+ const {store,add,now}=fixture(t);add('对账');const digest=store.claimDigest('08:00');
+ store.finishDigestGeneration(digest.slotKey,'',{stage:'opening_validation',error:{message:'digest_opening_multiline'}});
+ for(const status of ['error','ok'])store.observeDeliveries({id:'cron1',time:'08:00'},[{jobId:'cron1',runAtMs:now(),status,delivered:true,deliveryStatus:'delivered'}]);
+ const row=store.db.prepare('SELECT status,text FROM deliveries').get();assert.equal(row.status,'failed');assert.equal(row.text,'');
+ assert.equal(store.db.prepare("SELECT count(*) n FROM audit WHERE action='digest.delivered'").get().n,0);
+ assert.equal(store.claimDigest('08:00'),undefined);
+});
+test('a prepared facts snapshot alone and an error receipt never establish successful body delivery',t=>{
+ const {store,add,now}=fixture(t);add('对账');const digest=store.claimDigest('08:00');
+ store.observeDeliveries({id:'cron1',time:'08:00'},[{runAtMs:now(),status:'ok',delivered:true}]);
+ assert.equal(store.db.prepare('SELECT status FROM deliveries').get().status,'unknown');
+ store.db.prepare("UPDATE deliveries SET status='prepared'").run();store.finishDigestGeneration(digest.slotKey,'自然开场\n'+digest.text);
+ store.observeDeliveries({id:'cron1',time:'08:00'},[{runAtMs:now(),status:'error',delivered:true}]);assert.equal(store.db.prepare('SELECT status FROM deliveries').get().status,'failed');
 });

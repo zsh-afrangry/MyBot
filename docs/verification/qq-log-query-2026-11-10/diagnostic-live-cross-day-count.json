@@ -1,0 +1,334 @@
+{
+  "at": "2026-11-09T19:54:33.734Z",
+  "source": "c28dd92 plus diagnostic fixes under test",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, isolated OpenClaw/captured log tool/mandatory QQ policy and synthetic owner WebSocket input. Read-only production history; loopback replies only. No QQ network, production write, business execution or production service restart. Private generated answers and transcripts are not copied to evidence; temporary state is removed.",
+  "cases": [
+    {
+      "id": "cross-day-count",
+      "questionSha256": "fa7cccd56a7bfbd2c19ae7917f5218b69f633470b1ce07cf4dc7a217a02337ac",
+      "commandMentioned": false,
+      "requests": 6,
+      "calls": [
+        {
+          "id": "call007ETqB28f8y25YNdlGqjP7787",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "from",
+            "to",
+            "contains"
+          ],
+          "argumentHash": "592bd136951ed675d4c423d2ebfe6e3959abf43d172c286628499e2a40f05d05",
+          "view": "overview",
+          "from": "2026-11-08 00:00",
+          "to": "2026-11-10 00:02"
+        },
+        {
+          "id": "call00Dk29y4EyJ1sPHAoZ12ZF8452",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "from",
+            "to",
+            "kind",
+            "expand",
+            "limit"
+          ],
+          "argumentHash": "e8d0bda1a58205a86fb4e9c74af59053c04692403a39ec74a72c21ce27583248",
+          "view": "events",
+          "kind": "reminder-list.notice.generation_failed",
+          "limit": 20,
+          "from": "2026-11-08 00:00",
+          "to": "2026-11-10 00:02",
+          "expand": true
+        },
+        {
+          "id": "call00u0QTWrXDnrg2oK8y9oQG2702",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "from",
+            "to",
+            "view",
+            "keywords",
+            "keywordMode",
+            "limit"
+          ],
+          "argumentHash": "3775bc4962e292e11ef80eb4c6acab51956423301651abe4681770a8c2982581",
+          "view": "errors",
+          "limit": 50,
+          "from": "2026-11-08 00:00",
+          "to": "2026-11-10 00:02"
+        },
+        {
+          "id": "call00FrhLxsFhqtqOydbV8vhW7919",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "from",
+            "to",
+            "view",
+            "sources",
+            "limit",
+            "noText"
+          ],
+          "argumentHash": "303aa8716243798379aae75042c96128afa425f9f6f1049e7386f6c7c93834e2",
+          "sources": [
+            "cron-runs"
+          ],
+          "view": "events",
+          "limit": 50,
+          "from": "2026-11-08 03:50",
+          "to": "2026-11-10 00:02",
+          "noText": true
+        },
+        {
+          "id": "call00JtZoVJoUiXVPHzj8Jcug8717",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "from",
+            "to",
+            "keywords",
+            "keywordMode",
+            "limit",
+            "sources",
+            "view",
+            "noText"
+          ],
+          "argumentHash": "98ed5fc31bb27d39f5c46f89819ec3226d08c358f80b1aec3f8b90594a602f0d",
+          "sources": [
+            "channel-delivery",
+            "personal-reminders",
+            "trace-events",
+            "openclaw-receipt"
+          ],
+          "view": "events",
+          "limit": 50,
+          "from": "2026-11-08 00:00",
+          "to": "2026-11-10 00:02",
+          "noText": true
+        }
+      ],
+      "results": [
+        {
+          "callId": "call007ETqB28f8y25YNdlGqjP7787",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        },
+        {
+          "callId": "call00Dk29y4EyJ1sPHAoZ12ZF8452",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        },
+        {
+          "callId": "call00u0QTWrXDnrg2oK8y9oQG2702",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        },
+        {
+          "callId": "call00FrhLxsFhqtqOydbV8vhW7919",
+          "status": "ok",
+          "total": 10,
+          "shown": 10,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        },
+        {
+          "callId": "call00JtZoVJoUiXVPHzj8Jcug8717",
+          "status": "ok",
+          "total": 0,
+          "shown": 0,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        }
+      ],
+      "replyObserved": true,
+      "replyChars": 700,
+      "replySha256": "b27ee04daec3a457e6610120f1f58bd16a879cbc3ea4ece2bc4e3d8bbe10de6f",
+      "facts": {
+        "lineCount": null,
+        "cronExitCode": 1,
+        "distinctFailures": 5,
+        "exactCauseRecorded": false,
+        "listDeliveryProven": false,
+        "businessCodeFound": true,
+        "codesConsistent": true,
+        "recordCountIsIncidentCount": true,
+        "missingIsNotAbsent": true
+      },
+      "completeGeneratedTextObserved": false,
+      "passed": true,
+      "transportError": null
+    }
+  ],
+  "requests": 6,
+  "usage": {
+    "promptTokens": 97197,
+    "completionTokens": 3735
+  },
+  "baseline": {
+    "generatedChars": 390,
+    "generatedLines": 17,
+    "firstTwoLinesEqual": true,
+    "list": {
+      "delivery": {
+        "slot_key": "2026-11-09T12:00",
+        "status": "delivered",
+        "textLength": 0
+      },
+      "failures": [
+        {
+          "id": 271,
+          "at": 1794110404560,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 277,
+          "at": 1794153604142,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 283,
+          "at": 1794196805402,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 286,
+          "at": 1794218405273,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 289,
+          "at": 1794240005144,
+          "code": "assistant_notice_generation_failed"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "status": "error",
+        "errorTextPresent": true,
+        "exitOneText": true
+      }
+    ],
+    "cronHistory": [
+      {
+        "status": "error",
+        "exitCodes": [
+          1
+        ],
+        "commandDiagnosticPresent": true
+      }
+    ],
+    "sessionQuery": {
+      "fragments": 1,
+      "fullGeneratedTextAvailable": true
+    },
+    "errorQuery": {
+      "fragments": 1,
+      "counts": {
+        "assistant_notice_generation_failed": 1,
+        "command exited with code 1": 1,
+        "cron:WARN": 1,
+        "digest_delivered_without_body": 1
+      },
+      "recordCount": 4
+    },
+    "keywordQuery": {
+      "total": 1
+    },
+    "cronQuery": [
+      {
+        "exitCode": 1,
+        "exitCodeAvailable": true,
+        "errorFieldPresent": true,
+        "commandFieldPresent": true
+      }
+    ]
+  },
+  "transportErrors": [],
+  "modelResponses": [
+    {
+      "case": "cross-day-count",
+      "request": 1,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 1229
+    },
+    {
+      "case": "cross-day-count",
+      "request": 2,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 318
+    },
+    {
+      "case": "cross-day-count",
+      "request": 3,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 1777
+    },
+    {
+      "case": "cross-day-count",
+      "request": 4,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 957
+    },
+    {
+      "case": "cross-day-count",
+      "request": 5,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 1841
+    },
+    {
+      "case": "cross-day-count",
+      "request": 6,
+      "finishReason": "stop",
+      "toolCalls": 0,
+      "contentChars": 700,
+      "reasoningChars": 4226
+    }
+  ],
+  "testedFileHashes": {
+    "chatbot/plugins/kurumi-logs/index.js": "aea566e111d9cd484ad811174c7dbcb795e969acf7f4e86ca3401bef59571001",
+    "chatbot/plugins/kurumi-logs/query.js": "16de3c42fd5200df48c72ccc8d7cbc721a4fc6865cd152a9d5856621d7385844",
+    "chatbot/plugins/kurumi-logs/policy.js": "94dcba00c6e7469a3985c7c02554bc492c5b323e639fa1148cb701f8f9ad67f7",
+    "chatbot/plugins/kurumi-logs/service.js": "f79dfc8e454a5d521ff1e59952a2f42e222f568415d15fd9b87783167a1ffd00",
+    "scripts/fusion/log-query.mjs": "3e99a7ff21b198640231fdba0c6fe9e5f06e2a030432458723560a9b91d7d39c",
+    "scripts/fusion/log-query-diagnostics.mjs": "e3c3fc8af3d4654ed1f17d6b6bb1a449fd78a30bdeb6b1bf81b66e8346d8c9b0",
+    "scripts/fusion/log-query-privacy.mjs": "e4d0c823cbc4108fa1c7bfcdbaae3347712ffd2989e04600f1757e4eb441befc",
+    "scripts/fusion/log-query-views.mjs": "03dc9d9d94b723fa0b7ac0b649665798ca9e6795bd4d8992c116df9422bf50aa",
+    "scripts/fusion/templates/AGENTS.md": "57f7c2298cded6968da45a648ed18e2a7933bf014de11f4623db605b4a6763fd"
+  },
+  "scenarioSelection": [
+    "cross-day-count"
+  ],
+  "capturedPluginObserved": true,
+  "historyRowsUnchanged": true,
+  "testedSourcesUnchanged": true,
+  "executedAllCases": true,
+  "passed": true,
+  "temporaryStateRemoved": true,
+  "finishedAt": "2026-11-09T19:55:11.394Z"
+}

@@ -5,6 +5,7 @@
  * testable with synthetic events.
  */
 import {summarizeText} from '../../chatbot/packages/observability/index.js';
+import {eventReference} from './log-query-privacy.mjs';
 
 /** Unclassified native log lines; hidden unless --raw or an explicit --kind asks for them. */
 export const RAW_KINDS = new Set(['openclaw.log', 'snowluma.log']);
@@ -194,7 +195,7 @@ function subsystemCode(value) {
 }
 
 /** Classify one non-call event for --errors; undefined means not an error. */
-function eventError(item, {fullContent = false} = {}) {
+export function eventError(item, {fullContent = false} = {}) {
   const data = item.data ?? {};
   if(item.source==='proactive'&&item.kind==='proactive.delivery'&&data.status==='unknown')return {type:'business_error',code:'wake_delivery_unknown'};
   if (item.kind === 'agent.model_error') return {type: 'model_error', code: `model_${data.stopReason ?? 'error'}`};
@@ -217,18 +218,22 @@ export function collectErrors(events, calls = pairCalls(events), {details = fals
   const items = calls.filter((call) => call.outcome === 'error' || call.outcome === 'deny').map((call) => ({
     type: call.outcome === 'deny' ? 'access_denied' : call.errorCode === 'validation' ? 'validation' : 'tool_error',
     code: call.errorCode, at: call.at, epochMs: call.epochMs, tool: call.tool, toolCallId: call.toolCallId, correlation: call.correlation,
+    eventRef:eventReference(callMembers(call).at(-1)??call),
     ...(details ? {groupId:'tool:'+call.toolCallId,details:callMembers(call)} : {}),
   }));
   for (const item of events) {
     if (CALL_KINDS.has(item.kind) && item.correlation.toolCallId) continue;
     const found = eventError(item,{fullContent});
-    if (found) items.push({...found, at: item.at, epochMs: item.epochMs, kind: item.kind, source: item.source, correlation: item.correlation, sourceRef: item.sourceRef,
-      ...(details ? {groupId:item.correlation.toolCallId?'tool:'+item.correlation.toolCallId:'record:'+items.length,details:[item]} : {})});
+    if (found) items.push({...found, at: item.at, epochMs: item.epochMs, kind: item.kind, source: item.source, correlation: item.correlation, sourceRef: item.sourceRef,eventRef:eventReference(item),
+      ...(item.data?.exceptionRecordedInAudit!==undefined?{exceptionRecordedInAudit:item.data.exceptionRecordedInAudit,validationRecordedInAudit:item.data.validationRecordedInAudit,generationReferenceRecorded:item.data.generationReferenceRecorded}:{}),
+      ...(details ? {groupId:item.correlation.toolCallId?'tool:'+item.correlation.toolCallId:eventReference(item),details:[item]} : {})});
   }
   items.sort((a, b) => a.epochMs - b.epochMs);
   const counts = {};
   for (const item of items) counts[item.code] = (counts[item.code] ?? 0) + 1;
-  return {items, counts,...(details?{recordCount:items.length,correlationGroups:new Set(items.map(i=>i.groupId)).size,countBasis:'records'}:{})};
+  const attempts=new Set(items.filter(i=>i.correlation?.eventKey).map(i=>JSON.stringify([i.source,i.correlation.eventKey])));
+  return {items, counts,recordCount:items.length,correlationGroups:new Set(items.map(i=>i.correlation?.toolCallId?'tool:'+i.correlation.toolCallId:i.eventRef)).size,countBasis:'records',
+    businessAttemptCount:attempts.size,businessAttemptBasis:'source+explicit_eventKey',unkeyedErrorRecords:items.filter(i=>!i.correlation?.eventKey).length};
 }
 
 /** Per turn: denied tools (overreach attempts) and consecutive retries of the same tool after a failure. */

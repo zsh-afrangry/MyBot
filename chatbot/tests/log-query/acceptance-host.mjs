@@ -14,7 +14,8 @@ async function run(enabled){
  const state=path.join(directory,'host'),source=path.join(directory,'query-data'),token=randomBytes(24).toString('hex'),owner='100001',bot='100002';fs.mkdirSync(state);
  const stage={enabled,queries:[],modelRequests:0};report.stages.push(stage);
  let socket,peer,wss,child;const replies=new Set();let seq=100,modelError;
- const queries={default:{},six_hours:{since:'6h',view:'events',limit:20},stats:{view:'stats',since:'6h'},errors:{view:'errors',sources:['trace-events']},summary:{view:'errors',sources:['trace-events'],noText:true},keywords:{sources:['trace-events'],keywords:['STACK_ONLY_MARKER','中文/原因'],keywordMode:'all',noText:true},context:{sources:['snowluma'],contains:'OidbError',contextBefore:1,contextAfter:1,expand:true},history:{sources:['trace-events'],since:'all',contains:'HISTORY_RETAINED'},large:{sources:['trace-events'],contains:'LONG_RECORD',expand:true,limit:1}};
+ const opaqueRunId='cron:job:'+'x'.repeat(180)+'/原生 ID';
+ const queries={long_id:{sources:['trace-events'],runId:opaqueRunId},overview:{view:'overview',sources:['trace-events']},reference:{view:'overview',sources:['trace-events'],code:'中文/原因 空格:失败'},default:{},six_hours:{since:'6h',view:'events',limit:20},stats:{view:'stats',since:'6h'},errors:{view:'errors',sources:['trace-events']},summary:{view:'errors',sources:['trace-events'],noText:true},keywords:{sources:['trace-events'],keywords:['STACK_ONLY_MARKER','中文/原因'],keywordMode:'all',noText:true},context:{sources:['snowluma'],contains:'OidbError',contextBefore:1,contextAfter:1,expand:true},history:{sources:['trace-events'],since:'all',contains:'HISTORY_RETAINED'},large:{sources:['trace-events'],contains:'LONG_RECORD',expand:true,limit:1}};
  const toolText=value=>{
   if(Array.isArray(value))return value.map(toolText).join('\n');
   if(value && typeof value==='object')return value.text ?? (value.content ? toolText(value.content) : JSON.stringify(value));
@@ -26,7 +27,7 @@ async function run(enabled){
  const fixture=path.join(source,'channel/trace-events.jsonl');let before;
  if(enabled){
   fs.mkdirSync(path.dirname(fixture),{recursive:true});const at=new Date(Date.now()-60000).toISOString();
-  fs.writeFileSync(fixture,[{source:'reminder-list',kind:'reminder-list.notice.generation_failed',data:{status:'generation_failed',text:'PRIVATE_SYNTHETIC_BODY',apiKey:'PRIVATE_SYNTHETIC_KEY',code:'中文/原因 空格:失败',deep:{stack:'STACK_ONLY_MARKER'}}},{source:'e7',kind:'e7.http',data:{httpStatus:304}},{source:'e7',kind:'e7.http',data:{httpStatus:500}}].map(e=>JSON.stringify({schemaVersion:1,at,...e})).join('\n')+'\n');
+  fs.writeFileSync(fixture,[{source:'reminder-list',kind:'reminder-list.notice.generation_failed',correlation:{runId:opaqueRunId},data:{status:'generation_failed',text:'PRIVATE_SYNTHETIC_BODY',apiKey:'PRIVATE_SYNTHETIC_KEY',code:'中文/原因 空格:失败',deep:{stack:'STACK_ONLY_MARKER'}}},{source:'e7',kind:'e7.http',data:{httpStatus:304}},{source:'e7',kind:'e7.http',data:{httpStatus:500}}].map(e=>JSON.stringify({schemaVersion:1,at,...e})).join('\n')+'\n');
   fs.appendFileSync(fixture,JSON.stringify({schemaVersion:1,at:new Date(Date.now()-40*86400000).toISOString(),source:'fixture',kind:'fixture.history',data:{text:'HISTORY_RETAINED'}})+'\n');
   fs.appendFileSync(fixture,JSON.stringify({schemaVersion:1,at,source:'fixture',kind:'fixture.long',data:{body:expectedLong}})+'\n');
   const nativeDir=path.join(source,'runtime/logs');fs.mkdirSync(nativeDir,{recursive:true});
@@ -44,14 +45,27 @@ async function run(enabled){
     if(!tools.length){assert((body.tools??[]).some(t=>t.function?.name==='kurumi_logs'),'logs_tool_not_offered');delta={role:'assistant',tool_calls:[{index:0,id:'log-'+stage.modelRequests,type:'function',function:{name:'kurumi_logs',arguments:JSON.stringify(queries[mode])}}]};}
     else{
      const results=tools.map(t=>{const text=toolText(t.content);assert.match(text,/stored_events_only/);assert.match(text,/EXTERNAL_UNTRUSTED_CONTENT/);assert(!/query_failed|access_denied/.test(text));assert(Buffer.byteLength(text)<=24*1024);return parseResult(text);}),last=results.at(-1);
+     const previous=JSON.parse(messages.flatMap(m=>m.tool_calls??[]).find(c=>c.id===tools.at(-1).tool_call_id)?.function.arguments??JSON.stringify(queries[mode]));
+     const pages=[];let pending=[];
+     for(const r of (mode==='reference'&&results.length>1?results.slice(1):results)){
+      if(!r.chunked){pages.push(r);continue;}pending.push(r.contentFragment);if(r.nextContentOffset===null){pages.push(JSON.parse(pending.join('')));pending=[];}
+     }
      if(last.chunked && last.nextContentOffset!==null){
-      delta={role:'assistant',tool_calls:[{index:0,id:'log-'+stage.modelRequests,type:'function',function:{name:'kurumi_logs',arguments:JSON.stringify({...queries[mode],since:undefined,from:last.from,to:last.to,contentOffset:last.nextContentOffset,contentHash:last.contentHash})}}]};
+      delta={role:'assistant',tool_calls:[{index:0,id:'log-'+stage.modelRequests,type:'function',function:{name:'kurumi_logs',arguments:JSON.stringify({...previous,since:undefined,from:last.from,to:last.to,contentOffset:last.nextContentOffset,contentHash:last.contentHash})}}]};
+     }else if(last.nextOffset!==null&&last.nextOffset!==undefined){
+      delta={role:'assistant',tool_calls:[{index:0,id:'log-'+stage.modelRequests,type:'function',function:{name:'kurumi_logs',arguments:JSON.stringify({...previous,since:undefined,from:last.from,to:last.to,offset:last.nextOffset,contentOffset:undefined,contentHash:undefined})}}]};
+     }else if(mode==='reference'&&tools.length===1){
+      const ref=last.items.find(i=>i.code==='中文/原因 空格:失败')?.eventRef;assert(ref,'reference_missing');
+      delta={role:'assistant',tool_calls:[{index:0,id:'log-'+stage.modelRequests,type:'function',function:{name:'kurumi_logs',arguments:JSON.stringify({sources:['trace-events'],from:last.from,to:last.to,eventRef:ref,expand:true})}}]};
      }else{
-      const result=results[0].chunked?JSON.parse(results.map(r=>r.contentFragment).join('')):last,serial=JSON.stringify(result);
+      const result={...pages[0]};for(const key of ['events','items','calls'])if(pages[0][key])result[key]=pages.flatMap(p=>p[key]??[]);const serial=JSON.stringify(result);
       if(['default','six_hours','errors'].includes(mode)){assert.match(serial,/PRIVATE_SYNTHETIC_BODY/);assert.match(serial,/PRIVATE_SYNTHETIC_KEY/);}
       if(mode==='summary'||mode==='keywords'){assert(!serial.includes('PRIVATE_SYNTHETIC'));assert(!serial.includes('STACK_ONLY_MARKER'));}
       if(mode==='errors'){assert.match(serial,/generation_failed/);assert(result.items.some(i=>i.code==='中文/原因 空格:失败'));}
       if(mode==='keywords')assert.equal(result.total,1);
+      if(mode==='long_id'){assert.equal(result.total,1);assert.equal(result.events[0].correlation.runId,opaqueRunId);}
+      if(mode==='overview'){assert.equal(result.errorRecords,2);assert.equal(result.counts['中文/原因 空格:失败'],1);assert(result.items.every(i=>i.eventRef));}
+      if(mode==='reference'){assert.equal(result.total,1);assert.equal(result.events.length,1);assert.match(serial,/STACK_ONLY_MARKER/);assert.match(serial,/PRIVATE_SYNTHETIC_KEY/);}
       if(mode==='context'){assert.equal(result.contextEvents.length,3);assert.match(serial,/BEFORE_ONLY/);assert.match(serial,/AFTER_ONLY/);assert.match(serial,/stack.js:9/);}
       if(mode==='history'){assert.equal(result.total,1);assert.match(serial,/HISTORY_RETAINED/);}
       if(mode==='large')assert.equal(result.events[0].data.body,expectedLong);

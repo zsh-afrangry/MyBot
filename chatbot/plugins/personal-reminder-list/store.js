@@ -2,7 +2,7 @@
 import {DatabaseSync} from 'node:sqlite';
 import {mkdirSync, readFileSync, chmodSync} from 'node:fs';
 import {join} from 'node:path';
-import {randomBytes} from 'node:crypto';
+import {randomBytes,createHash} from 'node:crypto';
 import {TIMEZONE, DEFAULT_TIMES, localTime, normalizeTimes, dueSlot} from './time.js';
 import {normalize, item} from './model.js';
 import {formatDigest} from './formatter.js';
@@ -126,7 +126,7 @@ export class ListStore {
       return {slotKey: slot.key, at:slot.at, items, text: output, count: items.length};
     });
   }
-  finishDigestGeneration(slotKey, text, error) {
+  finishDigestGeneration(slotKey, text, error, evidence = {}) {
     return this.transaction(() => {
       const row=this.db.prepare("SELECT * FROM deliveries WHERE slot_key=? AND status='prepared'").get(slotKey);
       if(!row)return false;
@@ -134,7 +134,9 @@ export class ListStore {
       const stale=!settings.enabled || settings.version!==row.settings_version || !settings.times.includes(slotKey.slice(11));
       const status=stale?'skipped':error?'failed':'prepared';
       this.db.prepare('UPDATE deliveries SET status=?,text=?,updated_ms=? WHERE slot_key=?').run(status,status==='prepared'?text:'',this.now(),slotKey);
-      this.audit('notice.'+(stale?'settings_changed':error?'generation_failed':'generated'),null,{slotKey,...(error?{code:'assistant_notice_generation_failed'}:{})});
+      this.audit('notice.'+(stale?'settings_changed':error?'generation_failed':'generated'),null,{slotKey,...evidence,
+        ...(status==='prepared'?{bodySha256:createHash('sha256').update(text).digest('hex')} : {}),
+        ...(error?{code:'assistant_notice_generation_failed',...(typeof error==='object'?error:{error:{message:String(error)}})}:{})});
       return status==='prepared';
     });
   }
@@ -142,15 +144,24 @@ export class ListStore {
     this.transaction(() => {
       for (const row of this.db.prepare("SELECT * FROM deliveries WHERE status IN ('prepared','failed','unknown')").all()) {
         const time = row.slot_key.slice(11);
-        const matches = runs.filter(r => r.runAtMs >= row.slot_ms && r.runAtMs < row.slot_ms + 300000);
-        const run = matches.find(r => r.delivered === true || r.deliveryStatus === 'delivered')
+        const matches = runs.filter(r => (!r.jobId||r.jobId===jobId.id)&&r.runAtMs >= row.slot_ms && r.runAtMs < row.slot_ms + 300000);
+        const delivered = r => r.status === 'ok' && (r.delivered === true || r.deliveryStatus === 'delivered');
+        const run = matches.find(delivered)
           ?? matches.sort((a, b) => a.runAtMs - b.runAtMs)[0];
         if (!run || jobId.time !== time) continue;
-        const status = run.delivered === true || run.deliveryStatus === 'delivered' ? 'delivered'
+        // Cron also delivers command failure notices. Those receipts never prove
+        // that this slot's generated, frozen list body was sent successfully.
+        const generated=this.db.prepare("SELECT details_json FROM audit WHERE action='notice.generated' AND json_extract(details_json,'$.slotKey')=? ORDER BY id DESC LIMIT 1").get(row.slot_key);
+        const bodyHash=createHash('sha256').update(row.text??'').digest('hex');
+        const bodyReady=!!row.text?.trim()&&!!generated&&(!JSON.parse(generated.details_json).bodySha256||JSON.parse(generated.details_json).bodySha256===bodyHash);
+        const status = row.status === 'failed' || !row.text?.trim() ? 'failed' : delivered(run)&&bodyReady ? 'delivered'
           : run.status === 'error' || run.deliveryStatus === 'failed' ? 'failed' : 'unknown';
         if (row.status === status && row.cron_job_id === jobId.id) continue;
         this.db.prepare('UPDATE deliveries SET status=?,updated_ms=?,cron_job_id=? WHERE slot_key=?').run(status, this.now(), jobId.id, row.slot_key);
-        this.audit('digest.' + status, null, {slotKey: row.slot_key, cronJobId: jobId.id});
+        this.audit('digest.' + status, null, {slotKey: row.slot_key, cronJobId: jobId.id,
+          runId:run.runId,executionStatus:run.status,deliveryStatus:run.deliveryStatus,
+          notificationDelivered:run.delivered===true||run.deliveryStatus==='delivered',listBodyPresent:!!row.text?.trim(),generationSucceeded:bodyReady,
+          ...(status==='delivered'?{bodySha256:bodyHash}:{})});
       }
     });
   }

@@ -2,10 +2,11 @@
 // loopback QQ receipts. Deterministic cognition and a synthetic domain clock only.
 // No real model/API/QQ/SMTP, production database writes or service restart. docs/21.
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import http from 'node:http';import net from 'node:net';
-import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes} from 'node:crypto';import {fileURLToPath,pathToFileURL} from 'node:url';
+import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes,createHash} from 'node:crypto';import {fileURLToPath,pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import {compileAccessConfig} from '../../packages/access-control/config.js';import {ownerPolicy} from '../access-control/fixtures.mjs';
+import {readHostRecords,messageText} from '../../packages/session-records/index.js';
 import {seedList,seedReminder} from './fixtures.mjs';import {ListStore} from '../../plugins/personal-reminder-list/store.js';
 const out=process.argv[process.argv.indexOf('--out')+1];if(!process.argv.includes('--out')||!path.isAbsolute(out??'')||fs.existsSync(out))throw Error('Require a new absolute --out');
 const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-expression-host-'));
@@ -14,9 +15,11 @@ const report={at:new Date().toISOString(),boundary:'Real isolated OpenClaw sessi
 const creation=()=>Date.parse('2026-11-30T19:55:00+08:00'),due=Date.parse('2026-11-30T20:00:05+08:00');
 seedList(root,owner,creation);const ids=[await seedReminder(root,owner,creation),await seedReminder(root,owner,creation)];
 const ls=new ListStore({root,ownerId:owner,now:creation});ls.changeSchedule({action:'schedule',times:['19:59','20:00']},{});ls.close();
+let rejectList=false;const failureRoot=root+'/failure-state',failureSlot=new Date(Date.now()+8*3600000).toISOString().slice(11,16);
+seedList(failureRoot,owner,()=>Date.now());{const s=new ListStore({root:failureRoot,ownerId:owner});s.changeSchedule({action:'schedule',times:[failureSlot]},{});s.close();}
 const sends=[],model=http.createServer(async(req,res)=>{try{let raw='';for await(const x of req)raw+=x;const body=JSON.parse(raw);assert(++report.requests<=20);
  assert(JSON.stringify(body.messages).includes('KURUMI_NOTICE_PERSONA'),'bound persona missing');
- const text=report.requests===1?'模型初始对话':'模型自然提醒，请核对附带事实。';
+ const text=rejectList?'合成开场。\n合成开场。':report.requests===1?'模型初始对话':'模型自然提醒，请核对附带事实。';
  if(report.requests>1)assert(JSON.stringify(body.messages).includes('合成近期对话'),'recent bound chat missing');
  res.writeHead(200,{'content-type':'text/event-stream'});const base={id:'notice-'+report.requests,object:'chat.completion.chunk',created:1,model:'fixture'};
  res.write('data: '+JSON.stringify({...base,choices:[{index:0,delta:{role:'assistant',content:text},finish_reason:null}]})+'\n\n');
@@ -39,7 +42,8 @@ import {ListStore} from ${url('chatbot/plugins/personal-reminder-list/store.js')
 import {registerReminderNotice} from ${url('chatbot/packages/personal-domains/dist/reminder-notification.js')};
 import {ReminderStore} from ${url('chatbot/packages/personal-domains/dist/reminder-store.js')};
 export default {id:'notice-probe',register(api){
- registerDigestNotice(api,{root:${JSON.stringify(root)},ownerId:${JSON.stringify(owner)},openStore:o=>new ListStore(o)},{now:()=>${due}});
+ let failure=false;api.registerGatewayMethod('notice-probe.fail',async({respond})=>{failure=true;respond(true,{});},{scope:'operator.admin'});
+ registerDigestNotice(api,{root:${JSON.stringify(root)},ownerId:${JSON.stringify(owner)},openStore:o=>new ListStore({...o,root:failure?${JSON.stringify(failureRoot)}:o.root})},{now:()=>failure?Date.now():${due}});
  registerReminderNotice(api,{open:()=>new ReminderStore({stateDirectory:${JSON.stringify(root+'/state/personal-reminders')},now:()=>${Math.floor(due/1000)}})});
 }};`);
 const cfg=compileAccessConfig({gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},
@@ -66,6 +70,22 @@ try{
   const job=await call('cron.add',{name:'fixture-'+name,enabled:true,schedule:{kind:'at',at:new Date(Date.now()+1500).toISOString()},sessionTarget:'isolated',wakeMode:'now',payload:{kind:'command',argv,cwd,env:{OPENCLAW_GATEWAY_PORT:String(port)},timeoutSeconds:75,noOutputTimeoutSeconds:70,outputMaxBytes:524288},delivery:{mode:'announce',channel:'kurumi-qq',to:'user:'+owner,accountId:'default'},deleteAfterRun:false});cron.push({name,id:job.id??job.jobId});
  }
  for(const job of cron){let run;for(let n=0;n<120;n++){run=(await call('cron.runs',{id:job.id,limit:1},5000)).entries?.[0];if(run)break;await new Promise(r=>setTimeout(r,500));}assert.equal(run?.status,'ok',JSON.stringify(run));assert.equal(run.delivered,true,JSON.stringify(run));pass('native-fixed-'+job.name+'-command-and-qq-receipt');}
- assert(sends.some(s=>JSON.stringify(s).includes('明细不能丢')));assert(sends.some(s=>JSON.stringify(s).includes('起身活动')));report.platformAccepted=sends.length;report.passed=true;
+ assert(sends.some(s=>JSON.stringify(s).includes('明细不能丢')));assert(sends.some(s=>JSON.stringify(s).includes('起身活动')));report.platformAccepted=sends.length;
+ rejectList=true;await call('notice-probe.fail');
+ const failedJob=await call('cron.add',{name:'fixture-list-failed-opening',enabled:true,schedule:{kind:'at',at:new Date(Date.now()+1500).toISOString()},sessionTarget:'isolated',wakeMode:'now',payload:{kind:'command',argv:[process.execPath,repo+'/chatbot/scripts/reminder-list.mjs','run','--slot',failureSlot],cwd:repo+'/chatbot',env:{OPENCLAW_GATEWAY_PORT:String(port)},timeoutSeconds:75,noOutputTimeoutSeconds:70,outputMaxBytes:524288},delivery:{mode:'announce',channel:'kurumi-qq',to:'user:'+owner,accountId:'default'},deleteAfterRun:false});
+ const failedId=failedJob.id??failedJob.jobId;let failedRun;
+ for(let n=0;n<120;n++){failedRun=(await call('cron.runs',{id:failedId,limit:1},5000)).entries?.[0];if(failedRun)break;await new Promise(r=>setTimeout(r,500));}
+ assert.equal(failedRun?.status,'error');assert.equal(failedRun.delivered,true);assert(failedRun.diagnostics.entries.some(e=>e.exitCode===1));
+ const state=new ListStore({root:failureRoot,ownerId:owner});try{
+  const before=state.db.prepare('SELECT status,length(text) bytes FROM deliveries').get();assert.equal(before.status,'failed');assert.equal(before.bytes,0);
+  state.observeDeliveries({id:failedId,time:failureSlot},[failedRun]);const after=state.db.prepare('SELECT status,length(text) bytes FROM deliveries').get();assert.equal(after.status,'failed');assert.equal(after.bytes,0);
+  const diagnostic=JSON.parse(state.db.prepare("SELECT details_json FROM audit WHERE action='notice.generation_failed'").get().details_json);
+  assert.equal(diagnostic.error.code,'digest_opening_multiline');assert.match(diagnostic.error.stack,/notification.js/);assert(diagnostic.generation.runId);assert(diagnostic.generation.sessionId);assert.equal(diagnostic.validation.multiline,true);
+  assert.equal(state.db.prepare("SELECT count(*) n FROM audit WHERE action='digest.delivered'").get().n,0);
+  const transcript=readHostRecords(root+'/agents/main/agent/openclaw-agent.sqlite').rows.find(row=>row.sessionId===diagnostic.generation.sessionId&&(row.record.message??row.record).role==='assistant'&&createHash('sha256').update(messageText((row.record.message??row.record).content)).digest('hex')===diagnostic.validation.sha256);
+  assert(transcript,'generation_reference_does_not_resolve_to_rejected_transcript');
+  report.failureDiagnostic={generationTranscriptMatched:true,specificCode:diagnostic.error.code,stackRecorded:true,runReferenceRecorded:true,sessionReferenceRecorded:true,cronStatus:failedRun.status,exitCode:1,errorNotificationDelivered:true,listStatus:after.status,listTextBytes:after.bytes};
+ }finally{state.close();}
+ pass('native-failed-opening-diagnostic-and-error-notice-not-list');report.passed=true;
 }catch(error){report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;}
 finally{try{process.kill(-child.pid,'SIGTERM');}catch{}if(child.exitCode===null)await Promise.race([once(child,'exit'),new Promise(r=>setTimeout(r,3000))]);if(child.exitCode===null){try{process.kill(-child.pid,'SIGKILL');}catch{}}for(const client of ws.clients)client.terminate();await new Promise(r=>ws.close(r));onebot.closeAllConnections();model.closeAllConnections();await Promise.all([new Promise(r=>onebot.close(r)),new Promise(r=>model.close(r))]);fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n',{flag:'wx'});if(report.passed)fs.rmSync(root,{recursive:true,force:true});console.log(JSON.stringify({passed:report.passed,cases:report.cases.length,requests:report.requests,out,error:report.error}));}

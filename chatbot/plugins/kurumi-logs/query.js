@@ -5,18 +5,17 @@ import {LogQueryError} from './policy.js';
 export function cliArguments(config, q) {
   // The host captures plugin modules outside the source tree. Only the trusted
   // deployment root locates this fixed backend; import.meta.url cannot do so.
-  // OpenClaw's smallest automatic live result budget is 16k weighted chars.
-  // Rare CJK can cost four weighted chars per UTF-8 byte. Keep each fragment
-  // below 3k bytes plus the tool envelope; cursors retain the entire result.
-  const args = [path.join(config.backendRoot,'scripts/fusion/log-query.mjs'),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--full-content','--show-known','--output-bytes','3000'];
+  // Fit the actual text weight as well as bytes. Leave room below the host's
+  // minimum 16k live text cap and this plugin's 24KiB final envelope cap.
+  const args = [path.join(config.backendRoot,'scripts/fusion/log-query.mjs'),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--full-content','--show-known','--output-bytes','18000','--output-chars','12000'];
   for (const source of q.sources) args.push('--source',source);
-  for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
+  for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind'],['eventRef','--event-ref'],['eventKey','--event-key'],['cronJobId','--cron-job-id'],['code','--code']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
   for (const [key,flag] of [['contains','--contains'],['keywordMode','--keyword-mode'],['contextBefore','--context-before'],['contextAfter','--context-after'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) if(q[key] !== undefined)args.push(`${flag}=${q[key]}`);
   for (const keyword of q.keywords ?? []) args.push(`--keyword=${keyword}`);
   for (const level of q.levels ?? []) args.push(`--level=${level}`);
   for (const [key,flag] of [['noText','--no-text'],['expand','--expand'],['raw','--raw']]) if(q[key])args.push(flag);
   if (q.view === 'stats') args.push('--stats');
-  else { args.push('--limit',String(q.limit),'--offset',String(q.offset)); if (q.view === 'errors') args.push('--errors'); }
+  else { args.push('--limit',String(q.limit),'--offset',String(q.offset)); if (q.view === 'errors') args.push('--errors');if(q.view==='overview')args.push('--overview'); }
   return args;
 }
 export function readQuery(config, q, {signal, timeoutMs = 10000, maxBytes = 512 * 1024} = {}) {

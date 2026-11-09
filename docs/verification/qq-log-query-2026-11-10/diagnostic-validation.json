@@ -1,0 +1,42 @@
+{
+  "status": "technical_validation_passed_production_pending",
+  "node": "v26.13.0",
+  "offlineTests": 142,
+  "failed": 0,
+  "commands": [
+    "node --test --test-reporter=tap chatbot/tests/log-query/query.test.mjs chatbot/tests/access-control/policy.test.mjs chatbot/tests/reminder-list/*.test.mjs chatbot/tests/response/*.test.mjs scripts/fusion/test/log-query*.test.mjs",
+    "npm --prefix chatbot/plugins/kurumi-logs run build",
+    "npm --prefix chatbot/packages/personal-domains run build",
+    "npm --prefix chatbot/packages/confirmation-core run build"
+  ],
+  "weightedBudgetNativeComparison": {
+    "samples": 9860,
+    "underestimates": 0
+  },
+  "liveRetest": {
+    "cases": 6,
+    "passed": 6,
+    "modelRequests": 37,
+    "toolRequests": 31,
+    "promptTokens": 579451,
+    "completionTokens": 25243,
+    "busy": 0,
+    "queryFailed": 0,
+    "productionHistoryUnchanged": true,
+    "allSourceSnapshotsUnchangedDuringEachRun": true
+  },
+  "postScenarioDelta": "Opaque native runId input widened; verified by additional complete isolated host query. CLI help also documented the already-tested selectors. Six receipts retain the exact tested source hashes.",
+  "earlierFailures": [
+    "missing confirmation-core build output",
+    "complete-event budget did not include final presentation metadata",
+    "old deterministic host harness did not follow nextOffset",
+    "first real cause run exhausted 14 requests",
+    "second real cause run answered exactCauseRecorded=true incorrectly",
+    "third real cause run exhausted 14 requests"
+  ],
+  "boundary": "Production history was read only. All model replies were loopback only; no QQ network, production business write, production config or service restart in these tests.",
+  "documentationTests": 10,
+  "classifiedScripts": 241,
+  "ownedEvidenceFiles": 241,
+  "offlineTapSha256": "9753c65a10ec5ef5350425a6ff1db48d5567718265a3386a68e932e8fb875568"
+}

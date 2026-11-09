@@ -51,12 +51,32 @@ export function stateSnapshot(root,kind,{expand=false,now=Date.now()}={}) {
  return {schemaVersion:1,view:'snapshot',kind,snapshotAt:new Date(now).toISOString(),snapshotOfCurrentState:true,...data,...(Array.isArray(data.items)?{count:data.items.length}:{})};
 }
 export function readCronRuns(root,from,to,options={}){
- const result=database(path.join(root,'state','openclaw.sqlite'),db=>{
-  if(!table(db,'cron_run_receipts'))return[];
-  return db.prepare('SELECT receipt_id,job_id,request_run_id,status,started_at_ms,finished_at_ms,delivery_attempt_state FROM cron_run_receipts WHERE started_at_ms BETWEEN ? AND ? OR finished_at_ms BETWEEN ? AND ? ORDER BY started_at_ms,receipt_id').all(from,to,from,to).map(r=>normalizeQueryEvent({
+ const file=path.join(root,'state','openclaw.sqlite');
+ const result=database(file,db=>{
+  // OpenClaw 2026.11 stores authoritative Cron history in task_runs.detail_json;
+  // receipts alone describe execution ownership and cannot supply diagnostics.
+  const receipts=table(db,'cron_run_receipts')?db.prepare('SELECT * FROM cron_run_receipts WHERE started_at_ms BETWEEN ? AND ? OR finished_at_ms BETWEEN ? AND ? ORDER BY started_at_ms,receipt_id').all(from,to,from,to):[];
+  const used=new Set(),events=[];
+  if(table(db,'task_runs'))for(const row of db.prepare("SELECT * FROM task_runs WHERE runtime='cron' AND (COALESCE(ended_at,last_event_at,created_at) BETWEEN ? AND ? OR started_at BETWEEN ? AND ?) ORDER BY created_at,task_id").all(from,to,from,to)){
+   const detail=JSON.parse(row.detail_json??'{}');if(detail.kind!=='cron-run')continue;
+   const started=detail.runAtMs??row.started_at;
+   const receipt=receipts.find(r=>r.job_id===row.source_id&&r.started_at_ms===started&&(!detail.storeKey||r.store_key===detail.storeKey));
+   if(receipt)used.add(receipt.receipt_id);
+   const entries=detail.diagnostics?.entries??[],codes=[...new Set(entries.filter(e=>e.source==='exec'&&Number.isInteger(e.exitCode)).map(e=>e.exitCode))];
+   events.push(normalizeQueryEvent({at:row.ended_at??row.last_event_at??row.created_at,source:'cron-runs',kind:'cron.run_state',
+    correlation:correlationFrom({cronJobId:row.source_id,runId:detail.runId??row.run_id,sessionKey:row.child_session_key,sessionId:detail.sessionId}),
+    data:{...detail,taskId:row.task_id,status:detail.status??row.status,storedStatus:row.status,errorText:row.error??receipt?.error_text,
+      startedAtMs:started,finishedAtMs:row.ended_at,durationMs:detail.durationMs??(row.ended_at==null?null:row.ended_at-started),
+      exitCode:codes.length===1?codes[0]:null,exitCodeAvailable:codes.length>0,
+      ...(receipt?{receiptId:receipt.receipt_id,receipt:{...receipt},deliveryState:receipt.delivery_attempt_state}:{}),
+      historicalRecord:true,snapshotOfCurrentState:false},sourceRef:{path:file,table:'task_runs',id:row.task_id}},options));
+  }
+  for(const r of receipts)if(!used.has(r.receipt_id))events.push(normalizeQueryEvent({
    at:r.finished_at_ms??r.started_at_ms,source:'cron-runs',kind:'cron.run_state',correlation:correlationFrom({cronJobId:r.job_id,runId:r.request_run_id}),
-   data:{receiptId:r.receipt_id,status:r.status,startedAtMs:r.started_at_ms,finishedAtMs:r.finished_at_ms,durationMs:r.finished_at_ms==null?null:r.finished_at_ms-r.started_at_ms,exitCode:null,exitCodeAvailable:false,deliveryState:r.delivery_attempt_state,snapshotOfCurrentState:true}
+   data:{...r,receiptId:r.receipt_id,status:r.status,errorText:r.error_text,startedAtMs:r.started_at_ms,finishedAtMs:r.finished_at_ms,durationMs:r.finished_at_ms==null?null:r.finished_at_ms-r.started_at_ms,exitCode:null,exitCodeAvailable:false,deliveryState:r.delivery_attempt_state,snapshotOfCurrentState:true,historyAvailable:false},
+   sourceRef:{path:file,table:'cron_run_receipts',id:r.receipt_id}
   },options));
+  return events.filter(e=>e.epochMs>=from&&e.epochMs<=to);
  });return Array.isArray(result)?result:[];
 }
 export function knownWarning(item){

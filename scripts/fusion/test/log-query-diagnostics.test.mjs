@@ -141,3 +141,18 @@ test('stored messages compare only matching ID, direction and peer; no text/time
  assert.equal(collectEvents({runtimeRoot:fixture(t),snowlumaRoot:f.root,from:at-1000,to:at+1000}).filter(e=>e.source==='snowluma-messages').length,0);
  const rows=collectEvents({runtimeRoot:f.root,snowlumaRoot:f.root,from:at-1000,to:at+1000,sources:['snowluma-messages'],messageId:'-21',expand:true});assert.equal(rows.length,1);assert(!JSON.stringify(renderQuery(rows,{from:at-1000,to:at+1000,noText:true}).json).includes('PRIVATE'));
 });
+
+test('Cron history uses native task rows and exact receipt joins, never current command configuration',t=>{
+ const root=fixture(t),file=db(root,'state/openclaw.sqlite',`CREATE TABLE task_runs(task_id TEXT,runtime TEXT,source_id TEXT,run_id TEXT,child_session_key TEXT,status TEXT,error TEXT,started_at INTEGER,ended_at INTEGER,last_event_at INTEGER,created_at INTEGER,detail_json TEXT);
+ CREATE TABLE cron_run_receipts(receipt_id TEXT,job_id TEXT,store_key TEXT,request_run_id TEXT,status TEXT,started_at_ms INTEGER,finished_at_ms INTEGER,error_text TEXT,delivery_attempt_state TEXT);
+ CREATE TABLE cron_jobs(job_id TEXT,job_json TEXT);`);
+ const d=new DatabaseSync(file),history={kind:'cron-run',storeKey:'partition-1',status:'error',runAtMs:at,diagnostics:{summary:'synthetic diagnostic',entries:[{source:'exec',severity:'error',message:'Command failed: node /fixture/old-runner.mjs',exitCode:1}]},delivered:true,deliveryStatus:'delivered'};
+ d.prepare('INSERT INTO task_runs VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run('task-1','cron','job-1','actual-run','session-1','failed','synthetic error',at,at+100,at+100,at,JSON.stringify(history));
+ d.prepare('INSERT INTO cron_run_receipts VALUES(?,?,?,?,?,?,?,?,?)').run('receipt-1','job-1','partition-1',null,'error',at,at+100,'retained receipt error','sent');
+ d.prepare('INSERT INTO cron_run_receipts VALUES(?,?,?,?,?,?,?,?,?)').run('wrong-partition','job-1','partition-2',null,'error',at,at+100,'wrong partition','sent');
+ d.prepare('INSERT INTO cron_jobs VALUES(?,?)').run('job-1',JSON.stringify({payload:{argv:['new-command']}}));d.close();
+ const before=hash(file),events=readCronRuns(root,at-1,at+200,{fullContent:true});assert.equal(events.length,2);
+ const row=events.find(e=>e.data.taskId==='task-1');assert.equal(row.data.exitCode,1);assert.equal(row.data.exitCodeAvailable,true);assert.equal(row.data.receiptId,'receipt-1');assert.equal(row.data.errorText,'synthetic error');assert.equal(row.data.receipt.error_text,'retained receipt error');assert.equal(row.correlation.runId,'actual-run');assert.equal(row.sourceRef.table,'task_runs');
+ assert.equal(row.data.diagnostics.entries[0].message,history.diagnostics.entries[0].message);assert(!JSON.stringify(row).includes('new-command'));assert.equal(hash(file),before);
+ const errors=renderQuery(events,{from:at-1,to:at+200,errors:true,fullContent:true}).json;assert.equal(errors.recordCount,2);
+});

@@ -10,7 +10,7 @@ import {createLogPlugin,LOG_TOOL} from '../../plugins/kurumi-logs/index.js';
 import {queryOptions,SOURCES,RESULT_BYTES,settings} from '../../plugins/kurumi-logs/policy.js';
 import {LogQueryService,technicalResult} from '../../plugins/kurumi-logs/service.js';
 import {readQuery,cliArguments} from '../../plugins/kurumi-logs/query.js';
-import {paginateQueryContent} from '../../../scripts/fusion/log-query-privacy.mjs';
+import {paginateQueryContent,queryTextWeight,queryOutputFits} from '../../../scripts/fusion/log-query-privacy.mjs';
 import {ownerPolicy,memberRow,context} from '../access-control/fixtures.mjs';
 import {OWNER_PERMISSIONS,SHARED_PERMISSIONS,toolPermission,toolPolicyDecision,validatePolicy} from '../../packages/access-control/index.js';
 const BACKEND=fileURLToPath(new URL('../../../',import.meta.url));
@@ -26,7 +26,7 @@ function register(service) {
 const decode=r=>JSON.parse(r.content[0].text);
 test('retained history is unrestricted; typed filters and deployment roots remain explicit',()=>{
  const q=queryOptions({},NOW);assert.equal(Date.parse(q.to)-Date.parse(q.from),7200000);assert.deepEqual(q.sources,SOURCES);
- for(const a of [{since:'1h',from:'2026-11-10 00:00'},{limit:101},{offset:-1},{sources:['snowluma-messages']},{sources:['papers','papers']},{runtimeRoot:'/tmp'},{command:'id'},{runId:'--raw'},{messageId:'1;id'},{kind:'x\n--expand'},{view:'repair'},{from:'2026-02-30 01:00'},{view:'stats',offset:0}])assert.throws(()=>queryOptions(a,NOW));
+ for(const a of [{since:'1h',from:'2026-11-10 00:00'},{limit:101},{offset:-1},{sources:['snowluma-messages']},{sources:['papers','papers']},{runtimeRoot:'/tmp'},{command:'id'},{runId:12},{runId:''},{runId:'x\0y'},{messageId:'1;id'},{kind:'x\n--expand'},{view:'repair'},{from:'2026-02-30 01:00'},{view:'stats',offset:0}])assert.throws(()=>queryOptions(a,NOW));
  assert.equal(queryOptions({since:'all'},NOW).from,'1970-01-01T00:00:00.000Z');assert.equal(queryOptions({},NOW).noText,false);assert.equal(queryOptions({since:'800d',noText:true,expand:true},NOW).noText,true);
  assert.equal(Date.parse(queryOptions({since:'8d'},NOW).to)-Date.parse(queryOptions({since:'8d'},NOW).from),8*86400000);
  const local=queryOptions({from:'2026-11-10 08:00',to:'2026-11-10 09:00',messageId:'-12'},NOW);assert.equal(local.from,'2026-11-10T00:00:00.000Z');
@@ -174,4 +174,38 @@ test('failure records expose correlation grouping without claiming independent i
  fs.writeFileSync(f.file,[{source:'openclaw-session',kind:'agent.tool_result',correlation:{toolCallId:id},data:{tool:'kurumi_logs',isError:true,summary:{code:'query_failed',ok:false}}},{source:'diagnostics',kind:'logs.query',correlation:{toolCallId:id},data:{status:'error',code:'query_failed'}}].map(e=>JSON.stringify({at,...e})).join('\n')+'\n');
  const service=new LogQueryService(f.config,{now:()=>NOW}),result=await service.query({sources:['trace-events'],view:'errors'});
  assert.equal(result.recordCount,2);assert.equal(result.correlationGroups,1);assert.equal(result.countBasis,'records');assert.equal(result.items[0].groupId,result.items[1].groupId);assert.equal(result.counts.query_failed,2);
+});
+
+test('whole-event pages are independently readable and stable detail references survive projection and expansion',async t=>{
+ const f=fixture(t),rows=Array.from({length:40},(_,i)=>({at:new Date(NOW-10000+i).toISOString(),source:'fixture',kind:'fixture.failure',correlation:{eventKey:'slot-'+(i%2),cronJobId:'job-'+(i%2)},data:{status:'failed',code:'错误/ '+i,text:'保留正文'.repeat(30),unknown:{deep:'完整字段'}}}));
+ fs.writeFileSync(f.file,rows.map(JSON.stringify).join('\n')+'\n');const service=new LogQueryService(f.config,{now:()=>NOW}),args={sources:['trace-events'],expand:true};
+ const seen=[];let offset=0,first;
+ do{const r=await service.query({...args,offset});assert(!r.chunked);assert(r.events.length>0);assert(r.shown<40);first??=r;seen.push(...r.events);offset=r.nextOffset;}while(offset!==null);
+ assert.equal(seen.length,40);assert.equal(new Set(seen.map(e=>e.eventRef)).size,40);assert.deepEqual(seen.map(e=>e.data.text),rows.map(e=>e.data.text));
+ const target=seen[2],detail=await service.query({...args,eventRef:target.eventRef});assert.equal(detail.total,1);assert.equal(detail.events[0].eventRef,target.eventRef);assert.equal(detail.events[0].data.unknown.deep,'完整字段');
+ const summary=await service.query({sources:['trace-events'],eventRef:target.eventRef,noText:true});assert.equal(summary.events[0].eventRef,target.eventRef);assert(!JSON.stringify(summary).includes('保留正文'));
+ const narrow=await service.query({sources:['trace-events'],code:'错误/ 2',view:'overview'});assert.equal(narrow.total,1);assert.equal(narrow.items[0].eventRef,target.eventRef);assert.equal(narrow.counts['错误/ 2'],1);
+ const keys=await service.query({sources:['trace-events'],view:'overview',eventKey:'slot-0',cronJobId:'job-0'});assert.equal(keys.total,20);assert.equal(keys.businessAttemptCount,1);assert.equal(keys.counts['错误/ 3'],undefined);
+ const context=await service.query({...args,eventRef:target.eventRef,contextBefore:1,contextAfter:1});assert.equal(context.contextEvents.length,3);
+});
+test('nested business code is projected from list audit, remains exact and is counted per explicit slot',async t=>{
+ const f=fixture(t);fs.mkdirSync(path.join(f.root,'state/personal-reminder-list'),{recursive:true});const {DatabaseSync}=await import('node:sqlite');
+ const db=new DatabaseSync(path.join(f.root,'state/personal-reminder-list/list.sqlite'));db.exec('CREATE TABLE audit(id INTEGER,at_ms INTEGER,action TEXT,item_id TEXT,qq_message_id TEXT,session_key TEXT,run_id TEXT,details_json TEXT)');
+ for(let i=0;i<3;i++)db.prepare('INSERT INTO audit VALUES(?,?,?,?,?,?,?,?)').run(i,NOW-1000+i,'notice.generation_failed',null,null,null,null,JSON.stringify({slotKey:'slot-'+(i%2),code:'中文/外层',error:{code:'中文/底层 空格',stack:'retained deep stack'},generation:{runId:'generated-'+i,sessionId:'session-'+i}}));db.close();
+ const service=new LogQueryService(f.config,{now:()=>NOW}),args={sources:['personal-reminder-list'],view:'overview',code:'中文/底层 空格'};
+ const r=await service.query(args);assert(!r.chunked);assert.equal(r.counts['中文/外层'],3);assert.equal(r.businessAttemptCount,2);assert.equal(r.errorRecords,3);
+ const detail=await service.query({sources:['personal-reminder-list'],eventRef:r.items[0].eventRef,expand:true});assert.equal(detail.events[0].data.details.error.stack,'retained deep stack');assert.equal(detail.events[0].correlation.runId,'generated-0');
+});
+
+test('adaptive byte and weighted-text caps preserve English capacity and rare CJK safety',()=>{
+ const latin=page([{source:'fixture',kind:'fixture.large',data:{text:'a'.repeat(9000)}}]);
+ assert(queryOutputFits(latin,{outputBytes:18000,outputChars:12000}));assert(!paginateQueryContent(latin,{outputBytes:18000,outputChars:12000}).chunked);
+ const rare=page([{source:'fixture',kind:'fixture.large',data:{text:'龘𠀀😀中文'.repeat(1000)}}]),parts=[];let contentOffset=0,contentHash;
+ do{const chunk=paginateQueryContent(rare,{outputBytes:18000,outputChars:12000,contentOffset,contentHash});assert(chunk.chunked);assert(Buffer.byteLength(JSON.stringify(chunk))<=18000);assert(queryTextWeight(JSON.stringify(chunk))<=12000);parts.push(chunk.contentFragment);contentOffset=chunk.nextContentOffset;contentHash=chunk.contentHash;}while(contentOffset!==null);
+ assert.deepEqual(JSON.parse(parts.join('')),rare);
+});
+
+test('native opaque run IDs exceed 128 characters and remain literal CLI values',()=>{
+ const runId='cron:job:'+ 'x'.repeat(180)+'/原生 ID --raw';const q=queryOptions({runId},NOW);assert.equal(q.runId,runId);assert(LOG_TOOL.parameters.properties.runId.maxLength===undefined);
+ const args=cliArguments({backendRoot:BACKEND,runtimeRoot:'/fixture',snowlumaRoot:'/fixture'},q);assert(args.includes('--run-id='+runId));assert.equal(args.filter(a=>a==='--raw').length,1);assert.equal(queryOptions({runId:'--raw'},NOW).runId,'--raw');
 });

@@ -3,7 +3,7 @@ import {settings,queryOptions,LogQueryError,RESULT_BYTES} from './policy.js';
 import {readQuery} from './query.js';
 export function technicalResult(value, q, maxBytes = RESULT_BYTES - 1800) {
   if (!value || value.schemaVersion !== 1 || !Number.isSafeInteger(value.total) || value.total < 0) throw new LogQueryError('invalid_response');
-  const key = q.view === 'errors' ? 'items' : 'events';
+  const key = ['errors','overview'].includes(q.view) ? 'items' : 'events';
   if (!value.chunked && q.view !== 'stats' && !Array.isArray(value[key])) throw new LogQueryError('invalid_response');
   const result={status:'ok',coverage:'stored_events_only',queriedSources:q.sources,...value};
   // The backend paginates serialized content before crossing the child boundary.

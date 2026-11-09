@@ -6,20 +6,20 @@ const containers = new Set(['events', 'calls', 'timeline', 'turns', 'items', 'ac
 const identifiers = new Set(['id', 'receiptId', 'sessionId', 'sessionKey', 'session', 'runId', 'traceId', 'spanId', 'parentSpanId',
   'qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'cronJobId', 'taskId', 'conversationId',
   'senderId', 'recipientId', 'eventKey', 'draftId', 'grantId', 'confirmationMessageId', 'sourceMessageId', 'groupId',
-  'presentationMessageId', 'toolCallId', 'parentToolCallId', 'failedToolCallId', 'recoveredToolCallId',
+  'presentationMessageId', 'eventRef', 'toolCallId', 'parentToolCallId', 'failedToolCallId', 'recoveredToolCallId',
   'barrierToolCallId', 'loadId', 'sha256', 'resultFingerprint', 'ledgerId']);
 const labels = new Set(['source', 'kind', 'view', 'tool', 'declaredTool', 'outcome', 'errorCode', 'code',
   'type', 'level', 'subsystem', 'status', 'hostStatus', 'decision', 'permission', 'domain', 'actionKind', 'action', 'failureCode',
   'consumptionResult', 'lastStatus', 'lastDeliveryStatus', 'scheduleKind', 'sessionTarget', 'correlationQuality',
-  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache', 'direction', 'storedComparison', 'contextRole', 'countBasis']);
+  'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache', 'direction', 'storedComparison', 'contextRole', 'countBasis', 'businessAttemptBasis']);
 const dates = new Set(['at', 'from', 'to', 'snapshotAt', 'scheduleAt', 'recordedAt']);
 const facts = new Set(['schemaVersion', 'epochMs', 'durationMs', 'count', 'total', 'shown', 'hiddenRaw', 'orphanEvents',
-  'flagged', 'textLength', 'displayTruncated', 'limit', 'offset', 'nextOffset', 'truncated', 'noText', 'enabled', 'ok', 'isError', 'idempotent',
+  'flagged', 'textLength', 'displayTruncated', 'limit', 'offset', 'nextOffset', 'truncated', 'noText', 'enabled', 'ok', 'isError', 'idempotent','businessAttemptCount','unkeyedErrorRecords','errorRecords','exceptionRecordedInAudit','validationRecordedInAudit','generationReferenceRecorded',
   'requiresUserInput', 'resultConflict', 'structuredOutcome', 'snapshotOfCurrentState', 'partialPage','recordCount','correlationGroups','contextBefore','contextAfter','contextAnchors','contextWithinQueryWindow','detailsExpanded',
   'attempts', 'failures', 'outbound', 'errors', 'denied', 'aborted', 'pid', 'quoteLoaded', 'replyToAvailableToAgent',
   'replyToIsQuote', 'isTailDispatch', 'loadedSurfaceKnown', 'activeProcessVerified', 'createdAtMs', 'updatedAtMs', 'nextRunAtMs', 'lastRunAtMs', 'presentationOrder',
   'createdAtUtc', 'updatedAtUtc', 'committedAtUtc', 'expiresAtUtc', 'issuedAtUtc', 'consumedAtUtc', 'presentedAtUtc', 'sentAtUtc',
-  'scheduledAtUtc', 'dispatchedAtUtc', 'deliveredAtUtc', 'version', 'generation', 'revision', 'revisionBefore', 'revisionAfter', 'summaries', 'bytes', 'nameVersion', 'available', 'metadataOnly', 'totalRows', 'hiddenKnown', 'failureRate', 'averageDurationMs', 'measured', 'startedAtMs', 'finishedAtMs', 'exitCodeAvailable', 'exitCode', 'known', 'usageAvailable', 'input', 'output', 'cacheRead', 'cacheWrite', 'totalTokens', 'inputTokens', 'outputTokens', 'fallbackKnown', 'cacheHit', 'stale', 'resultCount', 'missing', 'compacted', 'tokensBefore', 'tokensAfter', 'summaryChars']);
+  'scheduledAtUtc', 'dispatchedAtUtc', 'deliveredAtUtc', 'version', 'generation', 'revision', 'revisionBefore', 'revisionAfter', 'summaries', 'bytes', 'nameVersion', 'available', 'metadataOnly', 'totalRows', 'hiddenKnown', 'failureRate', 'averageDurationMs', 'measured', 'startedAtMs', 'finishedAtMs', 'exitCodeAvailable', 'exitCode','historicalRecord','historyAvailable','generationSucceeded','notificationDelivered','listBodyPresent','bodyPresent', 'known', 'usageAvailable', 'input', 'output', 'cacheRead', 'cacheWrite', 'totalTokens', 'inputTokens', 'outputTokens', 'fallbackKnown', 'cacheHit', 'stale', 'resultCount', 'missing', 'compacted', 'tokensBefore', 'tokensAfter', 'summaryChars']);
 // Summary is opt-in presentation, not an authorization boundary. Preserve
 // identifiers/codes verbatim: Unicode, slashes and spaces are valid diagnostics.
 const identifier = value => typeof value === 'string';

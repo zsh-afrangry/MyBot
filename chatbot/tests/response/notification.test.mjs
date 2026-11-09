@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {assistantText,visibleAssistantReply,withFacts} from '../../packages/response-core/index.js';
+import {assistantText,visibleAssistantReply,withFacts,createAssistantComposer} from '../../packages/response-core/index.js';
 import {registerDigestNotice} from '../../plugins/personal-reminder-list/notification.js';
 import {registerReminderNotice} from '../../packages/personal-domains/dist/reminder-notification.js';
 import {ReminderStore} from '../../packages/personal-domains/dist/reminder-store.js';
@@ -102,4 +102,26 @@ test('one-off generation failure records a definite unsent failure with no autom
  registerReminderNotice(f.api,{open,composeNotice:async()=>{throw Error('model unavailable');}});
  assert.equal((await f.run({id})).ok,false);assert.deepEqual((await f.run({id})).result,{});
  const s=open();try{assert.equal(s.getReminder(id).failureCode,'assistant_notice_generation_failed');assert.equal(s.getRetryStatus(id),'exhausted');assert.equal(s.listDueRetryCandidates(Math.floor(f.now()/1000)+10000).length,0);}finally{s.close();}
+});
+
+test('failed opening retains exact rules, exception stack and generation reference without public text leakage',async t=>{
+ for(const [text,code]of [['一句开场\n一句开场','digest_opening_multiline'],['合成事项还没结束','digest_opening_repeats_items'],['','digest_opening_empty']])await t.test(code,async t=>{
+  const f=fixture(t);seedList(f.root,OWNER,f.now);f.due();
+  registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:o=>new ListStore(o)},{now:f.now,composeNotice:async()=>({text,runId:'gen-1',sessionId:'session-1'})});
+  const r=await f.run({slot:'20:00'});assert(!r.ok);assert.equal(r.error.message,'assistant_notice_generation_failed');assert(!JSON.stringify(r).includes(text||'gen-1'));
+  const store=new ListStore({root:f.root,ownerId:OWNER,now:f.now});try{
+   const evidence=JSON.parse(store.db.prepare("SELECT details_json FROM audit WHERE action='notice.generation_failed'").get().details_json);
+   assert.equal(evidence.code,'assistant_notice_generation_failed');assert.equal(evidence.error.code,code);assert.match(evidence.error.stack,/notification.js/);
+   assert.equal(evidence.stage,'opening_validation');assert.equal(evidence.origin.rule,code);assert.equal(evidence.generation.runId,'gen-1');assert.equal(evidence.generation.sessionId,'session-1');assert.equal(evidence.validation.textLength,text.length);assert.equal(evidence.validation.sha256.length,64);
+   assert(!Object.hasOwn(evidence,'text'));assert.equal(store.db.prepare('SELECT text FROM deliveries').get().text,'');
+  }finally{store.close();}
+ });
+});
+test('composer preserves provider cause and actual run/session references',async()=>{
+ const cause=Object.assign(Error('synthetic transport detail'),{code:'PROVIDER_FAILURE',cause:Error('synthetic socket closed')});
+ const session={resolveStorePath:()=>'/fixture',runWithWorkAdmission:async(o,fn)=>fn(new AbortController().signal),getSessionEntryAsync:async()=>({sessionId:'session-generated'})};
+ const compose=createAssistantComposer({config:()=>({agents:{entries:{main:{model:'fixture/model'}}}}),runtime:{agent:{session,resolveAgentWorkspaceDir:()=>'/fixture',resolveAgentDir:()=>'/fixture',runEmbeddedAgent:async()=>{throw cause;}}}});
+ await assert.rejects(compose({request:{agentId:'main',sessionKey:'fixture'},facts:{},sourceTool:'fixture',instructions:''}),error=>{
+  assert.equal(error.code,'assistant_notice_run_failed');assert.equal(error.cause,cause);assert.equal(error.cause.cause.message,'synthetic socket closed');assert.equal(error.generation.sessionId,'session-generated');assert(error.generation.runId);return true;
+ });
 });

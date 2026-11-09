@@ -1,0 +1,226 @@
+{
+  "at": "2026-11-09T19:54:08.253Z",
+  "source": "c28dd92 plus diagnostic fixes under test",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, isolated OpenClaw/captured log tool/mandatory QQ policy and synthetic owner WebSocket input. Read-only production history; loopback replies only. No QQ network, production write, business execution or production service restart. Private generated answers and transcripts are not copied to evidence; temporary state is removed.",
+  "cases": [
+    {
+      "id": "cron-fields",
+      "questionSha256": "81cf9dc94b894db053d85b53751b190296f813e6fed067c913592ecf86e96f82",
+      "commandMentioned": true,
+      "requests": 3,
+      "calls": [
+        {
+          "id": "call00lSVFzkQ8OjioZDk8xeJ55973",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "sources",
+            "from",
+            "to",
+            "limit"
+          ],
+          "argumentHash": "e0beb7a1a4092177b1399fe9a5a0bc27dc4025ba1f3863df8cc80c3e66355eae",
+          "sources": [
+            "cron-runs"
+          ],
+          "view": "events",
+          "limit": 100,
+          "from": "2026-11-09 11:58",
+          "to": "2026-11-09 12:02"
+        },
+        {
+          "id": "call0063IzufMPXCX6Odh9n4WN4349",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "eventRef",
+            "view",
+            "expand",
+            "from",
+            "to",
+            "sources"
+          ],
+          "argumentHash": "2cc1c39f3ef3dd3050bee22399cffb3e9e08460cea21f6ac1548ddcc4e9f497c",
+          "sources": [
+            "cron-runs"
+          ],
+          "view": "events",
+          "from": "2026-11-09 11:58",
+          "to": "2026-11-09 12:02",
+          "expand": true,
+          "eventRef": "event:3a0f693be1b5ac15163c17192318dcec"
+        }
+      ],
+      "results": [
+        {
+          "callId": "call00lSVFzkQ8OjioZDk8xeJ55973",
+          "status": "ok",
+          "total": 1,
+          "shown": 1,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        },
+        {
+          "callId": "call0063IzufMPXCX6Odh9n4WN4349",
+          "status": "ok",
+          "total": 1,
+          "shown": 1,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        }
+      ],
+      "replyObserved": true,
+      "replyChars": 649,
+      "replySha256": "b531e3bdae318ebbf7e4cfc12455bd0f23afff26222c00027fdd15cd722249b6",
+      "facts": {
+        "lineCount": null,
+        "cronExitCode": 1,
+        "distinctFailures": 1,
+        "exactCauseRecorded": false,
+        "listDeliveryProven": false,
+        "businessCodeFound": false,
+        "codesConsistent": true,
+        "recordCountIsIncidentCount": false,
+        "missingIsNotAbsent": true
+      },
+      "completeGeneratedTextObserved": false,
+      "passed": true,
+      "transportError": null
+    }
+  ],
+  "requests": 3,
+  "usage": {
+    "promptTokens": 36150,
+    "completionTokens": 1681
+  },
+  "baseline": {
+    "generatedChars": 390,
+    "generatedLines": 17,
+    "firstTwoLinesEqual": true,
+    "list": {
+      "delivery": {
+        "slot_key": "2026-11-09T12:00",
+        "status": "delivered",
+        "textLength": 0
+      },
+      "failures": [
+        {
+          "id": 271,
+          "at": 1794110404560,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 277,
+          "at": 1794153604142,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 283,
+          "at": 1794196805402,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 286,
+          "at": 1794218405273,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 289,
+          "at": 1794240005144,
+          "code": "assistant_notice_generation_failed"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "status": "error",
+        "errorTextPresent": true,
+        "exitOneText": true
+      }
+    ],
+    "cronHistory": [
+      {
+        "status": "error",
+        "exitCodes": [
+          1
+        ],
+        "commandDiagnosticPresent": true
+      }
+    ],
+    "sessionQuery": {
+      "fragments": 1,
+      "fullGeneratedTextAvailable": true
+    },
+    "errorQuery": {
+      "fragments": 1,
+      "counts": {
+        "assistant_notice_generation_failed": 1,
+        "command exited with code 1": 1,
+        "cron:WARN": 1,
+        "digest_delivered_without_body": 1
+      },
+      "recordCount": 4
+    },
+    "keywordQuery": {
+      "total": 1
+    },
+    "cronQuery": [
+      {
+        "exitCode": 1,
+        "exitCodeAvailable": true,
+        "errorFieldPresent": true,
+        "commandFieldPresent": true
+      }
+    ]
+  },
+  "transportErrors": [],
+  "modelResponses": [
+    {
+      "case": "cron-fields",
+      "request": 1,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 755
+    },
+    {
+      "case": "cron-fields",
+      "request": 2,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 602
+    },
+    {
+      "case": "cron-fields",
+      "request": 3,
+      "finishReason": "stop",
+      "toolCalls": 0,
+      "contentChars": 649,
+      "reasoningChars": 3414
+    }
+  ],
+  "testedFileHashes": {
+    "chatbot/plugins/kurumi-logs/index.js": "aea566e111d9cd484ad811174c7dbcb795e969acf7f4e86ca3401bef59571001",
+    "chatbot/plugins/kurumi-logs/query.js": "16de3c42fd5200df48c72ccc8d7cbc721a4fc6865cd152a9d5856621d7385844",
+    "chatbot/plugins/kurumi-logs/policy.js": "94dcba00c6e7469a3985c7c02554bc492c5b323e639fa1148cb701f8f9ad67f7",
+    "chatbot/plugins/kurumi-logs/service.js": "f79dfc8e454a5d521ff1e59952a2f42e222f568415d15fd9b87783167a1ffd00",
+    "scripts/fusion/log-query.mjs": "3e99a7ff21b198640231fdba0c6fe9e5f06e2a030432458723560a9b91d7d39c",
+    "scripts/fusion/log-query-diagnostics.mjs": "e3c3fc8af3d4654ed1f17d6b6bb1a449fd78a30bdeb6b1bf81b66e8346d8c9b0",
+    "scripts/fusion/log-query-privacy.mjs": "e4d0c823cbc4108fa1c7bfcdbaae3347712ffd2989e04600f1757e4eb441befc",
+    "scripts/fusion/log-query-views.mjs": "03dc9d9d94b723fa0b7ac0b649665798ca9e6795bd4d8992c116df9422bf50aa",
+    "scripts/fusion/templates/AGENTS.md": "57f7c2298cded6968da45a648ed18e2a7933bf014de11f4623db605b4a6763fd"
+  },
+  "scenarioSelection": [
+    "cron-fields"
+  ],
+  "capturedPluginObserved": true,
+  "historyRowsUnchanged": true,
+  "testedSourcesUnchanged": true,
+  "executedAllCases": true,
+  "passed": true,
+  "temporaryStateRemoved": true,
+  "finishedAt": "2026-11-09T19:54:33.000Z"
+}

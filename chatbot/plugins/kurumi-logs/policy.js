@@ -14,9 +14,9 @@ export function settings(raw) {
   return Object.freeze({...raw});
 }
 export function queryOptions(raw = {}, now = Date.now()) {
-  if (!object(raw) || Object.keys(raw).some(k => !['view','from','to','since','sources','runId','messageId','kind','limit','offset','contains','keywords','keywordMode','levels','noText','expand','raw','contextBefore','contextAfter','contentOffset','contentHash'].includes(k))) fail('invalid_query');
+  if (!object(raw) || Object.keys(raw).some(k => !['view','from','to','since','sources','runId','messageId','kind','limit','offset','contains','keywords','keywordMode','levels','noText','expand','raw','contextBefore','contextAfter','contentOffset','contentHash','eventRef','eventKey','cronJobId','code'].includes(k))) fail('invalid_query');
   const view = raw.view ?? 'events';
-  if (!['events','errors','stats'].includes(view) || (raw.since !== undefined && raw.from !== undefined)) fail('invalid_query');
+  if (!['events','errors','stats','overview'].includes(view) || (raw.since !== undefined && raw.from !== undefined)) fail('invalid_query');
   let duration = 2 * 3600000;
   if (raw.since !== undefined) {
     const m = /^([1-9]\d*)(m|h|d)$/.exec(raw.since);
@@ -39,14 +39,17 @@ export function queryOptions(raw = {}, now = Date.now()) {
   if (!Number.isFinite(new Date(from).getTime()) || from > to || to > now + 60000) fail('invalid_query');
   const sources = raw.sources ?? [...SOURCES];
   if (!Array.isArray(sources) || !sources.length || sources.length > SOURCES.length || new Set(sources).size !== sources.length || sources.some(s => !SOURCES.includes(s))) fail('invalid_query');
-  for (const key of ['runId','messageId','kind']) {
+  for (const key of ['messageId','kind']) {
     if (raw[key] === undefined) continue;
-    const pattern = key === 'messageId' ? /^[+-]?\d{1,20}$/ : key === 'kind' ? /^[a-zA-Z][a-zA-Z0-9_.-]{0,99}\*?$/ : /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+    const pattern = key === 'messageId' ? /^[+-]?\d{1,20}$/ : /^[a-zA-Z][a-zA-Z0-9_.-]{0,99}\*?$/;
     if (typeof raw[key] !== 'string' || !pattern.test(raw[key])) fail('invalid_query');
   }
   const limit = raw.limit ?? 50, offset = raw.offset ?? 0;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || view === 'stats' && (raw.limit !== undefined || raw.offset !== undefined)) fail('invalid_query');
   const text = value => typeof value === 'string' && value.length > 0 && !value.includes('\0');
+  for(const key of ['code','eventKey','cronJobId'])if(raw[key]!==undefined&&!text(raw[key]))fail('invalid_query');
+  if(raw.eventRef!==undefined&&(typeof raw.eventRef!=='string'||!/^event:[a-f0-9]{32}$/u.test(raw.eventRef)))fail('invalid_query');
+  if(raw.runId!==undefined&&!text(raw.runId))fail('invalid_query');
   if (raw.contains !== undefined && !text(raw.contains)) fail('invalid_query');
   if (raw.contentHash !== undefined && !text(raw.contentHash)) fail('invalid_query');
   if (raw.keywords !== undefined && (!Array.isArray(raw.keywords) || !raw.keywords.length || raw.keywords.some(x=>!text(x)))) fail('invalid_query');
@@ -54,6 +57,6 @@ export function queryOptions(raw = {}, now = Date.now()) {
   if (raw.levels !== undefined && (!Array.isArray(raw.levels) || !raw.levels.length || raw.levels.some(x=>!text(x)))) fail('invalid_query');
   for (const key of ['noText','expand','raw']) if (raw[key] !== undefined && typeof raw[key] !== 'boolean') fail('invalid_query');
   for (const key of ['contextBefore','contextAfter','contentOffset']) if (raw[key] !== undefined && (!Number.isSafeInteger(raw[key]) || raw[key] < 0 || key !== 'contentOffset' && raw[key] > 1000)) fail('invalid_query');
-  if (view === 'stats' && (raw.contextBefore || raw.contextAfter)) fail('invalid_query');
+  if (['stats','overview'].includes(view) && (raw.contextBefore || raw.contextAfter)) fail('invalid_query');
   return {...raw, view, from:new Date(from).toISOString(), to:new Date(to).toISOString(), sources, limit, offset, noText:raw.noText ?? false, expand:raw.expand ?? false, raw:raw.raw ?? true};
 }
