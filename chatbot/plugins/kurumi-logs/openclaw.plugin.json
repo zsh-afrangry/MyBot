@@ -21,6 +21,7 @@
     "type": "object",
     "additionalProperties": false,
     "required": [
+      "backendRoot",
       "runtimeRoot",
       "snowlumaRoot"
     ],
@@ -30,6 +31,10 @@
         "pattern": "^/"
       },
       "snowlumaRoot": {
+        "type": "string",
+        "pattern": "^/"
+      },
+      "backendRoot": {
         "type": "string",
         "pattern": "^/"
       }

@@ -5,12 +5,14 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import {createLogPlugin,LOG_TOOL} from '../../plugins/kurumi-logs/index.js';
-import {queryOptions,SOURCES,RESULT_BYTES} from '../../plugins/kurumi-logs/policy.js';
+import {queryOptions,SOURCES,RESULT_BYTES,settings} from '../../plugins/kurumi-logs/policy.js';
 import {LogQueryService,technicalResult} from '../../plugins/kurumi-logs/service.js';
 import {readQuery,cliArguments} from '../../plugins/kurumi-logs/query.js';
 import {ownerPolicy,memberRow,context} from '../access-control/fixtures.mjs';
 import {OWNER_PERMISSIONS,SHARED_PERMISSIONS,toolPermission,toolPolicyDecision,validatePolicy} from '../../packages/access-control/index.js';
+const BACKEND=fileURLToPath(new URL('../../../',import.meta.url));
 const NOW=Date.parse('2026-11-10T01:00:00Z');
 const page=(events=[])=>({schemaVersion:1,total:events.length,totalRows:events.length,shown:events.length,offset:0,nextOffset:null,truncated:false,events});
 function register(service) {
@@ -66,14 +68,14 @@ test('byte-driven shrinking advances pagination by actual returned rows',()=>{
  assert(r.events.length>0&&r.events.length<50);assert.equal(r.nextOffset,10+r.events.length);assert(r.truncated);assert.equal(r.shown,r.events.length);
 });
 test('adapter uses fixed Node script, no shell and unconditional no-text JSON',()=>{
- const q=queryOptions({messageId:'-123',sources:['cron-runs'],view:'errors'},NOW),args=cliArguments({runtimeRoot:'/fixed/runtime',snowlumaRoot:'/fixed/snow'},q);
+ const q=queryOptions({messageId:'-123',sources:['cron-runs'],view:'errors'},NOW),args=cliArguments({backendRoot:BACKEND,runtimeRoot:'/fixed/runtime',snowlumaRoot:'/fixed/snow'},q);
  assert(args.includes('--no-text'));assert(args.includes('--json'));assert(args.includes('--errors'));assert(args.includes('--message-id=-123'));assert(!args.includes('--raw'));assert(!args.includes('--expand'));
 });
 function fixture(t){
  const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-log-query-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));fs.mkdirSync(path.join(root,'channel'));
  const at='2026-11-10T00:00:00.000Z';
  fs.writeFileSync(path.join(root,'channel/trace-events.jsonl'),[{source:'reminder-list',kind:'reminder-list.notice.generation_failed',at,data:{status:'generation_failed',text:'private-body',apiKey:'private-key'}},{source:'e7',kind:'e7.http',at,data:{httpStatus:304}},{source:'e7',kind:'e7.http',at,data:{httpStatus:500}}].map(x=>JSON.stringify({schemaVersion:1,...x})).join('\n')+'\n');
- return {root,config:{runtimeRoot:root,snowlumaRoot:root},file:path.join(root,'channel/trace-events.jsonl')};
+ return {root,config:{backendRoot:BACKEND,runtimeRoot:root,snowlumaRoot:root},file:path.join(root,'channel/trace-events.jsonl')};
 }
 test('real CLI reports generation failures, excludes HTTP304, and leaves source bytes unchanged',async t=>{
  const f=fixture(t),hash=()=>createHash('sha256').update(fs.readFileSync(f.file)).digest('hex'),before=hash();
@@ -94,7 +96,7 @@ test('actual child abort, timeout and output caps reject without returning parti
  const controller=new AbortController(),pending=readQuery(f.config,q,{signal:controller.signal});controller.abort();await assert.rejects(pending,e=>e.code==='cancelled');
 });
 test('one concurrent read at a time; rejection and cancellation release the slot',async()=>{
- let release;const service=new LogQueryService({runtimeRoot:'/fixture',snowlumaRoot:'/fixture'},{now:()=>NOW,read:()=>new Promise(r=>release=r)});
+ let release;const service=new LogQueryService({backendRoot:BACKEND,runtimeRoot:'/fixture',snowlumaRoot:'/fixture'},{now:()=>NOW,read:()=>new Promise(r=>release=r)});
  const pending=service.query({});await assert.rejects(service.query({}),e=>e.code==='busy');release(page());await pending;
  service.read=async()=>{throw Error('failure');};await assert.rejects(service.query({}));service.read=async()=>page();assert.equal((await service.query({})).status,'ok');
 });
@@ -104,4 +106,18 @@ test('real tool handler reaches the fixed read-only adapter with a synthetic fix
  const rows=fs.readFileSync(f.file,'utf8').trim().split('\n').map(line=>({...JSON.parse(line),at}));fs.writeFileSync(f.file,rows.map(x=>JSON.stringify(x)).join('\n')+'\n');
  const h=register(new LogQueryService(f.config));const r=await h.tool().execute('integrated',{sources:['trace-events'],view:'errors'});
  assert(!r.isError);assert.match(r.content[0].text,/generation_failed/);assert.match(r.content[0].text,/http_500/);assert(!r.content[0].text.includes('private-body'));assert(!r.content[0].text.includes(f.root));
+});
+
+test('trusted backend root is required and must contain the fixed query script',()=>{
+ const valid={backendRoot:BACKEND,runtimeRoot:'/fixture',snowlumaRoot:'/fixture'};assert.equal(settings(valid).backendRoot,BACKEND);
+ for(const backendRoot of [undefined,'relative','/nonexistent-log-backend'])assert.throws(()=>settings({...valid,backendRoot}),e=>e.code==='invalid_config');
+});
+test('relocated plugin adapter still queries the configured backend instead of its module URL',async t=>{
+ const f=fixture(t),capture=path.join(f.root,'capture/package-0/node_modules/kurumi-logs');fs.mkdirSync(capture,{recursive:true});
+ fs.writeFileSync(path.join(f.root,'capture/package-0/package.json'),JSON.stringify({type:'module'}));
+ for(const name of ['query.js','policy.js'])fs.copyFileSync(new URL('../../plugins/kurumi-logs/'+name,import.meta.url),path.join(capture,name));
+ const relocated=await import(pathToFileURL(path.join(capture,'query.js')));
+ const q=queryOptions({sources:['trace-events'],view:'errors'},NOW);
+ assert.equal(relocated.cliArguments(f.config,q)[0],path.join(BACKEND,'scripts/fusion/log-query.mjs'));
+ const result=await relocated.readQuery(f.config,q);assert.equal(result.total,2);assert(result.items.some(i=>i.kind==='reminder-list.notice.generation_failed'));
 });

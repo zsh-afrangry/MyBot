@@ -1,0 +1,96 @@
+{
+  "at": "2026-11-09T17:07:50.392Z",
+  "windowLocal": "2026-11-10 00:57:59–00:58:04 Asia/Shanghai",
+  "runId": "a684128d-1197-4547-bd5c-8fc58debb5c4",
+  "queries": [
+    {
+      "at": "2026-11-09T16:57:59.182Z",
+      "query": {
+        "view": "errors",
+        "since": "24h",
+        "limit": 20
+      },
+      "code": "query_failed",
+      "durationMs": 46
+    },
+    {
+      "at": "2026-11-09T16:58:00.477Z",
+      "query": {
+        "since": "2h",
+        "view": "stats"
+      },
+      "code": "query_failed",
+      "durationMs": 51
+    },
+    {
+      "at": "2026-11-09T16:58:00.477Z",
+      "query": {
+        "limit": 10,
+        "since": "2h",
+        "view": "events"
+      },
+      "code": "busy",
+      "durationMs": 1
+    },
+    {
+      "at": "2026-11-09T16:58:02.481Z",
+      "query": {
+        "limit": 15,
+        "since": "6h",
+        "view": "events"
+      },
+      "code": "query_failed",
+      "durationMs": 45
+    },
+    {
+      "at": "2026-11-09T16:58:04.500Z",
+      "query": {},
+      "code": "query_failed",
+      "durationMs": 45
+    }
+  ],
+  "audit": [
+    {
+      "at": "2026-11-09T16:57:59.250Z",
+      "code": "query_failed",
+      "durationMs": 46
+    },
+    {
+      "at": "2026-11-09T16:58:00.523Z",
+      "code": "busy",
+      "durationMs": 1
+    },
+    {
+      "at": "2026-11-09T16:58:00.548Z",
+      "code": "query_failed",
+      "durationMs": 51
+    },
+    {
+      "at": "2026-11-09T16:58:02.543Z",
+      "code": "query_failed",
+      "durationMs": 45
+    },
+    {
+      "at": "2026-11-09T16:58:04.559Z",
+      "code": "query_failed",
+      "durationMs": 45
+    }
+  ],
+  "diagnosis": {
+    "queryFailures": 4,
+    "busy": 1,
+    "failedDurationMs": [
+      45,
+      51
+    ],
+    "timeout": false,
+    "concurrencyLockLeaked": false,
+    "capturedScriptMissing": true,
+    "sourceTreeScriptExists": true,
+    "oldCapturedAdapterReproduced": {
+      "code": "query_failed",
+      "durationMs": 33
+    }
+  },
+  "boundary": "Only technical query arguments, IDs, status and duration; no chat, tool result body or credentials."
+}

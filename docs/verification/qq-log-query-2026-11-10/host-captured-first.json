@@ -1,0 +1,19 @@
+{
+  "at": "2026-11-09T17:07:31.085Z",
+  "boundary": "Real isolated Gateway/captured plugin, actual QQ mandatory policy and owner ingress, deterministic local model, fixed CLI read of synthetic logs, loopback replies and enabled/disabled lifecycle. No real model provider/API/QQ, production writes or production service restart.",
+  "stages": [
+    {
+      "enabled": true,
+      "queries": [],
+      "modelRequests": 0,
+      "gracefulStop": true
+    }
+  ],
+  "passed": false,
+  "error": {
+    "name": "AssertionError",
+    "message": "Gateway readiness timed out"
+  },
+  "finishedAt": "2026-11-09T17:07:54.767Z",
+  "diagnosticsRemovedAfterSuccessfulRecheck": true
+}

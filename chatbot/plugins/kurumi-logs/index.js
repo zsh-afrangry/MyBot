@@ -18,7 +18,7 @@ export const LOG_TOOL = {
     limit:{type:'integer',minimum:1,maximum:100,description:'默认50；统计不传'},offset:{type:'integer',minimum:0,maximum:100000,description:'使用返回nextOffset，并保持from/to和筛选一致'},
   }},
 };
-const ERRORS = {invalid_query:'查询参数无效；请缩小至7天内并使用支持的筛选。',busy:'另一项日志查询尚未结束，请稍后重试。',timeout:'日志查询超时，未取得完整结果。',cancelled:'日志查询已取消。',output_limit:'查询结果超过上限，请缩小范围。',query_failed:'日志数据读取未完成。',invalid_response:'日志查询返回格式异常。'};
+const ERRORS = {invalid_query:'查询参数无效；请缩小至7天内并使用支持的筛选。',busy:'本工具一次只执行一个查询，请串行重试；busy本身不表示查询卡死。',timeout:'日志查询超时，未取得完整结果。',cancelled:'日志查询已取消。',output_limit:'查询结果超过上限，请缩小范围。',query_failed:'日志数据读取未完成。',invalid_response:'日志查询返回格式异常。'};
 export function createLogPlugin({serviceFactory = config => new LogQueryService(config)} = {}) {
   const plugin = {id:'kurumi-logs',name:'Read-only diagnostics',register(api) {
     const trace=createToolTrace(['kurumi_logs']); trace.attach(api);

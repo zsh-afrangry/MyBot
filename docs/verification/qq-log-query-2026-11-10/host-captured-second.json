@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-09T17:08:55.368Z",
+  "boundary": "Real isolated Gateway/captured plugin, actual QQ mandatory policy and owner ingress, deterministic local model, fixed CLI read of synthetic logs, loopback replies and enabled/disabled lifecycle. No model provider, no external API, no QQ network, no production write or production service restart.",
+  "stages": [
+    {
+      "enabled": true,
+      "queries": [
+        {
+          "mode": "default",
+          "passed": true,
+          "resultBytes": 1368
+        }
+      ],
+      "modelRequests": 2,
+      "capturedModuleObserved": true,
+      "gracefulStop": true
+    }
+  ],
+  "passed": false,
+  "error": {
+    "name": "AssertionError",
+    "message": "actual owner reply missing: default"
+  },
+  "finishedAt": "2026-11-09T17:09:25.256Z",
+  "diagnosticsRemovedAfterSuccessfulRecheck": true
+}

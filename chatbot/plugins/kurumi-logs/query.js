@@ -1,10 +1,11 @@
 // Fixed CLI adapter; no shell, arbitrary script, raw text mode or caller-supplied roots.
 import {spawn} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
+import path from 'node:path';
 import {LogQueryError} from './policy.js';
-const SCRIPT = fileURLToPath(new URL('../../../scripts/fusion/log-query.mjs',import.meta.url));
 export function cliArguments(config, q) {
-  const args = [SCRIPT,'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--no-text'];
+  // The host captures plugin modules outside the source tree. Only the trusted
+  // deployment root locates this fixed backend; import.meta.url cannot do so.
+  const args = [path.join(config.backendRoot,'scripts/fusion/log-query.mjs'),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--no-text'];
   for (const source of q.sources) args.push('--source',source);
   for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
   if (q.view === 'stats') args.push('--stats');
@@ -27,7 +28,7 @@ export function readQuery(config, q, {signal, timeoutMs = 10000, maxBytes = 512 
       error ? reject(error) : resolve(result);
     };
     try {
-      child = spawn(process.execPath,cliArguments(config,q),{shell:false,stdio:['ignore','pipe','pipe'],env:{PATH:process.env.PATH ?? '',TZ:'Asia/Shanghai',NODE_NO_WARNINGS:'1'}});
+      child = spawn(process.execPath,cliArguments(config,q),{cwd:config.backendRoot,shell:false,stdio:['ignore','pipe','pipe'],env:{PATH:process.env.PATH ?? '',TZ:'Asia/Shanghai',NODE_NO_WARNINGS:'1'}});
     } catch { finish(new LogQueryError('query_failed')); return; }
     signal?.addEventListener('abort',abort,{once:true}); if (signal?.aborted) abort();
     timer = setTimeout(() => stop('timeout'),timeoutMs); timer.unref();
