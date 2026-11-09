@@ -1,0 +1,162 @@
+{
+  "at": "2026-11-09T13:51:32.493Z",
+  "boundary": "Real isolated Gateway/public SDK, reset/end lifecycle hooks and synthetic execution authority with deterministic loopback model. No production, QQ, external model/API or actual delivery. Existing production QQ/domain policy is not integrated by this fixture.",
+  "cases": [
+    {
+      "label": "ordinary-turn-cannot-mint-background-authority",
+      "passed": true
+    },
+    {
+      "label": "allowed",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_read",
+          "allowed": true,
+          "reason": "allowed",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "no-lease",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_read",
+          "allowed": false,
+          "reason": "untrusted_wake",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "wrong-session",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_read",
+          "allowed": false,
+          "reason": "untrusted_wake_context",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "wrong-agent",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_read",
+          "allowed": false,
+          "reason": "untrusted_wake_context",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "revision",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_read",
+          "allowed": false,
+          "reason": "wake_policy_changed",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "foreground",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_read",
+          "allowed": false,
+          "reason": "wake_not_current",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "extra-tool",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_write",
+          "allowed": false,
+          "reason": "wake_tool_not_allowed",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "disabled",
+      "passed": true
+    },
+    {
+      "label": "no-notify",
+      "passed": true,
+      "decisions": [
+        {
+          "tool": "fixture_read",
+          "allowed": true,
+          "reason": "allowed",
+          "runIdPresent": true,
+          "sessionIdPresent": true,
+          "sessionKeyMatches": true,
+          "agentMatches": true,
+          "requesterSenderPresent": false,
+          "requesterOwnerPresent": false
+        }
+      ]
+    },
+    {
+      "label": "actual-unrelated-session-reset-does-not-preempt-owner",
+      "passed": true
+    },
+    {
+      "label": "actual-owner-reset-hooks-revoke-lease-and-abort-without-fabricating-activity",
+      "passed": true
+    }
+  ],
+  "requests": 20,
+  "passed": true,
+  "childStopped": true,
+  "finishedAt": "2026-11-09T13:51:48.030Z"
+}

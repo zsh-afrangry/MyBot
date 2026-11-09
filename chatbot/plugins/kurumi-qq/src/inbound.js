@@ -26,7 +26,7 @@ export function parseInbound(event,a,selfId){
  if(!text.trim()&&!images.length&&!files.length)return null;
  return {id:`${selfId}:${event.user_id}:${event.message_id}`,messageId:String(event.message_id),senderId,text:text.slice(0,16000),images,files,replyId:reply?.data?.id};
 }
-export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverride,signal,ingressKind='onebot',stageFile=stagePdf,stageMedia=stageImage,composeNotice}){
+export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverride,signal,ingressKind='onebot',stageFile=stagePdf,stageMedia=stageImage,composeNotice,onAcceptedInbound}){
  const a=account(cfg),msg=parseInbound(event,a,selfId);if(!msg)return {ignored:true};
  const subject=activeSubject(a,msg.senderId,'chat.use');
  // Member slash commands cannot reach administrative/native command handling.
@@ -39,6 +39,12 @@ export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverrid
    const expected=path.join(path.dirname(cfg.agents.entries.main.workspace),'users',subject.qq,'workspace');
    if(cfg.agents.entries[route.agentId]?.workspace!==expected||!fs.existsSync(expected)||fs.realpathSync(expected)!==expected||!fs.readFileSync(path.join(expected,'AGENTS.md'),'utf8').includes('kurumi-isolated-member-v1'))throw Error('isolated_workspace_not_ready');
   }
+  // Optional host composition point; never forward body, quotes or attachments.
+  // Runs before any attachment/quote I/O or model work. The durable ledger above
+  // prevents reconnect replay from fabricating fresh foreground activity.
+  if(subject.role==='owner' && onAcceptedInbound)await onAcceptedInbound({origin:ingressKind,subjectId:subject.qq,
+   agentId:route.agentId,sessionKey:route.sessionKey,messageId:msg.messageId,postType:event.post_type,
+   occurredAt:Number.isSafeInteger(event.time)&&event.time>0&&Number.isSafeInteger(event.time*1000)?event.time*1000:null});
   const to=`user:${subject.qq}`;
   const mediaAccount=subject.qq===a.ownerId?a:{...a,mediaRoot:path.join(a.mediaRoot,'subjects',subject.qq)};
   const attachments=await receiveAttachments(msg.files??[],cfg,{subjectId:subject.qq,signal,stage:stageFile,onResult:result=>{

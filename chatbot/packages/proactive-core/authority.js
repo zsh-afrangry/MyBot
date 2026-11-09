@@ -3,7 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {binding,fingerprint,error,digest,assertContactTime,time,decision} from './policy.js';
 
 export function createWakeAuthority({store,authorize,now=Date.now}) {
-  const active=new Map();
+  const active=new Map(),controllers=new Map();
   const trusted=()=>binding(authorize());
   const handleRun=handle=>{
     if (!handle || active.get(handle.runId)!==handle) throw error('untrusted_wake');
@@ -23,8 +23,17 @@ export function createWakeAuthority({store,authorize,now=Date.now}) {
       const selected=trusted(),at=time(now()),runId=randomUUID();
       const result=store.claim({runId,eventKey,binding:selected,now:at,expires:at+timeoutMs});
       if (result.skip) return result;
-      const handle=Object.freeze({runId});active.set(runId,handle);
+      const controller=new AbortController(),handle=Object.freeze({runId,signal:controller.signal});
+      active.set(runId,handle);controllers.set(runId,controller);
       return {handle,run:result.run};
+    },
+    // Host composition only: revokes authority, never grants it. Persist the fence
+    // before aborting in-process work, so late/non-cooperative work stays fenced.
+    invalidate(scope,change={}) {
+      if (!/^qq:user:[0-9]{5,12}$/.test(scope??'')) throw error('invalid_wake_scope');
+      const result=store.invalidate(scope,change);
+      for (const [id,controller] of controllers) if (store.get(id)?.scope===scope) controller.abort();
+      return result;
     },
     assertCurrent,
     toolDecision(event,ctx) {
@@ -40,6 +49,9 @@ export function createWakeAuthority({store,authorize,now=Date.now}) {
       assertContactTime(run.binding.night,now(),store.control(run.scope).last_activity);
       store.beginSend(run.run_id,now(),digest(text));
       return {route:structuredClone(run.binding.route),key:'proactive:'+run.run_id,
+        // A factual receipt may arrive after cancellation/release. This narrow
+        // closure cannot grant tools or initiate another send.
+        recordReceipt:value=>store.receipt(run.run_id,value),
         assertCurrent:()=>{
           const current=assertCurrent(handle,undefined,['sending']);
           assertContactTime(current.binding.night,now(),store.control(current.scope).last_activity);
@@ -47,7 +59,7 @@ export function createWakeAuthority({store,authorize,now=Date.now}) {
     },
     complete(handle,status,reason) {return store.finish(handleRun(handle),status,reason);},
     recordReceipt(handle,value) {return store.receipt(handleRun(handle),value);},
-    release(handle) {if (active.get(handle?.runId)===handle) active.delete(handle.runId);},
+    release(handle) {if (active.get(handle?.runId)===handle) {active.delete(handle.runId);controllers.delete(handle.runId);}},
     activeCount:()=>active.size,
   };
 }

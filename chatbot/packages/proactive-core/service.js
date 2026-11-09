@@ -15,15 +15,17 @@ export function createWakeService({authority,runModel,sendText}) {
       if (claim.skip) return {status:'skipped',reason:claim.skip};
       const {handle,run}=claim,controller=new AbortController();
       const timer=setTimeout(()=>controller.abort(),timeoutMs);
-      const scopeSignal=signal?AbortSignal.any([signal,controller.signal]):controller.signal;
+      const scopeSignal=AbortSignal.any([controller.signal,handle.signal,...(signal?[signal]:[])]);
       let sending=false;
       try {
         const result=decision(await abortable(()=>runModel({runId:run.run_id,binding:structuredClone(run.binding),signal:scopeSignal}),scopeSignal));
         authority.assertCurrent(handle);
         if (result.kind==='silent') return {status:authority.complete(handle,'silent').status,runId:run.run_id};
         const delivery=authority.prepareDelivery(handle,result.text);sending=true;
-        const receipt=await abortable(()=>sendText({...delivery,text:result.text,signal:scopeSignal,
-          assertCurrent:()=>{scopeSignal.throwIfAborted();delivery.assertCurrent();}}),scopeSignal);
+        const receipt=await abortable(()=>Promise.resolve(sendText({route:delivery.route,key:delivery.key,text:result.text,signal:scopeSignal,
+          assertCurrent:()=>{scopeSignal.throwIfAborted();delivery.assertCurrent();}})).then(receipt=>{
+            delivery.recordReceipt(receipt);return receipt;
+          }),scopeSignal);
         return {status:authority.recordReceipt(handle,receipt).status,runId:run.run_id};
       } catch (e) {
         const status=sending?authority.recordReceipt(handle,{status:'unknown'}).status

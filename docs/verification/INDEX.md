@@ -1,5 +1,7 @@
 # 验证证据索引
 
+- [N3前台生命周期接线](proactive-lifecycle-2026-11-09/README.md)：真实入站处理器的元数据/去重/抢占、reset/end及迟到投递回执；38项机制与隔离Gateway12场景/20次本地请求通过。尚无生产N3消费者、主动外发或新权限。
+
 - [N3可信运行基础](proactive-foundation-2026-11-07/README.md)：24项机制测试及真实隔离Gateway10场景/18次本地确定性请求通过；尚未接入生产QQ/领域授权、调度或上下文，不代表主动陪伴完成。
 
 - [自主诊断与分层复验2026-11-07](autonomous-verification-2026-11-07/README.md)：日志P1/P2、只读快照、真实隔离E7/成员宿主及公开FAQ+当前主模型；[第二批2C](autonomous-verification-2026-11-07/e7-2c/README.md)的玩法/估值、公开接口与模型技术验证；真人客户端与长期体验单列。

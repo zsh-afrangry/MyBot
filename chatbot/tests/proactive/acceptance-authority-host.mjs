@@ -1,7 +1,8 @@
 // Real isolated Gateway/public SDK and deterministic loopback model. Synthetic
 // tool effects only: no production access, QQ, external model/API or real sends.
 // This fixture supplies its own mandatory policy; production QQ/domain wiring
-// remains unimplemented. A passing probe does not prove that integration.
+// remains unimplemented. Also verifies actual public reset/end hook delivery to
+// the optional lifecycle adapter; a passing probe does not enable production.
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import http from 'node:http';import net from 'node:net';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes} from 'node:crypto';
 import {fileURLToPath,pathToFileURL} from 'node:url';import assert from 'node:assert/strict';
@@ -10,7 +11,7 @@ const out=process.argv.includes('--out')?process.argv[process.argv.indexOf('--ou
 if (!path.isAbsolute(out??'') || fs.existsSync(out)) throw Error('Require a new absolute --out');
 const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-proactive-host-'));
 const token=randomBytes(24).toString('hex'),sessionKey='agent:main:proactive:fixture';
-const report={at:new Date().toISOString(),boundary:'Real isolated Gateway/public SDK and synthetic execution authority with deterministic loopback model. No production, QQ, external model/API or actual delivery. Existing production QQ/domain policy is not integrated by this fixture.',cases:[],requests:0};
+const report={at:new Date().toISOString(),boundary:'Real isolated Gateway/public SDK, reset/end lifecycle hooks and synthetic execution authority with deterministic loopback model. No production, QQ, external model/API or actual delivery. Existing production QQ/domain policy is not integrated by this fixture.',cases:[],requests:0};
 let requestedTool='fixture_read';
 const model=http.createServer(async(req,res)=>{try{
   let raw='';for await(const p of req)raw+=p;const body=JSON.parse(raw);assert(++report.requests<=32,'Bounded model loop');
@@ -34,10 +35,12 @@ import {randomUUID} from 'node:crypto';
 import {WakeStore} from ${moduleUrl('store.js')};
 import {createWakeAuthority} from ${moduleUrl('authority.js')};
 import {createWakeService} from ${moduleUrl('service.js')};
+import {createWakeLifecycle} from ${moduleUrl('lifecycle.js')};
 export default {id:'proactive-probe',register(api){
  const store=new WakeStore(${JSON.stringify(root+'/wake.sqlite')});let current,mode='initial',readEffects=0,writeEffects=0,deliveryEffects=0,mutated=false;
  const decisions=[],factoryCalls=new Map(),actualKey=${JSON.stringify(sessionKey)};
- const authority=createWakeAuthority({store,authorize:()=>current});
+ const authority=createWakeAuthority({store,authorize:()=>current});let resetClaim;
+ createWakeLifecycle({authority,ownerId:'100001',activityMaxAgeMs:300000}).attach(api);
  const trace=(event,ctx,result)=>decisions.push({tool:event.toolName,allowed:!result?.block,reason:result?.blockReason??'allowed',
    runIdPresent:!!ctx.runId,sessionIdPresent:!!ctx.sessionId,sessionKeyMatches:ctx.sessionKey===actualKey,agentMatches:ctx.agentId==='main',
    requesterSenderPresent:ctx.requester?.senderId!=null,requesterOwnerPresent:ctx.requester?.senderIsOwner!=null});
@@ -61,6 +64,15 @@ export default {id:'proactive-probe',register(api){
  })},{name});
  const storePath=api.runtime.agent.session.resolveStorePath(api.config.session?.store,{agentId:'main'});
  api.registerGatewayMethod('proactive-probe.status',({respond})=>respond(true,{readEffects,writeEffects,deliveryEffects,active:authority.activeCount(),decisions}));
+ api.registerGatewayMethod('proactive-probe.arm-reset',({respond})=>{
+  resetClaim=authority.begin({eventKey:'actual-reset-hook'});if(!resetClaim.handle)throw Error('fixture_reset_claim_failed');
+  respond(true,{control:store.control(current.subjectKey),active:authority.activeCount()});
+ },{scope:'operator.admin'});
+ api.registerGatewayMethod('proactive-probe.check-reset',({params,respond})=>{
+  const aborted=resetClaim.handle.signal.aborted,run=store.get(resetClaim.run.run_id),control=store.control(current.subjectKey);
+  if(params.release===true)authority.release(resetClaim.handle);
+  respond(true,{aborted,status:run.status,control,active:authority.activeCount()});
+ },{scope:'operator.admin'});
  api.registerGatewayMethod('proactive-probe.run',async({params,respond})=>{
   try{
    if(!['allowed','no-lease','wrong-session','wrong-agent','revision','foreground','extra-tool','disabled','no-notify'].includes(params.mode))throw Error('invalid_fixture_mode');
@@ -128,6 +140,17 @@ try {
     report.cases.push({label:mode,passed:true,...(result.decisions?{decisions:result.decisions}:{} )});
     console.log(JSON.stringify({case:mode,passed:true}));
   }
+  const ownerKey='agent:main:kurumi-qq:direct:100001';
+  const ownerInit=await call('agent',{agentId:'main',sessionKey:ownerKey,message:'Initialize synthetic foreground session; no delivery.',deliver:false,idempotencyKey:'lifecycle-front-init'});
+  assert.equal((await call('agent.wait',{runId:ownerInit.runId,timeoutMs:20000},25000)).status,'ok');
+  const armed=await call('proactive-probe.arm-reset');assert.equal(armed.active,1);
+  await call('sessions.reset',{key:sessionKey,reason:'new'});
+  const unrelated=await call('proactive-probe.check-reset');assert.equal(unrelated.aborted,false);assert.equal(unrelated.status,'running');
+  assert.deepEqual(unrelated.control,armed.control);report.cases.push({label:'actual-unrelated-session-reset-does-not-preempt-owner',passed:true});
+  await call('sessions.reset',{key:ownerKey,reason:'new'});
+  const reset=await call('proactive-probe.check-reset',{release:true});assert.equal(reset.aborted,true);assert.equal(reset.status,'cancelled');assert.equal(reset.active,0);
+  assert(reset.control.epoch>armed.control.epoch);assert.equal(reset.control.last_activity,armed.control.last_activity);
+  report.cases.push({label:'actual-owner-reset-hooks-revoke-lease-and-abort-without-fabricating-activity',passed:true});
   assert(!report.modelError,report.modelError);report.passed=true;
 } catch(e) {report.passed=false;report.error=e.message;report.diagnosticsRoot=root;process.exitCode=1;}
 finally {

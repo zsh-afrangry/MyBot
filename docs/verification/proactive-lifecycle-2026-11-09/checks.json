@@ -1,0 +1,101 @@
+{
+  "date": "2026-11-09",
+  "timeZone": "Asia/Shanghai",
+  "baselineCommit": "bf9837f3c70bc677ceeaf612ea4bbbd1f2d51abd",
+  "scope": "N3 optional foreground metadata and reset/end lifecycle adapter, active cancellation and late factual receipt reconciliation; development only.",
+  "initialRun": {
+    "tests": 38,
+    "passed": 34,
+    "failed": 4,
+    "cause": "Synthetic QQ fixture omitted enabled:true. Four inbound tests were rejected before observer execution. Corrected fixture; 38/38 passed and included in final 80/80."
+  },
+  "checks": [
+    {
+      "name": "related_regressions",
+      "command": "node --test --test-reporter=tap chatbot/tests/proactive/core.test.mjs chatbot/tests/proactive/lifecycle.test.mjs chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/access-control/policy.test.mjs chatbot/tests/access-control/isolation.test.mjs",
+      "exitCode": 0,
+      "tests": 80,
+      "passed": 80,
+      "failed": 0,
+      "note": "Includes the 38 proactive core/lifecycle cases; do not add overlapping counts."
+    },
+    {
+      "name": "documentation_tests",
+      "command": "node --test --test-reporter=tap scripts/fusion/test/documentation-map.test.mjs",
+      "exitCode": 0,
+      "tests": 10,
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "name": "health",
+      "command": "node scripts/fusion/health.mjs",
+      "exitCode": 0,
+      "reportedOk": true,
+      "note": "Infrastructure/configuration check only. Existing digest business failure remains open; reported ok is not proof of delivery."
+    },
+    {
+      "name": "dependencies",
+      "command": "node scripts/fusion/verify-dependencies.mjs",
+      "exitCode": 0
+    },
+    {
+      "name": "configuration",
+      "command": "node scripts/fusion/sync-config.mjs --diff",
+      "exitCode": 0
+    },
+    {
+      "name": "persona",
+      "command": "node scripts/fusion/sync-persona.mjs --diff",
+      "exitCode": 0
+    },
+    {
+      "name": "evidence_coverage",
+      "command": "node scripts/fusion/evidence-coverage.mjs",
+      "exitCode": 0
+    },
+    {
+      "name": "script_index",
+      "command": "node scripts/fusion/evidence-index.mjs --check-markdown",
+      "exitCode": 0
+    },
+    {
+      "name": "diff_check",
+      "command": "git diff --check",
+      "exitCode": 0
+    }
+  ],
+  "host": {
+    "command": "node chatbot/tests/proactive/acceptance-authority-host.mjs --out /home/afrangry/kurumi-fusion/docs/verification/proactive-lifecycle-2026-11-09/host.json",
+    "exitCode": 0,
+    "scenarios": 12,
+    "localDeterministicRequests": 20,
+    "output": "host.json"
+  },
+  "production": {
+    "configSha256Before": "51c9bd5c24fe8e8491ab1dd1407e5af59bb3305fcf544ba1b7f5a54e7500ea08",
+    "configSha256After": "51c9bd5c24fe8e8491ab1dd1407e5af59bb3305fcf544ba1b7f5a54e7500ea08",
+    "fusionInvocationBefore": "201eaa17933b49248394055e049a8c96",
+    "fusionInvocationAfter": "201eaa17933b49248394055e049a8c96",
+    "fusionStartedAt": "2026-11-07 23:01:59 Asia/Shanghai",
+    "modified": false,
+    "realQqSends": false,
+    "externalModelCalls": false,
+    "newToolGrants": false,
+    "newProductionDatabase": false
+  },
+  "boundary": "Wake mode, cadence/cost, actual context/read-only domain purpose, self records, pause entry, sender, production assembly and QQ/long-term acceptance remain incomplete. N2 deferred.",
+  "indices": {
+    "scripts": 235,
+    "evidenceFiles": 198
+  },
+  "sourceSha256": {
+    "chatbot/packages/proactive-core/authority.js": "d8f56e95a263f246c042ccd3a6991d89231e3ea0edd9c84b78071673d518f612",
+    "chatbot/packages/proactive-core/service.js": "0532e5bff3c0df97fa01c799b8fa5412ec83bb65777a66a22023364f61d3b676",
+    "chatbot/packages/proactive-core/lifecycle.js": "bbd04b2195882ea5927adbdebe091f82bef1268c797f5d4a206cf5a3647aed6a",
+    "chatbot/plugins/kurumi-qq/src/inbound.js": "9c83c9818f302f7c923d6521ebae7a88196d9f71a1844e1e75df39d771c5ff66",
+    "chatbot/tests/proactive/core.test.mjs": "9ffcec3704b457ee205b8822f893a56c4a47fec9c7888a70dd0b3214fb1a007b",
+    "chatbot/tests/proactive/lifecycle.test.mjs": "3d321a9ca20c240e926e516251cc955c57782582142f19076e1abc32435c8123",
+    "chatbot/tests/proactive/acceptance-authority-host.mjs": "30b59da8edee45fb7a1bbd45f5bfd7732083b651740f2939529370bc5acd4e8e"
+  }
+}
