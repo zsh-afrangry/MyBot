@@ -1,0 +1,120 @@
+{
+  "at": "2026-11-09T18:15:07.438Z",
+  "source": "e8ec69f",
+  "before": {
+    "configSha256": "a8edea0f7de702c4d675d1850e08d36dbb4f1ae789fd6d9b04933e4ac33f1c84",
+    "revision": 7,
+    "FusionInvocationID": "9e49300232604984a665445a2c7512f2"
+  },
+  "configUnchanged": true,
+  "permissionsUnchanged": true,
+  "personaChanged": [
+    "workspace/AGENTS.md"
+  ],
+  "personaExpectedSha256": "0965074dca5c28a50c2812f65ef7b0ad0f8165a775142d2d91604b7420114015",
+  "N3Enabled": false,
+  "N3DatabaseCreated": false,
+  "testIngress": false,
+  "cronDeclarationsUnchanged": true,
+  "cronTotal": 6,
+  "cronEnabled": 5,
+  "independentServicesUnchanged": true,
+  "Fusion": {
+    "ActiveState": "active",
+    "InvocationID": "11c9f034f3d14e469b3e69757e904b3e"
+  },
+  "FusionStartedAt": "Tue 2026-11-10 02:14:28 CST",
+  "pluginState": "active",
+  "capturedQueryMatchesSource": true,
+  "productionCapturedAdapterQueries": [
+    {
+      "name": "default",
+      "passed": true,
+      "total": 488,
+      "shown": 50,
+      "fragments": 5,
+      "completeCurrentPageVerified": true,
+      "contextAnchors": null
+    },
+    {
+      "name": "six_hours",
+      "passed": true,
+      "total": 669,
+      "shown": 10,
+      "fragments": 1,
+      "completeCurrentPageVerified": true,
+      "contextAnchors": null
+    },
+    {
+      "name": "stats",
+      "passed": true,
+      "total": 1148,
+      "shown": null,
+      "fragments": 9,
+      "completeCurrentPageVerified": true,
+      "contextAnchors": null
+    },
+    {
+      "name": "errors",
+      "passed": true,
+      "total": 66,
+      "shown": 10,
+      "fragments": 1,
+      "completeCurrentPageVerified": true,
+      "contextAnchors": null
+    },
+    {
+      "name": "keywords",
+      "passed": true,
+      "total": 94,
+      "shown": 5,
+      "fragments": 1,
+      "completeCurrentPageVerified": true,
+      "contextAnchors": null
+    },
+    {
+      "name": "native_context",
+      "passed": true,
+      "total": 20,
+      "shown": 2,
+      "fragments": 1,
+      "completeCurrentPageVerified": true,
+      "contextAnchors": 2
+    },
+    {
+      "name": "all_retained",
+      "passed": true,
+      "total": 30,
+      "shown": 1,
+      "fragments": 1,
+      "completeCurrentPageVerified": true,
+      "contextAnchors": null
+    }
+  ],
+  "queryBoundary": "Actual new production captured adapter and fixed CLI, explicit noText summary reads. Full content/handler/SDK mapping verified with synthetic isolated host. No real QQ/model invocation.",
+  "noRealMessagesOrModelCalls": true,
+  "realQQAcceptance": "pending_owner_retest",
+  "productionRecheckAt": "2026-11-09T18:15:55.969Z",
+  "postChecks": [
+    {
+      "tool": "health",
+      "exit": 0,
+      "reportedOk": true,
+      "issues": [],
+      "cronLastStatusErrors": 3
+    },
+    {
+      "tool": "verify-dependencies",
+      "exit": 0
+    },
+    {
+      "tool": "sync-config",
+      "exit": 0
+    },
+    {
+      "tool": "sync-persona",
+      "exit": 0
+    }
+  ],
+  "validatedOwnPreimageRemoved": true
+}
