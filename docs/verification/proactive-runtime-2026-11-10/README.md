@@ -10,12 +10,15 @@
 | 备份/恢复保护 | 17/17；包含N3库发现、恢复副本明确关闭自主运行 | [checks.json](checks.json)；未制作或恢复生产点 |
 | 天气/安排/提醒原功能与构建 | 35/35，TypeScript构建通过 | [checks.json](checks.json) |
 | 实际QQ唯一策略、公共SDK、P2/领域/逐条投递/主人维护组合 | 13/13，30次本地确定性模型请求 | [host.json](host.json)；运行 chatbot/tests/proactive/acceptance-runtime-host.mjs --out 新绝对路径 |
+| 人格bootstrap与新会话专项补测 | 14/14，30次本地确定性模型请求；其中18次后台请求核对五份文件内容 | [bootstrap-host.json](bootstrap-host.json)；同一组合脚本，使用四份合成人格文件与标准MEMORY迁移说明 |
 | 原公共SDK凭据与真实reset/end回归 | 12/12，20次本地确定性模型请求 | [authority-host.json](authority-host.json)；运行 acceptance-authority-host.mjs --out 新绝对路径 |
 | 生产只读收尾 | health、依赖、配置/人格投影全过；N3配置/权限/进程未启用 | [checks.json](checks.json)；绿色健康不关闭已有播报故障 |
 
 组合验收用真实Gateway与QQ插件、真实SQLite和业务读取实现；模型、OneBot和KnowledgeMap都是临时loopback对端，身份为合成号码。最终显式工具上限与迟到回执不回填旧上下文保护加入后，191项及13场景/30请求按当前代码复验通过。覆盖四类只读查询、实际来源、自身记录、多次显式发言/静默、目标/主人位伪造拒绝、真实HTTP未知回执不重放、QQ入站暂停/恢复、重启保留、记录查看/更正/删除与CAS/清正文墓碑、前台抢占及实际会话重置。原生web_fetch对loopback的SSRF拒绝被记为失败经历来源，未读取loopback内容；不据此宣称真实公开检索质量通过。
 
 N3核心还验证夜间活动新鲜度、旧代际屏障、租约/事件幂等、迟到事实回执、来源/动作伪造、记录期限/跨scope/分页、固定slot无补跑与短期投影关联。SQLite只读适配前后业务库SHA一致；不建缺失库、不迁移、不对账、不写缓存。来源证明只证明实际接触及其摘要哈希，不证明模型推论正确。
+
+人格bootstrap补测直接检查loopback模型接口收到的system/developer内容，未只断言SDK参数：18次后台请求均包含合成AGENTS/SOUL/IDENTITY/USER内容及标准MEMORY迁移说明。连续full/quiet两次机会的实际绑定均为main及同一规范自主key，但sessionId不同；文件内容在两次机会中均进入模型输入。当前未配置contextInjection，宿主默认always；新detached会话不会续接上一机会完整历史，也不会清除共享workspace人格。该补测使用短合成文件，不证明任意长度生产文件未经截断；文件预算与P2上下文限长分别适用。14场景全部通过，子进程及临时工作区已清退，无生产读写、真实QQ或付费模型调用。
 
 ## 失败与修正
 

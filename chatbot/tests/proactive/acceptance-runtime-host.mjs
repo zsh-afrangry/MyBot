@@ -8,13 +8,22 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {WeatherStore} from '../../packages/personal-domains/dist/store.js';import {ReminderStore} from '../../packages/personal-domains/dist/reminder-store.js';
 import * as weather from '../../packages/personal-domains/dist/test-fixtures.js';
-import {emptyState} from '../../plugins/kurumi-memory/continuity/model.js';
+import {emptyState,MEMORY_NOTICE} from '../../plugins/kurumi-memory/continuity/model.js';
 import {initializeContinuity,replaceNotice} from '../../plugins/kurumi-memory/continuity/store.js';
 const out=process.argv.includes('--out')?process.argv[process.argv.indexOf('--out')+1]:undefined;
 if(!path.isAbsolute(out??'')||fs.existsSync(out))throw Error('Require new absolute --out');
 const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSync(os.tmpdir()+'/kurumi-proactive-runtime-');
 const token=randomBytes(24).toString('hex'),owner='100001',bot='100002',workspace=root+'/workspace',wakeFile=root+'/state/proactive/proactive.sqlite';
 const report={at:new Date().toISOString(),boundary:'Actual QQ mandatory policy and N3 component/public SDK; synthetic loopback model/OneBot/business peers and temporary P2/SQLite. No production state, external API or QQ network. Behavioral judgment and owner experience are outside this evidence.',cases:[],modelRequests:0,businessRequests:[],platformRequests:0};
+const bootstrapFiles={
+  'AGENTS.md':'Synthetic isolated test. Use only offered purpose tools. Never infer owner authority.\nKURUMI_BOOTSTRAP_FIXTURE_AGENTS',
+  'SOUL.md':'# Synthetic persona\nKURUMI_BOOTSTRAP_FIXTURE_SOUL',
+  'IDENTITY.md':'# Synthetic identity\nKURUMI_BOOTSTRAP_FIXTURE_IDENTITY',
+  'USER.md':'# Synthetic relationship\nKURUMI_BOOTSTRAP_FIXTURE_USER',
+  'MEMORY.md':MEMORY_NOTICE,
+};
+const messageText=message=>typeof message?.content==='string'?message.content:(message?.content??[]).map(part=>part.text??'').join('\n');
+report.bootstrap={files:Object.keys(bootstrapFiles),verifiedRequests:0};
 let mode='silent',unknownNext=false,platformSerial=2000,wsClient,holdResolve,holdSeen;
 const ownerActions=['pause','resume','records','record_put','record_remove'],ownerResults=new Map();
 let publicObservation,publicFetchRequests=0;
@@ -41,6 +50,11 @@ const model=http.createServer(async(req,res)=>{try{
     return res.end(JSON.stringify({status:'ok',retcode:0,data:{}}));
   }
   let raw='';for await(const chunk of req)raw+=chunk;const body=JSON.parse(raw);assert(++report.modelRequests<100,'bounded deterministic model');
+  if(body.messages?.some(message=>message.role==='user'&&messageText(message).includes('KURUMI_PROACTIVE_CONTEXT'))) {
+    const systemText=body.messages.filter(message=>['system','developer'].includes(message.role)).map(messageText).join('\n');
+    for(const [name,content] of Object.entries(bootstrapFiles))assert(systemText.includes(content),'Actual wake model request missing bootstrap content: '+name);
+    report.bootstrap.verifiedRequests++;
+  }
   if(mode==='hold'){holdSeen?.();await new Promise(r=>holdResolve=r);if(res.destroyed)return;}
   const messages=body.messages??[],lastUser=messages.findLastIndex(m=>m.role==='user'),tools=messages.slice(lastUser+1).filter(m=>m.role==='tool');
   let args,toolName='kurumi_proactive';
@@ -68,7 +82,8 @@ const model=http.createServer(async(req,res)=>{try{
 const wss=new WebSocketServer({server:model});wss.on('connection',socket=>wsClient=socket);
 await new Promise(r=>model.listen(0,'127.0.0.1',r));
 const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
-fs.mkdirSync(workspace,{mode:0o700});fs.writeFileSync(workspace+'/AGENTS.md','Synthetic isolated test. Use only offered purpose tools. Never infer owner authority.');
+fs.mkdirSync(workspace,{mode:0o700});
+for(const [name,content] of Object.entries(bootstrapFiles))if(name!=='MEMORY.md')fs.writeFileSync(workspace+'/'+name,content,{mode:0o600});
 initializeContinuity(workspace,emptyState(owner));replaceNotice(workspace);
 const weatherStore=new WeatherStore({stateDirectory:root+'/state/personal-weather'});weatherStore.close();const reminderStore=new ReminderStore({stateDirectory:root+'/state/personal-reminders'});reminderStore.close();
 const businessFiles=[root+'/state/personal-weather/weather.sqlite',root+'/state/personal-reminders/reminders.sqlite',workspace+'/.kurumi-memory/state.sqlite'];
@@ -111,7 +126,13 @@ try {
   report.cases.push({label:'actual-SDK-query-four-domains-self-record-two-speeches-and-factual-receipts',passed:true,messages:full.messages.map(m=>m.status)});
   const duplicate=await call('kurumi-proactive.run',{eventKey:'full'});assert.equal(duplicate.reason,'duplicate');assert.equal(report.platformRequests,2);
   report.cases.push({label:'same-event-replay-never-repeats-native-tools-or-platform-effects',passed:true});
+  const bootstrapRequestsBeforeQuiet=report.bootstrap.verifiedRequests;
   mode='silent';assert.equal((await call('kurumi-proactive.run',{eventKey:'quiet'})).status,'silent');assert.equal(report.platformRequests,2);
+  assert(bootstrapRequestsBeforeQuiet>0);assert(report.bootstrap.verifiedRequests>bootstrapRequestsBeforeQuiet);
+  const wakeBindings=inspect('SELECT binding FROM wake_run WHERE event_key IN (?,?)','full','quiet').map(row=>JSON.parse(row.binding));
+  assert.equal(wakeBindings.length,2);assert.notEqual(wakeBindings[0].sessionId,wakeBindings[1].sessionId);
+  assert(wakeBindings.every(binding=>binding.agentId==='main'&&binding.sessionKey==='agent:main:kurumi-proactive:'+owner));
+  report.cases.push({label:'fresh-detached-wakes-share-main-persona-bootstrap-at-actual-model-boundary',passed:true});
   report.cases.push({label:'actual-model-can-choose-silence-with-existing-self-record',passed:true});
   mode='public';assert.equal((await call('kurumi-proactive.run',{eventKey:'public'})).status,'silent');
   assert.equal(publicFetchRequests,0);assert.equal(publicObservation.sources.length,1);assert.equal(publicObservation.sources[0].tool,'web_fetch');
