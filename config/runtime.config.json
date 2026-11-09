@@ -74,7 +74,8 @@
             "knowledge_bill_manage",
             "e7_data",
             "kurumi_code",
-            "exec"
+            "exec",
+            "kurumi_logs"
           ],
           "deny": [
             "read",
@@ -206,7 +207,8 @@
       "personal-reminders",
       "kurumi-e7",
       "kurumi-coding",
-      "deepseek"
+      "deepseek",
+      "kurumi-logs"
     ],
     "load": {
       "paths": [
@@ -226,7 +228,8 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-e7",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-coding",
-        "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/deepseek-provider"
+        "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/deepseek-provider",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-logs"
       ]
     },
     "entries": {
@@ -433,6 +436,13 @@
       },
       "deepseek": {
         "enabled": true
+      },
+      "kurumi-logs": {
+        "enabled": true,
+        "config": {
+          "runtimeRoot": "/home/afrangry/.openclaw-fusion",
+          "snowlumaRoot": "/home/afrangry/snowluma"
+        }
       }
     },
     "slots": {

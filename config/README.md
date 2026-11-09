@@ -202,3 +202,7 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 ### N3开发基础不自动启用
 
 当前只开发`proactive-core`及独立验证入口，`runtime.config.json`没有新增主动唤醒插件/周期/白名单，`heartbeat.every=0m`、Code Mode和main禁用项维持。后台资格必须由受管身份/用途与可信宿主凭据组合授予，不能用模型参数或提示词代替；具体生产配置、暂停入口、上下文与主动外发须在方案审定后接线。新增私密执行库应随Fusion数据库发现进入下一成套恢复点；目前没有创建生产数据库或定时器。N2 organizer仍关闭。规则见文档24/25。
+
+## 主人只读日志工具提案
+
+`kurumi-logs`只装配`kurumi_logs`，配置根固定为本机运行目录和SnowLuma；参数不接受路径/命令/raw/expand。`logs.read`、main白名单、插件allow/load/entry及主人模板须同批审阅，按同步契约启用；当前新增源码不表示已部署。不继承给成员、Cron或自主行动后台。查询技术边界见[文档18](../docs/18_跨模块链路日志查询.md)，验收与待启用状态见文档16。

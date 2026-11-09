@@ -1,0 +1,26 @@
+{
+  "at": "2026-11-09T16:22:46.255Z",
+  "boundary": "Real isolated Gateway/plugin loading, RPC catalog and graceful process stop. No model provider, external API, QQ network or production write. Tool handler/permission and timer behavior covered separately by offline tests.",
+  "stages": [
+    {
+      "enabled": true,
+      "state": "active",
+      "tools": [
+        "kurumi_logs"
+      ],
+      "noInitialFetch": true,
+      "passed": true,
+      "gracefulStop": true
+    },
+    {
+      "enabled": false,
+      "state": "unloaded",
+      "tools": [],
+      "noInitialFetch": true,
+      "passed": true,
+      "gracefulStop": true
+    }
+  ],
+  "passed": true,
+  "finishedAt": "2026-11-09T16:23:07.416Z"
+}

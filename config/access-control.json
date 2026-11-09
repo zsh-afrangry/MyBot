@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 6,
+  "revision": 7,
   "subjects": [
     {
       "qq": "365999865",
@@ -47,9 +47,12 @@
         "automations.manage": true,
         "sessions.read": true,
         "e7.read": true,
-        "host.exec": true
+        "host.exec": true,
+        "logs.read": true
       },
-      "mailRecipients": ["365999865@qq.com"],
+      "mailRecipients": [
+        "365999865@qq.com"
+      ],
       "note": "原主人；保留现有能力。新增QQ由操作者另行登记。"
     },
     {

@@ -203,8 +203,8 @@ function eventError(item) {
   if (item.source === 'openclaw-runtime' && WARN_LEVELS.has(String(data.level ?? '').toUpperCase())) return {type: 'host_warning', code: item.kind === 'openclaw.log' ? `${subsystemCode(data.subsystem)}:${String(data.level).toUpperCase()}` : item.kind};
   if (item.source === 'snowluma' && WARN_LEVELS.has(String(data.level ?? '').toUpperCase())) return {type: 'host_warning', code: `snowluma:${String(data.level).toUpperCase()}`};
   const http = Number(data.httpStatus);
-  if (Number.isFinite(http) && (http < 200 || http >= 300)) return {type: 'business_error', code: `http_${http}`};
-  if (data.ok === false || ['error', 'failed'].includes(data.status) || data.failureCode) {
+  if (Number.isFinite(http) && (http < 200 || http >= 300) && http !== 304) return {type: 'business_error', code: `http_${http}`};
+  if (data.ok === false || ['error', 'failed', 'generation_failed'].includes(data.status) || /(?:^|[.])generation_failed$/.test(item.kind) || data.failureCode) {
     const code = String(data.code ?? data.failureCode ?? data.error ?? data.status ?? 'failed');
     return {type: 'business_error', code: /^[\w.:-]{1,60}$/u.test(code) ? code : 'business_error'};
   }

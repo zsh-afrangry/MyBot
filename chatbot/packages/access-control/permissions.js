@@ -10,14 +10,14 @@ export const OWNER_PERMISSIONS = Object.freeze([
   'weather.read', 'profile.read', 'profile.manage', 'planning.read', 'planning.manage',
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
   'memory.read', 'memory.manage', 'memory.raw.read', 'memory.organize', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
-  'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'host.exec',
+  'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'host.exec', 'logs.read',
 ]);
 export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
 export const MEMBER_TOOLS = Object.freeze(['session_status', 'web_search', 'web_fetch', 'kurumi_document', 'kurumi_translate', 'kurumi_document_send']);
 
 export function toolPermission(name, args = {}) {
   const direct = {
-    dispatch_action:'chat.use', tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec',
+    kurumi_logs:'logs.read', dispatch_action:'chat.use', tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec',
     personal_weather_get_brief: 'weather.read', personal_profile_state_get: 'profile.read',
     personal_profile_change_propose: 'profile.manage', personal_profile_change_commit: 'profile.manage',
     personal_planning_state_get: 'planning.read', personal_planning_change_propose: 'planning.manage', personal_planning_change_commit: 'planning.manage',

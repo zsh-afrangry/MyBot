@@ -93,3 +93,5 @@ node scripts/fusion/evidence-index.mjs --check-markdown  # 生成表不能手改
 新增证据目录或顶层文件必须登记；已有目录新增回执继承归属，不声称每次都会触发检查失败。新增脚本即使位于已有套件目录，仍须登记用途/副作用分类。文件名中的initial/attempt/fixed表示历史过程，不代表当前缺陷仍存在；原始失败保留，不再复制成长篇现行规则。
 
 - [受管PDF名称维护](paper-rename-2026-11-07/README.md)：37项离线与3项真实宿主/模型通过；主人批准后revision6仅给主人启用，20项权限回归及部署自验通过，真人收件单列。
+
+- [QQ主人只读日志工具](qq-log-query-2026-11-10/README.md)：固定CLI复用、权限隔离、输出脱敏、取消/超时及隔离Gateway工具发现；生产与真实QQ未启用。

@@ -32,7 +32,7 @@ test('Trusted sender, owner bit, agent, account, session and target must agree; 
 });
 test('Every current main tool is mapped; new tools and dangerous native/member operations are denied',()=>{
  const c=cfg(),[owner,member]=policy().subjects;
- for(const name of ['email_status','knowledge_bill_add','kurumi_memory','kurumi_task','automations','sessions_history','exec','read','message','unknown'])assert(hook(c,member,name,{action:'list'}),name);
+ for(const name of ['email_status','knowledge_bill_add','kurumi_memory','kurumi_task','automations','sessions_history','exec','read','message','unknown','kurumi_logs'])assert(hook(c,member,name,{action:'list'}),name);
  for(const [name,params] of [['kurumi_document',{action:'list'}],['kurumi_translate',{action:'start'}],['web_fetch',{}],['session_status',{}]])assert.equal(hook(c,member,name,params),undefined);
  assert(hook(c,member,'session_status',{sessionKey:context(owner).sessionKey}));assert(hook(c,member,'session_status',{model:'costly/model'}));
  const source=JSON.parse(fs.readFileSync(fileURLToPath(new URL('../../../config/runtime.config.json',import.meta.url))));
