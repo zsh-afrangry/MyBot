@@ -1,0 +1,340 @@
+{
+  "at": "2026-11-09T19:08:41.559Z",
+  "source": "8317654 plus scenario harness only",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, isolated OpenClaw/captured log tool/mandatory QQ policy and synthetic owner WebSocket input. Read-only production history; loopback replies only. No QQ network, production write, business execution or production service restart. Private generated answers and transcripts are not copied to evidence; temporary state is removed.",
+  "cases": [
+    {
+      "id": "full-session",
+      "requests": 6,
+      "calls": [
+        {
+          "id": "call00F2bK3Ngbel88IxYs0RLs7927",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "sources",
+            "from",
+            "to",
+            "expand",
+            "limit"
+          ],
+          "argumentHash": "c8a52adc816de28e0b4e404ed87b2cba89cfb75ee9ebea93d3f6b9e936481194",
+          "sources": [
+            "openclaw-session"
+          ],
+          "view": "events",
+          "limit": 100,
+          "from": "2026-11-09 11:59:00",
+          "to": "2026-11-09 12:01:00",
+          "expand": true
+        },
+        {
+          "id": "call00h93yLbYLp3m1JxSYH15C8022",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "sources",
+            "from",
+            "to",
+            "expand",
+            "limit",
+            "contentOffset",
+            "contentHash"
+          ],
+          "argumentHash": "647f9e924d78f2a9853bcec52fc13c911b4f7d17af397af975a194794be6d4fb",
+          "sources": [
+            "openclaw-session"
+          ],
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 2300,
+          "from": "2026-11-09 11:59:00",
+          "to": "2026-11-09 12:01:00",
+          "expand": true
+        },
+        {
+          "id": "call00J0GLJLz3ISKTMXFIsRUW3803",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "sources",
+            "from",
+            "to",
+            "expand",
+            "limit",
+            "contentOffset",
+            "contentHash"
+          ],
+          "argumentHash": "82109706b07c62f9b0b781f9527a3f83d7200da486abc017198f4564e82cfd8b",
+          "sources": [
+            "openclaw-session"
+          ],
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 4036,
+          "from": "2026-11-09 11:59:00",
+          "to": "2026-11-09 12:01:00",
+          "expand": true
+        },
+        {
+          "id": "call00rw3sqR1fLTmUgcFvqbiq5199",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "sources",
+            "from",
+            "to",
+            "expand",
+            "limit",
+            "contentOffset",
+            "contentHash"
+          ],
+          "argumentHash": "0f5a8ca36c2e45c8194a4425b1e2d3c60e579bb5e709a778d3466c7ee1fc4dfa",
+          "sources": [
+            "openclaw-session"
+          ],
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 6070,
+          "from": "2026-11-09 11:59:00",
+          "to": "2026-11-09 12:01:00",
+          "expand": true
+        },
+        {
+          "id": "call00ETELZQjHPugaRix5DVtAl74939",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "sources",
+            "from",
+            "to",
+            "expand",
+            "limit",
+            "contentOffset",
+            "contentHash"
+          ],
+          "argumentHash": "4a42bd1d9237b4a02264220015ec54234bf5fbaaf2ed2695e4a8c4f829ff0727",
+          "sources": [
+            "openclaw-session"
+          ],
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 8429,
+          "from": "2026-11-09 11:59:00",
+          "to": "2026-11-09 12:01:00",
+          "expand": true
+        }
+      ],
+      "results": [
+        {
+          "callId": "call00F2bK3Ngbel88IxYs0RLs7927",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 2300,
+          "contentHash": "d55c416229243021e843ee3c8a98ebec16b5dd2c55dd1d4157d6cd321aee3b4a",
+          "fragmentBytes": 2332
+        },
+        {
+          "callId": "call00h93yLbYLp3m1JxSYH15C8022",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 4036,
+          "contentHash": "d55c416229243021e843ee3c8a98ebec16b5dd2c55dd1d4157d6cd321aee3b4a",
+          "fragmentBytes": 2468
+        },
+        {
+          "callId": "call00J0GLJLz3ISKTMXFIsRUW3803",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 6070,
+          "contentHash": "d55c416229243021e843ee3c8a98ebec16b5dd2c55dd1d4157d6cd321aee3b4a",
+          "fragmentBytes": 2412
+        },
+        {
+          "callId": "call00rw3sqR1fLTmUgcFvqbiq5199",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 8429,
+          "contentHash": "d55c416229243021e843ee3c8a98ebec16b5dd2c55dd1d4157d6cd321aee3b4a",
+          "fragmentBytes": 2359
+        },
+        {
+          "callId": "call00ETELZQjHPugaRix5DVtAl74939",
+          "status": "ok",
+          "total": 5,
+          "shown": 5,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": null,
+          "contentHash": "d55c416229243021e843ee3c8a98ebec16b5dd2c55dd1d4157d6cd321aee3b4a",
+          "fragmentBytes": 181
+        }
+      ],
+      "replyObserved": true,
+      "replyChars": 549,
+      "replySha256": "6cbbcc92c7464480826d2cb6d0ed841ae6d379b972c5348e7474bf62c7ef2ac4",
+      "facts": {
+        "lineCount": 17,
+        "cronExitCode": null,
+        "distinctFailures": 1,
+        "exactCauseRecorded": false,
+        "firstTwoLinesEqual": true,
+        "listDeliveryProven": false,
+        "businessCodeFound": false,
+        "recordCountIsIncidentCount": false,
+        "missingIsNotAbsent": true
+      },
+      "completeGeneratedTextObserved": true,
+      "passed": true,
+      "transportError": null
+    }
+  ],
+  "requests": 6,
+  "usage": {
+    "promptTokens": 83336,
+    "completionTokens": 4908
+  },
+  "baseline": {
+    "generatedChars": 390,
+    "generatedLines": 17,
+    "firstTwoLinesEqual": true,
+    "list": {
+      "delivery": {
+        "slot_key": "2026-11-09T12:00",
+        "status": "delivered",
+        "textLength": 0
+      },
+      "failures": [
+        {
+          "id": 271,
+          "at": 1794110404560,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 277,
+          "at": 1794153604142,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 283,
+          "at": 1794196805402,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 286,
+          "at": 1794218405273,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 289,
+          "at": 1794240005144,
+          "code": "assistant_notice_generation_failed"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "status": "error",
+        "errorTextPresent": true,
+        "exitOneText": true
+      }
+    ],
+    "sessionQuery": {
+      "fragments": 2,
+      "fullGeneratedTextAvailable": true
+    },
+    "errorQuery": {
+      "fragments": 2,
+      "counts": {
+        "failed": 1,
+        "error": 1,
+        "cron:WARN": 1
+      },
+      "recordCount": 3
+    },
+    "keywordQuery": {
+      "total": 1
+    },
+    "cronQuery": [
+      {
+        "exitCode": null,
+        "exitCodeAvailable": false,
+        "errorFieldPresent": false,
+        "commandFieldPresent": false
+      }
+    ]
+  },
+  "transportErrors": [],
+  "modelResponses": [
+    {
+      "case": "full-session",
+      "request": 1,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 875
+    },
+    {
+      "case": "full-session",
+      "request": 2,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 54
+    },
+    {
+      "case": "full-session",
+      "request": 3,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 35
+    },
+    {
+      "case": "full-session",
+      "request": 4,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 21
+    },
+    {
+      "case": "full-session",
+      "request": 5,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 0
+    },
+    {
+      "case": "full-session",
+      "request": 6,
+      "finishReason": "stop",
+      "toolCalls": 0,
+      "contentChars": 549,
+      "reasoningChars": 9053
+    }
+  ],
+  "scenarioSelection": [
+    "full-session"
+  ],
+  "capturedPluginObserved": true,
+  "historyRowsUnchanged": true,
+  "executedAllCases": true,
+  "passed": true,
+  "temporaryStateRemoved": true,
+  "finishedAt": "2026-11-09T19:09:20.699Z"
+}

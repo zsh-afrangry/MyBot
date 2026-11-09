@@ -1,0 +1,690 @@
+{
+  "at": "2026-11-09T19:06:38.195Z",
+  "source": "8317654 plus scenario harness only",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, isolated OpenClaw/captured log tool/mandatory QQ policy and synthetic owner WebSocket input. Read-only production history; loopback replies only. No QQ network, production write, business execution or production service restart. Private generated answers and transcripts are not copied to evidence; temporary state is removed.",
+  "cases": [
+    {
+      "id": "cause",
+      "requests": 15,
+      "calls": [
+        {
+          "id": "call00ETL1vOPcmyPPaToKOwGT5V2994",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "from",
+            "to",
+            "sources",
+            "limit",
+            "expand"
+          ],
+          "argumentHash": "caf9886c363c0f5b98f9f46594e1cbb771fb4e95fff171ceea1cbbc21263f237",
+          "sources": [
+            "personal-reminder-list",
+            "personal-reminders",
+            "cron-runs",
+            "channel-delivery"
+          ],
+          "view": "events",
+          "limit": 100,
+          "from": "2026-11-09 11:58",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call01ETp1b4K8wHXXfSU7d3hGGV5155",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "from",
+            "to",
+            "limit",
+            "expand"
+          ],
+          "argumentHash": "6912d8a3265ffeb0f745918f4eca99da677948b9704121bda7db3237f52b1075",
+          "view": "errors",
+          "limit": 100,
+          "from": "2026-11-09 11:55",
+          "to": "2026-11-09 12:05",
+          "expand": true
+        },
+        {
+          "id": "call00ZZollrIsiQZkGok1lXwi7038",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "from",
+            "to",
+            "limit",
+            "contextBefore",
+            "contextAfter",
+            "expand"
+          ],
+          "argumentHash": "4149be0961cc140285e982892b5ea17b2311532646ac10666499a2b7ae383d3f",
+          "view": "events",
+          "limit": 100,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00q6pF1YNaWzHXazeEA8lV2379",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "from",
+            "to",
+            "limit",
+            "contextBefore",
+            "contextAfter",
+            "expand",
+            "contentOffset",
+            "contentHash"
+          ],
+          "argumentHash": "cd6f7cd9235b8b865188fc2cbd9a92556029ab5cdd1c9aa98dba8e3fe776ae38",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 2284,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00cN7UCQvkcrYJFDWzA55g4134",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "contextAfter",
+            "contextBefore",
+            "expand",
+            "from",
+            "limit",
+            "to",
+            "view"
+          ],
+          "argumentHash": "3ded7c3ef7fa9aca88d127b04d4dd7f3d606ec3bceace83667276e683b395c93",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 4657,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00HH1ZmC4VnUhO8uUbZVrj3008",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "contextAfter",
+            "contextBefore",
+            "expand",
+            "from",
+            "limit",
+            "to",
+            "view"
+          ],
+          "argumentHash": "e69e3f892ea1abb408a950cd9e69a35bf72f3caa9686c20823c53d6e03fba51e",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 6692,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00gdSXeG3aM3tYei1140Qr9646",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "contextAfter",
+            "contextBefore",
+            "expand",
+            "from",
+            "limit",
+            "to",
+            "view"
+          ],
+          "argumentHash": "423e80a8115a3b807bf051ffbd773cfae788224311c8e50c6fa7682e3d981f35",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 8424,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00AOkPUV4ShH98mLH9FdTp0245",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "contextAfter",
+            "contextBefore",
+            "expand",
+            "from",
+            "limit",
+            "to",
+            "view"
+          ],
+          "argumentHash": "08c79e73b0ab01f322566ea047fa3543f57c210aa894da76638072711a5092e8",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 10768,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00fpqV9JntmvtYBWbB9kGO4670",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "contextAfter",
+            "contextBefore",
+            "expand",
+            "from",
+            "limit",
+            "to",
+            "view"
+          ],
+          "argumentHash": "9d760c495859d9768910fd2046e50dd1455a94eca103860bde0b5642a3f3d939",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 13120,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00H72TiPc5qYZoc9ohWPFv1775",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "contextAfter",
+            "contextBefore",
+            "expand",
+            "from",
+            "limit",
+            "to",
+            "view"
+          ],
+          "argumentHash": "35b4b65b23b76e01fc9226ba2c01ea160e54758b795841cc5f9f75f1aa162a8d",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 15471,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00qfssIa6IjT9uL1T4UL7a7576",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "contextAfter",
+            "contextBefore",
+            "expand",
+            "from",
+            "limit",
+            "to",
+            "view"
+          ],
+          "argumentHash": "efcb80927b70f890988594485e7b05fc2c5f14d85b9aeb1ac6979aba58680712",
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 17805,
+          "from": "2026-11-09 11:59",
+          "to": "2026-11-09 12:02",
+          "expand": true
+        },
+        {
+          "id": "call00hW0jiExzxR4WusTWiPxi2926",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "view",
+            "from",
+            "to",
+            "sources",
+            "limit",
+            "expand"
+          ],
+          "argumentHash": "6ce8ce875d0712a4088cdc36c969d5c1cc7ded0cf33ff5056748f5fcadc8f2e2",
+          "sources": [
+            "personal-reminder-list"
+          ],
+          "view": "events",
+          "limit": 100,
+          "from": "2026-11-09 00:00",
+          "to": "2026-11-09 23:59",
+          "expand": true
+        },
+        {
+          "id": "call00sACZy83HML9s8oVi1z6r5679",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "expand",
+            "from",
+            "limit",
+            "sources",
+            "to",
+            "view"
+          ],
+          "argumentHash": "6c69f7ac0951a5b55c8d1de8b51e19b02856f8d73f9a856605dffdb8f0132207",
+          "sources": [
+            "personal-reminder-list"
+          ],
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 2337,
+          "from": "2026-11-09 00:00",
+          "to": "2026-11-09 23:59",
+          "expand": true
+        },
+        {
+          "id": "call00lDRrfAeV6Jc8HUXiMsWF9061",
+          "tool": "kurumi_logs",
+          "argumentKeys": [
+            "contentHash",
+            "contentOffset",
+            "expand",
+            "from",
+            "limit",
+            "sources",
+            "to",
+            "view"
+          ],
+          "argumentHash": "2faea3a26b3a56c0231c595de3431a3e4f3fba72ed19bbac07d2b42264b04224",
+          "sources": [
+            "personal-reminder-list"
+          ],
+          "view": "events",
+          "limit": 100,
+          "contentOffset": 4683,
+          "from": "2026-11-09 00:00",
+          "to": "2026-11-09 23:59",
+          "expand": true
+        }
+      ],
+      "results": [
+        {
+          "callId": "call00ETL1vOPcmyPPaToKOwGT5V2994",
+          "status": "ok",
+          "total": 6,
+          "shown": 6,
+          "chunked": false,
+          "nextOffset": null,
+          "fragmentBytes": 0
+        },
+        {
+          "callId": "call01ETp1b4K8wHXXfSU7d3hGGV5155",
+          "status": "unavailable",
+          "code": "busy",
+          "chunked": false,
+          "fragmentBytes": 0
+        },
+        {
+          "callId": "call00ZZollrIsiQZkGok1lXwi7038",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 2284,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2316
+        },
+        {
+          "callId": "call00q6pF1YNaWzHXazeEA8lV2379",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 4657,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2393
+        },
+        {
+          "callId": "call00cN7UCQvkcrYJFDWzA55g4134",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 6692,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2405
+        },
+        {
+          "callId": "call00HH1ZmC4VnUhO8uUbZVrj3008",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 8424,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2472
+        },
+        {
+          "callId": "call00gdSXeG3aM3tYei1140Qr9646",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 10768,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2368
+        },
+        {
+          "callId": "call00AOkPUV4ShH98mLH9FdTp0245",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 13120,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2352
+        },
+        {
+          "callId": "call00fpqV9JntmvtYBWbB9kGO4670",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 15471,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2351
+        },
+        {
+          "callId": "call00H72TiPc5qYZoc9ohWPFv1775",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 17805,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2334
+        },
+        {
+          "callId": "call00qfssIa6IjT9uL1T4UL7a7576",
+          "status": "ok",
+          "total": 19,
+          "shown": 19,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 20142,
+          "contentHash": "7ac7dd88f78d6a86b81e092cfe14fa434b5ffba48a35e4957a9a2274b17225a3",
+          "fragmentBytes": 2337
+        },
+        {
+          "callId": "call00hW0jiExzxR4WusTWiPxi2926",
+          "status": "ok",
+          "total": 12,
+          "shown": 12,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 2337,
+          "contentHash": "0fb2377c3b7f87bf23e58c60864c12a492023abe548b35b003864d6dd2b6fc22",
+          "fragmentBytes": 2337
+        },
+        {
+          "callId": "call00sACZy83HML9s8oVi1z6r5679",
+          "status": "ok",
+          "total": 12,
+          "shown": 12,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": 4683,
+          "contentHash": "0fb2377c3b7f87bf23e58c60864c12a492023abe548b35b003864d6dd2b6fc22",
+          "fragmentBytes": 2346
+        },
+        {
+          "callId": "call00lDRrfAeV6Jc8HUXiMsWF9061",
+          "status": "ok",
+          "total": 12,
+          "shown": 12,
+          "chunked": true,
+          "nextOffset": null,
+          "nextContentOffset": null,
+          "contentHash": "0fb2377c3b7f87bf23e58c60864c12a492023abe548b35b003864d6dd2b6fc22",
+          "fragmentBytes": 1181
+        }
+      ],
+      "replyObserved": false,
+      "replyChars": 0,
+      "replySha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "facts": {},
+      "completeGeneratedTextObserved": false,
+      "passed": false,
+      "transportError": "model_request_budget"
+    }
+  ],
+  "requests": 14,
+  "usage": {
+    "promptTokens": 306038,
+    "completionTokens": 5972
+  },
+  "baseline": {
+    "generatedChars": 390,
+    "generatedLines": 17,
+    "firstTwoLinesEqual": true,
+    "list": {
+      "delivery": {
+        "slot_key": "2026-11-09T12:00",
+        "status": "delivered",
+        "textLength": 0
+      },
+      "failures": [
+        {
+          "id": 271,
+          "at": 1794110404560,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 277,
+          "at": 1794153604142,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 283,
+          "at": 1794196805402,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 286,
+          "at": 1794218405273,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 289,
+          "at": 1794240005144,
+          "code": "assistant_notice_generation_failed"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "status": "error",
+        "errorTextPresent": true,
+        "exitOneText": true
+      }
+    ],
+    "sessionQuery": {
+      "fragments": 2,
+      "fullGeneratedTextAvailable": true
+    },
+    "errorQuery": {
+      "fragments": 2,
+      "counts": {
+        "failed": 1,
+        "error": 1,
+        "cron:WARN": 1
+      },
+      "recordCount": 3
+    },
+    "keywordQuery": {
+      "total": 1
+    },
+    "cronQuery": [
+      {
+        "exitCode": null,
+        "exitCodeAvailable": false,
+        "errorFieldPresent": false,
+        "commandFieldPresent": false
+      }
+    ]
+  },
+  "transportErrors": [
+    {
+      "case": "cause",
+      "code": "model_request_budget"
+    },
+    {
+      "case": "cause",
+      "code": "model_request_budget"
+    },
+    {
+      "case": "cause",
+      "code": "model_request_budget"
+    },
+    {
+      "case": "cause",
+      "code": "model_request_budget"
+    }
+  ],
+  "modelResponses": [
+    {
+      "case": "cause",
+      "request": 1,
+      "finishReason": "tool_calls",
+      "toolCalls": 2,
+      "contentChars": 90,
+      "reasoningChars": 0
+    },
+    {
+      "case": "cause",
+      "request": 2,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 2109
+    },
+    {
+      "case": "cause",
+      "request": 3,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 99
+    },
+    {
+      "case": "cause",
+      "request": 4,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 621
+    },
+    {
+      "case": "cause",
+      "request": 5,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 1352
+    },
+    {
+      "case": "cause",
+      "request": 6,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 546
+    },
+    {
+      "case": "cause",
+      "request": 7,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 108
+    },
+    {
+      "case": "cause",
+      "request": 8,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 9
+    },
+    {
+      "case": "cause",
+      "request": 9,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 239
+    },
+    {
+      "case": "cause",
+      "request": 10,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 244
+    },
+    {
+      "case": "cause",
+      "request": 11,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 6025
+    },
+    {
+      "case": "cause",
+      "request": 12,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 15
+    },
+    {
+      "case": "cause",
+      "request": 13,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 23
+    },
+    {
+      "case": "cause",
+      "request": 14,
+      "finishReason": "tool_calls",
+      "toolCalls": 1,
+      "contentChars": 0,
+      "reasoningChars": 1092
+    }
+  ],
+  "capturedPluginObserved": true,
+  "historyRowsUnchanged": true,
+  "executedAllCases": false,
+  "passed": false,
+  "forcedStop": true,
+  "temporaryStateRemoved": true,
+  "finishedAt": "2026-11-09T19:07:40.676Z"
+}

@@ -1,0 +1,91 @@
+{
+  "at": "2026-11-09T18:58:05.500Z",
+  "source": "8317654 plus scenario harness only",
+  "model": "deepseek/deepseek-flash",
+  "boundary": "Real configured model, isolated OpenClaw/captured log tool/mandatory QQ policy and synthetic owner WebSocket input. Read-only production history; loopback replies only. No QQ network, production write, business execution or production service restart. Private generated answers and transcripts are not copied to evidence; temporary state is removed.",
+  "cases": [],
+  "requests": 0,
+  "usage": {
+    "promptTokens": 0,
+    "completionTokens": 0
+  },
+  "baseline": {
+    "generatedChars": 390,
+    "generatedLines": 17,
+    "firstTwoLinesEqual": true,
+    "list": {
+      "delivery": {
+        "slot_key": "2026-11-09T12:00",
+        "status": "delivered",
+        "textLength": 0
+      },
+      "failures": [
+        {
+          "id": 271,
+          "at": 1794110404560,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 277,
+          "at": 1794153604142,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 283,
+          "at": 1794196805402,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 286,
+          "at": 1794218405273,
+          "code": "assistant_notice_generation_failed"
+        },
+        {
+          "id": 289,
+          "at": 1794240005144,
+          "code": "assistant_notice_generation_failed"
+        }
+      ]
+    },
+    "receipts": [
+      {
+        "status": "error",
+        "errorTextPresent": true,
+        "exitOneText": true
+      }
+    ],
+    "sessionQuery": {
+      "fragments": 2,
+      "fullGeneratedTextAvailable": true
+    },
+    "errorQuery": {
+      "fragments": 2,
+      "counts": {
+        "failed": 1,
+        "error": 1,
+        "cron:WARN": 1
+      },
+      "recordCount": 3
+    },
+    "keywordQuery": {
+      "total": 1
+    },
+    "cronQuery": [
+      {
+        "exitCode": null,
+        "exitCodeAvailable": false,
+        "errorFieldPresent": false,
+        "commandFieldPresent": false
+      }
+    ]
+  },
+  "transportErrors": [],
+  "passed": false,
+  "failure": {
+    "name": "AssertionError",
+    "message": "gateway_not_ready"
+  },
+  "gatewayLoadErrors": [],
+  "temporaryStateRemoved": true,
+  "finishedAt": "2026-11-09T18:58:34.318Z"
+}

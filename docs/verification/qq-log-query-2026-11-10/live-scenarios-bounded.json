@@ -1,0 +1,200 @@
+{
+  "at": "2026-11-09T19:05:31.829Z",
+  "passed": false,
+  "boundary": "Harness correction only. Earlier real-model attempt had a non-production output limit; do not use it to accept or reject diagnostic capability.",
+  "harnessFailure": "reasoning_model_output_budget_mismatch",
+  "testMaxTokens": 1600,
+  "productionMaxTokens": 32768,
+  "productionReasoning": true,
+  "interrupted": true,
+  "historyReadOnly": true,
+  "recordedAssistantResponses": [
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 9915,
+        "output": 541,
+        "totalTokens": 10712
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 2005,
+        "output": 213,
+        "totalTokens": 12842
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1406,
+        "output": 184,
+        "totalTokens": 14390
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1326,
+        "output": 184,
+        "totalTokens": 15846
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1501,
+        "output": 184,
+        "totalTokens": 17429
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1352,
+        "output": 184,
+        "totalTokens": 18944
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1281,
+        "output": 186,
+        "totalTokens": 20411
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 0,
+      "usage": {
+        "input": 947,
+        "output": 1600,
+        "totalTokens": 22899
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 0,
+      "usage": {
+        "input": 11169,
+        "output": 1600,
+        "totalTokens": 12769
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 0,
+      "usage": {
+        "input": 232,
+        "output": 1600,
+        "totalTokens": 12840
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 97,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "totalTokens": 0
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 587,
+        "output": 249,
+        "totalTokens": 10436
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1392,
+        "output": 252,
+        "totalTokens": 12012
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1287,
+        "output": 231,
+        "totalTokens": 13422
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1320,
+        "output": 231,
+        "totalTokens": 14863
+      }
+    },
+    {
+      "stopReason": "toolUse",
+      "textChars": 0,
+      "usage": {
+        "input": 1320,
+        "output": 242,
+        "totalTokens": 16410
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 0,
+      "usage": {
+        "input": 407,
+        "output": 1600,
+        "totalTokens": 18391
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 0,
+      "usage": {
+        "input": 6821,
+        "output": 1600,
+        "totalTokens": 8421
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 0,
+      "usage": {
+        "input": 236,
+        "output": 1600,
+        "totalTokens": 8492
+      }
+    },
+    {
+      "stopReason": "stop",
+      "textChars": 97,
+      "usage": {
+        "input": 0,
+        "output": 0,
+        "totalTokens": 0
+      }
+    }
+  ],
+  "temporaryStateRemoved": true,
+  "interruptionCleanup": {
+    "reason": "After interruption, runtime.log/tmp residue reappeared in the owned temporary directory. A later /proc check for its exact OPENCLAW_STATE_DIR found no live matching process; only that owned residue was removed.",
+    "lateOwnedProcessGroups": 0,
+    "allStopped": true,
+    "temporaryStateRemoved": true
+  }
+}

@@ -45,6 +45,7 @@ const TABLE = {
   'chatbot/tests/proactive/acceptance-runtime-host.mjs': ['验收', '现有QQ唯一策略/N3组件与真实隔离Gateway/公共SDK、P2/四类读取、逐条投递、主人维护/暂停/恢复/重启/抢占；确定性模型和loopback，无真实API/QQ或生产访问', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
   'chatbot/tests/log-query/query.test.mjs': ['离线', '真实只读CLI与实际工具处理器；合成日志、身份/撤权、关键词/上下文/完整内容分段、并发/取消/超时；无模型/QQ/生产写入', {testDir:1}, 'header'],
   'chatbot/tests/log-query/acceptance-host.mjs': ['验收', '真实隔离Gateway捕获插件、QQ策略/入站、本地确定性模型、实际CLI关键词/全文/上下文/历史/内容分段与回执及启用/禁用；无真实模型/API/QQ或生产写入', {restart:1,testDir:1,writesRepo:1}, 'boundary'],
+  'chatbot/tests/log-query/acceptance-live-diagnostics.mjs': ['验收', '显式--live真实当前主模型、隔离OpenClaw/QQ强制策略/捕获日志工具，自主选参读取生产历史并核对六类诊断场景；仅模拟QQ回执与技术元数据，无QQ网络、生产写入或生产重启', {auth:1,model:1,restart:1,testDir:1,writesRepo:1}, 'boundary'],
   'chatbot/tests/proactive/core.test.mjs': ['离线', 'N3可信运行凭据、真实临时SQLite租约/并发/暂停/抢占/深夜依据/未知回执与重启；无模型、QQ或生产访问', {testDir: 1}, 'header'],
   'chatbot/tests/proactive/lifecycle.test.mjs': ['离线', 'N3真实入站处理器与临时SQLite：元数据/去重/活动时间、前台中止、reset/end及迟到回执；无模型API、QQ或生产访问', {testDir: 1}, 'header'],
   'chatbot/tests/proactive/acceptance-authority-host.mjs': ['验收', 'N3公共SDK真实隔离Gateway和本地确定性模型/合成工具：活跃运行授权、伪造来源、会话/策略/前台抢占、越权拒绝及实际reset/end钩子；fixture策略尚未接生产QQ，无真实模型/QQ或生产访问', {testDir: 1, restart: 1, writesRepo: 1}, 'header'],
