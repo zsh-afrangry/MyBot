@@ -1,0 +1,69 @@
+{
+  "at": "2026-11-09T16:38:46.582Z",
+  "pluginState": "active",
+  "tools": [
+    "kurumi_logs"
+  ],
+  "revision": 7,
+  "N3Enabled": false,
+  "cronCount": 6,
+  "cronEnabled": 5,
+  "cronDeclarationsUnchanged": true,
+  "independentServicesUnchanged": true,
+  "Fusion": "ActiveState=active\nInvocationID=e8c5c16b75504c1cba919bd3346f3598",
+  "QQAcceptance": "pending_user_question",
+  "realMessagesSent": 0,
+  "liveQuery": {
+    "at": "2026-11-09T16:38:40.299Z",
+    "boundary": "Production fixed-CLI data read, not a real QQ tool invocation.",
+    "view": "errors",
+    "coverage": "stored_events_only",
+    "shown": 5,
+    "total": 10,
+    "passed": true,
+    "jsonBelow24KiB": true
+  },
+  "sourceMainAtActivation": "993195e",
+  "sourceFeatureCommit": "ff4206d",
+  "remoteWrites": false,
+  "preservedUncommittedN3": true,
+  "regressions": {
+    "mergedLogAccessQueries": {
+      "pass": 59,
+      "fail": 0
+    },
+    "N3DisabledBoundaryAndAdapters": {
+      "pass": 24,
+      "fail": 0
+    },
+    "isolatedDocumentationOwnership": {
+      "pass": 10,
+      "fail": 0
+    },
+    "isolatedGatewayCatalog": {
+      "pass": 2,
+      "fail": 0
+    }
+  },
+  "fullMainDocumentationCheck": {
+    "passed": false,
+    "reason": "Concurrent unfinished N3 adds three not-yet-classified test scripts; full combined run 66 passed / 3 failed (documentation suite and two of its subtests). Log/access/query cases all passed. No N3 code or tests committed by this integration."
+  },
+  "postChecks": {
+    "health": {
+      "exit": 0,
+      "reportedOk": true,
+      "cronLastStatusErrors": 3,
+      "broadcastHealthy": false
+    },
+    "verify-dependencies": {
+      "exit": 0
+    },
+    "sync-config": {
+      "exit": 0
+    },
+    "sync-persona": {
+      "exit": 0
+    }
+  }
+}
