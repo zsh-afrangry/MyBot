@@ -1,0 +1,330 @@
+{
+  "date": "2026-11-11",
+  "checkedAt": "2026-11-10T16:11:54.390Z",
+  "status": "deployed_production_technical_checks_passed",
+  "featureCommit": "ef2496a744879764f193a95b23b0fc91005efed0",
+  "authorization": "Existing owner-only log activation plus the explicit continuation of diagnostic verification and scoped repairs; local merge, managed owner template synchronization, Fusion-only restart. No permission expansion.",
+  "before": {
+    "configSha256": "a8edea0f7de702c4d675d1850e08d36dbb4f1ae789fd6d9b04933e4ac33f1c84",
+    "revision": 7,
+    "FusionInvocationID": "11c9f034f3d14e469b3e69757e904b3e"
+  },
+  "after": {
+    "configSha256": "a8edea0f7de702c4d675d1850e08d36dbb4f1ae789fd6d9b04933e4ac33f1c84",
+    "revision": 7,
+    "Fusion": {
+      "ActiveState": "active",
+      "ActiveEnterTimestamp": "Wed 2026-11-11 00:07:55 CST",
+      "InvocationID": "a77c75f328444b878091960c332a8430"
+    },
+    "ownerAgentsSha256": "10ee8b3d9ac002af615c45f1bfca57be1b9bca8822078e867b65a5ea96f7d0eb"
+  },
+  "configUnchanged": true,
+  "permissionsUnchanged": true,
+  "personaChanged": [
+    "workspace/AGENTS.md"
+  ],
+  "cronUnchanged": true,
+  "cron": {
+    "total": 6,
+    "enabled": 5,
+    "declarationsSha256": "3eb5dfcf0c497d1f9661186ecc3ea95e7ff36e9c3daebadbdcb06b3f0c992341"
+  },
+  "independentServicesUnchanged": true,
+  "independentServices": {
+    "snowluma": {
+      "ActiveState": "active",
+      "ActiveEnterTimestamp": "Sat 2026-10-10 22:00:26 CST",
+      "InvocationID": "c071f2a6548e4bc68c80c113e709c3b6"
+    },
+    "snowluma-qq": {
+      "ActiveState": "active",
+      "ActiveEnterTimestamp": "Fri 2026-10-16 23:55:44 CST",
+      "InvocationID": "913587c120d4451a9bb372e5c9742b73"
+    },
+    "knowledgemap-assistant": {
+      "ActiveState": "active",
+      "ActiveEnterTimestamp": "Sat 2026-10-17 13:27:20 CST",
+      "InvocationID": "2f262f9a8217442395c48aff373402e2"
+    },
+    "dsh-web": {
+      "ActiveState": "active",
+      "ActiveEnterTimestamp": "Mon 2026-10-19 00:22:30 CST",
+      "InvocationID": "419230df853d4321b3ab48f091d69639"
+    }
+  },
+  "historicalRowsUnchanged": true,
+  "historicalWindow": "2026-11-08T00:00:00+08:00 through 2026-11-10T00:02:00+08:00; delivery slots before 2026-11-11",
+  "historicalTechnicalFingerprints": {
+    "list": {
+      "audit": {
+        "count": 27,
+        "sha256": "96150f143c6b5df41253d59f972d6535ee27f77f955ccb55b1eadf78ecba942a"
+      },
+      "deliveries": {
+        "count": 12,
+        "sha256": "e7c284eed89d1597735d104fceb70916c5787eba6b11f22e217db3939845b93d"
+      }
+    },
+    "cron": {
+      "task_runs": {
+        "count": 11,
+        "sha256": "97f3aab33abb959057a714ec2b6ec4141321e829b0e55e245535e03d8074715f"
+      },
+      "receipts": {
+        "count": 11,
+        "sha256": "28a0c50b1f55515783e47ae53a749582c695aa7aa10bcfdb5a1e1f1fea47edb9"
+      }
+    }
+  },
+  "N3Enabled": false,
+  "N3DatabaseCreated": false,
+  "testIngress": false,
+  "codeMode": false,
+  "productionProbe": {
+    "at": "2026-11-10T16:10:39.907Z",
+    "featureCommit": "ef2496a",
+    "boundary": "Actual production captured adapters and fixed canonical CLI; retained-history summary queries with noText explicitly selected. No model invocation, QQ send, business command, historical rewrite or schedule change.",
+    "capturedFiles": [
+      {
+        "source": "chatbot/plugins/kurumi-logs/query.js",
+        "sha256": "16de3c42fd5200df48c72ccc8d7cbc721a4fc6865cd152a9d5856621d7385844",
+        "capturedCount": 1,
+        "allMatch": true
+      },
+      {
+        "source": "chatbot/plugins/kurumi-logs/policy.js",
+        "sha256": "7c9f928d4d175242b2c3ada63c165b28d1d476e5eec9d70a9d5c231b91846dde",
+        "capturedCount": 1,
+        "allMatch": true
+      },
+      {
+        "source": "chatbot/plugins/kurumi-logs/service.js",
+        "sha256": "f79dfc8e454a5d521ff1e59952a2f42e222f568415d15fd9b87783167a1ffd00",
+        "capturedCount": 1,
+        "allMatch": true
+      },
+      {
+        "source": "chatbot/plugins/kurumi-logs/index.js",
+        "sha256": "321a1002d6ce2be9066a28f5ec60727fc039b80395285077e7d54609a4b16fd7",
+        "capturedCount": 1,
+        "allMatch": true
+      },
+      {
+        "source": "chatbot/plugins/personal-reminder-list/notification.js",
+        "sha256": "004389cee8a7a3afaf45dfb040a866f83b90d903c788a0459b768ea1925433bb",
+        "capturedCount": 1,
+        "allMatch": true
+      },
+      {
+        "source": "chatbot/plugins/personal-reminder-list/store.js",
+        "sha256": "ced9a3edf48ced539c676406dfbda1bb17619aed8a4409727fb736c10cc07c9f",
+        "capturedCount": 1,
+        "allMatch": true
+      },
+      {
+        "source": "chatbot/packages/response-core/index.js",
+        "sha256": "1e403f98082ed09dcb606b85e31a1e45c93bf5dccb0665ae0e1fc84cd2a9d1fa",
+        "capturedCount": 5,
+        "allMatch": true
+      }
+    ],
+    "queries": [
+      {
+        "name": "overview",
+        "passed": true,
+        "total": 5,
+        "records": 3,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "exact_business_code",
+        "passed": true,
+        "total": 1,
+        "records": 1,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "ledger_contradiction",
+        "passed": true,
+        "total": 1,
+        "records": 1,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "stable_event_reference",
+        "passed": true,
+        "total": 1,
+        "records": 1,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "business_key",
+        "passed": true,
+        "total": 4,
+        "records": 4,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "cron_job_and_exit_code",
+        "passed": true,
+        "total": 1,
+        "records": 1,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "keywords",
+        "passed": true,
+        "total": 2,
+        "records": 2,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "native_context",
+        "passed": true,
+        "total": 2,
+        "records": 2,
+        "requests": 2,
+        "noText": true
+      },
+      {
+        "name": "opaque_native_run_id",
+        "passed": true,
+        "total": 3,
+        "records": 3,
+        "requests": 1,
+        "noText": true
+      },
+      {
+        "name": "stats",
+        "passed": true,
+        "total": 5,
+        "records": 0,
+        "requests": 1,
+        "noText": true
+      }
+    ],
+    "initialProbeFailure": {
+      "phase": "validator",
+      "queryKind": "agent.assistant",
+      "result": "zero_matching_events",
+      "correction": "Use existing agent.reply kind; no product code change"
+    },
+    "pluginState": "active",
+    "tools": [
+      "kurumi_logs"
+    ],
+    "historicalMissingExceptionExplicit": true,
+    "legacyEmptyBodyContradictionVisible": true,
+    "nativeExitCode": 1,
+    "stableEventReferenceVerified": true,
+    "opaqueRunIdLength": 36
+  },
+  "postChecks": [
+    {
+      "tool": "health",
+      "exit": 0,
+      "reportedOk": true,
+      "issues": [],
+      "cronLastStatusErrors": 2,
+      "limitation": "Existing health implementation does not include Cron failure states in issues; reportedOk does not establish broadcast health."
+    },
+    {
+      "tool": "verify-dependencies",
+      "exit": 0
+    },
+    {
+      "tool": "sync-config",
+      "exit": 0
+    },
+    {
+      "tool": "sync-persona",
+      "exit": 0
+    }
+  ],
+  "cleanup": {
+    "removedOwnFixturePaths": [
+      "chatbot/packages/personal-domains/node_modules",
+      "chatbot/packages/confirmation-core/node_modules",
+      "chatbot/plugins/kurumi-qq/node_modules",
+      "chatbot/packages/personal-domains/dist",
+      "chatbot/packages/confirmation-core/dist",
+      "/tmp/kurumi-logs-host-EIuid0"
+    ],
+    "failedHostAssociatedProcesses": 0,
+    "preexistingRootNodeModulesPreserved": true,
+    "canonicalDependenciesPreserved": true,
+    "olderUnrelatedExpressionFixturePreserved": "/tmp/kurumi-expression-host-4AuRw3",
+    "ownDiagnosticProcessesRemaining": 0,
+    "temporaryArtifactsRemoved": [
+      "kurumi-log-diagnostic-cleanup.json",
+      "kurumi-log-diagnostic-dependencies.json",
+      "kurumi-log-diagnostic-deploy-after.json",
+      "kurumi-log-diagnostic-deploy-before.json",
+      "kurumi-log-diagnostic-deploy-final.json",
+      "kurumi-log-diagnostic-deploy-snapshot.mjs",
+      "kurumi-log-diagnostic-health.json",
+      "kurumi-log-diagnostic-production-probe.json",
+      "kurumi-log-diagnostic-production-probe.mjs",
+      "kurumi-log-diagnostics-final.log",
+      "kurumi-log-diagnostics-second.log",
+      "kurumi-log-diagnostics.log",
+      "kurumi-log-fixes-doc-tests.tap",
+      "kurumi-log-fixes-expression-host-final.json",
+      "kurumi-log-fixes-expression-host-v2.json",
+      "kurumi-log-fixes-expression-host.json",
+      "kurumi-log-fixes-host-final.json",
+      "kurumi-log-fixes-host-opaque-id.json",
+      "kurumi-log-fixes-host-v2.json",
+      "kurumi-log-fixes-host-v3.json",
+      "kurumi-log-fixes-host.json",
+      "kurumi-log-fixes-live-cause-v2.json",
+      "kurumi-log-fixes-live-cause.json",
+      "kurumi-log-fixes-live-final.json",
+      "kurumi-log-fixes-retest-cause.json",
+      "kurumi-log-fixes-retest-codes.json",
+      "kurumi-log-fixes-retest-cron-fields.json",
+      "kurumi-log-fixes-retest-cross-day-count.json",
+      "kurumi-log-fixes-retest-delivery.json",
+      "kurumi-log-fixes-retest-full-session.json",
+      "kurumi-log-fixes-tests-commit.tap",
+      "kurumi-log-fixes-tests-final-v2.tap",
+      "kurumi-log-fixes-tests-final.tap",
+      "kurumi-log-fixes-tests.tap"
+    ],
+    "ownFixtureDirectoriesRemaining": 0
+  },
+  "noManualRealQQSendOrModelInvocationDuringDeployment": true,
+  "noRemoteWrites": true,
+  "noProductionDatabaseDeletionOrHistoricalRewrite": true,
+  "remaining": [
+    "Original long QQ session and long-term behavior are not re-accepted by synthetic/isolated tests.",
+    "Natural opening generation may still violate the current contract; no generation-quality repair or forced production replay in this deployment.",
+    "Historical missing exception cannot be recovered; legacy ledger contradictions remain visible.",
+    "N3 is disabled; log file archival, rotation and deletion via QQ remain unimplemented."
+  ],
+  "productionPluginStates": [
+    {
+      "id": "kurumi-qq",
+      "state": "enabled",
+      "runtime": "active"
+    },
+    {
+      "id": "personal-reminder-list",
+      "state": "enabled",
+      "runtime": "active"
+    },
+    {
+      "id": "kurumi-logs",
+      "state": "enabled",
+      "runtime": "active"
+    }
+  ]
+}

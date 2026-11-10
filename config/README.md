@@ -209,4 +209,4 @@ N3由现有QQ插件中的`proactive/`组件装配，不新增插件/进程。禁
 
 ## 主人只读日志工具
 
-`kurumi-logs`只装配`kurumi_logs`，配置根固定为本机运行目录和SnowLuma；`backendRoot`由部署者固定到源码根，只能执行其`scripts/fusion/log-query.mjs`，不按宿主捕获目录推导。参数不接受路径/命令；支持overview概览、稳定eventRef详情引用、精确code/eventKey/cronJobId和不透明runId，按固定argv传值。按主人2026-11-10八点授权可选择关键词、noText、expand、raw及上下文，查询无7天人为上限，完整内容通过分页/分段返回。运行身份白名单及logs.read不变，诊断输出不追加字段/字符白名单。主人于2026-11-10批准后，`logs.read`、main白名单、插件allow/load/entry及主人模板已按同批范围同步，并仅重启Fusion。策略revision7，工具发现及生产固定CLI只读查询通过，QQ由主人提问验收。不继承给成员、Cron或自主行动后台。查询技术边界见[文档18](../docs/18_跨模块链路日志查询.md)，验收分层状态见文档16。
+`kurumi-logs`只装配`kurumi_logs`，配置根固定为本机运行目录和SnowLuma；`backendRoot`由部署者固定到源码根，只能执行其`scripts/fusion/log-query.mjs`，不按宿主捕获目录推导。参数不接受路径/命令；支持overview概览、稳定eventRef详情引用、精确code/eventKey/cronJobId和不透明runId，按固定argv传值。按主人2026-11-10八点授权可选择关键词、noText、expand、raw及上下文，查询无7天人为上限，完整内容通过分页/分段返回。运行身份白名单及logs.read不变，诊断输出不追加字段/字符白名单。主人于2026-11-10批准后，`logs.read`、main白名单、插件allow/load/entry及主人模板已按同批范围同步，并仅重启Fusion。策略revision7，工具发现及生产固定CLI只读查询通过，QQ由主人提问验收。不继承给成员、Cron或自主行动后台。2026-11-11的ef2496a诊断/查询及对账修复已合入部署，仅同步主人AGENTS并重启Fusion，运行配置SHA256/策略revision7未变；生产捕获代码与10类只读查询已核对。查询技术边界见[文档18](../docs/18_跨模块链路日志查询.md)，验收分层状态见文档16。

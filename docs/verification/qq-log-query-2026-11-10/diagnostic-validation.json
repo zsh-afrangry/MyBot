@@ -1,5 +1,5 @@
 {
-  "status": "technical_validation_passed_production_pending",
+  "status": "technical_validation_passed",
   "node": "v26.13.0",
   "offlineTests": 142,
   "failed": 0,
@@ -38,5 +38,6 @@
   "documentationTests": 10,
   "classifiedScripts": 241,
   "ownedEvidenceFiles": 241,
-  "offlineTapSha256": "9753c65a10ec5ef5350425a6ff1db48d5567718265a3386a68e932e8fb875568"
+  "offlineTapSha256": "9753c65a10ec5ef5350425a6ff1db48d5567718265a3386a68e932e8fb875568",
+  "productionDeployment": "diagnostic-deployment.json"
 }
