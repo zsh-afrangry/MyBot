@@ -135,7 +135,10 @@ test('register-project --check rejects the archived legacy trees (V01 regression
     const file = writeDraft(path.join(state, `arch-${path.basename(archived)}.json`), entryFor(archived));
     const r = runCli(['--check', file], {state});
     assert.equal(r.status, 1, `${archived} must be rejected`);
-    assert.match(r.stderr, /Preserved original cannot be a project worker root/);
+    // Retired trees need not physically exist for the protected-root policy to hold.
+    assert.throws(() => assertNotProtectedRoot(archived), /Preserved original cannot be a project worker root/);
+    assert.match(r.stderr, fs.existsSync(archived)
+      ? /Preserved original cannot be a project worker root/ : /root does not exist/);
   }
 });
 

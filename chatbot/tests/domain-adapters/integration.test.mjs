@@ -13,6 +13,7 @@ import {ListStore} from '../../plugins/personal-reminder-list/store.js';
 import {createReminderListPlugin} from '../../plugins/personal-reminder-list/index.js';
 import {createScheduler, buildJob} from '../../plugins/personal-reminder-list/scheduler.js';
 import {main as runDigest} from '../../scripts/reminder-list.mjs';
+import {registerDigestNotice} from '../../plugins/personal-reminder-list/notification.js';
 import {createMemoryRegistry} from '../../plugins/kurumi-memory/adapters.js';
 import {createMemoryApplication} from '../../plugins/kurumi-memory/application.js';
 import {createMemoryPlugin} from '../../plugins/kurumi-memory/index.js';
@@ -27,7 +28,7 @@ function harness(plugin, root, pluginConfig) {
   plugin.register({config, pluginConfig, registrationMode: 'full', on: (name, fn) => hooks[name] = fn,
     registerTool: (factory, meta) => tools[meta.name] = factory, registerService: s => services.push(s)});
   const ctx = {senderIsOwner: true, requesterSenderId: owner, messageChannel: 'kurumi-qq', sessionKey: session, sessionId: 'real-host-uuid', assertInvocationCurrent() {}};
-  return {hooks, services,
+  return {hooks, services, config,
     dispatch(raw, patch = {}) {hooks.reply_dispatch({ctx: {RawBody: raw, CommandAuthorized: true, ChatType: 'direct', SenderId: owner, OriginatingChannel: 'kurumi-qq', OriginatingTo: 'user:' + owner, SessionKey: session, Timestamp: Date.now(), MessageSid: 'message-' + ++sequence, ...patch}});},
     run: async (name, args) => JSON.parse((await tools[name].create(ctx).execute('call', args)).content[0].text),
   };
@@ -59,7 +60,11 @@ function alternateListStore() {
         return {ok: true, action: args.action, item};
       },
       observeDeliveries() {visits.push('observe');}, markUnobserved() {visits.push('mark');},
-      claimDigest(slot) {visits.push('digest:' + slot); return {slotKey: 'test', text: 'alternate digest', count: state.items.length};},
+      claimDigest(slot) {
+        visits.push('digest:' + slot);const items=state.items.filter(item=>item.status==='active');
+        return {slotKey: 'test', at: Date.parse('2026-10-17T08:00:00+08:00'), items, count: items.length};
+      },
+      finishDigestGeneration(slotKey,text,error) {assert.equal(slotKey,'test');assert.equal(error,undefined);visits.push('freeze');return text;},
     });
   };
   return {open, visits, counts: () => ({opened, closed})};
@@ -89,10 +94,6 @@ test('reminder tools, scheduler and fixed runner all consume a registered altern
   f.dispatch('提醒列表添加独立存储');
   assert.equal((await f.run('personal_reminder_list_manage', {action: 'add', title: '独立存储'})).ok, true);
   assert.equal((await f.run('personal_reminder_list_get', {})).items[0].title, '独立存储');
-  f.dispatch('那条不用了');
-  const args = {action: 'void', id: '123456abcdef', expectedVersion: 1};
-  assert.equal((await f.run('personal_reminder_list_manage', {...args, expectedVersion: 99})).ok, false);
-  assert.equal((await f.run('personal_reminder_list_manage', args)).item.status, 'void');
   const app = createListApplication({registry, storeAdapter: 'alternate'}), jobs = [];
   const scheduler = createScheduler({root, ownerId: owner, repo: backend, storeAdapter: app.storeId, openStore: app.openStore,
     request: async (method, params) => {
@@ -103,10 +104,22 @@ test('reminder tools, scheduler and fixed runner all consume a registered altern
   assert.equal((await scheduler.sync()).ok, true);
   assert.equal(jobs[0].payload.env.KURUMI_LIST_STORE_ADAPTER, 'alternate');
   let output = '';
-  assert.equal(runDigest(['run', '--slot', '08:00'], {env: jobs[0].payload.env, registry, write: text => output += text}), 0);
-  assert.equal(output, 'alternate digest\n');
-  assert.ok(alternate.visits.includes('digest:08:00')); assert.ok(alternate.visits.includes('mark'));
-  assert.deepEqual(alternate.counts(), {opened: 6, closed: 6});
+  let handler;
+  registerDigestNotice({config:f.config,registerGatewayMethod(name,fn){assert.equal(name,'personal-reminder-list.compose');handler=fn;}},
+    {root,ownerId:owner,openStore:app.openStore},
+    {now:()=>Date.parse('2026-10-17T08:00:05+08:00'),composeNotice:async()=>({text:'一起看看待办吧。'})});
+  const request=async(method,params)=>{
+    assert.equal(method,'personal-reminder-list.compose');assert.deepEqual(params,{slot:'08:00'});
+    let reply;await handler({params,respond(ok,result,error){assert.equal(ok,true,error?.message);reply=result;}});return reply;
+  };
+  assert.equal(await runDigest(['run', '--slot', '08:00'], {env: {...jobs[0].payload.env,KURUMI_LIST_STORE_ADAPTER:'missing'},request,write: text => output += text}), 0);
+  assert.match(output,/一起看看待办吧。/);assert.match(output,/独立存储/);
+  assert.ok(alternate.visits.includes('digest:08:00')); assert.ok(alternate.visits.includes('freeze'));
+  f.dispatch('那条不用了');
+  const args = {action: 'void', id: '123456abcdef', expectedVersion: 1};
+  assert.equal((await f.run('personal_reminder_list_manage', {...args, expectedVersion: 99})).ok, false);
+  assert.equal((await f.run('personal_reminder_list_manage', args)).item.status, 'void');
+  const {opened,closed}=alternate.counts();assert(opened>=6);assert.equal(opened,closed);
   assert.equal(existsSync(join(root, 'state/personal-reminder-list/list.sqlite')), false);
 });
 test('a replacement list policy cannot mint transport identity or overwrite trusted request metadata', async t => {
@@ -128,11 +141,12 @@ test('a replacement list policy cannot mint transport identity or overwrite trus
     assert.equal(audit.qq_message_id, 'message-2'); assert.equal(audit.session_key, session);
   } finally {store.close();}
 });
-test('unknown store disables registration; runner and scheduler refuse a mismatched store binding', async t => {
+test('unknown store disables registration; runner propagates endpoint failure and scheduler refuses a mismatched binding', async t => {
   const root = temp(t), registry = createListRegistry(); let registrations = 0;
   assert.throws(() => createReminderListPlugin({registry}).register({pluginConfig: {storeAdapter: 'missing'}, registerTool() {registrations++;}}), /Unavailable/);
   assert.equal(registrations, 0);
-  assert.throws(() => runDigest(['run', '--slot', '08:00'], {env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: owner, KURUMI_LIST_STORE_ADAPTER: 'missing'}}), /Unavailable/);
+  await assert.rejects(runDigest(['run', '--slot', '08:00'], {env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: owner, KURUMI_LIST_STORE_ADAPTER: 'missing'},
+    request:async(method,params)=>{assert.equal(method,'personal-reminder-list.compose');assert.deepEqual(params,{slot:'08:00'});throw Error('Unavailable registered store');}}), /Unavailable registered store/);
   const alternate = alternateListStore(); registry.registerStore('alternate', alternate.open);
   const app = createListApplication({registry, storeAdapter: 'alternate'}), writes = [];
   const scheduler = createScheduler({root, ownerId: owner, repo: backend, storeAdapter: 'alternate', openStore: app.openStore,

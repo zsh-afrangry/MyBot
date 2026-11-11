@@ -17,6 +17,7 @@ import {createKnowledgeMapPlugin} from '../../plugins/kurumi-knowledgemap/index.
 import {collectEvents} from '../../../scripts/fusion/log-query.mjs';
 import {sourceFile} from '../../plugins/personal-reminder-list/data-source.js';
 import {main as runnerMain} from '../../scripts/reminder-list.mjs';
+import {registerDigestNotice} from '../../plugins/personal-reminder-list/notification.js';
 import {disableKnowledgeMapRecovery} from '../../../scripts/fusion/lib/recovery-isolation.mjs';
 const owner = '365999865', sessionKey = `agent:main:kurumi-qq:direct:${owner}`;
 const request = {sessionKey, messageId: '123'};
@@ -290,7 +291,13 @@ test('persisted cutover prevents old fixed jobs and local tools from using legac
   assert.throws(() => legacy.get()); assert.throws(() => legacy.addItem({title: '拒绝'}));
   t.mock.method(globalThis, 'fetch', async () => response({ok: true, total: 1, snapshot: 'a'.repeat(64), truncated: false, items: [row(2, {title: 'API共享项'})]}));
   let output = '';
-  await runnerMain(['run', '--slot', '08:00'], {env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: owner}, now, write: x => output += x});
+  const apiClient=new KnowledgeMapClient({tokenFile,trace(){}});let handler;
+  registerDigestNotice({config,registerGatewayMethod(name,fn){assert.equal(name,'personal-reminder-list.compose');handler=fn;}},
+    {root,ownerId:owner,openStore:options=>new ListControlStore(options)},
+    {now,loadItems:async()=>(await apiClient.allTasks()).map(taskItem),composeNotice:async()=>({text:'来看看现在的待办。'})});
+  await runnerMain(['run', '--slot', '08:00'], {env: {OPENCLAW_STATE_DIR: root, KURUMI_LIST_OWNER_ID: owner}, write: x => output += x,
+    request:async(method,params)=>{assert.equal(method,'personal-reminder-list.compose');let reply;
+      await handler({params,respond(ok,result,error){assert.equal(ok,true,error?.message);reply=result;}});return reply;}});
   assert.match(output, /API共享项/); assert.doesNotMatch(output, /不应读写的旧项/);
   assert.deepEqual(legacy.db.prepare('SELECT * FROM items').all(), before); legacy.close();
 });

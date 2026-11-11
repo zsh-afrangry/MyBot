@@ -39,6 +39,7 @@ const bundles = fs.readdirSync(sdkDist).filter(name => /^services-.*\.mjs$/.test
   && fs.readFileSync(path.join(sdkDist, name), 'utf8').includes('function startPluginServices('));
 assert.equal(bundles.length, 1, 'Pinned Host service-manager layout changed');
 const manager = await import(pathToFileURL(path.join(sdkDist, bundles[0])).href);
+const {GatewayScheduler} = await import(pathToFileURL(path.join(sdkDist, 'infra/gateway-scheduler.js')).href);
 const startServices = Object.values(manager).find(fn => typeof fn === 'function' && fn.name === 'startPluginServices');
 
 function collect(plugin, mode = 'full') {
@@ -51,7 +52,7 @@ function collect(plugin, mode = 'full') {
   return {tools, services, hooks};
 }
 async function start(services) {
-  return startServices({config: cfg, workspaceDir: root, throwOnStartError: true,
+  return startServices({scheduler: new GatewayScheduler(), config: cfg, workspaceDir: root, throwOnStartError: true,
     registry: {plugins: [], services: services.map(service => ({pluginId: service.id, id: service.id, service}))}});
 }
 
@@ -82,7 +83,8 @@ test('shared packages have no runtime imports into plugins or deployment scripts
 test('plugins reach other plugins only through public entries, never their src internals', () => {
   const root = fileURLToPath(new URL('../../plugins/', import.meta.url));
   // Public outward interfaces another plugin's composition entry may wire (docs/21).
-  const publicEntries = new Set([path.join(root, 'kurumi-qq', 'delivery.js')]);
+  const publicEntries = new Set([path.join(root, 'kurumi-qq', 'delivery.js'),
+    path.join(root, 'kurumi-memory', 'continuity', 'read-model.js')]);
   const files = [];
   function visit(dir) {
     for (const e of fs.readdirSync(dir, {withFileTypes: true})) {

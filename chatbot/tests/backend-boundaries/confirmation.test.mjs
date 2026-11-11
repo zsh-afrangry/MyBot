@@ -12,7 +12,7 @@ test('shared package preserves its complete runtime public API without leaking s
     'captureNaturalConfirmationRequest', 'clearNaturalConfirmationRequest', 'createNaturalConfirmationBackend',
     'narrowNaturalConfirmationBackend', 'listNaturalConfirmations', 'confirmNaturalProposal', 'confirmNaturalProposals',
     'MAX_CONFIRMATION_TARGETS', 'naturalConfirmationTextAllowed',
-    'prepareConfirmationPreview', 'recordConfirmationDelivery',
+    'prepareConfirmationPreview', 'recordConfirmationDelivery', 'freezeConfirmationFacts',
     'CONFIRMATION_GATE_SCHEMA_SQL', 'buildConfirmationInstruction', 'checkApprovalGrant', 'confirmationBackendIds',
     'createPublicUuid', 'ensureConfirmationGateSchema', 'findConfirmationProposalForInbound', 'issueApprovalGrant',
     'listConfirmationProposalsForInbound', 'listPendingConfirmationProposals', 'markConfirmationProposalCommitted',

@@ -1,0 +1,2024 @@
+{
+  "base": "57fb6c9ba0a20ed7e2e9b1e7bd1901b5daf95d7d",
+  "reviewedHead": "41a3ea162fb1b240129b35b6b6c33e5363739bc7",
+  "historyCommits": 123,
+  "mainFastForwardSteps": 91,
+  "historicalBlobs": 1736,
+  "historicalSyntaxVersions": 799,
+  "actualCredentialMatches": 0,
+  "credentialValuesCompared": 3,
+  "scannerCandidates": 15,
+  "scannerDisposition": "E7 public request labels and SHA256 values; not credentials",
+  "commits": [
+    {
+      "commit": "5109951e5f50272b32888ef03ad172eccad8fa14",
+      "subject": "feat(reminder-list): support eight targets per owner message",
+      "parents": [
+        "57fb6c9ba0a20ed7e2e9b1e7bd1901b5daf95d7d"
+      ],
+      "mainPushStep": 1,
+      "changeCount": 19,
+      "scope": {
+        "文档/证据": 11,
+        "源码/运维": 5,
+        "测试": 2,
+        "配置/人格": 1
+      },
+      "historicalSyntaxVersions": 9,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "1966beb8dba100c07628cfd1901e47e0c7b70604",
+      "subject": "fix(qq): 修复 Fake-IP 图片下载并完成真人收发验收",
+      "parents": [
+        "5109951e5f50272b32888ef03ad172eccad8fa14"
+      ],
+      "mainPushStep": 2,
+      "changeCount": 11,
+      "scope": {
+        "源码/运维": 2,
+        "测试": 1,
+        "文档/证据": 8
+      },
+      "historicalSyntaxVersions": 5,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "b129a85b507da76f6dad8977eb0185e50415645f",
+      "subject": "chore(docs): 按用户授权移除 kurimi 图片及入口引用",
+      "parents": [
+        "1966beb8dba100c07628cfd1901e47e0c7b70604"
+      ],
+      "mainPushStep": 3,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "2174b8eb589d99806fe0ef796cd3c5fb6130904e",
+      "subject": "docs(reminder-list): record real QQ multi-item acceptance",
+      "parents": [
+        "1966beb8dba100c07628cfd1901e47e0c7b70604"
+      ],
+      "mainPushStep": 4,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "e71f3766479ace145ee369bbb3b8c83dafe0efc2",
+      "subject": "docs(reminder-list): consolidate rules and close N21",
+      "parents": [
+        "2174b8eb589d99806fe0ef796cd3c5fb6130904e"
+      ],
+      "mainPushStep": 4,
+      "changeCount": 9,
+      "scope": {
+        "文档/证据": 9
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "59ade80ae12540ea3c60d2ecdc90d76d0d658cf8",
+      "subject": "merge: close N21 reminder-list multi-item work",
+      "parents": [
+        "b129a85b507da76f6dad8977eb0185e50415645f",
+        "e71f3766479ace145ee369bbb3b8c83dafe0efc2"
+      ],
+      "mainPushStep": 4,
+      "changeCount": 11,
+      "scope": {
+        "文档/证据": 11
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "326eb958fa769619a313b81dfcf9f47dbdb50285",
+      "subject": "docs(e7): 记录公开接口实测与固定检索职责判断",
+      "parents": [
+        "59ade80ae12540ea3c60d2ecdc90d76d0d658cf8"
+      ],
+      "mainPushStep": 5,
+      "changeCount": 10,
+      "scope": {
+        "文档/证据": 9,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 4,
+      "redactedScannerCandidates": 9,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "99e54139d99781b50877e2657585d01280f99f2c",
+      "subject": "docs: consolidate architecture recovery and shared business guides",
+      "parents": [
+        "326eb958fa769619a313b81dfcf9f47dbdb50285"
+      ],
+      "mainPushStep": 6,
+      "changeCount": 70,
+      "scope": {
+        "文档/证据": 65,
+        "配置/人格": 2,
+        "源码/运维": 3
+      },
+      "historicalSyntaxVersions": 14,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "d8b7366a3d348addc8fb9c85e73a8c7d115d24a5",
+      "subject": "feat(confirmation): bind natural approval to delivered proposal previews",
+      "parents": [
+        "326eb958fa769619a313b81dfcf9f47dbdb50285"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 9,
+      "scope": {
+        "源码/运维": 7,
+        "测试": 1,
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "e0e2d4e08f8df530792996e4a8ca8a8247eddf7e",
+      "subject": "feat(confirmation): resolve owner approval without copying a code",
+      "parents": [
+        "d8b7366a3d348addc8fb9c85e73a8c7d115d24a5"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 56,
+      "scope": {
+        "文档/证据": 13,
+        "源码/运维": 30,
+        "测试": 11,
+        "配置/人格": 2
+      },
+      "historicalSyntaxVersions": 22,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "49973e7cf27b5ee2cede9fc275ccd90653cb66cd",
+      "subject": "fix(confirmation): require trusted tool provenance for wrapped previews",
+      "parents": [
+        "e0e2d4e08f8df530792996e4a8ca8a8247eddf7e"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 5,
+      "scope": {
+        "测试": 1,
+        "源码/运维": 1,
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "127394791cab49343329e0a0da8c07ae344a9943",
+      "subject": "docs(e7): 补充梅铃取样图片验证与其他公开内容清单",
+      "parents": [
+        "326eb958fa769619a313b81dfcf9f47dbdb50285"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 8,
+      "scope": {
+        "文档/证据": 8
+      },
+      "historicalSyntaxVersions": 3,
+      "redactedScannerCandidates": 1,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "e47a4d32a239ed3150271aa534d8dc20c3ae25bf",
+      "subject": "docs: analyze paper translation token budget failure at 00:23",
+      "parents": [
+        "59ade80ae12540ea3c60d2ecdc90d76d0d658cf8"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f3232c4ee06c051b7f93148ed4375ff897daccf9",
+      "subject": "feat(papers): default to official DeepSeek and explain failures in chat",
+      "parents": [
+        "e47a4d32a239ed3150271aa534d8dc20c3ae25bf"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 24,
+      "scope": {
+        "源码/运维": 8,
+        "测试": 5,
+        "配置/人格": 3,
+        "文档/证据": 8
+      },
+      "historicalSyntaxVersions": 15,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "4620505113a0825a2d489536f587695284cc2f43",
+      "subject": "merge: deploy paper translation default and failure explanations",
+      "parents": [
+        "127394791cab49343329e0a0da8c07ae344a9943",
+        "f3232c4ee06c051b7f93148ed4375ff897daccf9"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 27,
+      "scope": {
+        "源码/运维": 8,
+        "测试": 5,
+        "配置/人格": 3,
+        "文档/证据": 11
+      },
+      "historicalSyntaxVersions": 17,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "8d42cd967b495160652b6c5f3fb136a7d97579f2",
+      "subject": "docs(papers): record DeepSeek default and failure-notice deployment checks",
+      "parents": [
+        "4620505113a0825a2d489536f587695284cc2f43"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f60f63267ee98aebb092d24cd7c9e9c8dc3274e9",
+      "subject": "merge: preserve parallel paper changes with natural confirmation",
+      "parents": [
+        "49973e7cf27b5ee2cede9fc275ccd90653cb66cd",
+        "8d42cd967b495160652b6c5f3fb136a7d97579f2"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 34,
+      "scope": {
+        "源码/运维": 8,
+        "测试": 5,
+        "配置/人格": 3,
+        "文档/证据": 18
+      },
+      "historicalSyntaxVersions": 22,
+      "redactedScannerCandidates": 1,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "fa0eeba2d5869dbcaa55cdf969b6f7ca44fab902",
+      "subject": "docs(confirmation): align integrated paper and reminder guidance",
+      "parents": [
+        "f60f63267ee98aebb092d24cd7c9e9c8dc3274e9"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 5,
+      "scope": {
+        "源码/运维": 1,
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "ed22f8bb41be2d6ea9ac8974efb6036b101a3ba6",
+      "subject": "docs(confirmation): record production load and pending QQ acceptance",
+      "parents": [
+        "fa0eeba2d5869dbcaa55cdf969b6f7ca44fab902"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 5,
+      "scope": {
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "3175d6f4a25832b51ba71a36ad7ce762fe9c8015",
+      "subject": "docs(e7): 设计查询分类与角色视图契约",
+      "parents": [
+        "ed22f8bb41be2d6ea9ac8974efb6036b101a3ba6"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "4a01d0c5139413340cedb533124a5257fc40787f",
+      "subject": "docs(papers): record 17:03 QQ retry failure diagnosis",
+      "parents": [
+        "3175d6f4a25832b51ba71a36ad7ce762fe9c8015"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 7,
+      "scope": {
+        "文档/证据": 7
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "8f33b69f7f53b9e37f14eafcb7dd7078f725ea89",
+      "subject": "fix(papers): use DeepSeek output limit and detach background lifecycle",
+      "parents": [
+        "4a01d0c5139413340cedb533124a5257fc40787f"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 19,
+      "scope": {
+        "源码/运维": 5,
+        "测试": 5,
+        "文档/证据": 9
+      },
+      "historicalSyntaxVersions": 13,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "805c7808ad53d7d96d6dc9235786cc69c01e6bdd",
+      "subject": "docs(papers): verify deployed output limit and captured worker",
+      "parents": [
+        "8f33b69f7f53b9e37f14eafcb7dd7078f725ea89"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 5,
+      "scope": {
+        "测试": 1,
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 4,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "4f42351f3d1628529533ec254b8d9717876a188c",
+      "subject": "feat(e7): 实现首批六类只读查询与缓存",
+      "parents": [
+        "8f33b69f7f53b9e37f14eafcb7dd7078f725ea89"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 27,
+      "scope": {
+        "文档/证据": 11,
+        "源码/运维": 12,
+        "测试": 4
+      },
+      "historicalSyntaxVersions": 17,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "b048027c098e9f7629cbded310678468f19bc4e6",
+      "subject": "feat(e7): 验证真实取数并配置本人只读能力",
+      "parents": [
+        "4f42351f3d1628529533ec254b8d9717876a188c"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 23,
+      "scope": {
+        "源码/运维": 3,
+        "测试": 5,
+        "配置/人格": 4,
+        "文档/证据": 11
+      },
+      "historicalSyntaxVersions": 17,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "8c041d82d15daf63f33ca1ad89e292f08ea3231b",
+      "subject": "docs(e7): 记录生产加载与分层验收结果",
+      "parents": [
+        "b048027c098e9f7629cbded310678468f19bc4e6"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 13,
+      "scope": {
+        "文档/证据": 13
+      },
+      "historicalSyntaxVersions": 6,
+      "redactedScannerCandidates": 1,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "afe872ed9b03378846b48171d216fc3dca189da5",
+      "subject": "Merge branch 'main' into codex/paper-translation-failure-20261027",
+      "parents": [
+        "805c7808ad53d7d96d6dc9235786cc69c01e6bdd",
+        "8c041d82d15daf63f33ca1ad89e292f08ea3231b"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 49,
+      "scope": {
+        "文档/证据": 25,
+        "源码/运维": 12,
+        "测试": 8,
+        "配置/人格": 4
+      },
+      "historicalSyntaxVersions": 36,
+      "redactedScannerCandidates": 1,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "0dd547a241c671c77afbdb33f1b2ef7b18e5cc2c",
+      "subject": "docs(papers): close N22 after successful QQ translation",
+      "parents": [
+        "afe872ed9b03378846b48171d216fc3dca189da5"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 7,
+      "scope": {
+        "文档/证据": 7
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "1765d936e90c6220a60dc39dfc4338fb00096d0f",
+      "subject": "docs: verify capability boundaries and prepare E7 query expansion",
+      "parents": [
+        "0dd547a241c671c77afbdb33f1b2ef7b18e5cc2c"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 13,
+      "scope": {
+        "文档/证据": 12,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 6,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "d85a89646935dfed6a1acf944c5de77a47307ec9",
+      "subject": "Merge main updates and document local coding delegation requirements",
+      "parents": [
+        "99e54139d99781b50877e2657585d01280f99f2c",
+        "1765d936e90c6220a60dc39dfc4338fb00096d0f"
+      ],
+      "mainPushStep": 7,
+      "changeCount": 156,
+      "scope": {
+        "文档/证据": 75,
+        "源码/运维": 49,
+        "测试": 27,
+        "配置/人格": 5
+      },
+      "historicalSyntaxVersions": 96,
+      "redactedScannerCandidates": 2,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c9672b5086ebd3f0733fb13309db2bc26176bf33",
+      "subject": "docs: record local integration and coding plan verification",
+      "parents": [
+        "d85a89646935dfed6a1acf944c5de77a47307ec9"
+      ],
+      "mainPushStep": 8,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 4,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "44fa869104bf38e4efee818b8c77e2122c5b9142",
+      "subject": "docs: distinguish managed PDF naming from coding delegation",
+      "parents": [
+        "c9672b5086ebd3f0733fb13309db2bc26176bf33"
+      ],
+      "mainPushStep": 9,
+      "changeCount": 4,
+      "scope": {
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c9d3e524a83a7178d80ef53c5799d7eea0b55c5d",
+      "subject": "docs: define staged scope for local coding and host tasks",
+      "parents": [
+        "44fa869104bf38e4efee818b8c77e2122c5b9142"
+      ],
+      "mainPushStep": 10,
+      "changeCount": 4,
+      "scope": {
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "0548fe7d92904d9dbe8956759cec25334edec208",
+      "subject": "docs: confirm two-phase scope for local task delegation",
+      "parents": [
+        "c9d3e524a83a7178d80ef53c5799d7eea0b55c5d"
+      ],
+      "mainPushStep": 11,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "e51d1b813387d12387dd66282650ef75a8a66229",
+      "subject": "docs: research DSH delegation and define task worktrees",
+      "parents": [
+        "0548fe7d92904d9dbe8956759cec25334edec208"
+      ],
+      "mainPushStep": 12,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f231f1b41e05f0b52afdfd94a5ee9673be535cf2",
+      "subject": "docs: confirm isolated task baselines and merge review policy",
+      "parents": [
+        "e51d1b813387d12387dd66282650ef75a8a66229"
+      ],
+      "mainPushStep": 13,
+      "changeCount": 4,
+      "scope": {
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "548c7d450dc2786806e8c00c29faec4c33447429",
+      "subject": "feat(e7): add community builds and reviews queries",
+      "parents": [
+        "f231f1b41e05f0b52afdfd94a5ee9673be535cf2"
+      ],
+      "mainPushStep": 14,
+      "changeCount": 22,
+      "scope": {
+        "源码/运维": 6,
+        "测试": 7,
+        "文档/证据": 8,
+        "配置/人格": 1
+      },
+      "historicalSyntaxVersions": 18,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f1a5ad785673a8b4071b54d796fdd7e090922a1f",
+      "subject": "docs(e7): record phase 2A deployment and verification",
+      "parents": [
+        "548c7d450dc2786806e8c00c29faec4c33447429"
+      ],
+      "mainPushStep": 15,
+      "changeCount": 8,
+      "scope": {
+        "文档/证据": 7,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "8fa34dc8e5a271718cd2d515b6361565033475bd",
+      "subject": "docs: define autonomous coding and native approval boundaries",
+      "parents": [
+        "f1a5ad785673a8b4071b54d796fdd7e090922a1f"
+      ],
+      "mainPushStep": 16,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "e66d89c43fe3c7d3526c2776af6de0e9dd5ad402",
+      "subject": "docs(e7): accept phase 2A QQ tests with backend audit",
+      "parents": [
+        "8fa34dc8e5a271718cd2d515b6361565033475bd"
+      ],
+      "mainPushStep": 17,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "a4186c59c0a5ffc30e7eb9ca3ec17e3d0e236d16",
+      "subject": "feat(e7): add rankings and public guide FAQ queries",
+      "parents": [
+        "e66d89c43fe3c7d3526c2776af6de0e9dd5ad402"
+      ],
+      "mainPushStep": 18,
+      "changeCount": 24,
+      "scope": {
+        "源码/运维": 9,
+        "测试": 7,
+        "文档/证据": 7,
+        "配置/人格": 1
+      },
+      "historicalSyntaxVersions": 20,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "9b9d35e4ba63ea6fd9a6d4980295432dfb531a0a",
+      "subject": "docs(e7): record phase 2B deployment and verification",
+      "parents": [
+        "a4186c59c0a5ffc30e7eb9ca3ec17e3d0e236d16"
+      ],
+      "mainPushStep": 19,
+      "changeCount": 8,
+      "scope": {
+        "文档/证据": 7,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "6a84297bf116732836a5f8c2b36977744daa180d",
+      "subject": "docs: record DSH local interface and worktree pilot",
+      "parents": [
+        "9b9d35e4ba63ea6fd9a6d4980295432dfb531a0a"
+      ],
+      "mainPushStep": 20,
+      "changeCount": 8,
+      "scope": {
+        "文档/证据": 8
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "76d5030c8c884c059fca36c339cd0ba16393e984",
+      "subject": "docs: define prerequisites for QQ DSH full-flow trial",
+      "parents": [
+        "6a84297bf116732836a5f8c2b36977744daa180d"
+      ],
+      "mainPushStep": 21,
+      "changeCount": 4,
+      "scope": {
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "4ad57e19118535e4bbc0812821c7a56222dd410b",
+      "subject": "feat(coding): add disabled DSH worktree pilot and local flow verification",
+      "parents": [
+        "76d5030c8c884c059fca36c339cd0ba16393e984"
+      ],
+      "mainPushStep": 22,
+      "changeCount": 47,
+      "scope": {
+        "文档/证据": 20,
+        "源码/运维": 19,
+        "测试": 7,
+        "配置/人格": 1
+      },
+      "historicalSyntaxVersions": 30,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "b58fbacabd3e223167991da2632752ef05fa5396",
+      "subject": "docs(coding): record local integration and read-only runtime checks",
+      "parents": [
+        "4ad57e19118535e4bbc0812821c7a56222dd410b"
+      ],
+      "mainPushStep": 23,
+      "changeCount": 2,
+      "scope": {
+        "文档/证据": 2
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "9eb6eeb6690e6f8bae2f21d6bef9fc46e16a116f",
+      "subject": "feat(coding): confine approved DSH pilot and retain permission requests",
+      "parents": [
+        "b58fbacabd3e223167991da2632752ef05fa5396"
+      ],
+      "mainPushStep": 24,
+      "changeCount": 31,
+      "scope": {
+        "文档/证据": 16,
+        "源码/运维": 8,
+        "测试": 5,
+        "配置/人格": 2
+      },
+      "historicalSyntaxVersions": 19,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "15b06b6181f4811bbc372d87021f716b1c19aefd",
+      "subject": "fix(coding): route pilot requests exclusively through the scoped backend",
+      "parents": [
+        "9eb6eeb6690e6f8bae2f21d6bef9fc46e16a116f"
+      ],
+      "mainPushStep": 25,
+      "changeCount": 10,
+      "scope": {
+        "源码/运维": 2,
+        "测试": 1,
+        "配置/人格": 3,
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 6,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "ed9da4585e8aa4b2670778c943c72aaf344add83",
+      "subject": "docs(coding): record scoped deployment and real permission denial checks",
+      "parents": [
+        "15b06b6181f4811bbc372d87021f716b1c19aefd"
+      ],
+      "mainPushStep": 26,
+      "changeCount": 21,
+      "scope": {
+        "文档/证据": 19,
+        "配置/人格": 2
+      },
+      "historicalSyntaxVersions": 7,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "b4f2102e40cc3fd0c761b076566940aa61c28ec1",
+      "subject": "docs(coding): close scoped deployment checks and record read-only follow-up",
+      "parents": [
+        "ed9da4585e8aa4b2670778c943c72aaf344add83"
+      ],
+      "mainPushStep": 27,
+      "changeCount": 2,
+      "scope": {
+        "文档/证据": 2
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "9ecc6873748ca84c27af55d1098924a1aafacbcf",
+      "subject": "docs(e7): audit QQ retrieval and delivery gaps on October 30",
+      "parents": [
+        "b4f2102e40cc3fd0c761b076566940aa61c28ec1"
+      ],
+      "mainPushStep": 28,
+      "changeCount": 11,
+      "scope": {
+        "文档/证据": 11
+      },
+      "historicalSyntaxVersions": 4,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "9af1968d011d337b6c8af163a2a34ae7b52d98f8",
+      "subject": "chore: record the current deployed Fusion source baseline",
+      "parents": [
+        "9ecc6873748ca84c27af55d1098924a1aafacbcf"
+      ],
+      "mainPushStep": 29,
+      "changeCount": 81,
+      "scope": {
+        "文档/证据": 48,
+        "源码/运维": 18,
+        "测试": 11,
+        "配置/人格": 4
+      },
+      "historicalSyntaxVersions": 54,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "9c9cf9f00c6fabcaf9e0c991dc9f29863aa1053a",
+      "subject": "fix(coding): persist task outputs and deliver trusted results",
+      "parents": [
+        "b4f2102e40cc3fd0c761b076566940aa61c28ec1"
+      ],
+      "mainPushStep": 30,
+      "changeCount": 34,
+      "scope": {
+        "源码/运维": 11,
+        "测试": 4,
+        "配置/人格": 3,
+        "文档/证据": 16
+      },
+      "historicalSyntaxVersions": 20,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "2cc1984ddc9286149001a6525a28664102a8031a",
+      "subject": "fix(coding): replace policy fingerprint with current task checks",
+      "parents": [
+        "9c9cf9f00c6fabcaf9e0c991dc9f29863aa1053a"
+      ],
+      "mainPushStep": 30,
+      "changeCount": 27,
+      "scope": {
+        "源码/运维": 6,
+        "测试": 2,
+        "文档/证据": 19
+      },
+      "historicalSyntaxVersions": 15,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c31b5039d726cd932657613f445c81390c783da0",
+      "subject": "feat: enable owner exec within pilot write boundary",
+      "parents": [
+        "2cc1984ddc9286149001a6525a28664102a8031a"
+      ],
+      "mainPushStep": 30,
+      "changeCount": 34,
+      "scope": {
+        "文档/证据": 21,
+        "源码/运维": 7,
+        "测试": 2,
+        "配置/人格": 4
+      },
+      "historicalSyntaxVersions": 19,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "49a8f6e54685cd9b155c5602e6ded6cadf374e7b",
+      "subject": "fix: accept native exec display titles",
+      "parents": [
+        "c31b5039d726cd932657613f445c81390c783da0"
+      ],
+      "mainPushStep": 30,
+      "changeCount": 16,
+      "scope": {
+        "源码/运维": 2,
+        "测试": 2,
+        "文档/证据": 12
+      },
+      "historicalSyntaxVersions": 9,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "9b6bbdc15b1ae010c1cf7ef77c572b8315a2aa24",
+      "subject": "merge: reconcile the already deployed coding branch history",
+      "parents": [
+        "9af1968d011d337b6c8af163a2a34ae7b52d98f8",
+        "49a8f6e54685cd9b155c5602e6ded6cadf374e7b"
+      ],
+      "mainPushStep": 30,
+      "changeCount": 0,
+      "scope": {},
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "7a52add5c2083b396aedbc93861d6b90ae1de4ce",
+      "subject": "docs(memory): start N2 memory design record with decisions D01-D14",
+      "parents": [
+        "9ecc6873748ca84c27af55d1098924a1aafacbcf"
+      ],
+      "mainPushStep": 31,
+      "changeCount": 1,
+      "scope": {
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f5e94592df214ed0edd0f5fd3e204d76fcced22b",
+      "subject": "docs(memory): confirm P01-P06 as D15 and list open questions",
+      "parents": [
+        "7a52add5c2083b396aedbc93861d6b90ae1de4ce"
+      ],
+      "mainPushStep": 31,
+      "changeCount": 1,
+      "scope": {
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "78a509a2f2f8bc882642b92ad5c1cab3f412eb86",
+      "subject": "docs(memory): add doc 29 memory system design and register it",
+      "parents": [
+        "f5e94592df214ed0edd0f5fd3e204d76fcced22b"
+      ],
+      "mainPushStep": 31,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f2f21b2658304c6c4c96714f868f09318f8e16eb",
+      "subject": "merge: preserve the approved memory-system design without deployment",
+      "parents": [
+        "9b6bbdc15b1ae010c1cf7ef77c572b8315a2aa24",
+        "78a509a2f2f8bc882642b92ad5c1cab3f412eb86"
+      ],
+      "mainPushStep": 31,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f28f1c37eddf1a0303b92095e5fa88d98e96a339",
+      "subject": "docs: freeze the approved proactive wake design before consolidation",
+      "parents": [
+        "8f33b69f7f53b9e37f14eafcb7dd7078f725ea89"
+      ],
+      "mainPushStep": 32,
+      "changeCount": 13,
+      "scope": {
+        "文档/证据": 12,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "7c04927aeed3bca037b448fc716586961e36bd15",
+      "subject": "merge: preserve the approved proactive design without implementation",
+      "parents": [
+        "f2f21b2658304c6c4c96714f868f09318f8e16eb",
+        "f28f1c37eddf1a0303b92095e5fa88d98e96a339"
+      ],
+      "mainPushStep": 32,
+      "changeCount": 13,
+      "scope": {
+        "文档/证据": 12,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c0ea00c81c81741a8082aba86a26c0f79ce6304c",
+      "subject": "docs: freeze the unified expression and notification design",
+      "parents": [
+        "8f33b69f7f53b9e37f14eafcb7dd7078f725ea89"
+      ],
+      "mainPushStep": 33,
+      "changeCount": 5,
+      "scope": {
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "522f5d5aaa5cbab1e15b1a178a15e5ceb264d885",
+      "subject": "merge: preserve the unified expression design without implementation",
+      "parents": [
+        "7c04927aeed3bca037b448fc716586961e36bd15",
+        "c0ea00c81c81741a8082aba86a26c0f79ce6304c"
+      ],
+      "mainPushStep": 33,
+      "changeCount": 5,
+      "scope": {
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "7b1734252ebc4ab31531f9d9ea0b1b2807aa4e0b",
+      "subject": "chore: anchor maintenance in the global handbook and respect repository scan boundaries",
+      "parents": [
+        "522f5d5aaa5cbab1e15b1a178a15e5ceb264d885"
+      ],
+      "mainPushStep": 34,
+      "changeCount": 9,
+      "scope": {
+        "文档/证据": 7,
+        "源码/运维": 1,
+        "测试": 1
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c849e63cfeffa68daa38b2c7ae84be14c5d36e52",
+      "subject": "chore: retire obsolete development copies and bound runtime retention",
+      "parents": [
+        "7b1734252ebc4ab31531f9d9ea0b1b2807aa4e0b"
+      ],
+      "mainPushStep": 35,
+      "changeCount": 34,
+      "scope": {
+        "文档/证据": 8,
+        "配置/人格": 3,
+        "源码/运维": 22,
+        "测试": 1
+      },
+      "historicalSyntaxVersions": 8,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "5d5d69783a77a7c77c7f29d6631202a6f4cf6ee1",
+      "subject": "docs: retain conclusions and move generated evidence out of the active tree",
+      "parents": [
+        "c849e63cfeffa68daa38b2c7ae84be14c5d36e52"
+      ],
+      "mainPushStep": 36,
+      "changeCount": 799,
+      "scope": {
+        "测试": 4,
+        "文档/证据": 794,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 4,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "786bb7eb62fd3eac83b586e3122caf69fa516b3a",
+      "subject": "Unify v3 recovery inputs and isolate restored coding dependencies",
+      "parents": [
+        "5d5d69783a77a7c77c7f29d6631202a6f4cf6ee1"
+      ],
+      "mainPushStep": 37,
+      "changeCount": 32,
+      "scope": {
+        "文档/证据": 5,
+        "源码/运维": 23,
+        "配置/人格": 1,
+        "测试": 3
+      },
+      "historicalSyntaxVersions": 24,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "ce9835f9724c860b07155e25b5572d442f4d8515",
+      "subject": "Make the host SDK peer explicit in reproducible QQ installs",
+      "parents": [
+        "786bb7eb62fd3eac83b586e3122caf69fa516b3a"
+      ],
+      "mainPushStep": 38,
+      "changeCount": 3,
+      "scope": {
+        "源码/运维": 2,
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "2e6187dfeced8b8350d6c3e8b5f92d532b155a22",
+      "subject": "Adapt Fusion contracts to OpenClaw 2026.11.1 with isolated rehearsal",
+      "parents": [
+        "ce9835f9724c860b07155e25b5572d442f4d8515"
+      ],
+      "mainPushStep": 39,
+      "changeCount": 21,
+      "scope": {
+        "文档/证据": 5,
+        "源码/运维": 7,
+        "测试": 7,
+        "配置/人格": 2
+      },
+      "historicalSyntaxVersions": 14,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "90a02a6e213b3179b9a152ab36255419dd2987c6",
+      "subject": "Pin the extracted DeepSeek provider and rehearse official database migration",
+      "parents": [
+        "2e6187dfeced8b8350d6c3e8b5f92d532b155a22"
+      ],
+      "mainPushStep": 40,
+      "changeCount": 11,
+      "scope": {
+        "测试": 2,
+        "配置/人格": 5,
+        "文档/证据": 2,
+        "源码/运维": 2
+      },
+      "historicalSyntaxVersions": 8,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "417aeb4e078612cdefab5851ec84136400965c28",
+      "subject": "Close the verified core cutover and retire obsolete retrieval harnesses",
+      "parents": [
+        "90a02a6e213b3179b9a152ab36255419dd2987c6"
+      ],
+      "mainPushStep": 41,
+      "changeCount": 13,
+      "scope": {
+        "文档/证据": 5,
+        "测试": 5,
+        "配置/人格": 1,
+        "源码/运维": 2
+      },
+      "historicalSyntaxVersions": 3,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "fc51cebb1e4dc1a105a950e6385a23ed2fd5b36c",
+      "subject": "Record the restored and verified upgraded recovery point",
+      "parents": [
+        "417aeb4e078612cdefab5851ec84136400965c28"
+      ],
+      "mainPushStep": 42,
+      "changeCount": 1,
+      "scope": {
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "4400260cca4fb1e76b000e23f9fc4445f708de0f",
+      "subject": "fix: keep direct tools for Code Mode preferred models",
+      "parents": [
+        "fc51cebb1e4dc1a105a950e6385a23ed2fd5b36c"
+      ],
+      "mainPushStep": 43,
+      "changeCount": 6,
+      "scope": {
+        "测试": 1,
+        "配置/人格": 2,
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "160406d64ee55eef5aa20b7aa870f4e8d76c6a54",
+      "subject": "docs: record corrected recovery point and scheduled checks",
+      "parents": [
+        "4400260cca4fb1e76b000e23f9fc4445f708de0f"
+      ],
+      "mainPushStep": 44,
+      "changeCount": 2,
+      "scope": {
+        "文档/证据": 2
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "7ce03df06cbfe46786d456cfa4152fc4684e7962",
+      "subject": "docs: close weather acceptance and Fusion consolidation",
+      "parents": [
+        "160406d64ee55eef5aa20b7aa870f4e8d76c6a54"
+      ],
+      "mainPushStep": 45,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "6d7b72906695955e61ee6c3c08df092ab1a76a27",
+      "subject": "docs: record final retirement of legacy DSH copies",
+      "parents": [
+        "7ce03df06cbfe46786d456cfa4152fc4684e7962"
+      ],
+      "mainPushStep": 46,
+      "changeCount": 1,
+      "scope": {
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "cf32a1c524afa00b9d5a528693d1513d9db75ede",
+      "subject": "fix: reconcile logs, confirmations, forgetting and FAQ lookup",
+      "parents": [
+        "6d7b72906695955e61ee6c3c08df092ab1a76a27"
+      ],
+      "mainPushStep": 47,
+      "changeCount": 53,
+      "scope": {
+        "源码/运维": 28,
+        "测试": 11,
+        "文档/证据": 14
+      },
+      "historicalSyntaxVersions": 28,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "686ac758d0c4bda3de0ace7258e6c2ccaee5f857",
+      "subject": "docs: record four scoped fixes and remaining acceptance",
+      "parents": [
+        "cf32a1c524afa00b9d5a528693d1513d9db75ede"
+      ],
+      "mainPushStep": 48,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "13f74a73b7a919a3873290d1b09de0c9bd2f739a",
+      "subject": "chore: scope Fusion backups and collect unreferenced artifacts",
+      "parents": [
+        "686ac758d0c4bda3de0ace7258e6c2ccaee5f857"
+      ],
+      "mainPushStep": 49,
+      "changeCount": 15,
+      "scope": {
+        "文档/证据": 7,
+        "源码/运维": 6,
+        "测试": 2
+      },
+      "historicalSyntaxVersions": 8,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "3259a550dae0cb2749e334cc07310d467b958b74",
+      "subject": "fix: preserve Fusion execution fence as an independent recovery dependency",
+      "parents": [
+        "13f74a73b7a919a3873290d1b09de0c9bd2f739a"
+      ],
+      "mainPushStep": 50,
+      "changeCount": 11,
+      "scope": {
+        "文档/证据": 4,
+        "源码/运维": 5,
+        "测试": 2
+      },
+      "historicalSyntaxVersions": 7,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "256ce5adec6cbcd6a30e463c2f8ac711039d0fd3",
+      "subject": "fix: verify Fusion independently of external coding backend availability",
+      "parents": [
+        "3259a550dae0cb2749e334cc07310d467b958b74"
+      ],
+      "mainPushStep": 51,
+      "changeCount": 4,
+      "scope": {
+        "文档/证据": 2,
+        "源码/运维": 2
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "aa852e7cd8cfe73a07531431f883a06d48003545",
+      "subject": "docs: record verified Fusion-only recovery and development readiness boundaries",
+      "parents": [
+        "256ce5adec6cbcd6a30e463c2f8ac711039d0fd3"
+      ],
+      "mainPushStep": 52,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "6865d01dc31c924fc4fa1984b68f8651392bba85",
+      "subject": "feat: reconcile interrupted coding tasks and own the execution fence dependency",
+      "parents": [
+        "aa852e7cd8cfe73a07531431f883a06d48003545"
+      ],
+      "mainPushStep": 53,
+      "changeCount": 39,
+      "scope": {
+        "源码/运维": 14,
+        "测试": 10,
+        "配置/人格": 4,
+        "文档/证据": 11
+      },
+      "historicalSyntaxVersions": 31,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "4cb3f7bf03242f5f6c01393f4d699ca5a81e0f17",
+      "subject": "feat: add reviewed non-Git experiment writeback",
+      "parents": [
+        "6865d01dc31c924fc4fa1984b68f8651392bba85"
+      ],
+      "mainPushStep": 54,
+      "changeCount": 16,
+      "scope": {
+        "源码/运维": 8,
+        "测试": 3,
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 12,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "2a1e494f4c34f01e948b0cb19cb68d424c3a3d1a",
+      "subject": "feat: implement opt-in provenance-based memory records and raw recall",
+      "parents": [
+        "4cb3f7bf03242f5f6c01393f4d699ca5a81e0f17"
+      ],
+      "mainPushStep": 55,
+      "changeCount": 30,
+      "scope": {
+        "文档/证据": 10,
+        "源码/运维": 17,
+        "测试": 2,
+        "配置/人格": 1
+      },
+      "historicalSyntaxVersions": 21,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "b1deafe606991c873114000945a8a036918d8186",
+      "subject": "feat: add versioned managed PDF display-name maintenance",
+      "parents": [
+        "2a1e494f4c34f01e948b0cb19cb68d424c3a3d1a"
+      ],
+      "mainPushStep": 56,
+      "changeCount": 15,
+      "scope": {
+        "源码/运维": 5,
+        "测试": 3,
+        "文档/证据": 7
+      },
+      "historicalSyntaxVersions": 9,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "14543111ac512ebd70e864093979ded65de1ec20",
+      "subject": "feat: unify assistant notices, immutable confirmation facts and visible progress",
+      "parents": [
+        "b1deafe606991c873114000945a8a036918d8186"
+      ],
+      "mainPushStep": 57,
+      "changeCount": 68,
+      "scope": {
+        "源码/运维": 36,
+        "测试": 15,
+        "文档/证据": 17
+      },
+      "historicalSyntaxVersions": 36,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "bce32b3446c56695ec58a41e3d8f23a97a4bd27f",
+      "subject": "feat: add bounded read-only diagnostics and independently verify E7 and member isolation",
+      "parents": [
+        "14543111ac512ebd70e864093979ded65de1ec20"
+      ],
+      "mainPushStep": 58,
+      "changeCount": 31,
+      "scope": {
+        "源码/运维": 16,
+        "测试": 5,
+        "文档/证据": 10
+      },
+      "historicalSyntaxVersions": 24,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "dfb8987841de13cd21f4bd18855b340e21a50968",
+      "subject": "fix: send ordinary QQ replies without implicit quotes and align memory template",
+      "parents": [
+        "bce32b3446c56695ec58a41e3d8f23a97a4bd27f"
+      ],
+      "mainPushStep": 59,
+      "changeCount": 14,
+      "scope": {
+        "源码/运维": 4,
+        "测试": 1,
+        "配置/人格": 4,
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 7,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c6e3d99d2a1edac9af2befad99d6a53c61e60a5d",
+      "subject": "feat: query scoped full QQ message records without exporting private envelopes",
+      "parents": [
+        "dfb8987841de13cd21f4bd18855b340e21a50968"
+      ],
+      "mainPushStep": 60,
+      "changeCount": 8,
+      "scope": {
+        "源码/运维": 4,
+        "文档/证据": 3,
+        "测试": 1
+      },
+      "historicalSyntaxVersions": 5,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "5d2eae321c45e3319af3f813b415368f0b44bad0",
+      "subject": "Complete authorized E7 gameplay and valuation read queries",
+      "parents": [
+        "c6e3d99d2a1edac9af2befad99d6a53c61e60a5d"
+      ],
+      "mainPushStep": 61,
+      "changeCount": 22,
+      "scope": {
+        "源码/运维": 8,
+        "测试": 7,
+        "文档/证据": 7
+      },
+      "historicalSyntaxVersions": 17,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "6e94a19a900bdeca7a95a096f4dd472da8d00785",
+      "subject": "Record final autonomous development deployment and validation",
+      "parents": [
+        "5d2eae321c45e3319af3f813b415368f0b44bad0"
+      ],
+      "mainPushStep": 62,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "fd49448aa81e0d49b03448f12b4515a839431d53",
+      "subject": "Close autonomous work with verified recovery and fixture retirement",
+      "parents": [
+        "6e94a19a900bdeca7a95a096f4dd472da8d00785"
+      ],
+      "mainPushStep": 63,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c7f071c22532fb425ed46751efbe56bcc67490f0",
+      "subject": "Align current overviews with implemented behavior and activation boundaries",
+      "parents": [
+        "fd49448aa81e0d49b03448f12b4515a839431d53"
+      ],
+      "mainPushStep": 64,
+      "changeCount": 8,
+      "scope": {
+        "文档/证据": 8
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "1aa9306e77fe66bfba5dd89d2cfe4da955975b6f",
+      "subject": "Verify natural confirmation with the current model and isolated Gateway",
+      "parents": [
+        "c7f071c22532fb425ed46751efbe56bcc67490f0"
+      ],
+      "mainPushStep": 65,
+      "changeCount": 7,
+      "scope": {
+        "测试": 1,
+        "文档/证据": 4,
+        "源码/运维": 1,
+        "配置/人格": 1
+      },
+      "historicalSyntaxVersions": 3,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "d1a4560bc917fe16ede16499bc093cce456f0b94",
+      "subject": "fix: present scheduled reminder list facts once after a natural opening",
+      "parents": [
+        "1aa9306e77fe66bfba5dd89d2cfe4da955975b6f"
+      ],
+      "mainPushStep": 66,
+      "changeCount": 7,
+      "scope": {
+        "源码/运维": 1,
+        "测试": 1,
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 3,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "57c4608b914a7cf7da1e6cb99e4159ccd81eb487",
+      "subject": "test: record live 17:00 list notice and restore the 18:00 schedule",
+      "parents": [
+        "d1a4560bc917fe16ede16499bc093cce456f0b94"
+      ],
+      "mainPushStep": 67,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "7cadee95719d822c0294eaebc84eebb9cd552ec3",
+      "subject": "feat: enable owner managed PDF name maintenance",
+      "parents": [
+        "57c4608b914a7cf7da1e6cb99e4159ccd81eb487"
+      ],
+      "mainPushStep": 68,
+      "changeCount": 3,
+      "scope": {
+        "配置/人格": 1,
+        "文档/证据": 2
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "40db1528e5a5e4b182788995a32346e182378b03",
+      "subject": "docs: record PDF rename activation and file-operation boundaries",
+      "parents": [
+        "7cadee95719d822c0294eaebc84eebb9cd552ec3"
+      ],
+      "mainPushStep": 69,
+      "changeCount": 7,
+      "scope": {
+        "文档/证据": 7
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "89fde76a58412952ee0fc378c03f10fa4f4b7bce",
+      "subject": "feat: support registered directories for daily file management",
+      "parents": [
+        "40db1528e5a5e4b182788995a32346e182378b03"
+      ],
+      "mainPushStep": 70,
+      "changeCount": 23,
+      "scope": {
+        "源码/运维": 7,
+        "测试": 5,
+        "配置/人格": 2,
+        "文档/证据": 9
+      },
+      "historicalSyntaxVersions": 13,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "0f836bd0cdc2bc1bf91f0d6897036686149af183",
+      "subject": "docs: record daily file management verification and base deployment",
+      "parents": [
+        "89fde76a58412952ee0fc378c03f10fa4f4b7bce"
+      ],
+      "mainPushStep": 71,
+      "changeCount": 3,
+      "scope": {
+        "文档/证据": 3
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "52de52fff27d07baa5013539c7a62bc8098d67ec",
+      "subject": "feat: enable owner file management in Downloads and Documents",
+      "parents": [
+        "0f836bd0cdc2bc1bf91f0d6897036686149af183"
+      ],
+      "mainPushStep": 72,
+      "changeCount": 3,
+      "scope": {
+        "配置/人格": 2,
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "9b98c9c3fbb6e4f0c6bfda71d94fac503ccf0bc8",
+      "subject": "docs: verify and record owner Downloads and Documents activation",
+      "parents": [
+        "52de52fff27d07baa5013539c7a62bc8098d67ec"
+      ],
+      "mainPushStep": 73,
+      "changeCount": 9,
+      "scope": {
+        "文档/证据": 9
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "bf9837f3c70bc677ceeaf612ea4bbbd1f2d51abd",
+      "subject": "feat(proactive): add disabled wake authority and durable execution foundation",
+      "parents": [
+        "9b98c9c3fbb6e4f0c6bfda71d94fac503ccf0bc8"
+      ],
+      "mainPushStep": 74,
+      "changeCount": 19,
+      "scope": {
+        "源码/运维": 6,
+        "测试": 2,
+        "配置/人格": 1,
+        "文档/证据": 10
+      },
+      "historicalSyntaxVersions": 10,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c2a9b7cbbf2febd667904347c138f54cb2f0e399",
+      "subject": "feat(proactive): add optional foreground lifecycle cancellation",
+      "parents": [
+        "bf9837f3c70bc677ceeaf612ea4bbbd1f2d51abd"
+      ],
+      "mainPushStep": 75,
+      "changeCount": 18,
+      "scope": {
+        "源码/运维": 6,
+        "测试": 2,
+        "文档/证据": 10
+      },
+      "historicalSyntaxVersions": 10,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "ff4206d7fdd04fa4c53acaccd148a902f1df7adf",
+      "subject": "feat(logs): add owner-only bounded diagnostic query tool",
+      "parents": [
+        "c2a9b7cbbf2febd667904347c138f54cb2f0e399"
+      ],
+      "mainPushStep": 76,
+      "changeCount": 28,
+      "scope": {
+        "源码/运维": 12,
+        "测试": 3,
+        "配置/人格": 4,
+        "文档/证据": 9
+      },
+      "historicalSyntaxVersions": 18,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "8edfa924c01df905852550210dc229e3539cd0cb",
+      "subject": "docs(logs): record activation boundary and current production checks",
+      "parents": [
+        "ff4206d7fdd04fa4c53acaccd148a902f1df7adf"
+      ],
+      "mainPushStep": 77,
+      "changeCount": 1,
+      "scope": {
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "993195edbe6eb2f5f24e44b15c7c3567475d73b0",
+      "subject": "docs(logs): record owner approval to activate diagnostic tool",
+      "parents": [
+        "8edfa924c01df905852550210dc229e3539cd0cb"
+      ],
+      "mainPushStep": 78,
+      "changeCount": 2,
+      "scope": {
+        "文档/证据": 2
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "12c09ee224c69c6fd94b11b5bb0cc43a3b4594f6",
+      "subject": "docs(logs): record production activation and pending QQ acceptance",
+      "parents": [
+        "993195edbe6eb2f5f24e44b15c7c3567475d73b0"
+      ],
+      "mainPushStep": 79,
+      "changeCount": 8,
+      "scope": {
+        "配置/人格": 1,
+        "文档/证据": 7
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "257ac77ac24c3bca0215207875096c1999b2c299",
+      "subject": "feat(proactive): complete fixed-period owner autonomy wiring",
+      "parents": [
+        "12c09ee224c69c6fd94b11b5bb0cc43a3b4594f6"
+      ],
+      "mainPushStep": 80,
+      "changeCount": 56,
+      "scope": {
+        "文档/证据": 22,
+        "源码/运维": 27,
+        "测试": 5,
+        "配置/人格": 2
+      },
+      "historicalSyntaxVersions": 33,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "f79a2047dc374fcf90aff1e37a7400a5adce2936",
+      "subject": "fix(logs): resolve backend from deployment root after plugin capture",
+      "parents": [
+        "257ac77ac24c3bca0215207875096c1999b2c299"
+      ],
+      "mainPushStep": 81,
+      "changeCount": 17,
+      "scope": {
+        "源码/运维": 5,
+        "测试": 2,
+        "配置/人格": 2,
+        "文档/证据": 8
+      },
+      "historicalSyntaxVersions": 12,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "09d3c0edfecf21716068a4858bb8f54c46c55a9a",
+      "subject": "docs(logs): record captured-backend repair deployment and QQ retry",
+      "parents": [
+        "f79a2047dc374fcf90aff1e37a7400a5adce2936"
+      ],
+      "mainPushStep": 82,
+      "changeCount": 6,
+      "scope": {
+        "文档/证据": 6
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "b2a0fbb837d4b40f24f1b7c77a0390b700c6d132",
+      "subject": "docs(memory): locate host bootstrap implementation by symbols",
+      "parents": [
+        "09d3c0edfecf21716068a4858bb8f54c46c55a9a"
+      ],
+      "mainPushStep": 83,
+      "changeCount": 1,
+      "scope": {
+        "文档/证据": 1
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "8eff6768d7e4fc1569b5b5033952648ed674fc0c",
+      "subject": "test(proactive): verify persona bootstrap at model boundary",
+      "parents": [
+        "b2a0fbb837d4b40f24f1b7c77a0390b700c6d132"
+      ],
+      "mainPushStep": 84,
+      "changeCount": 5,
+      "scope": {
+        "测试": 1,
+        "文档/证据": 4
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "e8ec69ffc3bb9ba6ed32962fdb1977ab2fa63c6c",
+      "subject": "feat(logs): enable complete owner diagnostics and contextual search",
+      "parents": [
+        "8eff6768d7e4fc1569b5b5033952648ed674fc0c"
+      ],
+      "mainPushStep": 85,
+      "changeCount": 28,
+      "scope": {
+        "源码/运维": 12,
+        "测试": 3,
+        "配置/人格": 2,
+        "文档/证据": 11
+      },
+      "historicalSyntaxVersions": 19,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "7729bca6ea550c277451cb7f2fbbfd01820ee7a8",
+      "subject": "docs(logs): record expanded diagnostics deployment and QQ verification boundary",
+      "parents": [
+        "e8ec69ffc3bb9ba6ed32962fdb1977ab2fa63c6c"
+      ],
+      "mainPushStep": 86,
+      "changeCount": 7,
+      "scope": {
+        "文档/证据": 7
+      },
+      "historicalSyntaxVersions": 1,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "8317654e227285c037f9896d3523c35b69e46892",
+      "subject": "docs(logs): verify QQ diagnosis and record missing diagnostics",
+      "parents": [
+        "7729bca6ea550c277451cb7f2fbbfd01820ee7a8"
+      ],
+      "mainPushStep": 87,
+      "changeCount": 5,
+      "scope": {
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "c28dd9253919e6978da69524186ed0a040513205",
+      "subject": "test(logs): baseline real model diagnostic workflows and define fixes",
+      "parents": [
+        "8317654e227285c037f9896d3523c35b69e46892"
+      ],
+      "mainPushStep": 88,
+      "changeCount": 16,
+      "scope": {
+        "测试": 1,
+        "文档/证据": 14,
+        "源码/运维": 1
+      },
+      "historicalSyntaxVersions": 10,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "ef2496a744879764f193a95b23b0fc91005efed0",
+      "subject": "Preserve failure diagnostics and improve log query navigation",
+      "parents": [
+        "c28dd9253919e6978da69524186ed0a040513205"
+      ],
+      "mainPushStep": 89,
+      "changeCount": 41,
+      "scope": {
+        "源码/运维": 12,
+        "测试": 8,
+        "配置/人格": 2,
+        "文档/证据": 19
+      },
+      "historicalSyntaxVersions": 33,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "519ae22a9b78528aac2cd1ae290ecd226cdaaa88",
+      "subject": "Record diagnostic deployment and consolidate current status",
+      "parents": [
+        "ef2496a744879764f193a95b23b0fc91005efed0"
+      ],
+      "mainPushStep": 90,
+      "changeCount": 9,
+      "scope": {
+        "配置/人格": 1,
+        "文档/证据": 8
+      },
+      "historicalSyntaxVersions": 2,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    },
+    {
+      "commit": "41a3ea162fb1b240129b35b6b6c33e5363739bc7",
+      "subject": "docs: close owner log query and diagnostic phase",
+      "parents": [
+        "519ae22a9b78528aac2cd1ae290ecd226cdaaa88"
+      ],
+      "mainPushStep": 91,
+      "changeCount": 5,
+      "scope": {
+        "文档/证据": 5
+      },
+      "historicalSyntaxVersions": 0,
+      "redactedScannerCandidates": 0,
+      "decision": "reviewed; included in final validation gate"
+    }
+  ]
+}

@@ -103,7 +103,9 @@ test('Revocation during explanation, cancellation and an unknown send receipt ne
   const {calls,deps}=setup();let permitted=true;
   deps.authorize=()=>{if(!permitted)throw Error('revoked');};
   deps.runtime.agent.runEmbeddedAgent=async()=>{permitted=false;return{payloads:[{text:'result '+jobId}]};};
-  await assert.rejects(createFailureNotifier(deps)(failureSummary(failed()),jobId,binding),/revoked/);assert.equal(calls.sends.length,0);
+  await assert.rejects(createFailureNotifier(deps)(failureSummary(failed()),jobId,binding), error => {
+    assert.equal(error.code,'assistant_notice_run_failed');assert.equal(error.cause?.message,'revoked');return true;
+  });assert.equal(calls.sends.length,0);
   const stopped=new AbortController();stopped.abort();
   await assert.rejects(createFailureNotifier(deps)(failureSummary(failed()),jobId,binding,stopped.signal));
   const lost=setup();lost.deps.sendText=async args=>{lost.calls.sends.push(args);throw Error('receipt lost');};

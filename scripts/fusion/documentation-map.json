@@ -600,6 +600,15 @@
   ],
   "evidenceOwners": [
     {
+      "prefix": "pre-push-2026-11-11/",
+      "documents": [
+        "docs/12_目录资产与Git备份整理.md",
+        "docs/16_验收与测试总表.md",
+        "docs/21_后端职责分层与代码整理.md"
+      ],
+      "category": "当前有效"
+    },
+    {
       "prefix": "proactive-runtime-2026-11-10/",
       "documents": [
         "docs/25_人格、记忆与会话连续性.md",

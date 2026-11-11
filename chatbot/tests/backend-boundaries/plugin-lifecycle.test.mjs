@@ -31,6 +31,7 @@ const bundles = fs.readdirSync(dist).filter(name => /^services-.*\.mjs$/.test(na
   && fs.readFileSync(path.join(dist, name), 'utf8').includes('function startPluginServices('));
 assert.equal(bundles.length, 1, 'Installed OpenClaw service manager layout changed; update this integration test');
 const manager = await import(pathToFileURL(path.join(dist, bundles[0])).href);
+const {GatewayScheduler} = await import(pathToFileURL(path.join(dist, 'infra/gateway-scheduler.js')).href);
 const startPluginServices = Object.values(manager).find(value => typeof value === 'function' && value.name === 'startPluginServices');
 assert.equal(typeof startPluginServices, 'function');
 const {createPaperPlugin} = await import('../../plugins/kurumi-papers/index.js');
@@ -50,7 +51,7 @@ function servicesOf(plugin, pluginConfig = {}, logger = {info() {}}) {
   return services;
 }
 function start(services) {
-  return startPluginServices({config, workspaceDir: root, throwOnStartError: true,
+  return startPluginServices({scheduler: new GatewayScheduler(), config, workspaceDir: root, throwOnStartError: true,
     registry: {plugins: [], services: services.map(service => ({pluginId: service.id, id: service.id, service}))}});
 }
 

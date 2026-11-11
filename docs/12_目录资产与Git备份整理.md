@@ -21,7 +21,7 @@ Fusion执行隔离原生包固定在`.openclaw-fusion/tools/node-addon-system-li
 
 ## Git 与实时状态查询
 
-日常在唯一主目录核对 `git status --short`、`git log -1`、`git worktree list`。配置/人格/依赖/服务健康只证明部署对齐，不证明已提交或推送。远端写入须用户明确授权；本轮不push。冻结标签只表示成果可恢复，不表示已经合入或部署。
+日常在唯一主目录核对 `git status --short`、`git log -1`、`git worktree list`。配置/人格/依赖/服务健康只证明部署对齐，不证明已提交或推送。远端写入须用户明确授权，执行结果以全局手册和真实远端引用为准；2026-11-11专项见[逐项审查](verification/pre-push-2026-11-11/README.md)。冻结标签只表示成果可恢复，不表示已经合入或部署。
 
 读取远端时避免输出带凭据的URL；`git ls-remote`只证明可读及返回引用，仍不证明当前未提交文件已保存。
 
