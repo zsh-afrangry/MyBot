@@ -1,5 +1,5 @@
 // Natural language -> real automations -> due agentTurn -> owner QQ.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
@@ -12,7 +12,7 @@ const event={post_type:'message',message_type:'private',self_id:login.user_id,us
 try{
  report.reply=await rpc('kurumi-qq.testInbound',{event,capture:true},120000);
  const jobs=await rpc('cron.list',{includeDisabled:true});const job=jobs.jobs.find(j=>j.name==='kurumi.fusion.natural-due');assert(job,'Native task not found');report.job=job;
- fs.writeFileSync('docs/verification/fusion/13-natural-reminder-delivery.json',JSON.stringify(report,null,2));
+ fs.writeFileSync('test-output/13-natural-reminder-delivery.json',JSON.stringify(report,null,2));
  for(let i=0;i<36;i++){
   const runs=await rpc('cron.runs',{id:job.id,limit:5});
   if(runs.entries?.length){report.runs=runs;break;}
@@ -21,4 +21,4 @@ try{
  assert(report.runs?.entries?.some(r=>r.status==='ok'&&r.deliveryStatus==='delivered'),'No successful due delivery');report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
 finally{if(report.job){const remaining=await rpc('cron.list',{includeDisabled:true});if(remaining.jobs?.some(j=>j.id===report.job.id))report.cleanup=await rpc('cron.remove',{id:report.job.id});}}
-fs.writeFileSync('docs/verification/fusion/13-natural-reminder-delivery.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+fs.writeFileSync('test-output/13-natural-reminder-delivery.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

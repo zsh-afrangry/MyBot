@@ -1,5 +1,5 @@
 // Public paper lookup through real Host native tools; no QQ output or memory writes.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
@@ -18,4 +18,4 @@ try{
  assert(/Lewis/i.test(text)&&text.includes('2020')&&text.includes('2005.11401'));
  report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
-fs.writeFileSync('docs/verification/fusion/15-research.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+fs.writeFileSync('test-output/15-research.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

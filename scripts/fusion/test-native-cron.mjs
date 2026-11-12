@@ -1,9 +1,9 @@
 // Real native Cron CRUD + native channel delivery. No custom reminder scheduler.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('/home/afrangry/kurumi-fusion/test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
 await ready();
-const file='/home/afrangry/kurumi-fusion/docs/verification/fusion/04-native-cron.json';
+const file='/home/afrangry/kurumi-fusion/test-output/04-native-cron.json';
 const mode=process.argv[2]??'create';
 if(mode==='create'){
  const base={enabled:true,sessionTarget:'isolated',wakeMode:'now',payload:{kind:'command',argv:['/usr/bin/printf','%s','【融合验收】这是 OpenClaw 原生调度经过新 QQ 频道发送的重启提醒。'],timeoutSeconds:10},delivery:{mode:'announce',channel:'kurumi-qq',to:'user:365999865',accountId:'default'},deleteAfterRun:true};

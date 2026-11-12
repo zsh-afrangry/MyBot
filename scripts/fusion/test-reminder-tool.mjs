@@ -1,5 +1,5 @@
 // Authorized synthetic natural-language CRUD; future task must be canceled before return.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('/home/afrangry/kurumi-fusion/test-output',{recursive:true});
 import {rpc,ready} from './rpc.mjs';
 await ready();
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
@@ -15,4 +15,4 @@ const catalog=await rpc('cron.list',{includeDisabled:true});report.cleanup=[];
 for(const job of catalog.jobs??[]){if((job.name?.startsWith('kurumi.reminder.')||job.name==='kurumi.fusion.native-owner-test')&&(job.payload?.argv?.[2]?.startsWith('融合验收')||job.payload?.message?.includes('融合验收')))report.cleanup.push(await rpc('cron.remove',{id:job.id}));}
 report.receipts=fs.existsSync(receiptFile)?fs.readFileSync(receiptFile,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse).filter(x=>x.at>=started):[];
 report.passed=['add','update','remove','list'].every(action=>report.receipts.some(x=>x.action===action&&!x.error))&&report.cleanup.length===0;
-fs.writeFileSync('/home/afrangry/kurumi-fusion/docs/verification/fusion/09-native-agent-reminder.json',JSON.stringify(report,null,2));console.log(JSON.stringify({result:report.result,error:report.error,cleanup:report.cleanup.length}));
+fs.writeFileSync('/home/afrangry/kurumi-fusion/test-output/09-native-agent-reminder.json',JSON.stringify(report,null,2));console.log(JSON.stringify({result:report.result,error:report.error,cleanup:report.cleanup.length}));

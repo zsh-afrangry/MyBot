@@ -1,6 +1,5 @@
 // Offline PDF source/reader/translation boundary; injected HTTP and actual managed
 // PDF inspection in temporary directories. No real APIs, paid jobs or delivery.
-// Evidence: docs/verification/capability-decoupling-2026-10-20/README.md
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

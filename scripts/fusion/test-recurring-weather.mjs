@@ -1,4 +1,4 @@
-import fs from 'node:fs';import assert from 'node:assert/strict';import {rpc,ready} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});import assert from 'node:assert/strict';import {rpc,ready} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
 await ready();const cfg=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/openclaw.json')),a=account(cfg),login=await onebot(a,'get_login_info',{});let id=-Date.now();const report={started:Date.now(),boundary:'Real main model creates/updates/removes a native recurring weather job; operator triggers one actual run for owner-only delivery.'};
 const send=text=>rpc('kurumi-qq.testInbound',{capture:true,event:{post_type:'message',message_type:'private',self_id:login.user_id,user_id:Number(a.ownerId),message_id:id--,time:Math.floor(Date.now()/1000),message:[{type:'text',data:{text}}]}},180000);
 try{
@@ -12,4 +12,4 @@ try{
  report.tools=fs.readFileSync(a.stateDir+'/native-tool-receipts.jsonl','utf8').trim().split('\n').map(JSON.parse).filter(x=>x.at>=report.started&&x.tool==='personal_weather_get_brief');assert(report.tools.length>0);const serialized=JSON.stringify(report.tools);assert(!serialized.includes('forbidden_context'));assert(!serialized.includes('"ok":false'));report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
 finally{for(const j of (await rpc('cron.list',{includeDisabled:true})).jobs.filter(x=>x.name==='kurumi.fusion.recurring-weather-test'))await rpc('cron.remove',{id:j.id});}
-fs.writeFileSync('docs/verification/migration/27-recurring-weather.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,run:report.run}));
+fs.writeFileSync('test-output/27-recurring-weather.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,run:report.run}));

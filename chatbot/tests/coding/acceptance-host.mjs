@@ -1,5 +1,4 @@
 // Real isolated Gateway/plugin catalog and enabled/disabled lifecycle. No model/API/QQ network. DSH is not launched.
-// Evidence: docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md.
 // Only temporary state/processes and the explicitly supplied new --out evidence file.
 import fs from 'node:fs';
 import path from 'node:path';

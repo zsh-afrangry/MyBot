@@ -1,3 +1,4 @@
-# 历史调用分析夹具
+# 验收夹具
 
-两份JSON从原verification目录逐字节迁入，供call-analysis.test.mjs验证错误重试与纠正后成功的区别；它们是离线回归输入，不是新版验收结果。原始来源为Git c849e63的同名docs/verification路径。其余生成回执退出活动树，保留在Git历史。
+- 两份 JSON：`call-analysis.test.mjs` 的离线回归输入，用来验证“错误重试”与“纠正后成功”的区别。
+- `legacy-system-prompt.md`：融合前的能力提示词，只供 `model-driver.mjs` 和 `run-retrieval-t3.mjs` 读取，不是当前运行规则。

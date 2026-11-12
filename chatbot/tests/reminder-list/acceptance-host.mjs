@@ -3,7 +3,7 @@ import {compileAccessConfig} from '../../packages/access-control/config.js';
 // runtime and process. Mock OneBot HTTP/WS only, no real QQ network or sends.
 // All chat/domain/Cron state is isolated; source and credentials are read only.
 // --natural runs the user dialogue suite; --out selects a separate evidence directory.
-// Evidence: docs/verification/reminder-list-2026-10-11/host.json
+// Evidence: test-output/reminder-list/host.json
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -180,7 +180,7 @@ finally {
   report.productionUnchanged = productionSnapshot() === before;
   if (!report.productionUnchanged || !report.childStopped) {report.passed = false; process.exitCode = 1;}
   report.mockSends = mockSends.length;
-  const evidenceDir = explicitOut ? resolve(explicitOut) : join(repo, 'docs/verification/reminder-list-2026-10-11', natural ? 'natural-input' : ''); fs.mkdirSync(evidenceDir, {recursive: true});
+  const evidenceDir = explicitOut ? resolve(explicitOut) : join(repo, 'test-output/reminder-list', natural ? 'natural-input' : ''); fs.mkdirSync(evidenceDir, {recursive: true});
   fs.writeFileSync(join(evidenceDir, 'host.json'), JSON.stringify(report, null, 2) + '\n');
   if (report.passed) fs.rmSync(root, {recursive: true, force: true});
   else console.log(JSON.stringify({failedFixtureForDiagnostics: root}));

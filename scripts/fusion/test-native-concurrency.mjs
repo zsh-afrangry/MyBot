@@ -1,5 +1,5 @@
 // Two ordinary native sessions; no child agents, no QQ sends.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('/home/afrangry/kurumi-fusion/test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {rpc,ready} from './rpc.mjs';
@@ -17,4 +17,4 @@ try{
  r.cancel=await rpc('chat.abort',{sessionKey:'agent:main:fusion-slow-test',runId:r.slow.runId});
  r.slowFinished=await rpc('agent.wait',{runId:r.slow.runId,timeoutMs:10000});assert.equal(r.cancel.aborted,true);assert.equal(r.slowFinished.status,'error');r.passed=true;
 }catch(e){r.error=e.message;r.passed=false;process.exitCode=1;}
-fs.writeFileSync('/home/afrangry/kurumi-fusion/docs/verification/fusion/05-native-concurrency.json',JSON.stringify(r,null,2));console.log(JSON.stringify(r));
+fs.writeFileSync('/home/afrangry/kurumi-fusion/test-output/05-native-concurrency.json',JSON.stringify(r,null,2));console.log(JSON.stringify(r));

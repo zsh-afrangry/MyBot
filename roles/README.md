@@ -22,7 +22,7 @@
 > 契约见 [`config/README.md`](../config/README.md) 与[配置同步操作](../docs/9_QQ融合助手架构与开发计划.md#配置同步)。
 >
 > 下面两节「人格卡只写人设」和「推荐结构」仍然是有效写作指导；涉及控制台、群聊命令和热生效的段落按旧机制阅读。
-> 两份角色卡 `小鲸鱼.md`、`傲娇助手.md` 仍与归档原件逐字一致（SHA256 分别以 `237dce15…`、`12d09202…` 开头，小鲸鱼完整SHA256为 `237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386`，迁移证据见[报告](../docs/verification/deepseek-whale/README.md)）；
+> 两份角色卡 `小鲸鱼.md`、`傲娇助手.md` 仍与归档原件逐字一致（SHA256 分别以 `237dce15…`、`12d09202…` 开头，小鲸鱼完整SHA256为 `237dce15331b4839fb0d9edb2b362017bffe6b99a732925bcb5d40a47c0c3386`）；
 > 本 `README.md` 自 2026-10-10 起增加了本说明块，因此与原件不再逐字一致，原件保留在
 > `/home/afrangry/kurumi-archive/qq-bridge/roles/README.md`。改动只加说明，不改旧机制正文。
 

@@ -1,6 +1,5 @@
 // Real isolated Gateway loading/disabling and RPC catalogs; no model/API/QQ/SMTP.
 // Writes temporary state and the explicitly supplied new --out evidence file only.
-// Evidence: docs/verification/capability-decoupling-2026-10-20/README.md
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';

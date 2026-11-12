@@ -1,7 +1,5 @@
 // docs/25 P1: actual bootstrap/QQ routing and persona dialogue in an isolated OpenClaw.
 // Default uses a local deterministic model. --live calls the configured official DeepSeek model.
-// Evidence: explicit new --out JSON in docs/verification/persona-memory-2026-10-19/.
-// Completed receipts and boundaries: docs/verification/persona-memory-2026-10-19/README.md
 // Temporary state and synthetic conversations only; no real QQ/mail, production writes or service restart.
 import fs from 'node:fs';
 import os from 'node:os';

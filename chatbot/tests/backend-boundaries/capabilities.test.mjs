@@ -1,6 +1,5 @@
 // Offline architecture/registration regressions; isolated SQLite and the installed
 // OpenClaw service manager. No API/model/QQ/SMTP or production service operations.
-// Evidence: docs/verification/capability-decoupling-2026-10-20/README.md
 import {test, after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

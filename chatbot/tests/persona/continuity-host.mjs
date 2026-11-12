@@ -1,8 +1,6 @@
 // docs/25 P2: hook identities, reset, manual compaction and restart in isolated OpenClaw.
 // Hook observations are synthetic metadata only; memory activation is not part of this probe.
 // Local deterministic model only; the optional --live flag is rejected before any I/O.
-// Evidence: explicit new --out JSON in docs/verification/persona-memory-2026-10-19/p2/.
-// Completed receipts and boundaries: docs/verification/persona-memory-2026-10-19/p2/README.md
 // Temporary state and synthetic conversations only; no real QQ/mail, production writes or service restart.
 import fs from 'node:fs';
 import os from 'node:os';

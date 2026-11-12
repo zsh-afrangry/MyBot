@@ -1,5 +1,5 @@
 // Temporarily change the isolated copy, exercise confirmation, then restore its original location.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
@@ -19,4 +19,4 @@ try{
  report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
 if(report.commitResult?.ok){try{const at=Date.now();await send('验收结束，请把融合副本当前所在地恢复为扬中市，先生成提案。location.text用扬中市，不传administrative_area。');const p=resultOf(receipts().findLast(x=>x.at>=at&&x.tool==='personal_profile_change_propose'));assert(p.ok);if(p.status==='pending'){const confirmAt=Date.now();await send(p.confirmationInstruction);report.restored=resultOf(receipts().findLast(x=>x.at>=confirmAt&&x.tool==='personal_profile_change_commit'));assert(report.restored.ok);}else report.restored=p;}catch(e){report.restoreError=e.message;report.passed=false;process.exitCode=1;}}
-fs.writeFileSync('docs/verification/migration/08-profile-confirmation.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,denied:report.deniedResult,committed:report.commitResult,replay:report.replayResult}));
+fs.writeFileSync('test-output/08-profile-confirmation.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,denied:report.deniedResult,committed:report.commitResult,replay:report.replayResult}));

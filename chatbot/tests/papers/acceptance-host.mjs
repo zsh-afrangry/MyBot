@@ -1,7 +1,7 @@
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 // Authorized real OpenClaw + main-model acceptance. Mock translation worker and OneBot only.
 // Separate /tmp runtime; no real translation API request, QQ/mail delivery or production write.
-// Development owner: docs/22; evidence: docs/verification/paper-translation-2026-10-17/ (explicit --out).
+// Development owner: docs/22.
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -19,7 +19,7 @@ import {pdf} from './fixtures.mjs';
 const repo=fileURLToPath(new URL('../../../',import.meta.url));
 const renameOnly=process.argv.includes('--rename-only');
 const outArg=process.argv.indexOf('--out');
-const out=outArg<0?path.join(repo,'docs/verification/paper-translation-2026-10-17/host.json'):process.argv[outArg+1];
+const out=outArg<0?path.join(repo,'test-output/papers-host.json'):process.argv[outArg+1];
 if(!out||!path.isAbsolute(out)||fs.existsSync(out))throw Error('Use an absolute, new --out evidence file');
 const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-paper-host-'));
 const runtime='/home/afrangry/.openclaw-fusion',owner='365999865',bot='1794511189',token=randomBytes(24).toString('hex');

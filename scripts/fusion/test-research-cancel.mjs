@@ -1,5 +1,5 @@
 // Real owner tool status/cancel. Main reply is captured; abort worker before final send.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
@@ -17,4 +17,4 @@ try{
  report.terminal=await rpc('agent.wait',{runId:start.result.runId,timeoutMs:15000});
  report.passed=report.terminal.status==='error';assert(report.passed);
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
-fs.writeFileSync('docs/verification/migration/28-research-cancel.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+fs.writeFileSync('test-output/28-research-cancel.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

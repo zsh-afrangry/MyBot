@@ -11,4 +11,4 @@
 npm --prefix chatbot/plugins/kurumi-mail test
 ```
 
-`test/fixtures/`的自签证书仅供本地mock服务器；上述测试不发送真实邮件。真实投递脚本的授权与副作用见[脚本索引](../../../docs/verification/SCRIPTS.md)，不要批量运行acceptance或运维脚本。
+`test/fixtures/`的自签证书仅供本地mock服务器；上述测试不发送真实邮件。真实投递脚本需要单独授权，判断规则见根目录 [AGENTS.md](../../../AGENTS.md#需要单独授权的操作)，不要批量运行acceptance或运维脚本。

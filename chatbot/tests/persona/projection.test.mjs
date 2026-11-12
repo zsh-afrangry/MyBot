@@ -1,6 +1,5 @@
 // docs/25 P1: offline projection, ownership and invalid-config regressions.
 // Temporary files and synthetic identities only; no production writes, model or QQ network.
-// Evidence: docs/verification/persona-memory-2026-10-19/node-tests.txt
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

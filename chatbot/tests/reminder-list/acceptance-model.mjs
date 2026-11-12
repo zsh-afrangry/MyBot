@@ -4,7 +4,7 @@ import {compileAccessConfig} from '../../packages/access-control/config.js';
 // removed, so schedule sync cannot mutate production Cron. No QQ delivery.
 // --natural runs the user dialogue suite; --ordinal verifies contextual item operations.
 // --out selects a separate evidence directory.
-// Evidence: docs/verification/reminder-list-2026-10-11/model.json
+// Evidence: test-output/reminder-list/model.json
 import {manageList} from '../../plugins/personal-reminder-list/application.js';
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';
@@ -26,7 +26,7 @@ if (natural && ordinal) throw Error('Choose one suite');
 const outArg = process.argv.indexOf('--out');
 const explicitOut = outArg < 0 ? undefined : process.argv[outArg + 1];
 if (outArg >= 0 && !explicitOut) throw Error('--out requires an output directory');
-const outDir = explicitOut ? resolve(explicitOut) : resolve(repo, 'docs/verification/reminder-list-2026-10-11', natural ? 'natural-input' : '');
+const outDir = explicitOut ? resolve(explicitOut) : resolve(repo, 'test-output/reminder-list', natural ? 'natural-input' : '');
 const runtime = '/home/afrangry/.openclaw-fusion';
 const cfg = compileAccessConfig(JSON.parse(fs.readFileSync(join(repo, 'config/runtime.config.json'))),JSON.parse(fs.readFileSync(join(repo,'config/access-control.json'))));
 const primary = cfg.agents.entries.main.model.primary, [providerId, model] = primary.split('/');

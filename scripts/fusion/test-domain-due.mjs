@@ -1,11 +1,11 @@
 // Create via real model and original confirmation. Check in a later invocation after restart.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {rpc,ready} from './rpc.mjs';
 import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
 import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
-await ready();const state='/home/afrangry/.openclaw-fusion',file='docs/verification/migration/10-reminder-restart-delivery.json';
+await ready();const state='/home/afrangry/.openclaw-fusion',file='test-output/10-reminder-restart-delivery.json';
 const a=account(JSON.parse(fs.readFileSync(`${state}/openclaw.json`)));
 if(process.argv[2]==='check'){
  const report=JSON.parse(fs.readFileSync(file));report.runs=await rpc('cron.runs',{id:report.job.id,limit:10});

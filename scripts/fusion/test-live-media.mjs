@@ -1,5 +1,5 @@
 // Synthetic input references only staged test media, with actual model/QQ egress.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('/home/afrangry/kurumi-fusion/test-output',{recursive:true});
 import {DatabaseSync} from 'node:sqlite';
 import {rpc,ready} from './rpc.mjs';
 await ready();
@@ -15,4 +15,4 @@ try{
  report.inbound=await rpc('kurumi-qq.testInbound',{event});
  report.imageSend=await sendPayload({cfg,to:`user:${a.ownerId}`,text:'【融合验收】新频道原生图片与引用投递测试。',mediaUrl:`${a.mediaRoot}/snowluma-logo.png`,replyToId:prior.message_id,key:'live-media-20261005'});
 }catch(e){report.error=e.message;process.exitCode=1;}
-fs.writeFileSync('/home/afrangry/kurumi-fusion/docs/verification/fusion/03-native-media.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+fs.writeFileSync('/home/afrangry/kurumi-fusion/test-output/03-native-media.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

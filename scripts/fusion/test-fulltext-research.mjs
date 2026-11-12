@@ -1,4 +1,4 @@
-import fs from 'node:fs';import assert from 'node:assert/strict';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
 await ready();const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(state+'/openclaw.json')),a=account(cfg),login=await onebot(a,'get_login_info',{});let id=-Date.now();
 const report={started:Date.now(),boundary:'Real owner main starts native researcher, cached real-source PDF full text and selected visual pages, concurrent main chat, saved report and owner-only completion.'};
@@ -11,4 +11,4 @@ try{
  assert.equal(report.worker?.status,'ok');report.reportPath=state+'/research-workspace/reports/rag-fulltext-acceptance.md';assert(fs.statSync(report.reportPath).size>500);
  const calls=fs.readFileSync(a.stateDir+'/native-tool-receipts.jsonl','utf8').trim().split('\n').map(JSON.parse).filter(x=>x.at>=report.started);report.calls=calls.filter(x=>['kurumi_paper','web_search','web_fetch'].includes(x.tool));const reads=report.calls.filter(x=>x.tool==='kurumi_paper'&&x.action==='text'&&!x.error).sort((x,y)=>(x.paper.offset??0)-(y.paper.offset??0));let end=0;for(const r of reads){assert((r.paper.offset??0)<=end,'Gap in full text reads');end=Math.max(end,(r.paper.offset??0)+(r.paper.limit??30000));}report.textCharacters=fs.readFileSync(state+'/research-cache/papers/fc8d32f196e0f0c2.txt','utf8').length;assert(end>=report.textCharacters);assert(report.calls.filter(x=>x.tool==='kurumi_paper'&&x.action==='page'&&!x.error).length>=2);report.passed=true;
 }catch(e){report.passed=false;report.error=e.message;process.exitCode=1;}
-fs.writeFileSync('docs/verification/migration/26-fulltext-research.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,chatMs:report.chatMs,report:report.reportPath}));
+fs.writeFileSync('test-output/26-fulltext-research.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,chatMs:report.chatMs,report:report.reportPath}));

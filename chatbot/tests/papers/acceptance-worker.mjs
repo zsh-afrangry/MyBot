@@ -1,7 +1,6 @@
 // Production-capture worker smoke test: reads selected captured code/runtime configuration,
 // writes only temporary sandbox directories and explicit --out. No credentials/model/API/delivery.
 // Development owner: docs/22_论文PDF翻译与文件投递.md.
-// Evidence: docs/verification/paper-translation-2026-10-17/ (explicit --out).
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';

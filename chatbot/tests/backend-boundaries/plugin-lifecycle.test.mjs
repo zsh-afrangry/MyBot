@@ -1,6 +1,5 @@
 // Real installed OpenClaw service manager, isolated temporary state and synthetic identity.
 // Injected translation/delivery only; no model/API/QQ/SMTP calls or production service restart.
-// Evidence and scope: docs/verification/plugin-lifecycle-2026-10-19/README.md.
 import {test, after} from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

@@ -1,5 +1,5 @@
 // Real GeoAPI, isolated Profile database, no production confirmation or QQ delivery.
-import { readFileSync, writeFileSync, mkdtempSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdtempSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { parseEnv } from 'node:util';
 import assert from 'node:assert/strict';
@@ -43,6 +43,7 @@ try {
 } catch (error) { report.status = 'failed'; report.failure = String(error); process.exitCode = 1; }
 finally {
   fixture.close();
-  writeFileSync(join(root, 'docs/verification/profile-geo-domain-acceptance.json'), JSON.stringify(report, null, 2));
+  mkdirSync(join(root, 'test-output'), { recursive: true });
+  writeFileSync(join(root, 'test-output/profile-geo-domain-acceptance.json'), JSON.stringify(report, null, 2));
   console.log(JSON.stringify({ status: report.status, failure: report.failure, samples: report.samples.map(x => ({ expected: x.expected, code: x.result.code ?? x.result.error?.code ?? x.result.status })) }));
 }

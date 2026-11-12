@@ -1,7 +1,7 @@
 // Authorized acceptance: real translation model/API and runtime job state; optional real QQ/mail.
 // Flags --send-qq / --send-mail opt in to actual owner-only delivery. No other recipients.
 // Confirmation is recorded programmatically for the explicitly authorized SMTP test, not a QQ round trip.
-// Development owner: docs/22_论文PDF翻译与文件投递.md; evidence: docs/verification/paper-translation-2026-10-17/.
+// Development owner: docs/22_论文PDF翻译与文件投递.md.
 import fs from 'node:fs';
 import path from 'node:path';
 import {PaperService} from '../../plugins/kurumi-papers/service.js';

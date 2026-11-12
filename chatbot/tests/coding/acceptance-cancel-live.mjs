@@ -1,6 +1,5 @@
 // Explicit --live: one actual DSH task and verified cancellation through the product handler.
 // Temporary synthetic project/heartbeat only. No QQ, production configuration, shared DSH service stop or arbitrary PID kill.
-// Evidence: docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md.
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';

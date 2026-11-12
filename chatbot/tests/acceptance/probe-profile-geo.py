@@ -56,6 +56,7 @@ for name, adm in [('重庆大学虎溪科学城校区', '重庆市沙坪坝区')
     except Exception as error:
         row['transportErrorType'] = type(error).__name__
     results.append(row)
-output = root / 'docs/verification/profile-geo-provider-probe.json'
+output = root / 'test-output/profile-geo-provider-probe.json'
+output.parent.mkdir(exist_ok=True)
 output.write_text(json.dumps(results, ensure_ascii=False, indent=2))
 print(output.read_text())

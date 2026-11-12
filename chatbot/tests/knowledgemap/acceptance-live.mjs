@@ -26,7 +26,7 @@ const configFile=join(repo,'config/runtime.config.json'),original=fs.readFileSyn
 const owner=cfg.channels['kurumi-qq'].ownerId;assert.equal(owner,'365999865');assert.equal(cfg.channels['kurumi-qq'].testIngress,false);
 const bridge=cfg.plugins.entries['kurumi-knowledgemap'].config,client=new KnowledgeMapClient({...bridge,trace(){}});
 const marker='[doc23-'+Date.now().toString(36)+']',billIds=new Set(),taskIds=new Set(),started=Date.now();
-const out=join(repo,'docs/verification/knowledgemap-bridge-2026-10-17/live.json');
+const out=join(repo,'test-output/knowledgemap-live.json');
 const report={at:new Date().toISOString(),boundary:'Real configured model and production OpenClaw/API/MySQL + actual website/browser; synthetic owner inbound, one native QQ digest to owner only; no human sent these test inputs',marker,cases:[]};
 let browser,jobId,control,temporary,ingressChanged=false,messageId=-Date.now();
 const website=async(route,method='GET',body)=>{
@@ -114,5 +114,5 @@ finally{
  }catch{report.cleanupFailed=true;report.ok=false;process.exitCode=1;}
  control?.close();if(temporary)fs.rmSync(temporary,{recursive:true,force:true});
  process.removeListener('SIGINT',signalCleanup);process.removeListener('SIGTERM',signalCleanup);
- fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
+ fs.mkdirSync(join(repo,'test-output'),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }

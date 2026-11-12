@@ -1,6 +1,5 @@
 // Isolated real OpenClaw acceptance with local deterministic model/OneBot and injected PDF worker.
 // Only temporary state and explicitly requested evidence file; no external model/API, real QQ/mail or production writes. docs/24 T04–T10.
-// Evidence: docs/verification/access-control-2026-10-19/host.json via an explicit new --out file.
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';

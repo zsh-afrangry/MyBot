@@ -1,5 +1,5 @@
 // Real model creates a clearly tagged trip in the isolated database; operator archives only that test row.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {rpc,ready} from './rpc.mjs';
@@ -17,4 +17,4 @@ try{
  const created=db.prepare('SELECT * FROM trips WHERE id NOT IN ('+(original.map(()=>'?').join(',')||'NULL')+')').all(...original.map(r=>r.id));assert.equal(created.length,1);assert.equal(created[0].title,'架构验证-行程迁移');report.createdId=created[0].id;assert.equal(created[0].departure_earliest_utc,null);assert.equal(created[0].arrival_earliest_utc,null);assert.equal(JSON.stringify(db.prepare('SELECT * FROM notification_preferences').all()),prefs);report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
 finally{if(report.createdId){report.cleanup=db.prepare("UPDATE trips SET state='cancelled',updated_at_utc=? WHERE id=? AND title='架构验证-行程迁移'").run(Math.floor(Date.now()/1000),report.createdId);assert.equal(report.cleanup.changes,1);}report.originalTripsUnchanged=original.every(row=>JSON.stringify(db.prepare('SELECT * FROM trips WHERE id=?').get(row.id))===JSON.stringify(row));db.close();}
-fs.writeFileSync('docs/verification/migration/11-planning-confirmation.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,originalTripsUnchanged:report.originalTripsUnchanged}));
+fs.writeFileSync('test-output/11-planning-confirmation.json',JSON.stringify(report,null,2));console.log(JSON.stringify({passed:report.passed,error:report.error,originalTripsUnchanged:report.originalTripsUnchanged}));

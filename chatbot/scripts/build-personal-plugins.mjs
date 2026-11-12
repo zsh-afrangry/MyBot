@@ -1,6 +1,5 @@
 // Build the shared default implementations and stable CLI entrypoints.
 // Boundary: local TypeScript build and ignored dist writes; no API, DB, or service calls.
-// Evidence: docs/verification/capability-decoupling-2026-10-20/README.md
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';

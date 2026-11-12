@@ -1,5 +1,5 @@
 // Authorized owner-only physical acceptance: two natural segments and one catalog sticker.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {rpc,ready} from './rpc.mjs';
@@ -18,4 +18,4 @@ try{
  for(const row of report.receipts){assert.equal(row.status,'sent');const msg=await onebot(a,'get_msg',{message_id:Number(row.message_id)});report.readback.push({messageId:row.message_id,types:msg.message.map(x=>x.type),text:msg.message.filter(x=>x.type==='text').map(x=>x.data.text).join('')});}
  assert(report.readback[0].text.includes('短段消息'));assert(report.readback[1].text.includes('独立送达'));assert(report.readback[2].types.includes('image'));assert(report.receipts[1].at-report.receipts[0].at>=400);report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
-fs.writeFileSync('docs/verification/migration/15-qq-natural-sticker.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+fs.writeFileSync('test-output/15-qq-natural-sticker.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

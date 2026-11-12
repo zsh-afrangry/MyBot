@@ -1,5 +1,5 @@
 // docs/22: real isolated OpenClaw + configured chat model, synthetic attachment I/O and translator.
-// Explicit new --out under docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/.
+// Requires an explicit new --out file.
 // No production writes, translation API calls, QQ/mail delivery, or production testIngress change.
 import fs from 'node:fs';
 import http from 'node:http';

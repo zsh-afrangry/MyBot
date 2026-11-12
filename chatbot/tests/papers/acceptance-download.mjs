@@ -1,5 +1,5 @@
 // Authorized public-paper HTTP + actual managed-PDF validation. No model/QQ/mail call.
-// Private runtime acceptance state only; report in docs/verification/paper-translation-2026-10-17/.
+// Private runtime acceptance state only.
 // Development owner: docs/22_论文PDF翻译与文件投递.md.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -8,7 +8,7 @@ import assert from 'node:assert/strict';
 import {PaperService} from '../../plugins/kurumi-papers/service.js';
 const repo=fileURLToPath(new URL('../../../',import.meta.url));
 const root='/home/afrangry/.openclaw-fusion/paper-acceptance/web-download';
-const out=path.join(repo,'docs/verification/paper-translation-2026-10-17/download.json');
+const out=path.join(repo,'test-output/papers-download.json');
 const report={at:new Date().toISOString(),boundary:'Actual public arXiv PDF download and networkless PDF inspection; private acceptance catalog only. No model/QQ/mail call.'};
 const service=new PaperService({root,liveTranslationEnabled:false});
 try{

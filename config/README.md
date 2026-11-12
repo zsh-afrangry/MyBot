@@ -50,7 +50,7 @@
 
 ## 主模型与人格切换
 
-- 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。历史实测见[模型与图片证据](../docs/verification/deepseek-whale/README.md)。
+- 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。
 - 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
 - 旧一次性人格/provider迁移脚本与运行根中的迁移副本已退役；日常使用下文的配置与人格同步入口。
 
@@ -68,7 +68,7 @@
 
 ## 同步契约
 
-`tools.codeMode=false`显式维持现有业务工具调用模式。OpenClaw2026.11.1缺省按模型自动启用Code Mode；官方DeepSeek模型会把业务工具包装为JavaScript `exec/wait`，与本项目将`exec`绑定宿主命令权限/目录约束的策略冲突。本轮不开放这项新执行模式，不修改宿主exec、成员或天气的授权范围。后续若采用Code Mode，须独立验证宿主权威`toolKind/toolInputKind`、内层工具授权与执行器边界。配置依据见[官方说明](https://docs.openclaw.ai/tools/code-mode/configuration)，实际验证见[整理与升级核验](../docs/verification/consolidation-2026-11-07/README.md)。
+`tools.codeMode=false`显式维持现有业务工具调用模式。OpenClaw2026.11.1缺省按模型自动启用Code Mode；官方DeepSeek模型会把业务工具包装为JavaScript `exec/wait`，与本项目将`exec`绑定宿主命令权限/目录约束的策略冲突。本轮不开放这项新执行模式，不修改宿主exec、成员或天气的授权范围。后续若采用Code Mode，须独立验证宿主权威`toolKind/toolInputKind`、内层工具授权与执行器边界。配置依据见[官方说明](https://docs.openclaw.ai/tools/code-mode/configuration)。
 
 `sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
 
@@ -104,7 +104,7 @@ node scripts/fusion/sync-persona.mjs --apply
 
 ### 分阶段部署
 
-并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。10项自检、allow成员检查补正及原回执见[结构整理报告](../docs/verification/capability-decoupling-2026-10-20/README.md)。
+并行开发需要按插件分阶段部署时，可显式使用 `--diff --defer-plugin=<插件ID>`，审阅后用同一参数配合 `--apply`。该参数保留该插件**完整的当前运行条目**，输出 `DEFERRED`；只允许仓库与运行态均启用、在 `plugins.allow` 中且加载路径一致的既有插件，不能延缓新增、禁用或路径变更。它不保留其它键，也不跳过构建或加载验收。**普通 `--check` 仍比较全部仓库意图**，不接受延期参数，延期期间可能正常报漂移；不能将部分部署写成全量对齐。完成延期模块后由对应任务同步并重新检查。
 
 ## 改配置的正确姿势
 
@@ -117,7 +117,7 @@ node scripts/fusion/sync-persona.mjs --apply
 | 禁用某类工具 | 同上，`tools.deny` / `tools.fs` | `sync-config.mjs --apply` |
 | 插件开关或参数 | 同上，`plugins.entries.<id>` | `sync-config.mjs --apply` |
 | E7本人只读查询 | `plugins.entries.kurumi-e7`、main的`e7_data`与身份表owner的`e7.read` | 首批6类、7个角色view；缓存24小时，公告/码30分钟，本地05:30串行刷新；差异审阅后同步并重启，验收见[文档27](../docs/27_E7数据插件设计.md) |
-| 编码委托单目录试点 | `kurumi-coding`插件allow/load/entry及main的`kurumi_code`；`kurumi-tasks.config.codeEnabled=false`关闭旧编码启动，模板改由专用工具路由；原生exec独立配置与授权 | 仅登记`dsh-pilot`；Linux Landlock限定普通文件写入试点目录，DSH profile/会话/临时文件留在该目录、既有凭据只读复用。主人已批准同步、重启Fusion和本人QQ测试；[实际差异与执行记录](../docs/verification/coding-delegation-plan-2026-10-28/qq-pilot-2026-10-30/README.md)。额外目录申请累计记录并拒绝，具体合入另行确认；结果采集与Python宿主检查见[文档28](../docs/28_本机编码工具委托与实验任务.md#执行结果与完成回传)，部署与真人边界见[修复记录](../docs/verification/coding-delegation-plan-2026-10-28/results-fix-2026-10-30/README.md) |
+| 编码委托单目录试点 | `kurumi-coding`插件allow/load/entry及main的`kurumi_code`；`kurumi-tasks.config.codeEnabled=false`关闭旧编码启动，模板改由专用工具路由；原生exec独立配置与授权 | 仅登记`dsh-pilot`；Linux Landlock限定普通文件写入试点目录，DSH profile/会话/临时文件留在该目录、既有凭据只读复用。主人已批准同步、重启Fusion和本人QQ测试；额外目录申请累计记录并拒绝，具体合入另行确认；结果采集与Python宿主检查见[文档28](../docs/28_本机编码工具委托与实验任务.md#执行结果与完成回传) |
 | 主人原生exec | main的`alsoAllow/deny/exec`、全局exec deny、`kurumi-qq.config.exec`及身份表owner的`host.exec` | 可信授权后固定gateway及操作者登记的普通文件写入根；现有试点加主人具体批准的下载/文档目录，不得仅设workdir。`sync-config --diff/--apply`、同步主人模板、重启Fusion，规则及限制见[文档28](../docs/28_本机编码工具委托与实验任务.md#主人原生exec) |
 | 发送限额 / 分段 / 默认引用 | 同上，`channels.kurumi-qq`；replyToMode=off保留SDK显式引用，普通消息不自动引用 | `sync-config.mjs --apply`；策略见文档9，重启Fusion |
 | 搜索 provider | 同上，`tools.web` | `sync-config.mjs --apply` |

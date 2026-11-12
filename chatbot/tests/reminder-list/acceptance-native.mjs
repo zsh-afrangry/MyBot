@@ -2,7 +2,7 @@
 // Domain rows live only under /tmp. Creates/removes one test Cron declaration;
 // retains normal channel/Cron receipts, restores service readiness, sends no
 // groups/other peers and never deletes production state. No model call.
-// Evidence: docs/verification/reminder-list-2026-10-11/native.json
+// Evidence: test-output/reminder-list/native.json
 import {manageList} from '../../plugins/personal-reminder-list/application.js';
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';
@@ -99,8 +99,8 @@ finally {
   }
   report.productionUnchanged = productionSnapshot() === before;
   if (!report.productionUnchanged || report.testJobRemoved === false) {report.passed = false; process.exitCode = 1;}
-  fs.mkdirSync(join(repo, 'docs/verification/reminder-list-2026-10-11'), {recursive: true});
-  fs.writeFileSync(join(repo, 'docs/verification/reminder-list-2026-10-11/native.json'), JSON.stringify(report, null, 2) + '\n');
+  fs.mkdirSync(join(repo, 'test-output/reminder-list'), {recursive: true});
+  fs.writeFileSync(join(repo, 'test-output/reminder-list/native.json'), JSON.stringify(report, null, 2) + '\n');
   store.close(); fs.rmSync(root, {recursive: true, force: true});
   console.log(JSON.stringify({passed: report.passed, error: report.error, testJobRemoved: report.testJobRemoved, productionUnchanged: report.productionUnchanged, qqReceipts: report.qqReceipts?.length}));
 }

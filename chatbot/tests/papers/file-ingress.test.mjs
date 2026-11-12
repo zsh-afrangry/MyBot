@@ -1,5 +1,4 @@
 // docs/22: offline attachment routing and typed PDF failures. Temporary state, mocked I/O only.
-// Evidence: docs/verification/paper-translation-2026-10-17/file-ingress-2026-10-19/.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

@@ -1,5 +1,5 @@
 // Read-only natural language domain acceptance. No QQ send and no preference writes.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import {createHash} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import assert from 'node:assert/strict';
@@ -18,4 +18,4 @@ try{
  for(const name of ['personal_profile_state_get','personal_weather_get_brief'])assert(report.tools.some(x=>x.name===name&&x.ok===true&&!x.error),'Missing successful '+name);
  report.after=hashFacts();assert.equal(report.before,report.after);report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
-fs.writeFileSync('docs/verification/migration/06-domain-read.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+fs.writeFileSync('test-output/06-domain-read.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));

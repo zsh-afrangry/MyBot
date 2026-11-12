@@ -1,6 +1,5 @@
 // Explicit --live only: real DSH ACP/model calls through the actual plugin handler and task service.
 // Synthetic temporary Git project, recording delivery/owner-confirmation fixture; NO real QQ or production config/service writes.
-// Evidence: docs/verification/coding-delegation-plan-2026-10-28/product-pilot-2026-10-29/README.md.
 import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';

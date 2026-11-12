@@ -1,5 +1,5 @@
 // Real-model memory CRUD; evidence includes synthetic test facts only, never imported personal fields.
-import fs from 'node:fs';
+import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {rpc,ready} from './rpc.mjs';
@@ -18,4 +18,4 @@ try{
  await invoke(`删除记忆 ${added.id}`,'delete');assert(!readMemory(workspace).entries.some(e=>e.id===added.id));report.deleted=true;
  report.afterHash=hash(readMemory(workspace).entries);assert.equal(report.afterHash,report.beforeHash);report.passed=true;
 }catch(e){report.error=e.message;report.passed=false;process.exitCode=1;}
-fs.writeFileSync('docs/verification/migration/13-memory-model.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
+fs.writeFileSync('test-output/13-memory-model.json',JSON.stringify(report,null,2));console.log(JSON.stringify(report));
