@@ -51,6 +51,8 @@
 ## 主模型与人格切换
 
 - 主模型由 `runtime.config.json` 的 `models` 与 `agents.defaults.model` 管理；当前为官方 `deepseek/deepseek-flash`，直连 `https://api.deepseek.com` 的 OpenAI兼容 Chat Completions，声明text/image输入。主聊天不经过DSH或NAICCC，未单独指定模型的后台agent继承默认值；继承配置不等于每个后台任务均已重验。
+- 只配置了这一个模型，没有备用模型：DeepSeek 不可用时助手整体不可用。要加备用模型，在 `agents.defaults.model` 下配置回退链，键名先对照当前 OpenClaw 版本的文档核对；会话里用 `/model` 固定了模型的，不走默认回退链。
+- 换模型或加备用模型不改变任何工具权限。改完先验证普通 QQ 文本，再验证受影响的业务工具；异常时改回上一个可用模型，不删业务数据库、不放宽工具权限。验证故障回退时用可回滚的临时 provider 或临时错误 Key，不拿生产密钥制造故障。
 - 人格只从 `persona.json`、`roles/`和受管模板投影，使用 `sync-persona.mjs --diff` → `--apply`。当前角色及本人/成员关系、记忆与 `/new` 的业务规则由[文档25](../docs/25_人格、记忆与会话连续性.md)维护；不将角色名当作权限依据。
 - 旧一次性人格/provider迁移脚本与运行根中的迁移副本已退役；日常使用下文的配置与人格同步入口。
 
