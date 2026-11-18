@@ -1,3 +1,8 @@
+// 真实模型验收：调用 config 里配置的主模型（付费 API），经隔离的 Host、确认插件和临时 SQLite 执行。
+// 副作用：消耗模型额度；不发 QQ，不写生产状态。需要用户授权后运行。
+// 覆盖范围：提醒提案的到期时间在回复里按本地时间和 UTC 同时展示，且与数据库一致；不提交
+// 基础提示词取自 fixtures/legacy-system-prompt.md（融合前的能力提示词），不代表当前运行规则。
+// 运行：/usr/bin/node chatbot/tests/acceptance/run-reminder-expiry.mjs
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";

@@ -1,3 +1,8 @@
+// 真实模型验收：调用 config 里配置的主模型（付费 API），经隔离的 Host、确认插件和临时 SQLite 执行。
+// 副作用：消耗模型额度；不发 QQ，不写生产状态。需要用户授权后运行。
+// 覆盖范围：行程提案只生成待确认草稿、裸“确认”不落库、规范确认触发提交、重复确认不重复写入（C1 到 C4）
+// 基础提示词取自 fixtures/legacy-system-prompt.md（融合前的能力提示词），不代表当前运行规则。
+// 运行：/usr/bin/node chatbot/tests/acceptance/run-model.mjs
 import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
