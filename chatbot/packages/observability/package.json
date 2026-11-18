@@ -2,5 +2,10 @@
   "name": "@kurumi/observability",
   "private": true,
   "type": "module",
-  "exports": "./index.js"
+  "exports": {
+    ".": "./index.js",
+    "./memory-audit.js": "./memory-audit.js",
+    "./query-privacy.js": "./query-privacy.js",
+    "./tool-trace.js": "./tool-trace.js"
+  }
 }

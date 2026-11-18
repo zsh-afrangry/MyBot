@@ -18,7 +18,7 @@ import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {WebSocketServer} from 'ws';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
-import {personaFiles, applyPersonaFile} from '../../packages/access-control/workspaces.js';
+import {personaFiles, applyPersonaFile} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import {ownerPolicy, memberRow, OWNER, MEMBER} from '../access-control/fixtures.mjs';
 import {emptyState, initializeContinuity, replaceNotice, openContinuityStore} from '../../packages/memory-continuity/index.js';
 

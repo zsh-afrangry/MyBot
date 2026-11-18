@@ -1,1 +1,11 @@
-{"name":"@kurumi/coding-runtime","version":"0.1.0","private":true,"type":"module","exports":{"./acp-client":"./acp-client.js"}}
+{
+  "name": "@kurumi/coding-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./acp-client": "./acp-client.js",
+    "./reconciliation": "./reconciliation.js",
+    "./write-fence": "./write-fence.js"
+  }
+}

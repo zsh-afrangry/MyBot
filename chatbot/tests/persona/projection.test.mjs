@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {personaFiles, applyPersonaFile} from '../../packages/access-control/workspaces.js';
+import {personaFiles, applyPersonaFile} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import {ownerPolicy, memberRow, OWNER, MEMBER, OTHER} from '../access-control/fixtures.mjs';
 
 const source = fileURLToPath(new URL('../../../', import.meta.url));

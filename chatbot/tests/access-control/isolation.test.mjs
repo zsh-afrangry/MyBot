@@ -10,7 +10,7 @@ import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
 import {ownerPolicy,memberRow,context,OWNER,MEMBER,OTHER} from './fixtures.mjs';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
-import {personaFiles,applyPersonaFile} from '../../packages/access-control/workspaces.js';
+import {personaFiles,applyPersonaFile} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import {Documents,documentRoot} from '../../packages/documents/index.js';
 import {createPaperPlugin} from '../../plugins/kurumi-papers/index.js';
 import {PaperService} from '../../plugins/kurumi-papers/service.js';

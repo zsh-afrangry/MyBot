@@ -1,0 +1,13 @@
+{
+  "name": "@kurumi/proactive-core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./context": "./context.js",
+    "./engine": "./engine.js",
+    "./lifecycle": "./lifecycle.js",
+    "./policy": "./policy.js",
+    "./scheduler": "./scheduler.js",
+    "./store": "./store.js"
+  }
+}

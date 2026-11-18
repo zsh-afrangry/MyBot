@@ -1,8 +1,8 @@
 // Project shared persona and scoped relationship files; never copy memory or private history.
 import fs from 'node:fs';
 import path from 'node:path';
-import {compileAccessConfig} from './config.js';
-import {agentFor} from './index.js';
+import {compileAccessConfig} from '../../../chatbot/packages/access-control/config.js';
+import {agentFor} from '../../../chatbot/packages/access-control/index.js';
 
 function readRole(repo, relative) {
   if (typeof relative !== 'string' || !relative.startsWith('roles/') ||

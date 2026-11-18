@@ -1,1 +1,12 @@
-{"name":"@kurumi/knowledgemap-client","version":"0.1.0","private":true,"type":"module","exports":{".":"./client.js","./client.js":"./client.js","./tool-trace.js":"./tool-trace.js"}}
+{
+  "name": "@kurumi/knowledgemap-client",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./client.js",
+    "./client.js": "./client.js",
+    "./inbound.js": "./inbound.js",
+    "./tool-trace.js": "./tool-trace.js"
+  }
+}
