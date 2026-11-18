@@ -56,7 +56,8 @@ export function createReminderListPlugin({registry} = {}) {
       api.on('before_reset', (event, ctx) => intake.end(event, ctx));
       api.on('session_end', (event, ctx) => intake.end(event, ctx));
       registerDigestNotice(api,options);
-      api.registerService({id: 'personal-reminder-list-scheduler', start: () => scheduler.start(), stop: () => scheduler.stop()});
+      api.registerService({id: 'personal-reminder-list-scheduler', apiVersion: 2,
+        start: ctx => scheduler.start(ctx.scheduler), stop: () => scheduler.stop()});
     }
     for (const declaration of toolDeclarations) {
       const {name} = declaration;

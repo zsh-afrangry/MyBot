@@ -1,7 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { join } from 'node:path';
 import { realpathSync, statSync } from 'node:fs';
-import { callGatewayFromCli } from 'openclaw/plugin-sdk/gateway-runtime';
+import { createManagedCron, type CronRequest } from '@kurumi/host-scheduling';
 import { buildReminderCronAddParams, buildReminderCronUpdateParams } from './reminder-gateway.js';
 import type { ReminderCronScheduler } from './reminders.js';
 import { applyReminderObservation, type ReminderReconcileResult } from './reminder-reconciler.js';
@@ -19,18 +19,13 @@ export function createNativeReminderScheduler(options: {
   ownerId: string;
   port: number;
   pluginRoot: string;
-  request?: (method: string, params: Record<string, unknown>) => Promise<unknown>;
+  request?: CronRequest;
 }): ReminderCronScheduler {
   if (!/^[0-9]{5,12}$/u.test(options.ownerId) || !Number.isInteger(options.port)
     || options.port < 1024 || options.port > 65535) throw new Error('Invalid service configuration');
   const pluginRoot=realpathSync(options.pluginRoot);
   if(!statSync(join(pluginRoot,'dist/reminder-cli.js')).isFile())throw new Error('Missing installed reminder runner');
-  const request = options.request ?? ((method, params) => {
-    const token = process.env.OPENCLAW_GATEWAY_TOKEN;
-    if (!token) throw new Error('Native reminder service credentials unavailable');
-    return callGatewayFromCli(method,
-      {url:`ws://127.0.0.1:${options.port}`,token,timeout:'15000',json:true},params);
-  });
+  const cron = createManagedCron<NativeJob, NativeRun>({port: options.port, ...(options.request ? {request: options.request} : {})});
   const read = (column: 'reminder_id' | 'cron_job_id', value: string) => {
     if (!/^[0-9a-f-]{36}$/u.test(value)) throw new Error('Invalid managed reminder identity');
     const db = new DatabaseSync(join(options.stateDirectory,'reminders.sqlite'),{readOnly:true});
@@ -48,20 +43,14 @@ export function createNativeReminderScheduler(options: {
       const result:ReminderReconcileResult={scanned:reminders.length,jobsAdopted:0,delivered:0,failed:0,warnings:[]};
       if(!reminders.length)return result;
       try {
-        const jobs:NativeJob[]=[];let offset=0;
-        for(let page=0;page<100;page++){
-          const r=await request('cron.list',{includeDisabled:true,offset,limit:100}) as {jobs:NativeJob[];hasMore?:boolean;nextOffset?:number};
-          jobs.push(...r.jobs);if(!r.hasMore)break;
-          if(!Number.isInteger(r.nextOffset)||r.nextOffset!<=offset)throw new Error('Invalid Cron pagination');
-          offset=r.nextOffset!;if(page===99)throw new Error('Cron snapshot too large');
-        }
+        const jobs = await cron.listJobs();
         // Fetch every observation before changing domain state. Failed reads never imply delivery failure.
         const observations=[];
         for(const reminder of reminders){
           const key=store.getCurrentDeclarationKey(reminder.reminderId)??reminder.eventKey;
           const job=jobs.find(j=>j.declarationKey===key||j.id===reminder.cronJobId);
           const id=job?.id??reminder.cronJobId;
-          const run=id?(await request('cron.runs',{id,limit:1}) as {entries:NativeRun[]}).entries[0]:undefined;
+          const run=id?(await cron.runs(id,1))[0]:undefined;
           observations.push({reminder,job,run});
         }
         for(const {reminder,job,run} of observations){
@@ -80,20 +69,19 @@ export function createNativeReminderScheduler(options: {
       // The fixed builder obtains executable/cwd from this installed plugin.
       const params=buildReminderCronAddParams(input);
       params.payload={...params.payload as Record<string,unknown>,cwd:pluginRoot,env:{OPENCLAW_GATEWAY_PORT:String(options.port)}};
-      const result=await request('cron.add',params) as {id?:string;jobId?:string;job?:{id?:string}};
-      const jobId=result?.id??result?.jobId??result?.job?.id;if(!jobId)throw new Error('Missing managed Cron identity');
-      return {jobId};
+      return {jobId: await cron.add(params)};
     },
     async update(input) {
       const row=read('cron_job_id',input.jobId);
       if(row.scheduled_at_utc!==input.scheduledAtUtc || !['scheduled','scheduling'].includes(String(row.status)))
         throw new Error('Reminder update does not match approved domain state');
-      await request('cron.update',buildReminderCronUpdateParams(input));
+      const {id, patch} = buildReminderCronUpdateParams(input);
+      await cron.update(id, patch);
     },
     async remove(input) {
       const row=read('cron_job_id',input.jobId);
       if(!['scheduled','failed'].includes(String(row.status)))throw new Error('Reminder is not cancellable');
-      await request('cron.remove',{id:input.jobId});
+      await cron.remove(input.jobId);
     },
   };
 }

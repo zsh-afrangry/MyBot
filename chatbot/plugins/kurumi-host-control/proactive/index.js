@@ -109,11 +109,12 @@ export function createProactiveComponent(dependencies={}) {
         attempt?.abort();engine?.authority.invalidate(scope);recent.clear();calls.clear();
       };
       api.on('before_reset',end);api.on('session_end',end);
-      api.registerService({id:'kurumi-proactive',start(){
+      api.registerService({id:'kurumi-proactive',apiVersion:2,start(ctx){
         permittedTools(getConfig());
         activeSubject(getConfig(),ownerId,'proactive.use');activeSubject(getConfig(),ownerId,'memory.read');
         if(settings.notifyEnabled)activeSubject(getConfig(),ownerId,'proactive.notify');
         adapters.memory();
+        scheduler=createWakeScheduler({intervalMs:settings.intervalMs,wake:trackedWake,clock:ctx.scheduler});
         const root=path.join(stateRoot,'state/proactive');
         fs.mkdirSync(root,{recursive:true,mode:0o700});
         if(fs.realpathSync(root)!==path.resolve(root)||fs.statSync(root).mode&0o077)throw error('invalid_proactive_state');
@@ -124,9 +125,9 @@ export function createProactiveComponent(dependencies={}) {
           catalog:capabilityCatalog.map(c=>({...c,available:settings.reads.includes(c.kind)})),emit:sink});
         lifecycle=createWakeLifecycle({authority:engine.authority,ownerId,activityMaxAgeMs:settings.night.activityMaxAgeMs});
         accepting=true;
-        scheduler=createWakeScheduler({intervalMs:settings.intervalMs,wake:trackedWake});scheduler.start();
-      },async stop(){accepting=false;scheduler?.stop();attempt?.abort();engine?.stop();
-        await Promise.allSettled([...pending]);await engine?.drain();recent.clear();calls.clear();store?.close();store=undefined;engine=undefined;
+        scheduler.start();
+      },async stop(){accepting=false;attempt?.abort();engine?.stop();
+        await scheduler?.stop();await Promise.allSettled([...pending]);await engine?.drain();recent.clear();calls.clear();store?.close();store=undefined;engine=undefined;
       }});
       api.registerGatewayMethod('kurumi-proactive.run',async({params,respond,hasCurrentClientAuthority})=>{
         if(hasCurrentClientAuthority&&!hasCurrentClientAuthority())return respond(false,undefined,{code:'UNAVAILABLE',message:'Expired operator authority'});

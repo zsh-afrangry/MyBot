@@ -14,6 +14,7 @@
     "typebox": "^1.1.38",
     "@kurumi/access-control": "file:../access-control",
     "@kurumi/confirmation-core": "file:../confirmation-core",
+    "@kurumi/host-scheduling": "file:../host-scheduling",
     "@kurumi/knowledgemap-client": "file:../knowledgemap-client"
   },
   "devDependencies": {

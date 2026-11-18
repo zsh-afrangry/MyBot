@@ -121,11 +121,15 @@ test('message leases recover unknown without replaying a persisted event',t=>{
   f.engine.authority.release(claim.handle);
 });
 test('scheduler aligns to a future wall-clock slot, skips overlap and does not catch up',async()=>{
-  let at=120001,scheduled=[],effects=0;const wait=deferred();
-  const scheduler=createWakeScheduler({intervalMs:60000,now:()=>at,setTimer:(fn,delay)=>{scheduled.push({fn,delay});return 1;},clearTimer(){},wake:async({eventKey})=>{effects++;assert.equal(eventKey,'fixed:60000:3');await wait.promise;return {status:'silent'};}});
-  scheduler.start();assert.equal(effects,0);assert.equal(scheduled[0].delay,59999);
-  at=180000;scheduled[0].fn();assert.equal(effects,1);assert.equal((await scheduler.tick()).reason,'scheduler_busy');
-  at=580000;wait.resolve();await new Promise(r=>setImmediate(r));assert.equal(effects,1);scheduler.stop();
+  let at=120001,effects=0,stops=0;const scheduled=[],wait=deferred();
+  const clock={version:1,signal:new AbortController().signal,now:()=>at,
+    schedule(job){scheduled.push(job);return {async stop(){stops++;}};}};
+  const scheduler=createWakeScheduler({intervalMs:60000,clock,wake:async({eventKey})=>{effects++;assert.equal(eventKey,'fixed:60000:3');await wait.promise;return {status:'silent'};}});
+  scheduler.start();assert.equal(effects,0);assert.equal(scheduled[0].atMs,180000);
+  at=180000;const running=scheduled[0].run();assert.equal(effects,1);assert.equal((await scheduler.tick()).reason,'scheduler_busy');
+  at=580000;wait.resolve();await running;assert.equal(scheduled[1].atMs,600000);
+  at=780000;await scheduled[1].run();assert.equal(effects,1);assert.equal(scheduled[2].atMs,840000);
+  await scheduler.stop();assert.equal(stops,1);assert.equal((await scheduler.tick()).reason,'scheduler_stopped');
   assert.throws(()=>createWakeScheduler({intervalMs:5,wake(){}}));
 });
 test('recent projection accepts only correlated real messages, expires and is cleared on forget/reset',()=>{

@@ -42,7 +42,7 @@ export function buildReminderCronAddParams(input: ReminderCronAddInput): Record<
 /** The only Gateway patch shape exposed to reminder updates.  The managed job
  * identity and declaration key remain unchanged, so updating a reminder does
  * not create a duplicate Cron declaration. */
-export function buildReminderCronUpdateParams(input: ReminderCronUpdateInput): Record<string, unknown> {
+export function buildReminderCronUpdateParams(input: ReminderCronUpdateInput): {id: string; patch: Record<string, unknown>} {
   return {
     id: input.jobId,
     patch: {

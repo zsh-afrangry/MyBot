@@ -1,6 +1,6 @@
 import {resolve, isAbsolute} from 'node:path';
 import {existsSync} from 'node:fs';
-import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
+import {createManagedCron} from '../../packages/host-scheduling/index.js';
 import {createListApplication} from './application.js';
 
 export const DECLARATION_PREFIX = 'kurumi.reminder-list.daily:';
@@ -47,49 +47,32 @@ const equal = (a, b) => JSON.stringify(canonical(a)) === JSON.stringify(canonica
 export function createScheduler(options) {
   buildJob('00:00', options); // Fail registration instead of persisting a missing runner.
   const openStore = options.openStore ?? createListApplication({storeAdapter: options.storeAdapter}).openStore;
-  const request = options.request ?? ((method, params) => {
-    if (!process.env.OPENCLAW_GATEWAY_TOKEN) throw Error('Native scheduler credentials unavailable');
-    return callGatewayFromCli(method, {url: `ws://127.0.0.1:${options.port}`, token: process.env.OPENCLAW_GATEWAY_TOKEN, timeout: '15000', json: true}, params);
-  });
+  const cron = createManagedCron({port: options.port ?? 18890, request: options.request});
   let chain = Promise.resolve();
-  let timer, stopped = true, last = {ok: false, status: 'pending'};
+  let task, last = {ok: false, status: 'pending'};
   async function reconcile() {
     const store = openStore(options);
     try {
       store.expire();
-      const settings = store.settings(), desired = settings.enabled ? settings.times : [], all = [];
-      let offset = 0;
-      for (let page = 0; page < 100; page++) {
-        const response = await request('cron.list', {includeDisabled: true, offset, limit: 100});
-        if (!Array.isArray(response?.jobs)) throw Error('Invalid Cron snapshot');
-        all.push(...response.jobs);
-        if (!response.hasMore) break;
-        if (!Number.isInteger(response.nextOffset) || response.nextOffset <= offset || page === 99) throw Error('Invalid Cron pagination');
-        offset = response.nextOffset;
-      }
+      const settings = store.settings(), desired = settings.enabled ? settings.times : [], all = await cron.listJobs();
       const managed = all.filter(j => j.declarationKey?.startsWith(DECLARATION_PREFIX));
       if (managed.some(j => !isOwned(j, options))) throw Error('Reminder-list Cron ownership mismatch');
       for (const job of managed) {
         const time = job.declarationKey.slice(DECLARATION_PREFIX.length);
-        const runs = await request('cron.runs', {id: job.id, limit: 20});
-        if (!Array.isArray(runs?.entries)) throw Error('Invalid Cron observations');
-        store.observeDeliveries({id: job.id, time}, runs.entries);
+        store.observeDeliveries({id: job.id, time}, await cron.runs(job.id, 20));
       }
       store.markUnobserved();
       const seen = new Set();
       for (const job of managed) {
         const time = job.declarationKey.slice(DECLARATION_PREFIX.length);
-        if (!desired.includes(time) || seen.has(time)) { await request('cron.remove', {id: job.id}); continue; }
+        if (!desired.includes(time) || seen.has(time)) { await cron.remove(job.id); continue; }
         seen.add(time);
         const expected = buildJob(time, options);
         const fields = ['name', 'enabled', 'schedule', 'payload', 'delivery', 'sessionTarget', 'wakeMode', 'deleteAfterRun'];
         const patch = Object.fromEntries(fields.filter(k => !equal(job[k], expected[k])).map(k => [k, expected[k]]));
-        if (Object.keys(patch).length) await request('cron.update', {id: job.id, patch});
+        if (Object.keys(patch).length) await cron.update(job.id, patch);
       }
-      for (const time of desired) if (!seen.has(time)) {
-        const added = await request('cron.add', buildJob(time, options));
-        if (!(added?.id ?? added?.jobId ?? added?.job?.id)) throw Error('Missing managed Cron identity');
-      }
+      for (const time of desired) if (!seen.has(time)) await cron.add(buildJob(time, options));
       // The runner always reads current settings; an in-flight old snapshot cannot
       // send at a disabled time. The next pass repairs any concurrent setting edit.
       const current = store.settings();
@@ -107,16 +90,13 @@ export function createScheduler(options) {
   };
   return {
     sync, status: () => last,
-    start() {
-      stopped = false;
-      const tick = async () => {
-        if (stopped) return;
+    start(clock) {
+      if (task) return;
+      task = clock.schedule({id: 'reminder-list-reconcile', delayMs: 1000, everyMs: 30000, async run() {
         const result = await sync();
         if (!result.ok) options.logger?.warn?.('Reminder-list schedule pending; retrying');
-        if (!stopped) { timer = setTimeout(tick, 30000); timer.unref?.(); }
-      };
-      timer = setTimeout(tick, 1000); timer.unref?.();
+      }});
     },
-    async stop() { stopped = true; clearTimeout(timer); await chain; },
+    async stop() { await task?.stop(); task = undefined; await chain; },
   };
 }

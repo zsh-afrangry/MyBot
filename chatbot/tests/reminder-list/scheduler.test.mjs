@@ -68,3 +68,14 @@ test('concurrent syncs serialize and do not create duplicate declarations', asyn
   await Promise.all([scheduler.sync(), scheduler.sync(), scheduler.sync()]);
   assert.equal(jobs.length, 4); assert.equal(new Set(jobs.map(j => j.declarationKey)).size, 4);
 });
+test('an incomplete native Cron snapshot cannot trigger writes', async t => {
+  const {options, store} = setup(t), calls = [];
+  const scheduler = createScheduler({...options, async request(method, params) {
+    calls.push({method, offset: params.offset});
+    if (method !== 'cron.list') assert.fail(method);
+    return {jobs: [], hasMore: true, nextOffset: 100};
+  }});
+  assert.equal((await scheduler.sync()).status, 'pending');
+  assert.equal(store.settings().enabled, true);
+  assert.deepEqual(calls, [{method: 'cron.list', offset: 0}, {method: 'cron.list', offset: 100}]);
+});

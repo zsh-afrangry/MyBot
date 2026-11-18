@@ -110,7 +110,8 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
       };
     }, {matcher: ['personal_reminder_propose', 'personal_reminder_commit', 'personal_reminder_change_propose', 'personal_reminder_change_commit', 'personal_reminder_cancel_propose', 'personal_reminder_cancel_commit', 'automations']});
     registerDigestNotice(api,options,{loadItems:async()=> (await client.allTasks()).map(taskItem)});
-    api.registerService({id: 'personal-reminder-list-scheduler', start: () => scheduler.start(), stop: () => scheduler.stop()});
+    api.registerService({id: 'personal-reminder-list-scheduler', apiVersion: 2,
+      start: ctx => scheduler.start(ctx.scheduler), stop: () => scheduler.stop()});
   }
   for (const declaration of declarations) api.registerTool({contextVersion: 2, create: ctx => {
     const request = inbound.current();

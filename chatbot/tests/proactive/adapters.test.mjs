@@ -98,7 +98,8 @@ test('composition accepts only matched owner lifecycle metadata and clears exact
   const provider=createProactiveComponent({stateRoot:f.root,getConfig:()=>f.cfg,adapters:f.adapters,host:{}}).register({
     config:f.cfg,pluginConfig:{proactive:settings},on(name,handler){hooks.set(name,handler);},registerService(value){service=value;},registerTool(){},registerGatewayMethod(){}});
   assert.throws(()=>service.start(),/wake_tool_not_allowed/);assert(!fs.existsSync(f.root+'/state/proactive'));
-  f.cfg.agents.entries.main.tools={alsoAllow:['kurumi_proactive']};service.start();t.after(()=>service.stop());
+  const clock={version:1,signal:new AbortController().signal,now:Date.now,schedule:()=>({async stop(){}})};
+  f.cfg.agents.entries.main.tools={alsoAllow:['kurumi_proactive']};service.start({scheduler:clock});t.after(()=>service.stop());
   const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(f.root+'/state/proactive/proactive.sqlite',{readOnly:true});t.after(()=>db.close());
   const epoch=()=>db.prepare('SELECT epoch FROM wake_control WHERE scope=?').get('qq:user:100001')?.epoch??0;
   const key='agent:main:kurumi-qq:direct:100001',before=epoch();

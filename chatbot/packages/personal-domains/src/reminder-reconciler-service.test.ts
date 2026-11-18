@@ -97,10 +97,15 @@ describe("personal reminder reconciler service", () => {
       intervalMs: 5_000,
     });
 
-    service.start({ logger } as never);
-    service.start({ logger } as never);
-    await service.stop?.({ logger } as never);
+    const stop = vi.fn(async () => {});
+    const schedule = vi.fn(() => ({stop}));
+    const ctx = {logger, scheduler: {schedule}} as never;
+    service.start(ctx);
+    service.start(ctx);
+    await service.stop?.(ctx);
 
+    expect(schedule).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({delayMs: 0, everyMs: 5_000}));
+    expect(stop).toHaveBeenCalledOnce();
     expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("started"));
     expect(logger.info).toHaveBeenCalledWith(expect.stringContaining("stopped"));
     expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining("already_started"));

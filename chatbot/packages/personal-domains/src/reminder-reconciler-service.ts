@@ -11,8 +11,8 @@ import {
 import { join } from "node:path";
 
 import type {
-  OpenClawPluginService,
-  OpenClawPluginServiceContext,
+  OpenClawPluginServiceV2,
+  OpenClawPluginServiceContextV2,
 } from "openclaw/plugin-sdk/plugin-entry";
 
 import {
@@ -177,62 +177,46 @@ export async function runReminderRetryMaintenanceOnce(
 /** Registers the host-local service; it has no model, tool, channel, or QQ send path. */
 export function createReminderReconcilerService(
   options: ReminderReconcilerServiceOptions = {},
-): OpenClawPluginService {
+): OpenClawPluginServiceV2 {
   const intervalMs = normalizeInterval(options.intervalMs);
-  let timer: NodeJS.Timeout | undefined;
-  let running = false;
-  let pending: Promise<void> | undefined;
-  let stopped = false;
-  let logger: OpenClawPluginServiceContext["logger"] | undefined;
+  let task: ReturnType<OpenClawPluginServiceContextV2["scheduler"]["schedule"]> | undefined;
 
-  const tick = (): void => {
-    if (stopped || running) return;
-    running = true;
-    pending = (async () => {
-      try {
-        const result = await runReminderRetryMaintenanceOnce(options);
-        if (result.skipped) {
-          logger?.warn("personal-reminders reconciler warning=lock_busy");
-          return;
-        }
-        if (result.warnings.length > 0) {
-          logger?.warn(`personal-reminders reconciler warning=${result.warnings.join(",")}`);
-        }
-        if (result.scanned > 0 || result.jobsAdopted > 0 || result.delivered > 0 || result.failed > 0
-          || (result.retriesScheduled ?? 0) > 0 || (result.retriesUnknown ?? 0) > 0 || result.warnings.length > 0) {
-          logger?.info(
-            `personal-reminders reconciler: scanned=${result.scanned} adopted=${result.jobsAdopted} delivered=${result.delivered} failed=${result.failed} retries=${result.retriesScheduled ?? 0} unknown=${result.retriesUnknown ?? 0} warnings=${result.warnings.length}`,
-          );
-        }
-      } catch (error) {
-        logger?.error(`personal-reminders reconciler failed: ${error instanceof Error ? error.message : String(error)}`);
-      } finally {
-        running = false;
+  const tick = async (logger: OpenClawPluginServiceContextV2["logger"]): Promise<void> => {
+    try {
+      const result = await runReminderRetryMaintenanceOnce(options);
+      if (result.skipped) {
+        logger.warn("personal-reminders reconciler warning=lock_busy");
+        return;
       }
-    })();
+      if (result.warnings.length > 0) {
+        logger.warn(`personal-reminders reconciler warning=${result.warnings.join(",")}`);
+      }
+      if (result.scanned > 0 || result.jobsAdopted > 0 || result.delivered > 0 || result.failed > 0
+        || (result.retriesScheduled ?? 0) > 0 || (result.retriesUnknown ?? 0) > 0 || result.warnings.length > 0) {
+        logger.info(
+          `personal-reminders reconciler: scanned=${result.scanned} adopted=${result.jobsAdopted} delivered=${result.delivered} failed=${result.failed} retries=${result.retriesScheduled ?? 0} unknown=${result.retriesUnknown ?? 0} warnings=${result.warnings.length}`,
+        );
+      }
+    } catch (error) {
+      logger.error(`personal-reminders reconciler failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
   };
 
   return {
     id: "personal-reminders-reconciler",
+    apiVersion: 2,
     start(ctx) {
-      logger = ctx.logger;
-      if (timer) {
-        logger.warn("personal-reminders reconciler warning=already_started");
+      if (task) {
+        ctx.logger.warn("personal-reminders reconciler warning=already_started");
         return;
       }
-      stopped = false;
-      tick();
-      timer = setInterval(tick, intervalMs);
-      timer.unref();
-      logger.info(`personal-reminders reconciler started (interval=${intervalMs}ms)`);
+      task = ctx.scheduler.schedule({ id: "reconcile", delayMs: 0, everyMs: intervalMs, run: () => tick(ctx.logger) });
+      ctx.logger.info(`personal-reminders reconciler started (interval=${intervalMs}ms)`);
     },
     async stop(ctx) {
-      stopped = true;
-      if (timer) clearInterval(timer);
-      timer = undefined;
-      logger = ctx.logger;
-      await pending;
-      logger.info("personal-reminders reconciler stopped");
+      await task?.stop();
+      task = undefined;
+      ctx.logger.info("personal-reminders reconciler stopped");
     },
   };
 }
