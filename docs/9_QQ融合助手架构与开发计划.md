@@ -42,7 +42,7 @@ systemctl --user status kurumi-fusion.service snowluma.service snowluma-qq.servi
 journalctl --user -u kurumi-fusion.service -n 100 --no-pager
 ```
 
-这四项只证明检查时的运行与对齐状态，不证明 Git 已提交推送，也不证明人格体验或业务端到端成功。`health.mjs` 不发 QQ、不创建任务。QQ 断线先看 SnowLuma/QQ 服务和在线状态，不重启旧 bridge。默认的滚动 24 小时 500 条发送额度按物理消息计数，不能靠清空历史绕过。
+这四项只证明检查时的运行与对齐状态，不证明 Git 已提交推送，也不证明人格体验或业务端到端成功。`health.mjs` 不发 QQ、不创建任务。QQ 断线先看 SnowLuma/QQ 服务和在线状态，不重启旧 bridge。当前配置的滚动 24 小时 500 条额度按发送预留计数，含失败和未知回执，不能靠清空历史绕过。
 
 ### 配置同步
 
@@ -76,24 +76,24 @@ cd /opt/deepseek-harness
 ./Stop-DSH.sh
 ```
 
-只启停 DSH 和融合助手，QQ 传输独立管理。
+脚本直接操作 DSH 和融合助手。QQ 传输由独立单元管理，Fusion 的 `Wants=` 可以在启动时拉起依赖单元。
 
 | 动作 | Start | Stop |
 | --- | --- | --- |
 | `dsh-web.service`（系统） | 启动 | 停止 |
 | `kurumi-fusion.service`（用户） | 启动 | 先停止 |
-| `snowluma`、`snowluma-qq` | 只检查，不启动 | 不停止 |
+| `snowluma`、`snowluma-qq` | 脚本检查状态，允许 systemd 按 `Wants=` 拉起 | 脚本不停止 |
 | 旧 `qq-bridge`、`openclaw-gateway` | 由 `Conflicts=` 停止 | 不单独操作 |
 
-- `snowluma-qq` 重启后须等客户端更新、登录和协议会话恢复，耗时无固定保证；期间 3083/3084 可能不监听，所以启停融合助手不带动它。
+- `snowluma-qq` 重启后须等客户端更新、登录和协议会话恢复，耗时无固定保证；期间 3083/3084 可能不监听，日常重启 Fusion 不会要求重启已运行的 QQ 服务。
 - Start 的退出码包含 QQ 状态：QQ 传输未运行时以非零退出。这是“未就绪”，不是“启动失败”，此时融合助手可能已经在跑。
 - Stop 之后助手不可用，QQ 通道仍在，停机期间没有融合回复。
-- Start 会等待健康检查，失败以非零退出并显示原因，可以重复执行。默认只显示 DSH 3080、Fusion 18890、SnowLuma WebUI 3082、OneBot HTTP 3083、OneBot WS 3084、QQ 在线状态和结果，显示层是 `scripts/fusion/stack-summary.mjs`。`--verbose` 看完整健康 JSON。Stop 的默认输出区分“已停止”和“已停止，退出状态异常”，`--verbose` 显示原始 ActiveState/Result。SnowLuma 曾超过停止期限被 SIGKILL，所以要看 `ActiveState` 和 `Result`，不能把“进程停止”当作“正常退出”。
+- Start 会等待健康检查，失败以非零退出并显示原因，可以重复执行。状态摘要包含 DSH 3080、Fusion 18890、SnowLuma WebUI 3082、OneBot HTTP 3083、OneBot WS 3084 和 QQ 在线状态，由 `scripts/fusion/stack-summary.mjs` 生成。Start 另显示可用的 DSH 入口，该入口可能包含认证信息。`--verbose` 看完整健康 JSON。Stop 的默认输出区分“已停止”和“已停止，退出状态异常”，`--verbose` 显示原始 ActiveState/Result。SnowLuma 曾超过停止期限被 SIGKILL，所以要看 `ActiveState` 和 `Result`，不能把“进程停止”当作“正常退出”。
 - 脚本源在 `scripts/fusion/launchers/`，实际入口在 `/opt/deepseek-harness/`（所有者 `dsh:dsh`，权限 755）。改了源文件必须同步到实际入口，否则以部署副本为准。脚本不保存 sudo 密码。
 
 ## 开发与验证
 
-先 `node scripts/fusion/link-dependencies.mjs` 准备开发依赖。下表是按领域选择的离线入口，不是全项目回归。测试用 `/usr/bin/node` 运行：shell 里 nvm 的 Node 22 加载不了 OpenClaw 依赖。确认消费方的测试前，先依次构建确认核心、确认入口和共享领域库。
+先 `node scripts/fusion/link-dependencies.mjs` 准备开发依赖。下表是按领域选择的离线入口，不是全项目回归。测试使用满足 `config/openclaw-release.json` 约束的系统 Node（`/usr/bin/node`），与服务解释器一致。确认消费方的测试前，先依次构建确认核心、确认入口和共享领域库。
 
 | 领域 | 命令 |
 | --- | --- |
@@ -120,7 +120,7 @@ cd /opt/deepseek-harness
 
 ### 诊断日志与保留
 
-宿主日志单文件按 10MiB 轮转；启动时的独立清理器只管理 `logs/` 和 runtime 轮转副本，默认保留 7 天、总预算 60MiB，不代表活动 `runtime.log`、会话或业务库统一只留 7 天。插件捕获是运行代码的临时副本，Gateway 退出后清理，不作为恢复数据。配置同步只在备份根 `.working/config-sync/openclaw.before.json` 留一份待验证的回退副本，验证后移除。
+宿主日志单文件按 10MiB 轮转；诊断清理在启动时和运行中每 6 小时执行，清理对象是 `logs/` 下的普通文件及 `runtime.1.log`、`runtime.2.log`。默认清理超过 7 天或超出 60 MiB 总预算的副本，预算计入活动 `runtime.log`，会话和业务库不参与。插件捕获是运行代码的临时副本，Gateway 退出后清理，不作为恢复数据。配置同步的待验证回退副本见[文档12](12_目录资产与Git备份整理.md#原理)。
 
 ### 固定依赖与升级
 
@@ -143,7 +143,7 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 
 ## QQ 图片与引用
 
-**图片入站。** `chatbot/plugins/kurumi-qq/src/media.js` 的 `stageImage` 只接受 QQ CDN 白名单里的精确主机（含 `multimedia.nt.qq.com.cn` 和 `multimedia.nt.qq.com`）或已暂存的本地图片，要求 HTTPS、无 URL 凭据、无非默认端口、禁重定向、不超过 8MiB、类型为图片。远程图片和表情共用它：按该次请求的精确主机生成 Fake-IP 策略（与天气插件使用的 SDK helper 一致，兼容 RFC 2544 和 IPv6 ULA，不放开通用私网），下载走 `fetchWithSsrFGuard` 的 `trusted_env_proxy` 模式，15 秒超时，响应交给 `saveResponseMedia` 校验大小和类型并暂存。
+**图片入站。** `chatbot/plugins/kurumi-qq/src/media.js` 的 `stageImage` 只接受 QQ CDN 白名单里的精确主机（含 `multimedia.nt.qq.com.cn` 和 `multimedia.nt.qq.com`）或已暂存的本地图片，要求 HTTPS、无 URL 凭据、无非默认端口、禁重定向、不超过 8MiB、类型为图片。远程图片和表情共用它，下载走宿主 `fetchWithSsrFGuard` 的 `trusted_env_proxy` 模式，对本次白名单主机使用受信代理策略，15 秒超时。响应由 `saveResponseMedia` 做媒体大小检查并暂存。
 
 图片加载失败时，先查频道暂存和附件状态，再查模型实际收到的媒体，不能只凭回复归因于视觉模型。识图细节和建议可能出错。
 
@@ -170,7 +170,7 @@ node scripts/fusion/log-query.mjs --source papers --contains <job_ID> --json
 - 当前没有通过项目注册表开放的编码项目。`projects.json` 保留空结构供插件兼容读取，日常编码走[文档28](28_本机编码工具委托与实验任务.md)的 `dsh-pilot` 专用工具。`register-project.mjs` 是操作员显式登记/移除的工具，不能绕过 `codeEnabled=false`。
 - `kurumi_task` 只保留研究任务和历史任务的查询、取消。长篇论文用 `kind=research` 进入后台，来源 PDF 在 `research-cache`，报告在 `research-workspace/reports`，按 URL、哈希、下载时间区分版本。未提取、未看图、未复现实验的部分，报告里必须说明。
 - 论文翻译的安装入口是 `chatbot/scripts/setup-paper-translation.sh`，凭据导入是 `chatbot/scripts/import-paper-credentials.mjs`，都由操作者执行。细节见[文档22](22_论文PDF翻译与文件投递.md)。
-- 提醒列表用 `chatbot/scripts/reminder-list.mjs`，规则见[文档23](23_KnowledgeMap业务能力桥接.md)。一次性提醒的固定 runner 到点执行，不依赖模型；每日播报以主人已登记的周期任务为准。
+- 提醒列表用 `chatbot/scripts/reminder-list.mjs`，规则见[文档23](23_KnowledgeMap业务能力桥接.md)。一次性提醒由固定 runner 到点触发，投递说明依赖模型生成。每日天气播报以主人登记的周期任务为准。
 
 ## 限制与已知问题
 

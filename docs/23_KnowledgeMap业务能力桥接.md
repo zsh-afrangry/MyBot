@@ -34,7 +34,7 @@
 ### 每日播报
 
 - 默认每天 00:00、08:00、12:00、18:00（Asia/Shanghai），24:00 等同 00:00；时刻集合最多 24 项，次数等于时刻数，可修改或暂停/恢复。设置以本地 settings 为准，`defaultTimes` 只用于首次建库。
-- 原生 Cron 运行 `chatbot/scripts/reminder-list.mjs run --slot HH:mm`。slot 是“日期 + 设定时刻”的一次计划播报，同一 slot 只生成一次。固定 CLI 经鉴权的本机 RPC 让宿主从业务 API 读取完整有效列表，按网站顺序呈现事项明细一次；模型只写一段自然开场（时刻、时区、数量），不注入逐项资料。
+- 原生 Cron 运行 `chatbot/scripts/reminder-list.mjs run --slot HH:mm`。slot 是“日期 + 设定时刻”的一次计划播报，同一 slot 只生成一次。固定 CLI 经鉴权的本机 RPC 让宿主从业务 API 读取完整有效列表，按 API 返回顺序呈现事项明细一次；模型只写一段自然开场（时刻、时区、数量），不注入逐项资料。
 - 只有查询成功、设置版本一致、处于设定时刻后 2 分钟窗口内且该 slot 未被占用时才准备正文。空列表跳过；API 故障不宣告空列表，也不读旧库；完整正文超过 500000 字节失败，不截断。
 - 模型生成失败明确记为未发送，不发固定兜底，不自动补发。开场校验记录空文案、换行和具体事项重复，错误保留规则和生成记录引用，不复制被拒的私密正文。
 - 投递账本记录 prepared/skipped/delivered/failed/unknown。清单成功需要本 slot 已生成非空冻结正文、Cron 执行成功且有送达回执；失败运行的错误通知即使送达，也只表示通知送达。未知送达不自动重发。
@@ -70,12 +70,12 @@
 | `bridgeTokenFile` / `tokenFile` | 专用助手 token 文件，位于 `~/.config/knowledgemap/assistant-token`，权限 600 |
 | `personal-weather.config.weatherBackend` | 当前为 `knowledgemap` |
 
-命令行连接可用环境变量 `KURUMI_KM_BASE_URL`、`KURUMI_KM_TOKEN_FILE` 覆盖。
+旧 Cron 载荷可带 `KURUMI_KM_BASE_URL`、`KURUMI_KM_TOKEN_FILE`。当前 runner 调用宿主 RPC，由宿主插件的受管配置决定业务 API 连接。
 
 ### 运行边界
 
 - 专用 API 常驻在 `127.0.0.1:3086`，由 `knowledgemap-assistant.service` 运行，读取网站同一业务数据库和后端配置。网站 `localhost:3000` 和开发后端 `127.0.0.1:3085` 不是助手的日常依赖。`/api/health` 只证明进程存活。
-- 助手通过专用认证的 `/api/assistant/` 访问天气、账单、标签、日历和仪表盘，拿不到任意 HTTP、SQL 或数据库凭据，也不使用网站登录密钥；CORS 不当认证。
+- 助手通过专用认证的 `/api/assistant/` 访问天气、账单、标签和共享事项，拿不到任意 HTTP、SQL 或数据库凭据，也不使用网站登录密钥；CORS 不当认证。
 
 ### 写入与查询契约
 
@@ -110,8 +110,8 @@ flowchart LR
   Tools <--> API[KnowledgeMap 业务 API]
   Web[网站] <--> API
   API <--> DB[(同一份业务数据库)]
-  Cron[固定播报 runner] --> API
-  Cron --> Delivery[OpenClaw / QQ 投递]
+  Cron[固定播报 runner] -->|本机鉴权 RPC| OC
+  OC --> Delivery[OpenClaw / QQ 投递]
 ```
 
 - **模型**理解请求、查询候选和标签、选择动作和目标，含糊时询问；后端不用聊天动词正则重判模型已明确的动作。

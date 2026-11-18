@@ -31,7 +31,7 @@
 
 | 厂商 / 渠道 | 模型 | 强度 | 说明 |
 | --- | --- | --- | --- |
-| DeepSeek / official | `deepseek-flash`、`deepseek-v4-pro` | none、low、high、max | 单次输出上限 393216（含推理 token），批次用 `text.format=json_schema` |
+| DeepSeek / official | `deepseek-flash`、`deepseek-v4-pro` | none、low、high、max | 请求传 `max_output_tokens=393216`（含推理 token），批次用 `text.format=json_schema` |
 | OpenAI / naiccc | `gpt-6.1-sol` | low、medium、high、xhigh、max | 凭据按 014→030→040 选择；未登记可靠输出上限，不传该参数 |
 
 只接 GPT 与 DeepSeek，不接 Grok。冲突组合和未登记模型直接拒绝，不静默替换，不切 Chat。指定厂商、模型或唯一渠道时推导其默认强度，不继承另一厂商的字段。`none` 的样式保留不稳定，仍可按明确指定执行。
@@ -107,7 +107,7 @@ flowchart LR
 - 公开下载只走 HTTPS 白名单：`arxiv.org`、`export.arxiv.org`、`aclanthology.org`、`openreview.net`、`proceedings.mlr.press`、`proceedings.neurips.cc`。不登录，不跟重定向，另有 45 秒期限、PDF 签名和哈希检查。实现在 `chatbot/packages/scholarly-source/`。
 - 源缓存为 `<id>.pdf` 和 `<id>.source.json`，旧阅读缓存 `<id>.json` 验证后可复用。取消不发布半文件；无独立取消信号的相同下载可合并，有独立信号的不合并取消。阅读解析失败不阻断翻译下载。
 - QQ 文件 URL 取自已鉴权 OneBot 的 `get_private_file_url`，忽略消息正文里的任何 URL。只允许已登记的 QQ CDN，或公开 IPv4 的固定 `/asn.com/` 路径；IPv4 以固定的 `multimedia.nt.qq.com.cn` 做 SNI 和证书校验，不关闭 TLS 验证。内网和保留地址拒绝。
-- 每条消息最多处理前 3 个文件，超量标为 `not_processed`。只支持 PDF，非 PDF 不下载。`qq_attachment_results` 逐项给出 `registered`、`unsupported_type`、`rejected`、`download_failed`、`validation_failed`、`import_failed`、`not_processed`，只有 `registered` 带本次真实文档 ID。文件名和扩展名是不可信数据。
+- 每条消息最多处理前 3 个文件，超量标为 `not_processed`。只有标为 `.pdf` 的候选会下载，随后校验真实字节。`qq_attachment_results` 逐项给出 `registered`、`unsupported_type`、`rejected`、`download_failed`、`validation_failed`、`import_failed`、`not_processed`，只有 `registered` 带本次真实文档 ID。文件名和扩展名是不可信数据。
 - 收到文件不等于请求翻译。成功的 PDF 结合本次文字和前文待续请求处理，用途不明先问。失败附件不能拿历史 PDF 顶替。只有失败附件、没有文字、引用和有效媒体时，由 QQ 频道生成绑定会话的模型说明，不派发业务工具，没有固定兜底文案。带文字的附件消息交给模型。
 - 追踪事件 `paper.qq_receive`（类型、状态、错误码、成功 ID）和 `paper.qq_ingress_route`（是否派发模型）可按 QQ 消息 ID 查询，不记文件名、正文和签名 URL。查询见[文档18](18_跨模块链路日志查询.md)。
 - 任务状态：queued → running → succeeded / failed / cancelled / interrupted。会话 ID 和调用 ID 生成幂等键，同键不同参数拒绝，重放不再付费。
@@ -137,7 +137,7 @@ flowchart LR
 ### 用量与空闲超时
 
 - 从请求开始或最后一次非空白的 `response.output_text.delta` 计时。心跳、创建事件、思考事件和空白不重置。无正文超时先取消 HTTP 进程，记 `api_output_idle_timed_out_unknown` 和未知用量，再按下表切渠道或有限恢复，只重试当前批次。持续有正文仍受 600 秒单请求期限和整篇期限约束。
-- 没有可见正文不证明上游没推理、没计费，本地取消也不保证上游停止计费。只有完整终态响应才提供可核实的译文和用量。渠道中断记 unknown，不记 0。所有实际尝试共同消耗请求和用量预算，不自动重跑整篇。
+- 没有可见正文不证明上游没推理、没计费，本地取消也不保证上游停止计费。只有状态为 `completed`、报告了用量且校验通过的响应可用于译文。已报告的用量即使任务失败仍计入预算，未报告的渠道中断记 unknown。所有实际尝试共同消耗请求和用量预算，不自动重跑整篇。
 - 每次请求独立上下文，不带 `previous_response_id`，顶层 `instructions` 明确。流式只采用终态 response 的完整 output_text 和用量，不采用 reasoning、部分 delta、空输出和 incomplete。记录请求数、实际模型、请求与回显强度、各类 token、responseId 和凭据名称，不记录密钥、论文正文和上游任意错误文本。
 - GPT 批次用原数组协议。DeepSeek 批次传 `text.format=json_schema`（`translations` 对象数组、原 ID 枚举）。无论 API 是否接受 schema，本地都核对条数、ID、非空译文和全部公式、样式标记；只允许去掉一个完整的外层 JSON 围栏，不从解释文字里抽取片段。源码、模型、强度和批次协议都进入缓存键。校验失败只记结构原因、数量和位置。
 
@@ -156,7 +156,7 @@ flowchart LR
 | 无鉴权证据的 403、参数或权限错误、错误的模型或强度 | 明确失败，不用换渠道掩盖 |
 | 译文结构、公式、样式校验失败 | 按 `batchValidationRetries` 只重试当前批次，失败输出不缓存、不拼进译稿 |
 
-冷却跨任务共享，成功后释放该渠道。任务终态时停止准入并中断在途等待，已完成的响应仍计账。恢复受整篇时限和预算约束，不保证金额上限。`api_stream_error` 只说明没拿到该批完整响应，不能据此归因于厂商、中转或超时。
+冷却保存在该身份的缓存目录，供它后续任务使用。成功后解除该渠道的相应冷却。任务终态时停止准入并中断在途等待，已完成的响应仍计账。恢复受整篇时限和预算约束，不保证金额上限。`api_stream_error` 只说明没拿到该批完整响应，不能据此归因于厂商、中转或超时。
 
 ### Worker 隔离
 

@@ -35,13 +35,13 @@
 > **业务记忆不在 `state/` 里。** 连续性模式下 `workspace/.kurumi-memory/state.sqlite` 是唯一事实，
 > `workspace/MEMORY.md` 只保留迁移说明；当前连续性模式不允许旧写入接口把它当作第二事实源。
 > `state/personal-weather/weather.sqlite` 存 Profile/行程，`state/personal-reminders/` 存提醒。
-> 备份必须包含整个运行目录；仅备份 `state/` 会遗漏人格和主人记忆。
+> 成套采集范围见[文档12](../docs/12_目录资产与Git备份整理.md)。仅备份 `state/` 会遗漏人格和主人记忆。
 
 `runtime.config.json` **不含任何真实凭据**。其凭据来源包含运行目录和业务服务的专用私密文件：
 
 - `${OPENCLAW_GATEWAY_TOKEN}`、`${QWEATHER_API_HOST}` —— 由 `run-gateway.mjs` 从
   `runtime-env.json` 展开为子进程环境变量；
-- `{"source":"env","id":"DEEPSEEK_API_KEY"}` 这类 **SecretRef** —— 由 OpenClaw 在运行时按名字解析。
+- `{"source":"env","provider":"default","id":"DEEPSEEK_API_KEY"}` 这类 **SecretRef** —— 由 OpenClaw 在运行时按名字解析。
 - `plugins.entries.kurumi-papers.config.credentialsFile` —— 翻译进程启动时读取 0600 私密 JSON，只选择该厂商的 Key，经 stdin 传入；不能在配置、命令行或工具参数中写密钥。操作者用 `chatbot/scripts/import-paper-credentials.mjs --provider openai|deepseek` 导入；已有目标需 `--replace` 原子合并并保留另一厂商，具体来源和命令见文档 22。
 
 - KnowledgeMap专用Bearer仅从 `/home/afrangry/.config/knowledgemap/assistant-token` 读取（600），两端共享此凭据文件，不共享MySQL密码；属于私密备份范围。
@@ -177,7 +177,7 @@ node scripts/fusion/sync-persona.mjs          # 角色卡是否与运行工作�
 node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 ```
 
-这四项是**运行态对齐**检查：通过表示运行目录没有偏离仓库意图、服务当前健康。三项含义不同，不要互相替代：
+四项自检分别核对配置、人格、依赖和服务状态。`health.mjs` 的 Cron 判定缺口见[文档9](../docs/9_QQ融合助手架构与开发计划.md#限制与已知问题)。版本收录单独检查。
 
 | 概念 | 由什么证明 | 不证明什么 |
 | --- | --- | --- |

@@ -6,7 +6,7 @@
 | --- | --- |
 | 源码仓库 | `/home/afrangry/kurumi-fusion`，main 单线维护 |
 | 私有运行目录 | `/home/afrangry/.openclaw-fusion`，身份、凭据、状态和人格投影 |
-| 恢复材料 | `/home/afrangry/kurumi-backups`，最近两个已验证恢复点 |
+| 恢复材料 | `/home/afrangry/kurumi-backups`，已验证恢复点和共享工件，按[文档12](docs/12_目录资产与Git备份整理.md)管理 |
 | 独立业务依赖 | KnowledgeMap，不合入本仓库，Fusion 通过接口使用 |
 | 受控编码试点 | 独立的 dsh-pilot 目录，不等于 Fusion 主仓库的写权限 |
 
