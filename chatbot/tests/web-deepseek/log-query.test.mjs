@@ -1,4 +1,4 @@
-// Offline read-only log-query adapter for DeepSeek provider traces, temporary runtime only. Design: docs/26.
+// Offline read-only log-query adapter for DeepSeek provider traces, temporary runtime only. Design: docs/8.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

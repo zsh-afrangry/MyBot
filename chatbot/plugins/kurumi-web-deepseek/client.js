@@ -1,4 +1,4 @@
-// Fixed-endpoint DeepSeek Search/Fetch client. Design: docs/26; official contract: api-docs.deepseek.com/guides/search.
+// Fixed-endpoint DeepSeek Search/Fetch client. Design: docs/8; official contract: api-docs.deepseek.com/guides/search.
 import fs from 'node:fs';
 import {isIP, BlockList} from 'node:net';
 

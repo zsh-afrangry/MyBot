@@ -67,12 +67,12 @@
 
 ## 后端代码边界
 
-- 共享运行代码归 `chatbot/packages/`，不得反向导入具体插件或 `scripts/fusion/`；插件组合入口可接线实际投递器。天气、Profile、行程、一次性提醒分别独立启停，默认实现共用 `personal-domains` 包和集中构建，历史数据库与旧 Cron 执行地址保持兼容。公开 PDF 下载归 `scholarly-source`，阅读解析仍归研究插件，翻译不依赖阅读提取。现行代码归属与生命周期见[文档21](docs/21_后端职责分层与代码整理.md)，待实施的Search/Fetch provider设计见[文档26](docs/26_基础能力插件边界整理与检索接入设计.md)，首批E7只读查询的实现范围与分层验收见[文档27](docs/27_E7数据插件设计.md)。
+- 共享运行代码归 `chatbot/packages/`，不得反向导入具体插件或 `scripts/fusion/`；插件组合入口可接线实际投递器。天气、Profile、行程、一次性提醒分别独立启停，默认实现共用 `personal-domains` 包和集中构建，历史数据库与旧 Cron 执行地址保持兼容。公开 PDF 下载归 `scholarly-source`，阅读解析仍归研究插件，翻译不依赖阅读提取。现行代码归属与生命周期见[文档21](docs/21_后端职责分层与代码整理.md)，待实施的Search/Fetch provider设计见[文档8](docs/8_检索功能.md)，首批E7只读查询的实现范围与分层验收见[文档27](docs/27_E7数据插件设计.md)。
 - 领域默认策略放 `policy.js`，可信入站放 `inbound.js`，写入编排放 `service.js`；`store.js` 不读取聊天原文。提醒列表的SQLite兼容实现与记忆通过 `application.js` 组合入口、`adapters.js` 注册表和 `contracts.d.ts` 消费 Policy/Store 接口，服务不导入具体实现。共享注册/选择机制在 `chatbot/packages/domain-adapters/`；不可热切换或静默回退。
 - KnowledgeMap共享业务走显式异步HTTP边界，不能注册为同步Store。事项唯一事实与版本/幂等在业务API，本地只保留设置和投递账本；持久切换标记防止旧runner写旧库。桥接接口与测试入口见文档23。
 - 账单增查改删/月汇总同样通过KnowledgeMap业务接口；单笔维护先查真实ID/version，明确唯一请求直接执行、歧义先澄清。业务规则与测试边界见[账单完整维护](docs/23_KnowledgeMap业务能力桥接.md#账单完整维护)，不把账单实际删除当成事项作废。关联runId取自可信宿主工具调用钩子，不读模型参数或假定工厂上下文提供runId。
 - 提醒列表已有项的动作和对话指代由模型转换成 ID/版本，后端不重判原文动词/标题。可信当前请求、事务、版本和幂等是执行契约；多项维护与请求键契约统一见[共享事项维护规则](docs/23_KnowledgeMap业务能力桥接.md#一条消息维护多项)及[版本与幂等](docs/23_KnowledgeMap业务能力桥接.md#写入与查询契约)。替换列表存储必须同时覆盖工具、调度器和独立固定 runner，参见文档21。
-- 自然语言二次确认及旧带码兼容只通过 `@kurumi/confirmation-core`；业务插件提供自己的适配器，在业务事务内消费 grant。交互钩子不签发授权。结构与删减入口见[文档 21](docs/21_后端职责分层与代码整理.md)。
+- 自然语言二次确认及旧带码兼容只通过 `@kurumi/confirmation-core`；业务插件提供自己的适配器，在业务事务内消费 grant。交互钩子不签发授权。规则见[文档 6](docs/6_二次确认.md)。
 - 新业务工具/action 须登记 `chatbot/packages/access-control/permissions.js` 并在执行处检查权限；未知映射拒绝。成员若尚无资源归属/确认隔离则保持 owner-only，不靠分会话冒充数据隔离。后台任务持久绑定实际请求者，回传前复核，不改发给主人。细则见文档24。
 - 新增领域后端脚本放 `chatbot/scripts/`，测试放 `chatbot/tests/<领域>/`；SQL 迁移随对应插件留在仓库。部署和运维脚本归 `scripts/fusion/`。
 

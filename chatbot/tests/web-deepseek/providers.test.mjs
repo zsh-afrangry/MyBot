@@ -1,4 +1,4 @@
-// Offline contract tests for docs/26 DeepSeek Search/Fetch providers: injected fetch only, no real API request.
+// Offline contract tests for docs/8 DeepSeek Search/Fetch providers: injected fetch only, no real API request.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

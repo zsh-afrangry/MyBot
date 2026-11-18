@@ -1,4 +1,4 @@
-// DeepSeek Search/Fetch providers under the host's own web_search/web_fetch. Design and status: docs/26.
+// DeepSeek Search/Fetch providers under the host's own web_search/web_fetch. Design and status: docs/8.
 // Selection stays explicit in tools.web.*.provider: no env/auth-profile credential, so the host never auto-detects it.
 import path from 'node:path';
 import {truncateSanitizedExternalContent, wrapWebContent} from 'openclaw/plugin-sdk/security-runtime';

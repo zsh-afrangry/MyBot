@@ -4,7 +4,7 @@
  * Boundary: real naiccc model via its OpenAI-compatible SDK, real Tavily API through
  * the installed plugin client, real HTTP fetch. No Host, no QQ delivery, no production
  * database, no production config change. This is the capability probe for the redesign
- * in docs/8_检索功能重构.txt, not a production Agent path.
+ * in docs/8_检索功能.md, not a production Agent path.
  *
  * Report only: no assertions abort the run, because the point is to compare across all
  * six questions, including the ones expected to stay silent.
