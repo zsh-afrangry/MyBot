@@ -215,7 +215,6 @@ if(pilotCopy.status!==0)fail('coding pilot copy','rsync failed');
 // Paths are relative to the backup root: database snapshots keep their absolute layout under
 // state/runtime/, while copied runtime directories sit directly under state/.
 const REQUIRED = [
-  ['state/整理记录.md','sole global execution handbook'],
   ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['kurumi-qq']?.config?.proactive?.enabled
     ? [['state/runtime/home/afrangry/.openclaw-fusion/state/proactive/proactive.sqlite','N3 control, delivery and self-record database']] : []),
   ['external/pilot/source/.git/HEAD','coding pilot repository'],

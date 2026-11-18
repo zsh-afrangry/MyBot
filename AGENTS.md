@@ -4,8 +4,6 @@
 
 阅读路径：本文件 → [docs/README.md](docs/README.md)（文档索引和各需求的状态）→ 任务涉及的编号文档。配置同步规则见 [config/README.md](config/README.md)。文档描述与代码或 `config/` 不一致时以后者为准，并在同一次改动里修正文档。
 
-当前任务队列在 [整理记录.md](/home/afrangry/.openclaw-fusion/整理记录.md) 的“当前执行位置”。
-
 ## 两处目录，不要混用
 
 | 位置 | 性质 | 允许的操作 |

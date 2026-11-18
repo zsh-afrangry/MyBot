@@ -18,7 +18,7 @@ openclaw() {
       *" status "*|*" --dry-run "*|*" --help "*|*" -h "*) ;;
       *)
         echo "已拦截 openclaw update：Fusion 使用经过隔离验收的固定版本，升级会替换全局安装并让 Gateway 退出。" >&2
-        echo "确需升级先读 /home/afrangry/.openclaw-fusion/整理记录.md 的恢复点与升级要求，再用 KURUMI_ALLOW_OPENCLAW_UPDATE=1 openclaw update ..." >&2
+        echo "确需升级先读 docs/12_目录资产与Git备份整理.md 的恢复点与升级顺序，再用 KURUMI_ALLOW_OPENCLAW_UPDATE=1 openclaw update ..." >&2
         return 1
         ;;
     esac
