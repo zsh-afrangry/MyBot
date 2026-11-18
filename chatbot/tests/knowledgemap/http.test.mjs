@@ -1,4 +1,4 @@
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「如何验证」。
 // Integration: Node tool mapping -> real FastAPI HTTP -> disposable SQLite -> website API.
 // No real model, production DB, external weather or QQ. Requires KnowledgeMap checkout.
 import {test} from 'node:test';

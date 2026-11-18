@@ -1,5 +1,5 @@
 import {withAccess} from '../access-control/fixtures.mjs';
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「如何验证」。
 // Offline: real factories/current-request guard, temporary SQLite, controlled HTTP.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';

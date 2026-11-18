@@ -1,6 +1,6 @@
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「第二轮开发与验收」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「账单维护」与「如何验证」。
 // Real model/host, production API/MySQL/browser and weather; synthetic owner ingress.
 // Explicit --live required. Restarts Fusion; no real QQ send. Cleans only marked test bills.
 import fs from 'node:fs';

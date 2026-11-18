@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「第二轮开发与验收」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「配对备份」。
 // Reads both main Git worktrees; writes only a NEW private backup directory.
 // No runtime/database capture, service changes, remote writes or QQ delivery.
 import fs from 'node:fs';

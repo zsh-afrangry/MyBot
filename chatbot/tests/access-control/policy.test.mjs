@@ -1,4 +1,4 @@
-// Offline identity/permission/configuration contracts; synthetic QQ identities, no host or network. docs/24 T01–T03/T07–T09.
+// Offline identity/permission/configuration contracts; synthetic QQ identities, no host or network. docs/24「身份来源」「权限」「配置编译」.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

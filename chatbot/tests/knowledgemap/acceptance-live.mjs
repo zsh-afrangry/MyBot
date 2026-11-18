@@ -1,6 +1,6 @@
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「如何验证」。
 // Real model/production API/MySQL/browser + one owner QQ digest. Explicit --live --qq required.
 // Briefly enables synthetic owner ingress, restarts Fusion and restores the disabled ingress.
 // Deletes only exact marked test business rows via website API; keeps request/delivery receipts.

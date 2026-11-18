@@ -1,78 +1,100 @@
-# 系统资产、备份与回退管理
+状态：已完成（2026-11-07；仅 Fusion 成套隔离恢复，不含真实 QQ 登录与独立项目）
 
-<a id="目录资产与-git备份管理"></a>
+# 系统资产、备份与回退
 
-本文维护资产与恢复契约。当前阶段、指定版本、恢复点和任务状态以唯一全局手册 [整理记录.md](/home/afrangry/.openclaw-fusion/整理记录.md) 为准。历史材料中的体积、SHA、运行结论仅属于当时范围，不能当作当前恢复证明。
+本文规定哪些资产放在哪里、恢复点包含什么、怎样制作和验证恢复点。恢复点只含 Fusion 自身材料，KnowledgeMap 和 DSH 是独立项目，不在范围内。
 
-Fusion执行隔离原生包固定在`.openclaw-fusion/tools/node-addon-system-linux-x64`，由`config/exec-fence-release.json`约束版本/完整树指纹，`install-exec-fence.mjs`负责校验导入；含许可证、单独进入exec-fence工件。它与DSH整体安装生命周期分离，不改变现有试点写入权限。操作后核对两个launcher及依赖自检，验证依据见[本轮编码报告](verification/coding-autonomous-2026-11-07/README.md)。
+## 功能
 
-## 资产归属
+### 资产归属
 
 | 资产 | 位置 | 边界 |
 | --- | --- | --- |
-| 日常源码与配置意图 | `/home/afrangry/kurumi-fusion` | 唯一日常Fusion仓库；main单线维护；未上线确认修复保留冻结标签 |
-| 私有运行状态 | `/home/afrangry/.openclaw-fusion` | 身份、凭据、人格投影、会话、记忆、SQLite和产物；不建运行根Git |
-| 私密备份 | `/home/afrangry/kurumi-backups` | 统一恢复点、指定版本工件及必要离线历史；700目录/600文件 |
-| 编码试点 | `/home/afrangry/.local/share/kurumi-coding-pilot-20261029` | 保留既有普通文件写入窄边界及功能必需Git/profile，不是第二个日常Fusion开发仓库；测试任务、输出与工作树已结束，必须纳入Fusion恢复范围 |
-| OpenClaw安装 | `/home/afrangry/.npm-global/lib/node_modules/openclaw` | 指定版本第三方内核；扩展不直接改内核，隔离适配通过后才能替换；当前版本见全局手册 |
-| 外部项目接口 | KnowledgeMap业务API、DeepSeek Harness | 两者都是独立项目；Fusion只保留自身的接口配置、专用接口凭据和业务/试点控制状态，不采集它们的源码、数据库、安装或全局认证 |
-| QQ传输 | SnowLuma、QQ及登录配置 | 实际运行依赖，保留认证/版本/安装信息；隔离恢复使用模拟OneBot，不声称恢复真实QQ登录 |
-| 已退役现场 | 原projects/fusion、worker原型、旧功能工作树 | 先保护独有历史再退役；不由旧提示词/脚本自动重建 |
+| 日常源码与配置意图 | `/home/afrangry/kurumi-fusion` | 唯一的日常 Fusion 仓库；当前分支、未提交改动和远端差异用 Git 查询 |
+| 私有运行状态 | `/home/afrangry/.openclaw-fusion` | 身份、凭据、人格投影、会话、记忆、SQLite、产物。不建运行根 Git |
+| 私密备份 | `/home/afrangry/kurumi-backups` | 恢复点、共享工件、唯一源码历史。目录 700，文件 600 |
+| 编码试点 | `/home/afrangry/.local/share/kurumi-coding-pilot-20261029` | 普通文件写入的窄边界，Fusion 拥有，纳入恢复范围，不是第二个开发仓库 |
+| OpenClaw 安装 | `/home/afrangry/.npm-global/lib/node_modules/openclaw` | 固定版本的第三方内核，不改它的源码 |
+| 外部项目 | KnowledgeMap 业务 API、DeepSeek Harness（DSH） | 独立项目。Fusion 只保留自己的接口配置、专用凭据和控制状态，不采集它们的源码、数据库、安装或全局认证 |
+| QQ 传输 | SnowLuma、QQ 及登录配置 | 实际运行依赖。隔离恢复用模拟 OneBot，不恢复真实 QQ 登录 |
 
-## Git 与实时状态查询
+内核批准版本和 Node 范围只在 `config/openclaw-release.json` 写一次，启动、依赖链接、依赖校验和备份都读它。执行写入围栏的原生包版本在 `config/exec-fence-release.json`，由 `scripts/fusion/install-exec-fence.mjs` 校验并导入 `.openclaw-fusion/tools/node-addon-system-linux-x64`。
 
-日常在唯一主目录核对 `git status --short`、`git log -1`、`git worktree list`。配置/人格/依赖/服务健康只证明部署对齐，不证明已提交或推送。远端写入须用户明确授权，执行结果以全局手册和真实远端引用为准；2026-11-11专项见[逐项审查](verification/pre-push-2026-11-11/README.md)。冻结标签只表示成果可恢复，不表示已经合入或部署。
+### 恢复点包含什么
 
-读取远端时避免输出带凭据的URL；`git ls-remote`只证明可读及返回引用，仍不证明当前未提交文件已保存。
+新恢复点用格式 v3，清单里标记 `scope: fusion-only`。必须包含：
 
-## 推荐管理方式
+- 源码历史（Git bundle）和未提交改动（补丁）。
+- 受管配置和私有配置。
+- 全部保留的 SQLite 的一致快照（不限目录层数，识别 `.sqlite`/`.db`，排除明确可重建的缓存）。
+- 人格、身份、业务控制状态、编码试点。
+- 指定版本的工件：OpenClaw 内核、论文 Python 环境、执行围栏原生包。按内容寻址存在共享的 `artifacts/` 里，每个点登记版本、源码树指纹和压缩包 SHA256，重复的点复用同一份工件。未验证的工件不算可恢复。
 
-一次推进一个明确任务，开始前读全局手册；必要实验才短期隔离，完成后收录/冻结并退役工作树。使用Git记录源码，不把数据库、聊天和凭据塞进源码仓库；使用一致私密快照保护运行数据。原独立后台源码副本不再维护。
+不包含：可重建依赖、诊断日志及其轮转文件、临时捕获、KnowledgeMap 源码和 MySQL、DSH 安装和全局认证、`dsh-web` 服务单元，以及用户额外登记的下载/文档目录。
 
-## 备份资产与保留规则
+没有 `scope` 标记的旧 v3 点保持原契约，恢复器仍接受其中的 DSH 工件。不改旧点来假装转换范围。
 
-新备份仍使用格式v3，并显式标记`scope: fusion-only`。内核、论文Python环境及执行写入边界的原生辅助包保存为统一根artifacts中的内容寻址工件，恢复点逐项记录版本、源码树指纹及压缩包SHA256，重复点复用同一工件；未验证的工件不算可恢复。原生辅助包是Fusion实际使用的`@deepseek-ai/node-addon-system-linux-x64`依赖（含许可证），并非整套DSH；隔离恢复将其还原到Fusion私有tools目录并改写launcher路径。数据库发现不限制四层目录，同时识别.sqlite/.db并排除明确可重建缓存；保留Fusion拥有的编码试点Git、profile和控制状态，不采集DSH独立安装、全局认证或dsh-web服务单元。
+## 接口
 
-未标记scope的既有v3点维持原契约，恢复器仍接受其中的DSH工件与认证材料；不得拆改既有点来假装转换范围。新点恢复验证要求真实DSH缺失时编码策略拒绝执行；仅用`/usr/bin/false`作为不执行的可用性夹具检查其余Git/目录策略，并由真实Linux辅助程序验证目录内可写、目录外拒绝。不运行DSH；实际使用编码能力还需独立DSH项目可用，不能把该夹具当成真实后端恢复。
+在 `/home/afrangry/kurumi-fusion` 执行。制作和验证恢复点需要用户授权。
 
-备份工具为 `scripts/fusion/backup-state.mjs`，隔离验证为 `restore-verify.mjs`。指定恢复点必须包含源码历史与实际工作文件、受管/私有配置、全部保留SQLite的一致快照、人格/身份、业务控制、编码试点及指定版本工件/依赖重建定义。保留范围、排除项和缺失项应进入清单，失败或中断的材料不得算通过。
+```bash
+node scripts/fusion/backup-state.mjs --label <标签> --quiesce      # 停写快照
+node scripts/fusion/restore-verify.mjs --backup /home/afrangry/kurumi-backups/<目录>
+node scripts/fusion/backup-retention.mjs --record /tmp/<恢复目标>/verification.json  # 登记 VERIFIED，预览保留计划
+node scripts/fusion/backup-retention.mjs --record <同上> --apply                    # 淘汰多余点和无引用工件
+```
 
-N3启用后，`state/proactive/proactive.sqlite`中的暂停/活动、运行/逐条回执、自身记录与来源证明随全部SQLite一致采集；配置声明N3启用时该库是必需资产，缺失即采集失败。禁用或回退代码不删除该库，不把unknown重建成可重试任务。短期聊天投影仅在内存，不作为可恢复资产；诊断trace及其轮转文件不复制进恢复点。隔离恢复器明确关闭副本的N3开关，保留原恢复点/账本，不让恢复验证触发自主模型或外发。当前生产未启用N3，既存R8/R7也不包含本轮新增源码或N3状态；上线前应制作并验证匹配的新恢复点。
+- `--quiesce` 只停止原本在运行的 Fusion，完成、出错或收到可捕获的中断后恢复；原本停着的保持停止。期间不能另起 Gateway，也不能手工改状态。
+- 恢复点目录里的 `VERIFIED.json` 与 `MANIFEST.sha256`、`EXPECTED.json` 的哈希绑定。
 
-可重建依赖、诊断日志、临时捕获、旧测试论文和冗余回退副本不作为正式数据再次复制。第三方依赖须具备可验证的重建或配套工件；不能仅写“可重建”就删掉唯一安装。KnowledgeMap数据库属于外部依赖，Fusion恢复测试使用隔离模拟API，不对其生产写入。
+## 原理
 
-普通文件管理额外登记的下载/文档等用户资料目录不自动成为Fusion恢复资产；文件改动不能靠Fusion恢复点或Git回档撤销。隔离恢复器移除原生exec的`additionalRoots`并将workdir重置到恢复副本的试点，避免验证副本沿用实际资料目录的写入授权；不修改原恢复点。范围与边界见[文档28](28_本机编码工具委托与实验任务.md#第二期普通文件管理的接入契约)，回归证据见[普通文件管理验证](verification/coding-autonomous-2026-11-07/ordinary-files.md)。
+**采集。** 先写 `INCOMPLETE.json` 并持有 `.backup.lock`，全部收集成功且服务恢复后才移除标记。SIGKILL 或断电无法捕获：先确认锁里的 PID 已不存在，检查并按需恢复服务，再处理陈旧的锁。不能删除不完整标记来伪装成功。已跟踪的修改用 `git --binary --full-index` 生成补丁，未跟踪且未忽略的文件单独打 tar，不保留原暂存区分类。
 
-滚动保留最近两个经过实际隔离恢复的点；新点完整通过并登记哈希绑定的VERIFIED后才淘汰被替代点。随后只删除已无任何保留/未完成点引用、且元数据与SHA256均有效的托管工件。未知文件不自动删除，采集锁存在时拒绝执行保留清理。唯一源码历史单独保留，不把Git冻结标签当成可部署状态或私密数据备份。
+**主动唤醒（N3）的库。** 配置启用 N3 时，`state/proactive/proactive.sqlite` 是必需资产，缺失则采集失败。禁用或回退代码不删除它，也不把 unknown 回执重建成可重试任务。隔离恢复器关闭副本的 N3 开关，不让恢复验证触发自主模型调用或外发。
 
-统一根的长期内容为恢复点、共享artifacts、唯一history和简短README导航；`.working`仅允许有消费者的短期预像，验证后退役。五份既存KnowledgeMap独立备份保持原路径和内容，明确排除Fusion自动保留与删除；它们不是Fusion恢复点。SnowLuma目录内四份旧备份均属DSH历史资料，按独立项目边界不在本次Fusion清理中处理。
+**保留。** 滚动保留最近两个经过隔离恢复的点。新点完整通过并登记 VERIFIED 之后，才淘汰被替代的点，再删除不再被任何保留点或未完成点引用且元数据和 SHA256 均有效的托管工件。未知文件不自动删除，采集锁存在时拒绝清理。
 
-配置同步只在统一根的`.working/config-sync/openclaw.before.json`留下最近待验证预像；发布验证后删除。宿主`openclaw.json.last-good`有实际消费契约，作为运行保护保留。
+**隔离恢复。** `restore-verify.mjs` 只接受新建的规范 `/tmp/` 目标，拒绝已有目录和链接，不碰生产。步骤：
 
-## 旧系统回退
+1. 验 manifest、Git bundle、补丁、数据库完整性。
+2. 按 EXPECTED 里的版本和 SHA256 还原内核、Python 环境和围栏原生包，从锁文件重装依赖，不借用全局安装。
+3. 所有路径（workspace、token、日志、runner、项目根）都改写到目标目录内，写入假凭据，禁止真实 QQ、Cron 和共享业务 API。
+4. 在 Bubblewrap 里（文件系统、网络、PID 隔离，生产 home 和服务总线不可见）启动 Gateway 和模拟 OneBot，执行探针。编码探针用真实的 Linux 辅助程序检查目录内可写、目录外拒绝。
+5. 恢复副本移除原生 exec 的 `additionalRoots`，工作目录重置到恢复副本的试点，避免沿用真实资料目录的写入授权。
 
-旧A/B整体重建承诺已结束，以当前Fusion的成套恢复点代替；原“未真人启动验收”不改写为通过。旧迁移和原型入口已从活动源码移除，可从Git历史追溯。原归档物理目录已在R1验证、独有Git历史保护后退役；实时恢复点见全局手册。
+`--skip-deps` 只做材料检查。默认通过只表示隔离 Gateway 加模拟传输可以运行。不要在主机上直接运行恢复副本的 `run-gateway.mjs`。
 
-升级若迁移了数据库，回退必须恢复对应旧版本内核和配套旧状态；不能把旧二进制直接接到升级后的库。旧消费者保持屏蔽，不与Fusion同时运行；恢复前停掉当前写入方，隔离验证时禁止QQ/邮件/真实业务外发。
+**升级演练。** `restore-verify.mjs --adapt-source <本地 bundle> --adapt-sdk <工件 tar.gz>`（两项必须同时给）在隔离副本里替换代码和内核并迁移其数据库，结果标为 `upgrade-rehearsal`，不能登记成恢复点。演练按新源码生成隔离配置，按新锁文件安装外部插件，在无生产路径和网络的命名空间里运行官方 `doctor --fix`，确认 agent schema 升到批准版本、权限和插件意图不变后才启动。
 
-`kurumi-baselines`曾经被删除，旧忽略文件没有逐项证明被等价覆盖；当前材料不能补回那个历史时点，不宣称重新获得迁移前完整基线。
+**生产升级顺序。** 先备好回退状态，停 Fusion，替换已验证的工件和源码，安装锁定的 provider，同步受管配置，运行官方迁移，最后启动服务。升级若迁移了数据库，回退必须同时恢复对应旧版内核和旧状态，不能把旧二进制接到升级后的库上。官方 Doctor 产生的配置 bak、迁移原件、update-captures 只是本次升级的临时回退材料，确认迁移完成并有新的恢复点后才清理，不删除未完成迁移或来源不明的材料。配置同步在备份根 `.working/config-sync/openclaw.before.json` 留一份待验证预像，验证后删除。宿主的 `openclaw.json.last-good` 有消费者，保留。
 
-## 尚待处理
+**Git。** 日常在 kurumi-fusion 里看 `git status --short`、`git log -1`、`git worktree list`。配置、人格、依赖和服务健康检查只证明部署对齐，不证明已提交或推送。远端写入需要用户明确授权。读取远端时不要输出带凭据的 URL。`git ls-remote` 只证明远端可读。
 
-全部阶段任务与未验收项统一见全局手册。功能契约见文档9、16、23、28；本文件不再复制另一份排期或旧恢复点清单。
+### 旧系统回退
 
-内核批准版本与Node范围统一在 `config/openclaw-release.json`，启动、依赖链接、依赖校验和备份共同读取；npm依赖声明仍按锁文件记录兼容约束。旧A/B恢复脚本及旧迁移源路径模块已经退役，历史可从Git追溯。
+旧 A/B 整体恢复不再支持，当前只保证上面范围内的 Fusion 成套恢复。旧消费者（`qq-bridge.service`、`openclaw-gateway.service`）保持屏蔽，不与 Fusion 同时运行。恢复前先停掉当前写入方，隔离验证时禁止 QQ、邮件等真实外发。
 
-实际隔离恢复成功后执行 `node scripts/fusion/backup-retention.mjs --record /tmp/<恢复目标>/verification.json`，生成与EXPECTED/MANIFEST哈希绑定的VERIFIED回执。默认预览最近两个已验证v3点及相应工件保留计划；`--apply`淘汰该集合中的多余点和不再被引用的已校验托管工件。失败/中断点不冒充恢复点，其已声明的工件引用仍受保护；旧项目材料不按此命令批量删除。整个统一根连同artifacts一起搬移才具备完整恢复输入，单独复制一个点不够。
+## 限制与已知问题
 
-QQ插件将宿主OpenClaw声明为可选peer：实际宿主版本由统一版本源/依赖校验强制，插件自身npm ci只重建锁定的业务依赖，避免另装一份OpenClaw。首轮R1演练实际发现并修复此锁文件重建缺口，失败候选不登记为有效点。
+- 恢复点不是跨系统同一时刻的快照。KnowledgeMap 的 MySQL 另由业务端备份，Fusion 脚本不备份它；共享业务的配对备份见[文档23](23_KnowledgeMap业务能力桥接.md)。
+- 隔离恢复不证明真实模型、真实 QQ 登录或独立 DSH 能恢复。使用编码能力还需要 DSH 项目本身可用；恢复验证里 DSH 缺失时编码策略必须拒绝执行，其余策略用不执行的 `/usr/bin/false` 作可用性夹具检查。
+- 普通文件管理登记的下载/文档目录不在恢复范围，对这些文件的改动无法靠恢复点或 Git 撤销。范围见[文档28](28_本机编码工具委托与实验任务.md)。
+- 当前生产没有启用 N3。已有恢复点不含 N3 状态；启用前要制作并验证匹配的新恢复点。
+- 最近已验证点为 R8/R7，源码范围分别为 `9b98c9c`/`57c4608`。之后的 N3 和日志源码不因此成为已验证恢复范围；实际保留点与匹配的 VERIFIED 以备份根只读检查为准。
+- 旧时点（迁移前的 `kurumi-baselines`）已经删除，旧的忽略文件没有逐项证明被等价覆盖，无法补回。
+- 备份根下五份 `knowledgemap-*` 目录是 KnowledgeMap 的独立备份，不计入 Fusion 恢复点，也不被自动保留清理选中。SnowLuma 目录下的旧备份属于 DSH 历史资料，不由 Fusion 处理。
+- 清单里的符号链接以 `symlink:<链接目标>` 的 SHA256 记录，用 `restore-verify.mjs` 核验，普通 `sha256sum -c` 会跟随链接，不能代替。
+- 整个备份根连同 `artifacts/` 一起搬移才具备完整的恢复输入，单独复制一个点目录不够。
 
-旧版R1（源码ce9835f / OpenClaw2026.9.7）曾25/25隔离恢复通过，升级及回退验证已完成；它不作为永久固定保留点，按最近两点规则替换，实际现存点见全局手册。旧Fusion快照与kurumi-archive物理目录已退役，必要独有源码历史集中在私密history/，它不承诺恢复旧A/B运行。五个独立KnowledgeMap备份保持原样。
+## 如何验证
 
-升级隔离演练可对R1指定`restore-verify.mjs --adapt-source <本地bundle> --adapt-sdk <工件tar.gz>`；两项必须成对，原R1不变，仅替换隔离副本代码/内核并迁移其数据库。此模式结果标为upgrade-rehearsal，不能登记成生产恢复点或替代R1/R2。
+```bash
+node scripts/fusion/backup-retention.mjs             # 只预览保留计划
+/usr/bin/node --test scripts/fusion/test/recovery.test.mjs scripts/fusion/test/backup-layout.test.mjs scripts/fusion/test/backup-retention.test.mjs
+git status --short --branch
+git log --oneline main..HEAD                         # 当前分支与 main 的差异，不代表已推送
+```
 
-适配演练按新源码的受管意图和身份配置生成隔离配置，按新锁文件安装外部插件，再在无生产路径/网络的命名空间运行官方doctor --fix；检查全部保留agent schema到批准版本、权限/插件意图不变后才启动。生产切换必须先准备回退状态，停Fusion，替换已验证工件/源码，安装锁定provider、同步受管配置、官方迁移后再启服务。
-
-官方Doctor可能产生配置bak、数据库迁移原件、完成清单与相邻update-captures。它们只作为当前升级的临时回退材料；确认迁移完成并有独立成套恢复点后，集中到统一根的有限工作区，验证R2后退役。不得删除未完成迁移、活动更新或未知来源材料。配置bak不进入正式快照，last-good继续保留。
-
-清单中的符号链接以 `symlink:<链接目标>` 的SHA256记录；请用restore-verify核验，普通 `sha256sum -c` 会跟随链接，不能替代本格式验证。
+保留计划会校验 VERIFIED 与清单哈希；文件存在不能代替完整隔离恢复。需要制作/复验新点时按上面的授权接口执行。

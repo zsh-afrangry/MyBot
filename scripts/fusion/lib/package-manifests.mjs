@@ -1,5 +1,5 @@
 // Read-only dependency discovery for health checks and isolated recovery.
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「备份与恢复演练」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「配对备份」。
 import fs from 'node:fs';
 import path from 'node:path';
 

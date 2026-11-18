@@ -1,6 +1,6 @@
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「测试计划」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「如何验证」。
 // Real configured model + actual v2 factories + isolated FastAPI/SQLite. No QQ/production writes.
 import fs from 'node:fs';
 import {join, resolve} from 'node:path';

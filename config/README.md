@@ -1,6 +1,6 @@
 # 配置来源与同步契约
 
-类型：配置规则与同步操作手册。状态：维护现行配置来源和部署契约；具体业务的实现范围及验收分别进入领域文档与[文档16](../docs/16_验收与测试总表.md)。
+配置规则与同步操作手册：维护现行配置来源和部署契约。具体业务的实现范围见[文档索引](../docs/README.md)里对应的领域文档。
 
 仓库保存配置意图，运行目录保存实际配置与私密状态。按[来源与目录](#目录分工) → [受管键与删除语义](#仓库全权管理-vs-宿主自行维护) → [同步命令](#同步契约) → [生效条件](#改配置的正确姿势)阅读。同步源码为`sync-config.mjs`和`sync-persona.mjs`，文中的历史迁移时点不构成新的执行授权。
 
@@ -74,7 +74,7 @@
 
 `sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
 
-主人普通文件管理复用`plugins.entries.kurumi-qq.config.exec`：`writeBoundary.root`保留试点及运行临时目录，可选`additionalRoots`登记具体批准的资料目录。模型参数不能添加根，旧配置无此字段时保持单根；`sync-persona.mjs`从同一配置向主人AGENTS投影默认workdir及可写根，成员不接收这些目录。新增根须取得具体范围决定后再同步配置/人格并重启Fusion；普通文件与受管资料、覆盖/删除及实际执行边界见[文档28](../docs/28_本机编码工具委托与实验任务.md#第二期普通文件管理的接入契约)。
+主人普通文件管理复用`plugins.entries.kurumi-qq.config.exec`：`writeBoundary.root`保留试点及运行临时目录，可选`additionalRoots`登记具体批准的资料目录。模型参数不能添加根，旧配置无此字段时保持单根；`sync-persona.mjs`从同一配置向主人AGENTS投影默认workdir及可写根，成员不接收这些目录。新增根须取得具体范围决定后再同步配置/人格并重启Fusion；普通文件与受管资料、覆盖/删除及实际执行边界见[文档28](../docs/28_本机编码工具委托与实验任务.md#主人原生exec)。
 
 ### 只读核对
 
@@ -144,14 +144,14 @@ OpenClaw 每回合重新核对 bootstrap 文件；文档25的真实隔离宿主�
 
 | 领域 / 来源键 | 配置与同步边界 | 详细规则 |
 | --- | --- | --- |
-| 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [提醒列表与播报](../docs/23_KnowledgeMap业务能力桥接.md#提醒列表与定时汇总)、[迁移与切换](../docs/23_KnowledgeMap业务能力桥接.md#迁移) |
-| 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析/默认城市桥接，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [21当前生产实现](../docs/21_后端职责分层与代码整理.md#当前生产实现) |
-| 阅读：`kurumi-research.config.cacheRoot` | 显式缓存位置，不从QQ频道目录推导 | [21共享边界](../docs/21_后端职责分层与代码整理.md#共享代码与插件生命周期) |
+| 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [每日播报](../docs/23_KnowledgeMap业务能力桥接.md#每日播报)、[存储与切换](../docs/23_KnowledgeMap业务能力桥接.md#原理) |
+| 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析/默认城市桥接，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [21插件生命周期](../docs/21_后端职责分层与代码整理.md#插件生命周期) |
+| 阅读：`kurumi-research.config.cacheRoot` | 显式缓存位置，不从QQ频道目录推导 | [21共享边界](../docs/21_后端职责分层与代码整理.md#共享代码的唯一实现) |
 | 记忆：`continuity.enabled/summaryTtlDays/maxContextChars` | 仓库为true/7/6000；TTL范围1–30天、缺省7；资料预算2000–12000字符、缺省6000 | [25存储与检索](../docs/25_人格、记忆与会话连续性.md#记忆存储与检索) |
-| 连续性适配器：`continuityPolicyAdapter/continuityStoreAdapter` | 当前`current-owner/sqlite`，不与旧`policyAdapter/storeAdapter`混用；配置选择不自动迁移数据 | [25](../docs/25_人格、记忆与会话连续性.md)、[21兼容实现](../docs/21_后端职责分层与代码整理.md#兼容实现) |
-| 旧本地列表/显式记忆：`policyAdapter/storeAdapter` | 缺省分别`default/sqlite`、`explicit/memory-file`；未知ID失败，连续性启用后旧记忆写入拒绝 | [21兼容实现](../docs/21_后端职责分层与代码整理.md#兼容实现) |
-| 论文：`root/python/credentialsFile/liveTranslationEnabled` | 路径与付费开关属于受管配置；成员目录/任务绑定不靠模型参数选择，凭据不写入配置 | [22产物与运维](../docs/22_论文PDF翻译与文件投递.md#精确产物与运维)、[24隔离](../docs/24_统一身份与权限管理.md#资源与投递隔离) |
-| 论文：`maxPages/maxRequests/maxReportedTokens/apiConcurrency/apiQps` | 源码缺省、仓库生产配置与可配置范围统一查参数表，模型不能改预算/并发 | [22默认资源](../docs/22_论文PDF翻译与文件投递.md#默认资源与用量限制) |
+| 连续性适配器：`continuityPolicyAdapter/continuityStoreAdapter` | 当前`current-owner/sqlite`，不与旧`policyAdapter/storeAdapter`混用；配置选择不自动迁移数据 | [25](../docs/25_人格、记忆与会话连续性.md)、[21适配器](../docs/21_后端职责分层与代码整理.md#适配器注册表) |
+| 旧本地列表/显式记忆：`policyAdapter/storeAdapter` | 缺省分别`default/sqlite`、`explicit/memory-file`；未知ID失败，连续性启用后旧记忆写入拒绝 | [21适配器](../docs/21_后端职责分层与代码整理.md#适配器注册表) |
+| 论文：`root/python/credentialsFile/liveTranslationEnabled` | 路径与付费开关属于受管配置；成员目录/任务绑定不靠模型参数选择，凭据不写入配置 | [22文件与路径](../docs/22_论文PDF翻译与文件投递.md#文件与路径)、[24隔离](../docs/24_统一身份与权限管理.md#资源与投递隔离) |
+| 论文：`maxPages/maxRequests/maxReportedTokens/apiConcurrency/apiQps` | 源码缺省、仓库生产配置与可配置范围统一查参数表，模型不能改预算/并发 | [22配置键](../docs/22_论文PDF翻译与文件投递.md#配置键) |
 | 论文：`batchValidationRetries/channelRecoveryRetries/requestIdleTimeoutSeconds/timeoutSeconds` | 参数表包含缺省与范围；两类重试独立计数，共同受任务预算约束 | [22重试与时限](../docs/22_论文PDF翻译与文件投递.md#重试与渠道切换) |
 
 四领域保留历史共库与旧Cron转发地址；列表切换标记、连续性SQLite、文档/任务归属属于运行状态，不由配置同步迁移。详情见21/23/25。论文队列、冷却、正文空闲与未知计费处理归22，本页不重复展开。
@@ -166,7 +166,7 @@ node chatbot/scripts/memory-migrate.mjs --apply \
   --backup-root /home/afrangry/kurumi-backups/.working/memory-migration
 ```
 
-迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。2026-10-20首次迁移完成时为revision=4、6条事实，后续修复版真人QQ复验已推进版本，不能将首次迁移号当作当前库版本；各时点见文档25。开发记忆与原迁移副本已按2026-11-07全局清理授权移除；当前数据与恢复点以全局手册为准。记忆生命周期与遗忘边界见[文档25](../docs/25_人格、记忆与会话连续性.md#会话生命周期)。备份需验证新增的 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目。
+迁移会把原 `MEMORY.md` 保存到私密备份、建立 `.kurumi-memory/state.sqlite` 并把 `MEMORY.md` 替换为说明文本；已有连续性数据库若与导入事实不一致会拒绝覆盖。当前记忆规则与生命周期见[文档25](../docs/25_人格、记忆与会话连续性.md#可信来源与会话生命周期)，恢复范围和核验入口见[文档12](../docs/12_目录资产与Git备份整理.md)。备份需核验 `state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` 条目，不把首次迁移的版本号当成当前库版本。
 
 ## 自检
 
@@ -184,14 +184,14 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 | 配置对齐 | `sync-config.mjs`（漂移时非零退出）与 `sync-persona.mjs` | 代码已提交、已推送；模型风格符合主观预期 |
 | 依赖自持 | `verify-dependencies.mjs` | 领域功能正确、隔离恢复可运行 |
 | 服务健康 | `health.mjs` | 真实模型理解、真实 QQ 往返、提醒一定送达 |
-| 版本收录 | `git status` / `git log` / 远端实查 SHA（见[Git与实时状态查询](../docs/12_目录资产与Git备份整理.md#git-与实时状态查询)） | 运行配置与仓库一致 |
+| 版本收录 | `git status` / `git log` / 远端实查 SHA（见[文档12](../docs/12_目录资产与Git备份整理.md)） | 运行配置与仓库一致 |
 
 **四项自检全过不等于改动已提交或已推送。** 提交范围与远端同步状态必须单独用 Git 命令核对，
 远端要看实查 SHA（`git ls-remote`），不能只看缓存的 `origin/main`。
 
 ## 恢复副本
 
-生产配置包含本机路径，不能原样用于隔离启动。恢复工具会重映射配置、项目注册表和符号链接，换成测试凭据，并只在Bubblewrap中执行构建与Gateway探针。详见[验收总表](../docs/16_验收与测试总表.md)；不要直接运行恢复仓库中的生产启动脚本。
+生产配置包含本机路径，不能原样用于隔离启动。恢复工具会重映射配置、项目注册表和符号链接，换成测试凭据，并只在Bubblewrap中执行构建与Gateway探针。详见[文档12](../docs/12_目录资产与Git备份整理.md)；不要直接运行恢复仓库中的生产启动脚本。
 
 返回[文档入口](../docs/README.md)。
 

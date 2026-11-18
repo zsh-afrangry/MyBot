@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「备份与恢复演练」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「配对备份」。
 // Offline restore rehearsal: Git bundles/working trees + private SQLite. Temp dirs only.
 import {parseArgs} from 'node:util';
 import {execFileSync} from 'node:child_process';

@@ -1,5 +1,5 @@
 import {withAccess} from '../access-control/fixtures.mjs';
-// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「第二轮开发与验收」。
+// 对应文档：docs/23_KnowledgeMap业务能力桥接.md「账单维护」与「如何验证」。
 // Offline: real plugin factories and host-shaped hooks, no model/API/QQ or private state.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';

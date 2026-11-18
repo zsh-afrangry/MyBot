@@ -1,4 +1,4 @@
-// Offline double-identity tests with real adapters/local OneBot HTTP, injected translator. Temporary state only; no external API/QQ/mail. docs/24 T03–T10.
+// Offline double-identity tests with real adapters/local OneBot HTTP, injected translator. Temporary state only; no external API/QQ/mail. docs/24「资源与投递隔离」「登记与撤权」.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';

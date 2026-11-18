@@ -1,5 +1,5 @@
 // Isolated real OpenClaw acceptance with local deterministic model/OneBot and injected PDF worker.
-// Only temporary state and explicitly requested evidence file; no external model/API, real QQ/mail or production writes. docs/24 T04–T10.
+// Only temporary state and explicitly requested evidence file; no external model/API, real QQ/mail or production writes. docs/24「执行」「资源与投递隔离」「如何验证」.
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';

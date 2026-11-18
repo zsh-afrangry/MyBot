@@ -1,4 +1,4 @@
-// Offline unified-query contract for authorization audit; synthetic events and temporary state only. docs/24 T02/T10.
+// Offline unified-query contract for authorization audit; synthetic events and temporary state only. docs/24「主人日志与审计」.
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
