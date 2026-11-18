@@ -4,12 +4,13 @@ import fs from 'node:fs';
 export const SOURCES = Object.freeze(['openclaw-runtime','openclaw-session','openclaw-receipt','snowluma','cron-runs','channel-delivery','access-control','trace-events','personal-reminders','personal-reminder-list','kurumi-memory','e7','papers','web-deepseek','knowledgemap']);
 export const RESULT_BYTES = 24 * 1024;
 export class LogQueryError extends Error { constructor(code, details) { super(code); this.code = code; if(details !== undefined)this.details=details; } }
+export const logQueryRunner = backendRoot => path.join(backendRoot, 'chatbot', 'scripts', 'log-query.mjs');
 const fail = code => { throw new LogQueryError(code); };
 const object = x => x && typeof x === 'object' && !Array.isArray(x);
 export function settings(raw) {
   if (!object(raw) || Object.keys(raw).some(k => !['backendRoot','runtimeRoot','snowlumaRoot'].includes(k))
     || ['backendRoot','runtimeRoot','snowlumaRoot'].some(k => typeof raw[k] !== 'string' || !path.isAbsolute(raw[k]))) fail('invalid_config');
-  try { if (!fs.statSync(path.join(raw.backendRoot,'scripts/fusion/log-query.mjs')).isFile()) fail('invalid_config'); }
+  try { if (!fs.statSync(logQueryRunner(raw.backendRoot)).isFile()) fail('invalid_config'); }
   catch { fail('invalid_config'); }
   return Object.freeze({...raw});
 }

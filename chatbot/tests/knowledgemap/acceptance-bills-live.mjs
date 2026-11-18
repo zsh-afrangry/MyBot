@@ -11,7 +11,7 @@ import {fileURLToPath} from 'node:url';
 import {spawnSync} from 'node:child_process';
 import {createRequire} from 'node:module';
 import {KnowledgeMapClient} from '../../packages/knowledgemap-client/client.js';
-import {collectEvents, filterEvents} from '../../../scripts/fusion/log-query.mjs';
+import {collectEvents, filterEvents} from '../../packages/log-query/index.js';
 
 assert.ok(process.argv.includes('--live'), '--live acknowledges production test writes, real model and service restarts');
 const outArg = process.argv.indexOf('--out');

@@ -12,8 +12,8 @@ import {
   parseReceiptLine,
   parseRuntimeLine,
   parseSnowLumaLine,
-} from '../log-query.mjs';
-import {createTraceSink, normalizeTraceEvent, redactValue} from '../../../chatbot/packages/observability/index.js';
+} from '../../packages/log-query/index.js';
+import {createTraceSink, normalizeTraceEvent, redactValue} from '../../packages/observability/index.js';
 
 const file = '/tmp/snowluma-test/snowluma-2026-10-11.log';
 

@@ -10,7 +10,7 @@ import {createLogPlugin,LOG_TOOL} from '../../plugins/kurumi-logs/index.js';
 import {queryOptions,SOURCES,RESULT_BYTES,settings} from '../../plugins/kurumi-logs/policy.js';
 import {LogQueryService,technicalResult} from '../../plugins/kurumi-logs/service.js';
 import {readQuery,cliArguments} from '../../plugins/kurumi-logs/query.js';
-import {paginateQueryContent,queryTextWeight,queryOutputFits} from '../../../scripts/fusion/log-query-privacy.mjs';
+import {paginateQueryContent,queryTextWeight,queryOutputFits} from '../../packages/log-query/log-query-privacy.mjs';
 import {ownerPolicy,memberRow,context} from '../access-control/fixtures.mjs';
 import {OWNER_PERMISSIONS,SHARED_PERMISSIONS,toolPermission,toolPolicyDecision,validatePolicy} from '../../packages/access-control/index.js';
 const BACKEND=fileURLToPath(new URL('../../../',import.meta.url));
@@ -126,7 +126,7 @@ test('relocated plugin adapter still queries the configured backend instead of i
  for(const name of ['query.js','policy.js'])fs.copyFileSync(new URL('../../plugins/kurumi-logs/'+name,import.meta.url),path.join(capture,name));
  const relocated=await import(pathToFileURL(path.join(capture,'query.js')));
  const q=queryOptions({sources:['trace-events'],view:'errors'},NOW);
- assert.equal(relocated.cliArguments(f.config,q)[0],path.join(BACKEND,'scripts/fusion/log-query.mjs'));
+ assert.equal(relocated.cliArguments(f.config,q)[0],path.join(BACKEND,'chatbot/scripts/log-query.mjs'));
  const result=await relocated.readQuery(f.config,q);assert.equal(result.total,2);assert(result.items.some(i=>i.kind==='reminder-list.notice.generation_failed'));
 });
 

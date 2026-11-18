@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 /**
  * Read-only cross-module event query.
  *
@@ -11,15 +9,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
-import {readHostRecords} from '../../chatbot/packages/session-records/index.js';
-import {fileURLToPath} from 'node:url';
+import {readHostRecords} from '../session-records/index.js';
 import {
   correlationFrom,
   epochMs,
   normalizeTraceEvent,
   redactValue,
   summarizeText,
-} from '../../chatbot/packages/observability/index.js';
+} from '../observability/index.js';
 import {
   applyViewFilters,
   auditTurns,
@@ -711,7 +708,7 @@ export function filterEvents(events, filters = {}) {
 }
 
 function usage() {
-  return `用法：node scripts/fusion/log-query.mjs [选项]
+  return `用法：node chatbot/scripts/log-query.mjs [选项]
 
   --from <时间>       起始时间（带时区 ISO；无时区按 Asia/Shanghai）
   --to <时间>         结束时间
@@ -928,8 +925,4 @@ export function renderQuery(events, options = {}) {
   if(value.hiddenKnown)rendered.lines.push('已折叠明确识别的可选目录警告 '+value.hiddenKnown+' 条（--show-known 展开）。');
   if(value.truncated)rendered.lines.push('本页之后仍有记录：固定--from/--to及筛选，使用--offset '+value.nextOffset+' 继续。');
   return rendered;
-}
-
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  try { process.exitCode = await runCli(); } catch (error) { console.error(`log-query: ${error.message}`); process.exitCode = 2; }
 }

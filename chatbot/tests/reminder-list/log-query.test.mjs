@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {ListStore} from '../../plugins/personal-reminder-list/store.js';
-import {readReminderListDatabase, filterEvents, collectEvents} from '../../../scripts/fusion/log-query.mjs';
+import {readReminderListDatabase, filterEvents, collectEvents} from '../../packages/log-query/index.js';
 test('list audit joins exact message/item/slot and does not copy task text or invent scheduled turn', t => {
   const root = fs.mkdtempSync(join(tmpdir(), 'kurumi-list-query-')), now = Date.parse('2026-10-11T08:00:10+08:00');
   const store = new ListStore({root, ownerId: '365999865', now: () => now});

@@ -187,7 +187,7 @@ python3 chatbot/tests/papers/responses_test.py
 python3 chatbot/tests/papers/concurrency_test.py
 python3 chatbot/tests/papers/reliability_test.py
 /home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py
-/usr/bin/node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js scripts/fusion/test/log-query.test.mjs
+/usr/bin/node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/log-query/log-query.test.mjs
 ```
 
 `chatbot/tests/papers/` 下的 `acceptance-*` 脚本不是离线测试。其中 `acceptance-host.mjs`、`acceptance-file-ingress.mjs`、`acceptance-api.py`、`acceptance.mjs` 会访问公开站点、调用真实模型或付费翻译 API，`acceptance.mjs` 加 `--send-qq` 或 `--send-mail` 才向本人外发；`acceptance-download.mjs` 只访问公开论文站点并校验 PDF，不调用模型和外发；`acceptance-worker.mjs`、`acceptance-notification-host.mjs` 只起隔离进程，不用凭据或外发。运行前先读脚本头部注释并取得授权，每次用新的 `--out`，不自动续跑付费任务。

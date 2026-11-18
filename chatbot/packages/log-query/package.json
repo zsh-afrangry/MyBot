@@ -1,0 +1,6 @@
+{
+  "name": "@kurumi/log-query",
+  "private": true,
+  "type": "module",
+  "exports": "./index.js"
+}

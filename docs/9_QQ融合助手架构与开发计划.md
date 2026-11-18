@@ -155,12 +155,12 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 
 ## 跨模块链路查询
 
-还原一轮 QQ 对话用只读入口 `scripts/fusion/log-query.mjs`，规则见[文档18](18_跨模块链路日志查询.md)：
+还原一轮 QQ 对话用只读入口 `chatbot/scripts/log-query.mjs`，规则见[文档18](18_跨模块链路日志查询.md)：
 
 ```bash
-node scripts/fusion/log-query.mjs --message-id=<QQ消息ID>
-node scripts/fusion/log-query.mjs --proposal-id <提案ID> --json
-node scripts/fusion/log-query.mjs --source papers --contains <job_ID> --json
+node chatbot/scripts/log-query.mjs --message-id=<QQ消息ID>
+node chatbot/scripts/log-query.mjs --proposal-id <提案ID> --json
+node chatbot/scripts/log-query.mjs --source papers --contains <job_ID> --json
 ```
 
 没有消息 ID 时给明确的 `--from`/`--to`，无时区的时间按 `Asia/Shanghai`。查询不调用 Gateway、OneBot、模型或 Cron，输出可能含私聊正文，不提交到 Git。

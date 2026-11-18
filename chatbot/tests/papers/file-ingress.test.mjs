@@ -11,7 +11,7 @@ import {stagePdf, Ledger} from '../../packages/qq-delivery/index.js';
 import {attachmentMetadata, receiveAttachments, attachmentContext} from '../../plugins/kurumi-qq/src/attachments.js';
 import {withAccess, memberRow, MEMBER, OWNER} from '../access-control/fixtures.mjs';
 import {pdf} from './fixtures.mjs';
-import {collectEvents, filterEvents} from '../../../scripts/fusion/log-query.mjs';
+import {collectEvents, filterEvents} from '../../packages/log-query/index.js';
 
 const BOT = '123456789';
 const file = (name = 'paper.pdf', extra = {}) => ({type: 'file', data: {name, file_id: 'synthetic-file', ...extra}});

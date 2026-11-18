@@ -1,11 +1,11 @@
 // Offline docs/18 diagnostics: synthetic SQLite/files/events, no services or external APIs.
 import test from 'node:test';import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {DatabaseSync} from 'node:sqlite';import {spawn} from 'node:child_process';import {once} from 'node:events';import {fileURLToPath} from 'node:url';import {createHash} from 'node:crypto';
-import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries,readStoredQQMessages} from '../log-query-diagnostics.mjs';
-import {collectEvents,renderQuery,parseDuration,runCli} from '../log-query.mjs';
-import {normalizeTraceEvent,createTraceSink} from '../../../chatbot/packages/observability/index.js';
-import {withAccess} from '../../../chatbot/tests/access-control/fixtures.mjs';
-import {auditMemoryCall} from '../../../chatbot/packages/observability/memory-audit.js';
+import {stateSnapshot,readCronRuns,knownWarning,selectRecentTurns,queryStatistics,tabularEvents,followQueries,readStoredQQMessages} from '../../packages/log-query/log-query-diagnostics.mjs';
+import {collectEvents,renderQuery,parseDuration,runCli} from '../../packages/log-query/index.js';
+import {normalizeTraceEvent,createTraceSink} from '../../packages/observability/index.js';
+import {withAccess} from '../access-control/fixtures.mjs';
+import {auditMemoryCall} from '../../packages/observability/memory-audit.js';
 const at=Date.parse('2026-11-07T09:00:00+08:00'),peer='100001',key='agent:main:kurumi-qq:direct:'+peer;
 const event=(kind,n,data={},correlation={})=>normalizeTraceEvent({at:at+n,source:'openclaw-session',kind,correlation:{sessionKey:key,...correlation},data});
 function fixture(t){const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-query-diagnostics-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));return root;}
@@ -99,7 +99,7 @@ test('CLI follow paginates every fresh event and removes its signal handlers on 
  const root=fixture(t),directory=path.join(root,'channel');fs.mkdirSync(directory);const file=path.join(directory,'trace-events.jsonl'),now=Date.now();
  const value=id=>normalizeTraceEvent({at:now,source:'trace-events',kind:'fixture.event',correlation:{runId:id},data:{status:'ok'}});
  fs.writeFileSync(file,[value('first'),value('second')].map(e=>JSON.stringify(e)).join('\n')+'\n');
- const child=spawn(process.execPath,[fileURLToPath(new URL('../log-query.mjs',import.meta.url)),'--runtime-root',root,'--snowluma-root',root,'--source','trace-events','--since','30m','--follow','--interval','100','--limit','1','--json'],{stdio:['ignore','pipe','pipe']});
+ const child=spawn(process.execPath,[fileURLToPath(new URL('../../scripts/log-query.mjs',import.meta.url)),'--runtime-root',root,'--snowluma-root',root,'--source','trace-events','--since','30m','--follow','--interval','100','--limit','1','--json'],{stdio:['ignore','pipe','pipe']});
  t.after(()=>{if(child.exitCode===null)child.kill('SIGKILL');});let buffer='',stderr='';const ids=[];let appended=false;
  child.stderr.on('data',c=>stderr+=c);child.stdout.on('data',chunk=>{buffer+=chunk;let index;while((index=buffer.indexOf('\n'))>=0){const line=buffer.slice(0,index);buffer=buffer.slice(index+1);if(!line.trim())continue;const result=JSON.parse(line);ids.push(...result.events.map(e=>e.correlation.runId));}
   if(ids.length===2&&!appended){appended=true;fs.appendFileSync(file,JSON.stringify(value('third'))+'\n');}if(ids.length===3)child.kill('SIGINT');

@@ -194,7 +194,7 @@ test('an ACP-created unchecked Git commit is rejected rather than advertised as 
 
 test('coding task events pass through the existing unified log query without plaintext task/code payloads', async t => {
   const {createTraceSink} = await import('../../packages/observability/index.js');
-  const {collectEvents} = await import('../../../scripts/fusion/log-query.mjs');
+  const {collectEvents} = await import('../../packages/log-query/index.js');
   const f = await fixture(t), task = await start(f); await f.settle(task.id);
   const sink = createTraceSink(path.join(f.root, 'channel', 'trace-events.jsonl'));
   for (const event of f.events) sink.emit(event);

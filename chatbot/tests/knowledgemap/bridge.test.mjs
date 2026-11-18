@@ -14,7 +14,7 @@ import {ListStore} from '../../plugins/personal-reminder-list/store.js';
 import {ListControlStore, manageRemoteList, taskItem, runRemoteDigest, registerRemoteList, normalizeTitle, maxItemsPerMessage} from '../../plugins/personal-reminder-list/remote.js';
 import {manageParameters, getParameters, sharedToolDeclarations, createReminderListPlugin} from '../../plugins/personal-reminder-list/index.js';
 import {createKnowledgeMapPlugin} from '../../plugins/kurumi-knowledgemap/index.js';
-import {collectEvents} from '../../../scripts/fusion/log-query.mjs';
+import {collectEvents} from '../../packages/log-query/index.js';
 import {sourceFile} from '../../plugins/personal-reminder-list/data-source.js';
 import {main as runnerMain} from '../../scripts/reminder-list.mjs';
 import {registerDigestNotice} from '../../plugins/personal-reminder-list/notification.js';

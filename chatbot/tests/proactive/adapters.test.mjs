@@ -10,8 +10,8 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {emptyState, initializeContinuity, replaceNotice} from '../../packages/memory-continuity/index.js';
 import {toolPermission,toolPolicyDecision} from '../../packages/access-control/index.js';
 import {createTraceSink} from '../../packages/observability/index.js';
-import {collectEvents} from '../../../scripts/fusion/log-query.mjs';
-import {collectErrors} from '../../../scripts/fusion/log-query-views.mjs';
+import {collectEvents} from '../../packages/log-query/index.js';
+import {collectErrors} from '../../packages/log-query/log-query-views.mjs';
 const sha=file=>createHash('sha256').update(fs.readFileSync(file)).digest('hex');
 function fixture(t) {
   const root=fs.mkdtempSync(os.tmpdir()+'/kurumi-proactive-adapters-'),workspace=root+'/workspace';fs.mkdirSync(workspace,{mode:0o700});

@@ -7,8 +7,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {zstdCompressSync} from 'node:zlib';
-import {collectEvents, filterEvents, renderQuery} from '../log-query.mjs';
-import {applyViewFilters, auditTurns, collectErrors, deepParseJson, groupTurns, matchesKind, pairCalls} from '../log-query-views.mjs';
+import {collectEvents, filterEvents, renderQuery} from '../../packages/log-query/index.js';
+import {applyViewFilters, auditTurns, collectErrors, deepParseJson, groupTurns, matchesKind, pairCalls} from '../../packages/log-query/log-query-views.mjs';
 
 const T0 = Date.parse('2026-10-21T12:00:00+08:00');
 const SESSION = 's1';

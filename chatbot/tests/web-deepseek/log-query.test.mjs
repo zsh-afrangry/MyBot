@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import {collectEvents, formatEvent} from '../../../scripts/fusion/log-query.mjs';
+import {collectEvents, formatEvent} from '../../packages/log-query/index.js';
 import {DeepSeekWebClient} from '../../plugins/kurumi-web-deepseek/client.js';
 import {createDeepSeekWebPlugin} from '../../plugins/kurumi-web-deepseek/index.js';
 

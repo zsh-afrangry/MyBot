@@ -4,7 +4,7 @@
  * log-query.mjs; nothing here reads files or calls services, so every view is
  * testable with synthetic events.
  */
-import {summarizeText} from '../../chatbot/packages/observability/index.js';
+import {summarizeText} from '../observability/index.js';
 import {eventReference} from './log-query-privacy.mjs';
 
 /** Unclassified native log lines; hidden unless --raw or an explicit --kind asks for them. */

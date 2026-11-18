@@ -1,6 +1,6 @@
 // Compatibility export; shared technical-output policy. Contract: docs/18.
-export {noTextProjection} from '../../chatbot/packages/observability/query-privacy.js';
-import {normalizeTraceEvent} from '../../chatbot/packages/observability/index.js';
+export {noTextProjection} from '../observability/query-privacy.js';
+import {normalizeTraceEvent} from '../observability/index.js';
 import {createHash} from 'node:crypto';
 
 // Stable across views, text projection, expansion and correlation enrichment.

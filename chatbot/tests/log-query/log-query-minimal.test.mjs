@@ -5,9 +5,9 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
-import {normalizeToolResult} from '../log-query-result.mjs';
-import {collectEvents, readChannelDelivery, readSnowLumaLogs, renderQuery} from '../log-query.mjs';
-import {normalizeTraceEvent} from '../../../chatbot/packages/observability/index.js';
+import {normalizeToolResult} from '../../packages/log-query/log-query-result.mjs';
+import {collectEvents, readChannelDelivery, readSnowLumaLogs, renderQuery} from '../../packages/log-query/index.js';
+import {normalizeTraceEvent} from '../../packages/observability/index.js';
 const at = Date.parse('2026-11-07T05:50:00+08:00');
 const ev = (kind, data, n=0) => normalizeTraceEvent({at:at+n,source:'openclaw-session',kind,correlation:{runId:'r1',sessionKey:'agent:main:fixture',toolCallId:'c1'},data});
 test('nested business failure survives host success, arbitrary document fields do not become failures',()=>{

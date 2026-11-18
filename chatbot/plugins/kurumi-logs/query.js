@@ -1,13 +1,12 @@
 // Fixed CLI adapter; complete authorized log content, no shell or caller-supplied roots.
 import {spawn} from 'node:child_process';
-import path from 'node:path';
-import {LogQueryError} from './policy.js';
+import {LogQueryError, logQueryRunner} from './policy.js';
 export function cliArguments(config, q) {
   // The host captures plugin modules outside the source tree. Only the trusted
   // deployment root locates this fixed backend; import.meta.url cannot do so.
   // Fit the actual text weight as well as bytes. Leave room below the host's
   // minimum 16k live text cap and this plugin's 24KiB final envelope cap.
-  const args = [path.join(config.backendRoot,'scripts/fusion/log-query.mjs'),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--full-content','--show-known','--output-bytes','18000','--output-chars','12000'];
+  const args = [logQueryRunner(config.backendRoot),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--full-content','--show-known','--output-bytes','18000','--output-chars','12000'];
   for (const source of q.sources) args.push('--source',source);
   for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind'],['eventRef','--event-ref'],['eventKey','--event-key'],['cronJobId','--cron-job-id'],['code','--code']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
   for (const [key,flag] of [['contains','--contains'],['keywordMode','--keyword-mode'],['contextBefore','--context-before'],['contextAfter','--context-after'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) if(q[key] !== undefined)args.push(`${flag}=${q[key]}`);

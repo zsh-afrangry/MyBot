@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {createTraceSink} from '../../packages/observability/index.js';
-import {collectEvents,filterEvents,formatEvent} from '../../../scripts/fusion/log-query.mjs';
+import {collectEvents,filterEvents,formatEvent} from '../../packages/log-query/index.js';
 
 test('Authorization audit joins by real run and shows decision/reason without tool parameters', t => {
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-access-query-'));

@@ -1,6 +1,6 @@
 // Read-only ToolResult adapter. Follow protocol envelopes, never arbitrary
 // business children (a retrieved document containing "ok":false is not a failure).
-import {redactValue} from '../../chatbot/packages/observability/index.js';
+import {redactValue} from '../observability/index.js';
 import {createHash} from 'node:crypto';
 
 const object = value => value && typeof value === 'object' && !Array.isArray(value);
