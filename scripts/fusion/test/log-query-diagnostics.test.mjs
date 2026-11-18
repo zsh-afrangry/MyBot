@@ -119,6 +119,31 @@ test('bounded diagnostic generations retain one private queryable predecessor', 
  assert.throws(()=>createTraceSink(file,{maxBytes:-1}),/maxBytes/);
 });
 
+test('trace queries include both generations of access, paper and DeepSeek events', t => {
+  const runtimeRoot = fixture(t);
+  const papersRoot = path.join(runtimeRoot, 'managed-pdfs');
+  const webTrace = path.join(runtimeRoot, 'provider', 'search.jsonl');
+  fs.writeFileSync(path.join(runtimeRoot, 'openclaw.json'), JSON.stringify({plugins: {entries: {
+    'kurumi-papers': {config: {root: papersRoot}},
+    'kurumi-web-deepseek': {config: {traceFile: webTrace}},
+  }}}));
+
+  for (const [source, file] of [
+    ['access-control', path.join(runtimeRoot, 'channel', 'access-events.jsonl')],
+    ['papers', path.join(papersRoot, 'events.jsonl')],
+    ['web-deepseek', webTrace],
+  ]) {
+    const sink = createTraceSink(file, {maxBytes: 1});
+    sink.emit({source, kind: 'fixture.trace', at, correlation: {runId: 'previous'}});
+    sink.emit({source, kind: 'fixture.trace', at: at + 1, correlation: {runId: 'current'}});
+
+    const events = collectEvents({runtimeRoot, sources: [source], from: at - 1, to: at + 2});
+    assert.deepEqual(events.map(e => [e.correlation.runId, e.sourceRef.path]), [
+      ['previous', `${file}.1`], ['current', file],
+    ], source);
+  }
+});
+
 function storedFixture(t){
  const f=setup(t);withAccess(f.cfg);fs.writeFileSync(path.join(f.root,'openclaw.json'),JSON.stringify(f.cfg));
  const bot='100002',file=db(f.root,'runtime/data/'+bot+'/messages.db','CREATE TABLE messages(message_hash INTEGER,is_group INTEGER,session_id INTEGER,private_direction INTEGER,timestamp INTEGER,data TEXT)');

@@ -619,27 +619,31 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
   }
   if (include('personal-reminders')) append(events, readReminderDatabase(path.join(runtimeRoot, 'state', 'personal-reminders', 'reminders.sqlite'), from, to,contentOptions));
   if (include('personal-reminder-list')) append(events, readReminderListDatabase(path.join(runtimeRoot, 'state', 'personal-reminder-list', 'list.sqlite'), from, to,contentOptions));
-  for (const [source, basename] of [['trace-events','trace-events.jsonl'],['e7','e7-events.jsonl'],['kurumi-memory','memory-events.jsonl']]) {
-    if (include(source)) for (const suffix of ['.1','']) append(events,readTraceFile(path.join(runtimeRoot,'channel',basename+suffix),from,to,contentOptions));
+  const appendTrace = (file) => {
+    for (const suffix of ['.1', '']) append(events, readTraceFile(file + suffix, from, to, contentOptions));
+  };
+  for (const [source, basename] of [
+    ['trace-events', 'trace-events.jsonl'],
+    ['e7', 'e7-events.jsonl'],
+    ['kurumi-memory', 'memory-events.jsonl'],
+    ['access-control', 'access-events.jsonl'],
+  ]) {
+    if (include(source)) appendTrace(path.join(runtimeRoot, 'channel', basename));
   }
-  if (include('access-control')) append(events, readTraceFile(path.join(runtimeRoot,'channel','access-events.jsonl'),from,to,contentOptions));
   if (include('papers')) {
     // Configured managed root, with a portable default for isolated tests/restores.
     let root = path.join(runtimeRoot, 'documents');
     try { root = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-papers'].config.root ?? root; } catch {}
-    append(events, readTraceFile(path.join(root, 'events.jsonl'), from, to,contentOptions));
+    appendTrace(path.join(root, 'events.jsonl'));
   }
   if (include('web-deepseek')) {
     // Only a configured trace file exists; the provider writes nothing by default.
     let file;
     try { file = JSON.parse(safeRead(path.join(runtimeRoot, 'openclaw.json'))).plugins.entries['kurumi-web-deepseek'].config.traceFile; } catch {}
-    if (typeof file === 'string' && path.isAbsolute(file)) append(events, readTraceFile(file, from, to,contentOptions));
+    if (typeof file === 'string' && path.isAbsolute(file)) appendTrace(file);
   }
-  if (include('knowledgemap')) {
-    for (const file of ['trace.jsonl.1', 'trace.jsonl']) append(events, readTraceFile(path.join(runtimeRoot, 'state', 'knowledgemap', file), from, to,contentOptions));
-  }
-  if (include('proactive')) {
-    for (const file of ['trace.jsonl.1','trace.jsonl']) append(events,readTraceFile(path.join(runtimeRoot,'state','proactive',file),from,to,contentOptions));
+  for (const source of ['knowledgemap', 'proactive']) {
+    if (include(source)) appendTrace(path.join(runtimeRoot, 'state', source, 'trace.jsonl'));
   }
   if(wanted?.has('snowluma-messages')) append(events,readStoredQQMessages(snowlumaRoot,runtimeRoot,from,to,{messageId,peer,expand,previews:events.filter(e=>e.source==='snowluma')}));
   attachSessionCorrelation(events, windows);

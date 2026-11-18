@@ -64,8 +64,9 @@ export function normalizeTraceEvent(input = {}) {
  * Create a small append-only sink for modules that want to emit structured
  * events. The caller owns the path and must opt in; the file is private by
  * default and every line is independently parseable.
+ * Rotation defaults to 4 MiB. Set maxBytes to 0 to disable it.
  */
-export function createTraceSink(file, {mkdir = fs.mkdirSync, append = fs.appendFileSync, chmod = fs.chmodSync, maxBytes = 0} = {}) {
+export function createTraceSink(file, {mkdir = fs.mkdirSync, append = fs.appendFileSync, chmod = fs.chmodSync, maxBytes = 4 * 1024 * 1024} = {}) {
   if (!Number.isSafeInteger(maxBytes) || maxBytes < 0) throw new Error('Invalid trace maxBytes');
   const target = path.resolve(file);
   return {
@@ -73,7 +74,7 @@ export function createTraceSink(file, {mkdir = fs.mkdirSync, append = fs.appendF
     emit(event) {
       mkdir(path.dirname(target), {recursive: true, mode: 0o700});
       const normalized = normalizeTraceEvent(event);
-      // Opt-in bounded diagnostics: one previous generation, never business ledgers.
+      // Retain one previous generation of diagnostic events.
       if (maxBytes) {
         try { if (fs.statSync(target).size >= maxBytes) fs.renameSync(target, `${target}.1`); }
         catch (error) { if (error.code !== 'ENOENT') throw error; }
