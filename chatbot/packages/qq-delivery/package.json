@@ -1,0 +1,6 @@
+{
+  "name": "@kurumi/qq-delivery",
+  "private": true,
+  "type": "module",
+  "exports": "./index.js"
+}

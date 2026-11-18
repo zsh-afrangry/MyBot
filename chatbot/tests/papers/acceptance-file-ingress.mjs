@@ -53,7 +53,7 @@ import fs from 'node:fs'; import path from 'node:path';
 import {createPaperPlugin} from ${source('chatbot/plugins/kurumi-papers/index.js')};
 import {PaperService} from ${source('chatbot/plugins/kurumi-papers/service.js')};
 import {handleInbound} from ${source('chatbot/plugins/kurumi-qq/src/inbound.js')};
-import {stagePdf} from ${source('chatbot/plugins/kurumi-qq/src/files.js')};
+import {stagePdf} from ${source('chatbot/packages/qq-delivery/index.js')};
 import {pdf} from ${source('chatbot/tests/papers/fixtures.mjs')};
 const actual=createPaperPlugin({serviceFactory:(config,deps)=>new PaperService(config,{...deps,runner:async({work,outputKind})=>{
  const result={usage:{requests:0,fixture:true}};

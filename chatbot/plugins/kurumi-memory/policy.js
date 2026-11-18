@@ -1,5 +1,5 @@
 // Existing explicit-memory admission rules. No file access or confirmation grants.
-import {normalize} from './model.js';
+import {normalize} from '../../packages/memory-continuity/facts.js';
 import {trustedMemoryText} from './inbound.js';
 
 export function memoryIntent(ctx, owner, event = {}) {

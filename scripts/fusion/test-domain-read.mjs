@@ -4,8 +4,7 @@ import {createHash} from 'node:crypto';
 import {DatabaseSync} from 'node:sqlite';
 import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
-import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
-import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {account, onebot} from '../../chatbot/packages/qq-delivery/index.js';
 import {freshMessageId} from './lib/fresh-id.mjs';
 await ready();const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(`${state}/openclaw.json`)),a=account(cfg),login=await onebot(a,'get_login_info',{}),started=Date.now();
 function hashFacts(){const db=new DatabaseSync(`${state}/state/personal-weather/weather.sqlite`,{readOnly:true});try{return createHash('sha256').update(JSON.stringify(['notification_preferences','trips'].map(t=>db.prepare(`SELECT * FROM ${t}`).all()))).digest('hex');}finally{db.close();}}

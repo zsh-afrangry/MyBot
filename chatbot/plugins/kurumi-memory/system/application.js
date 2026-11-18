@@ -3,8 +3,8 @@
 import {randomBytes} from 'node:crypto';
 import {readHostRecords,messageText} from '../../../packages/session-records/index.js';
 import {redactText} from '../../../packages/observability/index.js';
-import {digest,canonical,validateState,factDigest,safeText} from '../continuity/model.js';
-import {normalize} from '../model.js';
+import {digest,canonical,validateState,factDigest,safeText} from '../../../packages/memory-continuity/index.js';
+import {normalize} from '../../../packages/memory-continuity/facts.js';
 import {RecordStore} from './store.js';
 import {recordText as text} from './policy.js';
 const fail=code=>Object.assign(Error(code),{code});

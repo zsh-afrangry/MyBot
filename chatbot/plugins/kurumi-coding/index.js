@@ -5,7 +5,7 @@ import {registerConfirmationBackend} from '@kurumi/confirmation-core';
 import {createTraceSink} from '../../packages/observability/index.js';
 import {createToolTrace} from '../../packages/observability/tool-trace.js';
 import {createAssistantComposer} from '../../packages/response-core/index.js';
-import {createQqDelivery} from '../kurumi-qq/delivery.js';
+import {createQqDelivery} from '../../packages/qq-delivery/index.js';
 import {CodingService} from './service.js';
 import {CodingStore} from './store.js';
 import {codingRequest, authorizeRequester, confirmationScope} from './inbound.js';

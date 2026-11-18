@@ -1,5 +1,5 @@
 import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});import assert from 'node:assert/strict';
-import {rpc,ready} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {rpc,ready} from './rpc.mjs';import {account} from '../../chatbot/packages/qq-delivery/index.js';import {onebot} from '../../chatbot/packages/qq-delivery/index.js';
 await ready();const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(state+'/openclaw.json')),a=account(cfg),login=await onebot(a,'get_login_info',{});let id=-Date.now();
 const report={started:Date.now(),boundary:'Real owner main starts native researcher, cached real-source PDF full text and selected visual pages, concurrent main chat, saved report and owner-only completion.'};
 const send=text=>rpc('kurumi-qq.testInbound',{capture:true,event:{post_type:'message',message_type:'private',self_id:login.user_id,user_id:Number(a.ownerId),message_id:id--,time:Math.floor(Date.now()/1000),message:[{type:'text',data:{text}}]}},180000);

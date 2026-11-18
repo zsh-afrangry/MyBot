@@ -3,11 +3,8 @@ import {createAssistantComposer,visibleAssistantReply} from '../../../packages/r
 import fs from 'node:fs';
 import path from 'node:path';
 import {activeSubject, agentFor, sessionFor, targetSubject} from '../../../packages/access-control/index.js';
-import {account,CHANNEL} from './config.js';
-import {Ledger} from './ledger.js';
-import {sendPayload} from './transport.js';
+import {account, CHANNEL, Ledger, sendPayload, stagePdf, traceFile} from '../../../packages/qq-delivery/index.js';
 import {stageImage,quoteText} from './media.js';
-import {stagePdf,traceFile} from './files.js';
 import {receiveAttachments,attachmentContext,shouldReplyToFailedAttachments} from './attachments.js';
 export function parseInbound(event,a,selfId){
  const senderId=String(event.user_id);

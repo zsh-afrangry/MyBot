@@ -2,8 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {readLegacyMemory} from '../store.js';
-import {canonical, digest, emptyState, MEMORY_NOTICE} from './model.js';
-import {memoryPaths, initializeContinuity, replaceNotice, openContinuityStore} from './store.js';
+import {canonical, digest, emptyState, MEMORY_NOTICE, memoryPaths, initializeContinuity, replaceNotice, openContinuityStore} from '../../../packages/memory-continuity/index.js';
 export function migrateMemory({workspace, ownerId, backupRoot, apply = false}) {
   if (!/^\d{5,12}$/.test(ownerId)) throw Error('Explicit primary owner required');
   const paths = memoryPaths(workspace), exists = fs.existsSync(paths.notice), original = exists ? fs.readFileSync(paths.notice) : Buffer.alloc(0);

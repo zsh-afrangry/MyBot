@@ -1,6 +1,6 @@
 // Document 25 P2. Bounded personal memory; facts and model summaries stay distinct.
 import {createHash} from 'node:crypto';
-import {validateFact, normalize, CREDENTIAL_PATTERN} from '../model.js';
+import {validateFact, normalize, CREDENTIAL_PATTERN} from './facts.js';
 export const STATE_RELATIVE = '.kurumi-memory/state.sqlite';
 export const MEMORY_NOTICE = '# 个人记忆\n\n<!-- KURUMI_MEMORY_CONTINUITY_V2 -->\n长期事实及有限期近期摘要由 kurumi_memory 管理，唯一事实保存在 .kurumi-memory/state.sqlite。\n本文件不保存正文；仅本人授权回合可通过工具和受限上下文读取。原聊天与备份另行保留。\n';
 export const digest = value => createHash('sha256').update(String(value)).digest('hex');

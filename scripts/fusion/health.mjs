@@ -1,5 +1,5 @@
 // Read-only operational health: valid scheduled jobs are not failures. No credentials or message contents.
-import fs from 'node:fs';import {spawnSync} from 'node:child_process';import {DatabaseSync} from 'node:sqlite';import {rpc} from './rpc.mjs';import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import fs from 'node:fs';import {spawnSync} from 'node:child_process';import {DatabaseSync} from 'node:sqlite';import {rpc} from './rpc.mjs';import {account} from '../../chatbot/packages/qq-delivery/index.js';import {onebot} from '../../chatbot/packages/qq-delivery/index.js';
 import {KnowledgeMapClient} from '../../chatbot/packages/knowledgemap-client/client.js';
 import {readListSource} from '../../chatbot/plugins/personal-reminder-list/data-source.js';
 const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(state+'/openclaw.json')),acceptance=process.argv.includes('--acceptance'),r={at:new Date().toISOString(),ok:true,issues:[]};

@@ -7,8 +7,7 @@ import * as weatherFixtures from '../../packages/personal-domains/dist/test-fixt
 import {createDomainAdapters} from '../../plugins/kurumi-qq/proactive/adapters.js';
 import {createProactiveComponent,validateSettings} from '../../plugins/kurumi-qq/proactive/index.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
-import {emptyState} from '../../plugins/kurumi-memory/continuity/model.js';
-import {initializeContinuity,replaceNotice} from '../../plugins/kurumi-memory/continuity/store.js';
+import {emptyState, initializeContinuity, replaceNotice} from '../../packages/memory-continuity/index.js';
 import {toolPermission,toolPolicyDecision} from '../../packages/access-control/index.js';
 import {createTraceSink} from '../../packages/observability/index.js';
 import {collectEvents} from '../../../scripts/fusion/log-query.mjs';

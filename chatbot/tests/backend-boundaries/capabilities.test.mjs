@@ -99,22 +99,18 @@ test('shared packages have no runtime imports into plugins or deployment scripts
   }
 });
 
-test('plugins reach other plugins only through public entries, never their src internals', () => {
-  // Public outward interfaces another plugin's composition entry may wire (docs/21).
-  const publicEntries = new Set([path.join(pluginsDirectory, 'kurumi-qq', 'delivery.js'),
-    path.join(pluginsDirectory, 'kurumi-memory', 'continuity', 'read-model.js')]);
-  let crossings = 0;
-  for (const file of pluginSourceFiles()) {
+test('plugins import shared packages without importing other plugins', () => {
+  const files = [...pluginSourceFiles()];
+  assert(files.length > 0, 'plugin source scan is empty');
+  for (const file of files) {
     const own = path.relative(pluginsDirectory, file).split(path.sep)[0];
     for (const specifier of moduleSpecifiers(file)) {
       if (!specifier.startsWith('.')) continue;
       const resolved = path.resolve(path.dirname(file), specifier);
       if (!resolved.startsWith(pluginsDirectory) || path.relative(pluginsDirectory, resolved).split(path.sep)[0] === own) continue;
-      crossings++;
-      assert(publicEntries.has(resolved), `${file}: ${specifier}`);
+      assert.fail(`${file}: ${specifier}`);
     }
   }
-  assert(crossings > 0, 'scan must see the papers -> QQ delivery wiring');
 });
 
 test('plugins reach personal-domains dist only through their own plugin entrypoints', () => {

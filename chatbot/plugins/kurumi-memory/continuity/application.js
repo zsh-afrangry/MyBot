@@ -1,11 +1,10 @@
 // Document 25 P2. Composition-local synchronous adapters and atomic memory commands.
 import {randomBytes} from 'node:crypto';
 import {createAdapterRegistry} from '../../../packages/domain-adapters/index.js';
-import {normalize} from '../model.js';
+import {normalize} from '../../../packages/memory-continuity/facts.js';
 import {continuityPolicy} from './policy.js';
-import {openContinuityStore} from './store.js';
+import {openContinuityStore, digest, factDigest, canonical, limits, options, validateState} from '../../../packages/memory-continuity/index.js';
 import {openRecordContinuityStore} from '../system/application.js';
-import {digest, factDigest, canonical, limits, options, validateState} from './model.js';
 import {assertContinuityArgs} from './tool-contract.js';
 const missingId = id => {throw Error(`记忆ID ${id} 不存在，请按本回合记忆参考或list核对真实ID；本次未提交`);};
 export function createContinuityRegistry() {

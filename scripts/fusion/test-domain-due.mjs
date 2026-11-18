@@ -3,8 +3,7 @@ import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {rpc,ready} from './rpc.mjs';
-import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
-import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {account, onebot} from '../../chatbot/packages/qq-delivery/index.js';
 await ready();const state='/home/afrangry/.openclaw-fusion',file='test-output/10-reminder-restart-delivery.json';
 const a=account(JSON.parse(fs.readFileSync(`${state}/openclaw.json`)));
 if(process.argv[2]==='check'){

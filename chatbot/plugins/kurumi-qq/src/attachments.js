@@ -1,5 +1,5 @@
 // Attachment facts and routing; never infer chat intent. Contract: docs/22.
-import {stagePdf} from './files.js';
+import {stagePdf} from '../../../packages/qq-delivery/index.js';
 
 const MAX_ATTACHMENTS = 3;
 const FAILURE_STATUS = Object.freeze({

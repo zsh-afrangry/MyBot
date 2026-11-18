@@ -1,7 +1,7 @@
 // Identity-scoped PDF tools. Fixed domain operations; no generic filesystem or command tool. docs/22.
 import {assertToolAccess,activeSubject,primaryOwner,agentFor,sessionFor} from '../../packages/access-control/index.js';
 import {Documents,documentRoot} from '../../packages/documents/index.js';
-import {createQqDelivery} from '../kurumi-qq/delivery.js';
+import {createQqDelivery} from '../../packages/qq-delivery/index.js';
 import {PaperService} from './service.js';
 import {createTraceSink, correlationFrom} from '../../packages/observability/index.js';
 import {createFailureNotifier} from './notification.js';

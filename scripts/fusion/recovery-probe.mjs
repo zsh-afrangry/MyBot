@@ -57,7 +57,7 @@ try{
  assert(health,'Isolated Gateway did not become healthy');
  // The namespace is the hard boundary; disabled channels and cron also prevent accidental activity.
  assert.equal(cfg.cron.enabled,false);
- const {sendPayload}=await import('file://'+repo+'/chatbot/plugins/kurumi-qq/src/transport.js');
+ const {sendPayload}=await import('file://'+repo+'/chatbot/packages/qq-delivery/index.js');
  await sendPayload({cfg,to:'user:'+cfg.channels['kurumi-qq'].ownerId,text:'isolated recovery transport check',key:'recovery-'+Date.now()});
  assert.equal(sends.length,1);
  const image=runtime+'/media/recovery-fixture.png';fs.mkdirSync(path.dirname(image),{recursive:true});

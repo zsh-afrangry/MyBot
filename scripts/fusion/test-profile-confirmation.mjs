@@ -2,8 +2,7 @@
 import fs from 'node:fs';fs.mkdirSync('test-output',{recursive:true});
 import assert from 'node:assert/strict';
 import {rpc,ready} from './rpc.mjs';
-import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
-import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {account, onebot} from '../../chatbot/packages/qq-delivery/index.js';
 await ready();const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(`${state}/openclaw.json`)),a=account(cfg),login=await onebot(a,'get_login_info',{});let id=-Date.now();
 const receipts=()=>fs.readFileSync(a.stateDir+'/native-tool-receipts.jsonl','utf8').trim().split('\n').filter(Boolean).map(JSON.parse);
 const resultOf=x=>JSON.parse(x.result.content.find(p=>p.type==='text').text);

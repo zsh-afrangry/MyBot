@@ -1,7 +1,7 @@
 // Document 29 private persistence: SQL, CAS rows and append-only raw bytes. No ingress or host reader.
 import fs from 'node:fs';
 import {DatabaseSync} from 'node:sqlite';
-import {memoryPaths} from '../continuity/store.js';
+import {memoryPaths} from '../../../packages/memory-continuity/index.js';
 import {NOTICE_V3,SCHEMA_V3} from './policy.js';
 export {NOTICE_V3,SCHEMA_V3};
 const fail=code=>Object.assign(Error(code),{code});

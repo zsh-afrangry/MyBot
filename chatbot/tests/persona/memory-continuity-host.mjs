@@ -17,8 +17,7 @@ import {personaFiles, applyPersonaFile} from '../../packages/access-control/work
 import {ownerPolicy, memberRow, OWNER, MEMBER} from '../access-control/fixtures.mjs';
 import {RecordApplication as RecordStore,openRecordContinuityStore} from '../../plugins/kurumi-memory/system/application.js';
 import {migrateMemoryV3} from '../../plugins/kurumi-memory/system/migration.js';
-import {emptyState} from '../../plugins/kurumi-memory/continuity/model.js';
-import {initializeContinuity, replaceNotice, openContinuityStore} from '../../plugins/kurumi-memory/continuity/store.js';
+import {emptyState, initializeContinuity, replaceNotice, openContinuityStore} from '../../packages/memory-continuity/index.js';
 
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const outIndex = process.argv.indexOf('--out'), out = outIndex < 0 ? null : process.argv[outIndex + 1];

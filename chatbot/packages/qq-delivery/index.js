@@ -1,0 +1,19 @@
+// Shared QQ transport, document delivery and receipts. Contracts: docs/21, docs/22.
+import {sendDocument as uploadDocument} from './files.js';
+import {sendPayload} from './transport.js';
+
+export {account, CHANNEL, ownerAuthorized, ownerTarget, token} from './config.js';
+export {qqFileUrl, sendDocument, stagePdf, traceFile} from './files.js';
+export {Ledger} from './ledger.js';
+export {presentForQQ} from './presentation.js';
+export {localImage, onebot, sendPayload, sendSegments} from './transport.js';
+export {splitForQQ} from './vendor/md-to-plain.js';
+export {findSticker, formatStickerList, loadStickerStore} from './vendor/sticker-lib.js';
+
+// cfg is a getter so each send uses the current runtime config.
+export function createQqDelivery(cfg) {
+  return {
+    sendDocument: ({to, documentId, key, signal}) => uploadDocument({cfg: cfg(), to, documentId, key, signal}),
+    sendText: ({to, text, key, signal}) => sendPayload({cfg: cfg(), to, text, key, signal}),
+  };
+}

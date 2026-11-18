@@ -23,8 +23,8 @@ const configFile = join(repo, 'config/runtime.config.json'), config = compileAcc
 const owner = config.channels['kurumi-qq'].ownerId;
 assert.equal(owner, '365999865'); assert.equal(config.channels['kurumi-qq'].testIngress, false);
 const {rpc, ready} = await import('../../../scripts/fusion/rpc.mjs');
-const {account} = await import('../../plugins/kurumi-qq/src/config.js');
-const {onebot} = await import('../../plugins/kurumi-qq/src/transport.js');
+const {account} = await import('../../packages/qq-delivery/index.js');
+const {onebot} = await import('../../packages/qq-delivery/index.js');
 const client = new KnowledgeMapClient({...config.plugins.entries['kurumi-knowledgemap'].config, trace() {}});
 const marker = '[doc23-r2-' + Date.now().toString(36) + ']', ids = new Set(), started = Date.now();
 const report = {at: new Date().toISOString(), marker, boundary: 'Real model/production OpenClaw/API/MySQL/browser/weather; synthetic owner inbound captured without QQ delivery; exact test-row cleanup, original bills unchanged', cases: []};

@@ -2,9 +2,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {randomBytes} from 'node:crypto';
-import {validateFact} from './model.js';
-import {MEMORY_NOTICE} from './continuity/model.js';
-import {openContinuityStore} from './continuity/store.js';
+import {validateFact} from '../../packages/memory-continuity/facts.js';
+import {MEMORY_NOTICE, openContinuityStore} from '../../packages/memory-continuity/index.js';
 import {NOTICE_V3} from './system/store.js';
 import {openRecordContinuityStore} from './system/application.js';
 

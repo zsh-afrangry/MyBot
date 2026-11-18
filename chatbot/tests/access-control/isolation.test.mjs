@@ -15,9 +15,7 @@ import {Documents,documentRoot} from '../../packages/documents/index.js';
 import {createPaperPlugin} from '../../plugins/kurumi-papers/index.js';
 import {PaperService} from '../../plugins/kurumi-papers/service.js';
 import {handleInbound,parseInbound} from '../../plugins/kurumi-qq/src/inbound.js';
-import {sendPayload} from '../../plugins/kurumi-qq/src/transport.js';
-import {stagePdf,sendDocument} from '../../plugins/kurumi-qq/src/files.js';
-import {Ledger} from '../../plugins/kurumi-qq/src/ledger.js';
+import {sendPayload, stagePdf, sendDocument, Ledger} from '../../packages/qq-delivery/index.js';
 import {pdf} from '../papers/fixtures.mjs';
 const inspect=async()=>({pages:1});
 async function setup(t,extra={}){

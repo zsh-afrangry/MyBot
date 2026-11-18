@@ -1,6 +1,6 @@
 // Language understanding stays in the model; policy checks evidence and bounded structures.
-import {normalize} from '../model.js';
-import {safeText} from './model.js';
+import {normalize} from '../../../packages/memory-continuity/facts.js';
+import {safeText} from '../../../packages/memory-continuity/index.js';
 // reach[i] bit 1: prefix of length i is covered; bit 2: covered with at least one evidence piece.
 function composed(target, old, current) {
   const reach = new Uint8Array(target.length + 1); reach[0] = 1;

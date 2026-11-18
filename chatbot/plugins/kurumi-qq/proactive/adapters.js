@@ -2,8 +2,8 @@
 import {activeSubject} from '../../../packages/access-control/index.js';
 import {KnowledgeMapClient} from '../../../packages/knowledgemap-client/client.js';
 import {readPlanning, readActiveReminders, readWeatherBrief} from '../../../packages/personal-domains/read-model.js';
-import {readContinuityContext} from '../../kurumi-memory/continuity/read-model.js';
-import {sendSegments} from '../src/transport.js';
+import {readContinuityContext} from '../../../packages/memory-continuity/read-model.js';
+import {sendSegments} from '../../../packages/qq-delivery/index.js';
 import {error} from '../../../packages/proactive-core/policy.js';
 
 const reads={weather:'weather.read',planning:'planning.read',reminders:'reminders.read',reminder_list:'reminder-list.read'};

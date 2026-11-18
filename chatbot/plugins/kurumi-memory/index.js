@@ -3,7 +3,7 @@ import {auditMemoryCall} from '../../packages/observability/memory-audit.js';
 import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/index.js';
 import {createMemoryApplication} from './application.js';
 import {trustedMemoryText} from './inbound.js';
-import {normalize} from './model.js';
+import {normalize} from '../../packages/memory-continuity/facts.js';
 import {registerContinuity} from './continuity/plugin.js';
 import {registerMemorySystem} from './system/plugin.js';
 

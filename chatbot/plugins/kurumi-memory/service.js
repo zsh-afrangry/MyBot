@@ -1,6 +1,6 @@
 // Application mutation entry: explicit policy, exact replay, then revision-checked storage.
 import {randomBytes} from 'node:crypto';
-import {normalize, validateFact} from './model.js';
+import {normalize, validateFact} from '../../packages/memory-continuity/facts.js';
 import {assertMemoryRequest} from './inbound.js';
 
 /** @param {import('./contracts.js').Policy} policy */

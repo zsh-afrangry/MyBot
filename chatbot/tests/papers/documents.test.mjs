@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {Documents,MAX_PDF_BYTES,MAX_ARTIFACT_PDF_BYTES} from '../../packages/documents/index.js';
 import {parseInbound} from '../../plugins/kurumi-qq/src/inbound.js';
-import {qqFileUrl, stagePdf, sendDocument} from '../../plugins/kurumi-qq/src/files.js';
+import {qqFileUrl, stagePdf, sendDocument} from '../../packages/qq-delivery/index.js';
 import {pdf} from './fixtures.mjs';
 const inspect = async () => ({pages: 1});
 function setup(t) {

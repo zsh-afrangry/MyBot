@@ -5,8 +5,7 @@ import {isWakeSession} from '../../packages/proactive-core/policy.js';
 import {createProactiveComponent} from './proactive/index.js';
 import WebSocket from 'ws';
 import {registerAcceptanceTools} from './src/acceptance.js';
-import {account,CHANNEL,token} from './src/config.js';
-import {onebot,sendPayload} from './src/transport.js';
+import {account, CHANNEL, token, onebot, sendPayload} from '../../packages/qq-delivery/index.js';
 import {handleInbound} from './src/inbound.js';
 import {registerStickerTool} from './src/stickers.js';
 export const plugin={

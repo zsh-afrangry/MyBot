@@ -19,8 +19,7 @@ import {WebSocketServer} from 'ws';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {personaFiles, applyPersonaFile} from '../../packages/access-control/workspaces.js';
 import {ownerPolicy, memberRow, OWNER, MEMBER} from '../access-control/fixtures.mjs';
-import {emptyState} from '../../plugins/kurumi-memory/continuity/model.js';
-import {initializeContinuity, replaceNotice, openContinuityStore} from '../../plugins/kurumi-memory/continuity/store.js';
+import {emptyState, initializeContinuity, replaceNotice, openContinuityStore} from '../../packages/memory-continuity/index.js';
 
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const arg = name => {const index = process.argv.indexOf(name); return index < 0 ? null : process.argv[index + 1];};

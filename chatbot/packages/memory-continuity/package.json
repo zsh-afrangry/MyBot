@@ -1,0 +1,10 @@
+{
+  "name": "@kurumi/memory-continuity",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./facts": "./facts.js",
+    "./read-model": "./read-model.js"
+  }
+}

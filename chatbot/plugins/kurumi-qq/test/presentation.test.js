@@ -5,9 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
-import {presentForQQ} from '../src/presentation.js';
-import {Ledger} from '../src/ledger.js';
-import {sendPayload} from '../src/transport.js';
+import {presentForQQ, Ledger, sendPayload} from '../../../packages/qq-delivery/index.js';
 test('short paragraphs separate naturally while reports and code remain grouped',()=>{
  const chat='主人，辛苦啦。\n\n先歇一会儿吧🐋';const shown=presentForQQ(chat);assert(shown.paced);assert.equal(shown.pieces.join('\n\n'),chat);
  for(const report of ['结果如下\n\n- 测试通过\n- 状态正常','代码如下\n\n```js\nconst x=1\n```','来源\n\nhttps://example.org','内容'.repeat(400)])assert.equal(presentForQQ(report).paced,false);

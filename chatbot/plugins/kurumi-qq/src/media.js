@@ -1,6 +1,6 @@
 // Current-turn images are staged through Host media storage, never arbitrary URL fetch.
 import fs from 'node:fs';
-import {localImage,onebot} from './transport.js';
+import {localImage,onebot} from '../../../packages/qq-delivery/index.js';
 const CDN=new Set(['gchat.qpic.cn','c2cpicdw.qpic.cn','multimedia.nt.qq.com','multimedia.nt.qq.com.cn','p.qpic.cn']);
 export function qqImageUrl(value){
  const url=new URL(value);

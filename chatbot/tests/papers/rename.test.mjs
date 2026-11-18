@@ -6,7 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {Documents,atomicJson,displayPdfName} from '../../packages/documents/index.js';
 import {createPaperPlugin} from '../../plugins/kurumi-papers/index.js';
-import {sendDocument} from '../../plugins/kurumi-qq/src/files.js';
+import {sendDocument} from '../../packages/qq-delivery/index.js';
 import {withAccess,memberRow,context,OWNER,MEMBER} from '../access-control/fixtures.mjs';
 import {pdf} from './fixtures.mjs';
 const inspect = async () => ({pages:1});

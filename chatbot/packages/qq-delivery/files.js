@@ -1,13 +1,13 @@
 // Authorized private PDF ingress/egress, sharing the managed document catalog. Contract: docs/22.
-import {Documents, documentRoot, MAX_PDF_BYTES, inspectPdf} from '../../../packages/documents/index.js';
+import {Documents, documentRoot, MAX_PDF_BYTES, inspectPdf} from '../documents/index.js';
 import {account} from './config.js';
 import {onebot} from './transport.js';
 import {Ledger} from './ledger.js';
-import {createTraceSink} from '../../../packages/observability/index.js';
+import {createTraceSink} from '../observability/index.js';
 import {isIP} from 'node:net';
 import https from 'node:https';
 import {Readable} from 'node:stream';
-import {activeSubject, targetSubject} from '../../../packages/access-control/index.js';
+import {activeSubject, targetSubject} from '../access-control/index.js';
 
 export function traceFile(cfg, event) {
   try { createTraceSink(documentRoot(cfg) + '/events.jsonl').emit({source: 'papers', ...event}); } catch {}

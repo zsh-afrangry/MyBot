@@ -1,7 +1,6 @@
 import fs from 'node:fs';fs.mkdirSync('/home/afrangry/kurumi-fusion/test-output',{recursive:true});
 import {DatabaseSync} from 'node:sqlite';
-import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
-import {onebot} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {account, onebot} from '../../chatbot/packages/qq-delivery/index.js';
 const cfg=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/openclaw.json'));
 const a=account(cfg),db=new DatabaseSync(`${a.stateDir}/channel.sqlite`,{readOnly:true});
 const receipts=db.prepare('SELECT * FROM outbound ORDER BY at').all();

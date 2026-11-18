@@ -79,8 +79,8 @@ node chatbot/scripts/import-paper-credentials.mjs --provider deepseek --source /
 | `chatbot/packages/documents/index.js` | 受管文档唯一实现，论文、QQ、邮件共用 |
 | `chatbot/plugins/kurumi-papers/{index,profiles,service,runner,failure,notification,outputs}.js` | 工具、配置解析、任务、固定子进程、失败说明 |
 | `chatbot/plugins/kurumi-papers/python/{engine,responses,http_worker}.py` | 排版适配、批次验证与有界恢复、可取消的一次性 HTTP |
-| `chatbot/plugins/kurumi-qq/delivery.js` | QQ 对外投递入口，论文插件只经它发文件和通知 |
-| `chatbot/plugins/kurumi-qq/src/{attachments,inbound,files,transport}.js` | 附件事实、纯失败分流、PDF 接收、OneBot 文件投递 |
+| [共享 QQ 投递入口](21_后端职责分层与代码整理.md#共享代码的唯一实现) | 论文文件和通知的实际投递 |
+| `chatbot/plugins/kurumi-qq/src/{attachments,inbound}.js` | 附件事实、纯失败分流和 PDF 接收接线 |
 | `/home/afrangry/.openclaw-fusion/documents/` | 受管记录、files、jobs、work、cache、`events.jsonl` |
 | `/home/afrangry/.openclaw-fusion/paper-credentials.json` | 0600，GPT 凭据和 `DEEPSEEK_API_KEY` |
 | `/home/afrangry/.openclaw-fusion/venvs/paper-translation/` | 独立 Python 环境，按锁文件重建 |

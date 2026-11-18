@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import {accessPolicy, authorizedOwner, targetSubject} from '../../../packages/access-control/index.js';
+import {accessPolicy, authorizedOwner, targetSubject} from '../access-control/index.js';
 export const CHANNEL='kurumi-qq';
 export function account(cfg, id='default') {
  if(id&&id!=='default')throw Error('Unknown QQ account');

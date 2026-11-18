@@ -3,8 +3,7 @@ import fs from 'node:fs';fs.mkdirSync('/home/afrangry/kurumi-fusion/test-output'
 import {DatabaseSync} from 'node:sqlite';
 import {rpc,ready} from './rpc.mjs';
 await ready();
-import {account} from '../../chatbot/plugins/kurumi-qq/src/config.js';
-import {onebot,sendPayload} from '../../chatbot/plugins/kurumi-qq/src/transport.js';
+import {account, onebot, sendPayload} from '../../chatbot/packages/qq-delivery/index.js';
 import {freshMessageId} from './lib/fresh-id.mjs';
 const cfg=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/openclaw.json')),a=account(cfg);
 const login=await onebot(a,'get_login_info',{});
