@@ -33,7 +33,9 @@ export async function createHostDriver() {
         return handler(event, context);
       } });
     },
+    config: { channels: { "kurumi-qq": { ownerId: "acceptance-owner" } } },
     logger: { info: message => logs.push(JSON.parse(message)), warn: message => logs.push(JSON.parse(message)) },
+    registerTool() {},
     registerService() {},
   });
   initializeGlobalHookRunner(registry);

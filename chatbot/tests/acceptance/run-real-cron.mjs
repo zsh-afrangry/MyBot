@@ -1,3 +1,8 @@
+// 隔离 Gateway 的 Cron 存储验收：在临时目录启动本机回环网关，执行真实的 cron.add / cron.update / cron.remove。
+// 副作用：只写 /tmp 下的临时目录，不调用模型，不发 QQ，不碰生产状态；任务排在一天后，并在用例内取消。
+// 范围：到 Cron 存储为止（改期沿用同一任务 ID、重复提交不再发 RPC、取消后无提醒任务）；不覆盖到点执行和 QQ 送达。
+// 隔离网关不加载频道插件，cron.add 的 delivery.channel 在转发时换成 "last"，其余参数与生产构造一致。
+// 运行：/usr/bin/node chatbot/tests/acceptance/run-real-cron.mjs
 import assert from "node:assert/strict";
 import { writeFileSync, openSync, closeSync } from "node:fs";
 import { join } from "node:path";
@@ -32,7 +37,9 @@ const rpc = (method, params = {}) => callGatewayFromCli(method, { url: `ws://127
 const scheduler = {
   async add(input) {
     const params = buildReminderCronAddParams(input);
-    const result = await rpc("cron.add", params);
+    // The isolated Gateway loads no channel plugin, so it rejects delivery.channel "qqbot".
+    // Only the delivery channel is replaced; the job shape and schedule are what production builds.
+    const result = await rpc("cron.add", { ...params, delivery: { ...params.delivery, channel: "last" } });
     const jobId = result.id ?? result.jobId ?? result.job?.id;
     report.rpc.push({ method: "cron.add", params, result });
     assert.ok(jobId, "Gateway must return a job ID");
@@ -50,7 +57,8 @@ const scheduler = {
 const commit = proposal => driver.dispatch(fixture.confirmation(proposal), () => fixture.reminders.commitReminderProposal(
   fixture.reminder, { proposal_id: proposal.proposalId, payload_hash: proposal.payloadHash }, fixture.reminderContext, scheduler));
 const schedule = offset => ({ local_date_time: fixture.reminders.formatShanghaiDateTime(fixture.now() + offset).replace(" ", "T"), timezone: "Asia/Shanghai" });
-const jobs = async () => (await rpc("cron.list", { includeDisabled: true })).jobs;
+// The Gateway keeps its own "heartbeat-main" job; only reminder jobs are counted.
+const jobs = async () => (await rpc("cron.list", { includeDisabled: true })).jobs.filter(job => String(job.name).startsWith("kurumi.personal-reminder."));
 const persist = () => writeFileSync(join(driver.directory, "real-cron-report.json"), JSON.stringify(report, null, 2));
 async function check(name, operation) {
   const item = { name, before: fixture.snapshot() }; report.tests.push(item);
@@ -74,7 +82,8 @@ try {
     assert.equal(proposal.ok, true);
     created = await commit(proposal);
     assert.equal(created.ok, true, JSON.stringify(created));
-    const list = await jobs(); assert.equal(list.length, 1);
+    assert.equal(created.status, "scheduled", JSON.stringify(created));
+    const list = await jobs(); assert.equal(list.length, 1, JSON.stringify(list.map(job => ({ id: job.id, name: job.name, payload: job.payload?.kind }))));
     originalJobId = list[0].id;
     assert.equal(list[0].payload.kind, "command");
     assert.equal(list[0].schedule.at, new Date(proposal.canonicalFacts.schedule.atUtc * 1000).toISOString());
@@ -85,6 +94,7 @@ try {
       request: { kind: "reminder.update", reminder_id: created.reminder.reminderId, content: "updated isolated acceptance", schedule: schedule(90000) } }, fixture.reminderContext);
     assert.equal(proposal.ok, true);
     const result = await commit(proposal); assert.equal(result.ok, true, JSON.stringify(result));
+    assert.equal(result.status, "updated", JSON.stringify(result));
     const list = await jobs(); assert.equal(list.length, 1); assert.equal(list[0].id, originalJobId);
     assert.equal(list[0].schedule.at, new Date(proposal.canonicalFacts.schedule.atUtc * 1000).toISOString());
     report.updated = { result, jobs: list };

@@ -6,7 +6,7 @@
 > [归档验证记录](../verification/chatbot-agents-archive-2026-10-28/README.md)。
 
 > **本文件不是当前系统的规则来源。** 它是融合前（旧 NAICCC/`qqbot` 部署）的能力登记，
-> 现在只由 `chatbot/tests/acceptance/model-driver.mjs` 与 `run-retrieval-t3.mjs` 显式读取，
+> 现在只由 `chatbot/tests/acceptance/model-driver.mjs` 显式读取，
 > 作为历史验收的基础提示词；脚本会在末尾追加本轮隔离说明，执行时仍可能调用真实模型/API。
 >
 > - 当前运行规则、工具与权限：[根目录开发指引](../../AGENTS.md) → [文档入口](../README.md) → [当前规则文档](../README.md#当前规则)。

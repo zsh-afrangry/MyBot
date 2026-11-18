@@ -8,8 +8,8 @@
 
 - `call-analysis.mjs`、`call-analysis.test.mjs` 及两份 `fixtures/`：仍在使用的回合/调用结果分析回归，可离线运行 `node --test chatbot/tests/acceptance/call-analysis.test.mjs`。
 - `host-driver.mjs`、`domain-fixture.mjs`、`run.mjs`、`verify-restart.mjs`：历史确认流程的隔离基础设施，合成身份、临时数据库和本地回复收集，不证明当前 QQ 网络链路。
-- 旧真实模型、GeoAPI、Cron、fallback 和 retrieval-t3 入口：用于追溯旧验收方法；部分依赖融合前配置与 `KURUMI_SOURCE_ROOT`，不保证兼容当前内核。按文档16保留其未覆盖边界；不得根据旧结果宣称新版通过。
+- 旧真实模型、GeoAPI、Cron、fallback 入口：用于追溯旧验收方法；部分依赖融合前配置与 `KURUMI_SOURCE_ROOT`，不保证兼容当前内核。按文档16保留其未覆盖边界；不得根据旧结果宣称新版通过。
 
 依赖腾讯 `qqbot`、旧源码安装索引及私有 dist 导出的 `run-retrieval-smoke.mjs`、`run-retrieval-host.mjs` 和专用 `retrieval-config.mjs` 已退役，可从 Git `90a02a6` 追溯。现行 Fusion 使用自研 OneBot `kurumi-qq`；原 2026-10-01/04 的检索结论仍属历史，不再保留失效运行命令。
 
-旧模型基础提示词是 [fixtures/legacy-system-prompt.md](fixtures/legacy-system-prompt.md)，只供 `model-driver.mjs` 和 `run-retrieval-t3.mjs` 读取，不是当前运行规则。旧完整运行归档已退役，禁止使用不存在的 `2026-10-05-pre-consolidation` 路径作为恢复说明。当前恢复以文档12规定的 v3 恢复点及其配套工件为准。
+旧模型基础提示词是 [fixtures/legacy-system-prompt.md](fixtures/legacy-system-prompt.md)，只供 `model-driver.mjs` 读取，不是当前运行规则。旧完整运行归档已退役，禁止使用不存在的 `2026-10-05-pre-consolidation` 路径作为恢复说明。当前恢复以文档12规定的 v3 恢复点及其配套工件为准。
