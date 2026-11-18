@@ -41,7 +41,7 @@ export interface ProfileLocationRecord {
   longitude: number;
   timezone: string;
   precision: "city" | "district" | "point";
-  qweatherLocationId: string;
+  qweatherLocationId: string | null;
 }
 
 export interface ResolvedProfileLocation {
@@ -58,6 +58,9 @@ export type ProfileLocationResolution =
   | { kind: "resolved"; location: ResolvedProfileLocation }
   | { kind: "not_found" }
   | { kind: "ambiguous"; candidates: WeatherLocationCandidate[] };
+
+export type ProfilePlaceResolver = (input: WeatherLocationQuery, signal?: AbortSignal) => Promise<ProfileLocationResolution>;
+export type ProfilePlaceSource = Pick<WeatherClient, 'lookupPlace'> | ProfilePlaceResolver;
 
 type ResolvedCandidate = {
   candidate: QwGeoLocation;
@@ -93,10 +96,11 @@ export async function resolveWeatherLocation(
 
 /** Resolve one trusted GeoAPI candidate for a durable Profile location update. */
 export async function resolveProfileLocation(
-  client: WeatherClient,
+  client: ProfilePlaceSource,
   input: WeatherLocationQuery,
   signal?: AbortSignal,
 ): Promise<ProfileLocationResolution> {
+  if (typeof client === 'function') return await client(input, signal);
   const resolved = await resolveLocationCandidate(client, input, signal);
   if (resolved.kind !== "resolved") return resolved;
 
@@ -110,7 +114,7 @@ export async function resolveProfileLocation(
 }
 
 async function resolveLocationCandidate(
-  client: WeatherClient,
+  client: Pick<WeatherClient, 'lookupPlace'>,
   input: WeatherLocationQuery,
   signal?: AbortSignal,
 ): Promise<CandidateResolution> {

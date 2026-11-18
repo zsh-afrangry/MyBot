@@ -36,7 +36,10 @@ test('read-only stores do not create missing directories and SQLite rejects atte
   assert.throws(()=>new WeatherStore({stateDirectory:missing,readOnly:true}));assert(!fs.existsSync(missing));
   assert.throws(()=>new ReminderStore({stateDirectory:missing,readOnly:true}));assert(!fs.existsSync(missing));
   const store=new WeatherStore({stateDirectory:f.root+'/state/personal-weather',readOnly:true});
-  try{assert.throws(()=>store.deleteExpiredApiCache(Number.MAX_SAFE_INTEGER),/readonly/i);}finally{store.close();}
+  try {
+    const placeId=store.getCurrentLocation().place.id, atUtc=store.getNowUtc();
+    assert.throws(()=>store.withProfileTransaction(repo=>repo.replaceCurrentLocation({placeId,atUtc,sourceSummary:'fixture'})),/readonly/i);
+  } finally {store.close();}
   const link=f.root+'/link';fs.symlinkSync(f.root+'/state/personal-weather',link);
   assert.throws(()=>new WeatherStore({stateDirectory:link,readOnly:true}));
 });
@@ -55,6 +58,7 @@ test('actual weather adapter and remote list use GET-only fixed API, current run
   const brief=await f.adapters.query('weather',options);assert(brief.location);assert(brief.current);
   const list=await f.adapters.query('reminder_list',options);assert.deepEqual(list,{items:[],total:0,truncated:false});
   assert.equal(requests.length,5);assert(requests.every(r=>r.method==='GET'&&r.runId==='host-minted-id'));assert.deepEqual(f.files.map(sha),before);
+  assert(!fs.existsSync(f.root+'/state/personal-weather/weather-cache.sqlite'));
 });
 test('revoked domain permission and N2 adapter never acquire read authority through N3',async t=>{
   const f=fixture(t);f.cfg.channels['kurumi-qq'].accessControl.subjects[0].permissions['planning.read']=false;

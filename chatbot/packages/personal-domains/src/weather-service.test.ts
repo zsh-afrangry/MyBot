@@ -1,18 +1,17 @@
 import { describe, expect, it, vi } from "vitest";
 
 import type { QWeatherClient } from "./qweather-client.js";
-import type { WeatherStore } from "./store.js";
 import {
   alertFixture,
   currentFixture,
   dailyFixture,
   hourlyFixture,
 } from "./test-fixtures.js";
-import { WeatherService } from "./weather-service.js";
+import { WeatherService, type WeatherBriefStore } from "./weather-service.js";
 
 const NOW = Date.parse("2026-08-06T02:30:00.000Z");
 
-function store(): WeatherStore {
+function store(): WeatherBriefStore {
   return {
     deleteExpiredApiCache: () => 0,
     deleteApiCache: () => false,
@@ -40,7 +39,7 @@ function store(): WeatherStore {
         source: "qweather_location_list",
       },
     }),
-  } as unknown as WeatherStore;
+  } as unknown as WeatherBriefStore;
 }
 
 function client(overrides: Partial<QWeatherClient> = {}): QWeatherClient {
@@ -77,7 +76,7 @@ describe("WeatherService", () => {
 
   it("keeps a county-level city leaf name when GeoAPI classifies it as city", async () => {
     const yangzhongStore = store() as unknown as {
-      getEffectivePlace: WeatherStore["getEffectivePlace"];
+      getEffectivePlace: WeatherBriefStore["getEffectivePlace"];
     };
     yangzhongStore.getEffectivePlace = () => ({
       source: "current_location",
@@ -104,7 +103,7 @@ describe("WeatherService", () => {
     const getCurrent = vi.fn(async () => currentFixture);
 
     const brief = await new WeatherService(
-      yangzhongStore as unknown as WeatherStore,
+      yangzhongStore as unknown as WeatherBriefStore,
       client({ getCurrent }),
       { now: () => NOW },
     ).getBrief();
@@ -150,27 +149,25 @@ describe("WeatherService", () => {
     const entries = new Map<string, {
       cacheKey: string;
       endpointKind: string;
-      placeId: number;
       metadataTag: string | null;
       fetchedAtUtc: number;
       expiresAtUtc: number;
       payload: unknown;
     }>();
     const cachedStore = store() as unknown as {
-      getEffectivePlace: WeatherStore["getEffectivePlace"];
-      deleteExpiredApiCache: WeatherStore["deleteExpiredApiCache"];
-      deleteApiCache: WeatherStore["deleteApiCache"];
-      getFreshApiCache: WeatherStore["getFreshApiCache"];
-      putApiCache: WeatherStore["putApiCache"];
+      getEffectivePlace: WeatherBriefStore["getEffectivePlace"];
+      deleteExpiredApiCache: WeatherBriefStore["deleteExpiredApiCache"];
+      deleteApiCache: WeatherBriefStore["deleteApiCache"];
+      getFreshApiCache: WeatherBriefStore["getFreshApiCache"];
+      putApiCache: WeatherBriefStore["putApiCache"];
     };
     cachedStore.getFreshApiCache = ((key: string, atUtc: number) => {
       const entry = entries.get(key);
       return entry && atUtc < entry.expiresAtUtc ? entry : undefined;
-    }) as WeatherStore["getFreshApiCache"];
+    }) as WeatherBriefStore["getFreshApiCache"];
     cachedStore.putApiCache = ((input: {
       cacheKey: string;
       endpointKind: string;
-      placeId?: number;
       metadataTag?: string;
       fetchedAtUtc: number;
       expiresAtUtc: number;
@@ -179,20 +176,19 @@ describe("WeatherService", () => {
       entries.set(input.cacheKey, {
         cacheKey: input.cacheKey,
         endpointKind: input.endpointKind,
-        placeId: input.placeId ?? 1,
         metadataTag: input.metadataTag ?? null,
         fetchedAtUtc: input.fetchedAtUtc,
         expiresAtUtc: input.expiresAtUtc,
         payload: input.payload,
       });
-    }) as WeatherStore["putApiCache"];
+    }) as WeatherBriefStore["putApiCache"];
 
     const getCurrent = vi.fn(async () => currentFixture);
     const getDaily = vi.fn(async () => dailyFixture);
     const getHourly = vi.fn(async () => hourlyFixture);
     const getAlerts = vi.fn(async () => alertFixture);
     const upstream = client({ getCurrent, getDaily, getHourly, getAlerts });
-    const service = new WeatherService(cachedStore as unknown as WeatherStore, upstream, {
+    const service = new WeatherService(cachedStore as unknown as WeatherBriefStore, upstream, {
       now: () => NOW,
     });
 
@@ -206,18 +202,18 @@ describe("WeatherService", () => {
 
   it("reads a temporary resolved location without consulting or changing the effective place", async () => {
     const transientStore = store() as unknown as {
-      getEffectivePlace: WeatherStore["getEffectivePlace"];
-      putApiCache: WeatherStore["putApiCache"];
+      getEffectivePlace: WeatherBriefStore["getEffectivePlace"];
+      putApiCache: WeatherBriefStore["putApiCache"];
     };
     const getEffectivePlace = vi.fn(transientStore.getEffectivePlace);
     const putApiCache = vi.fn();
     transientStore.getEffectivePlace = getEffectivePlace;
-    transientStore.putApiCache = putApiCache as WeatherStore["putApiCache"];
+    transientStore.putApiCache = putApiCache as WeatherBriefStore["putApiCache"];
     const getCurrent = vi.fn(async () => currentFixture);
     const upstream = client({ getCurrent });
 
     const brief = await new WeatherService(
-      transientStore as unknown as WeatherStore,
+      transientStore as unknown as WeatherBriefStore,
       upstream,
       { now: () => NOW },
     ).getBriefForLocation({

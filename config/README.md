@@ -20,7 +20,7 @@
 | `.openclaw-fusion/workspace/` | **人格/规则文件与 `MEMORY.md` 说明文件**、`SOUL.md`、`IDENTITY.md`、`AGENTS.md`、`USER.md` | ❌ 仅私有备份 |
 | `.openclaw-fusion/workspace/.kurumi-memory/state.sqlite` | 主人连续性记忆唯一事实：长期事实、7天（可配置1–30天）近期摘要、来源、版本与遗忘屏障 | ❌ 仅私有备份；由备份脚本做 SQLite 一致快照 |
 | `.openclaw-fusion/users/<QQ>/workspace/` | 成员独立 Agent 的四份受管人格/规则文件及个人会话环境，不复制主人记忆/资料 | ❌ 仅私有备份 |
-| `.openclaw-fusion/state/` | 一次性提醒、天气、Profile、行程；共享列表的设置/投递账本及冻结旧事项（SQLite） | ❌ 仅私有备份 |
+| `.openclaw-fusion/state/` | 一次性提醒、天气缓存、Profile/行程；共享列表的设置/投递账本及冻结旧事项（SQLite） | ❌ 仅私有备份 |
 | `.openclaw-fusion/state/kurumi-e7/` | E7公开资料JSON缓存、哈希与条件请求元数据；不存聊天/身份/凭据 | ❌ 可从公开站点重建；随整目录私密备份保留 |
 | `.openclaw-fusion/channel/` | 频道账本、贴纸目录、发送回执 | ❌ 仅私有备份 |
 | `.openclaw-fusion/agents/` | 各 Agent 的原生会话 SQLite、保留的历史 JSONL 等资料；读取归属见文档25 | ❌ 仅私有备份 |
@@ -145,7 +145,7 @@ OpenClaw 每回合重新核对 bootstrap 文件；文档25的真实隔离宿主�
 | 领域 / 来源键 | 配置与同步边界 | 详细规则 |
 | --- | --- | --- |
 | 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [每日播报](../docs/23_KnowledgeMap业务能力桥接.md#每日播报)、[存储与切换](../docs/23_KnowledgeMap业务能力桥接.md#原理) |
-| 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析/默认城市桥接，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [21插件生命周期](../docs/21_后端职责分层与代码整理.md#插件生命周期) |
+| 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析和可选地点目录，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [2天气与资料](../docs/2_天气模块.md#接口)、[21插件生命周期](../docs/21_后端职责分层与代码整理.md#插件生命周期) |
 | 阅读：`kurumi-research.config.cacheRoot` | 显式缓存位置，不从QQ频道目录推导 | [21共享边界](../docs/21_后端职责分层与代码整理.md#共享代码的唯一实现) |
 | 记忆：`continuity.enabled/summaryTtlDays/maxContextChars` | 仓库为true/7/6000；TTL范围1–30天、缺省7；资料预算2000–12000字符、缺省6000 | [25存储与检索](../docs/25_人格、记忆与会话连续性.md#记忆存储与检索) |
 | 连续性适配器：`continuityPolicyAdapter/continuityStoreAdapter` | 当前`current-owner/sqlite`，不与旧`policyAdapter/storeAdapter`混用；配置选择不自动迁移数据 | [25](../docs/25_人格、记忆与会话连续性.md)、[21适配器](../docs/21_后端职责分层与代码整理.md#适配器注册表) |

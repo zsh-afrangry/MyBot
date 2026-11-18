@@ -9,6 +9,7 @@ import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, test } from "vitest";
 
+import { WeatherCacheStore } from "./weather-cache.js";
 import { WeatherStore } from "./store.js";
 
 const FIXED_NOW = 1_786_032_000;
@@ -327,35 +328,34 @@ test("rejects invalid timestamps and use after close", () => {
 });
 
 test("stores only fresh bounded API cache entries and expires them deterministically", () => {
-  const { store } = createStore();
+  const { store, stateDirectory } = createStore();
+  const cache = new WeatherCacheStore({stateDirectory});
   try {
     const place = store.getDefaultPlace();
-    store.putApiCache({
+    cache.putApiCache({
       cacheKey: `v1:current:${place.id}`,
       endpointKind: "current",
-      placeId: place.id,
       metadataTag: "fixture-tag",
       fetchedAtUtc: 1_000,
       expiresAtUtc: 1_600,
       payload: { metadata: { tag: "fixture-tag" }, condition: { text: "多云" } },
     });
 
-    assert.deepEqual(store.getFreshApiCache(`v1:current:${place.id}`, 1_599), {
+    assert.deepEqual(cache.getFreshApiCache(`v1:current:${place.id}`, 1_599), {
       cacheKey: `v1:current:${place.id}`,
       endpointKind: "current",
-      placeId: place.id,
       metadataTag: "fixture-tag",
       fetchedAtUtc: 1_000,
       expiresAtUtc: 1_600,
       payload: { metadata: { tag: "fixture-tag" }, condition: { text: "多云" } },
     });
-    assert.equal(store.getFreshApiCache(`v1:current:${place.id}`, 1_600), undefined);
-    assert.equal(store.deleteExpiredApiCache(1_600), 1);
-    assert.equal(store.deleteExpiredApiCache(1_600), 0);
+    assert.equal(cache.getFreshApiCache(`v1:current:${place.id}`, 1_600), undefined);
+    assert.equal(cache.deleteExpiredApiCache(1_600), 1);
+    assert.equal(cache.deleteExpiredApiCache(1_600), 0);
 
     assert.throws(
       () =>
-        store.putApiCache({
+        cache.putApiCache({
           cacheKey: "v1:bad",
           endpointKind: "current",
           fetchedAtUtc: 1_000,
@@ -365,6 +365,7 @@ test("stores only fresh bounded API cache entries and expires them deterministic
       /later than/,
     );
   } finally {
+    cache.close();
     store.close();
   }
 });

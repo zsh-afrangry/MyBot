@@ -8,7 +8,7 @@ import { QWeatherClient } from './qweather-client.js';
 import { KnowledgeMapWeatherClient } from './knowledgemap-client.js';
 import { createToolTrace } from '@kurumi/knowledgemap-client/tool-trace.js';
 import { asWeatherError } from './errors.js';
-import { WeatherStore } from './store.js';
+import { openWeatherBriefStore } from './weather-query-store.js';
 import { weatherStateDirectory } from './paths.js';
 import { geoConfigSchema as configSchema } from './geo-config-schema.js';
 import { WeatherService } from './weather-service.js';
@@ -44,7 +44,7 @@ export function createPlugin() {
                         const params = rawParams as Static<typeof weatherBriefParameters>;
                         if (!isTrustedWeatherRead(toolContext, config.scheduledOwnerId))
                             return forbiddenResult();
-                        let store: WeatherStore | undefined;
+                        let store: ReturnType<typeof openWeatherBriefStore> | undefined;
                         try {
                             if (params.location === undefined && params.administrative_area !== undefined) {
                                 return jsonResult({
@@ -54,7 +54,7 @@ export function createPlugin() {
                                     message: "administrative_area 只能与 location 一起使用。",
                                 });
                             }
-                            store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
+                            store = openWeatherBriefStore(weatherStateDirectory());
                             const client = config.weatherBackend === "knowledgemap"
                                 ? new KnowledgeMapWeatherClient({ baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile, runId: weatherTrace.resolve(toolContext, _toolCallId, "personal_weather_get_brief") })
                                 : new QWeatherClient(resolvePersonalWeatherConfig(config));

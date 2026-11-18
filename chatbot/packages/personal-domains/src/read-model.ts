@@ -10,7 +10,8 @@ import { ReminderStore } from "./reminder-store.js";
 import { getReminderState, type ReminderStateResult } from "./reminders.js";
 import { WeatherStore } from "./store.js";
 import type { WeatherBrief } from "./weather-model.js";
-import { WeatherService, type WeatherBriefStore } from "./weather-service.js";
+import { openWeatherBriefStore } from "./weather-query-store.js";
+import { WeatherService } from "./weather-service.js";
 
 type WeatherReadConfig = RawPersonalWeatherConfig & Pick<
   Static<typeof geoConfigSchema>,
@@ -64,16 +65,8 @@ export async function readWeatherBrief({
   runId,
   signal,
 }: WeatherReadOptions): Promise<WeatherBrief> {
-  const store = openReadOnlyWeatherStore(stateRoot);
+  const store = openWeatherBriefStore(personalStateDirectory(stateRoot, "personal-weather"), {readOnly: true});
   try {
-    // Fresh cache entries can be reused without performing cache maintenance.
-    const readOnlyStore: WeatherBriefStore = {
-      getEffectivePlace: store.getEffectivePlace.bind(store),
-      getFreshApiCache: store.getFreshApiCache.bind(store),
-      deleteExpiredApiCache: () => 0,
-      deleteApiCache: () => false,
-      putApiCache() {},
-    };
     const client = config.weatherBackend === "knowledgemap"
       ? new KnowledgeMapWeatherClient({
         baseUrl: config.bridgeBaseUrl,
@@ -81,7 +74,7 @@ export async function readWeatherBrief({
         runId,
       })
       : new QWeatherClient(resolvePersonalWeatherConfig(config));
-    return await new WeatherService(readOnlyStore, client).getBrief(signal);
+    return await new WeatherService(store, client).getBrief(signal);
   } finally {
     store.close();
   }

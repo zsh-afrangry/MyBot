@@ -13,6 +13,7 @@ import {
   profileProposalError,
 } from "./profile.js";
 import { WeatherError } from "./errors.js";
+import { createProfileCatalog } from "./profile-catalog.js";
 import type { QWeatherClient } from "./qweather-client.js";
 import { WeatherStore } from "./store.js";
 import { geoLookupFixture } from "./test-fixtures.js";
@@ -21,6 +22,36 @@ const CONFIRMATION_SCOPE = scopeFromToolContext({ messageChannel: "qqbot", sende
   deliveryContext: { to: "qqbot:c2c:test-owner", accountId: "default" } })!;
 const NOW = 1_786_032_000;
 const temporaryRoots: string[] = [];
+
+it('resolves catalog places without weather credentials and changes location only after confirmation', async () => {
+  const {store} = createStore();
+  try {
+    const base = {name: '新区', countryCode: 'CN', latitude: 35, longitude: 114, timezone: 'Asia/Shanghai', precision: 'district' as const};
+    const resolve = createProfileCatalog([
+      {...base, id: 'north', adm1: '甲省'},
+      {...base, id: 'south', adm1: '乙省', latitude: 25},
+    ]);
+    const propose = (area?: string) => proposeProfileChange(store, resolve, {
+      schema_version: 1,
+      request: {kind: 'current_location.set', location: {text: '新区', ...(area ? {administrative_area: area} : {})}},
+    }, undefined, CONFIRMATION_SCOPE);
+    expect(await propose()).toMatchObject({requiresUserInput: true, error: {code: 'location_ambiguous'}});
+    expect(await propose('丙省')).toMatchObject({requiresUserInput: true, error: {code: 'location_not_found'}});
+    const pending = await propose('甲省');
+    if (!pending.ok || pending.status !== 'pending') throw Error('Expected catalog proposal');
+    expect(store.getCurrentLocation().place.displayName).not.toContain('新区');
+    const confirmation = {proposal_id: pending.proposalId, payload_hash: pending.payloadHash};
+    expect(commitProfileChange(store, confirmation, CONFIRMATION_SCOPE)).toMatchObject({ok:false, error:{code:'approval_required'}});
+    expect(store.recordInboundConfirmation({channel:'qqbot', conversationId:'qqbot:c2c:test-owner', accountId:'default',
+      senderIsOwner:true, isGroup:false, messageId:'catalog-confirm', content:`确认 ${pending.proposalId} ${pending.payloadHash}`})).toBe(true);
+    expect(commitProfileChange(store, confirmation, CONFIRMATION_SCOPE).ok).toBe(true);
+    expect(store.getCurrentLocation().place).toMatchObject({placeKey:'catalog:north', qweatherLocationId:null, latitude:35});
+    expect(await propose('甲省')).toMatchObject({ok:true, status:'unchanged'});
+    expect(await propose('乙省')).toMatchObject({ok:true, status:'pending'});
+  } finally {
+    store.close();
+  }
+});
 
 afterEach(() => {
   for (const root of temporaryRoots.splice(0)) {

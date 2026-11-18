@@ -224,7 +224,7 @@ const REQUIRED = [
     ? [['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminder-list/list.sqlite', 'reminder-list database']] : []),
   ['state/runtime/home/afrangry/.openclaw-fusion/state/openclaw.sqlite', 'core state database'],
   ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminders/reminders.sqlite', 'reminders database'],
-  ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-weather/weather.sqlite', 'weather/Profile database'],
+  ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-weather/weather.sqlite', 'Profile/planning database'],
   ['state/runtime/home/afrangry/.openclaw-fusion/channel/channel.sqlite', 'channel ledger'],
   ['state/runtime/home/afrangry/.openclaw-fusion/agents/main/agent/openclaw-agent.sqlite', 'main agent database'],
   ['state/runtime/home/afrangry/.openclaw-fusion/workspace/.kurumi-memory/state.sqlite', 'personal memory continuity database'],

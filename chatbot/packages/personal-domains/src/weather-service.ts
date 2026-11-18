@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { WeatherError, asWeatherError } from "./errors.js";
 import {
   parseQWeatherAlerts,
@@ -7,6 +8,7 @@ import {
 } from "./parsers.js";
 import type { WeatherClient } from "./qweather-client.js";
 import type { EffectivePlace, WeatherStore } from "./store.js";
+import type { WeatherCacheStore } from "./weather-cache.js";
 import type {
   ParseIssue,
   QwDailyItem,
@@ -40,13 +42,11 @@ interface LoadedComponent {
 interface WeatherBriefLocationSource {
   location: WeatherLocation;
   cacheIdentity: string;
-  placeId?: number;
   attributions: string[];
 }
 
-export type WeatherBriefStore = Pick<
-  WeatherStore,
-  | "getEffectivePlace"
+export type WeatherBriefStore = Pick<WeatherStore, "getEffectivePlace"> & Pick<
+  WeatherCacheStore,
   | "getFreshApiCache"
   | "deleteExpiredApiCache"
   | "deleteApiCache"
@@ -70,11 +70,10 @@ export class WeatherService {
 
   async getBrief(signal?: AbortSignal): Promise<WeatherBrief> {
     const nowMs = this.#now();
-    const effective = this.#store.getEffectivePlace(Math.floor(nowMs / 1000));
+    const location = toWeatherLocation(this.#store.getEffectivePlace(Math.floor(nowMs / 1000)));
     return this.#getBrief({
-      location: toWeatherLocation(effective),
-      cacheIdentity: String(effective.place.id),
-      placeId: effective.place.id,
+      location,
+      cacheIdentity: weatherCacheIdentity(location),
       attributions: [],
     }, signal);
   }
@@ -112,7 +111,6 @@ export class WeatherService {
         this.#loadComponent(
           "current",
           `v1:current:${locationSource.cacheIdentity}`,
-          locationSource.placeId,
           CACHE_TTL_SECONDS.current,
           () => this.#client.getCurrent(coordinates, signal),
           (payload) => parseQWeatherCurrent(payload).ok,
@@ -121,7 +119,6 @@ export class WeatherService {
         this.#loadComponent(
           "daily",
           `v1:daily:${locationSource.cacheIdentity}:${localDateKey(nowMs, locationSource.location.timezone)}`,
-          locationSource.placeId,
           CACHE_TTL_SECONDS.daily,
           () => this.#client.getDaily(coordinates, signal),
           (payload) => parseQWeatherDaily(payload).ok,
@@ -130,7 +127,6 @@ export class WeatherService {
         this.#loadComponent(
           "hourly",
           `v1:hourly:${locationSource.cacheIdentity}`,
-          locationSource.placeId,
           CACHE_TTL_SECONDS.hourly,
           () => this.#client.getHourly(coordinates, signal),
           (payload) => parseQWeatherHourly(payload).ok,
@@ -139,7 +135,6 @@ export class WeatherService {
         this.#loadComponent(
           "alerts",
           `v1:alerts:${locationSource.cacheIdentity}`,
-          locationSource.placeId,
           CACHE_TTL_SECONDS.alerts,
           () => this.#client.getAlerts(coordinates, signal),
           (payload) => parseQWeatherAlerts(payload).ok,
@@ -274,7 +269,6 @@ export class WeatherService {
   async #loadComponent(
     endpointKind: keyof typeof CACHE_TTL_SECONDS,
     cacheKey: string,
-    placeId: number | undefined,
     ttlSeconds: number,
     fetcher: () => Promise<unknown>,
     validator: (payload: unknown) => boolean,
@@ -302,7 +296,6 @@ export class WeatherService {
     this.#store.putApiCache({
       cacheKey,
       endpointKind,
-      ...(placeId !== undefined ? { placeId } : {}),
       ...(tag ? { metadataTag: tag } : {}),
       fetchedAtUtc: nowUtc,
       expiresAtUtc: nowUtc + ttlSeconds,
@@ -313,6 +306,10 @@ export class WeatherService {
       quality: freshQuality(new Date(nowUtc * 1000).toISOString()),
     };
   }
+}
+
+export function weatherCacheIdentity({latitude, longitude, timezone}: Pick<WeatherLocation, 'latitude' | 'longitude' | 'timezone'>): string {
+  return 'coordinates:' + createHash('sha256').update(JSON.stringify([latitude, longitude, timezone])).digest('hex');
 }
 
 function toWeatherLocation(effective: EffectivePlace): WeatherLocation {

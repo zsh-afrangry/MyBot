@@ -11,7 +11,8 @@ import { createToolTrace } from '@kurumi/knowledgemap-client/tool-trace.js';
 import { asWeatherError } from './errors.js';
 import { WeatherStore } from './store.js';
 import { weatherStateDirectory } from './paths.js';
-import { geoConfigSchema as configSchema } from './geo-config-schema.js';
+import { profileGeoConfigSchema as configSchema } from './geo-config-schema.js';
+import { createProfileCatalog } from './profile-catalog.js';
 import { commitProfileChange, getProfileState, proposeProfileChange, profileProposalError } from './profile.js';
 import { registerDomainBackend } from './confirmation-backends.js';
 import { registerInteractionHooks } from './interaction/index.js';
@@ -74,7 +75,9 @@ export function createPlugin() {
                         let store: WeatherStore | undefined;
                         try {
                             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
-                            return jsonResult(await proposeProfileChange(store, config.weatherBackend === "knowledgemap"
+                            return jsonResult(await proposeProfileChange(store, config.locationCatalog !== undefined
+                                ? createProfileCatalog(config.locationCatalog)
+                                : config.weatherBackend === "knowledgemap"
                                 ? new KnowledgeMapWeatherClient({ baseUrl: config.bridgeBaseUrl, tokenFile: config.bridgeTokenFile, runId: weatherTrace.resolve(toolContext, _toolCallId, "personal_profile_change_propose") })
                                 : new QWeatherClient(resolvePersonalWeatherConfig(config)), params, signal, scopeFromToolContext(toolContext)));
                         }

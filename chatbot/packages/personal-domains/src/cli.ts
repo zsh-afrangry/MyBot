@@ -10,7 +10,8 @@ import {
 } from "./parsers.js";
 import { weatherStateDirectory } from "./paths.js";
 import { QWeatherClient } from "./qweather-client.js";
-import { WeatherStore } from "./store.js";
+import { WeatherCacheStore } from "./weather-cache.js";
+import { openWeatherBriefStore } from "./weather-query-store.js";
 import { WeatherService } from "./weather-service.js";
 
 export async function main(argv: string[] = process.argv.slice(2)): Promise<number> {
@@ -48,15 +49,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
 }
 
 function initializeDatabase(): number {
-  const store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
+  const store = new WeatherCacheStore({ stateDirectory: weatherStateDirectory() });
   try {
-    const currentLocation = store.getCurrentLocation();
-    printJson({
-      ok: true,
-      databaseReady: true,
-      currentLocation: currentLocation.place.displayName,
-      currentLocationSource: currentLocation.source,
-    });
+    printJson({ok: true, weatherCacheReady: true});
     return 0;
   } finally {
     store.close();
@@ -65,13 +60,12 @@ function initializeDatabase(): number {
 
 function health(): number {
   configFromEnvironment();
-  const store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
+  const store = openWeatherBriefStore(weatherStateDirectory());
   try {
     const place = store.getEffectivePlace(Math.floor(Date.now() / 1000)).place;
     printJson({
       ok: true,
       configured: true,
-      databaseReady: true,
       effectiveLocation: place.displayName,
       networkChecked: false,
     });
@@ -104,7 +98,7 @@ async function lookup(args: string[]): Promise<number> {
 }
 
 async function brief(json: boolean, greeting: boolean): Promise<number> {
-  const store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
+  const store = openWeatherBriefStore(weatherStateDirectory());
   try {
     const client = new QWeatherClient(configFromEnvironment());
     const result = await new WeatherService(store, client).getBrief();

@@ -101,14 +101,14 @@ export class ProfileRepository {
     });
   }
 
-  /** Reuse a known QWeather place rather than inserting duplicate coordinates. */
+  /** Reuse the catalog key or the historical provider identity. */
   upsertConfirmedPlace(input: ProfileLocationRecord, atUtc: UnixSeconds): number {
     const existing = this.#database.prepare(`
       SELECT id
       FROM places
-      WHERE qweather_location_id = ?
+      WHERE place_key = ? OR qweather_location_id = ?
       LIMIT 1
-    `).get(input.qweatherLocationId) as { id: number } | undefined;
+    `).get(input.placeKey, input.qweatherLocationId) as { id: number } | undefined;
     if (existing) return existing.id;
 
     const inserted = this.#database.prepare(`

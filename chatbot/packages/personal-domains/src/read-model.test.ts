@@ -1,11 +1,14 @@
 import assert from "node:assert/strict";
-import { mkdirSync, mkdtempSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, realpathSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { afterEach, test, vi } from "vitest";
 
 import { readActiveReminders, readPlanning, readWeatherBrief } from "./read-model.js";
+import { WeatherCacheStore } from "./weather-cache.js";
+import { weatherCacheIdentity } from "./weather-service.js";
+import { openWeatherBriefStore } from "./weather-query-store.js";
 import { WeatherStore } from "./store.js";
 import { alertFixture, currentFixture, dailyFixture, hourlyFixture } from "./test-fixtures.js";
 
@@ -16,6 +19,31 @@ function createStateRoot(): string {
   temporaryRoots.push(root);
   return root;
 }
+
+test('weather can initialize and refresh its cache without creating or writing personal state', () => {
+  const stateDirectory = join(createStateRoot(), 'state', 'personal-weather');
+  const contextPath = join(stateDirectory, 'weather.sqlite');
+  const cachePath = join(stateDirectory, 'weather-cache.sqlite');
+  const weather = openWeatherBriefStore(stateDirectory);
+  try {
+    const now = Math.floor(Date.now() / 1000), place = weather.getEffectivePlace(now);
+    assert.equal(place.source, 'default');
+    weather.putApiCache({cacheKey:'fixture:current', endpointKind:'current', fetchedAtUtc:now,
+      expiresAtUtc:now+60, payload:{fixture:true}});
+    assert(existsSync(cachePath));
+    assert(!existsSync(contextPath));
+
+    const context = new WeatherStore({stateDirectory});
+    const expected = context.getCurrentLocation().place;
+    context.close();
+    const before = readFileSync(contextPath);
+    assert.deepEqual(weather.getEffectivePlace(now).place, expected);
+    weather.deleteApiCache('fixture:current');
+    assert.deepEqual(readFileSync(contextPath), before);
+  } finally {
+    weather.close();
+  }
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -67,16 +95,18 @@ test("a weather brief refreshes a corrupt cache entry from upstream without chan
   writeFileSync(tokenFile, "synthetic-weather-credential-for-tests", { mode: 0o600 });
 
   const store = new WeatherStore({ stateDirectory: join(stateRoot, "state", "personal-weather") });
-  const cacheKey = "v1:current:" + store.getDefaultPlace().id;
+  const cacheKey = "v1:current:" + weatherCacheIdentity(store.getDefaultPlace());
+  store.close();
+  const cache = new WeatherCacheStore({stateDirectory: store.stateDirectory});
   try {
-    store.putApiCache({
+    cache.putApiCache({
       cacheKey,
       endpointKind: "current",
       fetchedAtUtc: nowUtc - 60,
       expiresAtUtc: nowUtc + 60,
       payload: currentFixture,
     });
-    store.putApiCache({
+    cache.putApiCache({
       cacheKey: "v1:expired",
       endpointKind: "current",
       fetchedAtUtc: nowUtc - 600,
@@ -84,10 +114,10 @@ test("a weather brief refreshes a corrupt cache entry from upstream without chan
       payload: currentFixture,
     });
   } finally {
-    store.close();
+    cache.close();
   }
 
-  const database = new DatabaseSync(store.databasePath);
+  const database = new DatabaseSync(cache.databasePath);
   try {
     // Normal writes enforce valid JSON. Simulate corruption in the test fixture.
     database.exec("PRAGMA ignore_check_constraints = ON");

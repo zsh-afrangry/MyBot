@@ -11,10 +11,10 @@ import type {
   UnixSeconds,
   WeatherStore,
 } from "./store.js";
-import type { WeatherClient } from "./qweather-client.js";
 import { resolveProfileLocation } from "./weather-location.js";
 import type {
   ProfileLocationRecord,
+  ProfilePlaceSource,
 } from "./weather-location.js";
 import type { WeatherLocationCandidate } from "./weather-model.js";
 import type { LocationSetProposalForCommit } from "./profile-repository.js";
@@ -204,7 +204,7 @@ export function getProfileState(store: WeatherStore): ProfileState {
 
 export async function proposeProfileChange(
   store: WeatherStore,
-  client: WeatherClient,
+  client: ProfilePlaceSource,
   rawInput: unknown,
   signal?: AbortSignal,
   scope?: ConfirmationScope,
@@ -236,7 +236,9 @@ export async function proposeProfileChange(
   }
 
   const current = store.getCurrentLocation();
-  if (current.place.qweatherLocationId === resolution.location.location.qweatherLocationId) {
+  const resolved = resolution.location.location;
+  if (current.place.placeKey === resolved.placeKey || (resolved.qweatherLocationId !== null
+      && current.place.qweatherLocationId === resolved.qweatherLocationId)) {
     return {
       ok: true,
       schemaVersion: 1,
@@ -572,7 +574,7 @@ function parseFrozenLocation(value: unknown): ProfileLocationRecord | undefined 
     || value.longitude > 180
     || !isSafeText(value.timezone, 100)
     || (value.precision !== "city" && value.precision !== "district" && value.precision !== "point")
-    || !isSafeText(value.qweatherLocationId, 96)
+    || !isNullableSafeText(value.qweatherLocationId, 96)
   ) return undefined;
   const localityName = value.localityName === undefined
     ? deriveLegacyLocalityName({
