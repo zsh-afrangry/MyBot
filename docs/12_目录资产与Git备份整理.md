@@ -82,7 +82,7 @@ node scripts/fusion/backup-retention.mjs --apply                                
 - 隔离恢复不证明真实模型、真实 QQ 登录或独立 DSH 能恢复。使用编码能力还需要 DSH 项目本身可用；恢复验证里 DSH 缺失时编码策略必须拒绝执行，其余策略用不执行的 `/usr/bin/false` 作可用性夹具检查。
 - 普通文件管理登记的下载/文档目录不在恢复范围，对这些文件的改动无法靠恢复点或 Git 撤销。范围见[文档28](28_本机编码工具委托与实验任务.md)。
 - 当前生产没有启用 N3。已有恢复点不含 N3 状态；启用前要制作并验证匹配的新恢复点。
-- 最新登记点 `2026-11-18-17-45-34-post-doc-cleanup` 对应源码 `debe707`，通过 26 项 Fusion 隔离恢复检查。保留预览选中该点和 R8（`9b98c9c`），R7 仍在，列为淘汰候选。实际名单运行 `backup-retention.mjs` 查询。
+- 最新登记点 `2026-11-18-17-45-34-post-doc-cleanup` 对应源码 `debe707`，通过 26 项 Fusion 隔离恢复检查。当前保留该点和 R8（`9b98c9c`）。保留名单以 `backup-retention.mjs` 的只读输出为准。
 - 旧时点（迁移前的 `kurumi-baselines`）已经删除，旧的忽略文件没有逐项证明被等价覆盖，无法补回。
 - 备份根下五份 `knowledgemap-*` 目录是 KnowledgeMap 的独立备份，不计入 Fusion 恢复点，也不被自动保留清理选中。SnowLuma 目录下的旧备份属于 DSH 历史资料，不由 Fusion 处理。
 - 清单里的符号链接以 `symlink:<链接目标>` 的 SHA256 记录，用 `restore-verify.mjs` 核验，普通 `sha256sum -c` 会跟随链接，不能代替。
