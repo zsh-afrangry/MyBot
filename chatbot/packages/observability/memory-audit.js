@@ -1,7 +1,7 @@
 // Memory operation telemetry only: actual host binding, revisions and IDs. Never
 // persist text, queries, evidence, arguments, source hashes or arbitrary errors.
 import fs from 'node:fs';import path from 'node:path';import {DatabaseSync} from 'node:sqlite';
-import {createTraceSink} from './index.js';
+import {createRuntimeTraceSink} from './index.js';
 function revision(cfg,ctx){
  const owner=cfg.channels?.['kurumi-qq']?.ownerId;
  if(ctx.agentId!=='main'||ctx.requesterSenderId!==owner||ctx.sessionKey!==`agent:main:kurumi-qq:direct:${owner}`)return;
@@ -23,9 +23,8 @@ export async function auditMemoryCall({api,ctx,callId,args,runId},execute){
  try{result=await execute();return result;}catch(e){error=e;throw e;}finally{
   try{
    if(api.registrationMode==='discovery'||api.registrationMode==='setup')throw Error('audit_not_registered');
-   const root=cfg.channels?.['kurumi-qq']?.stateDir;if(typeof root!=='string'||!path.isAbsolute(root))throw Error('audit_root_missing');
    const value=resultValue(result),ids=[...new Set([...(Array.isArray(value.ids)?value.ids:[]),...(Array.isArray(value.entries)?value.entries.map(r=>r.id):[])])].filter(id=>typeof id==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(id)).slice(0,64);
-   createTraceSink(path.join(root,'memory-events.jsonl'), {maxBytes:4*1024*1024}).emit({source:'kurumi-memory',kind:'memory.operation',
+   createRuntimeTraceSink('memory-events.jsonl', {stateRoot:api.runtime?.state?.resolveStateDir?.()}).emit({source:'kurumi-memory',kind:'memory.operation',
     correlation:{sessionKey:ctx.sessionKey,sessionId:ctx.sessionId,runId,toolCallId:callId},
     data:{action:['list','search','observe','upsert','delete'].includes(args?.action)?args.action:'unknown',revisionBefore:before,revisionAfter:revision(cfg,ctx),ids,count:ids.length,status:error?'rejected':'ok',...(error?{code:code(error)}:{}),durationMs:Date.now()-started}});
   }catch{/* Telemetry cannot change business results or replace the original error. */}

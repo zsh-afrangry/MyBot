@@ -1,3 +1,4 @@
+import {withHostControl} from '../access-control/host-config.mjs';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 // Authorized real OpenClaw + main-model acceptance. Mock translation worker and OneBot only.
 // Separate /tmp runtime; no real translation API request, QQ/mail delivery or production write.
@@ -59,7 +60,7 @@ cfg.channels['kurumi-qq']={...cfg.channels['kurumi-qq'],httpUrl:`http://127.0.0.
 if(renameOnly)cfg.channels['kurumi-qq'].accessControl.subjects.find(row=>row.qq===owner).permissions['papers.rename']=true;
 for(const dir of ['workspace','media','channel'])fs.mkdirSync(path.join(root,dir),{mode:0o700});
 for(const file of ['http-token','ws-token'])fs.writeFileSync(path.join(root,file),token,{mode:0o600});
-fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(cfg),{mode:0o600});
+fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(withHostControl(cfg,repo)),{mode:0o600});
 fs.copyFileSync(path.join(repo,'scripts/fusion/templates/AGENTS.md'),path.join(root,'workspace/AGENTS.md'));
 fs.copyFileSync(path.join(repo,'roles/小鲸鱼.md'),path.join(root,'workspace/SOUL.md'));
 const secrets=JSON.parse(fs.readFileSync(path.join(runtime,'runtime-env.json'))),fd=fs.openSync(path.join(root,'gateway.log'),'w',0o600);

@@ -69,7 +69,7 @@ test('follow de-duplicates overlap, observes new/corrected receipts and stops on
  assert.equal(reads,2);assert.equal(emitted.length,2);assert.equal(emitted[1].data.status,'sent');
 });
 test('memory auditing preserves result/error and logs no query, evidence, raw text or arbitrary error',async t=>{
- const f=setup(t),ctx={agentId:'main',requesterSenderId:peer,sessionKey:key,sessionId:'session-1',runId:'run-1'},api={config:f.cfg};
+ const f=setup(t),ctx={agentId:'main',requesterSenderId:peer,sessionKey:key,sessionId:'session-1',runId:'run-1'},api={config:f.cfg,runtime:{state:{resolveStateDir:()=>f.root}}};
  const result={content:[{type:'text',text:JSON.stringify({revision:5,ids:['aabbcc'],entries:[{id:'aabbcc',text:'PRIVATE RESULT'}]})}]};
  const returned=await auditMemoryCall({api,ctx,callId:'call-1',args:{action:'upsert',text:'PRIVATE INPUT',evidence:'PRIVATE'}},async()=>{
   const d=new DatabaseSync(f.memory);try{d.exec('UPDATE memory_state SET revision=5');}finally{d.close();}return result;

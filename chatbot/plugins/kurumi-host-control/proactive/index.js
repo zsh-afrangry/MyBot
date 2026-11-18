@@ -48,11 +48,11 @@ export function createProactiveComponent(dependencies={}) {
     let store,engine,lifecycle,scheduler,prepared,attempt,accepting=false,emitEvent=()=>{};
     const pending=new Set(),adapters=dependencies.adapters??createDomainAdapters({getConfig,ownerId,stateRoot});
     const currentSettings=()=>{
-      const value=validateSettings(getConfig().plugins.entries['kurumi-qq']?.config?.proactive);
+      const value=validateSettings(getConfig().plugins.entries['kurumi-host-control']?.config?.proactive);
       if(JSON.stringify(value)!==JSON.stringify(settings))throw error('wake_policy_changed');
       return value;
     };
-    const policyStamp=cfg=>digest(JSON.stringify({settings:cfg.plugins.entries['kurumi-qq']?.config?.proactive,access:accessPolicy(cfg),tools:cfg.agents.entries.main.tools}));
+    const policyStamp=cfg=>digest(JSON.stringify({settings:cfg.plugins.entries['kurumi-host-control']?.config?.proactive,access:accessPolicy(cfg),tools:cfg.agents.entries.main.tools}));
     const permittedTools=cfg=>{
       const tools=cfg.agents.entries.main.tools,allowed=new Set([...(tools?.allow??[]),...(tools?.alsoAllow??[])]);
       if(!allowed.has('kurumi_proactive')||tools?.deny?.includes('kurumi_proactive'))throw error('wake_tool_not_allowed');

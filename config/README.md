@@ -74,7 +74,7 @@
 
 `sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
 
-主人普通文件管理复用`plugins.entries.kurumi-qq.config.exec`：`writeBoundary.root`保留试点及运行临时目录，可选`additionalRoots`登记具体批准的资料目录。模型参数不能添加根，旧配置无此字段时保持单根；`sync-persona.mjs`从同一配置向主人AGENTS投影默认workdir及可写根，成员不接收这些目录。新增根须取得具体范围决定后再同步配置/人格并重启Fusion；普通文件与受管资料、覆盖/删除及实际执行边界见[文档28](../docs/28_本机编码工具委托与实验任务.md#主人原生exec)。
+主人普通文件管理复用`plugins.entries.kurumi-host-control.config.exec`：`writeBoundary.root`保留试点及运行临时目录，可选`additionalRoots`登记具体批准的资料目录。模型参数不能添加根，旧配置无此字段时保持单根；`sync-persona.mjs`从同一配置向主人AGENTS投影默认workdir及可写根，成员不接收这些目录。新增根须取得具体范围决定后再同步配置/人格并重启Fusion；普通文件与受管资料、覆盖/删除及实际执行边界见[文档28](../docs/28_本机编码工具委托与实验任务.md#主人原生exec)。
 
 ### 只读核对
 
@@ -120,7 +120,7 @@ node scripts/fusion/sync-persona.mjs --apply
 | 插件开关或参数 | 同上，`plugins.entries.<id>` | `sync-config.mjs --apply` |
 | E7本人只读查询 | `plugins.entries.kurumi-e7`、main的`e7_data`与身份表owner的`e7.read` | 首批6类、7个角色view；缓存24小时，公告/码30分钟，本地05:30串行刷新；差异审阅后同步并重启，验收见[文档27](../docs/27_E7数据插件设计.md) |
 | 编码委托单目录试点 | `kurumi-coding`插件allow/load/entry及main的`kurumi_code`；`kurumi-tasks.config.codeEnabled=false`关闭旧编码启动，模板改由专用工具路由；原生exec独立配置与授权 | 仅登记`dsh-pilot`；Linux Landlock限定普通文件写入试点目录，DSH profile/会话/临时文件留在该目录、既有凭据只读复用。主人已批准同步、重启Fusion和本人QQ测试；额外目录申请累计记录并拒绝，具体合入另行确认；结果采集与Python宿主检查见[文档28](../docs/28_本机编码工具委托与实验任务.md#执行结果与完成回传) |
-| 主人原生exec | main的`alsoAllow/deny/exec`、全局exec deny、`kurumi-qq.config.exec`及身份表owner的`host.exec` | 可信授权后固定gateway及操作者登记的普通文件写入根；现有试点加主人具体批准的下载/文档目录，不得仅设workdir。`sync-config --diff/--apply`、同步主人模板、重启Fusion，规则及限制见[文档28](../docs/28_本机编码工具委托与实验任务.md#主人原生exec) |
+| 主人原生exec | main的`alsoAllow/deny/exec`、全局exec deny、`kurumi-host-control.config.exec`及身份表owner的`host.exec` | 可信授权后固定gateway及操作者登记的普通文件写入根；现有试点加主人具体批准的下载/文档目录，不得仅设workdir。`sync-config --diff/--apply`、同步主人模板、重启Fusion，规则及限制见[文档28](../docs/28_本机编码工具委托与实验任务.md#主人原生exec) |
 | 发送限额 / 分段 / 默认引用 | 同上，`channels.kurumi-qq`；replyToMode=off保留SDK显式引用，普通消息不自动引用 | `sync-config.mjs --apply`；策略见文档9，重启Fusion |
 | 搜索 provider | 同上，`tools.web` | `sync-config.mjs --apply` |
 | 轮换 API Key | **只改** `.openclaw-fusion/runtime-env.json` | 重启服务 |
@@ -201,9 +201,11 @@ node scripts/fusion/health.mjs                # 服务、QQ、频道、数据库
 
 文档29阶段1–3源码与独立验收已具备，生产继续P2。`records-sqlite`须先停写、预览/备份并显式迁移，不能热切换或静默回退。`system.enabled/records/raw/l0`缺省关闭；原文工具另需`memory.raw.read`和main白名单具体同意。N3可信用途凭据已有独立实现，但不授权N2整理；`system.organizer`继续只能false，不注册后台整理工具。操作、回退及证据见[文档29](../docs/29_记忆系统.md)。
 
+QQ 与 `kurumi-host-control` 作为一组随受管配置同步。宿主控制服务缺失时 QQ 工具关口拒绝调用，健康检查通过 `kurumi-host-control.status` 核对就绪。
+
 ### N3自主行动的可选配置（生产未启用）
 
-N3由现有QQ插件中的`proactive/`组件装配，不新增插件/进程。禁用示例见`config/proactive.example.json`，配置位置为`plugins.entries.kurumi-qq.config.proactive`。`runtime.config.json`当前没有该键、main没有`kurumi_proactive`、身份未授予四项proactive权限；生产仍未创建N3库/定时器。原生`heartbeat.every=0m`、Code Mode、main禁用项及既有Cron保持。
+N3由`kurumi-host-control`内的`proactive/`组件装配。禁用示例见`config/proactive.example.json`，配置位置为`plugins.entries.kurumi-host-control.config.proactive`。`runtime.config.json`当前没有该键、main没有`kurumi_proactive`、身份未授予四项proactive权限；生产仍未创建N3库/定时器。原生`heartbeat.every=0m`、Code Mode、main禁用项及既有Cron保持。
 
 启用候选须一起审阅：intervalMs/timeoutMs、night明确时段/时区/真实主人活动新鲜度、reads四类只读用途、publicSearch及notifyEnabled；仅主人显式`proactive.use/notify/read/manage`和main新增窄工具`kurumi_proactive`，不解禁read/write/exec/message等原生能力。参数修改使活跃凭据失效，重新装配后生效；暂停跨重启保留。示例的30分钟/60秒、23–08点/15分钟是待审核参数，不是已批准生产取值。具体功能/权限契约见文档25/24。
 

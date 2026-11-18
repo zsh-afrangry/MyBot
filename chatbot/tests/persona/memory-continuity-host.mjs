@@ -1,6 +1,7 @@
 // Document 25 P2: real isolated OpenClaw + real kurumi-memory continuity plugin.
 // Default deterministic local model; --live uses the configured official DeepSeek with bounded requests.
 // Simulated OneBot, synthetic data and temporary state only; no production writes, real QQ/mail or production restart.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -247,7 +248,7 @@ fs.mkdirSync(path.join(root, 'channel'), {recursive: true, mode: 0o700}); fs.mkd
 for (const [file, content] of personaFiles(fixtureRepo, root).files) applyPersonaFile(file, content);
 initializeContinuity(workspace, emptyState(OWNER)); replaceNotice(workspace);
 if(v3){const backupRoot=path.join(root,'migration');fs.mkdirSync(backupRoot,{mode:0o700});const options={workspace,ownerId:OWNER,backupRoot};const preview=migrateMemoryV3(options);migrateMemoryV3({...options,apply:true,expectedStateHash:preview.stateHash});}
-fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(compiled), {mode: 0o600});
+fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(withHostControl(compiled,repo)), {mode: 0o600});
 
 const gatewayLog = path.join(root, 'gateway.log'), fd = fs.openSync(gatewayLog, 'w', 0o600);
 let child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(gatewayPort), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {

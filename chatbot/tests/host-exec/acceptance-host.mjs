@@ -1,5 +1,6 @@
 // Real isolated OpenClaw native exec, local deterministic model and synthetic OneBot.
 // Creates only disposable fixtures and the explicit new --out file; no production/QQ/provider/DSH I/O.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -106,7 +107,7 @@ for (const row of policy.subjects) {
   fs.writeFileSync(path.join(directory,'AGENTS.md'), row.role==='owner' ? '# Synthetic exec fixture\n' : '# kurumi-isolated-member-v1\n');
 }
 fs.writeFileSync(path.join(root,'channel-token'),token,{mode:0o600});
-fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(config),{mode:0o600});
+fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(withHostControl(config,repo)),{mode:0o600});
 const fd = fs.openSync(path.join(root,'gateway.log'),'w',0o600);
 const child = spawn(process.execPath,[path.join(repo,'node_modules/openclaw/openclaw.mjs'),'gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{
   cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:process.env.HOME,LANG:'C.UTF-8',OPENCLAW_EXEC_SHELL_SNAPSHOT:'0',

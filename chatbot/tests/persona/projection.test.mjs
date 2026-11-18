@@ -145,7 +145,7 @@ test('Owner USER points facts to continuity memory, not the MEMORY.md notice', t
 test('Owner file scope follows managed config without entering member prompts', t => {
   const f = fixture(t), file = path.join(f.repo, 'config/runtime.config.json');
   const cfg = JSON.parse(fs.readFileSync(file, 'utf8'));
-  const exec = cfg.plugins.entries['kurumi-qq'].config.exec;
+  const exec = cfg.plugins.entries['kurumi-host-control'].config.exec;
   const extra = ['/tmp/OWNER_DOWNLOAD_SCOPE/中文 空格', '/tmp/OWNER_DOC_SCOPE/引号"和$&'];
   exec.writeBoundary.additionalRoots = extra; exec.workdir = extra[0];
   fs.writeFileSync(file, JSON.stringify(cfg));
@@ -171,7 +171,7 @@ test('Missing scope marker and malformed scope fail before persona files are wri
   fs.writeFileSync(file, original);
   const configFile = path.join(f.repo, 'config/runtime.config.json');
   const cfg = JSON.parse(fs.readFileSync(configFile, 'utf8'));
-  cfg.plugins.entries['kurumi-qq'].config.exec.writeBoundary.additionalRoots = '/tmp/NOT_AN_ARRAY';
+  cfg.plugins.entries['kurumi-host-control'].config.exec.writeBoundary.additionalRoots = '/tmp/NOT_AN_ARRAY';
   fs.writeFileSync(configFile, JSON.stringify(cfg));
   assert.throws(() => personaFiles(f.repo, f.state), /invalid_persona_exec_scope/u);
   assert(!fs.existsSync(f.state));

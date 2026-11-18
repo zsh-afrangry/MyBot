@@ -1,6 +1,7 @@
 // docs/22: real isolated OpenClaw + configured chat model, synthetic attachment I/O and translator.
 // Requires an explicit new --out file.
 // No production writes, translation API calls, QQ/mail delivery, or production testIngress change.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -95,7 +96,7 @@ cfg.channels['kurumi-qq'] = {...cfg.channels['kurumi-qq'], httpUrl: `http://127.
   httpTokenFile: path.join(root, 'token'), wsTokenFile: path.join(root, 'token'), stateDir: path.join(root, 'channel'), mediaRoot: path.join(root, 'media'), testIngress: false};
 for (const dir of ['channel', 'media']) fs.mkdirSync(path.join(root, dir));
 fs.writeFileSync(path.join(root, 'token'), token, {mode: 0o600});
-fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(cfg), {mode: 0o600});
+fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(withHostControl(cfg,repo)), {mode: 0o600});
 const secrets = JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
 const fd = fs.openSync(path.join(root, 'gateway.log'), 'w', 0o600);
 const child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'],

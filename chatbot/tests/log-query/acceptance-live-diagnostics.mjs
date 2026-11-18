@@ -2,6 +2,7 @@
 // Read-only production history, synthetic OneBot input and loopback replies; no QQ network,
 // production writes, business execution or production service restart. Temporary state is removed.
 // Only technical metadata is written to the new --out receipt; never persist private answers there.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import http from 'node:http';import net from 'node:net';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes,createHash} from 'node:crypto';import {fileURLToPath} from 'node:url';
 import {DatabaseSync} from 'node:sqlite';import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';
@@ -114,7 +115,7 @@ try{
   channels:{'kurumi-qq':{enabled:true,httpUrl:url,wsUrl:url.replace('http:','ws:')+'/events',httpTokenFile:root+'/http-token',wsTokenFile:root+'/ws-token',stateDir:root+'/channel',mediaRoot:root+'/media',testIngress:false,naturalSegments:false,dailySendLimit:20}},
   session:{dmScope:'per-channel-peer'},cron:{enabled:false},tools:{toolSearch:false,codeMode:false,web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:root+'/runtime.log'}};
  cfg=compileAccessConfig(cfg,{version:1,revision:1,subjects:[{qq:owner,kind:'user',role:'owner',enabled:true,permissions:{'chat.use':true,'qq.reply':true,'logs.read':true},mailRecipients:[]}]});
- for(const name of ['http-token','ws-token'])fs.writeFileSync(path.join(root,name),token,{mode:0o600});fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(cfg),{mode:0o600});
+ for(const name of ['http-token','ws-token'])fs.writeFileSync(path.join(root,name),token,{mode:0o600});fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(withHostControl(cfg,repo)),{mode:0o600});
  const fd=fs.openSync(root+'/gateway.log','w',0o600);child=spawn(process.execPath,[repo+'/node_modules/openclaw/openclaw.mjs','gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:root,LANG:'C.UTF-8',OPENCLAW_STATE_DIR:root,OPENCLAW_CONFIG_PATH:root+'/openclaw.json',OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_AGENT_DIR:root+'/agents/main/agent'}});fs.closeSync(fd);
  const call=(method,params={},timeout=10000)=>callGatewayFromCli(method,{url:'ws://127.0.0.1:'+port,token,timeout:String(timeout),json:true},params);
  let ready=false;for(let i=0;i<100;i++){try{await call('health',{},1000);if(socket?.readyState===1){ready=true;break;}}catch{}if(child.exitCode!==null)throw Error('gateway_exited');await delay(250);}assert(ready,'gateway_not_ready');

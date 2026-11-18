@@ -1,7 +1,6 @@
 // OpenClaw composition only. Query implementation and lifecycle: docs/27.
 import fs from 'node:fs';
-import path from 'node:path';
-import {createTraceSink} from '../../packages/observability/index.js';
+import {createRuntimeTraceSink} from '../../packages/observability/index.js';
 import {createToolTrace} from '../../packages/observability/tool-trace.js';
 import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
 import {wrapExternalContent} from 'openclaw/plugin-sdk/security-runtime';
@@ -56,8 +55,8 @@ const MESSAGES = {
 export function createE7Plugin({serviceFactory = (config,dependencies) => new E7Service(config,dependencies)} = {}) {
   const plugin = {id: 'kurumi-e7', name: 'E7 public wiki data', register(api) {
     const telemetry=createToolTrace(['e7_data']);telemetry.attach(api);
-    const traceRoot=api.config.channels?.['kurumi-qq']?.stateDir;
-    const emit=(api.registrationMode==='full'||api.registrationMode===undefined)&&typeof traceRoot==='string'&&path.isAbsolute(traceRoot)?createTraceSink(path.join(traceRoot,'e7-events.jsonl'), {maxBytes:4*1024*1024}).emit:()=>{};
+    const emit=(api.registrationMode==='full'||api.registrationMode===undefined)
+      ? createRuntimeTraceSink('e7-events.jsonl',{stateRoot:api.runtime?.state?.resolveStateDir?.()}).emit : ()=>{};
     const service = serviceFactory(api.pluginConfig,{observe:event=>emit({source:'e7',...event})});
     api.registerService({id: 'kurumi-e7-refresh', start: () => service.start(), stop: () => service.stop()});
     api.registerTool({contextVersion: 2, create: ctx => ({...E7_TOOL, async execute(callId, args = {}, signal) {

@@ -60,21 +60,23 @@ test('Fusion recovery owns its execution fence without remapping the independent
  const owned=remap({launcher:'/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'},'/tmp/r/runtime','/tmp/r/repo',{execFenceRoot:'/tmp/r/runtime/tools/fence'});
  assert.equal(owned.launcher,'/tmp/r/runtime/tools/fence/bin/landlock-run');
 });
-test('recovery copy revokes external ordinary-file roots and cwd while preserving coding and owner identity',()=>{
- const cfg={plugins:{entries:{'kurumi-qq':{config:{exec:{writeBoundary:{root:'/tmp/r/pilot',additionalRoots:['/home/afrangry/下载','/home/afrangry/文档']},workdir:'/home/afrangry/文档',timeoutSeconds:60}}},'kurumi-coding':{config:{writeBoundary:{root:'/tmp/r/pilot'}}}}},channels:{'kurumi-qq':{ownerId:'fixture'}}};
- const coding=structuredClone(cfg.plugins.entries['kurumi-coding']),channel=structuredClone(cfg.channels);
- disableOwnerFileRecovery(cfg);assert.equal(cfg.plugins.entries['kurumi-qq'].config.exec.workdir,'/tmp/r/pilot/source');
- assert.equal(cfg.plugins.entries['kurumi-qq'].config.exec.writeBoundary.additionalRoots,undefined);
- assert.deepEqual(cfg.plugins.entries['kurumi-coding'],coding);assert.deepEqual(cfg.channels,channel);
- const legacy=structuredClone(cfg);disableOwnerFileRecovery(cfg);assert.deepEqual(cfg,legacy);
-});
+for(const id of ['kurumi-qq','kurumi-host-control']){
+ test(`recovery revokes external ordinary-file roots and cwd for ${id}`,()=>{
+  const cfg={plugins:{entries:{[id]:{config:{exec:{writeBoundary:{root:'/tmp/r/pilot',additionalRoots:['/home/afrangry/下载','/home/afrangry/文档']},workdir:'/home/afrangry/文档',timeoutSeconds:60}}},'kurumi-coding':{config:{writeBoundary:{root:'/tmp/r/pilot'}}}}},channels:{'kurumi-qq':{ownerId:'fixture'}}};
+  const coding=structuredClone(cfg.plugins.entries['kurumi-coding']),channel=structuredClone(cfg.channels);
+  disableOwnerFileRecovery(cfg);assert.equal(cfg.plugins.entries[id].config.exec.workdir,'/tmp/r/pilot/source');
+  assert.equal(cfg.plugins.entries[id].config.exec.writeBoundary.additionalRoots,undefined);
+  assert.deepEqual(cfg.plugins.entries['kurumi-coding'],coding);assert.deepEqual(cfg.channels,channel);
+  const legacy=structuredClone(cfg);disableOwnerFileRecovery(cfg);assert.deepEqual(cfg,legacy);
+ });
 
-test('recovery explicitly disables autonomous opportunities while preserving copied ledgers and unrelated settings',()=>{
- const original={plugins:{entries:{'kurumi-qq':{config:{proactive:{enabled:true,notifyEnabled:true,intervalMs:1800000},exec:{workdir:'/fixture'}}}}}};
- const copy=structuredClone(original);disableProactiveRecovery(copy);
- assert.equal(copy.plugins.entries['kurumi-qq'].config.proactive.enabled,false);
- assert.equal(original.plugins.entries['kurumi-qq'].config.proactive.enabled,true);
- assert.equal(copy.plugins.entries['kurumi-qq'].config.proactive.notifyEnabled,true);
- assert.deepEqual(copy.plugins.entries['kurumi-qq'].config.exec,original.plugins.entries['kurumi-qq'].config.exec);
- const legacy={plugins:{entries:{}}};disableProactiveRecovery(legacy);assert.deepEqual(legacy,{plugins:{entries:{}}});
-});
+ test(`recovery disables autonomous opportunities for ${id}`,()=>{
+  const original={plugins:{entries:{[id]:{config:{proactive:{enabled:true,notifyEnabled:true,intervalMs:1800000},exec:{workdir:'/fixture'}}}}}};
+  const copy=structuredClone(original);disableProactiveRecovery(copy);
+  assert.equal(copy.plugins.entries[id].config.proactive.enabled,false);
+  assert.equal(original.plugins.entries[id].config.proactive.enabled,true);
+  assert.equal(copy.plugins.entries[id].config.proactive.notifyEnabled,true);
+  assert.deepEqual(copy.plugins.entries[id].config.exec,original.plugins.entries[id].config.exec);
+  const legacy={plugins:{entries:{}}};disableProactiveRecovery(legacy);assert.deepEqual(legacy,{plugins:{entries:{}}});
+ });
+}

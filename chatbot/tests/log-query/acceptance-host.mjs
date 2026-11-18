@@ -1,6 +1,7 @@
 // Real isolated Gateway: captured plugin, QQ mandatory policy, deterministic local
 // model, actual tool/CLI execution and loopback replies. No real model/API/QQ or production writes.
 // Writes only temporary state/processes and the explicitly supplied new --out evidence file.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import http from 'node:http';import net from 'node:net';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes,createHash} from 'node:crypto';import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
@@ -97,7 +98,7 @@ async function run(enabled){
   cfg.plugins.allow.push('kurumi-qq');cfg.plugins.load.paths.push(repo+'/chatbot/plugins/kurumi-qq');cfg.plugins.entries['kurumi-qq']={enabled:true};
   cfg=compileAccessConfig(cfg,{version:1,revision:1,subjects:[{qq:owner,kind:'user',role:'owner',enabled:true,permissions:{'chat.use':true,'qq.reply':true,'logs.read':true},mailRecipients:[]}]});
  }
- fs.writeFileSync(state+'/openclaw.json',JSON.stringify(cfg),{mode:0o600});const fd=fs.openSync(directory+'/gateway.log','w',0o600);
+ fs.writeFileSync(state+'/openclaw.json',JSON.stringify(withHostControl(cfg,repo)),{mode:0o600});const fd=fs.openSync(directory+'/gateway.log','w',0o600);
  child=spawn(process.execPath,[repo+'/node_modules/openclaw/openclaw.mjs','gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:state,LANG:'C.UTF-8',OPENCLAW_STATE_DIR:state,OPENCLAW_CONFIG_PATH:state+'/openclaw.json',OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_AGENT_DIR:state+'/agents/main/agent'}});fs.closeSync(fd);
  const call=(method,params={},timeout=10000)=>callGatewayFromCli(method,{url:'ws://127.0.0.1:'+port,token,timeout:String(timeout),json:true},params);
  try{

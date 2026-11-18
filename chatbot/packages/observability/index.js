@@ -86,6 +86,13 @@ export function createTraceSink(file, {mkdir = fs.mkdirSync, append = fs.appendF
   };
 }
 
+// Keep the established diagnostic files under the runtime root, independent of channel config.
+export function createRuntimeTraceSink(name, {stateRoot = process.env.OPENCLAW_STATE_DIR, ...options} = {}) {
+  if (typeof name !== 'string' || !/^[a-z][a-z0-9-]*\.jsonl$/.test(name)) throw Error('Invalid runtime trace name');
+  if (!path.isAbsolute(stateRoot ?? '')) return {emit() {}};
+  return createTraceSink(path.join(stateRoot, 'channel', name), options);
+}
+
 export function summarizeText(value, limit = 320) {
   const text = redactText(String(value ?? '')).replace(/\s+/gu, ' ').trim();
   return text.length <= limit ? text : `${text.slice(0, Math.max(0, limit - 1))}…`;

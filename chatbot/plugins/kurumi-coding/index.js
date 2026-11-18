@@ -1,8 +1,7 @@
 // Composition entry: the domain service knows neither OpenClaw hooks nor the QQ implementation.
-import path from 'node:path';
 import {createRuntimeConfigReader} from 'openclaw/plugin-sdk/runtime-config-snapshot';
 import {registerConfirmationBackend} from '@kurumi/confirmation-core';
-import {createTraceSink} from '../../packages/observability/index.js';
+import {createRuntimeTraceSink} from '../../packages/observability/index.js';
 import {createToolTrace} from '../../packages/observability/tool-trace.js';
 import {createAssistantComposer} from '../../packages/response-core/index.js';
 import {createQqDelivery} from '../../packages/qq-delivery/index.js';
@@ -17,7 +16,7 @@ export function createCodingPlugin(dependencies = {}) {
     const currentConfig = createRuntimeConfigReader(api.config);
     const trace = createToolTrace(['kurumi_code']); trace.attach(api);
     const delivery = dependencies.delivery ?? createQqDelivery(currentConfig);
-    const events = dependencies.trace ?? (full ? createTraceSink(path.join(api.config.channels?.['kurumi-qq']?.stateDir ?? api.pluginConfig.root, 'trace-events.jsonl')).emit : () => {});
+    const events = dependencies.trace ?? (full ? createRuntimeTraceSink('trace-events.jsonl', {stateRoot: api.runtime?.state?.resolveStateDir?.()}).emit : () => {});
     const compose = createAssistantComposer({runtime:api.runtime,config:currentConfig});
     const composeNotice = dependencies.composeNotice ?? (async (facts,request) => (await compose({facts,request,sourceTool:'kurumi_code',required:[facts.taskId],
       check:()=>{authorizeRequester(currentConfig(),request,'tasks.read');authorizeRequester(currentConfig(),request,'qq.reply');},

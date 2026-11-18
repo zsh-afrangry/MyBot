@@ -1,6 +1,7 @@
 // Real isolated Gateway, typed hooks, deferred tools, SQLite and loopback OneBot.
 // Default cognition is deterministic. Explicit --model uses the configured official model; still no real QQ/SMTP or production writes.
 // Requires a new absolute --out evidence file; failed fixtures stay in /tmp for diagnosis.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -91,7 +92,7 @@ const cfg=compileAccessConfig({
  plugins:{allow:ids,load:{paths:ids.map(id=>path.join(repo,'chatbot/plugins',id))},entries:Object.fromEntries(ids.map(id=>[id,{enabled:true,...(id==='personal-confirmation'?{hooks:{allowConversationAccess:true}}:{}),...(id==='personal-reminders'?{config:{reminderBackend:'native-service',reminderRunnerRoot:path.join(repo,'chatbot/plugins/personal-reminders')}}:{})}])),slots:{memory:'none'}},
  session:{dmScope:'per-channel-peer'},cron:{enabled:false},logging:{file:path.join(root,'runtime.log')},tools:{...(realModel?{codeMode:false}:{}),deny:['exec','process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},
 },ownerPolicy(owner));
-fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(cfg),{mode:0o600});
+fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(withHostControl(cfg,repo)),{mode:0o600});
 const fd=fs.openSync(path.join(root,'gateway.log'),'w',0o600);
 child=spawn(process.execPath,[path.join(repo,'node_modules/openclaw/openclaw.mjs'),'gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:process.env.HOME,LANG:'C.UTF-8',OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_STATE_DIR:root,OPENCLAW_CONFIG_PATH:path.join(root,'openclaw.json'),OPENCLAW_AGENT_DIR:path.join(root,'agents/main/agent')}});fs.closeSync(fd);
 const call=(method,params={},timeout=60000)=>callGatewayFromCli(method,{url:`ws://127.0.0.1:${port}`,token,timeout:String(timeout),json:true},params);

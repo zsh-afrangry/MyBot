@@ -11,12 +11,16 @@ if(r.gateway){
  try{const status=await rpc('channels.status',{probe:true},10000);r.channel=status.channelAccounts?.['kurumi-qq']?.map(x=>({running:x.running,connected:x.connected}));if(!r.channel?.some(x=>x.running&&x.connected))issue('QQ channel is disconnected');}catch{issue('QQ channel probe failed');}
  try{const result=await rpc('cron.list',{includeDisabled:true,limit:100},10000);r.cron={total:result.total??result.jobs.length,hasMore:result.hasMore??false,jobs:result.jobs.map(j=>({id:j.id,enabled:j.enabled,lastStatus:j.state?.lastStatus??null,lastDeliveryStatus:j.state?.lastDeliveryStatus??null,nextRunAtMs:j.state?.nextRunAtMs??null}))};}catch{issue('Cron state is unavailable');}
  if(!r.testIngress){try{await rpc('kurumi-qq.testInbound',{},3000);issue('Acceptance RPC remains available');}catch(e){r.testMethodDisabled=/unknown method|not found/i.test(e.message);if(!r.testMethodDisabled)issue('Acceptance RPC removal not verified');}}
+ if(cfg.plugins?.entries?.['kurumi-host-control']?.enabled===true){
+  try{r.hostControl=(await rpc('kurumi-host-control.status',{},3000)).ready===true;}catch{r.hostControl=false;}
+  if(!r.hostControl)issue('Host tool authorization is unavailable');
+ }
 }
 for(const [name,file] of [['channel','channel/channel.sqlite'],['weather','state/personal-weather/weather.sqlite'],['reminders','state/personal-reminders/reminders.sqlite'],...(cfg.plugins?.entries?.['personal-reminder-list']?.enabled?[['reminderList','state/personal-reminder-list/list.sqlite']]:[])]){
  try{const db=new DatabaseSync(state+'/'+file,{readOnly:true});try{const check=db.prepare('PRAGMA quick_check').get();r[name+'Database']=Object.values(check)[0];if(r[name+'Database']!=='ok')issue(name+' database integrity error');if(name==='channel'){r.outbound=db.prepare('SELECT status,COUNT(*) count FROM outbound GROUP BY status').all();r.recentAttempts=db.prepare('SELECT COUNT(*) n FROM outbound WHERE at>=?').get(Date.now()-86400000).n;r.dailyLimit=cfg.channels['kurumi-qq'].dailySendLimit??120;if(r.recentAttempts>=r.dailyLimit)issue('QQ daily send quota exhausted');r.recentFailedInbound=db.prepare("SELECT COUNT(*) n FROM inbound WHERE status='failed' AND at>=?").get(Date.now()-86400000).n;}}finally{db.close();}}catch{issue(name+' database could not be checked');}
 }
 const sharedList=cfg.plugins?.entries?.['personal-reminder-list']?.config;
-if(cfg.plugins?.entries?.['kurumi-qq']?.config?.proactive?.enabled){
+if((cfg.plugins?.entries?.['kurumi-host-control']??cfg.plugins?.entries?.['kurumi-qq'])?.config?.proactive?.enabled){
  try{
   r.proactive=await rpc('kurumi-proactive.status',{},5000);
   if(!r.proactive.control||!r.proactive.scheduler?.started)issue('Proactive service is unavailable');

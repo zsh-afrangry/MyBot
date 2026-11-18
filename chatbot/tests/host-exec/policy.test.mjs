@@ -8,6 +8,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {confineOwnerExec} from '../../packages/host-exec/index.js';
 import qq from '../../plugins/kurumi-qq/index.js';
+import hostControl from '../../plugins/kurumi-host-control/index.js';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {toolPermission} from '../../packages/access-control/index.js';
 import {withAccess, memberRow, context, OWNER} from '../access-control/fixtures.mjs';
@@ -88,14 +89,21 @@ test('runtime directory setup cannot create outside files through a replaced sta
   assert(confineOwnerExec({command:'true'},f.config).block);
   assert.deepEqual(fs.readdirSync(outside),[]);
 });
-test('trusted QQ policy checks owner permission before exec, rejects member/forged/Cron/background callers, and audits no payload', t => {
-  const f = fixture(t), cfg = withAccess({channels:{'kurumi-qq':{stateDir:path.join(f.root,'channel')}}});
-  cfg.channels['kurumi-qq'].accessControl.subjects.push(memberRow()); let policy;
-  qq.register({config:cfg, pluginConfig:{exec:f.config}, registerChannel(){}, registerTool(){}, registerTrustedToolPolicy(p){policy=p;}});
+test('QQ tool boundary requires a live host control, enforces owner permissions and audits without command payload', t => {
+  const f = fixture(t), cfg = withAccess({channels:{'kurumi-qq':{stateDir:path.join(f.root,'onebot')}}});
+  cfg.channels['kurumi-qq'].accessControl.subjects.push(memberRow()); let policy, service;
+  qq.register({config:cfg, registerChannel(){}, registerTool(){}, registerTrustedToolPolicy(p){policy=p;}});
+  hostControl.register({config:cfg, pluginConfig:{exec:f.config}, runtime:{state:{resolveStateDir:()=>f.root}},
+    registerService(value){service=value;}, registerGatewayMethod(){}});
   const [owner,member] = cfg.channels['kurumi-qq'].accessControl.subjects;
   const ctx = row => {const c = context(row); return {agentId:c.agentId,sessionKey:c.sessionKey,runId:'fixture-run',toolCallId:'fixture-call',requester:{channel:c.messageChannel,accountId:'default',senderId:c.requesterSenderId,senderIsOwner:c.senderIsOwner}};};
   const event = {toolName:'exec',params:{command:'printf PRIVATE_COMMAND_SENTINEL',title:'PRIVATE_TITLE_SENTINEL'}};
+  assert.equal(policy.evaluate(event,ctx(owner)).blockReason,'host_control_unavailable');
+  service.start();t.after(()=>service.stop());
   assert.equal(toolPermission('exec'), 'host.exec'); assert(policy.evaluate(event,ctx(owner)).params);
+  let otherPolicy;
+  qq.register({config:structuredClone(cfg), registerChannel(){}, registerTool(){}, registerTrustedToolPolicy(p){otherPolicy=p;}});
+  assert.equal(otherPolicy.evaluate(event,ctx(owner)).blockReason,'host_control_unavailable');
   for (const c of [ctx(member), {...ctx(member),requester:ctx(owner).requester}, {...ctx(owner),requester:undefined},
     {...ctx(owner),sessionKey:'agent:main:cron:12345678-1234-1234-1234-123456789abc'},
     {agentId:'researcher',sessionKey:'agent:researcher:kurumi-task-'+'a'.repeat(24)}]) assert(policy.evaluate(event,c).block);
@@ -103,6 +111,9 @@ test('trusted QQ policy checks owner permission before exec, rejects member/forg
   const audit = fs.readFileSync(path.join(f.root,'channel/access-events.jsonl'),'utf8');
   assert(!audit.includes('PRIVATE_COMMAND_SENTINEL')); assert(!audit.includes('PRIVATE_TITLE_SENTINEL')); assert(audit.includes('host.exec')); assert(audit.includes('writeRoot'));
   assert(audit.includes('"decision":"allow"')); assert(audit.includes('"decision":"deny"'));
+  assert(!fs.existsSync(cfg.channels['kurumi-qq'].stateDir));
+  service.stop();
+  assert.equal(policy.evaluate(event,ctx(owner)).blockReason,'host_control_unavailable');
 });
 test('source enables only owner native exec; member agents, background agents and all process tools remain restricted', () => {
   const root = fileURLToPath(new URL('../../../',import.meta.url));
@@ -116,7 +127,7 @@ test('source enables only owner native exec; member agents, background agents an
   assert.equal(access.subjects.find(row=>row.permissions['host.exec']===true).role,'owner');
   for (const [id,agent] of Object.entries(config.agents.entries)) if (id!=='main') assert(agent.tools.deny?.includes('exec')||!agent.tools.allow?.includes('exec'),id);
   assert.equal(config.channels['kurumi-qq'].testIngress,false);
-  assert.equal(config.plugins.entries['kurumi-qq'].config.exec.writeBoundary.root,config.plugins.entries['kurumi-coding'].config.writeBoundary.root);
+  assert.equal(config.plugins.entries['kurumi-host-control'].config.exec.writeBoundary.root,config.plugins.entries['kurumi-coding'].config.writeBoundary.root);
 });
 
 test('ordinary files use registered directories without Git: read/edit/copy/move/suffix/delete and Chinese names across roots', t => {

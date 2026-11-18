@@ -1,3 +1,4 @@
+import {withHostControl} from '../access-control/host-config.mjs';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「如何验证」。
@@ -64,7 +65,7 @@ cfg.channels['kurumi-qq'] = {...cfg.channels['kurumi-qq'], httpUrl: `http://127.
 cfg.logging.file = join(root, 'runtime.log');
 for (const dir of ['workspace', 'channel', 'media']) fs.mkdirSync(join(root, dir), {mode: 0o700});
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(join(root, file), token, {mode: 0o600});
-fs.writeFileSync(join(root, 'openclaw.json'), JSON.stringify(cfg), {mode: 0o600});
+fs.writeFileSync(join(root, 'openclaw.json'), JSON.stringify(withHostControl(cfg,repo)), {mode: 0o600});
 fs.copyFileSync(join(repo, 'scripts/fusion/templates/AGENTS.md'), join(root, 'workspace/AGENTS.md'));
 fs.copyFileSync(join(repo, 'roles/小鲸鱼.md'), join(root, 'workspace/SOUL.md'));
 fs.writeFileSync(join(root, 'workspace/IDENTITY.md'), '# Identity\n小鲸鱼\n');

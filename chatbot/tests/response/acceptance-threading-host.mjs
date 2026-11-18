@@ -1,5 +1,6 @@
 // docs/9: real isolated OpenClaw reply-mode/tag processing and local OneBot receipts.
 // Deterministic local model, synthetic messages. No QQ network, provider or production writes.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import http from 'node:http';import net from 'node:net';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes} from 'node:crypto';import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
@@ -28,7 +29,7 @@ const cfg=compileAccessConfig({gateway:{mode:'local',port,bind:'loopback',auth:{
  channels:{'kurumi-qq':{enabled:true,replyToMode:'off',httpUrl:'http://127.0.0.1:'+onebot.address().port,wsUrl:'ws://127.0.0.1:'+onebot.address().port,httpTokenFile:root+'/http-token',wsTokenFile:root+'/ws-token',stateDir:root+'/channel',mediaRoot:root+'/media',testIngress:true,dailySendLimit:50,chunkLimit:100,naturalSegments:false,segmentDelayMs:0}},
  plugins:{allow:['kurumi-qq'],load:{paths:[repo+'/chatbot/plugins/kurumi-qq']},entries:{'kurumi-qq':{enabled:true}},slots:{memory:'none'}},
  session:{dmScope:'per-channel-peer'},cron:{enabled:false},tools:{codeMode:false,web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:root+'/runtime.log'}},ownerPolicy(owner));
-fs.writeFileSync(root+'/openclaw.json',JSON.stringify(cfg),{mode:0o600});const fd=fs.openSync(root+'/gateway.log','w',0o600);
+fs.writeFileSync(root+'/openclaw.json',JSON.stringify(withHostControl(cfg,repo)),{mode:0o600});const fd=fs.openSync(root+'/gateway.log','w',0o600);
 const child=spawn(process.execPath,[repo+'/node_modules/openclaw/openclaw.mjs','gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:root,LANG:'C.UTF-8',OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_STATE_DIR:root,OPENCLAW_CONFIG_PATH:root+'/openclaw.json',OPENCLAW_AGENT_DIR:root+'/agents/main/agent'}});fs.closeSync(fd);
 const call=(method,params={},timeout=50000)=>callGatewayFromCli(method,{url:'ws://127.0.0.1:'+port,token,timeout:String(timeout),json:true},params);
 let sequence=200;const inbound=(patch={})=>({post_type:'message',message_type:'private',self_id:Number(bot),user_id:Number(owner),message_id:++sequence,time:Math.floor(Date.now()/1000),message:[{type:'text',data:{text:'合成引用策略测试'}}],...patch});

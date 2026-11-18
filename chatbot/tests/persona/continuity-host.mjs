@@ -2,6 +2,7 @@
 // Hook observations are synthetic metadata only; memory activation is not part of this probe.
 // Local deterministic model only; the optional --live flag is rejected before any I/O.
 // Temporary state and synthetic conversations only; no real QQ/mail, production writes or service restart.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -140,7 +141,7 @@ let cfg = {
 };
 cfg = compileAccessConfig(cfg, fake);
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(root, file), token, {mode: 0o600});
-fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(cfg), {mode: 0o600});
+fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(withHostControl(cfg,repo)), {mode: 0o600});
 function startGateway() {
   const fd = fs.openSync(path.join(root, 'gateway.log'), 'a', 0o600);
   child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {

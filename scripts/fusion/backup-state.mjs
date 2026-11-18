@@ -214,12 +214,13 @@ if(pilotCopy.status!==0)fail('coding pilot copy','rsync failed');
 // Material that must exist for a restore to be usable. Missing entries are hard failures.
 // Paths are relative to the backup root: database snapshots keep their absolute layout under
 // state/runtime/, while copied runtime directories sit directly under state/.
+const runtimeEntries = JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries;
 const REQUIRED = [
-  ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['kurumi-qq']?.config?.proactive?.enabled
+  ...((runtimeEntries?.['kurumi-host-control']??runtimeEntries?.['kurumi-qq'])?.config?.proactive?.enabled
     ? [['state/runtime/home/afrangry/.openclaw-fusion/state/proactive/proactive.sqlite','N3 control, delivery and self-record database']] : []),
   ['external/pilot/source/.git/HEAD','coding pilot repository'],
   ['state/runtime/'+PILOT_ROOT.replace(/^\//,'')+'/state/coding.sqlite','coding control database'],
-  ...(JSON.parse(fs.readFileSync(`${STATE_DIR}/openclaw.json`)).plugins?.entries?.['personal-reminder-list']?.enabled
+  ...(runtimeEntries?.['personal-reminder-list']?.enabled
     ? [['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminder-list/list.sqlite', 'reminder-list database']] : []),
   ['state/runtime/home/afrangry/.openclaw-fusion/state/openclaw.sqlite', 'core state database'],
   ['state/runtime/home/afrangry/.openclaw-fusion/state/personal-reminders/reminders.sqlite', 'reminders database'],

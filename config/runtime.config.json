@@ -192,6 +192,7 @@
   "plugins": {
     "allow": [
       "kurumi-qq",
+      "kurumi-host-control",
       "kurumi-tasks",
       "tavily",
       "personal-confirmation",
@@ -213,6 +214,7 @@
     "load": {
       "paths": [
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-qq",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-host-control",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-tasks",
         "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation",
@@ -234,6 +236,9 @@
     },
     "entries": {
       "kurumi-qq": {
+        "enabled": true
+      },
+      "kurumi-host-control": {
         "enabled": true,
         "config": {
           "exec": {

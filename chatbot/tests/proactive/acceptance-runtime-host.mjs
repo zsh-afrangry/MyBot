@@ -1,5 +1,6 @@
 // Actual production composition/QQ policy, public host SDK, P2/SQL read models
 // and HTTP transport against synthetic loopback peers. No production or paid API.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import http from 'node:http';import net from 'node:net';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes,createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';import {DatabaseSync} from 'node:sqlite';import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';
@@ -104,7 +105,7 @@ const cfg={gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},
     'personal-weather':{enabled:false,config:{apiHost:'synthetic.qweather.test',apiKey:'synthetic',weatherBackend:'knowledgemap',bridgeBaseUrl:httpUrl,bridgeTokenFile:bridgeToken}},
     'personal-reminder-list':{enabled:false,config:{backendRoot:repo,dataSource:'knowledgemap',bridgeBaseUrl:httpUrl,bridgeTokenFile:bridgeToken}}},slots:{memory:'none'}},
   cron:{enabled:false},tools:{toolSearch:false,codeMode:false,web:{search:{enabled:false},fetch:{enabled:true}}},logging:{file:root+'/runtime.log'}};
-fs.writeFileSync(root+'/openclaw.json',JSON.stringify(compileAccessConfig(cfg,ownerPolicy(owner))),{mode:0o600});let child;
+fs.writeFileSync(root+'/openclaw.json',JSON.stringify(withHostControl(compileAccessConfig(cfg,ownerPolicy(owner)),repo)),{mode:0o600});let child;
 function start(){const fd=fs.openSync(root+'/gateway.log','a',0o600);child=spawn(process.execPath,[repo+'/node_modules/openclaw/openclaw.mjs','gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],
   {cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:root,LANG:'C.UTF-8',OPENCLAW_STATE_DIR:root,OPENCLAW_CONFIG_PATH:root+'/openclaw.json',OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_AGENT_DIR:root+'/agents/main/agent'}});fs.closeSync(fd);}
 const call=(method,params={},timeout=30000)=>callGatewayFromCli(method,{url:'ws://127.0.0.1:'+port,token,timeout:String(timeout),json:true},params);

@@ -26,16 +26,20 @@ export function assertNoProduction(value){
 }
 // Restoring state is never authorization to run autonomous models or sends.
 export function disableProactiveRecovery(cfg){
- const proactive=cfg.plugins?.entries?.['kurumi-qq']?.config?.proactive;
- if(proactive)proactive.enabled=false;
+ for(const id of ['kurumi-host-control','kurumi-qq']){
+  const proactive=cfg.plugins?.entries?.[id]?.config?.proactive;
+  if(proactive)proactive.enabled=false;
+ }
 }
 // User documents are not Fusion recovery assets. Even an accidentally started
 // verification copy must not inherit ordinary-file grants or their default cwd.
 export function disableOwnerFileRecovery(cfg){
- const exec=cfg.plugins?.entries?.['kurumi-qq']?.config?.exec;
- if(!exec?.writeBoundary||exec.writeBoundary.additionalRoots===undefined)return;
- delete exec.writeBoundary.additionalRoots;
- exec.workdir=path.join(exec.writeBoundary.root,'source');
+ for(const id of ['kurumi-host-control','kurumi-qq']){
+  const exec=cfg.plugins?.entries?.[id]?.config?.exec;
+  if(!exec?.writeBoundary||exec.writeBoundary.additionalRoots===undefined)continue;
+  delete exec.writeBoundary.additionalRoots;
+  exec.workdir=path.join(exec.writeBoundary.root,'source');
+ }
 }
 // A recovery copy never starts paid paper jobs, even outside its test sandbox.
 export function disablePaperRecovery(cfg,runtime){

@@ -5,6 +5,7 @@
 // C2 malformed summary with compaction.mode=safeguard (quality guard must retry, then cancel and keep history).
 // Writes only the explicit new --out evidence file; no real QQ/mail, production write or production service restart.
 // --keep-root keeps the temporary state directory of passing variants for log inspection.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -236,7 +237,7 @@ async function runVariant(name) {
   for (const [file, content] of personaFiles(fixtureRepo, root).files) applyPersonaFile(file, content);
   initializeContinuity(workspace, seededState()); replaceNotice(workspace);
   const before = memoryState(workspace);
-  fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(cfg), {mode: 0o600});
+  fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(withHostControl(cfg,repo)), {mode: 0o600});
   const call = (method, params = {}, timeout = 120000) => callGatewayFromCli(method, {url: `ws://127.0.0.1:${port}`, token, timeout: String(timeout), json: true}, params);
   const ready = async child => {
     for (let i = 0; i < 100; i++) {try {await call('health', {}, 1200); return;} catch {if (child.exitCode !== null) throw Error('isolated_gateway_exited'); await new Promise(resolve => setTimeout(resolve, 300));}}

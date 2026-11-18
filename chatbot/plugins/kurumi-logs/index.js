@@ -1,10 +1,9 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
 import {wrapExternalContent} from 'openclaw/plugin-sdk/security-runtime';
 import {assertToolAccess} from '../../packages/access-control/index.js';
 import {createToolTrace} from '../../packages/observability/tool-trace.js';
-import {createTraceSink} from '../../packages/observability/index.js';
+import {createRuntimeTraceSink} from '../../packages/observability/index.js';
 import {LogQueryService,technicalResult} from './service.js';
 import {LogQueryError,queryOptions,SOURCES,RESULT_BYTES} from './policy.js';
 export const LOG_TOOL = {
@@ -37,9 +36,8 @@ export function createLogPlugin({serviceFactory = config => new LogQueryService(
   const plugin = {id:'kurumi-logs',name:'Read-only diagnostics',register(api) {
     const trace=createToolTrace(['kurumi_logs']); trace.attach(api);
     const service=serviceFactory(api.pluginConfig);
-    const root=api.config.channels?.['kurumi-qq']?.stateDir;
-    const emit=(api.registrationMode === undefined || api.registrationMode === 'full') && typeof root==='string' && path.isAbsolute(root)
-      ? createTraceSink(path.join(root,'trace-events.jsonl')).emit : () => {};
+    const emit=(api.registrationMode === undefined || api.registrationMode === 'full')
+      ? createRuntimeTraceSink('trace-events.jsonl', {stateRoot:api.runtime?.state?.resolveStateDir?.()}).emit : () => {};
     api.registerTool({contextVersion:2,create:ctx => ({...LOG_TOOL,async execute(callId,args={},signal) {
       const current=() => ctx.getRuntimeConfig?.() ?? api.config;
       let status='error',code,shown=0; const started=Date.now();

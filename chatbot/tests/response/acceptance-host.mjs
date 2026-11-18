@@ -1,6 +1,7 @@
 // Real isolated Gateway, model/session composition, fixed native Cron commands and
 // loopback QQ receipts. Deterministic cognition and a synthetic domain clock only.
 // No real model/API/QQ/SMTP, production database writes or service restart. docs/21.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import http from 'node:http';import net from 'node:net';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes,createHash} from 'node:crypto';import {fileURLToPath,pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';
@@ -52,7 +53,7 @@ const cfg=compileAccessConfig({gateway:{mode:'local',port,bind:'loopback',auth:{
  channels:{'kurumi-qq':{enabled:true,httpUrl:'http://127.0.0.1:'+onebot.address().port,wsUrl:'ws://127.0.0.1:'+onebot.address().port,httpTokenFile:root+'/http-token',wsTokenFile:root+'/ws-token',stateDir:root+'/channel',mediaRoot:root+'/media',testIngress:true,dailySendLimit:20,segmentDelayMs:0}},
  plugins:{allow:['kurumi-qq','notice-probe'],load:{paths:[repo+'/chatbot/plugins/kurumi-qq',probe]},entries:{'kurumi-qq':{enabled:true},'notice-probe':{enabled:true}},slots:{memory:'none'}},
  session:{dmScope:'per-channel-peer'},cron:{enabled:true},tools:{codeMode:false,web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:root+'/runtime.log'}},ownerPolicy(owner));
-fs.writeFileSync(root+'/openclaw.json',JSON.stringify(cfg),{mode:0o600});const fd=fs.openSync(root+'/gateway.log','w',0o600);
+fs.writeFileSync(root+'/openclaw.json',JSON.stringify(withHostControl(cfg,repo)),{mode:0o600});const fd=fs.openSync(root+'/gateway.log','w',0o600);
 const child=spawn(process.execPath,[repo+'/node_modules/openclaw/openclaw.mjs','gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:root,LANG:'C.UTF-8',OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_STATE_DIR:root,OPENCLAW_CONFIG_PATH:root+'/openclaw.json',OPENCLAW_AGENT_DIR:root+'/agents/main/agent'}});fs.closeSync(fd);
 const call=(method,params={},timeout=65000)=>callGatewayFromCli(method,{url:'ws://127.0.0.1:'+port,token,timeout:String(timeout),json:true},params);
 const pass=label=>{report.cases.push({label,passed:true});console.log(JSON.stringify({case:label,passed:true}));};

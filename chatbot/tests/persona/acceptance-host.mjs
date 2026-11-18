@@ -1,6 +1,7 @@
 // docs/25 P1: actual bootstrap/QQ routing and persona dialogue in an isolated OpenClaw.
 // Default uses a local deterministic model. --live calls the configured official DeepSeek model.
 // Temporary state and synthetic conversations only; no real QQ/mail, production writes or service restart.
+import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -126,7 +127,7 @@ let cfg = {
 };
 cfg = compileAccessConfig(cfg, fake);
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(root, file), token, {mode: 0o600});
-fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(cfg), {mode: 0o600});
+fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(withHostControl(cfg,repo)), {mode: 0o600});
 const fd = fs.openSync(path.join(root, 'gateway.log'), 'w', 0o600);
 child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
   cwd: repo, env: {...process.env, OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_STATE_DIR: root, OPENCLAW_CONFIG_PATH: path.join(root, 'openclaw.json'), OPENCLAW_AGENT_DIR: path.join(root, 'agents/main/agent')},

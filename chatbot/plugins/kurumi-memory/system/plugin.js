@@ -1,7 +1,7 @@
 // Narrow v3 tools. Registration is opt-in; production allowlists and explicit migration remain separate.
 import path from 'node:path';
 import {authorizedOwner,activeSubject} from '../../../packages/access-control/index.js';
-import {createTraceSink} from '../../../packages/observability/index.js';
+import {createRuntimeTraceSink} from '../../../packages/observability/index.js';
 import {trustedMemoryText} from '../inbound.js';
 import {continuityPolicy} from '../continuity/policy.js';
 import {RecordApplication as RecordStore} from './application.js';
@@ -19,7 +19,7 @@ export function registerMemorySystem(api) {
   const location=config=>({workspace:config.agents.entries.main.workspace,ownerId:owner});
   const use=(config,fn)=>{const store=new RecordStore(location(config));try{return fn(store);}finally{store.close();}};
   const full=api.registrationMode===undefined || api.registrationMode==='full';
-  const trace=full?createTraceSink(path.join(cfg.channels?.['kurumi-qq']?.stateDir??cfg.agents.entries.main.workspace,'trace-events.jsonl'), {maxBytes:4*1024*1024}).emit:()=>{};
+  const trace=full?createRuntimeTraceSink('trace-events.jsonl',{stateRoot:api.runtime?.state?.resolveStateDir?.()}).emit:()=>{};
   const fresh=request=>request && request===current && request.runId && Date.now()>=request.at && Date.now()-request.at<300000;
   const callKey=(ctx,id)=>JSON.stringify([ctx.sessionKey,ctx.sessionId,id]);
   const target=event=>String(['tool_call','dispatch_action'].includes(event.toolName)?event.params?.id:event.toolName??'').split(':').at(-1);

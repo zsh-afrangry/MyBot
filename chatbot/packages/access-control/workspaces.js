@@ -56,7 +56,7 @@ export function personaFiles(repo, state) {
   // the grant; trusted host checks and the kernel fence still enforce it.
   const scopeMarker = '<!-- owner-exec-scope -->';
   if (agents.split(scopeMarker).length !== 2) throw Error('persona_exec_scope_marker_mismatch');
-  const exec = cfg.plugins?.entries?.['kurumi-qq']?.config?.exec;
+  const exec = cfg.plugins?.entries?.['kurumi-host-control']?.config?.exec;
   let scope = '当前未配置原生exec的普通文件可写根，不能据本提示自行获得执行权限。';
   if (exec !== undefined) {
     const extra = exec?.writeBoundary?.additionalRoots === undefined ? [] : exec.writeBoundary.additionalRoots;

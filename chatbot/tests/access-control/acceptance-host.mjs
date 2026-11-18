@@ -1,5 +1,6 @@
 // Isolated real OpenClaw acceptance with local deterministic model/OneBot and injected PDF worker.
 // Only temporary state and explicitly requested evidence file; no external model/API, real QQ/mail or production writes. docs/24「执行」「资源与投递隔离」「如何验证」.
+import {withHostControl} from './host-config.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -72,7 +73,7 @@ cfg=compileAccessConfig(cfg,policy);cfg.agents.entries['qq-user-'+MEMBER].tools.
 for(const file of ['http-token','ws-token'])fs.writeFileSync(path.join(root,file),token,{mode:0o600});
 for(const row of policy.subjects){const dir=cfg.agents.entries[row.role==='owner'?'main':'qq-user-'+row.qq].workspace;fs.mkdirSync(dir,{recursive:true,mode:0o700});fs.copyFileSync(path.join(repo,'roles/小鲸鱼.md'),path.join(dir,'SOUL.md'));fs.copyFileSync(path.join(repo,'scripts/fusion/templates',row.role==='owner'?'AGENTS.md':'MEMBER_AGENTS.md'),path.join(dir,'AGENTS.md'));}
 fs.writeFileSync(path.join(root,'workspace/MEMORY.md'),'OWNER_PRIVATE_SENTINEL');
-fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(cfg),{mode:0o600});
+fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(withHostControl(cfg,repo)),{mode:0o600});
 const catalogs=new Map();for(const id of [OWNER,MEMBER]){const docs=new Documents(id===OWNER?path.join(root,'documents'):path.join(root,'documents/subjects',id));const doc=await docs.add(pdf(id),{filename:id===OWNER?'owner-private.pdf':'member-own.pdf'},{inspect:async()=>({pages:1})});catalogs.set(id,{docs,doc});}
 const fd=fs.openSync(path.join(root,'gateway.log'),'w',0o600);
 const child=spawn(process.execPath,[path.join(repo,'node_modules/openclaw/openclaw.mjs'),'gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{cwd:repo,env:{...process.env,OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_STATE_DIR:root,OPENCLAW_CONFIG_PATH:path.join(root,'openclaw.json'),OPENCLAW_AGENT_DIR:path.join(root,'agents/main/agent')},stdio:['ignore',fd,fd],detached:true});fs.closeSync(fd);

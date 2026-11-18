@@ -4,8 +4,8 @@ import {createHash} from 'node:crypto';
 import {WeatherStore} from '../../packages/personal-domains/dist/store.js';
 import {ReminderStore} from '../../packages/personal-domains/dist/reminder-store.js';
 import * as weatherFixtures from '../../packages/personal-domains/dist/test-fixtures.js';
-import {createDomainAdapters} from '../../plugins/kurumi-qq/proactive/adapters.js';
-import {createProactiveComponent,validateSettings} from '../../plugins/kurumi-qq/proactive/index.js';
+import {createDomainAdapters} from '../../plugins/kurumi-host-control/proactive/adapters.js';
+import {createProactiveComponent,validateSettings} from '../../plugins/kurumi-host-control/proactive/index.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {emptyState, initializeContinuity, replaceNotice} from '../../packages/memory-continuity/index.js';
 import {toolPermission,toolPolicyDecision} from '../../packages/access-control/index.js';
@@ -93,7 +93,7 @@ test('existing log API queries N3 structured events and reports unknown delivery
 });
 test('composition accepts only matched owner lifecycle metadata and clears exact owner/background scopes',async t=>{
   const f=fixture(t),settings=JSON.parse(fs.readFileSync(new URL('../../../config/proactive.example.json',import.meta.url)));settings.enabled=true;
-  f.cfg.plugins.entries['kurumi-qq']={config:{proactive:settings}};f.cfg.agents.entries.main.tools={};
+  f.cfg.plugins.entries['kurumi-host-control']={config:{proactive:settings}};f.cfg.agents.entries.main.tools={};
   const hooks=new Map();let service;
   const provider=createProactiveComponent({stateRoot:f.root,getConfig:()=>f.cfg,adapters:f.adapters,host:{}}).register({
     config:f.cfg,pluginConfig:{proactive:settings},on(name,handler){hooks.set(name,handler);},registerService(value){service=value;},registerTool(){},registerGatewayMethod(){}});
