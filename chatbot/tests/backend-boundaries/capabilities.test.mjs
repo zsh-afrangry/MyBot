@@ -55,6 +55,26 @@ async function start(services) {
     registry: {plugins: [], services: services.map(service => ({pluginId: service.id, id: service.id, service}))}});
 }
 
+const pluginsDirectory = fileURLToPath(new URL('../../plugins/', import.meta.url));
+const excludedPluginDirectories = new Set(['dist', 'node_modules', 'vendor', 'test', 'tests', 'python']);
+
+function* pluginSourceFiles(directory = pluginsDirectory) {
+  for (const entry of fs.readdirSync(directory, {withFileTypes: true})) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory() && !excludedPluginDirectories.has(entry.name)) {
+      yield* pluginSourceFiles(file);
+    } else if (entry.isFile() && /\.(?:[cm]?[jt]s|[jt]sx)$/.test(entry.name) && !/\.test\./.test(entry.name)) {
+      yield file;
+    }
+  }
+}
+
+function moduleSpecifiers(file) {
+  const source = fs.readFileSync(file, 'utf8');
+  const imports = /(?:\bfrom\s*|\b(?:import|require)\s*\(\s*|\bimport\s*)(['"`])([^'"`\r\n]+)\1/g;
+  return Array.from(source.matchAll(imports), ([, , specifier]) => specifier);
+}
+
 test('shared packages have no runtime imports into plugins or deployment scripts', () => {
   const directory = fileURLToPath(new URL('../../packages/', import.meta.url));
   const files = [];
@@ -80,33 +100,49 @@ test('shared packages have no runtime imports into plugins or deployment scripts
 });
 
 test('plugins reach other plugins only through public entries, never their src internals', () => {
-  const root = fileURLToPath(new URL('../../plugins/', import.meta.url));
   // Public outward interfaces another plugin's composition entry may wire (docs/21).
-  const publicEntries = new Set([path.join(root, 'kurumi-qq', 'delivery.js'),
-    path.join(root, 'kurumi-memory', 'continuity', 'read-model.js')]);
-  const files = [];
-  function visit(dir) {
-    for (const e of fs.readdirSync(dir, {withFileTypes: true})) {
-      if (['dist', 'node_modules', 'vendor', 'test', 'python'].includes(e.name)) continue;
-      const file = path.join(dir, e.name);
-      if (e.isDirectory()) visit(file);
-      else if (/\.(?:js|mjs|ts)$/.test(e.name) && !/\.test\./.test(e.name)) files.push(file);
-    }
-  }
-  visit(root);
+  const publicEntries = new Set([path.join(pluginsDirectory, 'kurumi-qq', 'delivery.js'),
+    path.join(pluginsDirectory, 'kurumi-memory', 'continuity', 'read-model.js')]);
   let crossings = 0;
-  for (const file of files) {
-    const own = path.relative(root, file).split(path.sep)[0];
-    const source = fs.readFileSync(file, 'utf8');
-    for (const [, specifier] of source.matchAll(/(?:\bfrom\s*|\bimport\s*\(\s*|\bimport\s*)['"]([^'"]+)['"]/g)) {
+  for (const file of pluginSourceFiles()) {
+    const own = path.relative(pluginsDirectory, file).split(path.sep)[0];
+    for (const specifier of moduleSpecifiers(file)) {
       if (!specifier.startsWith('.')) continue;
       const resolved = path.resolve(path.dirname(file), specifier);
-      if (!resolved.startsWith(root) || path.relative(root, resolved).split(path.sep)[0] === own) continue;
+      if (!resolved.startsWith(pluginsDirectory) || path.relative(pluginsDirectory, resolved).split(path.sep)[0] === own) continue;
       crossings++;
       assert(publicEntries.has(resolved), `${file}: ${specifier}`);
     }
   }
   assert(crossings > 0, 'scan must see the papers -> QQ delivery wiring');
+});
+
+test('plugins reach personal-domains dist only through their own plugin entrypoints', () => {
+  const domainsDirectory = fileURLToPath(new URL('../../packages/personal-domains/', import.meta.url));
+  const domainsDist = path.join(domainsDirectory, 'dist');
+  const packagePrefix = '@kurumi/personal-domains/';
+  const pluginEntrypoints = new Map([
+    ['personal-weather/index.js', 'weather-plugin.js'],
+    ['personal-profile/index.js', 'profile-plugin.js'],
+    ['personal-planning/index.js', 'planning-plugin.js'],
+    ['personal-reminders/index.js', 'reminder-plugin.js'],
+  ].map(([source, target]) => [path.join(pluginsDirectory, source), path.join(domainsDist, target)]));
+
+  for (const file of pluginSourceFiles()) {
+    for (const specifier of moduleSpecifiers(file)) {
+      let target;
+      if (specifier.startsWith(packagePrefix)) {
+        target = path.resolve(domainsDirectory, specifier.slice(packagePrefix.length));
+      } else if (specifier.startsWith('.') || specifier.startsWith('file:') || path.isAbsolute(specifier)) {
+        target = fileURLToPath(new URL(specifier, pathToFileURL(file)));
+      } else {
+        continue;
+      }
+      if (target !== domainsDist && !target.startsWith(domainsDist + path.sep)) continue;
+      assert.equal(target, pluginEntrypoints.get(file),
+        path.relative(pluginsDirectory, file) + ' must use the personal-domains public entry: ' + specifier);
+    }
+  }
 });
 
 test('four independently discovered entries register exactly their manifest tools', () => {

@@ -1,15 +1,7 @@
 // Composition-only imports. Shared proactive-core never depends on plugins.
-import path from 'node:path';
 import {activeSubject} from '../../../packages/access-control/index.js';
 import {KnowledgeMapClient} from '../../../packages/knowledgemap-client/client.js';
-import {WeatherStore} from '../../../packages/personal-domains/dist/store.js';
-import {ReminderStore} from '../../../packages/personal-domains/dist/reminder-store.js';
-import {getPlanningState} from '../../../packages/personal-domains/dist/planning.js';
-import {getReminderState} from '../../../packages/personal-domains/dist/reminders.js';
-import {WeatherService} from '../../../packages/personal-domains/dist/weather-service.js';
-import {KnowledgeMapWeatherClient} from '../../../packages/personal-domains/dist/knowledgemap-client.js';
-import {QWeatherClient} from '../../../packages/personal-domains/dist/qweather-client.js';
-import {resolvePersonalWeatherConfig} from '../../../packages/personal-domains/dist/config.js';
+import {readPlanning, readActiveReminders, readWeatherBrief} from '../../../packages/personal-domains/read-model.js';
 import {readContinuityContext} from '../../kurumi-memory/continuity/read-model.js';
 import {sendSegments} from '../src/transport.js';
 import {error} from '../../../packages/proactive-core/policy.js';
@@ -23,7 +15,6 @@ export const capabilityCatalog=Object.freeze([
 ]);
 export function createDomainAdapters({getConfig,ownerId,stateRoot}) {
   const authorize=permission=>activeSubject(getConfig(),ownerId,permission);
-  const readWeather=fn=>{const store=new WeatherStore({stateDirectory:path.join(stateRoot,'state/personal-weather'),readOnly:true});try{return fn(store);}finally{store.close();}};
   return {
     memory() {
       authorize('memory.read');
@@ -33,11 +24,8 @@ export function createDomainAdapters({getConfig,ownerId,stateRoot}) {
     },
     async query(kind,{signal,runId,verify}) {
       if(!reads[kind])throw error('wake_query_not_allowed');authorize(reads[kind]);verify();
-      if(kind==='planning')return readWeather(store=>{const data=getPlanningState(store);return {asOfUtc:data.asOfUtc,profile:data.profile,weather:data.weather,trips:data.trips};});
-      if(kind==='reminders') {
-        const store=new ReminderStore({stateDirectory:path.join(stateRoot,'state/personal-reminders'),readOnly:true});
-        try{const data=getReminderState(store);return {asOfUtc:data.asOfUtc,activeReminders:data.activeReminders};}finally{store.close();}
-      }
+      if(kind==='planning')return readPlanning(stateRoot);
+      if(kind==='reminders')return readActiveReminders(stateRoot);
       if(kind==='reminder_list') {
         const cfg=getConfig().plugins.entries['personal-reminder-list']?.config;
         if(cfg?.dataSource!=='knowledgemap')throw error('wake_list_adapter_not_supported');
@@ -47,16 +35,9 @@ export function createDomainAdapters({getConfig,ownerId,stateRoot}) {
       }
       const cfg=getConfig().plugins.entries['personal-weather']?.config;
       if(!cfg)throw error('wake_weather_unavailable');
-      const store=new WeatherStore({stateDirectory:path.join(stateRoot,'state/personal-weather'),readOnly:true});
-      try {
-        // WeatherService can reuse cache reads, but this purpose never writes
-        // cache/proposals/business data or runs migrations/reconciliation.
-        const readonly={getEffectivePlace:store.getEffectivePlace.bind(store),getFreshApiCache:store.getFreshApiCache.bind(store),
-          deleteExpiredApiCache(){},deleteApiCache(){},putApiCache(){}};
-        const client=cfg.weatherBackend==='knowledgemap'?new KnowledgeMapWeatherClient({baseUrl:cfg.bridgeBaseUrl,tokenFile:cfg.bridgeTokenFile,runId})
-          :new QWeatherClient(resolvePersonalWeatherConfig(cfg));
-        const result=await new WeatherService(readonly,client).getBrief(signal);verify();return result;
-      } finally {store.close();}
+      const result=await readWeatherBrief({stateRoot,config:cfg,runId,signal});
+      verify();
+      return result;
     },
     async send({route,key,text,signal,assertCurrent}) {
       authorize('proactive.notify');

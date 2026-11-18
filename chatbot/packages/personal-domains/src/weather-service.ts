@@ -44,13 +44,22 @@ interface WeatherBriefLocationSource {
   attributions: string[];
 }
 
+export type WeatherBriefStore = Pick<
+  WeatherStore,
+  | "getEffectivePlace"
+  | "getFreshApiCache"
+  | "deleteExpiredApiCache"
+  | "deleteApiCache"
+  | "putApiCache"
+>;
+
 export class WeatherService {
-  readonly #store: WeatherStore;
+  readonly #store: WeatherBriefStore;
   readonly #client: WeatherClient;
   readonly #now: () => number;
 
   constructor(
-    store: WeatherStore,
+    store: WeatherBriefStore,
     client: WeatherClient,
     options: WeatherServiceOptions = {},
   ) {

@@ -1,10 +1,17 @@
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
 
+export function personalStateDirectory(
+  stateRoot: string,
+  domain: "personal-weather" | "personal-reminders",
+): string {
+  return join(stateRoot, "state", domain);
+}
+
 export function weatherStateDirectory(
   env: NodeJS.ProcessEnv = process.env,
 ): string {
-  return join(openClawStateDirectory(env), "state", "personal-weather");
+  return personalStateDirectory(openClawStateDirectory(env), "personal-weather");
 }
 
 /**
@@ -14,7 +21,7 @@ export function weatherStateDirectory(
 export function reminderStateDirectory(
   env: NodeJS.ProcessEnv = process.env,
 ): string {
-  return join(openClawStateDirectory(env), "state", "personal-reminders");
+  return personalStateDirectory(openClawStateDirectory(env), "personal-reminders");
 }
 
 export function openClawStateDirectory(

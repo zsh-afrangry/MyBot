@@ -748,11 +748,13 @@ export class WeatherStore {
   readonly databasePath: string;
 
   #database: DatabaseSync;
+  readonly #readOnly: boolean;
   #closed = false;
   #now: () => UnixSeconds;
 
   constructor(options: WeatherStoreOptions) {
-    if (options.readOnly) {
+    this.#readOnly = options.readOnly ?? false;
+    if (this.#readOnly) {
       const location=readOnlyLocation(options.stateDirectory,DATABASE_FILE_NAME);
       this.stateDirectory=location.directory;this.databasePath=location.file;
       this.#now=options.now??currentUnixSeconds;
@@ -1231,7 +1233,9 @@ export class WeatherStore {
         payload: JSON.parse(row.response_json) as unknown,
       };
     } catch {
-      this.#database.prepare("DELETE FROM api_cache WHERE cache_key = ?").run(cacheKey);
+      if (!this.#readOnly) {
+        this.#database.prepare("DELETE FROM api_cache WHERE cache_key = ?").run(cacheKey);
+      }
       return undefined;
     }
   }
