@@ -179,6 +179,7 @@ node scripts/fusion/log-query.mjs --source papers --contains <job_ID> --json
 - 共享业务的 MySQL 不在 Fusion 备份里，见[文档12](12_目录资产与Git备份整理.md)和[文档23](23_KnowledgeMap业务能力桥接.md)。
 - `health.mjs` 会列出 Cron 最后失败，但尚未把它加入 `issues`，可能同时出现 Cron error 与 `ok=true`。须核对执行、冻结正文和送达账本，不能仅凭总状态判播报成功。
 - **QQ 客户端异常退出后，协议会话长时间不恢复（低优先级，未立项修复）。** 2026-11-13 23:55:52，`snowluma-qq.service` 产生原生崩溃记录并以状态 1 退出，23:56:01 被 systemd 拉起，但到 11-14 02:21 才恢复 QQ 会话和 OneBot 3083/3084 监听。期间 Fusion 对 3083 有 54 条 ECONNREFUSED 通道失败记录并退避重连，02:22:03 自动重连成功。02:21:29 的新建会话指令到达 SnowLuma 时 Fusion 尚未连通，没有被执行或回复；零点 Cron 投递同样被拒绝并重试，不能当作成功播报。因果链：QQ 客户端异常退出，协议会话迟迟不恢复，OneBot 端口不可用，Fusion 退避重连，恢复间隙内的指令丢失。崩溃的具体原因，以及重启后约两小时二十五分未恢复会话的原因，都未确定；崩溃记录里的内存字段不能当作 OOM 证据。重连后的真实问答尚未验收，不能据进程自动重启判定恢复成功。需要复查时，从 `runtime.log`、SnowLuma 当日日志和两项服务的 journal 入手。
+- **SnowLuma 群申请扫描反复超时（低优先级，根因未定）。** SnowLuma 的 `OneBot.GroupRequests` 周期扫描记录 “group request scan failed: QQ protocol reply timed out after 15000 ms”，例如 2026-11-11 11:19:04。超时值来自 `sendRawPacket` 的默认 15 秒（`/home/afrangry/snowluma/runtime/index.mjs`），扫描器（`group-request-poller`）在每次扫描结束后再等默认 15 秒才开始下一次，所以失败周期约 30 秒。2026-11-10 15:35 至 11-11 15:35 的窗口内有 178 条同类失败记录。源码表明部分群请求不产生实时推送，因此不能说推送已经提供完整保底。超时现象不足以排除代码缺陷，也不足以证明 30 秒阈值合适；不要直接改共享的 `sendRawPacket` 默认值，也不要只降低日志等级。Fusion 的群聊是关闭的；这些失败对助手私聊的影响没有评估过。
 
 ## 进行中：运行与端到端复验
 
