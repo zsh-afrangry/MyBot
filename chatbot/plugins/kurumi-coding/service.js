@@ -1,6 +1,7 @@
 // Task orchestration. Execution, Git, confirmation and outward transport each keep their own boundaries.
 import fs from 'node:fs';
 import path from 'node:path';
+import {AsyncResource} from 'node:async_hooks';
 import {randomUUID} from 'node:crypto';
 import {AcpClient, processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/acp-client.js';
 import {inspectOwnedRuntime, stopOwnedRuntime} from '../../packages/coding-runtime/reconciliation.js';
@@ -36,6 +37,9 @@ export class CodingService {
         const round = task.executionRoundId && this.store.result(task.id, task.executionRoundId);
         if (round) this.store.saveResult(task.id, {...round, state: 'needs_reconciliation', reason: 'restart_requires_state_check', interruptedAt: new Date().toISOString()});
       }
+      // Capture the service scope before a tool call so background work does not
+      // inherit the foreground reply's host lease, which closes when the reply ends.
+      this.backgroundScope = new AsyncResource('kurumi-coding-service');
       this.started = true;
     } catch (error) { fs.unlinkSync(this.lockFile); throw error; }
   }
@@ -80,23 +84,25 @@ export class CodingService {
     const entry = {controller: new AbortController(), roundId: randomUUID()};
     this.store.createResult(task, {roundId: entry.roundId, state: 'queued', startedAt: new Date().toISOString(), baseCommit: task.verifiedCommit});
     this.active.set(task.id, entry);
-    entry.monitor = setInterval(() => {
-      try {this.authorize(task.requester, 'tasks.code');}
-      catch {this.requestStop(entry, 'authorization_revoked');}
-      try {
-        if (sameProcess(entry.client?.identity)) {
-          const current = this.store.get(task.id);
-          this.store.save({...current, runtimeProcesses: descendants(entry.client.identity.pid).filter(sameProcess)});
-        }
-      } catch { /* Missing process facts remain explicitly unverified after restart. */ }
-    }, 1000); entry.monitor.unref();
-    entry.done = this.execute(task.id, text, entry).catch(error => {
-      const current = this.store.get(task.id);
-      this.store.save({...current, state: 'failed', reason: error.code ?? 'coding_execution_failed'});
-      this.finishResult(this.store.get(task.id));
-      this.event(this.store.get(task.id), 'coding.failed', {code: error.code ?? 'coding_execution_failed'});
-      return this.notify(this.store.get(task.id));
-    }).finally(() => {clearInterval(entry.monitor); this.active.delete(task.id);});
+    this.backgroundScope.runInAsyncScope(() => {
+      entry.monitor = setInterval(() => {
+        try {this.authorize(task.requester, 'tasks.code');}
+        catch {this.requestStop(entry, 'authorization_revoked');}
+        try {
+          if (sameProcess(entry.client?.identity)) {
+            const current = this.store.get(task.id);
+            this.store.save({...current, runtimeProcesses: descendants(entry.client.identity.pid).filter(sameProcess)});
+          }
+        } catch { /* Missing process facts remain explicitly unverified after restart. */ }
+      }, 1000); entry.monitor.unref();
+      entry.done = this.execute(task.id, text, entry).catch(error => {
+        const current = this.store.get(task.id);
+        this.store.save({...current, state: 'failed', reason: error.code ?? 'coding_execution_failed'});
+        this.finishResult(this.store.get(task.id));
+        this.event(this.store.get(task.id), 'coding.failed', {code: error.code ?? 'coding_execution_failed'});
+        return this.notify(this.store.get(task.id));
+      }).finally(() => {clearInterval(entry.monitor); this.active.delete(task.id);});
+    });
   }
   async execute(id, text, entry) {
     let task = this.store.get(id), denied = false;
@@ -429,6 +435,7 @@ export class CodingService {
       this.requestStop(entry);
       await entry.done;
     }));
+    this.backgroundScope.emitDestroy();
     this.store.close(); this.started = false;
     if (fs.existsSync(this.lockFile)) {
       const owner = JSON.parse(fs.readFileSync(this.lockFile, 'utf8'));
