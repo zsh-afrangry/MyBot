@@ -277,7 +277,38 @@
       "kurumi-access-admin": {
         "enabled": true,
         "config": {
-          "sourceRoot": "/home/afrangry/kurumi-fusion"
+          "sourceRoot": "/home/afrangry/kurumi-fusion",
+          "enabledCategories": [
+            "mail_recipient",
+            "owner_tool",
+            "exec_root",
+            "coding_project"
+          ],
+          "execDirectoryBases": [
+            "/home/afrangry/kurumi-whitelist-acceptance/exec"
+          ],
+          "projectCheckProfiles": {
+            "acceptance-readme": [
+              {
+                "name": "README exists",
+                "argv": [
+                  "/usr/bin/test",
+                  "-f",
+                  "README.md"
+                ]
+              }
+            ],
+            "acceptance-readme-nonempty": [
+              {
+                "name": "README is nonempty",
+                "argv": [
+                  "/usr/bin/test",
+                  "-s",
+                  "README.md"
+                ]
+              }
+            ]
+          }
         }
       },
       "personal-weather": {
