@@ -75,7 +75,8 @@
             "e7_data",
             "kurumi_code",
             "exec",
-            "kurumi_logs"
+            "kurumi_logs",
+            "kurumi_access"
           ],
           "deny": [
             "read",
@@ -196,6 +197,7 @@
       "kurumi-tasks",
       "tavily",
       "personal-confirmation",
+      "kurumi-access-admin",
       "personal-weather",
       "personal-reminder-list",
       "kurumi-memory",
@@ -218,6 +220,7 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-tasks",
         "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/tavily-plugin",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-confirmation",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-access-admin",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-weather",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminder-list",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-memory",
@@ -268,6 +271,12 @@
         "enabled": true,
         "hooks": {
           "allowConversationAccess": true
+        }
+      },
+      "kurumi-access-admin": {
+        "enabled": true,
+        "config": {
+          "sourceRoot": "/home/afrangry/kurumi-fusion"
         }
       },
       "personal-weather": {

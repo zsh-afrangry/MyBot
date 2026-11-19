@@ -1,0 +1,21 @@
+{
+  "id": "kurumi-access-admin",
+  "name": "Kurumi QQ member administration",
+  "description": "Owner-confirmed changes to the checked-out QQ member access policy.",
+  "version": "0.1.0",
+  "activation": {"onStartup": true},
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["sourceRoot"],
+    "properties": {
+      "sourceRoot": {"type": "string", "minLength": 2}
+    }
+  },
+  "contracts": {
+    "tools": ["kurumi_access"]
+  },
+  "toolMetadata": {
+    "kurumi_access": {"optional": true}
+  }
+}

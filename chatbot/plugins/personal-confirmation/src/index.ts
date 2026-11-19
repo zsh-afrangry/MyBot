@@ -6,18 +6,19 @@ import { createConfirmationRuntime, type ConfirmationArguments } from './runtime
 
 // Narrow host-hook compatibility surface; the installed host has these public hooks.
 type HookApi = OpenClawPluginApi & {on(name: string, callback: (...args: any[]) => unknown, options?: Record<string, unknown>): void};
+const domains = ['personal_reminder', 'personal_profile', 'planning', 'mail', 'coding', 'access'];
 const parameters = {
   type: 'object', additionalProperties: false, required: ['action', 'domain'],
   properties: {
     action: {type: 'string', enum: ['list', 'preview', 'confirm']},
-    domain: {type: 'string', enum: ['personal_reminder', 'personal_profile', 'planning', 'mail', 'coding'],
-      description: 'Required: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding (single target only). For targets use the first target domain.'},
+    domain: {type: 'string', enum: domains,
+      description: 'Required: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding, QQ member=access. Coding and access confirm one target at a time.'},
     proposalId: {type: 'string', pattern: '^[a-fA-F0-9-]{36}$'},
     payloadHash: {type: 'string', pattern: '^[a-f0-9]{64}$'},
     targets: {type: 'array', minItems: 1, maxItems: MAX_CONFIRMATION_TARGETS,
       description: 'Only for explicit confirmation of a finite set. Supply the complete set in ONE call, then commit every authorized target separately.',
       items: {type: 'object', additionalProperties: false, required: ['domain', 'proposalId', 'payloadHash'], properties: {
-        domain: {type: 'string', enum: ['personal_reminder', 'personal_profile', 'planning', 'mail', 'coding']},
+        domain: {type: 'string', enum: domains},
         proposalId: {type: 'string', pattern: '^[a-fA-F0-9-]{36}$'}, payloadHash: {type: 'string', pattern: '^[a-f0-9]{64}$'},
       }}},
   },
@@ -49,11 +50,11 @@ const entry: ReturnType<typeof definePluginEntry> = definePluginEntry({
     for (const name of ['before_reset', 'session_end']) hooks.on(name, runtime.reset);
     api.registerTool({contextVersion: 2, create: ctx => ({
       name: 'personal_confirmation', label: 'Confirm a pending proposal',
-      description: 'REQUIRED domain mapping: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding (single target only). '
+      description: 'REQUIRED domain mapping: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding, QQ member=access. Coding and access confirm one target at a time. '
         + 'Read pending proposals with action=list. To re-display, MUST use action=preview; list is not a presentation receipt. '
         + 'Resolve the current owner confirmation to previously delivered frozen previews. '
         + 'For one use action=confirm with its real proposalId/payloadHash. For explicit multiple use ONE call with complete targets (max 16, outer domain=first target). '
-        + 'Then call the matching domain commit, email_send or kurumi_code(action=merge) for EACH authorized target; report partial/unknown outcomes accurately. '
+        + 'Then call the matching domain commit for EACH authorized target; report partial/unknown outcomes accurately. '
         + 'Do not require a code. Ambiguous/negative/quoted statements or a request to change the proposal need clarification/new preview. '
         + 'New proposals cannot be confirmed in the same message. Owner private chat only.',
       parameters,

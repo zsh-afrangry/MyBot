@@ -12,9 +12,12 @@ function fixture() {
  return {cfg,policy,tool:(row=policy.subjects[0])=>factory.create({...context(row),getRuntimeConfig:()=>cfg})};
 }
 const target=domain=>({domain,proposalId:'12345678-1234-4234-8234-123456789abc',payloadHash:'a'.repeat(64)});
-test('batch preflights each target permission, so a reminder outer domain cannot grant mail permission',async()=>{
- const f=fixture();f.policy.subjects[0].permissions['mail.send']=false;
- await assert.rejects(()=>f.tool().execute('call',{action:'confirm',domain:'personal_reminder',targets:[target('personal_reminder'),target('mail')]}),{code:'capability_not_allowed'});
+test('a reminder outer domain cannot grant mail or QQ member administration permissions',async()=>{
+ const f=fixture();
+ for(const [domain,permission] of [['mail','mail.send'],['access','access.manage']]){
+  f.policy.subjects[0].permissions[permission]=false;
+  await assert.rejects(()=>f.tool().execute('call',{action:'confirm',domain:'personal_reminder',targets:[target('personal_reminder'),target(domain)]}),{code:'capability_not_allowed'});
+ }
 });
 test('missing, aliased and unknown batch domains continue to fail closed',async()=>{
  const f=fixture();
@@ -28,7 +31,7 @@ test('member identity cannot inherit owner confirmation, even when the outer dom
 });
 test('tool discovery includes exact domains, re-preview instruction and bounded multi-target schema',async()=>{
  const f=fixture(),tool=f.tool();assert(tool.parameters.required.includes('domain'));
- assert.deepEqual(tool.parameters.properties.domain.enum,['personal_reminder','personal_profile','planning','mail','coding']);
+ assert.deepEqual(tool.parameters.properties.domain.enum,['personal_reminder','personal_profile','planning','mail','coding','access']);
  assert.equal(tool.parameters.properties.targets.maxItems,16);assert.match(tool.description,/MUST use action=preview/);
  const result=await tool.execute('unbound',{action:'confirm',domain:'personal_reminder',targets:[target('personal_reminder')]});
  assert.equal(result.details.code,'confirmation_not_current');

@@ -34,10 +34,12 @@ export function toolPermission(name, args = {}) {
     const permissions = {
       personal_reminder: ['reminders.read', 'reminders.manage'], personal_profile: ['profile.read', 'profile.manage'],
       planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'], coding: ['tasks.read', 'tasks.code'],
+      access: ['access.manage', 'access.manage'],
     };
     return ['list', 'preview', 'confirm'].includes(args.action) ? permissions[args.domain]?.[args.action === 'confirm' ? 1 : 0] : undefined;
   }
   if (direct[name]) return direct[name];
+  if (name === 'kurumi_access') return ['list', 'get', 'propose', 'commit', 'status'].includes(args.action) ? 'access.manage' : undefined;
   if (name === 'kurumi_proactive') return ['status','records'].includes(args.action)?'proactive.read'
     :['pause','resume','record_put','record_remove'].includes(args.action)?'proactive.manage'
     :['query','remember','forget','sources'].includes(args.action)?'proactive.use':args.action==='notify'?'proactive.notify':undefined;
