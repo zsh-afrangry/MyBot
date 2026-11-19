@@ -22,7 +22,7 @@ import {withHostControl} from './host-config.mjs';
 
 const [flag, out, mode, category = 'member', ...extra] = process.argv.slice(2);
 assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out), 'Require a new absolute --out');
-assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient'].includes(category) && !extra.length);
+assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'owner_tool'].includes(category) && !extra.length);
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-access-admin-host-'));
@@ -91,6 +91,11 @@ const server = http.createServer(async (req, res) => {
       }
       const step = active.steps[active.next];
       if (!step) return modelReply(body, undefined, res);
+      if (step.searchOnly) {
+        active.next++;
+        active.observe = step.verify;
+        return modelReply(body, ['tool_search', {query: step.name, limit: 1}], res);
+      }
       if (!active.found) {
         active.found = true;
         return modelReply(body, ['tool_search', {query: step.name, limit: 1}], res);
@@ -125,8 +130,8 @@ const port = probe.address().port;
 await new Promise(resolve => probe.close(resolve));
 const endpoint = `127.0.0.1:${server.address().port}`;
 const admin = 'kurumi-access-admin', confirmation = 'personal-confirmation';
-const mail = 'kurumi-mail', mailRun = category === 'mail_recipient';
-const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun ? [mail] : [])];
+const mail = 'kurumi-mail', mailRun = category === 'mail_recipient', toolRun = category === 'owner_tool';
+const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun || toolRun ? [mail] : [])];
 const workspace = path.join(state, 'workspace');
 const model = {primary: 'fixture/fixture'};
 const config = withHostControl({
@@ -143,9 +148,9 @@ const config = withHostControl({
     stateDir: path.join(state, 'channel'), mediaRoot: path.join(state, 'media'), testIngress: true, dailySendLimit: 100, segmentDelayMs: 0}},
   plugins: {allow: [...plugins], load: {paths: plugins.map(id => path.join(repo, 'chatbot/plugins', id))}, entries: {
     'kurumi-qq': {enabled: true}, [admin]: {enabled: true, config: {sourceRoot: source,
-      ...(mailRun ? {enabledCategories: [category]} : {})}},
+      ...(category !== 'member' ? {enabledCategories: [category]} : {})}},
     [confirmation]: {enabled: true, hooks: {allowConversationAccess: true}},
-    ...(mailRun ? {[mail]: {enabled: true}} : {}),
+    ...(mailRun || toolRun ? {[mail]: {enabled: true}} : {}),
   }, slots: {memory: 'none'}},
   tools: {codeMode: false, deny: ['exec', 'process', 'message', 'sessions_spawn'], web: {search: {enabled: false}, fetch: {enabled: false}}},
   session: {dmScope: 'per-channel-peer'}, cron: {enabled: false}, logging: {file: path.join(state, 'runtime.log')},
@@ -299,9 +304,49 @@ async function mailScenario() {
   report.cases.push('Revocation rejects both To and Cc, including an older draft, without opening SMTP');
 }
 
+async function toolScenario() {
+  const name = 'email_status';
+  const select = (action, fields = {}) => ({action, category, ...fields});
+  const ok = result => assert.equal(result.ok, true, JSON.stringify(result));
+  const show = change => turn(owner, '预览合成工具名单变更', [adminTool(select('propose', {change}), result => {
+    ok(result);
+    assert(result.previewText.includes(change.key));
+    proposal = result;
+  })]);
+  const notVisible = {name, searchOnly: true, verify: result => assert(!JSON.stringify(result).includes('"name":"' + name + '"'))};
+  await turn(owner, '核对未开放工具', [
+    notVisible,
+    adminTool(select('propose', {change: {op: 'add', key: 'exec'}}), isError('owner_tool_unavailable')),
+  ]);
+  await show({op: 'add', key: name});
+  await turn(owner, '确认', [confirm(ok), commit(ok)]);
+  assert(JSON.parse(fs.readFileSync(intentFile)).agents.entries.main.tools.alsoAllow.includes(name));
+  report.cases.push('Only an available mapped tool can be added; host-denied exec remains denied');
+  await stop(); await start();
+  await turn(owner, '查看新工具并调用只读状态', [
+    adminTool(select('get', {key: name}), result => {
+      ok(result); assert(result.inSync && result.runtime === name && result.available.includes(name));
+    }),
+    {name, args: {probe: false}, verify: result => assert.equal(result.ok, true, JSON.stringify(result))},
+  ]);
+  report.cases.push('Confirmed tool becomes visible and its read-only call is allowed by the trusted host after sync');
+  await show({op: 'remove', key: name});
+  await turn(owner, '确认', [confirm(ok), commit(ok)]);
+  await stop(); await start();
+  await turn(owner, '核对移除后的工具', [
+    notVisible,
+    {...notVisible, name, searchOnly: false, verify: result => assert(/not found|not available|unknown|unavailable/i.test(JSON.stringify(result)))},
+    adminTool(select('get', {key: name}), result => {
+      ok(result); assert(result.inSync && result.runtime === null && !result.available.includes(name));
+    }),
+  ]);
+  report.cases.push('Removal takes effect in tool search and execution; administration remains usable');
+}
+
 try {
   await start();
   if (mailRun) await mailScenario();
+  else if (toolRun) await toolScenario();
   else await memberScenario();
   report.passed = true;
 } catch (error) {

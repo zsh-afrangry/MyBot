@@ -16,43 +16,67 @@ export const OWNER_PERMISSIONS = Object.freeze([
 export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
 export const MEMBER_TOOLS = Object.freeze(['session_status', 'web_search', 'web_fetch', 'kurumi_document', 'kurumi_translate', 'kurumi_document_send']);
 
-export function toolPermission(name, args = {}) {
-  const direct = {
-    kurumi_logs:'logs.read', dispatch_action:'chat.use', tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec', e7_image: 'e7.image',
-    personal_weather_get_brief: 'weather.read', personal_profile_state_get: 'profile.read',
-    personal_profile_change_propose: 'profile.manage', personal_profile_change_commit: 'profile.manage',
-    personal_planning_state_get: 'planning.read', personal_planning_change_propose: 'planning.manage', personal_planning_change_commit: 'planning.manage',
-    personal_reminder_state_get: 'reminders.read', personal_reminder_propose: 'reminders.manage', personal_reminder_commit: 'reminders.manage',
-    personal_reminder_change_propose: 'reminders.manage', personal_reminder_change_commit: 'reminders.manage',
-    personal_reminder_cancel_propose: 'reminders.manage', personal_reminder_cancel_commit: 'reminders.manage',
-    personal_reminder_list_get: 'reminder-list.read',
-    kurumi_sticker: 'stickers.use', email_status: 'mail.status', email_draft: 'mail.draft', email_send: 'mail.send', email_outbox: 'mail.history',
-    knowledge_bills_get: 'bills.read', knowledge_bill_add: 'bills.manage', knowledge_bill_manage: 'bills.manage',
-    sessions_list: 'sessions.read', sessions_history: 'sessions.read',
+const DIRECT = {
+  kurumi_logs:'logs.read', dispatch_action:'chat.use', tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec', e7_image: 'e7.image',
+  personal_weather_get_brief: 'weather.read', personal_profile_state_get: 'profile.read',
+  personal_profile_change_propose: 'profile.manage', personal_profile_change_commit: 'profile.manage',
+  personal_planning_state_get: 'planning.read', personal_planning_change_propose: 'planning.manage', personal_planning_change_commit: 'planning.manage',
+  personal_reminder_state_get: 'reminders.read', personal_reminder_propose: 'reminders.manage', personal_reminder_commit: 'reminders.manage',
+  personal_reminder_change_propose: 'reminders.manage', personal_reminder_change_commit: 'reminders.manage',
+  personal_reminder_cancel_propose: 'reminders.manage', personal_reminder_cancel_commit: 'reminders.manage',
+  personal_reminder_list_get: 'reminder-list.read',
+  kurumi_sticker: 'stickers.use', email_status: 'mail.status', email_draft: 'mail.draft', email_send: 'mail.send', email_outbox: 'mail.history',
+  knowledge_bills_get: 'bills.read', knowledge_bill_add: 'bills.manage', knowledge_bill_manage: 'bills.manage',
+  sessions_list: 'sessions.read', sessions_history: 'sessions.read',
+  kurumi_document_send: 'qq.file.reply',
+};
+const CONFIRMATION = {
+  personal_reminder: ['reminders.read', 'reminders.manage'], personal_profile: ['profile.read', 'profile.manage'],
+  planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'], coding: ['tasks.read', 'tasks.code'],
+  access: ['access.manage', 'access.manage'],
+};
+
+function actions(groups, fallback) {
+  const byAction = new Map(Object.entries(groups).flatMap(([permission, names]) => names.map(name => [name, permission])));
+  return {
+    resolve: args => byAction.get(args.action) ?? fallback,
+    permissions: [...new Set([...byAction.values(), ...(fallback ? [fallback] : [])])],
   };
-  if (name === 'personal_confirmation') {
-    const permissions = {
-      personal_reminder: ['reminders.read', 'reminders.manage'], personal_profile: ['profile.read', 'profile.manage'],
-      planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'], coding: ['tasks.read', 'tasks.code'],
-      access: ['access.manage', 'access.manage'],
-    };
-    return ['list', 'preview', 'confirm'].includes(args.action) ? permissions[args.domain]?.[args.action === 'confirm' ? 1 : 0] : undefined;
-  }
-  if (direct[name]) return direct[name];
-  if (name === 'kurumi_access') return ['list', 'get', 'propose', 'commit', 'status'].includes(args.action) ? 'access.manage' : undefined;
-  if (name === 'kurumi_proactive') return ['status','records'].includes(args.action)?'proactive.read'
-    :['pause','resume','record_put','record_remove'].includes(args.action)?'proactive.manage'
-    :['query','remember','forget','sources'].includes(args.action)?'proactive.use':args.action==='notify'?'proactive.notify':undefined;
-  if (name === 'e7_data') return ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content', 'gvg', 'fates', 'packs'].includes(args.action) ? 'e7.read' : undefined;
-  if (name === 'personal_reminder_list_manage') return ['schedule', 'pause', 'resume'].includes(args.action) ? 'reminder-list.schedule' : 'reminder-list.manage';
-  if (name === 'kurumi_memory') return ['list', 'search'].includes(args.action) ? 'memory.read' : 'memory.manage';
-  if (name === 'kurumi_memory_records') return ['search','get','history'].includes(args.action)?'memory.read':['write','revise','supersede','retract','forget'].includes(args.action)?'memory.manage':undefined;
-  if (name === 'kurumi_memory_raw') return ['around','search'].includes(args.action)?'memory.raw.read':undefined;
-  if (name === 'kurumi_code') return ['list', 'status', 'result', 'diff'].includes(args.action) ? 'tasks.read' : ['start', 'continue', 'cancel', 'rollback', 'reconcile', 'preview', 'merge'].includes(args.action) ? 'tasks.code' : undefined;
-  if (name === 'kurumi_task') return args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read';
-  if (name === 'automations') return ['list', 'get', 'status', 'runs'].includes(args.action) ? 'automations.read' : 'automations.manage';
-  if (name === 'kurumi_document') return args.action==='rename'?'papers.rename':args.action==='fetch'?'papers.import':['list','get','find'].includes(args.action)?'papers.read':undefined;
-  if (name === 'kurumi_translate') return ({start: 'papers.translate', status: 'papers.read', list: 'papers.read', cancel: 'papers.cancel'})[args.action];
-  if (name === 'kurumi_document_send') return 'qq.file.reply';
-  return undefined;
+}
+
+const POLICIES = {
+  personal_confirmation: {
+    resolve: args => ['list', 'preview', 'confirm'].includes(args.action) && Object.hasOwn(CONFIRMATION, args.domain)
+      ? CONFIRMATION[args.domain][args.action === 'confirm' ? 1 : 0] : undefined,
+    permissions: [...new Set(Object.values(CONFIRMATION).flat())],
+  },
+  kurumi_access: actions({'access.manage': ['list', 'get', 'propose', 'commit', 'status']}),
+  kurumi_proactive: actions({'proactive.read': ['status', 'records'], 'proactive.manage': ['pause', 'resume', 'record_put', 'record_remove'],
+    'proactive.use': ['query', 'remember', 'forget', 'sources'], 'proactive.notify': ['notify']}),
+  e7_data: actions({'e7.read': ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content', 'gvg', 'fates', 'packs']}),
+  personal_reminder_list_manage: actions({'reminder-list.schedule': ['schedule', 'pause', 'resume']}, 'reminder-list.manage'),
+  kurumi_memory: actions({'memory.read': ['list', 'search']}, 'memory.manage'),
+  kurumi_memory_records: actions({'memory.read': ['search', 'get', 'history'],
+    'memory.manage': ['write', 'revise', 'supersede', 'retract', 'forget']}),
+  kurumi_memory_raw: actions({'memory.raw.read': ['around', 'search']}),
+  kurumi_code: actions({'tasks.read': ['list', 'status', 'result', 'diff'],
+    'tasks.code': ['start', 'continue', 'cancel', 'rollback', 'reconcile', 'preview', 'merge']}),
+  kurumi_task: {
+    resolve: args => args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read',
+    permissions: ['tasks.read', 'tasks.research', 'tasks.code'],
+  },
+  automations: actions({'automations.read': ['list', 'get', 'status', 'runs']}, 'automations.manage'),
+  kurumi_document: actions({'papers.rename': ['rename'], 'papers.import': ['fetch'], 'papers.read': ['list', 'get', 'find']}),
+  kurumi_translate: actions({'papers.translate': ['start'], 'papers.read': ['status', 'list'], 'papers.cancel': ['cancel']}),
+};
+
+export function toolPermission(name, args = {}) {
+  if (Object.hasOwn(DIRECT, name)) return DIRECT[name];
+  return Object.hasOwn(POLICIES, name) ? POLICIES[name].resolve(args) : undefined;
+}
+
+// Catalog view only. Execution still checks the one permission selected by actual arguments.
+export function toolPermissions(name) {
+  if (Object.hasOwn(DIRECT, name)) return [DIRECT[name]];
+  return Object.hasOwn(POLICIES, name) ? [...POLICIES[name].permissions] : [];
 }

@@ -9,7 +9,7 @@ import {
 } from '../../packages/confirmation-core/dist/index.js';
 import {ownerInvocation} from '../../plugins/kurumi-access-admin/inbound.js';
 import {createAccessAdminService} from '../../plugins/kurumi-access-admin/service.js';
-import {openPolicySource} from '../../plugins/kurumi-access-admin/source.js';
+import {openPolicySource, openRuntimeSource} from '../../plugins/kurumi-access-admin/source.js';
 import {AccessChangeStore} from '../../plugins/kurumi-access-admin/store.js';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {context, MEMBER, memberRow, OTHER, OWNER, ownerPolicy} from './fixtures.mjs';
@@ -18,25 +18,31 @@ const protectedGroup = {...memberRow(OTHER), kind: 'group', enabled: false, perm
 const chatPermissions = ['chat.use', 'qq.reply'];
 const add = {op: 'add', qq: MEMBER, grant: chatPermissions};
 
-function fixture(t, enabledCategories = []) {
+function fixture(t, enabledCategories = [], toolSurface) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-member-admin-'));
   fs.mkdirSync(path.join(root, 'config'));
   const file = path.join(root, 'config/access-control.json');
+  const runtimeFile = path.join(root, 'config/runtime.config.json');
   const original = ownerPolicy();
   original.subjects.push(memberRow(OTHER), protectedGroup);
   const writePolicy = value => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', {mode: 0o640});
   const read = () => fs.readFileSync(file, 'utf8');
   writePolicy(original);
-  const intent = {channels: {'kurumi-qq': {}}, agents: {entries: {main: {workspace: path.join(root, 'workspace')}}},
+  const intent = {channels: {'kurumi-qq': {}}, agents: {entries: {main: {workspace: path.join(root, 'workspace'),
+    tools: {profile: 'messaging', alsoAllow: ['kurumi_access', 'personal_confirmation']}}}},
     plugins: {entries: {
       'kurumi-access-admin': {enabled: true, config: {enabledCategories}},
       'kurumi-mail': {enabled: true},
     }}};
+  const readIntent = () => JSON.parse(fs.readFileSync(runtimeFile, 'utf8'));
+  const writeIntent = value => fs.writeFileSync(runtimeFile, JSON.stringify(value, null, 2) + '\n');
+  writeIntent(intent);
   let config;
-  const sync = () => { config = compileAccessConfig(intent, JSON.parse(read())); };
+  const sync = () => { config = compileAccessConfig(readIntent(), JSON.parse(read())); };
   sync();
   const ownerContext = context(original.subjects[0]);
   const source = openPolicySource(root);
+  const runtimeSource = openRuntimeSource(root);
   let now = Date.now();
   const store = new AccessChangeStore(root, () => now);
   const natural = store.natural;
@@ -48,7 +54,7 @@ function fixture(t, enabledCategories = []) {
     fs.rmSync(root, {recursive: true, force: true});
   });
   const run = (args, ctx = ownerContext, policySource = source) =>
-    createAccessAdminService(policySource, store)(args, config, ownerInvocation(ctx, config, args));
+    createAccessAdminService(policySource, store, {runtimeSource})(args, config, {...ownerInvocation(ctx, config, args), toolSurface});
   const propose = (change, category) => run({action: 'propose', change, ...(category ? {category} : {})});
   const commit = ({proposalId}) => run({action: 'commit', proposalId});
   const status = ({proposalId}) => run({action: 'status', proposalId});
@@ -75,7 +81,7 @@ function fixture(t, enabledCategories = []) {
     return proposal;
   }
   return {apply, approve, commit, file, newMessage, original, ownerContext, propose, read, run,
-    source, status, sync, writePolicy, advance: ms => { now += ms; }};
+    readIntent, source, status, sync, writeIntent, writePolicy, advance: ms => { now += ms; }};
 }
 
 test('QQ member changes cover registration, per-permission edits, clearing fields, disabling and removal', t => {
@@ -172,7 +178,7 @@ test('source edits before commit or before replacement are preserved', t => {
   assert.equal(f.status(otherProposal).status, 'failed');
   assert.deepEqual(JSON.parse(f.read()), concurrent);
   assert.throws(() => f.commit(otherProposal), {code: 'access_change_already_submitted'});
-  assert.deepEqual(fs.readdirSync(path.dirname(f.file)), ['access-control.json']);
+  assert.deepEqual(fs.readdirSync(path.dirname(f.file)).sort(), ['access-control.json', 'runtime.config.json']);
 });
 
 test('mail management is opt-in even for the owner', t => {
@@ -239,4 +245,54 @@ test('mail rejects mixed shapes, duplicate/wildcard entries, members, and stale 
   assert.equal(f.status(pending).status, 'stale');
   assert.throws(() => f.commit(pending), {code: 'access_policy_changed'});
   assert.deepEqual(JSON.parse(f.read()), concurrent);
+});
+
+test('tool whitelist refuses unauthorized additions, protects administration and previews inherited tools', async t => {
+  const category = 'owner_tool';
+  const surface = cfg => ['session_status', ...cfg.agents.entries.main.tools.alsoAllow.filter(name => name !== 'exec')];
+  const f = fixture(t, [category], surface);
+  const intent = f.readIntent();
+  intent.agents.entries.main.tools.alsoAllow.push('session_status');
+  f.writeIntent(intent);
+  f.sync();
+  assert.throws(() => f.propose({op: 'remove', key: 'kurumi_access'}, category), {code: 'access_management_tool_protected'});
+  assert.throws(() => f.propose({op: 'replace', key: 'session_status', replacement: 'personal_confirmation'}, category),
+    {code: 'access_entry_already_exists'});
+  assert.throws(() => f.propose({op: 'add', key: 'unknown'}, category), {code: 'owner_tool_not_granted'});
+  await assert.rejects(f.propose({op: 'add', key: 'exec'}, category), {code: 'owner_tool_unavailable'});
+  const changed = structuredClone(f.original);
+  delete changed.subjects[0].permissions['mail.status'];
+  f.writePolicy(changed);
+  assert.throws(() => f.propose({op: 'add', key: 'email_status'}, category), {code: 'owner_tool_not_granted'});
+  const removal = await f.propose({op: 'remove', key: 'session_status'}, category);
+  assert.match(removal.previewText, /其他规则提供/);
+  await assert.rejects(f.commit(removal), {code: 'approval_required'});
+  f.approve(removal);
+  assert.equal((await f.commit(removal)).activation, 'pending_sync');
+  assert.equal(f.status(removal).activation, 'pending_sync');
+  f.sync();
+  assert.equal(f.status(removal).activation, 'active');
+  const list = await f.run({action: 'list', category});
+  assert.deepEqual(list.source.sort(), ['kurumi_access', 'personal_confirmation']);
+  assert(list.outsideAlsoAllow.includes('session_status'));
+  assert.deepEqual(JSON.parse(f.read()), changed);
+});
+
+test('runtime proposal is stale after either its config or the identity source changes', async t => {
+  const category = 'owner_tool';
+  const f = fixture(t, [category], cfg => cfg.agents.entries.main.tools.alsoAllow);
+  const change = {op: 'add', key: 'email_status'};
+  const beforeConfig = await f.propose(change, category);
+  f.approve(beforeConfig);
+  const concurrent = f.readIntent();
+  concurrent.tools = {codeMode: false};
+  f.writeIntent(concurrent);
+  assert.equal(f.status(beforeConfig).status, 'stale');
+  assert.throws(() => f.commit(beforeConfig), {code: 'access_policy_changed'});
+  const beforeIdentity = await f.propose(change, category);
+  f.approve(beforeIdentity);
+  f.writePolicy({...f.original, revision: 2});
+  assert.equal(f.status(beforeIdentity).status, 'stale');
+  assert.throws(() => f.commit(beforeIdentity), {code: 'access_policy_changed'});
+  assert.deepEqual(f.readIntent(), concurrent);
 });

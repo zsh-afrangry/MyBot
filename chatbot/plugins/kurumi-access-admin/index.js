@@ -5,7 +5,7 @@ import {CATEGORY_NAMES} from './categories.js';
 import {ownerInvocation} from './inbound.js';
 import {TOOL} from './policy.js';
 import {createAccessAdminService} from './service.js';
-import {openPolicySource} from './source.js';
+import {openPolicySource, openRuntimeSource} from './source.js';
 import {AccessChangeStore} from './store.js';
 
 const qq = {type: 'string', pattern: '^[0-9]{5,12}$'};
@@ -57,7 +57,7 @@ export default {
               open: () => ({natural, listInboundConfirmationCandidates: () => [],
                 recordInboundConfirmation: () => false, close() {}}),
             });
-            execute = createAccessAdminService(source, store);
+            execute = createAccessAdminService(source, store, {runtimeSource: openRuntimeSource(api.pluginConfig?.sourceRoot)});
           } catch (error) {
             store.close();
             store = undefined;
@@ -83,6 +83,7 @@ export default {
         'For update, grant enables permissions and revoke removes permissions. Null clears note or expiresAt.',
         'Remove deletes the membership record, retaining its data.',
         'For enabled category mail_recipient, use key for one exact address, with replacement for replace. This does not send mail.',
+        'For enabled category owner_tool, use key for one registered tool name. Business permissions and denials still apply.',
         'Show the preview and wait for a later owner confirmation through personal_confirmation with domain=access.',
         'Then call commit using the approved proposalId. That writes the repository policy only.',
         'Use status to inspect a proposal after an interrupted response. A written change takes effect after operator deployment.',
@@ -93,7 +94,14 @@ export default {
           const config = ctx.getRuntimeConfig?.() ?? currentConfig();
           const request = ownerInvocation(ctx, config, args, signal);
           if (!execute) throw new AccessError('access_admin_unavailable');
-          return json(execute(args, config, request));
+          request.toolSurface = async projected => {
+            const {createOpenClawCodingToolsAsync} = await import('openclaw/plugin-sdk/agent-harness');
+            const tools = await createOpenClawCodingToolsAsync({config: projected, abortSignal: signal,
+              agentId: ctx.agentId, sessionKey: ctx.sessionKey, sessionId: ctx.sessionId, workspaceDir: ctx.workspaceDir,
+              toolPolicyMessageProvider: 'kurumi-qq', requesterSenderId: ctx.requesterSenderId, senderIsOwner: true});
+            return tools.map(tool => tool.name);
+          };
+          return json(await execute(args, config, request));
         } catch (error) {
           signal?.throwIfAborted();
           if (error instanceof AccessError) return json({ok: false, code: error.code});
