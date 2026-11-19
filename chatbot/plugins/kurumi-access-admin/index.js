@@ -47,9 +47,11 @@ export default {
       api.registerService({
         id: 'kurumi-access-admin',
         start() {
-          const source = openPolicySource(api.pluginConfig?.sourceRoot);
+          const sourceRoot = api.pluginConfig?.sourceRoot;
+          const stateRoot = api.runtime.state.resolveStateDir();
+          const source = openPolicySource(sourceRoot);
           source.read();
-          store = new AccessChangeStore(api.runtime.state.resolveStateDir());
+          store = new AccessChangeStore(stateRoot);
           try {
             const natural = store.natural;
             unregister = registerConfirmationBackend({
@@ -57,7 +59,7 @@ export default {
               open: () => ({natural, listInboundConfirmationCandidates: () => [],
                 recordInboundConfirmation: () => false, close() {}}),
             });
-            execute = createAccessAdminService(source, store, {runtimeSource: openRuntimeSource(api.pluginConfig?.sourceRoot)});
+            execute = createAccessAdminService(source, store, {runtimeSource: openRuntimeSource(sourceRoot), sourceRoot, stateRoot});
           } catch (error) {
             store.close();
             store = undefined;
@@ -84,6 +86,7 @@ export default {
         'Remove deletes the membership record, retaining its data.',
         'For enabled category mail_recipient, use key for one exact address, with replacement for replace. This does not send mail.',
         'For enabled category owner_tool, use key for one registered tool name. Business permissions and denials still apply.',
+        'For enabled category exec_root, use key for one absolute directory path inside an operator-approved base. This only changes additional executable write directories.',
         'Show the preview and wait for a later owner confirmation through personal_confirmation with domain=access.',
         'Then call commit using the approved proposalId. That writes the repository policy only.',
         'Use status to inspect a proposal after an interrupted response. A written change takes effect after operator deployment.',

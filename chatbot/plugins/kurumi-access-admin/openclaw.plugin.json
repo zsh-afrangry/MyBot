@@ -12,7 +12,11 @@
       "sourceRoot": {"type": "string", "minLength": 2},
       "enabledCategories": {
         "type": "array", "uniqueItems": true,
-        "items": {"type": "string", "enum": ["mail_recipient", "owner_tool"]}
+        "items": {"type": "string", "enum": ["mail_recipient", "owner_tool", "exec_root"]}
+      },
+      "execDirectoryBases": {
+        "type": "array", "maxItems": 16, "uniqueItems": true,
+        "items": {"type": "string", "minLength": 2, "maxLength": 4096}
       }
     }
   },

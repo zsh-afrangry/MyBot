@@ -19,7 +19,7 @@ function applied(list, category, {before, after}) {
   return newKey === null || list.some(row => category.key(row) === newKey && isDeepStrictEqual(row, after));
 }
 
-export function createAccessAdminService(source, store, {runtimeSource} = {}) {
+export function createAccessAdminService(source, store, {runtimeSource, sourceRoot, stateRoot} = {}) {
   function readSource(owner) {
     const current = source.read();
     const primary = current.policy.subjects.find(row => row.role === 'owner');
@@ -48,7 +48,8 @@ export function createAccessAdminService(source, store, {runtimeSource} = {}) {
     const current = runtimeTarget ? target.read() : identity;
     if (runtimeTarget) getCategory(name, current.policy);
     const revisions = runtimeTarget ? {} : {sourceRevision: current.policy.revision, runtimeRevision: runtime.revision};
-    const env = {config, owner: identity.policy.subjects.find(row => row.role === 'owner'),
+    const env = {config, intent: current.policy, sourceRoot, stateRoot,
+      owner: identity.policy.subjects.find(row => row.role === 'owner'),
       runtimeOwner: runtime.subjects.find(row => row.role === 'owner'), toolSurface};
     const repoList = category.list(current.policy);
     const liveList = category.live(runtime, config);
@@ -64,7 +65,10 @@ export function createAccessAdminService(source, store, {runtimeSource} = {}) {
     };
     const withFacts = (draft, next) => {
       if (!category.inspect) return next();
-      return category.inspect(env, draft).then(facts => { check(); assertUnchanged(); return next(facts); });
+      const facts = category.inspect(env, draft);
+      return typeof facts?.then === 'function'
+        ? facts.then(result => { check(); assertUnchanged(); return next(result); })
+        : next(facts);
     };
     const stale = plan => plan.baseHash !== current.hash || (runtimeTarget
       ? plan.accessHash !== identity.hash : plan.baseRevision !== current.policy.revision);

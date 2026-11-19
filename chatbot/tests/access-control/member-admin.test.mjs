@@ -18,22 +18,25 @@ const protectedGroup = {...memberRow(OTHER), kind: 'group', enabled: false, perm
 const chatPermissions = ['chat.use', 'qq.reply'];
 const add = {op: 'add', qq: MEMBER, grant: chatPermissions};
 
-function fixture(t, enabledCategories = [], toolSurface) {
+function fixture(t, enabledCategories = [], toolSurface, configure = () => {}) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-member-admin-'));
-  fs.mkdirSync(path.join(root, 'config'));
-  const file = path.join(root, 'config/access-control.json');
-  const runtimeFile = path.join(root, 'config/runtime.config.json');
+  const sourceRoot = path.join(root, 'source'), stateRoot = path.join(root, 'runtime');
+  fs.mkdirSync(path.join(sourceRoot, 'config'), {recursive: true});
+  fs.mkdirSync(stateRoot);
+  const file = path.join(sourceRoot, 'config/access-control.json');
+  const runtimeFile = path.join(sourceRoot, 'config/runtime.config.json');
   const original = ownerPolicy();
   original.subjects.push(memberRow(OTHER), protectedGroup);
   const writePolicy = value => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', {mode: 0o640});
   const read = () => fs.readFileSync(file, 'utf8');
   writePolicy(original);
-  const intent = {channels: {'kurumi-qq': {}}, agents: {entries: {main: {workspace: path.join(root, 'workspace'),
+  const intent = {channels: {'kurumi-qq': {}}, agents: {entries: {main: {workspace: path.join(stateRoot, 'workspace'),
     tools: {profile: 'messaging', alsoAllow: ['kurumi_access', 'personal_confirmation']}}}},
     plugins: {entries: {
       'kurumi-access-admin': {enabled: true, config: {enabledCategories}},
       'kurumi-mail': {enabled: true},
     }}};
+  configure(intent, root);
   const readIntent = () => JSON.parse(fs.readFileSync(runtimeFile, 'utf8'));
   const writeIntent = value => fs.writeFileSync(runtimeFile, JSON.stringify(value, null, 2) + '\n');
   writeIntent(intent);
@@ -41,10 +44,10 @@ function fixture(t, enabledCategories = [], toolSurface) {
   const sync = () => { config = compileAccessConfig(readIntent(), JSON.parse(read())); };
   sync();
   const ownerContext = context(original.subjects[0]);
-  const source = openPolicySource(root);
-  const runtimeSource = openRuntimeSource(root);
+  const source = openPolicySource(sourceRoot);
+  const runtimeSource = openRuntimeSource(sourceRoot);
   let now = Date.now();
-  const store = new AccessChangeStore(root, () => now);
+  const store = new AccessChangeStore(stateRoot, () => now);
   const natural = store.natural;
   const unregister = registerConfirmationBackend({id: 'access-admin-fixture', open: () => ({natural, close() {}})});
   t.after(() => {
@@ -54,7 +57,8 @@ function fixture(t, enabledCategories = [], toolSurface) {
     fs.rmSync(root, {recursive: true, force: true});
   });
   const run = (args, ctx = ownerContext, policySource = source) =>
-    createAccessAdminService(policySource, store, {runtimeSource})(args, config, {...ownerInvocation(ctx, config, args), toolSurface});
+    createAccessAdminService(policySource, store, {runtimeSource, sourceRoot, stateRoot})(args, config,
+      {...ownerInvocation(ctx, config, args), toolSurface});
   const propose = (change, category) => run({action: 'propose', change, ...(category ? {category} : {})});
   const commit = ({proposalId}) => run({action: 'commit', proposalId});
   const status = ({proposalId}) => run({action: 'status', proposalId});
@@ -81,7 +85,7 @@ function fixture(t, enabledCategories = [], toolSurface) {
     return proposal;
   }
   return {apply, approve, commit, file, newMessage, original, ownerContext, propose, read, run,
-    readIntent, source, status, sync, writeIntent, writePolicy, advance: ms => { now += ms; }};
+    readIntent, root, source, sourceRoot, stateRoot, status, sync, writeIntent, writePolicy, advance: ms => { now += ms; }};
 }
 
 test('QQ member changes cover registration, per-permission edits, clearing fields, disabling and removal', t => {
@@ -295,4 +299,59 @@ test('runtime proposal is stale after either its config or the identity source c
   assert.equal(f.status(beforeIdentity).status, 'stale');
   assert.throws(() => f.commit(beforeIdentity), {code: 'access_policy_changed'});
   assert.deepEqual(f.readIntent(), concurrent);
+});
+
+function directoryFixture(t) {
+  return fixture(t, ['exec_root'], undefined, (intent, root) => {
+    const base = path.join(root, 'ordinary');
+    const primary = path.join(root, 'pilot');
+    for (const directory of [base, primary, path.join(root, 'outside'), path.join(base, '文件 A'), path.join(base, '文件 B')]) {
+      fs.mkdirSync(directory);
+    }
+    intent.plugins.entries['kurumi-access-admin'].config.execDirectoryBases = [base];
+    intent.plugins.entries['kurumi-host-control'] = {enabled: true, config: {
+      exec: {workdir: primary, timeoutSeconds: 60, writeBoundary: {root: primary, launcher: '/usr/bin/true'}},
+    }};
+  });
+}
+
+test('directory changes touch only extra roots and never touch the directory or the fixed fence', t => {
+  const category = 'exec_root', f = directoryFixture(t);
+  const first = path.join(f.root, 'ordinary/文件 A'), second = path.join(f.root, 'ordinary/文件 B');
+  fs.writeFileSync(path.join(first, 'sentinel.txt'), 'retained');
+  const before = f.readIntent();
+  const added = f.apply({op: 'add', key: first}, category);
+  assert.equal(f.status(added).activation, 'pending_sync');
+  f.sync();
+  assert.equal(f.status(added).activation, 'active');
+  const replace = f.apply({op: 'replace', key: first, replacement: second}, category);
+  assert.equal(f.status(replace).activation, 'pending_sync');
+  const after = f.readIntent();
+  assert.deepEqual(after.plugins.entries['kurumi-host-control'].config.exec.writeBoundary.additionalRoots, [second]);
+  assert.equal(fs.readFileSync(path.join(first, 'sentinel.txt'), 'utf8'), 'retained');
+  f.apply({op: 'remove', key: second}, category);
+  before.plugins.entries['kurumi-host-control'].config.exec.writeBoundary.additionalRoots = [];
+  assert.deepEqual(f.readIntent(), before);
+});
+
+test('directory additions reject out-of-scope, protected, overlapping, linked and replaced directories', t => {
+  const category = 'exec_root', f = directoryFixture(t);
+  const add = key => f.propose({op: 'add', key}, category);
+  const base = path.join(f.root, 'ordinary'), first = path.join(base, '文件 A');
+  assert.throws(() => add(path.join(f.root, 'outside')), {code: 'exec_directory_not_approved'});
+  for (const key of [f.sourceRoot, f.stateRoot, '/usr', '/etc']) {
+    assert.throws(() => add(key), {code: 'exec_directory_protected'});
+  }
+  assert.throws(() => add(base + '/..'), {code: 'invalid_exec_directory'});
+  assert.throws(() => f.propose({op: 'add', key: first, launcher: '/usr/bin/true'}, category), {code: 'invalid_access_admin_arguments'});
+  const link = path.join(base, 'linked');
+  fs.symlinkSync(first, link);
+  assert.throws(() => add(link), {code: 'invalid_exec_directory'});
+  const pending = add(first);
+  f.approve(pending);
+  fs.renameSync(first, first + '-old');
+  fs.mkdirSync(first);
+  assert.throws(() => f.commit(pending), {code: 'access_policy_changed'});
+  f.apply({op: 'add', key: first}, category);
+  assert.throws(() => add(base), {code: 'exec_directory_boundary_invalid'});
 });

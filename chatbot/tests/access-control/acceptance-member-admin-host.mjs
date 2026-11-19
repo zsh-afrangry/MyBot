@@ -22,7 +22,7 @@ import {withHostControl} from './host-config.mjs';
 
 const [flag, out, mode, category = 'member', ...extra] = process.argv.slice(2);
 assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out), 'Require a new absolute --out');
-assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'owner_tool'].includes(category) && !extra.length);
+assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'owner_tool', 'exec_root'].includes(category) && !extra.length);
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-access-admin-host-'));
@@ -51,7 +51,7 @@ let active, proposal, child;
 const sends = [];
 function unwrap(value) {
   for (let i = 0; i < 6; i++) {
-    if (typeof value === 'string') value = JSON.parse(value);
+    if (typeof value === 'string') { try { value = JSON.parse(value); } catch { return value; } }
     else if (value?.result) value = value.result;
     else if (value?.content?.length === 1) value = value.content[0].text;
     else break;
@@ -131,6 +131,13 @@ await new Promise(resolve => probe.close(resolve));
 const endpoint = `127.0.0.1:${server.address().port}`;
 const admin = 'kurumi-access-admin', confirmation = 'personal-confirmation';
 const mail = 'kurumi-mail', mailRun = category === 'mail_recipient', toolRun = category === 'owner_tool';
+const execRun = category === 'exec_root', fixed = path.join(root, 'exec-fixed');
+const base = path.join(root, 'ordinary'), extraRoot = path.join(base, '目录 A');
+const launcher = '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run';
+if (execRun) {
+  fs.mkdirSync(fixed);
+  fs.mkdirSync(extraRoot, {recursive: true});
+}
 const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun || toolRun ? [mail] : [])];
 const workspace = path.join(state, 'workspace');
 const model = {primary: 'fixture/fixture'};
@@ -141,18 +148,24 @@ const config = withHostControl({
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
   agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
     entries: {main: {workspace, model, tools: {profile: 'messaging',
-      alsoAllow: ['personal_confirmation', 'kurumi_access', ...(mailRun ? ['email_draft', 'email_send'] : [])],
-      deny: ['read', 'write', 'edit', 'apply_patch', 'exec', 'process', 'message', 'sessions_spawn']}}}},
+      alsoAllow: ['personal_confirmation', 'kurumi_access', ...(mailRun ? ['email_draft', 'email_send'] : []), ...(execRun ? ['exec'] : [])],
+      deny: ['read', 'write', 'edit', 'apply_patch', ...(!execRun ? ['exec'] : []), 'process', 'message', 'sessions_spawn'],
+      ...(execRun ? {exec: {host: 'gateway', mode: 'full', timeoutSeconds: 10, notifyOnExit: false}} : {}),
+    }}}},
   channels: {'kurumi-qq': {enabled: true, httpUrl: `http://${endpoint}`, wsUrl: `ws://${endpoint}`,
     httpTokenFile: path.join(state, 'http-token'), wsTokenFile: path.join(state, 'ws-token'),
     stateDir: path.join(state, 'channel'), mediaRoot: path.join(state, 'media'), testIngress: true, dailySendLimit: 100, segmentDelayMs: 0}},
   plugins: {allow: [...plugins], load: {paths: plugins.map(id => path.join(repo, 'chatbot/plugins', id))}, entries: {
-    'kurumi-qq': {enabled: true}, [admin]: {enabled: true, config: {sourceRoot: source,
-      ...(category !== 'member' ? {enabledCategories: [category]} : {})}},
+    'kurumi-qq': {enabled: true, ...(execRun ? {config: {
+      exec: {workdir: fixed, timeoutSeconds: 10, writeBoundary: {root: fixed, launcher}},
+    }} : {})}, [admin]: {enabled: true, config: {sourceRoot: source,
+      ...(category !== 'member' ? {enabledCategories: [category]} : {}),
+      ...(execRun ? {execDirectoryBases: [base]} : {})}},
     [confirmation]: {enabled: true, hooks: {allowConversationAccess: true}},
     ...(mailRun || toolRun ? {[mail]: {enabled: true}} : {}),
   }, slots: {memory: 'none'}},
-  tools: {codeMode: false, deny: ['exec', 'process', 'message', 'sessions_spawn'], web: {search: {enabled: false}, fetch: {enabled: false}}},
+  tools: {codeMode: false, deny: [...(!execRun ? ['exec'] : []), 'process', 'message', 'sessions_spawn'],
+    web: {search: {enabled: false}, fetch: {enabled: false}}},
   session: {dmScope: 'per-channel-peer'}, cron: {enabled: false}, logging: {file: path.join(state, 'runtime.log')},
 }, repo);
 writeJson(intentFile, config);
@@ -167,6 +180,7 @@ async function start() {
     child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run',
       '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
       cwd: repo, detached: true, stdio: ['ignore', fd, fd], env: {PATH: process.env.PATH, HOME: process.env.HOME,
+        OPENCLAW_EXEC_SHELL_SNAPSHOT: '0',
         LANG: 'C.UTF-8', OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_STATE_DIR: state, OPENCLAW_CONFIG_PATH: runtimeFile,
         OPENCLAW_AGENT_DIR: path.join(state, 'agents/main/agent')},
     });
@@ -343,10 +357,48 @@ async function toolScenario() {
   report.cases.push('Removal takes effect in tool search and execution; administration remains usable');
 }
 
+async function execScenario() {
+  const select = (action, fields = {}) => ({action, category, ...fields});
+  const ok = result => assert.equal(result.ok, true, JSON.stringify(result));
+  const show = op => turn(owner, '预览合成可写目录变更', [adminTool(select('propose', {change: {op, key: extraRoot}}), result => {
+    ok(result); assert(result.previewText.includes(extraRoot)); proposal = result;
+  })]);
+  const file = path.join(extraRoot, 'canary.txt');
+  const probe = workdir => ({name: 'exec', args: {workdir, command: 'printf fixture > canary.txt'}, verify() {}});
+  const forbidden = verify => ({name: 'exec',
+    args: {workdir: extraRoot, command: `printf fixture > "${path.join(source, 'should-not-exist')}"`}, verify});
+
+  await turn(owner, '查询可登记范围并拒绝受管配置目录', [
+    adminTool(select('list'), result => { ok(result); assert.deepEqual(result.approvedBases, [base]); }),
+    adminTool(select('propose', {change: {op: 'add', key: source}}), isError('exec_directory_protected')),
+  ]);
+  await show('add');
+  await turn(owner, '确认', [confirm(ok), commit(ok), probe(extraRoot)]);
+  assert(!fs.existsSync(file));
+  report.cases.push('Outside approved bases is refused and a newly written source entry does not yet allow writing');
+  await stop(); await start();
+  assert(fs.readFileSync(path.join(workspace, 'AGENTS.md'), 'utf8').includes(extraRoot));
+  await turn(owner, '验证运行中的目录限制', [probe(extraRoot), forbidden(result => assert(/denied|permitted/i.test(JSON.stringify(result))))]);
+  assert.equal(fs.readFileSync(file, 'utf8'), 'fixture');
+  assert(!fs.existsSync(path.join(source, 'should-not-exist')));
+  report.cases.push('Persona projects the new scope; real isolated exec writes in the added root and refuses the source tree');
+  await show('remove');
+  await turn(owner, '确认', [confirm(ok), commit(ok)]);
+  await stop(); await start();
+  assert(!fs.readFileSync(path.join(workspace, 'AGENTS.md'), 'utf8').includes(extraRoot));
+  fs.renameSync(file, path.join(extraRoot, 'preserved.txt'));
+  await turn(owner, '核对撤销不删除资料并验固定根', [probe(extraRoot), probe(fixed)]);
+  assert(!fs.existsSync(file));
+  assert.equal(fs.readFileSync(path.join(extraRoot, 'preserved.txt'), 'utf8'), 'fixture');
+  assert.equal(fs.readFileSync(path.join(fixed, 'canary.txt'), 'utf8'), 'fixture');
+  report.cases.push('Removal revokes new writes after sync; prior files and the fixed root are preserved');
+}
+
 try {
   await start();
   if (mailRun) await mailScenario();
   else if (toolRun) await toolScenario();
+  else if (execRun) await execScenario();
   else await memberScenario();
   report.passed = true;
 } catch (error) {

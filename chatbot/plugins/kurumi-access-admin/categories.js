@@ -1,5 +1,5 @@
 import {AccessError, validatePolicy} from '../../packages/access-control/index.js';
-import {ownerToolCategory} from './runtime-lists.js';
+import {execRootCategory, ownerToolCategory} from './runtime-lists.js';
 import {assertQq, buildMemberChange, memberPreview, memberView, recipientKey,
   stringListChange, stringListPreview, stringListView} from './policy.js';
 
@@ -40,6 +40,7 @@ const categories = {
       '同步后收件人与抄送均按新名单校验；本次变更不发送邮件。', revision),
   },
   owner_tool: ownerToolCategory,
+  exec_root: execRootCategory,
 };
 
 export const CATEGORY_NAMES = Object.freeze(Object.keys(categories));
