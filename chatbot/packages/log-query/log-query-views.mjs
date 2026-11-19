@@ -69,23 +69,26 @@ const failed = (item) => item && (item.data.isError === true || item.data.summar
  */
 export function pairCalls(events) {
   const calls = new Map();
-  const entry = (id) => {
-    if (!calls.has(id)) calls.set(id, {call: undefined, result: undefined, nested: [], access: []});
-    return calls.get(id);
+  const scoped=(item,id)=>JSON.stringify([item.correlation.sessionKey??item.correlation.sessionId??item.correlation.runId??'',id]);
+  const entry = (item,id) => {
+    const key=scoped(item,id);
+    if (!calls.has(key)) calls.set(key, {toolCallId:id,call: undefined, result: undefined, nested: [], access: []});
+    return calls.get(key);
   };
   const nestedParent = new Map();
   for (const item of events) {
-    if (item.kind === 'agent.tool_nested' && item.correlation.toolCallId && item.correlation.parentToolCallId) nestedParent.set(item.correlation.toolCallId, item.correlation.parentToolCallId);
+    if (item.kind === 'agent.tool_nested' && item.correlation.toolCallId && item.correlation.parentToolCallId) nestedParent.set(scoped(item,item.correlation.toolCallId), item.correlation.parentToolCallId);
   }
   for (const item of events) {
     const id = item.correlation.toolCallId;
     if (!id || !CALL_KINDS.has(item.kind)) continue;
-    if (item.kind === 'agent.tool_call') entry(id).call = item;
-    else if (item.kind === 'agent.tool_result') entry(id).result = item;
-    else if (item.kind === 'agent.tool_nested') entry(item.correlation.parentToolCallId ?? id).nested.push(item);
-    else entry(nestedParent.get(id) ?? id).access.push(item);
+    if (item.kind === 'agent.tool_call') entry(item,id).call = item;
+    else if (item.kind === 'agent.tool_result') entry(item,id).result = item;
+    else if (item.kind === 'agent.tool_nested') entry(item,item.correlation.parentToolCallId ?? id).nested.push(item);
+    else entry(item,nestedParent.get(scoped(item,id)) ?? id).access.push(item);
   }
-  return [...calls.entries()].map(([toolCallId, parts]) => {
+  return [...calls.values()].map(parts => {
+    const toolCallId=parts.toolCallId;
     const {call, result, nested, access} = parts;
     const members = [call, ...access, ...nested, result].filter(Boolean);
     const first = members.reduce((min, item) => item.epochMs < min.epochMs ? item : min);

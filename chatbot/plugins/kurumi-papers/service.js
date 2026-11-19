@@ -1,7 +1,7 @@
 // On-demand domain jobs, durable state, no automatic paid replay after a restart. See docs/22.
 import fs from 'node:fs';
 import path from 'node:path';
-import {createHash} from 'node:crypto';
+import {createHash,randomUUID} from 'node:crypto';
 import {AsyncResource} from 'node:async_hooks';
 import {Documents, atomicJson, paperTitle} from '../../packages/documents/index.js';
 import {downloadScholarlyPdf} from '../../packages/scholarly-source/index.js';
@@ -9,6 +9,7 @@ import {resolveProfile} from './profiles.js';
 import {runTranslation,executionSettings,reliabilitySettings} from './runner.js';
 import {selectedOutputs} from './outputs.js';
 import {failureSummary} from './failure.js';
+import {createExecutionStore,executionSpan,observabilityDirectory} from '../../packages/observability/execution.js';
 
 const JOB_ID = /^job_[a-f0-9]{24}$/;
 export function normalizePages(value, pages, maxPages = 30) {
@@ -27,6 +28,7 @@ export class PaperService {
     this.config = config; this.documents = new Documents(config.root);
     this.documentsFor = documentsFor ?? (() => this.documents); this.ownerBinding = ownerBinding; this.authorize = authorize;
     this.download = download; this.runner = runner; this.sendFile = sendFile; this.notify = notify; this.trace = trace; this.inspect = inspect;
+    this.evidence=createExecutionStore(path.join(config.root,'observability'),{source:'papers'});
     this.queue = []; this.active = null; this.online = false;
     // Constructed at plugin startup, before any managed tool invocation. Background jobs
     // must outlive that invocation without retaining its closed host work scope.
@@ -61,7 +63,14 @@ export class PaperService {
     if (job.notification) view.notification = Object.fromEntries(['mode','status','contextQueued','explanationError'].filter(k => job.notification[k] !== undefined).map(k => [k,job.notification[k]]));
     return view;
   }
-  save(job) { job.updatedAt = new Date().toISOString(); atomicJson(this.file(job.id), job); this.trace({kind: 'paper.job', correlation: {taskId: job.id, ...job.correlation}, data: {status: job.status, documentId: job.documentId, profile: job.profile, error: job.error ?? null, delivery: job.delivery ?? null}}); return job; }
+  span(job,id,type,name,parentSpanId='task') {return executionSpan(this.evidence,{executionId:'paper:'+job.id,spanId:id,parentSpanId,business:'papers',type,name,correlation:{taskId:job.id,...job.correlation}});}
+  save(job) {
+    job.updatedAt = new Date().toISOString(); atomicJson(this.file(job.id), job);
+    try{this.trace({kind:'paper.job',correlation:{taskId:job.id,...job.correlation},data:{status:job.status,documentId:job.documentId,profile:job.profile,error:job.error??null,delivery:job.delivery??null}});}catch{console.warn('paper trace capture failed');}
+    this.span(job,'root','execution','论文翻译',null).emit(job.status==='succeeded'&&job.delivery?.status==='dispatching'?'running':job.status,{links:[{documentId:job.documentId}],captureStatus:job.usage?.traceCaptureFailed?'partial':'available'});
+    this.span(job,'task','task','后台翻译',job.correlation?.toolCallId?'tool':'root').emit(job.status,{error:job.error,delivery:job.delivery?.status});
+    return job;
+  }
   list(requester) { return fs.readdirSync(path.join(this.documents.root, 'jobs')).filter(n => /^job_[a-f0-9]{24}\.json$/.test(n)).map(n => this.get(n.slice(0,-5))).filter(job=>!this.authorize||(requester && this.binding(job)?.subjectId===requester.subjectId)).sort((a,b) => b.createdAt.localeCompare(a.createdAt)).slice(0,20).map(job=>this.explain(job)); }
   start() {
     for (const name of fs.readdirSync(path.join(this.documents.root, 'jobs'))) {
@@ -77,14 +86,25 @@ export class PaperService {
     this.online = false;
     for (const id of this.queue.splice(0)) { const job = this.get(id); job.status = 'interrupted'; this.save(job); }
     this.active?.controller.abort(); await this.active?.promise;
+    this.evidence.close();
   }
-  async fetch(url, {signal,requester,title} = {}) {
+  async fetch(url, {signal,requester,title,correlation={}} = {}) {
     const check=()=>this.authorize?.(requester,'papers.import');check();
     const documents=this.documentsFor(requester?.subjectId);
     const cache = path.join(documents.root, 'cache');
-    const paper = await this.download(cache, url, {signal});
-    check();
-    return documents.add(fs.readFileSync(paper.pdfPath), {filename: `paper-${paper.id}.pdf`, source: {type: 'scholarly', url: paper.url, ...(paperTitle(title) ? {title: paperTitle(title)} : {})}}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
+    const executionId='acquisition:'+randomUUID();
+    const make=(spanId,type,name,parentSpanId)=>executionSpan(this.evidence,{executionId,spanId,type,name,parentSpanId,business:'papers',correlation});
+    const root=make('root','execution','获取论文'),tool=make('tool','tool','kurumi_document.fetch','root');
+    root.emit('running');tool.emit('running',{details:{input:tool.detail({url,title})}});
+    try{
+      const paper=await this.download(cache,url,{signal,observe:event=>{
+        const span=make('download','http','下载 PDF','tool');
+        span.emit(event.status,{cacheHit:event.cacheHit,details:{request:span.detail(event.request),response:span.detail(event.response)}});
+      }});
+      check();
+      const doc=await documents.add(fs.readFileSync(paper.pdfPath),{filename:`paper-${paper.id}.pdf`,source:{type:'scholarly',url:paper.url,...(paperTitle(title)?{title:paperTitle(title)}:{})}},{signal,...(this.inspect?{inspect:this.inspect}:{})});
+      tool.emit('completed',{details:{result:tool.detail({ok:true,document:doc})}});root.emit('completed',{links:[{documentId:doc.id}]});return doc;
+    }catch(error){tool.emit('failed',{code:error.code??'download_failed'});root.emit('failed');throw error;}
   }
   submit(args, {key, correlation = {}, requester} = {}) {
     if (!this.online) throw Error('Translation job service is not running');
@@ -106,6 +126,7 @@ export class PaperService {
       if (existing.requestHash !== digest && !(this.ownerBinding && !existing.requester && existing.requestHash===legacyDigest)) throw Error('Invocation key reused with different parameters'); return existing; }
     if (this.queue.length >= 5) throw Error('Translation queue is full (maximum 5 waiting jobs)');
     const job = this.save({id, ...parameters, requestHash: digest, status: 'queued', correlation, createdAt: new Date().toISOString(), artifacts: {}});
+    if(correlation.toolCallId){const tool=this.span(job,'tool','tool','kurumi_translate.start','root');tool.emit('completed',{details:{input:tool.detail(args),result:tool.detail({ok:true,job})}});}
     this.queue.push(id); this.scheduleDrain(); return job;
   }
   scheduleDrain() {
@@ -134,7 +155,10 @@ export class PaperService {
       fs.mkdirSync(work, {mode: 0o700});
       fs.writeFileSync(path.join(work, 'input.pdf'), documents.get(job.documentId).content, {mode: 0o600, flag: 'wx'});
       job.status = 'running'; job.execution = {...executionSettings(this.config), ...reliabilitySettings(this.config)}; this.save(job);
-      const result = await this.runner({config: this.config, work, cache: path.join(documents.root, 'cache'), profile: job.profile, pages: job.pages, sourceLang: job.sourceLang, targetLang: job.targetLang, outputKind: job.deliveryKind, signal});
+      this.span(job,'engine','stage','PDF 翻译引擎').emit('running');
+      const result = await this.runner({config: this.config, work, cache: path.join(documents.root, 'cache'), profile: job.profile, pages: job.pages, sourceLang: job.sourceLang, targetLang: job.targetLang, outputKind: job.deliveryKind, signal,
+        trace:{root:path.join(this.config.root,'observability'),libraryRoot:observabilityDirectory(),executionId:'paper:'+job.id,parentId:'engine',correlation:{taskId:job.id,subjectId:this.binding(job)?.subjectId,...job.correlation}}});
+      this.span(job,'engine','stage','PDF 翻译引擎').emit('completed');
       signal.throwIfAborted();
       this.check(job,'papers.translate');
       job.usage = result.usage;
@@ -143,6 +167,7 @@ export class PaperService {
           if (typeof result[kind] !== 'string') throw Object.assign(Error('missing_selected_pdf_output'), {code: 'missing_selected_pdf_output'});
           const record = await documents.add(fs.readFileSync(result[kind]), {kind: 'artifact', filename: documents.describe(job.documentId).filename.replace(/\.pdf$/i, `${job.pages ? '-pages-' + job.pages : ''}-${kind}.pdf`), source: {type: 'translation', inputId: job.documentId}, jobId: id}, {signal, ...(this.inspect ? {inspect: this.inspect} : {})});
           job.artifacts[kind] = record.id;
+          this.span(job,'artifact:'+kind,'stage','登记 PDF 产物').emit('completed',{links:[{documentId:record.id}]});
         } catch (error) {
           const code = /^[a-zA-Z0-9_]+$/.test(error.code ?? '') ? error.code : 'pdf_artifact_registration_failed';
           job.artifactFailure = {kind, code};
@@ -155,12 +180,15 @@ export class PaperService {
         for (const kind of selectedOutputs(job.deliveryKind)) {
           signal.throwIfAborted();
           this.check(job,'qq.file.reply');
+          this.span(job,'delivery:'+kind,'stage','投递 PDF').emit('running');
           const receipt = await this.sendFile(job.artifacts[kind], id + ':' + kind, signal, this.binding(job));
+          const deliverySpan=this.span(job,'delivery:'+kind,'stage','投递 PDF');deliverySpan.emit('completed',{details:{receipt:deliverySpan.detail(receipt)}});
           job.delivery.receipts.push(receipt); this.save(job);
         }
         job.delivery.status = 'platform_accepted'; this.save(job);
       }
     } catch (error) {
+      this.span(job,job.status==='succeeded'?'delivery:'+job.deliveryKind:'engine','stage',job.status==='succeeded'?'投递 PDF':'PDF 翻译引擎').emit(signal.aborted?'cancelled':'failed',{code:error.code??'translation_failed'});
       if (job.status === 'succeeded') { job.delivery.status = 'failed_or_unknown'; this.save(job); }
       else { job.status = signal.aborted ? (this.online ? 'cancelled' : 'interrupted') : 'failed'; job.error = /^[a-zA-Z0-9_]+$/.test(error.code ?? '') ? error.code : 'translation_failed'; this.save(job); }
     } finally {

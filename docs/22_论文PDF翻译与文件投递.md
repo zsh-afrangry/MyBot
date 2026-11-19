@@ -130,7 +130,7 @@ flowchart LR
 翻译失败、或译文已生成但投递失败或未知时，先保存 worker 用量、阶段和结构诊断，再生成白名单字段的 `failureSummary`，供 status、list 和通知共用。
 
 - 说明区分：单篇 token 或请求上限、上游余额/配额/鉴权、渠道中断、总时限、输出校验、文件投递。`translation_budget_exhausted` 不解释成账号余额不足，未知用量不计作 0。
-- Responses 未完成时只保存响应状态、未完成原因和实际输出上限，不保存上游正文和推理内容。`max_output_tokens` 解释为本次输出（含推理）到限，`content_filter` 单独说明，缺少原因时不猜。
+- 失败说明只使用响应状态、未完成原因和实际输出上限，不把上游任意正文带进通知。`max_output_tokens` 解释为本次输出（含推理）到限，`content_filter` 单独说明，缺少原因时不猜。
 - status 和 list 只返回有界的任务视图和用量汇总，不含逐请求回执、请求人绑定和内部路径。
 - 摘要交给请求人绑定的原会话和 Agent，经 `response-core` 与公开会话准入生成说明，沿用该会话的人格、近期聊天和模型。说明回合关闭工具执行，发送前复核身份和权限。不自动重译、不调预算、不换厂商、不重发文件，成员的结果不改发给主人。生成失败记 `generation_failed`，不发固定兜底，也不假记已通知。通知经 QQ 公开接口，沿用原幂等键，未知不补发。表达边界见[文档21](21_后端职责分层与代码整理.md)。
 
@@ -139,7 +139,8 @@ flowchart LR
 - 从请求开始或最后一次非空白的 `response.output_text.delta` 计时。心跳、创建事件、思考事件和空白不重置。无正文超时先取消 HTTP 进程，记 `api_output_idle_timed_out_unknown` 和未知用量，再按下表切渠道或有限恢复，只重试当前批次。持续有正文仍受 600 秒单请求期限和整篇期限约束。
 - 没有可见正文不证明上游没推理、没计费，本地取消也不保证上游停止计费。只有状态为 `completed`、报告了用量且校验通过的响应可用于译文。已报告的用量即使任务失败仍计入预算，未报告的渠道中断记 unknown。所有实际尝试共同消耗请求和用量预算，不自动重跑整篇。
 - 校验通过的译文批次保留在本人缓存，整篇失败不清除已完成批次；同一模型、强度、语言和协议的后续任务可复用。单任务用量只统计本次实际 API 请求，不包含命中本地缓存的历史消耗。
-- 每次请求独立上下文，不带 `previous_response_id`，顶层 `instructions` 明确。流式只采用终态 response 的完整 output_text 和用量，不采用 reasoning、部分 delta、空输出和 incomplete。记录请求数、实际模型、请求与回显强度、各类 token、responseId 和凭据名称，不记录密钥、论文正文和上游任意错误文本。
+- 每次请求独立上下文，不带 `previous_response_id`，顶层 `instructions` 明确。流式译文只采用终态 response 的完整 output_text 和用量，不采用 reasoning、部分 delta、空输出和 incomplete。任务回执保存请求数、实际模型、请求与回显强度、各类 token、responseId 和凭据名称，不保存密钥。
+- 工具、后台任务、批次/API、缓存、引擎阶段、产物和投递进入共享执行树；实际请求/响应及回执通过主人日志查询按需展开。脱敏、保留、历史缺失和 token 汇总契约统一见[文档18](18_跨模块链路日志查询.md#用量与正文)。
 - GPT 批次用原数组协议。DeepSeek 批次传 `text.format=json_schema`（`translations` 对象数组、原 ID 枚举）。无论 API 是否接受 schema，本地都核对条数、ID、非空译文和全部公式、样式标记；只允许去掉一个完整的外层 JSON 围栏，不从解释文字里抽取片段。源码、模型、强度和批次协议都进入缓存键。校验失败只记结构原因、数量和位置。
 
 ### 重试与渠道切换
@@ -161,15 +162,13 @@ flowchart LR
 
 ### Worker 隔离
 
-固定 worker 只挂载系统文件、只读 Python 和适配器、单任务目录与缓存，清空宿主环境，凭据只经 stdin 传入。取消或超时终止整个进程组。翻译允许出站网络，用于调用固定 API、下载布局模型和字体，网络并未隔离。
-
-备份和恢复规则见[文档12](12_目录资产与Git备份整理.md)。恢复演练的副本会关闭 `liveTranslationEnabled` 并清空其中的论文凭据。
+固定 worker 只挂载系统文件、只读 Python/适配器/日志辅助模块、单任务目录与缓存、诊断目录，清空宿主环境，凭据只经 stdin 传入。取消或超时终止整个进程组。翻译允许出站网络，用于调用固定 API、下载布局模型和字体，网络并未隔离。备份和恢复规则见[文档12](12_目录资产与Git备份整理.md)；恢复演练的副本会关闭 `liveTranslationEnabled` 并清空论文凭据。
 
 ## 限制与已知问题
 
 - **性能优化未实施。** 新身份首次使用在 API 前约有 5 分 55 秒公共资源初始化，全渠道冷却时等待很长；多人并发、长期压力和新成员冷启动的性能对照待验，待办见文末。
 - **030 凭据用量异常未查清。** 曾有 9 笔 030 的请求报告约 2.3 万输入 token，明显偏高，渠道侧来源和修复未处理。官方 DeepSeek 渠道成功不能说明它已修复。
-- **缓存验收边界。** 逐任务本地缓存命中尚无记录，整篇成功和 API 请求数不能证明零缓存。成员身份验收范围见[文档24](24_统一身份与权限管理.md)。
+- **缓存验收边界。** 逐任务缓存命中与来源关联可查；采集上线前的任务没有缓存轨迹，旧缓存可能来源未知，不能由请求数倒推历史命中。成员身份验收范围见[文档24](24_统一身份与权限管理.md)。
 - **质量与强度范围。** MAX 冷缓存、全文逐字和公式校对未覆盖。DeepSeek Flash/low 的整篇结果不能替代 high 档的验收，V4 Pro 只测过短句。`none` 档的标记保持不稳定。
 - **渠道可靠性。** 只测过真实短句、部分自然降级和故障注入，没有专门制造渠道耗尽、凭据吊销或每种切换顺序的真实故障，不保证所有凭据长期可用。
 - **改名的真人体验未验。** `papers.rename` 仅在离线和隔离宿主（含真实主模型）验证，没有真实 QQ 改名和收件。
@@ -179,14 +178,15 @@ flowchart LR
 ## 如何验证
 
 离线测试不外发、不调用付费 API；Node 用 `/usr/bin/node`，引擎用已安装的锁定 Python 环境：
-
 ```bash
 /usr/bin/node --test chatbot/tests/papers/*.test.mjs
 python3 chatbot/tests/papers/responses_test.py
 python3 chatbot/tests/papers/concurrency_test.py
 python3 chatbot/tests/papers/reliability_test.py
 /home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py
-/usr/bin/node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/log-query/log-query.test.mjs
+python3 chatbot/tests/papers/trace.test.py
+/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/cache-trace.test.py
+/usr/bin/node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/plugins/kurumi-qq/test/*.test.js chatbot/tests/log-query/*.test.mjs
 ```
 
 版本 `869faf9` 的真实验收：主人 34 页整篇以官方 DeepSeek Flash/high 完成并确认 QQ 收件，已报告用量 312,409 / 600,000 tokens、272 次请求，无校验重试、渠道失败或用量未知；成员单页及复用缓存的 23 页整篇收件通过。全文与公式质量、MAX、改名及长期体验不在此结论内。
@@ -196,5 +196,5 @@ python3 chatbot/tests/papers/reliability_test.py
 ## 进行中：性能与交付复验
 
 - 预热或只读共享模型、字体和 tokenizer，个人 PDF、译文缓存及凭据保持隔离；按故障类别/连续失败细分冷却，保留有序同模型切换、有界重试和单路恢复探测。
-- 增加初始化、资源、解析、翻译、排版、投递的阶段计时与阶段内进度，不以静态总体权重推算剩余时间。先保持 high、4 并发/QPS1、30 分钟与既有预算，对照首次准备和预热场景，付费复测另获授权。
+- 执行树已有引擎阶段记录；继续细分初始化和资源准备、补齐阶段内进度，不以静态总体权重推算剩余时间。先保持 high、4 并发/QPS1、30 分钟与既有预算，对照首次准备和预热场景，付费复测另获授权。
 - MAX 冷缓存、全文/公式质量、改名收件与多人长期体验均按上面的缺口复验。

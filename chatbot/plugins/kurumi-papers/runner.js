@@ -45,11 +45,17 @@ export function loadKeys(file, profile = {}) {
   if (!Object.keys(keys).length) throw Object.assign(Error('No translation credentials configured'),{code:'translation_credentials_not_configured'});
   return keys;
 }
-export function workerCommand({config, work, cache}) {
+export function workerCommand({config, work, cache, trace}) {
   const python = fs.realpathSync(config.python), prefix = path.dirname(path.dirname(python));
   const source = fileURLToPath(new URL('./python', import.meta.url));
   for (const dir of [work, cache]) if (fs.realpathSync(dir) !== path.resolve(dir)) throw Error('Worker directory must not contain symlinks');
   const args = ['--unshare-all', '--share-net', '--die-with-parent', '--new-session', '--clearenv'];
+  if(trace){
+    const library=trace.libraryRoot??fileURLToPath(new URL('../../packages/observability/',import.meta.url));
+    fs.mkdirSync(trace.root,{recursive:true,mode:0o700});
+    if(fs.realpathSync(trace.root)!==path.resolve(trace.root))throw Error('Invalid trace directory');
+    args.push('--ro-bind',library,'/observability','--setenv','PYTHONPATH','/observability','--bind',trace.root,'/logs');
+  }
   for (const dir of ['/usr','/bin','/lib','/lib64','/etc/ssl','/etc/fonts','/usr/share/fonts']) if (fs.existsSync(dir)) args.push('--ro-bind', dir, dir);
   for (const file of ['/etc/resolv.conf','/etc/hosts','/etc/nsswitch.conf']) if (fs.existsSync(file)) args.push('--ro-bind', fs.realpathSync(file), file);
   args.push('--ro-bind', prefix, prefix, '--ro-bind', source, '/app', '--bind', work, '/work', '--bind', cache, '/cache',
@@ -59,17 +65,17 @@ export function workerCommand({config, work, cache}) {
     '--', '/usr/bin/prlimit', '--as=12884901888', '--fsize=104857600', '--cpu=1200', '--', python, '/app/engine.py');
   return {command: '/usr/bin/bwrap', args};
 }
-export function runTranslation({config, work, cache, profile, pages, sourceLang, targetLang, outputKind = 'dual', signal}) {
+export function runTranslation({config, work, cache, profile, pages, sourceLang, targetLang, outputKind = 'dual', signal,trace}) {
   signal?.throwIfAborted();
   const execution = executionSettings(config);
   const kinds = selectedOutputs(outputKind), timeoutSeconds = translationTimeoutSeconds(config);
   profile = resolveProfile(profile);
-  const {command, args} = workerCommand({config, work, cache});
+  const {command, args} = workerCommand({config, work, cache,trace});
   const request = {profile, keys: loadKeys(config.credentialsFile, profile), input: '/work/input.pdf', output: '/work',
     cooldownFile: '/cache/credential-cooldowns.json', pages, sourceLang, targetLang, outputKind,
     maxRequests: config.maxRequests ?? 300, maxReportedTokens: config.maxReportedTokens ?? 150000,
     executionTimeoutSeconds: timeoutSeconds, requestIdleTimeoutSeconds: requestIdleTimeoutSeconds(config),
-    ...execution, ...reliabilitySettings(config)};
+    ...execution, ...reliabilitySettings(config),...(trace?{trace:{...trace,root:'/logs'}}:{})};
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {env: {PATH: '/usr/bin:/bin'}, stdio: ['pipe','pipe','pipe'], detached: true});
     let output = '', killed = false;

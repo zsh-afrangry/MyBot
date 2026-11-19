@@ -1,7 +1,8 @@
 // Owner-authorized read-only diagnostics. Contract: docs/18 and docs/24.
 import path from 'node:path';
 import fs from 'node:fs';
-export const SOURCES = Object.freeze(['openclaw-runtime','openclaw-session','openclaw-receipt','snowluma','cron-runs','channel-delivery','access-control','trace-events','personal-reminders','personal-reminder-list','kurumi-memory','e7','papers','web-deepseek','knowledgemap']);
+export {QQ_SOURCES as SOURCES} from '../../packages/log-query/sources.js';
+import {QQ_SOURCES as SOURCES} from '../../packages/log-query/sources.js';
 export const RESULT_BYTES = 24 * 1024;
 export class LogQueryError extends Error { constructor(code, details) { super(code); this.code = code; if(details !== undefined)this.details=details; } }
 export const logQueryRunner = backendRoot => path.join(backendRoot, 'chatbot', 'scripts', 'log-query.mjs');
@@ -15,9 +16,9 @@ export function settings(raw) {
   return Object.freeze({...raw});
 }
 export function queryOptions(raw = {}, now = Date.now()) {
-  if (!object(raw) || Object.keys(raw).some(k => !['view','from','to','since','sources','runId','messageId','kind','limit','offset','contains','keywords','keywordMode','levels','noText','expand','raw','contextBefore','contextAfter','contentOffset','contentHash','eventRef','eventKey','cronJobId','code'].includes(k))) fail('invalid_query');
+  if (!object(raw) || Object.keys(raw).some(k => !['view','from','to','since','sources','runId','messageId','kind','limit','offset','contains','keywords','keywordMode','levels','noText','expand','raw','contextBefore','contextAfter','contentOffset','contentHash','eventRef','eventKey','cronJobId','code','nodeId','executionId','detail'].includes(k))) fail('invalid_query');
   const view = raw.view ?? 'events';
-  if (!['events','errors','stats','overview'].includes(view) || (raw.since !== undefined && raw.from !== undefined)) fail('invalid_query');
+  if (!['events','errors','stats','overview','tree'].includes(view) || (raw.since !== undefined && raw.from !== undefined)) fail('invalid_query');
   let duration = 2 * 3600000;
   if (raw.since !== undefined) {
     const m = /^([1-9]\d*)(m|h|d)$/.exec(raw.since);
@@ -48,6 +49,8 @@ export function queryOptions(raw = {}, now = Date.now()) {
   const limit = raw.limit ?? 50, offset = raw.offset ?? 0;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || !Number.isSafeInteger(offset) || offset < 0 || view === 'stats' && (raw.limit !== undefined || raw.offset !== undefined)) fail('invalid_query');
   const text = value => typeof value === 'string' && value.length > 0 && !value.includes('\0');
+  for(const key of ['nodeId','executionId','detail'])if(raw[key]!==undefined&&(!text(raw[key])||raw[key].length>200||view!=='tree'))fail('invalid_query');
+  if(raw.detail!==undefined&&(!raw.nodeId||!/^[a-zA-Z][a-zA-Z0-9_-]{0,63}$/.test(raw.detail)))fail('invalid_query');
   for(const key of ['code','eventKey','cronJobId'])if(raw[key]!==undefined&&!text(raw[key]))fail('invalid_query');
   if(raw.eventRef!==undefined&&(typeof raw.eventRef!=='string'||!/^event:[a-f0-9]{32}$/u.test(raw.eventRef)))fail('invalid_query');
   if(raw.runId!==undefined&&!text(raw.runId))fail('invalid_query');

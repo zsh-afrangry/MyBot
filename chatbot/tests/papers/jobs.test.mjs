@@ -8,6 +8,7 @@ import path from 'node:path';
 import {PaperService,normalizePages} from '../../plugins/kurumi-papers/service.js';
 import {resolveProfile} from '../../plugins/kurumi-papers/profiles.js';
 import {createPaperPlugin} from '../../plugins/kurumi-papers/index.js';
+import {readExecutionStore,readExecutionDetail} from '../../packages/observability/execution.js';
 import {pdf} from './fixtures.mjs';
 const inspect=async()=>({pages:1});
 async function setup(t,deps={}) {
@@ -41,7 +42,7 @@ test('Explicit GPT jobs keep their own profile and never mutate the default Deep
 });
 test('Lifecycle, immutable invocation identity and separate output/delivery state',async t=>{
   let files=0;const {service,doc,root}=await setup(t,{sendFile:async()=>{files++;return{status:'platform_accepted'};}});
-  const args={documentId:doc.id,pages:'1'},job=service.submit(args,{key:'first'});
+  const args={documentId:doc.id,pages:'1'},job=service.submit(args,{key:'first',correlation:{toolCallId:'tool-1'}});
   assert.equal(service.submit(args,{key:'first'}).id,job.id);
   assert.throws(()=>service.submit({...args,pages:undefined},{key:'first'}),/different/);
   const result=await terminal(service,job.id);assert.equal(result.status,'succeeded');
@@ -51,6 +52,11 @@ test('Lifecycle, immutable invocation identity and separate output/delivery stat
   assert(service.documents.get(result.artifacts.dual).content.subarray(0,8).includes(Buffer.from('%PDF-')));
   assert.match(service.documents.describe(result.artifacts.dual).filename,/-pages-1-dual\.pdf$/);
   assert(!fs.existsSync(path.join(root,'work',job.id)));
+  const file=path.join(root,'observability/executions.sqlite'),events=readExecutionStore(file,{executionId:'paper:'+job.id});
+  const tool=events.find(event=>event.data.type==='tool');
+  const returned=readExecutionDetail(file,tool.data.details.result).content;
+  assert.equal(returned.ok,true);assert.equal(returned.job.status,'queued');assert.equal(returned.job.documentId,doc.id);
+  assert.equal(events.filter(event=>event.correlation.spanId==='root').at(-1).data.status,'succeeded');
 });
 test('Only selected PDFs are passed to the worker, registered and delivered; originals survive',async t=>{
   for(const output of ['dual','mono','both']){

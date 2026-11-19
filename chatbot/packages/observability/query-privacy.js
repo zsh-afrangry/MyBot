@@ -2,18 +2,19 @@
 // minimization, not anonymization: retained opaque IDs can still identify people.
 const containers = new Set(['events', 'calls', 'timeline', 'turns', 'items', 'access', 'nestedToolCallIds',
   'denied', 'retries', 'failures', 'recoveries', 'clarificationRetries', 'correlation', 'data', 'summary',
-  'diagnostics', 'functions', 'schemas', 'tools', 'fingerprints', 'targetResults', 'modelTurns', 'models', 'usage', 'sources', 'settings', 'ids', 'contextEvents']);
+  'diagnostics', 'functions', 'schemas', 'tools', 'fingerprints', 'targetResults', 'modelTurns', 'models', 'usage', 'sources', 'settings', 'ids', 'contextEvents',
+  'nodes','node','detail','details','references','links','sourceStatus','issues','backgroundRequests','backgroundUsage']);
 const identifiers = new Set(['id', 'receiptId', 'sessionId', 'sessionKey', 'session', 'runId', 'traceId', 'spanId', 'parentSpanId',
   'qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'cronJobId', 'taskId', 'conversationId',
   'senderId', 'recipientId', 'eventKey', 'draftId', 'grantId', 'confirmationMessageId', 'sourceMessageId', 'groupId',
   'presentationMessageId', 'eventRef', 'toolCallId', 'parentToolCallId', 'failedToolCallId', 'recoveredToolCallId',
-  'barrierToolCallId', 'loadId', 'sha256', 'resultFingerprint', 'ledgerId']);
+  'barrierToolCallId', 'loadId', 'sha256', 'resultFingerprint', 'ledgerId','executionId','spanId','parentSpanId','parentId']);
 const labels = new Set(['source', 'kind', 'view', 'tool', 'declaredTool', 'outcome', 'errorCode', 'code',
-  'type', 'level', 'subsystem', 'status', 'hostStatus', 'decision', 'permission', 'domain', 'actionKind', 'action', 'failureCode',
+  'type', 'level', 'subsystem', 'status', 'hostStatus', 'decision', 'permission', 'domain', 'business','relationship','captureStatus','scope','coverage','actionKind', 'action', 'failureCode',
   'consumptionResult', 'lastStatus', 'lastDeliveryStatus', 'scheduleKind', 'sessionTarget', 'correlationQuality',
   'metadataTrust', 'replyToSource', 'ingressKind', 'fingerprintScope', 'component', 'name', 'consistency', 'table', 'finalOutcome', 'storage', 'executionOutcome', 'businessOutcome', 'textCompleteness', 'model', 'provider', 'stopReason', 'payloadKind', 'reason', 'deliveryState', 'knownCode', 'method', 'resource', 'cache', 'direction', 'storedComparison', 'contextRole', 'countBasis', 'businessAttemptBasis']);
 const dates = new Set(['at', 'from', 'to', 'snapshotAt', 'scheduleAt', 'recordedAt']);
-const facts = new Set(['schemaVersion', 'epochMs', 'durationMs', 'count', 'total', 'shown', 'hiddenRaw', 'orphanEvents',
+const facts = new Set(['schemaVersion', 'epochMs', 'durationMs', 'count', 'total', 'shown', 'hiddenRaw', 'orphanEvents','childCount','executions','unassignedEvents','requests','unknownUsageRequests','missingRequestDetails','expectedRequests','reasoningTokens','cacheReadTokens','cacheWriteTokens','usageKnown',
   'flagged', 'textLength', 'displayTruncated', 'limit', 'offset', 'nextOffset', 'truncated', 'noText', 'enabled', 'ok', 'isError', 'idempotent','businessAttemptCount','unkeyedErrorRecords','errorRecords','exceptionRecordedInAudit','validationRecordedInAudit','generationReferenceRecorded',
   'requiresUserInput', 'resultConflict', 'structuredOutcome', 'snapshotOfCurrentState', 'partialPage','recordCount','correlationGroups','contextBefore','contextAfter','contextAnchors','contextWithinQueryWindow','detailsExpanded',
   'attempts', 'failures', 'outbound', 'errors', 'denied', 'aborted', 'pid', 'quoteLoaded', 'replyToAvailableToAgent',

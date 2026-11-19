@@ -100,10 +100,11 @@ def validate_idle_timeout(seconds):
     return seconds
 
 
-def http_request(url, key, body, timeout, on_progress=None, cancel_event=None, idle_timeout_seconds=100):
+def http_request(url, key, body, timeout, on_progress=None, cancel_event=None, idle_timeout_seconds=100, on_response_event=None):
     """Supervise one disposable HTTP worker so blocking DNS/TLS/read is cancellable.
 
-    Private request/response bytes only cross anonymous pipes, never argv, stderr or disk.
+    Transport bytes cross anonymous pipes, never argv or stderr. The parent trace
+    producer separately stores sanitized diagnostic snapshots when enabled.
     The worker inherits the existing sandbox/process group and has no persistent service.
     """
     if cancel_event and cancel_event.is_set():
@@ -131,7 +132,7 @@ def http_request(url, key, body, timeout, on_progress=None, cancel_event=None, i
                                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                                bufsize=0)
     try:
-        data = json.dumps({"url": url, "key": key, "body": body, "timeout": timeout}).encode()
+        data = json.dumps({"url": url, "key": key, "body": body, "timeout": timeout,"captureEvents":on_response_event is not None}).encode()
         pending = memoryview(data)
         while pending:
             pending = pending[process.stdin.write(pending):]
@@ -155,7 +156,10 @@ def http_request(url, key, body, timeout, on_progress=None, cancel_event=None, i
                 while b"\n" in buffer:
                     line, buffer = buffer.split(b"\n", 1)
                     event = json.loads(line)
-                    if event.get("kind") == "progress":
+                    if event.get("kind") == "response_event":
+                        if on_response_event:
+                            on_response_event(event["value"])
+                    elif event.get("kind") == "progress":
                         if on_progress:
                             on_progress(event["value"])
                     elif event.get("kind") == "output_activity":
@@ -205,7 +209,7 @@ def transport_error_details(error, phase):
     return result
 
 
-def blocking_http_request(url, key, body, timeout, on_progress=None, on_output=None):
+def blocking_http_request(url, key, body, timeout, on_progress=None, on_output=None, on_response_event=None):
     deadline = time.monotonic() + timeout
     request = urllib.request.Request(url, data=json.dumps(body).encode(), headers={
         "Authorization": "Bearer " + key, "Content-Type": "application/json",
@@ -218,15 +222,19 @@ def blocking_http_request(url, key, body, timeout, on_progress=None, on_output=N
             status, phase = response.status, "read_stream" if body.get("stream") else "read_body"
             if body.get("stream"):
                 try:
-                    value = read_response_stream(response, on_progress=on_progress, deadline=deadline, on_output=on_output)
+                    value = read_response_stream(response, on_progress=on_progress, deadline=deadline, on_output=on_output,on_response_event=on_response_event)
                 except TranslationFailure as error:
                     error.details["httpStatus"] = response.status
                     raise
                 return response.status, value
             return response.status, json.loads(response.read(4 * 1024 * 1024))
     except urllib.error.HTTPError as error:
+        raw=error.read(32769)
+        if on_response_event:
+            on_response_event({'type':'http.error.body','httpStatus':error.code,
+                'body':raw[:32768].decode('utf8',errors='replace'),'truncated':len(raw)>32768})
         try:
-            body = json.loads(error.read(32768))
+            body = json.loads(raw[:32768])
         except Exception:
             # An edge/WAF rejection is not evidence that a credential is bad.
             body = {"error": {"code": "non_json_http_error"}}
@@ -244,7 +252,7 @@ def blocking_http_request(url, key, body, timeout, on_progress=None, on_output=N
         raise TranslationFailure("invalid_api_response") from None
 
 
-def read_response_stream(response, on_progress=None, deadline=None, on_output=None):
+def read_response_stream(response, on_progress=None, deadline=None, on_output=None,on_response_event=None):
     """Only the terminal Responses object is authoritative; never return partial deltas."""
     size, event, count, output_chars, last_progress = 0, [], 0, 0, 0
     started, last_output = time.monotonic(), None
@@ -271,6 +279,8 @@ def read_response_stream(response, on_progress=None, deadline=None, on_output=No
             if raw == "[DONE]":
                 break
             data = json.loads(raw)
+            if on_response_event:
+                on_response_event(data)
             kind = data.get("type")
             count += 1
             if kind == "response.output_text.delta":
@@ -324,7 +334,7 @@ class ResponsesClient:
                  timeout=600, cooldown_file=None, request=http_request, sleep=time.sleep,
                  now=time.time, on_usage=None, max_concurrency=1, max_qps=None,
                  batch_validation_retries=1, channel_recovery_retries=1,
-                 channel_cooldown_seconds=300, execution_timeout_seconds=1800, idle_timeout_seconds=100):
+                 channel_cooldown_seconds=300, execution_timeout_seconds=1800, idle_timeout_seconds=100,trace=None):
         spec = registered_profile(profile)
         self.profile, self.key_ids = dict(profile), tuple(spec["credentialIds"])
         self.batch_format = spec["batchFormat"]
@@ -356,6 +366,8 @@ class ResponsesClient:
         self.deadline = self.started_clock + execution_timeout_seconds
         self.next_start = self.started_clock
         self.requests = 0
+        self.trace=trace
+        self.trace_fingerprints={}
         self.input_tokens = self.output_tokens = 0
         self.receipts = []
         self.failure = None
@@ -395,13 +407,37 @@ class ResponsesClient:
                     "channelFailures": sum(r.get("outcome") == "channel_failed" for r in self.receipts),
                     "maxConcurrency": self.max_concurrency, "maxQps": self.max_qps,
                     "inFlight": self.in_flight, "peakInFlight": self.peak_in_flight,
-                    "hardCostLimit": False}
+                    "hardCostLimit": False,"traceCaptureFailed":bool(self.trace and self.trace.failed)}
 
     def _publish(self):
         # Serialize snapshot + write: an older concurrent snapshot must not overwrite a newer one.
         with self.lock:
+            if self.trace:
+                for receipt in self.receipts:
+                    self._trace_receipt(receipt)
             if self.on_usage:
                 self.on_usage(self.snapshot())
+
+    def _trace_receipt(self, receipt):
+        # Only semantic receipt changes create events; stream counters stay in usage.json.
+        try:
+            stable={k:v for k,v in receipt.items() if k != "streamProgress"}
+            signature=json.dumps(stable,sort_keys=True)
+            if self.trace_fingerprints.get(receipt["attempt"])==signature:
+                return
+            self.trace_fingerprints[receipt["attempt"]]=signature
+            u=receipt.get("usage",{})
+            usage={k:v for k,v in {"inputTokens":u.get("input_tokens"),"outputTokens":u.get("output_tokens"),
+                "reasoningTokens":u.get("output_tokens_details",{}).get("reasoning_tokens"),
+                "cacheReadTokens":u.get("input_tokens_details",{}).get("cached_tokens")}.items() if type(v) is int}
+            self.trace.node("request:"+str(receipt["attempt"]),"api","Responses API",receipt.get("outcome","failed" if receipt.get("error") else "running"),
+                parent="batch:"+str(receipt["batchId"]),usage=usage,usageKnown=receipt.get("usageStatus")=="reported",
+                durationMs=round(receipt['elapsedSeconds']*1000) if 'elapsedSeconds' in receipt else None,
+                model=receipt['model'],provider=receipt['provider'],effort=receipt['effort'],
+                details={**receipt.get("traceDetails",{}),"receipt":self.trace.detail(stable)})
+        except Exception:
+            # The business request, validation and accounting remain authoritative.
+            pass
 
     def fail(self, code, *, details=None, validation=None, annotate=True):
         with self.lock:
@@ -439,9 +475,13 @@ class ResponsesClient:
             self.batch_count += 1
             context = {"id": self.batch_count, "attempt": 0}
         self.local.batch = context
+        if self.trace:
+            self.trace.node("batch:"+str(context["id"]),"batch","翻译批次","running")
         try:
             yield context
         finally:
+            if self.trace:
+                self.trace.node("batch:"+str(context["id"]),"batch","翻译批次","failed" if self.failure else "completed")
             self.local.batch = previous
 
     def _assert_budget(self):
@@ -668,10 +708,33 @@ class ResponsesClient:
                     options["idle_timeout_seconds"] = self.idle_timeout_seconds
                 started = time.monotonic()
                 transport_error = None
+                response_events=[]
+                response_bytes=0
+                response_truncated=False
+                if self.trace:
+                    receipt["traceDetails"]={"request":self.trace.detail({"method":"POST","url":self.profile["baseUrl"]+"/responses",
+                        "headers":{"Content-Type":"application/json","User-Agent":"Kurumi-Papers/1.0"},"body":body}),
+                        "response":{"status":"not_collected","reason":"no_terminal_response"}}
+                    self._trace_receipt(receipt)
+                    def response_event(value):
+                        nonlocal response_bytes,response_truncated
+                        size=len(json.dumps(value,ensure_ascii=False).encode())
+                        if response_bytes+size<=3*1024*1024:
+                            response_events.append(value);response_bytes+=size
+                        else:
+                            response_truncated=True
+                    if self.request is http_request:
+                        options["on_response_event"]=response_event
                 try:
                     status, data = self.request(self.profile["baseUrl"] + "/responses", self.keys[name], body, self.timeout, **options)
+                    if self.trace:
+                        receipt["traceDetails"]["response"]=self.trace.detail({"httpStatus":status,"representation":"terminal_response","body":data,
+                            **({"transportEvents":response_events,"truncated":response_truncated} if status!=200 else {})})
                 except TranslationFailure as error:
                     transport_error = error
+                    if self.trace:
+                        receipt["traceDetails"]["response"]=self.trace.detail({"representation":"partial_stream","complete":False,
+                            "truncated":response_truncated,"events":response_events,"code":str(error)})
                 except Exception:
                     transport_error = TranslationFailure("invalid_api_response")
                 with self.lock:

@@ -46,7 +46,8 @@ try{
   if(report.gptDefault.effort!=='high'||report.explicitMax.effort!=='max')throw Error('Captured GPT effort differs');
   const config=JSON.parse(fs.readFileSync(state+'/openclaw.json')).plugins.entries['kurumi-papers'].config;
   report.budgets={maxRequests:config.maxRequests,maxReportedTokens:config.maxReportedTokens};
-  if(report.budgets.maxRequests!==300||report.budgets.maxReportedTokens!==300000)throw Error('Captured production budgets differ');
+  const managed=JSON.parse(fs.readFileSync(source('../../../config/runtime.config.json'))).plugins.entries['kurumi-papers'].config;
+  if(report.budgets.maxRequests!==managed.maxRequests||report.budgets.maxReportedTokens!==managed.maxReportedTokens)throw Error('Captured production budgets differ');
   report.execution=executionSettings(config);
   report.reliability=reliabilitySettings(config);
   if(report.reliability.batchValidationRetries!==1||report.reliability.channelRecoveryRetries!==1)throw Error('Captured retry defaults differ');
@@ -55,14 +56,17 @@ try{
   report.requestIdleTimeoutSeconds=requestIdleTimeoutSeconds(config);
   if(report.requestIdleTimeoutSeconds!==100)throw Error('Captured output idle timeout differs');
   for(const name of ['work','cache'])fs.mkdirSync(path.join(root,name));
-  const {command,args}=workerCommand({config,work:path.join(root,'work'),cache:path.join(root,'cache')});
+  const library=fs.readdirSync(build).filter(name=>name.startsWith('package-')).map(name=>path.join(build,name,'node_modules/observability')).find(dir=>fs.existsSync(path.join(dir,'trace_store.py')));
+  if(!library)throw Error('Captured observability library missing');
+  for(const name of ['execution-schema.sql','trace_store.py'])if(!fs.readFileSync(path.join(library,name)).equals(fs.readFileSync(source('../../packages/observability/'+name))))throw Error('Captured trace helper differs');
+  const {command,args}=workerCommand({config,work:path.join(root,'work'),cache:path.join(root,'cache'),trace:{root:path.join(root,'observability'),libraryRoot:library}});
   const app=args.indexOf('/app'),pythonSource=args[app-1];
   report.sourceHashes=Object.fromEntries(['engine.py','responses.py','http_worker.py','profiles.json'].map(name=>{
     const bytes=fs.readFileSync(path.join(pythonSource,name));
     if(!bytes.equals(fs.readFileSync(source('../../plugins/kurumi-papers/python/'+name))))throw Error('Captured Python differs');
     return [name,createHash('sha256').update(bytes).digest('hex')];
   }));
-  const code=`import pathlib,json,sys,subprocess; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; assert specs[1]['defaultModel']=='deepseek-flash' and specs[1]['defaultEffort']=='high'; assert specs[1]['maxOutputTokens']==393216; assert engine.execution_limits(json.loads('${JSON.stringify(report.execution)}'))==(${report.execution.apiConcurrency},${report.execution.apiQps}); assert responses.validate_idle_timeout(${report.requestIdleTimeoutSeconds})==100; assert 'api_output_idle_timed_out_unknown' in responses.CHANNEL_FAILURES; child=subprocess.run([sys.executable,'-u','/app/http_worker.py'],input='{}',capture_output=True,text=True,timeout=5); assert json.loads(child.stdout)['code']=='api_transport_worker_error'; print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs],'cancellableHttpWorker':True,'deepseekMaxOutputTokens':specs[1]['maxOutputTokens']}))`;
+  const code=`import pathlib,json,sys,subprocess; sys.path.insert(0,'/app'); import engine,responses; import babeldoc; from trace_store import TraceStore; trace=TraceStore('/logs','capture-fixture','root'); assert trace.detail({'input_tokens':3,'authorization':'synthetic-secret'})['status']=='stored'; assert trace.node('root','execution','capture fixture','completed',parent='')['data']['status']=='completed'; p=pathlib.Path; assert not p('${state}/paper-credentials.json').exists(); assert not p('${state}/runtime-env.json').exists(); specs=responses.PROFILE_REGISTRY['providers']; assert [s['provider'] for s in specs]==['openai','deepseek']; assert specs[1]['baseUrl']=='https://api.deepseek.com'; assert specs[1]['defaultModel']=='deepseek-flash' and specs[1]['defaultEffort']=='high'; assert specs[1]['maxOutputTokens']==393216; assert engine.execution_limits(json.loads('${JSON.stringify(report.execution)}'))==(${report.execution.apiConcurrency},${report.execution.apiQps}); assert responses.validate_idle_timeout(${report.requestIdleTimeoutSeconds})==100; assert 'api_output_idle_timed_out_unknown' in responses.CHANNEL_FAILURES; child=subprocess.run([sys.executable,'-u','/app/http_worker.py'],input='{}',capture_output=True,text=True,timeout=5); assert json.loads(child.stdout)['code']=='api_transport_worker_error'; print(json.dumps({'ok':True,'providers':[s['provider'] for s in specs],'cancellableHttpWorker':True,'deepseekMaxOutputTokens':specs[1]['maxOutputTokens']}))`;
   const result=spawnSync(command,[...args.slice(0,-1),'-c',code],{encoding:'utf8',timeout:20000,env:{PATH:'/usr/bin:/bin'}});
   report.exitCode=result.status;report.ok=result.status===0;
   if(report.ok)report.worker=JSON.parse(result.stdout.trim().split('\n').at(-1));

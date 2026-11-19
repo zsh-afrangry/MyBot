@@ -8,10 +8,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import {randomUUID} from 'node:crypto';
 
 export const TRACE_SCHEMA_VERSION = 1;
 
 const SECRET_KEY = /(?:token|secret|password|passwd|authorization|cookie|api[_-]?key|credential|private[_-]?key)/iu;
+const TOKEN_COUNT = /^(?:(?:input|output|total|reported|reasoning|completion|prompt|cached|cache_read|cache_write|max_output|max_reported|max_input)_?tokens|(?:input|output|total|reported|reasoning|completion|prompt|cached|cacheRead|cacheWrite|maxOutput|maxReported|maxInput)Tokens)$/u;
+const TOKEN_DETAILS = /^(?:(?:input|output|prompt|completion)_tokens_details|(?:input|output|prompt|completion)TokensDetails)$/u;
 const BEARER = /\bBearer\s+[A-Za-z0-9._~+/=-]+/giu;
 const API_KEY = /\b(?:sk|key|token)[-_][A-Za-z0-9._~-]{12,}\b/giu;
 
@@ -22,7 +25,8 @@ export function redactText(value) {
 }
 
 export function redactValue(value, key = '') {
-  if (SECRET_KEY.test(key)) return '[REDACTED]';
+  if (SECRET_KEY.test(key) && !(TOKEN_COUNT.test(key) && typeof value === 'number' && Number.isFinite(value))
+    && !(TOKEN_DETAILS.test(key) && value && typeof value === 'object' && !Array.isArray(value))) return '[REDACTED]';
   if (typeof value === 'string') return redactText(value);
   if (Array.isArray(value)) return value.map((item) => redactValue(item));
   if (value && typeof value === 'object') {
@@ -50,6 +54,7 @@ export function normalizeTraceEvent(input = {}) {
     : {};
   return {
     schemaVersion: TRACE_SCHEMA_VERSION,
+    ...(input.eventId ? {eventId: String(input.eventId)} : {}),
     at: new Date(atMs).toISOString(),
     epochMs: atMs,
     source: String(input.source ?? 'unknown'),
@@ -73,7 +78,7 @@ export function createTraceSink(file, {mkdir = fs.mkdirSync, append = fs.appendF
     file: target,
     emit(event) {
       mkdir(path.dirname(target), {recursive: true, mode: 0o700});
-      const normalized = normalizeTraceEvent(event);
+      const normalized = normalizeTraceEvent({...event, eventId: event.eventId ?? randomUUID()});
       // Retain one previous generation of diagnostic events.
       if (maxBytes) {
         try { if (fs.statSync(target).size >= maxBytes) fs.renameSync(target, `${target}.1`); }
@@ -103,6 +108,7 @@ export function correlationFrom(value = {}) {
     'sessionId', 'sessionKey', 'runId', 'traceId', 'spanId', 'parentSpanId',
     'qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId',
     'cronJobId', 'taskId', 'conversationId', 'senderId', 'recipientId', 'eventKey',
+    'executionId', 'toolCallId', 'parentToolCallId', 'subjectId',
   ];
   const result = {};
   for (const name of names) {

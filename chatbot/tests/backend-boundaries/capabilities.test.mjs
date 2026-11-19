@@ -167,7 +167,8 @@ test('old Cron CLI addresses and new reminder CLI execute the same implementatio
     const child = spawnSync(process.execPath, [file], {env: {...process.env}, encoding: 'utf8', timeout: 20000});
     assert.equal(child.status, 2, child.stderr);
     if (entry === 'cli') assert.equal(JSON.parse(child.stdout).code, 'USAGE');
-    else { assert.equal(child.stdout, ''); assert.match(child.stderr, /usage: reminder-cli deliver/); }
+    // Native Cron can announce either stream; invalid arguments must remain silent.
+    else { assert.equal(child.stdout, ''); assert.equal(child.stderr, ''); }
   }
 });
 

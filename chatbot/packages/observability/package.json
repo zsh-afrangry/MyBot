@@ -4,6 +4,9 @@
   "type": "module",
   "exports": {
     ".": "./index.js",
+    "./execution.js": "./execution.js",
+    "./execution-schema.sql": "./execution-schema.sql",
+    "./trace_store.py": "./trace_store.py",
     "./memory-audit.js": "./memory-audit.js",
     "./query-privacy.js": "./query-privacy.js",
     "./tool-trace.js": "./tool-trace.js"

@@ -51,7 +51,8 @@ export async function downloadScholarlyPdf(workspace, input, options = {}) {
   return job;
 }
 
-async function downloadOnce(workspace, url, {signal, fetcher = fetch} = {}) {
+async function downloadOnce(workspace, url, {signal, fetcher = fetch,observe} = {}) {
+  const record=event=>{try{observe?.(event);}catch{/* Diagnostics never change downloads. */}};
   const {dir} = paperDirectory(workspace), id = sha256(url).slice(0, 16);
   const pdfPath = paperFile(dir, id + '.pdf'), metadata = paperFile(dir, id + '.source.json');
   const legacy = paperFile(dir, id + '.json');
@@ -62,9 +63,12 @@ async function downloadOnce(workspace, url, {signal, fetcher = fetch} = {}) {
     const bytes = fs.readFileSync(pdfPath);
     if (bytes.length > MAX_SOURCE_BYTES || saved.bytes !== bytes.length || saved.sha256 !== sha256(bytes) || !bytes.subarray(0, 1024).includes(Buffer.from('%PDF-'))) throw Error('Cached PDF integrity mismatch');
     // Adopt an existing research cache without extracting text or downloading it again.
+    record({status:'completed',cacheHit:true,request:{method:'GET',url,performed:false},response:{kind:'artifact',sha256:saved.sha256,bytes:bytes.length}});
     return {id, url, sha256: saved.sha256, bytes: bytes.length, pdfPath, downloadedAt: saved.downloadedAt};
   }
+  record({status:'running',request:{method:'GET',url,redirect:'manual'}});
   const response = await fetcher(url, {redirect: 'manual', signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(45000)]) : AbortSignal.timeout(45000)});
+  record({status:response.status===200?'running':'failed',request:{method:'GET',url},response:{httpStatus:response.status,contentType:response.headers.get('content-type')}});
   if (response.status !== 200) throw Error(`PDF source HTTP ${response.status}; no redirects or credentials attempted`);
   if (Number(response.headers.get('content-length')) > MAX_SOURCE_BYTES) throw Error('PDF exceeds 25 MiB');
   const parts = []; let size = 0;
@@ -81,5 +85,6 @@ async function downloadOnce(workspace, url, {signal, fetcher = fetch} = {}) {
   try { fs.renameSync(temporary, pdfPath); } finally { fs.rmSync(temporary, {force: true}); }
   const data = {id, url, sha256: sha256(bytes), bytes: bytes.length, downloadedAt: new Date().toISOString()};
   saveJson(metadata, data);
+  record({status:'completed',cacheHit:false,request:{method:'GET',url},response:{httpStatus:response.status,kind:'artifact',sha256:data.sha256,bytes:data.bytes}});
   return {...data, pdfPath};
 }

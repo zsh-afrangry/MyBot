@@ -5,9 +5,10 @@ import {createHash} from 'node:crypto';
 
 // Stable across views, text projection, expansion and correlation enrichment.
 export function eventReference(event) {
+  if(event.eventId)return 'event:'+createHash('sha256').update(event.eventId).digest('hex').slice(0,32);
   return 'event:'+createHash('sha256').update(JSON.stringify([
-    event.source,event.kind,event.at,event.sourceRef??null,event.correlation?.toolCallId??null,
-    ...(event.sourceRef?[]:[event.data]),
+    event.source,event.kind,event.at,event.correlation?.toolCallId??null,
+    event.sourceRef?.table??null,event.sourceRef?.sessionId??null,event.data,
   ])).digest('hex').slice(0,32);
 }
 
@@ -29,7 +30,8 @@ export function queryOutputFits(value,{outputBytes,outputChars}={}) {
 // Only the explicit owner-authorized query path selects fullContent. Runtime
 // append-only sinks retain their existing write-time redaction unchanged.
 export function normalizeQueryEvent(input, {fullContent = false} = {}) {
-  const normal = normalizeTraceEvent(input);
+  const nativeId=input.sourceRef?.table?createHash('sha256').update(JSON.stringify([input.source,input.kind,input.at,input.sourceRef.table,input.sourceRef.id??input.sourceRef.line,input.sourceRef.sessionId,input.correlation?.toolCallId])).digest('hex'):undefined;
+  const normal = normalizeTraceEvent({...input,eventId:input.eventId??nativeId});
   if (!fullContent) return normal;
   return {...input,...normal,correlation:input.correlation ?? {},data:input.data ?? {},...(input.sourceRef ? {sourceRef:input.sourceRef} : {})};
 }

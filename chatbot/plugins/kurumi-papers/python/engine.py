@@ -4,12 +4,16 @@ Receives one trusted JSON request on stdin. Credentials never enter argv or outp
 The parent runs this in a restricted filesystem and kills its process group on cancellation.
 """
 import json
+import hashlib
+import uuid
 import logging
 from pathlib import Path
 import re
 import sys
 import threading
 import traceback
+if len(Path(__file__).resolve().parents)>3:
+    sys.path.insert(0,str(Path(__file__).resolve().parents[3]/'packages'/'observability'))
 from responses import (ResponsesClient, TranslationFailure, atomic_json, PROMPT_VERSION, PROFILE_REGISTRY,
                        marker_validation, validation_retry_hint)
 
@@ -133,6 +137,26 @@ def create_translator(request, client):
             version = PROMPT_VERSION + ("-json-schema" if spec["batchFormat"] == "json_schema" else "")
             for key, value in {**request["profile"], "prompt_version": version}.items():
                 self.add_cache_impact_parameters(key, value)
+            if getattr(client,'trace',None):
+                base=self.cache
+                trace=client.trace
+                class ObservedCache:
+                    def __getattr__(self,name):
+                        return getattr(base,name)
+                    def key(self,text):
+                        return hashlib.sha256(json.dumps([trace.correlation.get('subjectId'),base.translate_engine,base.translate_engine_params,text],ensure_ascii=False).encode()).hexdigest()
+                    def get(self,text):
+                        value=base.get(text)
+                        key=self.key(text)
+                        trace.node('cache:'+uuid.uuid4().hex,'cache','译文缓存','hit' if value is not None else 'miss',
+                            cacheKey=key,links=[trace.cache_origin(key)] if value is not None else [])
+                        return value
+                    def set(self,text,value):
+                        base.set(text,value)
+                        receipt=getattr(client.local,'receipt',None)
+                        if receipt:
+                            trace.cache_origin(self.key(text),'request:'+str(receipt['attempt']))
+                self.cache=ObservedCache()
 
         def do_translate(self, text, rate_limit_params=None):
             return client.generate(text,
@@ -214,6 +238,11 @@ def translate(request):
         atomic_json(usage_file, value)
         if value.get("failure"):
             cancel_event.set()
+    trace=None
+    if request.get('trace'):
+        from trace_store import TraceStore
+        spec=request['trace']
+        trace=TraceStore(spec['root'],spec['executionId'],spec['parentId'],correlation=spec.get('correlation'),secrets=request['keys'].values())
     client = ResponsesClient(request["profile"], request["keys"],
                              max_requests=request["maxRequests"], max_tokens=request["maxReportedTokens"],
                              cooldown_file=request.get("cooldownFile"),
@@ -221,7 +250,7 @@ def translate(request):
                              batch_validation_retries=request.get("batchValidationRetries", 1),
                              channel_recovery_retries=request.get("channelRecoveryRetries", 1),
                              idle_timeout_seconds=request.get("requestIdleTimeoutSeconds", 100),
-                             execution_timeout_seconds=request.get("executionTimeoutSeconds", 1800))
+                             execution_timeout_seconds=request.get("executionTimeoutSeconds", 1800),trace=trace)
     client._publish()
     source_lang, target_lang = request["sourceLang"], request["targetLang"]
     translator = create_translator(request, client)
@@ -234,10 +263,17 @@ def translate(request):
         watermark_output_mode=WatermarkOutputMode.NoWatermark,
         only_include_translated_page=True, auto_enable_ocr_workaround=False,
         disable_same_text_fallback=True)
+    previous_stage=[None]
     def progress(**event):
         if event.get("type", "").startswith("progress_"):
             atomic_json(Path(request["output"]) / "progress.json", {
                 key: event[key] for key in ("type", "stage", "stage_progress", "overall_progress") if key in event})
+            if trace and event.get('stage')!=previous_stage[0]:
+                if previous_stage[0]:
+                    trace.node('stage:'+str(previous_stage[0]),'stage',str(previous_stage[0]),'completed')
+                previous_stage[0]=event.get('stage')
+                if previous_stage[0]:
+                    trace.node('stage:'+str(previous_stage[0]),'stage',str(previous_stage[0]),'running')
         if client.failure:
             raise TranslationFailure(client.failure)
     # Dedicated CLI worker needs no async callback bridge. The pinned bridge can race after finish.
@@ -245,11 +281,15 @@ def translate(request):
         with create_monitor(get_translation_stage(config), progress, cancel_event) as monitor:
             finished = do_translate(monitor, config)
     except BaseException:
+        if trace and previous_stage[0]:
+            trace.node('stage:'+str(previous_stage[0]),'stage',str(previous_stage[0]),'failed')
         if client.failure:
             raise TranslationFailure(client.failure) from None
         raise
     if not finished or client.failure:
         raise TranslationFailure(client.failure or "pdf_translation_not_finished")
+    if trace and previous_stage[0]:
+        trace.node('stage:'+str(previous_stage[0]),'stage',str(previous_stage[0]),'completed')
     result = {"ok": True, "usage": client.snapshot(), "engine": "pdf2zh-next-2.9.0/babeldoc-0.6.2"}
     for kind in kinds:
         file = getattr(finished, kind + "_pdf_path", None)

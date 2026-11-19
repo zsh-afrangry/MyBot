@@ -8,12 +8,13 @@ export function cliArguments(config, q) {
   // minimum 16k live text cap and this plugin's 24KiB final envelope cap.
   const args = [logQueryRunner(config.backendRoot),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--full-content','--show-known','--output-bytes','18000','--output-chars','12000'];
   for (const source of q.sources) args.push('--source',source);
-  for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind'],['eventRef','--event-ref'],['eventKey','--event-key'],['cronJobId','--cron-job-id'],['code','--code']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
+  for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind'],['eventRef','--event-ref'],['eventKey','--event-key'],['cronJobId','--cron-job-id'],['code','--code'],['nodeId','--node-id'],['executionId','--execution-id'],['detail','--detail']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
   for (const [key,flag] of [['contains','--contains'],['keywordMode','--keyword-mode'],['contextBefore','--context-before'],['contextAfter','--context-after'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) if(q[key] !== undefined)args.push(`${flag}=${q[key]}`);
   for (const keyword of q.keywords ?? []) args.push(`--keyword=${keyword}`);
   for (const level of q.levels ?? []) args.push(`--level=${level}`);
   for (const [key,flag] of [['noText','--no-text'],['expand','--expand'],['raw','--raw']]) if(q[key])args.push(flag);
   if (q.view === 'stats') args.push('--stats');
+  else if(q.view==='tree')args.push('--tree','--limit',String(q.limit),'--offset',String(q.offset));
   else { args.push('--limit',String(q.limit),'--offset',String(q.offset)); if (q.view === 'errors') args.push('--errors');if(q.view==='overview')args.push('--overview'); }
   return args;
 }

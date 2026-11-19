@@ -5,11 +5,14 @@ import {createQqDelivery} from '../../packages/qq-delivery/index.js';
 import {PaperService} from './service.js';
 import {createTraceSink, correlationFrom} from '../../packages/observability/index.js';
 import {createFailureNotifier} from './notification.js';
+import {createToolTrace} from '../../packages/observability/tool-trace.js';
 
 const json = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
 export function createPaperPlugin({serviceFactory = (config, deps) => new PaperService(config, deps), deliveryFactory = createQqDelivery} = {}) {
   return {id: 'kurumi-papers', name: 'Kurumi paper translation', register(api) {
     const config = api.pluginConfig;
+    const toolTrace=createToolTrace(['kurumi_translate','kurumi_document','kurumi_document_send']);
+    if(api.on)toolTrace.attach(api);
     const cfg = () => api.config;
     const delivery = deliveryFactory(cfg);
     const owner=primaryOwner(cfg());
@@ -24,7 +27,7 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
       ownerBinding,authorize,documentsFor:id=>new Documents(documentRoot(cfg(),id)),
       sendFile: (id,key,signal,request) => {authorize(request,'qq.file.reply');return delivery.sendDocument({to:request.to,documentId:id,key,signal});},
       notify: createFailureNotifier({runtime:api.runtime,workflow:api.session?.workflow,config:cfg,authorize,sendText:request=>delivery.sendText(request)}),
-      trace: event => createTraceSink(config.root + '/events.jsonl').emit({source: 'papers', ...event}),
+      trace: event => {try{return createTraceSink(config.root + '/events.jsonl').emit({source: 'papers', ...event});}catch{console.warn('paper trace capture failed');}},
     });
     api.registerService({
       id: 'kurumi-papers-jobs',
@@ -40,7 +43,8 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
         const requester=binding(actor);
         ctx.assertInvocationCurrent(); signal?.throwIfAborted();
         try {
-          const result = await execute(args, {ctx, runtime, callId, signal,requester});
+          const correlation=correlationFrom({...ctx,toolCallId:callId,runId:toolTrace.resolve(ctx,callId,name)});
+          const result = await execute(args, {ctx, runtime, callId, signal,requester,correlation});
           ctx.assertInvocationCurrent(); return json(result);
         } catch (e) { return json({ok: false, code: e.code ?? 'paper_request_failed', reason: e.code === 'unsupported_translation_profile' ? e.message : '请核对文档/任务 ID、页码范围和已登记翻译配置；失败详情见任务记录与论文链路日志。'}); }
       },
@@ -50,9 +54,9 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
       query: {type: 'string', maxLength: 300}, title: {type: 'string', maxLength: 300},
       filename: {type: 'string', maxLength: 160}, expectedVersion: {type: 'integer', minimum: 0},
       kind: {type: 'string', enum: ['input','artifact']}, limit: {type: 'integer', minimum: 1, maximum: 50},
-    }, async (args, {ctx,callId,signal,requester,runtime}) => {
+    }, async (args, {ctx,callId,signal,requester,runtime,correlation}) => {
       const documents=new Documents(documentRoot(runtime,requester.subjectId));
-      if (args.action === 'fetch') return {ok: true, document: await service.fetch(args.url, {signal,requester,title:args.title})};
+      if (args.action === 'fetch') return {ok: true, document: await service.fetch(args.url, {signal,requester,title:args.title,correlation})};
       if (args.action === 'find') return {ok: true, documents: documents.find(args.query, args)};
       if (args.action === 'get') return {ok: true, document: documents.describe(args.documentId)};
       if (args.action === 'list') return {ok: true, documents: documents.list(args)};
@@ -70,13 +74,13 @@ export function createPaperPlugin({serviceFactory = (config, deps) => new PaperS
       pages: {type: 'string', maxLength: 200}, sourceLang: {type: 'string'}, targetLang: {type: 'string'},
       output: {type: 'string', enum: ['dual','mono','both'], description: '默认 dual：只生成并投递一份中英对照 PDF；mono：一份纯译文；both：仅当前用户明确要求两种文件时才投递两份。双语不表示 both。'},
       delivery: {type: 'string', enum: ['qq','none'], description: '默认 qq：任务完成后自动投递所选 PDF，不需要另调用发送工具；none：只生成。已自动投递后，除非当前用户另有明确重发请求，不再调用 kurumi_document_send。'},
-    }, async (args, {ctx, callId, signal,requester}) => {
+    }, async (args, {ctx, callId, signal,requester,correlation}) => {
       if (args.action === 'list') return {ok: true, jobs: service.list(requester)};
       if (args.action === 'status') return {ok: true, job: service.status(args.jobId,requester)};
       if (args.action === 'cancel') return {ok: true, job: await service.cancel(args.jobId,requester)};
       if (args.action === 'start') {
         ctx.assertInvocationCurrent(); signal?.throwIfAborted();
-        return {ok: true, job: service.submit(args, {key: ctx.sessionId + ':' + callId, correlation: correlationFrom(ctx),requester})};
+        return {ok: true, job: service.submit(args, {key: ctx.sessionId + ':' + callId, correlation,requester})};
       }
       throw Error('Invalid translation action');
     });

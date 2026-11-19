@@ -17,6 +17,7 @@ def main():
         request = json.load(sys.stdin)
         status, value = blocking_http_request(request["url"], request["key"], request["body"], request["timeout"],
             on_progress=lambda value: emit({"kind": "progress", "value": value}),
+            on_response_event=(lambda value: emit({"kind":"response_event","value":value})) if request.get("captureEvents") else None,
             on_output=lambda at: emit({"kind": "output_activity", "at": at}))
         emit({"kind": "result", "status": status, "value": value})
     except TranslationFailure as error:

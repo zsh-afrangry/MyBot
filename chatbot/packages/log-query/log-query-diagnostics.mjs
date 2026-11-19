@@ -8,6 +8,7 @@ import {normalizeTraceEvent,correlationFrom,redactText} from '../observability/i
 import {normalizeQueryEvent} from './log-query-privacy.mjs';
 import {allowedMembers,sessionFor} from '../access-control/index.js';
 import {pairCalls,collectErrors,localTime,groupTurns} from './log-query-views.mjs';
+import {backgroundUsage} from './execution-tree.js';
 const readJson = file => JSON.parse(fs.readFileSync(file,'utf8'));
 const exists = file => fs.existsSync(file);
 function database(file,work) {
@@ -112,7 +113,7 @@ export function queryStatistics(events){
   return{at:turn.at,sessionKey:turn.session,runId:turn.runId,models:[...unique.values()],usage,usageAvailable:samples.some(e=>e.data.usageAvailable),compacted:members.some(e=>e.kind==='session.compaction'),fallbackKnown:false};
  });
  const rates=rows=>rows.map(r=>({...r,failureRate:r.failures/r.count,...(r.measured?{averageDurationMs:r.durationMs/r.measured}:{})}));
- return {view:'stats',total:events.length,sources:rates([...sourceMap.values()]),tools:rates([...toolMap.values()]),modelTurns,models:events.filter(e=>e.kind==='agent.model_usage').map(e=>({at:e.at,correlation:e.correlation,...e.data}))};
+ return {view:'stats',total:events.length,...backgroundUsage(events),sources:rates([...sourceMap.values()]),tools:rates([...toolMap.values()]),modelTurns,models:events.filter(e=>e.kind==='agent.model_usage').map(e=>({at:e.at,correlation:e.correlation,...e.data}))};
 }
 const columns={time:e=>localTime(e.epochMs),source:e=>e.source,kind:e=>e.kind,tool:e=>e.data?.tool??'',outcome:e=>e.data?.businessOutcome??e.data?.status??e.data?.decision??'',durationMs:e=>e.data?.durationMs??'',runId:e=>e.correlation.runId??'',messageId:e=>e.correlation.qqMessageId??''};
 export function tabularEvents(events,{fields='time,source,kind,tool,outcome',format='table'}={}){

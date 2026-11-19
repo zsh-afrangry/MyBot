@@ -19,7 +19,7 @@ function event(runId, data = {}) {
 }
 
 function eventAtThreshold(runId) {
-  const value = event(runId, {padding: ''});
+  const value = {...event(runId, {padding: ''}),eventId:'fixed-fixture-event-'+runId};
   const envelopeBytes = Buffer.byteLength(`${JSON.stringify(normalizeTraceEvent(value))}\n`);
   value.data.padding = 'x'.repeat(rotationBytes - envelopeBytes);
   return value;
