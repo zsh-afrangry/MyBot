@@ -3,20 +3,27 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {AsyncResource} from 'node:async_hooks';
 import {randomUUID} from 'node:crypto';
+import {isDeepStrictEqual} from 'node:util';
 import {AcpClient, processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/acp-client.js';
 import {inspectOwnedRuntime, stopOwnedRuntime} from '../../packages/coding-runtime/reconciliation.js';
+import {attachProjectRegistry} from '../../packages/coding-runtime/project-registry.js';
 import {probeWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
 import {CodingResultRecorder, readCodingResult} from './results.js';
-import {projectPolicy, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, git, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
+import {projectPolicy, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, fencedGit, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
 import {digest, fail, taskText} from './policy.js';
 import {directoryState, directoryPlan, prepareDirectoryWriteback, runDirectoryWriteback, directoryWritebackState} from './directory-workspaces.js';
 
+const inFlight = new Set(['queued', 'running', 'checking', 'cancelling', 'merging']);
+const settings = ({projects: _projects, ...rest}) => rest;
+
 export class CodingService {
-  constructor(config, {authorize, sendText, composeNotice, trace = () => {}, clientFactory = args => new AcpClient(args)} = {}) {
+  constructor(config, {authorize, sendText, composeNotice, assertProjectCurrent = () => {}, trace = () => {}, clientFactory = args => new AcpClient(args)} = {}) {
     this.config = config; this.authorize = authorize; this.sendText = sendText; this.composeNotice = composeNotice; this.trace = trace;
     this.clientFactory = clientFactory; this.active = new Map(); this.projectLocks = new Set(); this.started = false;
+    this.assertProjectCurrent = assertProjectCurrent;
+    this.git = (cwd, ...args) => fencedGit(this.config.writeBoundary, cwd, ...args);
   }
   start() {
     if (this.started) return;
@@ -32,24 +39,57 @@ export class CodingService {
     fs.writeFileSync(this.lockFile, JSON.stringify(processIdentity(process.pid)), {flag: 'wx', mode: 0o600});
     try {
       this.store = new CodingStore(this.config.root);
-      for (const task of this.store.list()) if (['queued', 'running', 'checking', 'cancelling', 'merging'].includes(task.state)) {
-        this.store.save({...task, state: 'needs_reconciliation', reason: 'restart_requires_state_check', stateBeforeReconciliation: task.state});
-        const round = task.executionRoundId && this.store.result(task.id, task.executionRoundId);
-        if (round) this.store.saveResult(task.id, {...round, state: 'needs_reconciliation', reason: 'restart_requires_state_check', interruptedAt: new Date().toISOString()});
-      }
-      // Capture the service scope before a tool call so background work does not
-      // inherit the foreground reply's host lease, which closes when the reply ends.
+      this.store.transaction(() => {
+        for (const task of this.store.list()) {
+          if (!this.registeredProject(task)) this.store.invalidate(task.id, {revokeApproval: true});
+          if (!inFlight.has(task.state)) continue;
+          this.store.save({...task, state: 'needs_reconciliation', reason: 'restart_requires_state_check', stateBeforeReconciliation: task.state});
+          const round = task.executionRoundId && this.store.result(task.id, task.executionRoundId);
+          if (round) this.store.saveResult(task.id, {...round, state: 'needs_reconciliation', reason: 'restart_requires_state_check', interruptedAt: new Date().toISOString()});
+        }
+      });
+      this.releaseProjectRegistry = attachProjectRegistry(this.config.root,
+        (active, intent, id, projects, candidate) => this.inspectProjectMutation(active, intent, id, projects, candidate));
+      // Capture service scope before a tool call; completion outlives the foreground host lease.
       this.backgroundScope = new AsyncResource('kurumi-coding-service');
       this.started = true;
-    } catch (error) { fs.unlinkSync(this.lockFile); throw error; }
+    } catch (error) {
+      this.releaseProjectRegistry?.();
+      this.store?.close();
+      fs.unlinkSync(this.lockFile);
+      throw error;
+    }
+  }
+  inspectProjectMutation(active, intent, id, projects, candidate) {
+    if (!this.started || !isDeepStrictEqual(this.config, active)
+      || !isDeepStrictEqual(settings(this.config), settings(intent))) throw fail('coding_project_config_out_of_sync');
+    if (this.projectLocks.has(id) || this.store.list().some(task => task.projectId === id && (
+      this.active.has(task.id) || inFlight.has(task.state) || task.state === 'needs_reconciliation'
+      || sameProcess(task.runtimeIdentity) || task.runtimeProcesses?.some(sameProcess)
+    ))) throw fail('coding_project_tasks_unsettled');
+    projectPolicy({...this.config, projects});
+    if (candidate) {
+      const stat = fs.statSync(candidate.root, {bigint: true});
+      return {device: String(stat.dev), inode: String(stat.ino), createdAtNs: String(stat.birthtimeNs)};
+    }
+  }
+  registeredProject(task) {
+    const project = this.config.projects.find(row => row.id === task.projectId);
+    return project && project.registrationId === task.projectRegistrationId ? project : undefined;
   }
   project(id) { const p = this.config.projects.find(p => p.id === id); if (!p) throw fail('unknown_coding_project'); return p; }
-  target(project) { return project.kind === 'directory' ? {kind: 'directory', files: directoryState(project.root)} : targetState(project); }
-  task(id, requester) {
+  target(project) { return project.kind === 'directory' ? {kind: 'directory', files: directoryState(project.root)} : targetState(project, this.git); }
+  task(id, requester, historical = false) {
     const task = this.store.get(id);
     if (!task || task.requester.subjectId !== requester.subjectId || task.requester.sessionKey !== requester.sessionKey) throw fail('unknown_coding_task');
     this.authorize(task.requester, 'tasks.read');
-    assertTaskLocation(this.config, this.project(task.projectId), task);
+    const project = this.registeredProject(task);
+    if (!project) {
+      if (!historical) {
+        this.project(task.projectId);
+        throw fail('coding_project_registration_changed');
+      }
+    } else assertTaskLocation(this.config, project, task);
     return task;
   }
   event(task, kind, data = {}) {
@@ -58,12 +98,14 @@ export class CodingService {
   }
   describe(task) {
     const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind} = task;
-    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind: workspaceKind ?? 'git'};
+    const activeProject = !!this.registeredProject(task);
+    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery,
+      ...(activeProject ? {candidate} : {projectActive: false}), permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind: workspaceKind ?? 'git'};
   }
   list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
-  status(id, requester) { return this.describe(this.task(id, requester)); }
+  status(id, requester) { return this.describe(this.task(id, requester, true)); }
   result(id, requester, options) {
-    const task = this.task(id, requester);
+    const task = this.task(id, requester, true);
     return {task: this.describe(task), result: readCodingResult(this.store, task, options)};
   }
   submit({projectId, task: text}, {requester, key, correlation}) {
@@ -73,9 +115,11 @@ export class CodingService {
     const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester}));
     const old = this.store.find(key);
     if (old) { if (old.requestHash !== requestHash) throw fail('coding_request_key_conflict'); return this.describe(this.task(old.id, requester)); }
+    this.assertProjectCurrent(project);
     const id = randomUUID();
     const workspace = createWorkspace(this.config, project, id);
-    const task = {id, projectId, text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
+    const task = {id, projectId, projectRoot: project.root, projectRegistrationId: project.registrationId,
+      text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
     this.store.create(task); this.event(task, 'coding.submitted');
     this.launch(task, text); return this.describe(this.store.get(id));
   }
@@ -156,18 +200,18 @@ export class CodingService {
       if (result.stopReason !== 'end_turn') throw fail('coding_turn_incomplete');
       this.authorize(task.requester, 'tasks.code'); assertWorkspace(task);
       update({state: 'checking', runtimeIdentity: undefined, runtimeProcesses: undefined}); this.event(task, 'coding.checking');
-      const snapshotPath = snapshot(task, path.join(directory, 'snapshots', randomUUID()));
+      const snapshotPath = snapshot(task, path.join(directory, 'snapshots', randomUUID()), this.git);
       update({snapshotPath});
-      const checkedHash = workingHash(task.cwd), checkPlan = structuredClone(project.checks);
+      const checkedHash = workingHash(task.cwd, this.git), checkPlan = structuredClone(project.checks);
       const checks = await runChecks({...project, checks: checkPlan}, task.cwd, path.join(directory, 'checks.log'), entry.controller.signal, this.config.writeBoundary,
         runtime => update({runtimeIdentity: runtime?.identity, runtimeProcesses: runtime?.processes}));
       assertTaskLocation(this.config, this.project(task.projectId), task);
       if (JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
-      if (workingHash(task.cwd) !== checkedHash) throw fail('checked_tree_changed');
+      if (workingHash(task.cwd, this.git) !== checkedHash) throw fail('checked_tree_changed');
       update({checks}); this.event(task, 'coding.checked', {ok: checks.ok, checkCount: checks.rows.length});
       if (!checks.ok) { update({state: 'check_failed', reason: 'registered_checks_failed'}); await this.notify(task); return; }
       this.authorize(task.requester, 'tasks.code'); entry.controller.signal.throwIfAborted();
-      const verifiedCommit = commitUnit(task, checkedHash);
+      const verifiedCommit = commitUnit(task, checkedHash, this.git);
       update({verifiedCommit, state: 'ready', runtimeIdentity: undefined, runtimeProcesses: undefined}); this.event(task, 'coding.ready', {verifiedCommit});
       await this.notify(task);
     } catch (error) {
@@ -183,6 +227,7 @@ export class CodingService {
   }
   continue(id, text, requester, key) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    this.assertProjectCurrent(this.project(task.projectId));
     taskText(text);
     if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
     const hash = digest(JSON.stringify({id, text, requester}));
@@ -213,11 +258,12 @@ export class CodingService {
   }
   rollback(id, requester) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    this.assertProjectCurrent(this.project(task.projectId));
     if (this.active.has(id) || !['check_failed', 'failed', 'cancelled', 'needs_permission', 'interrupted'].includes(task.state)) throw fail('coding_task_busy');
     const runtime = inspectOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
     if (!runtime.verified || !runtime.stopped) throw fail('runtime_reconciliation_unverified');
-    const snapshotPath = snapshot(task, path.join(this.config.root, 'tasks', id, 'snapshots', randomUUID()));
-    rollbackUnit(task); this.store.invalidate(id);
+    const snapshotPath = snapshot(task, path.join(this.config.root, 'tasks', id, 'snapshots', randomUUID()), this.git);
+    rollbackUnit(task, this.git); this.store.invalidate(id);
     this.store.save({...task, state: 'rolled_back', snapshotPath, reason: undefined});
     this.event(this.store.get(id), 'coding.rolled_back'); return this.describe(this.store.get(id));
   }
@@ -251,7 +297,7 @@ export class CodingService {
           changes = {...changes, state: 'ready', reason: 'merge_not_applied_preview_again', candidate: undefined};
         } else throw fail('merge_reconciliation_unverified');
       } else {
-        const snapshotPath = snapshot(task, path.join(this.config.root, 'tasks', id, 'snapshots', randomUUID()));
+        const snapshotPath = snapshot(task, path.join(this.config.root, 'tasks', id, 'snapshots', randomUUID()), this.git);
         changes = {...changes, state: 'interrupted', reason: 'execution_stopped_no_replay', snapshotPath};
       }
       changes = {...changes, runtimeIdentity: undefined, runtimeProcesses: undefined};
@@ -263,14 +309,16 @@ export class CodingService {
   }
   diff(id, requester) {
     const task = this.task(id, requester); assertWorkspace(task);
-    return {task: this.describe(task), diff: git(task.cwd, 'diff', '--no-ext-diff', task.base, '--'), committedDiff: git(task.cwd, 'diff', '--no-ext-diff', task.base, task.verifiedCommit, '--')};
+    return {task: this.describe(task), diff: this.git(task.cwd, 'diff', '--no-ext-diff', '--no-textconv', task.base, '--'),
+      committedDiff: this.git(task.cwd, 'diff', '--no-ext-diff', '--no-textconv', task.base, task.verifiedCommit, '--')};
   }
   async preview(id, requester, scope) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    const project = structuredClone(this.project(task.projectId));
+    this.assertProjectCurrent(project);
     if (task.state !== 'ready' || this.active.has(id)) throw fail('coding_task_not_ready');
     assertWorkspace(task);
-    if (git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
-    const project = structuredClone(this.project(task.projectId));
+    if (this.git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
     if (this.projectLocks.has(project.id)) throw fail('project_merge_busy');
     this.projectLocks.add(project.id);
     try {
@@ -278,31 +326,31 @@ export class CodingService {
       if (!directory && target.branch !== project.branch) throw fail('target_branch_changed');
       if (directory && JSON.stringify(target.files) !== JSON.stringify(task.directoryBaseline)) throw fail('directory_source_changed');
       const candidateDir = path.join(this.config.worktrees, `candidate-${randomUUID()}`);
-      const commits = git(task.cwd, 'rev-list', '--reverse', `${task.base}..${task.verifiedCommit}`).trim().split('\n').filter(Boolean);
+      const commits = this.git(task.cwd, 'rev-list', '--reverse', `${task.base}..${task.verifiedCommit}`).trim().split('\n').filter(Boolean);
       if (!commits.length) throw fail('no_coding_changes');
       if (directory) {
-        git(task.cwd, 'worktree', 'add', '--detach', candidateDir, task.verifiedCommit);
+        this.git(task.cwd, 'worktree', 'add', '--detach', candidateDir, task.verifiedCommit);
         for (const row of task.directoryBaseline) if (row.kind === 'directory' && !fs.existsSync(path.join(candidateDir, row.name))) fs.mkdirSync(path.join(candidateDir, row.name), {recursive: true, mode: row.mode});
       } else {
-        git(project.root, 'worktree', 'add', '--detach', candidateDir, target.head);
-        try {git(candidateDir, '-c', 'user.name=Kurumi', '-c', 'user.email=kurumi@localhost', 'cherry-pick', ...commits);}
+        this.git(project.root, 'worktree', 'add', '--detach', candidateDir, target.head);
+        try {this.git(candidateDir, '-c', 'user.name=Kurumi', '-c', 'user.email=kurumi@localhost', 'cherry-pick', ...commits);}
         catch {throw fail('merge_conflict');}
       }
-      const checkedHash = workingHash(candidateDir), checkPlan = structuredClone(project.checks);
+      const checkedHash = workingHash(candidateDir, this.git), checkPlan = structuredClone(project.checks);
       const checks = await runChecks({...project, checks: checkPlan}, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'), undefined, this.config.writeBoundary);
       if (!checks.ok) throw fail('candidate_checks_failed');
-      this.task(id, requester); this.authorize(requester, 'tasks.code');
+      this.task(id, requester); this.authorize(requester, 'tasks.code'); this.assertProjectCurrent(project);
       if (this.active.has(id) || this.store.get(id).verifiedCommit !== task.verifiedCommit || this.store.get(id).state !== 'ready') throw fail('coding_task_not_ready');
       if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch || this.project(task.projectId).kind !== project.kind
         || JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
-      if (workingHash(candidateDir) !== checkedHash) throw fail('checked_candidate_changed');
+      if (workingHash(candidateDir, this.git) !== checkedHash) throw fail('checked_candidate_changed');
       if (JSON.stringify(this.target(project)) !== JSON.stringify(target)) throw fail('target_changed_during_checks');
-      const candidate = git(candidateDir, 'rev-parse', 'HEAD').trim();
+      const candidate = this.git(candidateDir, 'rev-parse', 'HEAD').trim();
       const diffBase = directory ? task.base : target.head;
-      const diff = git(candidateDir, 'diff', '--no-ext-diff', diffBase, candidate, '--');
-      if (!directory) assertNoUntrackedOverwrite(project, target.head, candidate);
-      const plan = directory ? directoryPlan(project, task, candidateDir, git) : undefined;
-      const paths = directory ? plan.changes.map(c => c.name) : git(candidateDir, 'diff', '--name-only', target.head, candidate, '--').trim().split('\n');
+      const diff = this.git(candidateDir, 'diff', '--no-ext-diff', '--no-textconv', diffBase, candidate, '--');
+      if (!directory) assertNoUntrackedOverwrite(project, target.head, candidate, this.git);
+      const plan = directory ? directoryPlan(project, task, candidateDir, this.git) : undefined;
+      const paths = directory ? plan.changes.map(c => c.name) : this.git(candidateDir, 'diff', '--no-ext-diff', '--name-only', target.head, candidate, '--').trim().split('\n');
       const payload = {taskId: id, projectId: project.id, projectRoot: project.root, taskCommit: task.verifiedCommit, target, candidate, diffBase,
         diffHash: digest(diff), candidateDir, checks, ...(directory ? {directoryPlan: plan} : {})};
       const previewText = `${directory ? '实验目录待确认回写' : '编码任务待确认合入'}\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${directory ? project.root : project.branch + ' @ ' + target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + (r.skipped ? '=不适用' : '=通过')).join('；')}\n${directory ? '原目录基线一致，回写前再次核对；原目录不建立Git。' : '目标当前有未提交内容：' + (target.status ? '有，合入不得覆盖' : '无')}\n差异SHA256：${payload.diffHash}\n执行范围：仅${directory ? '确认后目录回写' : '确认后本地合入'}；不包含push。`;
@@ -313,7 +361,7 @@ export class CodingService {
   }
   async merge(id, proposalId, requester, scope, assertCurrent) {
     const task = this.task(id, requester), project = structuredClone(this.project(task.projectId));
-    this.authorize(requester, 'tasks.code'); assertCurrent();
+    this.authorize(requester, 'tasks.code'); assertCurrent(); this.assertProjectCurrent(project);
     if (this.active.has(id) || this.projectLocks.has(project.id)) throw fail('project_merge_busy');
     this.projectLocks.add(project.id);
     try {
@@ -322,31 +370,31 @@ export class CodingService {
       const directory = project.kind === 'directory';
       if (preview.payload.projectRoot !== project.root || (directory ? !preview.payload.directoryPlan : preview.payload.target.branch !== project.branch)) throw fail('merge_preview_stale');
       assertWorkspace(task);
-      if (git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
+      if (this.git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
       if (JSON.stringify(this.target(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
       const assertCandidate = () => {
         assertCandidateLocation(this.config, this.project(task.projectId), preview.payload.candidateDir, task);
-        if (git(preview.payload.candidateDir, 'rev-parse', 'HEAD').trim() !== preview.payload.candidate
-          || git(preview.payload.candidateDir, 'status', '--porcelain=v1').trim()
-          || digest(git(preview.payload.candidateDir, 'diff', '--no-ext-diff', preview.payload.diffBase ?? preview.payload.target.head, preview.payload.candidate, '--')) !== preview.payload.diffHash) throw fail('candidate_changed');
+        if (this.git(preview.payload.candidateDir, 'rev-parse', 'HEAD').trim() !== preview.payload.candidate
+          || this.git(preview.payload.candidateDir, 'status', '--porcelain=v1').trim()
+          || digest(this.git(preview.payload.candidateDir, 'diff', '--no-ext-diff', '--no-textconv', preview.payload.diffBase ?? preview.payload.target.head, preview.payload.candidate, '--')) !== preview.payload.diffHash) throw fail('candidate_changed');
       };
       assertCandidate();
-      const checkPlan = structuredClone(project.checks), checkedHash = workingHash(preview.payload.candidateDir);
+      const checkPlan = structuredClone(project.checks), checkedHash = workingHash(preview.payload.candidateDir, this.git);
       const checks = await runChecks({...project, checks: checkPlan}, preview.payload.candidateDir,
         path.join(this.config.root, 'tasks', id, 'merge-checks.log'), undefined, this.config.writeBoundary);
-      const current = this.task(id, requester); this.authorize(requester, 'tasks.code'); assertCurrent();
+      const current = this.task(id, requester); this.authorize(requester, 'tasks.code'); assertCurrent(); this.assertProjectCurrent(project);
       if (current.state !== 'ready' || current.verifiedCommit !== task.verifiedCommit || this.active.has(id)) throw fail('merge_preview_stale');
       if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch || this.project(task.projectId).kind !== project.kind
         || JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
       assertWorkspace(current); assertCandidate();
-      if (workingHash(preview.payload.candidateDir) !== checkedHash) throw fail('checked_candidate_changed');
+      if (workingHash(preview.payload.candidateDir, this.git) !== checkedHash) throw fail('checked_candidate_changed');
       if (JSON.stringify(this.target(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
       this.store.save({...current, mergeChecks: {...checks, candidate: preview.payload.candidate, at: new Date().toISOString()}});
       this.event(this.store.get(id), 'coding.merge_checked', {ok: checks.ok, checkCount: checks.rows.length});
       if (!checks.ok) throw fail('candidate_checks_failed');
       if (directory) {
-        if (JSON.stringify(directoryPlan(project, task, preview.payload.candidateDir, git)) !== JSON.stringify(preview.payload.directoryPlan)) throw fail('candidate_changed');
-      } else assertNoUntrackedOverwrite(project, preview.payload.target.head, preview.payload.candidate);
+        if (JSON.stringify(directoryPlan(project, task, preview.payload.candidateDir, this.git)) !== JSON.stringify(preview.payload.directoryPlan)) throw fail('candidate_changed');
+      } else assertNoUntrackedOverwrite(project, preview.payload.target.head, preview.payload.candidate, this.git);
       assertCurrent(); const payload = this.store.claimMerge(task, proposalId, scope);
       this.event(this.store.get(id), 'coding.merge_authorized', {proposalId});
       try {
@@ -355,8 +403,8 @@ export class CodingService {
           this.store.save({...this.store.get(id), directoryWriteback: transaction});
           runDirectoryWriteback(this.config.writeBoundary, project, transaction);
         } else {
-          git(project.root, 'merge', '--ff-only', payload.candidate);
-          if (git(project.root, 'rev-parse', 'HEAD').trim() !== payload.candidate || git(project.root, 'symbolic-ref', '--short', 'HEAD').trim() !== project.branch) throw fail('merge_result_requires_check');
+          this.git(project.root, 'merge', '--ff-only', payload.candidate);
+          if (this.git(project.root, 'rev-parse', 'HEAD').trim() !== payload.candidate || this.git(project.root, 'symbolic-ref', '--short', 'HEAD').trim() !== project.branch) throw fail('merge_result_requires_check');
           assertDirtyPreserved(project, payload.target);
         }
       } catch {
@@ -415,8 +463,8 @@ export class CodingService {
     if (!round) return;
     let changedFiles = round.changedFiles;
     try {
-      changedFiles = [...new Set([...git(task.cwd, 'diff', '--name-only', '-z', round.baseCommit, '--').split('\0'),
-        ...git(task.cwd, 'ls-files', '--others', '--exclude-standard', '-z').split('\0')].filter(Boolean))].sort();
+      changedFiles = [...new Set([...this.git(task.cwd, 'diff', '--no-ext-diff', '--name-only', '-z', round.baseCommit, '--').split('\0'),
+        ...this.git(task.cwd, 'ls-files', '--others', '--exclude-standard', '-z').split('\0')].filter(Boolean))].sort();
     } catch { /* Failed or interrupted workspace; no invented artifact claim. */ }
     this.store.saveResult(task.id, {...round, state: task.state, reason: task.reason, hostChecks: task.checks, changedFiles,
       verifiedCommit: task.verifiedCommit, finishedAt: round.finishedAt ?? new Date().toISOString()});
@@ -431,6 +479,7 @@ export class CodingService {
   async idle(id) { await this.active.get(id)?.done; }
   async stop() {
     if (!this.started) return;
+    this.releaseProjectRegistry?.();
     await Promise.all([...this.active.entries()].map(async ([id, entry]) => {
       this.requestStop(entry);
       await entry.done;

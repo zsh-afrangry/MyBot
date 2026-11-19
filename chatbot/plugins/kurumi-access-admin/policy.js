@@ -49,10 +49,6 @@ export function memberView(row) {
   } : null;
 }
 
-export function findMember(policy, qq) {
-  return policy.subjects.find(row => row.kind === 'user' && row.role === 'member' && row.qq === qq);
-}
-
 export function buildMemberChange(policy, change) {
   assertFields(change, ['op', 'qq', 'grant', 'revoke', 'enabled', 'note', 'expiresAt']);
   assertQq(change.qq);
@@ -113,6 +109,52 @@ export function memberPreview(change, before, after, revision) {
     '修改后：' + describeMember(after),
     '配置版本：' + revision + ' → ' + (revision + 1),
     ...(change.op === 'remove' ? ['该成员的会话、文档及任务记录保留。'] : []),
+    '确认后保存到仓库，按名单同步流程生效。',
+  ].join('\n');
+}
+
+export function recipientKey(value) {
+  if (typeof value !== 'string' || /[\r\n]/u.test(value)) reject('invalid_mail_recipient');
+  const key = value.trim().toLowerCase();
+  // One mailbox only. In particular no wildcard, display name or recipient list.
+  const [local, domain] = key.split('@');
+  if (key.length > 254 || !domain || key.indexOf('@') !== key.lastIndexOf('@') || local.length > 64
+    || !/^[a-z0-9!#$%&'+/=^_\x60{|}~-]+(?:\.[a-z0-9!#$%&'+/=^_\x60{|}~-]+)*$/u.test(local)
+    || !/^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/u.test(domain)) {
+    reject('invalid_mail_recipient');
+  }
+  return key;
+}
+
+export function stringListChange(entries, change, parseKey) {
+  const op = change?.op;
+  assertFields(change, op === 'replace' ? ['op', 'key', 'replacement'] : ['op', 'key']);
+  if (!['add', 'remove', 'replace'].includes(op)) reject('unknown_access_list_operation');
+  const key = parseKey(change.key);
+  const replacement = op === 'replace' ? parseKey(change.replacement) : undefined;
+  const exists = entries.includes(key);
+  if (op === 'add' ? exists : !exists) reject(op === 'add' ? 'access_entry_already_exists' : 'access_entry_not_found');
+  if (replacement === key) reject('access_change_noop');
+  if (replacement !== undefined && entries.includes(replacement)) reject('access_entry_already_exists');
+  return {
+    entries: op === 'add' ? [...entries, key] : entries.flatMap(entry => entry !== key ? [entry] : replacement ? [replacement] : []),
+    change: {op, key, ...(replacement === undefined ? {} : {replacement})},
+    before: op === 'add' ? null : key,
+    after: op === 'remove' ? null : replacement ?? key,
+  };
+}
+
+export function stringListView(entries) {
+  return [...new Set(entries)].sort();
+}
+
+export function stringListPreview(label, before, after, effect, revision) {
+  return [
+    label + '白名单预览',
+    '修改前：' + (before === null ? '无记录' : JSON.stringify(before)),
+    '修改后：' + (after === null ? '无记录' : JSON.stringify(after)),
+    ...(revision === undefined ? [] : ['配置版本：' + revision + ' → ' + (revision + 1)]),
+    effect,
     '确认后保存到仓库，按名单同步流程生效。',
   ].join('\n');
 }

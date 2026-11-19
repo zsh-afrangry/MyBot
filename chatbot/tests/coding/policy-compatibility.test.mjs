@@ -3,6 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
+import {randomUUID} from 'node:crypto';
 import {fixture, member} from './fixtures.mjs';
 import {git, targetState} from '../../plugins/kurumi-coding/workspaces.js';
 
@@ -62,7 +63,10 @@ test('actual project and directory changes are rejected by explicit conditions',
     if (change === 'symlink-worktree') {
       const moved = path.join(f.root, 'moved-task'); fs.renameSync(task.cwd, moved); fs.symlinkSync(moved, task.cwd); code = /invalid_coding_paths/;
     }
-    await assert.rejects(f.run({action: 'status', taskId: task.id}), code);
+    if (change === 'unregistered') {
+      assert.equal((await f.run({action: 'status', taskId: task.id})).projectActive, false);
+      assert.equal((await f.run({action: 'result', taskId: task.id})).task.id, task.id);
+    } else await assert.rejects(f.run({action: 'status', taskId: task.id}), code);
     await assert.rejects(f.run({action: 'continue', taskId: task.id, task: 'Must not launch with a different actual location.'}), code);
     assert.equal(f.calls.filter(c => c.method === 'prompt').length, 1);
     assert.equal(git(f.source, 'rev-parse', 'HEAD').trim(), f.baseline);
@@ -134,4 +138,32 @@ test('current passing checks still require an explicit exact-candidate confirmat
   f.pluginConfig.projects[0].checks.push(extraCheck('new passing check'));
   await assert.rejects(f.run({action: 'merge', taskId: task.id, proposalId: preview.proposalId}), /approval_required/);
   assert.equal(git(f.source, 'rev-parse', 'HEAD').trim(), f.baseline);
+});
+
+test('a removed project retains historical results, cancels its old candidate and does not resume it after re-registration', async t => {
+  const {f, task} = await ready(t);
+  const preview = await f.run({action: 'preview', taskId: task.id});
+  f.approve(preview);
+  const [project] = f.pluginConfig.projects;
+  await f.services[0].stop();
+  f.pluginConfig.projects = [];
+  await f.services[0].start();
+  assert.equal(grantStatus(f, preview), 'rejected');
+  assert.equal(f.service.store.db.prepare('SELECT status FROM confirmation_proposals WHERE proposal_id=?').get(preview.proposalId).status, 'cancelled');
+  assert.deepEqual((await f.run({action: 'list'})).projects, []);
+  assert.equal((await f.run({action: 'status', taskId: task.id})).projectActive, false);
+  assert.equal((await f.run({action: 'result', taskId: task.id})).task.verifiedCommit, f.service.store.get(task.id).verifiedCommit);
+  await assert.rejects(start(f), /unknown_coding_project/);
+  await assert.rejects(f.run({action: 'continue', taskId: task.id, task: 'Must not resume.'}), /unknown_coding_project/);
+  await assert.rejects(f.run({action: 'merge', taskId: task.id, proposalId: preview.proposalId}), /unknown_coding_project/);
+  assert.equal(git(f.source, 'rev-parse', 'HEAD').trim(), f.baseline);
+
+  await f.services[0].stop();
+  f.pluginConfig.projects = [{...project, registrationId: randomUUID()}];
+  await f.services[0].start();
+  await assert.rejects(f.run({action: 'continue', taskId: task.id, task: 'Must not resume.'}), /coding_project_registration_changed/);
+  await assert.rejects(f.run({action: 'merge', taskId: task.id, proposalId: preview.proposalId}), /coding_project_registration_changed/);
+  const fresh = await start(f);
+  assert.notEqual(fresh.id, task.id);
+  assert.equal((await f.settle(fresh.id)).state, 'ready');
 });

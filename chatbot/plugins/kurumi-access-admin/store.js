@@ -53,14 +53,13 @@ export class AccessChangeStore {
     }
   }
 
-  propose(plan, owner, scope) {
-    const proposalId = randomUUID();
+  propose(plan, owner, scope, proposalId = randomUUID()) {
     const payload = JSON.stringify(plan);
     const payloadHash = sha256(payload);
     const at = this.now();
     this.transaction(() => {
       registerConfirmationProposal(this.db, {proposalId, payloadHash, domain: DOMAIN,
-        actionKind: 'member.' + plan.change.op, subjectId: 'owner', scope,
+        actionKind: (plan.category ?? 'member') + '.' + plan.change.op, subjectId: 'owner', scope,
         createdAtUtc: at, expiresAtUtc: at + 86400});
       this.db.prepare('INSERT INTO access_changes VALUES (?,?,?,?,?,NULL)').run(proposalId, owner, payload, 'pending', at);
     });

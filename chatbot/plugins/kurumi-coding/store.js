@@ -60,7 +60,9 @@ export class CodingStore {
     if (old) { if (old.task_id !== taskId || old.hash !== hash) throw fail('coding_request_key_conflict'); return false; }
     this.db.prepare('INSERT INTO coding_commands VALUES (?,?,?)').run(key, taskId, hash); return true;
   }
-  invalidate(taskId) {
+  invalidate(taskId, {revokeApproval = false} = {}) {
+    if (revokeApproval) this.db.prepare(`UPDATE approval_grants SET status='rejected',consumption_result='proposal_cancelled'
+      WHERE domain='coding' AND status='pending' AND proposal_id IN (SELECT id FROM coding_previews WHERE task_id=?)`).run(taskId);
     this.db.prepare(`UPDATE confirmation_proposals SET status='cancelled',updated_at_utc=? WHERE domain='coding'
       AND status='pending' AND proposal_id IN (SELECT id FROM coding_previews WHERE task_id=?)`).run(Math.floor(Date.now() / 1000), taskId);
   }
@@ -82,6 +84,8 @@ export class CodingStore {
     return this.transaction(() => {
       const current = this.get(task.id), preview = this.getPreview(proposalId);
       if (current?.state !== 'ready' || preview?.taskId !== task.id) throw fail('merge_not_pending');
+      const proposal = this.db.prepare("SELECT status FROM confirmation_proposals WHERE proposal_id=? AND domain='coding'").get(proposalId);
+      if (proposal?.status === 'cancelled') throw fail('approval_required');
       const result = checkApprovalGrant(this.db, {proposalId, domain: 'coding', subjectId: 'owner',
         payloadHash: digest(JSON.stringify(preview.payload)), scope, nowUtc: Math.floor(Date.now() / 1000), consume: true});
       if (!result.ok) throw fail(result.code);

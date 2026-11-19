@@ -1,7 +1,7 @@
 // Shared identity/capability checks; no filesystem I/O, model parsing or default-allow fallback.
 // Runtime policy is compiled from config/access-control.json by sync-config. See docs/24.
 import {PERMISSIONS, OWNER_PERMISSIONS, toolPermission} from './permissions.js';
-export {PERMISSIONS, SHARED_PERMISSIONS, OWNER_PERMISSIONS, MEMBER_TOOLS, toolPermission} from './permissions.js';
+export {PERMISSIONS, SHARED_PERMISSIONS, OWNER_PERMISSIONS, MEMBER_TOOLS, toolPermission, toolPermissions} from './permissions.js';
 export const CHANNEL = 'kurumi-qq';
 export const QQ_ID = /^[0-9]{5,12}$/;
 export class AccessError extends Error {

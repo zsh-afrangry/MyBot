@@ -6,6 +6,7 @@
   "exports": {
     "./acp-client": "./acp-client.js",
     "./reconciliation": "./reconciliation.js",
+    "./project-registry": "./project-registry.js",
     "./write-fence": "./write-fence.js"
   }
 }
