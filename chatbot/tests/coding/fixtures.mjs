@@ -46,7 +46,7 @@ export async function fixture(t, options = {}) {
     constructor(args) { super(); this.args = args; this.identity = null; calls.push({method: 'spawn', cwd: args.cwd}); }
     async initialize() { calls.push({method: 'initialize'}); }
     async open(cwd, args) { this.sessionId = args.sessionId ?? randomUUID(); calls.push({method: args.sessionId ? 'resume' : 'new', cwd, sessionId: this.sessionId}); return this.sessionId; }
-    async request(method) { calls.push({method}); return {}; }
+    async closeSession() { calls.push({method: 'session/close'}); }
     async prompt(text) {
       const turn = calls.filter(c => c.method === 'prompt' && c.sessionId === this.sessionId).length + 1;
       calls.push({method: 'prompt', sessionId: this.sessionId});

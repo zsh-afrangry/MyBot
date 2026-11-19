@@ -7,6 +7,7 @@ import {processIdentity, sameProcess, descendants} from '../../packages/coding-r
 import {validateWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {digest, fail} from './policy.js';
 import {directoryState, copyDirectory} from './directory-workspaces.js';
+import {validateCodex} from './backends.js';
 
 export function executionEnv() {
   const env = {};
@@ -51,6 +52,7 @@ export function projectPolicy(config) {
   if (!config.dsh || typeof config.dsh.command !== 'string' || !path.isAbsolute(config.dsh.command)
     || !fs.statSync(config.dsh.command).isFile() || !path.isAbsolute(config.dsh.home ?? '') || !fs.statSync(config.dsh.home).isDirectory()
     || !Array.isArray(config.dsh.model) || config.dsh.model.length !== 2 || config.dsh.model.some(v => typeof v !== 'string' || !v || v.length > 100)) throw fail('invalid_dsh_config');
+  validateCodex(config);
   const ids = new Set(), roots = [];
   for (const p of config.projects) {
     if (!/^[a-z][a-z0-9-]{0,39}$/.test(p.id) || ids.has(p.id)) throw fail('invalid_project_id');

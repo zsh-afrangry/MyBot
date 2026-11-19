@@ -1,7 +1,7 @@
 {
   "id": "kurumi-coding",
   "name": "Kurumi coding delegation pilot",
-  "description": "Disabled-by-default DSH ACP delegation for registered local Git projects or experiment directories; owner-confirmed merge or writeback.",
+  "description": "Local coding delegation for registered Git projects or experiment directories; owner-confirmed merge or writeback.",
   "version": "0.1.0",
   "configSchema": {
     "type": "object",
@@ -47,6 +47,15 @@
               "type": "string"
             }
           }
+        }
+      },
+      "codex": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command"],
+        "properties": {
+          "command": {"type": "string"},
+          "model": {"type": "string"}
         }
       },
       "projects": {
