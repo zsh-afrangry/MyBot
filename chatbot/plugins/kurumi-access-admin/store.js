@@ -60,7 +60,7 @@ export class AccessChangeStore {
     const at = this.now();
     this.transaction(() => {
       registerConfirmationProposal(this.db, {proposalId, payloadHash, domain: DOMAIN,
-        actionKind: 'member.' + plan.change.op, subjectId: 'owner', scope,
+        actionKind: (plan.category ?? 'member') + '.' + plan.change.op, subjectId: 'owner', scope,
         createdAtUtc: at, expiresAtUtc: at + 86400});
       this.db.prepare('INSERT INTO access_changes VALUES (?,?,?,?,?,NULL)').run(proposalId, owner, payload, 'pending', at);
     });

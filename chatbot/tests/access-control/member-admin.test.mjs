@@ -11,13 +11,14 @@ import {ownerInvocation} from '../../plugins/kurumi-access-admin/inbound.js';
 import {createAccessAdminService} from '../../plugins/kurumi-access-admin/service.js';
 import {openPolicySource} from '../../plugins/kurumi-access-admin/source.js';
 import {AccessChangeStore} from '../../plugins/kurumi-access-admin/store.js';
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {context, MEMBER, memberRow, OTHER, OWNER, ownerPolicy} from './fixtures.mjs';
 
 const protectedGroup = {...memberRow(OTHER), kind: 'group', enabled: false, permissions: {}};
 const chatPermissions = ['chat.use', 'qq.reply'];
 const add = {op: 'add', qq: MEMBER, grant: chatPermissions};
 
-function fixture(t) {
+function fixture(t, enabledCategories = []) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-member-admin-'));
   fs.mkdirSync(path.join(root, 'config'));
   const file = path.join(root, 'config/access-control.json');
@@ -26,7 +27,14 @@ function fixture(t) {
   const writePolicy = value => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', {mode: 0o640});
   const read = () => fs.readFileSync(file, 'utf8');
   writePolicy(original);
-  const config = {channels: {'kurumi-qq': {ownerId: OWNER, accessControl: original}}};
+  const intent = {channels: {'kurumi-qq': {}}, agents: {entries: {main: {workspace: path.join(root, 'workspace')}}},
+    plugins: {entries: {
+      'kurumi-access-admin': {enabled: true, config: {enabledCategories}},
+      'kurumi-mail': {enabled: true},
+    }}};
+  let config;
+  const sync = () => { config = compileAccessConfig(intent, JSON.parse(read())); };
+  sync();
   const ownerContext = context(original.subjects[0]);
   const source = openPolicySource(root);
   let now = Date.now();
@@ -41,7 +49,7 @@ function fixture(t) {
   });
   const run = (args, ctx = ownerContext, policySource = source) =>
     createAccessAdminService(policySource, store)(args, config, ownerInvocation(ctx, config, args));
-  const propose = change => run({action: 'propose', change});
+  const propose = (change, category) => run({action: 'propose', change, ...(category ? {category} : {})});
   const commit = ({proposalId}) => run({action: 'commit', proposalId});
   const status = ({proposalId}) => run({action: 'status', proposalId});
   let sequence = 0;
@@ -60,14 +68,14 @@ function fixture(t) {
     const confirmation = newMessage('确认');
     assert.equal(confirmNaturalProposal(confirmation, proposal, now).ok, true);
   }
-  function apply(change) {
-    const proposal = propose(change);
+  function apply(change, category) {
+    const proposal = propose(change, category);
     approve(proposal);
     assert.equal(commit(proposal).status, 'written');
     return proposal;
   }
   return {apply, approve, commit, file, newMessage, original, ownerContext, propose, read, run,
-    source, status, writePolicy, advance: ms => { now += ms; }};
+    source, status, sync, writePolicy, advance: ms => { now += ms; }};
 }
 
 test('QQ member changes cover registration, per-permission edits, clearing fields, disabling and removal', t => {
@@ -165,4 +173,70 @@ test('source edits before commit or before replacement are preserved', t => {
   assert.deepEqual(JSON.parse(f.read()), concurrent);
   assert.throws(() => f.commit(otherProposal), {code: 'access_change_already_submitted'});
   assert.deepEqual(fs.readdirSync(path.dirname(f.file)), ['access-control.json']);
+});
+
+test('mail management is opt-in even for the owner', t => {
+  const f = fixture(t);
+  assert.throws(() => f.run({action: 'list', category: 'mail_recipient'}), {code: 'access_category_not_enabled'});
+  assert.throws(() => f.propose({op: 'add', key: 'test@example.test'}, 'mail_recipient'), {code: 'access_category_not_enabled'});
+});
+
+test('mail preview freezes one address and distinguishes source, active and superseded changes', t => {
+  const category = 'mail_recipient';
+  const f = fixture(t, [category]);
+  const base = f.original.subjects[0].mailRecipients[0];
+  const newAddress = 'first+tag@example.test';
+  const nextAddress = 'other@example.test';
+  const get = key => f.run({action: 'get', category, key});
+  const add = f.propose({op: 'add', key: ' First+Tag@Example.Test '}, category);
+  assert(add.previewText.includes(newAddress));
+  assert.equal(f.status(add).status, 'pending');
+  assert.throws(() => f.commit(add), {code: 'approval_required'});
+  assert.deepEqual(JSON.parse(f.read()), f.original);
+  f.approve(add);
+  assert.equal(f.commit(add).activation, 'pending_sync');
+  assert.throws(() => f.commit(add), {code: 'access_change_already_submitted'});
+  assert.equal(get(newAddress).runtime, null);
+  f.sync();
+  assert.equal(get(newAddress).runtime, newAddress);
+  assert.equal(f.status(add).activation, 'active');
+
+  const replace = f.apply({op: 'replace', key: newAddress, replacement: nextAddress}, category);
+  assert.equal(f.status(add).activation, 'superseded');
+  assert.equal(f.status(replace).activation, 'pending_sync');
+  assert.equal(get(newAddress).source, null);
+  assert.equal(get(newAddress).runtime, newAddress);
+  f.sync();
+  assert.equal(f.status(replace).activation, 'active');
+  assert.equal(get(nextAddress).runtime, nextAddress);
+
+  f.apply({op: 'remove', key: nextAddress}, category);
+  f.apply({op: 'remove', key: base}, category);
+  const expected = structuredClone(f.original);
+  expected.revision += 4;
+  expected.subjects[0].mailRecipients = [];
+  assert.deepEqual(JSON.parse(f.read()), expected);
+  f.sync();
+  assert.deepEqual(f.run({action: 'list', category}).runtime, []);
+});
+
+test('mail rejects mixed shapes, duplicate/wildcard entries, members, and stale policy', t => {
+  const category = 'mail_recipient';
+  const f = fixture(t, [category]);
+  assert.throws(() => f.run({action: 'list', category}, context(memberRow(OTHER))), {code: 'capability_not_allowed'});
+  for (const key of ['*@example.test', 'x?@example.test', 'a@example..test', 'a@example.test,b@example.test', 'Name <a@example.test>']) {
+    assert.throws(() => f.propose({op: 'add', key}, category), {code: 'invalid_mail_recipient'});
+  }
+  assert.throws(() => f.propose({op: 'add', key: f.original.subjects[0].mailRecipients[0]}, category),
+    {code: 'access_entry_already_exists'});
+  assert.throws(() => f.propose({op: 'add', key: 'test@example.test', qq: OTHER}, category),
+    {code: 'invalid_access_admin_arguments'});
+  const pending = f.propose({op: 'add', key: 'test@example.test'}, category);
+  f.approve(pending);
+  const concurrent = structuredClone(f.original);
+  concurrent.subjects[1].enabled = false;
+  f.writePolicy(concurrent);
+  assert.equal(f.status(pending).status, 'stale');
+  assert.throws(() => f.commit(pending), {code: 'access_policy_changed'});
+  assert.deepEqual(JSON.parse(f.read()), concurrent);
 });

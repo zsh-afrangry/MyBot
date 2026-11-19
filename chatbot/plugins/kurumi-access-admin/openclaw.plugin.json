@@ -1,7 +1,7 @@
 {
   "id": "kurumi-access-admin",
-  "name": "Kurumi QQ member administration",
-  "description": "Owner-confirmed changes to the checked-out QQ member access policy.",
+  "name": "Kurumi allowlist administration",
+  "description": "Owner-confirmed changes to specifically enabled allowlists in the repository.",
   "version": "0.1.0",
   "activation": {"onStartup": true},
   "configSchema": {
@@ -9,7 +9,11 @@
     "additionalProperties": false,
     "required": ["sourceRoot"],
     "properties": {
-      "sourceRoot": {"type": "string", "minLength": 2}
+      "sourceRoot": {"type": "string", "minLength": 2},
+      "enabledCategories": {
+        "type": "array", "uniqueItems": true,
+        "items": {"type": "string", "enum": ["mail_recipient"]}
+      }
     }
   },
   "contracts": {

@@ -1,6 +1,7 @@
 import {createRuntimeConfigReader} from 'openclaw/plugin-sdk/runtime-config-snapshot';
 import {registerConfirmationBackend} from '@kurumi/confirmation-core';
 import {AccessError, SHARED_PERMISSIONS} from '../../packages/access-control/index.js';
+import {CATEGORY_NAMES} from './categories.js';
 import {ownerInvocation} from './inbound.js';
 import {TOOL} from './policy.js';
 import {createAccessAdminService} from './service.js';
@@ -13,12 +14,16 @@ const parameters = {
   type: 'object', additionalProperties: false, required: ['action'],
   properties: {
     action: {type: 'string', enum: ['list', 'get', 'propose', 'commit', 'status']},
+    category: {type: 'string', enum: CATEGORY_NAMES, description: 'Omit for the existing member operations.'},
     qq,
+    key: {type: 'string', description: 'Exact entry for get on a non-member category.'},
     proposalId: {type: 'string'},
     change: {
-      type: 'object', additionalProperties: false, required: ['op', 'qq'],
+      type: 'object', additionalProperties: false, required: ['op'],
       properties: {
-        op: {type: 'string', enum: ['add', 'update', 'remove']},
+        op: {type: 'string', enum: ['add', 'update', 'remove', 'replace']},
+        key: {type: 'string', description: 'Exact entry to add, remove or replace in a non-member list.'},
+        replacement: {type: 'string', description: 'New entry for replace.'},
         qq,
         grant: {...permissions, description: 'Explicit permission set for add (required), or permissions to enable for update.'},
         revoke: {...permissions, description: 'Permissions to remove for update.'},
@@ -34,7 +39,7 @@ const json = result => ({content: [{type: 'text', text: JSON.stringify(result)}]
 
 export default {
   id: 'kurumi-access-admin',
-  name: 'Kurumi QQ member administration',
+  name: 'Kurumi allowlist administration',
   register(api) {
     const currentConfig = createRuntimeConfigReader(api.config);
     let store, execute, unregister;
@@ -70,13 +75,14 @@ export default {
     }
     api.registerTool({contextVersion: 2, create: ctx => ({
       name: TOOL,
-      label: 'Manage QQ member access',
+      label: 'Manage owner-approved allowlists',
       description: [
-        'Owner private chat. list and get inspect QQ members and distinguish repository policy from active policy.',
-        'propose freezes a single member add, update or remove. Use the precise QQ string.',
+        'Owner private chat. list and get distinguish repository policy from active policy.',
+        'With category omitted or member, propose a single member add, update or remove. Use the precise QQ string.',
         'For add, get the owner’s selection of shared permissions and supply grant explicitly.',
         'For update, grant enables permissions and revoke removes permissions. Null clears note or expiresAt.',
         'Remove deletes the membership record, retaining its data.',
+        'For enabled category mail_recipient, use key for one exact address, with replacement for replace. This does not send mail.',
         'Show the preview and wait for a later owner confirmation through personal_confirmation with domain=access.',
         'Then call commit using the approved proposalId. That writes the repository policy only.',
         'Use status to inspect a proposal after an interrupted response. A written change takes effect after operator deployment.',
