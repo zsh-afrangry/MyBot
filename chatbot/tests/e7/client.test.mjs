@@ -35,6 +35,24 @@ test('304 releases the body without trying to parse JSON', async () => {
   assert.equal((await f.client.read('cards')).status, 304); assert.equal(f.releases(), 1);
 });
 
+test('announcement PDFs require a listed relative path, PDF content type and signature, and a bounded response', async () => {
+  const bytes = Buffer.from('%PDF-1.4 fixture');
+  const f = setup(() => new Response(bytes, {headers: {'content-type': 'application/pdf'}}));
+  const r = await f.client.read('announcementPdf', {relative: '/event/test.pdf'});
+  assert.deepEqual(r.data, bytes);
+  assert.equal(f.calls[0].url, 'https://assets2.e7.wiki/announcement/event/test.pdf');
+  assert.equal(f.calls[0].init.headers.Accept, 'application/pdf');
+  for (const relative of ['https://assets2.e7.wiki/event/test.pdf', '/../test.pdf', '/event/%2e%2e/test.pdf', '/test.pdf?a=1'])
+    await rejects(f.client.read('announcementPdf', {relative}), 'invalid_query');
+  assert.equal(f.calls.length, 1);
+  for (const [contentType, body] of [['text/html', bytes], ['application/pdf', Buffer.from('invalid')]]) {
+    const g = setup(() => new Response(body, {headers: {'content-type': contentType}}));
+    await rejects(g.client.read('announcementPdf', {relative: '/test.pdf'}), 'invalid_response');
+  }
+  const large = setup(() => new Response(bytes, {headers: {'content-type': 'application/pdf', 'content-length': String(13 * 1024 * 1024)}}));
+  await rejects(large.client.read('announcementPdf', {relative: '/test.pdf'}), 'response_too_large');
+});
+
 test('community endpoints build different fixed read-only POST bodies and refuse path input before IO', async () => {
   const f = setup(() => json({code: 1000, data: []}));
   await f.client.read('builds', {heroCode: 'test-hero-1'});
@@ -93,6 +111,33 @@ test('requests and queued callers are cancellable and concurrency never exceeds 
     const hold = setTimeout(resolve, 1000); p.signal.addEventListener('abort', () => {clearTimeout(hold); reject(p.signal.reason);});
   }), {timeoutMs: 20});
   await rejects(slow.client.read('cards'), 'timeout');
+});
+
+test('an in-flight success or a shorter failure cannot clear a concurrent 403 cooldown', async () => {
+  let now = 0;
+  const first = Promise.withResolvers();
+  const f = setup(request => {
+    if (request.url.includes('card-list')) return first.promise;
+    if (request.url.includes('artifact')) return json(null, 403);
+    throw Error('unexpected request');
+  }, {clock: () => now});
+  const pending = f.client.read('cards');
+  await rejects(f.client.read('artifacts'), 'upstream_forbidden');
+  first.resolve(json({code: 1000, data: []}));
+  await pending;
+  now += 3599000;
+  await rejects(f.client.read('summary'), 'upstream_backoff');
+  assert.equal(f.calls.length, 2);
+
+  const lateFailure = Promise.withResolvers();
+  const g = setup(request => request.url.includes('card-list') ? lateFailure.promise : json(null, 403), {clock: () => now});
+  const rateLimited = rejects(g.client.read('cards'), 'rate_limited');
+  await rejects(g.client.read('artifacts'), 'upstream_forbidden');
+  lateFailure.resolve(json(null, 429, {'retry-after': '30'}));
+  await rateLimited;
+  now += 31000;
+  await rejects(g.client.read('summary'), 'upstream_backoff');
+  assert.equal(g.calls.length, 2);
 });
 
 test('actual local HTTP streaming exercises POST, parsing and body limits through an injected test transport', async t => {

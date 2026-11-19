@@ -71,11 +71,13 @@ test('conditional 304, content hash and count shrink protect the last validated 
   now.value += 25 * 3600000; mode = '304';
   const before = new E7Store(root).read(JSON.stringify(['cards', {}]));
   const second = await service.query(args); assert.equal(second.stale, false); assert.equal(calls.at(-1).opts.validators.etag, '"v1"');
+  assert.equal(second.citation, '资料来源：E7·WIKI；缓存校对日期（UTC）：2026-10-28');
   const checked = new E7Store(root).read(JSON.stringify(['cards', {}])); assert.equal(checked.fetchedAt, before.fetchedAt); assert(checked.checkedAt > before.checkedAt); assert.equal(checked.hash, before.hash);
   now.value += 25 * 3600000; mode = 'normal'; await service.query(args);
   assert.equal(new E7Store(root).read(JSON.stringify(['cards', {}])).fetchedAt, before.fetchedAt, 'identical 200 keeps original fetchedAt');
   now.value += 25 * 3600000; mode = 'shrink';
   const stale = await service.query(args); assert.equal(stale.stale, true); assert.equal(stale.data.total, 12); assert.equal(stale.sources[0].warning, 'catalog_shrank');
+  assert.equal(stale.citation, '资料来源：E7·WIKI；缓存校对日期（UTC）：2026-10-29；含陈旧缓存');
   mode = 'error'; assert.equal((await service.query(args)).stale, true);
   assert.equal(new E7Store(root).read(JSON.stringify(['cards', {}])).hash, before.hash);
 });
@@ -338,6 +340,27 @@ test('GVG refuses changed, duplicate, truncated or excessive catalogs instead of
  }
 });
 
+test('GVG overlaps two follow-up pages and keeps page order when the second response arrives first', async t => {
+  const requested = [], returned = [];
+  const total = 302;
+  const {service} = setup(t, {read: async (kind, {page}, opts, data) => {
+    assert.equal(kind, 'gvgHomework');
+    requested.push(page);
+    if (page === 2) await new Promise(resolve => setImmediate(resolve));
+    returned.push(page);
+    const start = (page - 1) * 100;
+    const list = Array.from({length: Math.min(100, total - start)}, (_, i) => ({...data.gvgHomework[0], id: start + i + 1}));
+    return {status: 200, data: {list, pagination: {page, size: 100, total}}};
+  }});
+  let result = await service.query({action: 'gvg', limit: 10});
+  assert.deepEqual(requested, [1, 2, 3, 4]);
+  assert.deepEqual(returned, [1, 3, 2, 4]);
+  assert.equal(result.data.coverage.fetched, total);
+  for (let i = 0; i < 10; i++) result = await service.query({action: 'gvg', limit: 10, cursor: result.data.nextCursor});
+  assert.equal(result.data.items[0].id, '101');
+  assert.deepEqual(requested, [1, 2, 3, 4]);
+});
+
 test('hot defenses disclose top100 scope, never infer reliable win rates and use short TTL',async t=>{
  const {service,now,calls}=setup(t);const args={action:'gvg',view:'hot_defenses'};
  const r=await service.query(args);assert.equal(r.data.coverage.scope,'upstream_top_100');assert.equal(r.data.coverage.totalAvailable,null);assert.equal(r.data.items[0].reliableWinRate,null);
@@ -354,6 +377,24 @@ test('fates validate seasons and actor binding, preserve conditions and separate
  const second=await service.query({...q,cursor:first.data.nextCursor,limit:2});assert.deepEqual(second.data.items.map(r=>r.recommended),[false,null]);assert(second.data.items.every(r=>r.id===null));assert.deepEqual(second.data.items.map(r=>r.fateId),['fate-2','fate-3']);assert(second.missingFields.includes('recommendationTier'));
  now.value+=25*3600000;data.heroFates.heroCode='test-hero-2';const stale=await service.query(q);assert.equal(stale.stale,true);assert(stale.sources.some(s=>s.warning==='invalid_response'));assert.deepEqual(stale.data,first.data);
  await assert.rejects(service.query({...q,heroCode:'unknown-hero'}),e=>e.code==='unknown_hero');assert(!calls.some(c=>c.params.heroCode==='unknown-hero'));
+});
+
+test('fates discovers distinct seasons without guessing an ID or fetching recommendations', async t => {
+  const {service, data, calls} = setup(t);
+  data.fates.push({...data.fates[0], id: 99});
+  const first = await service.query({action: 'fates', limit: 1});
+  assert.equal(first.status, 'ok');
+  assert.deepEqual(first.data.items, [{seasonId: 'season-1'}]);
+  assert.equal(first.data.total, 2);
+  assert.match(first.citation, /E7·WIKI.*UTC.*2026-10-27/u);
+  const next = await service.query({action: 'fates', view: 'list', cursor: first.data.nextCursor});
+  assert.deepEqual(next.data.items, [{seasonId: 'season-2'}]);
+  assert.equal(next.data.nextCursor, null);
+  await assert.rejects(service.query({action: 'fates', seasonId: 'season-1', cursor: first.data.nextCursor}), {code: 'cursor_expired'});
+  for (const invalid of [{view: 'recommended_heroes'}, {view: 'hero_fates', heroCode: 'test-hero-1'}, {seasonId: ''}, {seasonId: null}]) {
+    await assert.rejects(service.query({action: 'fates', ...invalid}), {code: 'invalid_query'});
+  }
+  assert.deepEqual(calls.map(c => c.kind), ['fates']);
 });
 
 test('pack IDs and numerical inputs are validated while source valuation gaps and item values stay explicit',async t=>{

@@ -24,7 +24,7 @@ async function run(enabled) {
   const cacheRoot = path.join(directory, 'cache');
   const config = {
     gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
-    agents: {defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['e7_data']}}}},
+    agents: {defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['e7_data', 'e7_image']}}}},
     plugins: {allow: ['kurumi-e7'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-e7')]}, entries: {'kurumi-e7': {enabled, config: {cacheRoot}}}, slots: {memory: 'none'}},
     cron: {enabled: false}, tools: {web: {search: {enabled: false}, fetch: {enabled: false}}}, logging: {file: path.join(directory, 'runtime.log')},
   };
@@ -49,7 +49,7 @@ async function run(enabled) {
     const plugins = await call('plugins.list'), catalog = await call('tools.catalog', {agentId: 'main', includePlugins: true});
     const plugin = plugins.plugins.find(p => p.id === 'kurumi-e7'); assert(plugin);
     const names = catalog.groups.filter(g => g.pluginId === 'kurumi-e7').flatMap(g => g.tools.map(t => t.id));
-    if (enabled) {assert.equal(plugin.runtime.state, 'active'); assert.deepEqual(names, ['e7_data']);}
+    if (enabled) {assert.equal(plugin.runtime.state, 'active'); assert.deepEqual(names.sort(), ['e7_data', 'e7_image']);}
     else {assert(['disabled', 'unloaded'].includes(plugin.runtime.state)); assert.deepEqual(names, []);}
     assert.equal(fs.existsSync(cacheRoot), false); // Loading does not perform an initial fetch.
     Object.assign(stage, {state: plugin.runtime.state, tools: names, noInitialFetch: true, passed: true});

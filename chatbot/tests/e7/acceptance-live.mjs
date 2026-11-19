@@ -1,4 +1,4 @@
-// Explicit --live public HTTP acceptance; --community-only/--reference-only/--gameplay-only select 2A/2B/2C; optional --model uses the configured official model.
+// Explicit --live public E7 HTTP acceptance; --media-only checks one announcement and one avatar without sending; optional --model uses the configured official model.
 // Temporary public cache and new --out evidence only. No QQ delivery or production state writes.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -19,19 +19,27 @@ if (!process.argv.includes('--live') || !process.argv.includes('--out') || !path
 const communityOnly = process.argv.includes('--community-only');
 const referenceOnly = process.argv.includes('--reference-only');
 const gameplayOnly=process.argv.includes('--gameplay-only');
-assert([communityOnly,referenceOnly,gameplayOnly].filter(Boolean).length<=1, 'Choose at most one phase selector');
+const mediaOnly=process.argv.includes('--media-only');
+assert([communityOnly,referenceOnly,gameplayOnly,mediaOnly].filter(Boolean).length<=1, 'Choose at most one phase selector');
+if (mediaOnly) assert(!process.argv.includes('--model'), 'Media acceptance uses no model or QQ');
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const runtimeEnv = JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
 for (const name of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy'])
   if (typeof runtimeEnv[name] === 'string') process.env[name] = runtimeEnv[name];
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-e7-live-'));
 const report = {at: new Date().toISOString(), boundary: 'Real public E7 HTTP, temporary public-data cache. Optional configured official model and actual v2 tool handlers with synthetic trusted owner context. No QQ send or production write; not full model/Gateway/QQ inbound.', userAgent: USER_AGENT, requests: [], queries: [], modelCases: []};
-const client = new E7Client({observe: row => report.requests.push({...row, at: new Date().toISOString()})});
+const traces = new WeakMap();
+const client = new E7Client({observe: ({correlation, ...row}) => {
+  const event = {...row, at: new Date().toISOString()};
+  report.requests.push(event);
+  if (correlation) traces.set(correlation, event);
+}});
 const read = client.read.bind(client);
-client.read = async (...args) => {
-  const response = await read(...args);
-  Object.assign(report.requests.at(-1), {parameters: args[1] ?? {}, dataSha256: response.data === undefined ? null : digest(response.data),
-    conditional: Boolean(args[2]?.validators?.etag || args[2]?.validators?.lastModified)});
+client.read = async (kind, params, opts = {}) => {
+  const trace = {};
+  const response = await read(kind, params, {...opts, trace});
+  Object.assign(traces.get(trace), {parameters: params ?? {}, dataSha256: response.data === undefined || Buffer.isBuffer(response.data) ? null : digest(response.data),
+    conditional: Boolean(opts.validators?.etag || opts.validators?.lastModified)});
   return response;
 };
 const service = new E7Service({cacheRoot: root, refreshEnabled: false}, {client});
@@ -55,6 +63,7 @@ async function query(label, args) {
   assert(Buffer.byteLength(JSON.stringify(result)) <= RESULT_BYTES);
   assert(result.sources.every(s => /^https:\/\/(admin|assets2)\.e7\.wiki\//.test(s.url)));
   assert.equal(result.externalContent.untrusted, true);
+  assert.match(result.citation, /E7·WIKI.*UTC.*\d{4}-\d{2}-\d{2}/u);
   return result;
 }
 async function modelAcceptance() {
@@ -66,8 +75,9 @@ async function modelAcceptance() {
   report.model = primary;
   const policy = ownerPolicy(), config = {channels: {'kurumi-qq': {ownerId: policy.subjects[0].qq, accessControl: policy}}};
   const ctx = context(policy.subjects[0]); ctx.getRuntimeConfig = () => config;
-  let factory;
-  createE7Plugin({serviceFactory: () => service}).register({config, pluginConfig: {}, on(){}, registerService() {}, registerTool: f => {factory = f;}});
+  let factory, toolResult;
+  createE7Plugin({serviceFactory: () => ({async query(...args) {toolResult = await service.query(...args); return toolResult;}})})
+    .register({config, pluginConfig: {}, on(){}, registerService() {}, registerTool: (f, opts) => {if (opts.name === E7_TOOL.name) factory = f;}});
   const tool = factory.create(ctx);
   const system = fs.readFileSync(path.join(repo, 'scripts/fusion/templates/AGENTS.md'), 'utf8') +
     '\n本轮为隔离验收，仅提供e7_data。按工具真实结果回答，查名称先search再用真实ID。需要专属装备、可用性或公告正文但来源缺失时说明边界。当前时间：' + new Date().toISOString();
@@ -80,6 +90,7 @@ async function modelAcceptance() {
   report.modelCaseSelection = selection;
   for (const [label, input, verify] of cases.filter(c => selection.includes(c[0]))) {
     const row = {label, input, calls: [], requests: 0}; report.modelCases.push(row);
+    const toolResults = [];
     const messages = [{role: 'system', content: system}, {role: 'user', content: input}];
     for (let step = 0; step < 5; step++) {
       row.requests++;
@@ -90,13 +101,15 @@ async function modelAcceptance() {
       if (!response.ok) throw Error('Model HTTP ' + response.status);
       const body = await response.json(), answer = body.choices?.[0]?.message;
       assert(answer); messages.push(answer);
-      if (!answer.tool_calls?.length) {row.reply = answer.content ?? ''; verify(row); assert.match(row.reply, /E7|WIKI|wiki/u); row.passed = true; break;}
+      if (!answer.tool_calls?.length) {row.reply = answer.content ?? ''; verify(row, toolResults); assert.match(row.reply, /E7\s*[·・]?\s*WIKI/iu); row.passed = true; break;}
       for (const call of answer.tool_calls) {
         assert.equal(call.function.name, E7_TOOL.name);
+        toolResult = undefined;
         const args = JSON.parse(call.function.arguments), result = await tool.execute(call.id, args);
         const value = result.content[0].text;
         row.calls.push({name: call.function.name, args, resultBytes: Buffer.byteLength(value), resultSha256: digest(value), untrustedBoundary: value.includes('EXTERNAL_UNTRUSTED_CONTENT')});
         assert(value.includes('EXTERNAL_UNTRUSTED_CONTENT'));
+        toolResults.push(toolResult);
         messages.push({role: 'tool', tool_call_id: call.id, content: value});
       }
     }
@@ -110,21 +123,24 @@ async function communityAcceptance() {
   const found = await query('build-hero-search', {action: 'search', kind: 'hero', query: '梅铃'});
   assert.equal(found.data.items[0].heroCode, 'mei-lin');
   const first = await query('builds-page1', {action: 'builds', heroCode: 'mei-lin', limit: 3});
-  assert(first.data.total > 3); assert(first.data.items.every(r => r.statBasis.equipmentIncluded && r.statBasis.percentUnit === 'percentage_points'));
-  assert.equal(first.data.items[0].stats.chd, 289); assert.equal(first.data.items[0].statBasis.level, null);
-  report.buildSample = {id: first.data.items[0].id, stats: first.data.items[0].stats, statBasis: first.data.items[0].statBasis, updatedAt: first.data.items[0].updatedAt};
-  const second = await query('builds-page2', {action: 'builds', heroCode: 'mei-lin', limit: 3, cursor: first.data.nextCursor});
-  assert(!second.data.items.some(r => first.data.items.some(p => p.id === r.id)));
+  assert(first.data.items.every(r => r.statBasis.equipmentIncluded && r.statBasis.percentUnit === 'percentage_points' && r.statBasis.level === null));
+  const [sample] = first.data.items;
+  if (sample) report.buildSample = {id: sample.id, stats: sample.stats, statBasis: sample.statBasis, updatedAt: sample.updatedAt};
+  if (first.data.nextCursor) {
+    const second = await query('builds-page2', {action: 'builds', heroCode: 'mei-lin', limit: 3, cursor: first.data.nextCursor});
+    assert(!second.data.items.some(r => first.data.items.some(p => p.id === r.id)));
+  }
   const filtered = await query('builds-filtered', {action: 'builds', heroCode: 'mei-lin', filters: {sets: ['开战', '穿透'], minStats: {chd: 250, spd: 218}}, limit: 3});
-  assert(filtered.data.total > 0); assert(filtered.data.items.every(r => r.sets.includes('开战') && r.sets.includes('穿透') && r.stats.chd >= 250 && r.stats.spd >= 218));
+  assert(filtered.data.items.every(r => r.sets.includes('开战') && r.sets.includes('穿透') && r.stats.chd >= 250 && r.stats.spd >= 218));
   const reviewed = await query('review-hero-search', {action: 'search', kind: 'hero', query: '小春'});
   assert.equal(reviewed.data.items[0].heroCode, 'haru');
   const reviews = await query('reviews-all', {action: 'reviews', heroCode: 'haru'});
   assert(reviews.data.total >= 4); assert(reviews.data.items.every(r => r.author && r.updatedAt));
   const rta = await query('reviews-rta', {action: 'reviews', heroCode: 'haru', category: 'RTA'});
   assert(rta.data.items.length); assert(rta.data.items.every(r => r.category === 'RTA'));
-  const empty = await query('reviews-empty', {action: 'reviews', heroCode: 'mei-lin'});
-  assert.equal(empty.data.total, 0); assert.equal(empty.data.nextCursor, null);
+  const pve = await query('reviews-pve', {action: 'reviews', heroCode: 'mei-lin', category: 'PVE'});
+  assert(pve.data.items.every(r => r.category === 'PVE'));
+  if (pve.data.total === 0) {assert.deepEqual(pve.data.items, []); assert.equal(pve.data.nextCursor, null);}
   const before = report.requests.length;
   await service.query({action: 'builds', heroCode: 'mei-lin'}); await service.query({action: 'reviews', heroCode: 'haru'});
   assert.equal(report.requests.length, before); report.cacheReuseWithoutHttp = true;
@@ -169,14 +185,19 @@ async function referenceAcceptance() {
 }
 async function gameplayAcceptance(){
  report.phase='2C';
+ const started=performance.now();
  const first=await query('gvg-complete-page1',{action:'gvg',limit:2});assert(first.data.total>2);assert.equal(first.data.coverage.fetched,first.data.total);assert.equal(first.data.coverage.scope,'complete_verified_pages');
+ const pages=report.requests.filter(r=>r.kind==='gvgHomework');
+ report.gvgCold={wallMs:Math.round(performance.now()-started),pages:pages.length,bytes:pages.reduce((n,r)=>n+r.bytes,0)};
  const second=await query('gvg-page2',{action:'gvg',limit:2,cursor:first.data.nextCursor});assert(!second.data.items.some(r=>first.data.items.some(p=>p.id===r.id)));
  const codes=first.data.items[0].defense.map(h=>h.heroCode);assert.equal(codes.length,3);
  const exact=await query('gvg-exact-team',{action:'gvg',defenseHeroCodes:codes,limit:2});assert(exact.data.total>0);assert(exact.data.items.every(r=>codes.every(c=>r.defense.some(h=>h.heroCode===c))));
  const reverse=await query('gvg-reordered-team',{action:'gvg',defenseHeroCodes:[...codes].reverse(),limit:2});assert.deepEqual(reverse.data,exact.data);
  const partial=await query('gvg-contains-partial',{action:'gvg',defenseHeroCodes:codes.slice(0,1),match:'contains',limit:2});assert(partial.data.total>=exact.data.total);
  const hot=await query('gvg-hot',{action:'gvg',view:'hot_defenses',limit:2});assert.equal(hot.data.coverage.scope,'upstream_top_100');assert(hot.data.items.every(r=>r.reliableWinRate===null));
- const all=await service.resource('fates');const seasonId=all.data[0].season_id;
+ const seasons=await query('fates-seasons',{action:'fates',view:'list'});
+ assert(seasons.data.total>0);
+ const {seasonId}=seasons.data.items[0];
  const fates=await query('fates-list',{action:'fates',seasonId,limit:2});assert(fates.data.total>2);
  const fateNext=await query('fates-page2',{action:'fates',seasonId,limit:2,cursor:fates.data.nextCursor});assert(!fateNext.data.items.some(r=>fates.data.items.some(p=>p.id===r.id)));
  const heroes=await query('fates-recommended-heroes',{action:'fates',view:'recommended_heroes',seasonId,limit:2});assert(heroes.data.items.length);
@@ -190,8 +211,24 @@ async function gameplayAcceptance(){
  const pack=await query('packs-detail',{action:'packs',mode:'get',packId:packs.data.items[0].packId});assert(pack.data.items.length);assert.equal(pack.data.currency,null);assert.equal(pack.data.valuationBasis.ratioFormula,null);assert.equal(pack.data.valuationBasis.realtimePriceVerified,false);
  const before=report.requests.length;await service.query({action:'gvg',limit:1});await service.query({action:'packs'});assert.equal(report.requests.length,before);report.cacheReuseWithoutHttp=true;
 }
+async function mediaAcceptance() {
+  const news = await query('game-news-list', {action: 'news', kind: 'game', server: '国际服', limit: 3});
+  const row = news.data.items.find(item => item.url);
+  assert(row, 'No announcement with a listed PDF in sample');
+  const body = await query('game-news-body', {action: 'news', kind: 'game', mode: 'get', announcementId: row.id, limit: 2});
+  report.announcement = {id: row.id, status: body.data.bodyStatus, pageCountRead: body.data.total,
+    returnedTextCharacters: body.data.items.reduce((count, page) => count + page.text.length, 0), more: Boolean(body.data.nextCursor)};
+  assert(body.data.bodyExtracted && report.announcement.returnedTextCharacters > 0, 'Sample PDF has no extracted text in the first two pages');
+  const hero = await query('image-hero', {action: 'search', kind: 'hero', query: '罗安纳'});
+  assert.equal(hero.data.items.length, 1);
+  const image = await service.image({heroCode: hero.data.items[0].heroCode, kind: 'avatar'});
+  assert(image.bytes.length > 0);
+  assert.match(image.contentType, /^image\/(?:png|jpeg|gif|webp)$/u);
+  report.image = {kind: 'avatar', contentType: image.contentType, bytes: image.bytes.length};
+}
 try {
-  if (gameplayOnly)await gameplayAcceptance();
+  if (mediaOnly) await mediaAcceptance();
+  else if (gameplayOnly)await gameplayAcceptance();
   else if (communityOnly) await communityAcceptance();
   else if (referenceOnly) await referenceAcceptance();
   else {

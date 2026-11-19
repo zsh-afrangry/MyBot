@@ -29,6 +29,7 @@ chatbot/SOUL.md
 
 # Test and acceptance script output; never committed (see AGENTS.md 文档管理规范)
 /test-output/
+/docs/e7_capture_*.pcap
 
 # Host-generated state, credentials, caches and local recovery copies
 /.codex/

@@ -1,5 +1,5 @@
 // Cache/read/query orchestration, shared in-flight reads and an explicitly stopped daily refresher.
-import {E7Client, endpoint} from './client.js';
+import {E7Client, endpoint, announcementAssetUrl} from './client.js';
 import {E7Store, digest} from './store.js';
 import {E7Error, fail, settings, ttlFor, CATALOGS, normalize, nextRefresh, object} from './policy.js';
 import {validateQuery, validateData, dataCount, text, matchRows, cardProjection, artifactIdentity, heroProjection, artifactProjection, dictionaryProjection, pageRows, boundResult} from './query.js';
@@ -7,8 +7,23 @@ import {buildProjection, reviewProjection, matchBuilds} from './query.js';
 import {rankingIdentity, rankingTiers, rankingEntries, contentProjection, contentCursor, contentPage, faqFallbackQueries} from './reference.js';
 
 import {queryGameplay} from './gameplay.js';
+import {extractAnnouncement} from './announcements.js';
+import {E7ImageCache, selectImage, validateImageQuery} from './images.js';
 
 const contentKey = (kind, contentId) => JSON.stringify(['contentLocator', {kind, contentId}]);
+const announcementKey = id => JSON.stringify(['announcementLocator', id]);
+const SOURCE = 'E7·WIKI';
+
+const announcement = row => ({
+  id: String(row.id), title: text(row.title), server: row.server === 1 ? '国服' : row.server === 2 ? '国际服' : '来源未注明',
+  updatedAt: row.updateTime ?? null, url: announcementAssetUrl(row.url), bodyExtracted: false,
+});
+
+function citationFor(sources, stale) {
+  const days = [...new Set(sources.map(s => s.checkedAt.slice(0, 10)))].sort();
+  const dates = days.length > 1 ? `${days[0]} 至 ${days.at(-1)}` : days[0];
+  return `资料来源：${SOURCE}${dates ? `；缓存校对日期（UTC）：${dates}` : ''}${stale ? '；含陈旧缓存' : ''}`;
+}
 
 function waitFor(promise, signal) {
   if (!signal) return promise;
@@ -21,9 +36,11 @@ function waitFor(promise, signal) {
 }
 
 export class E7Service {
-  constructor(config, {client, store, clock = Date.now, timers = {set: setTimeout, clear: clearTimeout}, onRefresh = () => {}, observe=()=>{}} = {}) {
+  constructor(config, {client, store, clock = Date.now, timers = {set: setTimeout, clear: clearTimeout}, onRefresh = () => {}, observe=()=>{}, extractPdf = extractAnnouncement} = {}) {
     this.config = settings(config); this.observe=observe;this.client = client ?? new E7Client({...this.config,observe:event=>{try{observe({kind:'e7.http',correlation:event.correlation??{},data:{resource:event.kind,method:event.method,httpStatus:event.status||null,bytes:event.bytes,durationMs:event.durationMs}});}catch{}}}); this.store = store ?? new E7Store(this.config.cacheRoot);
     this.clock = clock; this.timers = timers; this.onRefresh = onRefresh;
+    this.extractPdf = extractPdf;
+    this.images = new E7ImageCache();
     this.flights = new Map(); this.controller = new AbortController(); this.closed = false; this.started = false;
   }
   start() {
@@ -44,6 +61,7 @@ export class E7Service {
     this.closed = true; this.started = false;
     if (this.timer !== undefined) this.timers.clear(this.timer); this.timer = undefined;
     this.controller.abort(); await Promise.allSettled([...this.flights.values()]);
+    this.images.clear();
   }
   async refresh() {
     const results = [];
@@ -80,7 +98,9 @@ export class E7Service {
         if (!old) fail('unexpected_not_modified');
         record = {...old, checkedAt: this.clock()};
       } else {
-        const data = validateData(kind, response.data, params), count = dataCount(kind, data);
+        const body = kind === 'announcementPdf' ? await this.extractPdf(response.data, {signal: this.controller.signal}) : response.data;
+        const data = validateData(kind, body, params);
+        const count = CATALOGS.includes(kind) ? dataCount(kind, data) : null;
         if (old && CATALOGS.includes(kind) && count < dataCount(kind, old.data) * 0.9) fail('catalog_shrank');
         const hash = digest(data);
         record = {data, hash, fetchedAt: old?.hash === hash ? old.fetchedAt : this.clock(), checkedAt: this.clock(), url: endpoint(kind, params).url,
@@ -93,6 +113,23 @@ export class E7Service {
       throw error instanceof E7Error ? error : new E7Error('upstream_failed');
     }
   }
+  async image(raw, {signal, trace} = {}) {
+    const args = validateImageQuery(raw);
+    const request = {signal, trace};
+    const cards = await this.resource('cards', {}, request);
+    if (!cards.data.some(r => r.code === args.heroCode)) fail('unknown_hero');
+    const hero = await this.resource('hero', {heroCode: args.heroCode}, request);
+    const relative = selectImage(hero.data, args);
+    const stop = signal ? AbortSignal.any([signal, this.controller.signal]) : this.controller.signal;
+    stop.throwIfAborted();
+    const cached = this.images.get(relative, this.clock());
+    if (cached) return cached;
+    const {data: bytes, contentType} = await this.client.read('heroImage', {kind: args.kind, relative}, {signal: stop, trace});
+    stop.throwIfAborted();
+    const asset = {bytes, contentType};
+    this.images.set(relative, asset, this.clock());
+    return asset;
+  }
   async query(raw, {signal,trace} = {}) {
     const args = validateQuery(raw), resources = [];
     const get = async (kind, params = {}) => {
@@ -102,7 +139,7 @@ export class E7Service {
       signal?.throwIfAborted();
       for (const row of record.data.list) this.store.write(contentKey(kind, String(row.id)), {...record, data: params, hash: digest(params)});
     };
-    let data, missingFields = [], status = 'ok';
+    let data, missingFields = [], status = 'ok', truncated = false;
     if (args.action === 'search') {
       const base = await get(args.kind === 'hero' ? 'cards' : 'artifacts');
       let rows = base.data;
@@ -227,14 +264,38 @@ export class E7Service {
         const all = await get('wikiUpdates');
         data = {...pageRows(all.data.map(r => ({id: String(r.id), title: text(r.title), date: r.date ?? null, content: text(r.content), updatedAt: r.updateTime ?? null})), args, all.hash),
           coverage: 'wiki最新50条版本日志，属于网站更新'};
+      } else if (args.mode === 'get') {
+        const params = this.store.read(announcementKey(args.announcementId))?.data;
+        if (!object(params) || Object.keys(params).some(k => !['page', 'server'].includes(k))
+          || !Number.isInteger(params.page) || params.page < 1 || params.page > 1000
+          || ('server' in params && ![1, 2].includes(params.server))) fail('announcement_list_required');
+        const list = await get('gameNews', params);
+        const row = list.data.list.find(r => String(r.id) === args.announcementId);
+        if (!row) fail('announcement_locator_expired');
+        data = announcement(row);
+        if (!data.url) {
+          data.bodyStatus = 'pdf_unavailable';
+          missingFields.push('body');
+        } else {
+          const pdf = await get('announcementPdf', {relative: row.url});
+          const {pages, pageLimitReached} = pdf.data;
+          const readable = pages.some(p => p.text);
+          data = {...data, ...pageRows(pages, args, [list.hash, pdf.hash]),
+            bodyExtracted: readable, bodyStatus: readable ? 'text_extracted' : 'no_extractable_text',
+            coverage: '仅PDF文字层，未识别图片或扫描件；有nextCursor时还有已提取的页可读。',
+            pageLimitReached};
+          truncated = pageLimitReached;
+          if (!readable) missingFields.push('body');
+        }
       } else {
         let page = 1;
         if (args.cursor) {
           let cursor; try {cursor = JSON.parse(Buffer.from(args.cursor, 'base64url').toString());} catch {fail('invalid_cursor');}
-          if (cursor.server !== (args.server ?? null) || !Number.isInteger(cursor.page) || cursor.page < 1 || cursor.page > 1000 || !Number.isInteger(cursor.offset) || cursor.offset < 0 || cursor.offset >= 10) fail('invalid_cursor');
+          if (!object(cursor) || cursor.server !== (args.server ?? null) || !Number.isInteger(cursor.page) || cursor.page < 1 || cursor.page > 1000 || !Number.isInteger(cursor.offset) || cursor.offset < 0 || cursor.offset >= 10) fail('invalid_cursor');
           page = cursor.page;
         }
-        const all = await get('gameNews', {page, ...(args.server ? {server: args.server === '国服' ? 1 : 2} : {})});
+        const params = {page, ...(args.server ? {server: args.server === '国服' ? 1 : 2} : {})};
+        const all = await get('gameNews', params);
         const upstream = all.data;
         let offset = 0;
         if (args.cursor) {
@@ -248,17 +309,16 @@ export class E7Service {
         else if (upstream.list.length && page * 10 < upstream.pagination.total) nextCursor = {server: args.server ?? null, page: page + 1, offset: 0, hash: null};
         // A new-page cursor has no snapshot yet. Same-page cursors always bind to the exact response hash.
         if (nextCursor) nextCursor = Buffer.from(JSON.stringify(nextCursor)).toString('base64url');
-        data = {items: rows.map(r => {
-          const relative = typeof r.url === 'string' && /^\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.pdf$/.test(r.url) && !r.url.includes('..') ? r.url : null;
-          return {id: String(r.id), title: text(r.title), server: r.server === 1 ? '国服' : r.server === 2 ? '国际服' : '来源未注明', updatedAt: r.updateTime ?? null,
-            url: relative ? 'https://assets2.e7.wiki/announcement' + relative : null, bodyExtracted: false};
-        }), total: upstream.pagination.total, nextCursor, coverage: '仅公告目录，正文PDF未解析'};
+        signal?.throwIfAborted();
+        for (const row of rows) this.store.write(announcementKey(String(row.id)), {...all, data: params, hash: digest(params)});
+        data = {items: rows.map(announcement), total: upstream.pagination.total, nextCursor, coverage: '公告目录；正文须用已列出的公告ID取PDF文字层。'};
       }
     }
     signal?.throwIfAborted();
     const sources = [...new Map(resources.map(r => [r.url + r.hash, {url: r.url, fetchedAt: new Date(r.fetchedAt).toISOString(),
       checkedAt: new Date(r.checkedAt).toISOString(), upstreamUpdatedAt: null, stale: r.stale, ...(r.warning ? {warning: r.warning} : {})}])).values()];
-    return boundResult({status, action: args.action, data, source: 'E7·WIKI', sources, stale: sources.some(r => r.stale), missingFields,
+    const stale = sources.some(r => r.stale);
+    return boundResult({status, action: args.action, source: SOURCE, citation: citationFor(sources, stale), data, sources, stale, missingFields, truncated,
       externalContent: {untrusted: true, source: 'api'}});
   }
 }

@@ -2,10 +2,10 @@
   "id": "kurumi-e7",
   "name": "E7 public wiki data",
   "version": "0.1.0",
-  "description": "Owner-only bounded read queries for E7·WIKI; no image sending or arbitrary fetch",
+  "description": "Owner-only bounded E7·WIKI queries and separately authorized image delivery",
   "activation": {"onStartup": true},
-  "contracts": {"tools": ["e7_data"]},
-  "toolMetadata": {"e7_data": {"optional": true, "replaySafe": true}},
+  "contracts": {"tools": ["e7_data", "e7_image"]},
+  "toolMetadata": {"e7_data": {"optional": true, "replaySafe": true}, "e7_image": {"optional": true, "replaySafe": false}},
   "configSchema": {
     "type": "object", "additionalProperties": false, "required": ["cacheRoot"],
     "properties": {

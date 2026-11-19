@@ -5,10 +5,33 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
-import {account, ownerTarget, Ledger, sendPayload, localImage, splitForQQ} from '../../../packages/qq-delivery/index.js';
+import {account, ownerTarget, Ledger, sendPayload, sendImage, localImage, splitForQQ} from '../../../packages/qq-delivery/index.js';
 import {parseInbound,handleInbound} from '../src/inbound.js';
 function fixture(){const dir=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-channel-'));fs.writeFileSync(path.join(dir,'token'),'test',{mode:0o600});const cfg=withAccess({channels:{'kurumi-qq':{enabled:true,ownerId:'365999865',httpUrl:'http://127.0.0.1:1',wsUrl:'ws://127.0.0.1:2',httpTokenFile:path.join(dir,'token'),wsTokenFile:path.join(dir,'token'),stateDir:dir,mediaRoot:dir,sendLimit:10}}});return {dir,cfg,a:account(cfg)};}
 const valid={post_type:'message',message_type:'private',self_id:123456789,user_id:365999865,message_id:789,message:[{type:'text',data:{text:'你好'}}]};
+test('binary image delivery shares the private OneBot transport, durable deduplication and quota', async t => {
+ const {cfg,dir}=fixture(), calls=[];
+ t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const server=http.createServer(async(req,res)=>{
+  let body='';for await(const chunk of req)body+=chunk;
+  calls.push({path:req.url,...JSON.parse(body)});
+  res.setHeader('content-type','application/json');
+  res.end(JSON.stringify({status:'ok',retcode:0,data:{message_id:901}}));
+ });
+ await new Promise(r=>server.listen(0,'127.0.0.1',r));
+ try{
+  cfg.channels['kurumi-qq'].httpUrl='http://127.0.0.1:'+server.address().port;
+  const bytes=Buffer.from('RIFF0000WEBP'),opts={cfg,to:'user:365999865',bytes,contentType:'image/webp',key:'requested',text:'Source',dailyLimit:1};
+  await assert.rejects(sendImage({...opts,to:'group:365999865'}));
+  await assert.rejects(sendImage({...opts,contentType:'image/png'}),/Invalid QQ image/);
+  assert.equal((await sendImage(opts)).messageId,'901');
+  assert.equal((await sendImage(opts)).messageId,'901');
+  await assert.rejects(sendImage({...opts,key:'second'}),{code:'qq_category_daily_limit'});
+  assert.deepEqual(calls,[{path:'/send_private_msg',user_id:365999865,message:[
+   {type:'text',data:{text:'Source'}},{type:'image',data:{file:'base64://'+bytes.toString('base64')}},
+  ]}]);
+ }finally{await new Promise(r=>server.close(r));}
+});
 test('Owner and endpoint validation fail closed',()=>{const {a,cfg}=fixture();assert.equal(ownerTarget('user:365999865',a),'365999865');for(const to of ['group:365999865','123456','365999865x','user:365999865:thread'])assert.throws(()=>ownerTarget(to,a));cfg.channels['kurumi-qq'].httpUrl='http://example.com';assert.throws(()=>account(cfg));});
 test('Reject group, stranger, self, wrong bot, malformed event',()=>{const {a}=fixture();assert.equal(parseInbound(valid,a,'123456789').text,'你好');for(const patch of [{message_type:'group'},{user_id:777777},{self_id:999999},{message_id:0},{message:'[CQ:at,qq=all]'}])assert.equal(parseInbound({...valid,...patch},a,'123456789'),null);});
 test('CQ text is literal, not metadata',()=>{const {a}=fixture();const r=parseInbound({...valid,message:[{type:'text',data:{text:'[CQ:reply,id=1]'}}]},a,'123456789');assert.equal(r.replyId,undefined);});

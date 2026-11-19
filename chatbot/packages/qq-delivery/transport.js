@@ -5,6 +5,7 @@ import {account,ownerTarget,token} from './config.js';
 import {Ledger} from './ledger.js';
 import {setTimeout as pause} from 'node:timers/promises';
 import {presentForQQ} from './presentation.js';
+import {imageType, MAX_IMAGE_BYTES} from './image.js';
 export async function onebot(a,action,params,signal,{timeoutMs=15000}={}){
  const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeoutMs)]):AbortSignal.timeout(timeoutMs)});
  if(!r.ok)throw Error(`OneBot HTTP ${r.status}`);
@@ -14,29 +15,44 @@ export function localImage(file,a){
  // Only explicitly staged media; symlink escapes and arbitrary files are rejected.
  const root=fs.realpathSync(a.mediaRoot);const target=fs.realpathSync(file.replace(/^file:\/\//,''));
  if(!target.startsWith(root+path.sep)||!fs.statSync(target).isFile())throw Error('Image outside staged media');
- const bytes=fs.readFileSync(target);if(bytes.length>8*1024*1024)throw Error('Image exceeds 8 MiB');
- if(!(bytes.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||(bytes[0]===255&&bytes[1]===216)||bytes.subarray(0,3).toString()==='GIF'||(bytes.subarray(0,4).toString()==='RIFF'&&bytes.subarray(8,12).toString()==='WEBP')))throw Error('Unsupported image bytes');
+ const bytes=fs.readFileSync(target);if(bytes.length>MAX_IMAGE_BYTES)throw Error('Image exceeds 8 MiB');
+ if(!imageType(bytes))throw Error('Unsupported image bytes');
  return {type:'image',data:{file:'base64://'+bytes.toString('base64')}};
 }
 export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
  const a=account(cfg),target=ownerTarget(to,a);
  // Preserve legacy owner receipt keys; every member has a separate idempotency namespace.
- if(target!==a.ownerId)id=`subject:${target}:${id}`;
+ const subjectPrefix=target===a.ownerId?'':'subject:'+target+':';
+ id=subjectPrefix+id;
  if(!Array.isArray(message)||!message.length||message.some(x=>!['text','reply','image'].includes(x.type)))throw Error('Invalid message segments');
  context.signal?.throwIfAborted();
  const l=new Ledger(a.stateDir);
  try{
-  const prior=l.reserve(id,a.sendLimit,a.dailySendLimit??120);
-  if(prior){if(prior.status==='sent')return {channel:'kurumi-qq',messageId:prior.message_id};throw Error('Previous QQ send unresolved/failed; manual reconciliation required');}
+  const prior=l.reserve(id,a.sendLimit,a.dailySendLimit??120,context.quota?{...context.quota,prefix:subjectPrefix+context.quota.prefix}:undefined);
+  if(prior){
+   if(prior.status==='sent')return {channel:'kurumi-qq',messageId:prior.message_id,...(context.reportReplay?{replayed:true}:{})};
+   throw Object.assign(Error('Previous QQ send unresolved/failed; manual reconciliation required'),{code:'qq_receipt_unresolved'});
+  }
   try{
    await context.onPlatformSendDispatch?.();
    context.signal?.throwIfAborted();context.assertDirectAdapterHandoff?.();
- ownerTarget(to,account(cfg));
+   ownerTarget(to,account(cfg));
    const r=await onebot(a,'send_private_msg',{user_id:Number(target),message},context.signal);
    if(!Number.isSafeInteger(r?.message_id)||r.message_id===0)throw Error('Missing message receipt');
    l.sent(id,r.message_id);return {channel:'kurumi-qq',messageId:String(r.message_id)};
   }catch(e){if(e.rejected)l.failed(id);throw e;}
  }finally{l.close();}
+}
+export async function sendImage({cfg,to,bytes,contentType,key,text='',signal,dailyLimit=20,assertDirectAdapterHandoff}){
+ signal?.throwIfAborted();
+ if(typeof key!=='string'||!key||key.length>512)throw Error('Stable image delivery key required');
+ const type=imageType(bytes);
+ if(!type||bytes.length>MAX_IMAGE_BYTES||type!==contentType)throw Error('Invalid QQ image');
+ if(typeof text!=='string'||text.length>500)throw Error('Invalid QQ image caption');
+ const segments=[];
+ if(text)segments.push({type:'text',data:{text}});
+ segments.push({type:'image',data:{file:'base64://'+bytes.toString('base64')}});
+ return sendSegments(cfg,to,segments,'image:'+key,{signal,assertDirectAdapterHandoff,reportReplay:true,quota:{prefix:'image:',limit:dailyLimit}});
 }
 export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliveryQueueId,deliveryPartIndex,signal,onPlatformSendDispatch,assertDirectAdapterHandoff,onDeliveryResult}){
  key??=deliveryQueueId?`delivery:${deliveryQueueId}:${deliveryPartIndex??0}`:randomUUID();

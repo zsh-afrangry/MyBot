@@ -1,10 +1,20 @@
 // Exact public read endpoints only. No arbitrary URL, redirect, cookie, write API or automatic retry.
 import {fetchWithSsrFGuard} from 'openclaw/plugin-sdk/ssrf-runtime';
 import {E7Error, fail, codePattern} from './policy.js';
+import {acceptedImagePath} from './images.js';
+import {MAX_IMAGE_BYTES, IMAGE_TYPES, imageType} from '../../packages/qq-delivery/index.js';
 
 const API = 'https://admin.e7.wiki/api';
 const ASSETS = 'https://assets2.e7.wiki';
 export const USER_AGENT = 'kurumi-e7/0.1 (personal read-only wiki client)';
+const MAX_ANNOUNCEMENT_BYTES = 12 * 1024 * 1024;
+
+export function announcementAssetUrl(relative) {
+  return typeof relative === 'string' && relative.length <= 512 && !relative.includes('..')
+    && /^\/(?:[a-zA-Z0-9_-]+\/)*[a-zA-Z0-9_.-]+\.pdf$/u.test(relative)
+    ? ASSETS + '/announcement' + relative : null;
+}
+
 export function endpoint(kind, params = {}) {
   const fixed = {
     cards: '/open/epicseven/hero/card-list', summary: '/open/epicseven/hero_summary/hero-list',
@@ -48,6 +58,15 @@ export function endpoint(kind, params = {}) {
     return {url: API + '/open/epicseven/announcement/page', method: 'POST', envelope: true,
       body: {page, size: 10, order: 'createTime', sort: 'desc', ...(params.server ? {server: params.server} : {})}};
   }
+  if (kind === 'announcementPdf') {
+    const url = announcementAssetUrl(params.relative);
+    if (!url) fail('invalid_query');
+    return {url, method: 'GET', binary: 'application/pdf', maxBytes: MAX_ANNOUNCEMENT_BYTES};
+  }
+  if (kind === 'heroImage') {
+    if (!acceptedImagePath(params.kind, params.relative)) fail('invalid_query');
+    return {url: ASSETS + params.relative, method: 'GET', binary: 'image/*', maxBytes: MAX_IMAGE_BYTES};
+  }
   fail('unknown_resource');
 }
 
@@ -82,11 +101,18 @@ export class E7Client {
   async read(kind, params = {}, {signal, validators = {}, trace} = {}) {
     const spec = endpoint(kind, params), host = new URL(spec.url).hostname;
     return this.slot(signal, async () => {
-      if ((this.cooldowns.get(host)?.until ?? 0) > this.clock()) throw new E7Error('upstream_backoff');
+      const previous = this.cooldowns.get(host);
+      if ((previous?.until ?? 0) > this.clock()) throw new E7Error('upstream_backoff');
+      const clearPrevious = () => {if (this.cooldowns.get(host) === previous) this.cooldowns.delete(host);};
+      const backoff = minimumDelay => {
+        const current = this.cooldowns.get(host), failures = (current?.failures ?? 0) + 1;
+        const delay = Math.min(86400000, minimumDelay ?? 30000 * 2 ** Math.min(failures - 1, 6));
+        this.cooldowns.set(host, {failures, until: Math.max(current?.until ?? 0, this.clock() + delay)});
+      };
       const timeout = AbortSignal.timeout(this.timeoutMs), combined = signal ? AbortSignal.any([signal, timeout]) : timeout;
       let guard, status = 0, bytes = 0;const started=this.clock();
       try {
-        const headers = {Accept: 'application/json', 'User-Agent': USER_AGENT};
+        const headers = {Accept: spec.binary ?? 'application/json', 'User-Agent': USER_AGENT};
         if (header(validators.etag)) headers['If-None-Match'] = validators.etag;
         if (header(validators.lastModified)) headers['If-Modified-Since'] = validators.lastModified;
         if (spec.body) headers['Content-Type'] = 'application/json';
@@ -97,17 +123,21 @@ export class E7Client {
         const res = guard.response; status = res.status;
         if (guard.finalUrl && guard.finalUrl !== spec.url) fail('redirect_refused');
         const meta = {url: spec.url, status, etag: header(res.headers.get('etag')), lastModified: header(res.headers.get('last-modified'))};
-        if (status === 304) {this.cooldowns.delete(host); return meta;}
+        if (status === 304) {clearPrevious(); return meta;}
         if (status !== 200) {
           if (status === 403 || status === 429 || status >= 500) {
-            const failures = (this.cooldowns.get(host)?.failures ?? 0) + 1;
             const retry = res.headers.get('retry-after');
             const delay = retry && /^\d+$/.test(retry) ? Number(retry) * 1000 : retry ? Date.parse(retry) - this.clock() : 0;
-            this.cooldowns.set(host, {failures, until: this.clock() + Math.min(86400000, Math.max(status === 403 ? 3600000 : 30000, delay || 30000 * 2 ** Math.min(failures - 1, 6)))});
+            backoff(status === 403 ? Math.max(3600000, delay || 0) : delay ? Math.max(30000, delay) : undefined);
           }
           throw new E7Error(status === 403 ? 'upstream_forbidden' : status === 429 ? 'rate_limited' : status >= 300 && status < 400 ? 'redirect_refused' : status === 404 ? 'not_found' : 'upstream_failed', status);
         }
-        if (!/\bapplication\/(?:[\w.-]+\+)?json\b/i.test(res.headers.get('content-type') ?? '')) fail('invalid_response');
+        const contentType = res.headers.get('content-type')?.split(';', 1)[0].trim().toLowerCase() ?? '';
+        const validType = spec.binary === 'image/*' ? IMAGE_TYPES.includes(contentType)
+          : spec.binary ? contentType === spec.binary : /^application\/(?:[\w.-]+\+)?json$/.test(contentType);
+        if (!validType) fail('invalid_response');
+        const maxBytes = spec.maxBytes ?? this.maxBytes;
+        if (Number(res.headers.get('content-length')) > maxBytes) fail('response_too_large');
         const reader = res.body?.getReader();
         if (!reader) fail('invalid_response');
         const chunks = [];
@@ -116,24 +146,30 @@ export class E7Client {
             combined.throwIfAborted();
             const part = await reader.read(); if (part.done) break;
             bytes += part.value.byteLength;
-            if (bytes > this.maxBytes) {await reader.cancel(); fail('response_too_large');}
+            if (bytes > maxBytes) {await reader.cancel(); fail('response_too_large');}
             chunks.push(part.value);
           }
         } finally {reader.releaseLock();}
+        const body = Buffer.concat(chunks);
+        if (spec.binary) {
+          if (spec.binary === 'image/*'
+            ? imageType(body) !== contentType : !body.subarray(0, 5).equals(Buffer.from('%PDF-'))) fail('invalid_response');
+          clearPrevious();
+          return {...meta, data: body, contentType};
+        }
         let data;
-        try {data = JSON.parse(Buffer.concat(chunks).toString('utf8'));} catch {fail('invalid_response');}
+        try {data = JSON.parse(body.toString('utf8'));} catch {fail('invalid_response');}
         if (spec.envelope) {
           if (!data || data.code !== 1000 || !Object.hasOwn(data, 'data')) fail('invalid_response');
           data = data.data;
         }
-        this.cooldowns.delete(host);
+        clearPrevious();
         return {...meta, data};
       } catch (error) {
         if (signal?.aborted) throw new E7Error('cancelled');
         if (error instanceof E7Error) throw error;
         if (error?.name === 'GuardedFetchRedirectError') throw new E7Error('redirect_refused');
-        const failures = (this.cooldowns.get(host)?.failures ?? 0) + 1;
-        this.cooldowns.set(host, {failures, until: this.clock() + 30000 * 2 ** Math.min(failures - 1, 6)});
+        backoff();
         throw new E7Error(timeout.aborted ? 'timeout' : 'network_failed');
       } finally {
         try {await guard?.response?.body?.cancel();} catch {}

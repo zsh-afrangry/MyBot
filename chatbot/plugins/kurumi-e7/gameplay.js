@@ -22,7 +22,9 @@ export function validateGameplayQuery(a){
   }
  }
  if(a.action==='fates'){
-  a.view??='list';if(!['list','recommended_heroes','hero_fates'].includes(a.view)||!stable(a.seasonId))fail('invalid_query');
+  a.view??='list';
+  if(!['list','recommended_heroes','hero_fates'].includes(a.view))fail('invalid_query');
+  if(('seasonId' in a || a.view!=='list') && !stable(a.seasonId))fail('invalid_query');
   if(a.view==='hero_fates'?!code(a.heroCode):'heroCode' in a)fail('invalid_query');
  }
  if(a.action==='packs'){
@@ -61,6 +63,32 @@ const fate=r=>({id:r.id==null?null:String(r.id),fateId:r.chaos_fate_id,name:text
 const pack=r=>({packId:String(r.packId),name:text(r.packName),price:r.packPrice,currency:null,totalSkyStoneValue:r.totalSkyStoneValue??null,valueRatio:r.valueRatio??null,
  items:r.itemBreakdown.map(i=>({itemId:String(i.itemId),name:text(i.itemName),quantity:i.quantity??null,unitSkyStoneValue:i.unitPrice??null,totalSkyStoneValue:i.totalPrice??null})),
  valuationBasis:{source:'E7·WIKI',realtimePriceVerified:false,ratioFormula:null,note:'站点按道具天青石估值计算；保留来源单价/数量/总值。币种和比率公式未注明，不推算或作为实时商城价格/购买建议。'}});
+
+async function readHomework(get) {
+ const pageSize=100,maxPages=30,rows=[],hashes=[],ids=new Set();
+ const read=page=>get('gvgHomework',{page});
+ const first=await read(1),total=first.data.pagination.total;
+ if(total>pageSize*maxPages)fail('gvg_catalog_too_large');
+ const append=(record,page)=>{
+  const {list,pagination}=record.data;
+  if(pagination.total!==total||list.length!==Math.min(pageSize,total-(page-1)*pageSize))fail('gvg_snapshot_changed');
+  for(const row of list){
+   if(ids.has(String(row.id)))fail('gvg_snapshot_changed');
+   ids.add(String(row.id));rows.push(row);
+  }
+  hashes.push(record.hash);
+ };
+ append(first,1);
+ const pages=Math.ceil(total/pageSize);
+ for(let page=2;page<=pages;page+=2){
+  const indexes=page<pages?[page,page+1]:[page];
+  const batch=await Promise.all(indexes.map(read));
+  batch.forEach((record,i)=>append(record,indexes[i]));
+ }
+ return {rows,stamp:hashes,coverage:{scope:'complete_verified_pages',fetched:rows.length,totalAvailable:total,
+  note:'固定每页100条、最多3000条，核对总数/重复ID后在本地按无槽位顺序的阵容筛选；分页不是上游跨页事务。'}};
+}
+
 export async function queryGameplay(args,{get,pageRows}){
  let data,status='ok',missingFields=[];
  if(args.action==='gvg'){
@@ -69,22 +97,13 @@ export async function queryGameplay(args,{get,pageRows}){
   let rows,stamp,coverage;
   if(args.view==='hot_defenses'){
    const all=await get('gvgHot');rows=all.data;stamp=all.hash;coverage={scope:'upstream_top_100',fetched:rows.length,totalAvailable:null,note:'只筛来源热门防守前100条，不等于全部防守；不把热度或来源winRate解释为可靠胜率。'};
-  }else{
-   rows=[];const hashes=[],ids=new Set();let total;
-   for(let page=1;page<=30;page++){
-    const r=await get('gvgHomework',{page}),p=r.data.pagination;
-    if(total===undefined)total=p.total;else if(total!==p.total)fail('gvg_snapshot_changed');
-    if(total>3000)fail('gvg_catalog_too_large');
-    for(const row of r.data.list){if(ids.has(String(row.id)))fail('gvg_snapshot_changed');ids.add(String(row.id));rows.push(row);}hashes.push(r.hash);
-    if(rows.length===total)break;if(r.data.list.length!==100||rows.length>total)fail('gvg_snapshot_changed');
-   }
-   if(rows.length!==total)fail('gvg_snapshot_changed');stamp=hashes;coverage={scope:'complete_verified_pages',fetched:rows.length,totalAvailable:total,note:'固定每页100条、最多3000条，核对总数/重复ID后在本地按无槽位顺序的阵容筛选；分页不是上游跨页事务。'};
-  }
+  }else ({rows,stamp,coverage}=await readHomework(get));
   const selected=rows.filter(r=>matches(team(r,'defense'),args.defenseHeroCodes,args.match)&&matches(team(r,'offense'),args.offenseHeroCodes,args.match));
   data={...pageRows(selected.map(r=>({id:String(r.id),defense:teams(r,'defense'),...(args.view==='homework'?{offense:teams(r,'offense'),scene:text(r.scene),strategy:text(r.strategy),equipment:text(r.equipment),artifact:text(r.artifact),note:text(r.note),author:text(r.author)||null,updatedAt:text(r.updateTime)||null,observations:{wins:r.win??null,losses:r.lose??null,reliableWinRate:null},equipmentByHero:[1,2,3].map(n=>({heroCode:r['offenseHero'+n]??null,equipment:text(r['offenseHero'+n+'Equipment']),artifact:text(r['offenseHero'+n+'Artifact'])}))}:{description:text(r.description),weight:r.weight??null,searchCount:r.searchCount??null,reliableWinRate:null})})),args,stamp),match:args.match,coverage,sampleWarning:'计数只是来源样本，不能据少量胜负推导可靠胜率、确定克制或保证胜利。'};
  }
  if(args.action==='fates'){
   const all=await get('fates'),seasons=[...new Set(all.data.map(r=>r.season_id))];
+  if(!args.seasonId)return{status,data:pageRows(seasons.map(seasonId=>({seasonId})),args,all.hash),missingFields};
   if(!seasons.includes(args.seasonId))return{status:'not_found',data:{availableSeasons:seasons},missingFields};
   if(args.view==='list')data={...pageRows(all.data.filter(r=>r.season_id===args.seasonId).map(fate),args,all.hash),seasonId:args.seasonId,availableSeasons:seasons};
   else{

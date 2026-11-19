@@ -4,6 +4,7 @@ import {digest} from './store.js';
 import {text} from './text.js';
 import {validateReferenceQuery, validateReferenceData} from './reference.js';
 import {GAMEPLAY_KINDS,validateGameplayQuery,validateGameplayData,gameplayRows} from './gameplay.js';
+import {validateAnnouncementText} from './announcements.js';
 export {text} from './text.js';
 
 export const ATTRIBUTES = ['fire', 'ice', 'wind', 'light', 'dark'];
@@ -18,7 +19,7 @@ export function validateQuery(raw) {
   const a = {...raw}, fields = {
     search: ['kind', 'query', 'filters', 'limit', 'cursor'], hero: ['heroCode', 'view', 'skill'],
     artifact: ['artifactId', 'view'], dictionary: ['kind', 'query', 'entryId', 'limit', 'cursor'],
-    codes: ['server', 'limit'], news: ['kind', 'server', 'limit', 'cursor'],
+    codes: ['server', 'limit'], news: ['kind', 'server', 'limit', 'cursor', 'mode', 'announcementId'],
     builds: ['heroCode', 'filters', 'limit', 'cursor'], reviews: ['heroCode', 'category', 'limit', 'cursor'],
     gvg:['view','defenseHeroCodes','offenseHeroCodes','match','limit','cursor'], fates:['view','seasonId','heroCode','limit','cursor'],packs:['mode','packId','limit','cursor'],
     rankings: ['mode', 'rankingId', 'objectType', 'limit', 'cursor'], content: ['kind', 'mode', 'query', 'contentId', 'limit', 'cursor'],
@@ -68,13 +69,21 @@ export function validateQuery(raw) {
   if (a.action === 'dictionary') {
     if (!['effect', 'item'].includes(a.kind) || ('entryId' in a && !id(a.entryId)) || (a.query && a.entryId)) fail('invalid_query');
   }
-  if (a.action === 'news' && (!['game', 'wiki_update'].includes(a.kind) || (a.kind === 'wiki_update' && a.server))) fail('invalid_query');
+  if (a.action === 'news') {
+    if (!['game', 'wiki_update'].includes(a.kind)) fail('invalid_query');
+    if (a.kind === 'wiki_update' && ['server', 'mode', 'announcementId'].some(key => key in a)) fail('invalid_query');
+    if (a.kind === 'game') {
+      a.mode ??= 'list';
+      if (a.mode === 'get' ? !id(a.announcementId) || 'server' in a : a.mode !== 'list' || 'announcementId' in a) fail('invalid_query');
+    }
+  }
   return a;
 }
 
 const listOf = (value, kind) => kind === 'items' ? Object.values(value).flat() : ['gameNews', 'guides', 'faq'].includes(kind) ? value.list : value;
 export function validateData(kind, data, params = {}) {
   const invalid = () => fail('invalid_response');
+  if (kind === 'announcementPdf') return validateAnnouncementText(data);
   if(GAMEPLAY_KINDS.includes(kind))return validateGameplayData(kind,data,params);
   if (['rankings', 'guides', 'faq'].includes(kind)) return validateReferenceData(kind, data, params);
   if (kind === 'hero') {
@@ -218,6 +227,7 @@ export function boundResult(result) {
     const walk = (v, key = '', depth = 0) => {
       if (depth > 12) {truncated = true; return null;}
       if (typeof v === 'string') {
+        if (key === 'citation') return v;
         const max = /^(?:id|heroCode|artifactId|entryId|rankingId|contentId|fateId|seasonId|packId|itemId|tierId|objectCode|code|url|sourcePage|detailUrl|nextCursor|fetchedAt|upstreamUpdatedAt|hash|key|source|status)$/.test(key) ? 1024 : limit;
         if ([...v].length <= max) return v;
         truncated = true; const prefix = [...v].slice(0, max).join('');

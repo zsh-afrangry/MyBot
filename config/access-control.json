@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 8,
+  "revision": 12,
   "subjects": [
     {
       "qq": "365999865",
@@ -47,6 +47,7 @@
         "automations.manage": true,
         "sessions.read": true,
         "e7.read": true,
+        "e7.image": true,
         "host.exec": true,
         "logs.read": true
       },
