@@ -333,7 +333,7 @@
           "liveTranslationEnabled": true,
           "maxPages": 30,
           "maxRequests": 300,
-          "maxReportedTokens": 300000,
+          "maxReportedTokens": 600000,
           "apiConcurrency": 4,
           "apiQps": 1,
           "batchValidationRetries": 1,
