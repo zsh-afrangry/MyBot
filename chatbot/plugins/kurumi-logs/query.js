@@ -1,12 +1,21 @@
 // Fixed CLI adapter; complete authorized log content, no shell or caller-supplied roots.
 import {spawn} from 'node:child_process';
+import {QQ_ID} from '../../packages/access-control/index.js';
 import {LogQueryError, logQueryRunner} from './policy.js';
-export function cliArguments(config, q) {
+export function cliArguments(config, q, {ownerId} = {}) {
   // The host captures plugin modules outside the source tree. Only the trusted
   // deployment root locates this fixed backend; import.meta.url cannot do so.
   // Fit the actual text weight as well as bytes. Leave room below the host's
   // minimum 16k live text cap and this plugin's 24KiB final envelope cap.
-  const args = [logQueryRunner(config.backendRoot),'--runtime-root',config.runtimeRoot,'--snowluma-root',config.snowlumaRoot,'--from',q.from,'--to',q.to,'--json','--full-content','--show-known','--output-bytes','18000','--output-chars','12000'];
+  const args = [logQueryRunner(config.backendRoot),'--runtime-root',config.runtimeRoot,'--from',q.from,'--to',q.to,'--json','--output-bytes','18000','--output-chars','12000'];
+  if (q.view === 'interactions') {
+    if (typeof ownerId !== 'string' || !QQ_ID.test(ownerId) || q.peer === ownerId) throw new LogQueryError('invalid_query');
+    args.push(`--interactions-for=${ownerId}`,'--limit',String(q.limit),'--offset',String(q.offset));
+    for (const [key,flag] of [['peer','--peer'],['direction','--direction'],['eventRef','--event-ref'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
+    if (q.expand) args.push('--expand');
+    return args;
+  }
+  args.push('--snowluma-root',config.snowlumaRoot,'--full-content','--show-known');
   for (const source of q.sources) args.push('--source',source);
   for (const [key,flag] of [['runId','--run-id'],['messageId','--message-id'],['kind','--kind'],['eventRef','--event-ref'],['eventKey','--event-key'],['cronJobId','--cron-job-id'],['code','--code'],['nodeId','--node-id'],['executionId','--execution-id'],['detail','--detail']]) if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
   for (const [key,flag] of [['contains','--contains'],['keywordMode','--keyword-mode'],['contextBefore','--context-before'],['contextAfter','--context-after'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) if(q[key] !== undefined)args.push(`${flag}=${q[key]}`);
@@ -18,8 +27,9 @@ export function cliArguments(config, q) {
   else { args.push('--limit',String(q.limit),'--offset',String(q.offset)); if (q.view === 'errors') args.push('--errors');if(q.view==='overview')args.push('--overview'); }
   return args;
 }
-export function readQuery(config, q, {signal, timeoutMs = 10000, maxBytes = 512 * 1024} = {}) {
+export function readQuery(config, q, {signal, ownerId, timeoutMs = 10000, maxBytes = 512 * 1024} = {}) {
   signal?.throwIfAborted();
+  const args = cliArguments(config,q,{ownerId});
   return new Promise((resolve,reject) => {
     let child, timer, forceTimer, failure, bytes=0; const chunks=[], errors=[];
     const stop = code => {
@@ -34,7 +44,7 @@ export function readQuery(config, q, {signal, timeoutMs = 10000, maxBytes = 512 
       error ? reject(error) : resolve(result);
     };
     try {
-      child = spawn(process.execPath,cliArguments(config,q),{cwd:config.backendRoot,shell:false,stdio:['ignore','pipe','pipe'],env:{PATH:process.env.PATH ?? '',TZ:'Asia/Shanghai',NODE_NO_WARNINGS:'1'}});
+      child = spawn(process.execPath,args,{cwd:config.backendRoot,shell:false,stdio:['ignore','pipe','pipe'],env:{PATH:process.env.PATH ?? '',TZ:'Asia/Shanghai',NODE_NO_WARNINGS:'1'}});
     } catch { finish(new LogQueryError('query_failed')); return; }
     signal?.addEventListener('abort',abort,{once:true}); if (signal?.aborted) abort();
     timer = setTimeout(() => stop('timeout'),timeoutMs); timer.unref();

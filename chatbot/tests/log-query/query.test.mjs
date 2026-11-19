@@ -124,8 +124,10 @@ test('relocated plugin adapter still queries the configured backend instead of i
  const f=fixture(t),capture=path.join(f.root,'capture/package-0/node_modules/kurumi-logs');fs.mkdirSync(capture,{recursive:true});
  fs.writeFileSync(path.join(f.root,'capture/package-0/package.json'),JSON.stringify({type:'module'}));
  for(const name of ['query.js','policy.js'])fs.copyFileSync(new URL('../../plugins/kurumi-logs/'+name,import.meta.url),path.join(capture,name));
- const shared=path.resolve(capture,'../../packages/log-query');fs.mkdirSync(shared,{recursive:true});
- fs.copyFileSync(new URL('../../packages/log-query/sources.js',import.meta.url),path.join(shared,'sources.js'));
+ for (const file of ['log-query/sources.js','access-control/index.js','access-control/permissions.js']) {
+  const target=path.resolve(capture,'../../packages',file);fs.mkdirSync(path.dirname(target),{recursive:true});
+  fs.copyFileSync(new URL('../../packages/'+file,import.meta.url),target);
+ }
  const relocated=await import(pathToFileURL(path.join(capture,'query.js')));
  const q=queryOptions({sources:['trace-events'],view:'errors'},NOW);
  assert.equal(relocated.cliArguments(f.config,q)[0],path.join(BACKEND,'chatbot/scripts/log-query.mjs'));
