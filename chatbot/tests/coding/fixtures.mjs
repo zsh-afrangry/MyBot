@@ -38,7 +38,7 @@ export async function fixture(t, options = {}) {
   // The fake DSH home must be separate from the registered project, as in the real runtime.
   pluginConfig.dsh.home = path.join(root, 'dsh'); fs.mkdirSync(pluginConfig.dsh.home);
   if (options.directoryProject) {pluginConfig.projects[0].kind = 'directory'; delete pluginConfig.projects[0].branch;}
-  options.configure?.(pluginConfig);
+  options.configure?.(pluginConfig, config);
   const calls = [], events = [], deliveries = [], hooks = {}, services = [], tools = {};
   let service;
   const behavior = options.behavior ?? (async ({cwd, turn}) => fs.writeFileSync(path.join(cwd, 'value.mjs'), `export const value = ${turn + 1};\n`));
@@ -56,9 +56,10 @@ export async function fixture(t, options = {}) {
     async stop() { this.closed = true; }
     async cancellationStopped() { await this.stop(); return true; }
   }
-  createCodingPlugin({composeNotice: options.composeNotice ?? (async facts => `合成模型通知 ${facts.taskId}\n状态：${facts.state}\n${facts.result?.page?.text ?? ''}\n${facts.hostChecks?.rows?.map(r=>r.name+'='+ (r.skipped?'不适用':r.code===0?'通过':'失败')).join('；')??''}\n${facts.workspaceKind==='directory'?'尚未修改原目录':'尚未修改目标分支'}`), clientFactory: options.clientFactory ?? (args => new Peer(args)), trace: e => events.push(e), delivery: {async sendText(message) {
+  const defaultNotice = async facts => `合成模型通知 ${facts.taskId}\n状态：${facts.state}\n${facts.result?.page?.text ?? ''}\n${facts.hostChecks?.rows?.map(r=>r.name+'='+ (r.skipped?'不适用':r.code===0?'通过':'失败')).join('；')??''}\n${facts.workspaceKind==='directory'?'尚未修改原目录':'尚未修改目标分支'}`;
+  createCodingPlugin({composeNotice: options.composeNotice ?? (options.runtime ? undefined : defaultNotice), clientFactory: options.clientFactory ?? (args => new Peer(args)), trace: e => events.push(e), delivery: {async sendText(message) {
     deliveries.push(message); return options.delivery ? options.delivery(message) : {channel: 'kurumi-qq', messageId: String(deliveries.length)};
-  }}, onService: s => service = s}).register({config, pluginConfig, registrationMode: 'full', logger: {info() {}, warn() {}},
+  }}, onService: s => service = s}).register({config, pluginConfig, runtime: options.runtime, registrationMode: 'full', logger: {info() {}, warn() {}},
     on: (name, fn) => (hooks[name] ??= []).push(fn), registerTool: (factory, meta) => tools[meta.name] = factory,
     registerService: s => services.push(s)});
   for (const s of services) await s.start();

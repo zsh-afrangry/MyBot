@@ -13,6 +13,7 @@ export function authorizeRequester(cfg, requester, permission) {
   const row = activeSubject(cfg, requester.subjectId, permission);
   if (row.role !== 'owner' || requester.sessionKey !== sessionFor(row) || requester.to !== `user:${row.qq}`) throw fail('coding_requires_trusted_owner');
   activeSubject(cfg, row.qq, 'chat.use');
+  return row;
 }
 export function confirmationScope(ctx) {
   const scope = scopeFromToolContext(ctx);

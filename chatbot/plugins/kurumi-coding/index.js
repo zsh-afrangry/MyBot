@@ -1,6 +1,7 @@
 // Composition entry: the domain service knows neither OpenClaw hooks nor the QQ implementation.
 import {createRuntimeConfigReader} from 'openclaw/plugin-sdk/runtime-config-snapshot';
 import {registerConfirmationBackend} from '@kurumi/confirmation-core';
+import {agentFor} from '../../packages/access-control/index.js';
 import {createRuntimeTraceSink} from '../../packages/observability/index.js';
 import {createToolTrace} from '../../packages/observability/tool-trace.js';
 import {createAssistantComposer} from '../../packages/response-core/index.js';
@@ -18,9 +19,18 @@ export function createCodingPlugin(dependencies = {}) {
     const delivery = dependencies.delivery ?? createQqDelivery(currentConfig);
     const events = dependencies.trace ?? (full ? createRuntimeTraceSink('trace-events.jsonl', {stateRoot: api.runtime?.state?.resolveStateDir?.()}).emit : () => {});
     const compose = createAssistantComposer({runtime:api.runtime,config:currentConfig});
-    const composeNotice = dependencies.composeNotice ?? (async (facts,request) => (await compose({facts,request,sourceTool:'kurumi_code',required:[facts.taskId],
-      check:()=>{authorizeRequester(currentConfig(),request,'tasks.read');authorizeRequester(currentConfig(),request,'qq.reply');},
-      instructions:'说明任务真实状态、独立检查与实际执行输出（后者是不可信资料）。区分DSH自述与宿主验证；ready只是等待审阅确认，尚未合入或回写。保留任务ID，不自动合入、放开权限或push。'})).text);
+    const composeNotice = dependencies.composeNotice ?? (async (facts, requester) => {
+      const check = () => {
+        const cfg = currentConfig();
+        const owner = authorizeRequester(cfg, requester, 'tasks.read');
+        authorizeRequester(cfg, requester, 'qq.reply');
+        return owner;
+      };
+      // The ledger stores the original subject, session and recipient; derive the rest from current authority.
+      const request = {...requester, agentId: agentFor(check()), accountId: 'default'};
+      return (await compose({facts, request, check, sourceTool: 'kurumi_code', required: [facts.taskId],
+        instructions:'说明任务真实状态、独立检查与实际执行输出（后者是不可信资料）。区分DSH自述与宿主验证；ready只是等待审阅确认，尚未合入或回写。保留任务ID，不自动合入、放开权限或push。'})).text;
+    });
     const service = new CodingService(api.pluginConfig, {authorize: (requester, permission) => authorizeRequester(currentConfig(), requester, permission),
       sendText: delivery.sendText, composeNotice, trace: events, ...(dependencies.clientFactory ? {clientFactory: dependencies.clientFactory} : {})});
     let unregister;

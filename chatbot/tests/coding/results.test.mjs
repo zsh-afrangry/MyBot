@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {resolveStorePath} from 'openclaw/plugin-sdk/session-store-paths';
 import {fixture, member} from './fixtures.mjs';
 import {CodingService} from '../../plugins/kurumi-coding/service.js';
 import {git, runChecks} from '../../plugins/kurumi-coding/workspaces.js';
@@ -39,6 +40,42 @@ test('actual execution output is persisted separately from file reads, reasoning
   assert.equal(recorded.text, f.deliveries[0].text); assert.equal(recorded.bodyHash, digest(recorded.text));
   assert.equal(ready.delivery.bodyHash, recorded.bodyHash); assert.equal(fs.statSync(f.service.store.file).mode & 0o777, 0o600);
   assert.equal(JSON.stringify(f.events).includes('assertions passed'), false);
+});
+
+test('the default composer resolves the original owner session and delivers to the bound QQ account', async t => {
+  let lookup, modelRun;
+  const f = await fixture(t, {
+    configure: (plugin, config) => {
+      config.session = {store: path.join(plugin.writeBoundary.root, '{agentId}', 'sessions.json')};
+      config.agents = {defaults: {model: 'fixture/model'}};
+    },
+    runtime: {agent: {
+      session: {
+        resolveStorePath,
+        runWithWorkAdmission: async ({signal}, run) => run(signal),
+        getSessionEntryAsync: async args => {lookup = args; return {sessionId: 'fixture-current-session'};},
+      },
+      resolveAgentWorkspaceDir: () => '/fixture/workspace',
+      resolveAgentDir: () => '/fixture/agent',
+      runEmbeddedAgent: async args => {
+        modelRun = args;
+        const facts = JSON.parse(args.transcriptPrompt.slice(args.transcriptPrompt.indexOf('\n') + 1));
+        return {payloads: [{text: `Synthetic completion ${facts.taskId}`}]};
+      },
+    }},
+  });
+  const task = await start(f), ready = await f.settle(task.id);
+  assert.equal(ready.state, 'ready');
+  assert.equal(ready.delivery.state, 'platform_accepted');
+  assert.equal(ready.delivery.messageId, '1');
+  const {sessionKey, deliveryContext: {to, accountId}} = f.context;
+  assert.deepEqual(lookup, {storePath: path.join(f.root, 'main', 'sessions.json'), sessionKey, readConsistency: 'latest'});
+  const {agentId, sessionKey: generationKey, sessionId, messageTo, agentAccountId} = modelRun;
+  assert.deepEqual({agentId, generationKey, sessionId, messageTo, agentAccountId},
+    {agentId: 'main', generationKey: sessionKey, sessionId: 'fixture-current-session', messageTo: to, agentAccountId: accountId});
+  assert.equal(f.deliveries.length, 1);
+  assert.equal(f.deliveries[0].to, to);
+  assert.equal(f.deliveries[0].text, `Synthetic completion ${task.id}`);
 });
 
 test('redaction precedes paging and handles credentials split across agent chunks', async t => {
