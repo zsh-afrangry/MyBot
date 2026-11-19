@@ -331,7 +331,7 @@
           "python": "/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python",
           "credentialsFile": "/home/afrangry/.openclaw-fusion/paper-credentials.json",
           "liveTranslationEnabled": true,
-          "maxPages": 30,
+          "maxPages": 50,
           "maxRequests": 300,
           "maxReportedTokens": 600000,
           "apiConcurrency": 4,
