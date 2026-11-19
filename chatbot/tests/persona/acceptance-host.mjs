@@ -1,5 +1,5 @@
 // docs/25 P1: actual bootstrap/QQ routing and persona dialogue in an isolated OpenClaw.
-// Default uses a local deterministic model. --live calls the configured official DeepSeek model.
+// Default uses a local deterministic model and a synthetic public reading source. --live calls the official DeepSeek model and skips sightings.
 // Temporary state and synthetic conversations only; no real QQ/mail, production writes or service restart.
 import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
@@ -16,6 +16,8 @@ import {WebSocketServer} from 'ws';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {personaFiles, applyPersonaFile} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import {ownerPolicy, memberRow, OWNER, MEMBER, OTHER} from '../access-control/fixtures.mjs';
+import {sqliteSightings} from '../../plugins/kurumi-sightings/store.js';
+import {createSightingsCollector, createSightingsService} from '../../plugins/kurumi-sightings/service.js';
 
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const index = process.argv.indexOf('--out'), out = index < 0 ? null : process.argv[index + 1];
@@ -40,6 +42,15 @@ const report = {
 const hash = value => createHash('sha256').update(value).digest('hex');
 let activeCase, child, sequence = 1;
 const fake = ownerPolicy(); fake.subjects.push(memberRow(), memberRow(OTHER));
+const publicFixture = 'SYNTHETIC_PUBLIC_SIGHTING';
+const sightings = sqliteSightings(root);
+let sighting;
+if (!live) {
+  fake.subjects.find(row=>row.qq===MEMBER).permissions['sightings.read']=true;
+  const collect=createSightingsCollector({store:sightings,read:async()=>({origin:'independent-public',status:'read',
+    page:{url:'https://www.bilibili.com/video/BV1ab2cd3EF4/',title:publicFixture,excerpt:'Synthetic public page text.',from:'PRIVATE_ORIGIN_FIXTURE'}})});
+  sighting=await collect();
+}
 const fixtureRepo = path.join(root, 'source');
 const persona = JSON.parse(fs.readFileSync(path.join(repo, 'config/persona.json'), 'utf8'));
 const core = fs.readFileSync(path.join(repo, persona.roleFile), 'utf8');
@@ -75,7 +86,24 @@ const model = http.createServer(async (req, res) => {
     assert.equal(check.memberRelationship, !check.owner, 'member relationship missing');
     assert.equal(check.ownerPrivateMemory, check.owner, 'owner memory crossed identity');
     if (activeCase.refresh) assert(check.refreshed, 'long-lived session used stale persona');
+    if (!live) assert.equal(check.toolNames.includes('kurumi_sightings'), activeCase.qq===MEMBER, 'sightings tool crossed its opt-in boundary');
     let answer = {role: 'assistant', content: 'PERSONA_HOST_FIXTURE_OK'};
+    if (!live && activeCase.label.startsWith('sighting-') && activeCase.qq===MEMBER) {
+      const current=body.messages.findLastIndex(message=>message.role==='user');
+      const tool=body.messages.slice(current+1).find(message=>message.role==='tool');
+      if (!tool) answer={role:'assistant',tool_calls:[{index:0,id:'sightings-'+report.requests,type:'function',function:{name:'kurumi_sightings',arguments:JSON.stringify({date:sighting.date})}}]};
+      else {
+        const text=Array.isArray(tool.content)?tool.content.map(part=>part.text ?? '').join(''):tool.content;
+        const value=JSON.parse(text.slice(text.indexOf('{'),text.lastIndexOf('}')+1));
+        assert.equal(value.status,'ok');
+        if (activeCase.label==='sighting-visible') {
+          assert.match(text,/EXTERNAL_UNTRUSTED_CONTENT/u);
+          assert.doesNotMatch(text,/PRIVATE_ORIGIN_FIXTURE/u);
+          assert.deepEqual(value.items.map(row=>row.title),[publicFixture]);
+        } else assert.deepEqual(value.items,[]);
+        answer.content='SIGHTINGS_HOST_FIXTURE_OK';
+      }
+    }
     if (live) {
       const payload = {...body, model: modelId, stream: false, max_tokens: 1200};
       delete payload.stream_options;
@@ -93,13 +121,13 @@ const model = http.createServer(async (req, res) => {
     res.setHeader('content-type', body.stream ? 'text/event-stream' : 'application/json');
     if (body.stream) {
       const base = {id: 'chatcmpl-persona', object: 'chat.completion.chunk', created: 1, model: modelId};
-      res.write('data: ' + JSON.stringify({...base, choices: [{index: 0, delta: {role: 'assistant', content: answer.content}, finish_reason: null}]}) + '\n\n');
-      res.write('data: ' + JSON.stringify({...base, choices: [{index: 0, delta: {}, finish_reason: 'stop'}], usage: {prompt_tokens: 1, completion_tokens: 1, total_tokens: 2}}) + '\n\n');
+      res.write('data: ' + JSON.stringify({...base, choices: [{index: 0, delta: answer, finish_reason: null}]}) + '\n\n');
+      res.write('data: ' + JSON.stringify({...base, choices: [{index: 0, delta: {}, finish_reason: answer.tool_calls ? 'tool_calls' : 'stop'}], usage: {prompt_tokens: 1, completion_tokens: 1, total_tokens: 2}}) + '\n\n');
       res.end('data: [DONE]\n\n');
     } else res.end(JSON.stringify({id: 'chatcmpl-persona', object: 'chat.completion', choices: [{index: 0, message: answer, finish_reason: 'stop'}], usage: {prompt_tokens: 1, completion_tokens: 1, total_tokens: 2}}));
   } catch (error) {
     report.modelError = error.message;
-    res.writeHead(500); res.end(JSON.stringify({error: {message: 'isolated_persona_acceptance_failed'}}));
+    res.writeHead(400); res.end(JSON.stringify({error: {message: 'isolated_persona_acceptance_failed'}}));
   }
 });
 model.listen(0, '127.0.0.1'); await once(model, 'listening');
@@ -124,8 +152,13 @@ let cfg = {
     httpTokenFile: path.join(root, 'http-token'), wsTokenFile: path.join(root, 'ws-token'), stateDir: path.join(root, 'channel'), mediaRoot: path.join(root, 'media'), testIngress: true, dailySendLimit: 100, segmentDelayMs: 0}},
   plugins: {allow: ['kurumi-qq'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-qq')]}, entries: {'kurumi-qq': {enabled: true}}, slots: {memory: 'none'}},
   session: {dmScope: 'per-channel-peer'}, cron: {enabled: false}, logging: {file: path.join(root, 'runtime.log')},
-  tools: {deny: ['exec', 'process', 'message', 'sessions_spawn'], web: {search: {enabled: false}, fetch: {enabled: false}}},
+  tools: {toolSearch:false,codeMode:false,deny: ['exec', 'process', 'message', 'sessions_spawn'], web: {search: {enabled: false}, fetch: {enabled: false}}},
 };
+if (!live) {
+  cfg.plugins.allow.push('kurumi-sightings');
+  cfg.plugins.load.paths.push(path.join(repo,'chatbot/plugins/kurumi-sightings'));
+  cfg.plugins.entries['kurumi-sightings']={enabled:true};
+}
 cfg = compileAccessConfig(cfg, fake);
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(root, file), token, {mode: 0o600});
 fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify(withHostControl(cfg,repo)), {mode: 0o600});
@@ -156,6 +189,12 @@ try {
     catch { if (child.exitCode !== null) throw Error('isolated_gateway_exited'); await new Promise(resolve => setTimeout(resolve, 400)); }
   }
   assert(ready, 'isolated_gateway_not_ready');
+  if (!live) {
+    await turn('sighting-visible', MEMBER, '今天在 B 站刷到了哪些有趣的帖子？');
+    await turn('sighting-not-granted', OTHER, '你今天看了哪些 B 站帖子？');
+    assert.equal(createSightingsService({store:sightings}).withdraw(sighting.id).status,'withdrawn');
+    await turn('sighting-withdrawn', MEMBER, '重新查一下今天的 B 站见闻。');
+  }
   await turn('owner-relationship', OWNER, '你叫什么？我们现在是什么关系？', reply => {assert.match(reply, /kurumi/iu); assert.match(reply, /恋人|男朋友|女朋友|对象|男女朋友/u);});
   await turn('member-relationship', MEMBER, '你叫什么？我们现在是什么关系？', reply => {assert.match(reply, /kurumi/iu); assert.match(reply, /朋友/u);});
   await turn('member-relationship-status', MEMBER, '你有对象吗？', reply => {
