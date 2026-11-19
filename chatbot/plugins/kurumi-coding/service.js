@@ -10,9 +10,9 @@ import {attachProjectRegistry} from '../../packages/coding-runtime/project-regis
 import {probeWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
-import {CodingResultRecorder, readCodingResult} from './results.js';
+import {CodingResultRecorder, readCodingResult, resultText} from './results.js';
 import {projectPolicy, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, fencedGit, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
-import {digest, fail, taskText} from './policy.js';
+import {digest, fail, taskText, taskTitle} from './policy.js';
 import {directoryState, directoryPlan, prepareDirectoryWriteback, runDirectoryWriteback, directoryWritebackState} from './directory-workspaces.js';
 
 const inFlight = new Set(['queued', 'running', 'checking', 'cancelling', 'merging']);
@@ -102,24 +102,29 @@ export class CodingService {
     return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery,
       ...(activeProject ? {candidate} : {projectActive: false}), permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind: workspaceKind ?? 'git'};
   }
-  list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
+  list(requester) {
+    this.authorize(requester, 'tasks.read');
+    return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey)
+      .map(t => ({...this.describe(t), title: t.title, createdAt: t.createdAt}));
+  }
   status(id, requester) { return this.describe(this.task(id, requester, true)); }
   result(id, requester, options) {
     const task = this.task(id, requester, true);
     return {task: this.describe(task), result: readCodingResult(this.store, task, options)};
   }
-  submit({projectId, task: text}, {requester, key, correlation}) {
+  submit({projectId, task: text, title: label}, {requester, key, correlation}) {
     this.authorize(requester, 'tasks.code');
     taskText(text);
+    const title = resultText(taskTitle(label)) || undefined;
     if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
-    const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester}));
+    const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester, title}));
     const old = this.store.find(key);
     if (old) { if (old.requestHash !== requestHash) throw fail('coding_request_key_conflict'); return this.describe(this.task(old.id, requester)); }
     this.assertProjectCurrent(project);
     const id = randomUUID();
     const workspace = createWorkspace(this.config, project, id);
     const task = {id, projectId, projectRoot: project.root, projectRegistrationId: project.registrationId,
-      text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
+      text, title, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
     this.store.create(task); this.event(task, 'coding.submitted');
     this.launch(task, text); return this.describe(this.store.get(id));
   }
@@ -190,12 +195,15 @@ export class CodingService {
       const instruction = `Work only on the authorized task in ${task.cwd}. Read applicable AGENTS.md. Do not commit, merge, push, edit other worktrees, change services, or install system software. The host runs registered checks and creates verified commits. Keep unfinished work in this worktree. Task:\n${text}`;
       const result = await client.prompt(instruction);
       this.store.saveResult(id, {...this.store.result(id, roundId), stopReason: result.stopReason});
-      if (entry.cancelRequested || result.stopReason === 'cancelled') {
+      // A backend can report cancellation when an extra permission was denied.
+      // Keep the owner's explicit cancellation distinct from that blocked round.
+      if (entry.cancelRequested || (!denied && result.stopReason === 'cancelled')) {
         const stopped = await client.cancellationStopped();
         update({state: stopped ? 'cancelled' : 'needs_reconciliation', reason: stopped ? entry.cancelReason : 'cancel_not_verified'});
         this.event(task, 'coding.cancelled', {stopped}); return;
       }
       await client.request('session/close', {sessionId: externalSessionId}); await client.stop();
+      entry.controller.signal.throwIfAborted();
       if (denied) { update({state: 'needs_permission', reason: 'extra_backend_permission_required'}); this.event(task, 'coding.needs_permission'); await this.notify(task); return; }
       if (result.stopReason !== 'end_turn') throw fail('coding_turn_incomplete');
       this.authorize(task.requester, 'tasks.code'); assertWorkspace(task);

@@ -92,10 +92,10 @@ let config = {
   gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},
   agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},systemAgent:{agentId:'main'},heartbeat:{every:'0m'}},
     entries:{main:{workspace:path.join(root,'workspace'),tools:{profile:'messaging',alsoAllow:['exec'],deny:['read','write','edit','apply_patch','process','message','sessions_spawn'],exec:{host:'gateway',mode:'full',timeoutSeconds:60,notifyOnExit:false},elevated:{enabled:false}}}}},
-  models:{providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'fixture',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:3000,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
+  models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'fixture',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:3000,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
   plugins:{allow:['kurumi-qq'],load:{paths:[path.join(repo,'chatbot/plugins/kurumi-qq')]},entries:{'kurumi-qq':{enabled:true,config:{exec:{writeBoundary:boundary,workdir:source,timeoutSeconds:60}}}},slots:{memory:'none'}},
   channels:{'kurumi-qq':{enabled:true,httpUrl:`http://127.0.0.1:${onebot.address().port}`,wsUrl:`ws://127.0.0.1:${onebot.address().port}`,httpTokenFile:path.join(root,'channel-token'),wsTokenFile:path.join(root,'channel-token'),stateDir:path.join(root,'channel'),mediaRoot:path.join(root,'media'),testIngress:true}},
-  session:{dmScope:'per-channel-peer'},cron:{enabled:false},tools:{deny:['process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:path.join(root,'runtime.log')},
+  session:{dmScope:'per-channel-peer'},cron:{enabled:false},update:{checkOnStart:false},tools:{deny:['process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:path.join(root,'runtime.log')},
 };
 config = compileAccessConfig(config,policy);
 // Deliberately expose the native surface to the synthetic member to test the mandatory gate as well as catalog policy.
@@ -110,7 +110,7 @@ fs.writeFileSync(path.join(root,'channel-token'),token,{mode:0o600});
 fs.writeFileSync(path.join(root,'openclaw.json'),JSON.stringify(withHostControl(config,repo)),{mode:0o600});
 const fd = fs.openSync(path.join(root,'gateway.log'),'w',0o600);
 const child = spawn(process.execPath,[path.join(repo,'node_modules/openclaw/openclaw.mjs'),'gateway','run','--port',String(port),'--bind','loopback','--auth','token','--tailscale','off'],{
-  cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:process.env.HOME,LANG:'C.UTF-8',OPENCLAW_EXEC_SHELL_SNAPSHOT:'0',
+  cwd:repo,detached:true,stdio:['ignore',fd,fd],env:{PATH:process.env.PATH,HOME:root,LANG:'C.UTF-8',OPENCLAW_EXEC_SHELL_SNAPSHOT:'0',
     PROVIDER_CREDENTIAL_FIXTURE:'not-a-real-secret',OPENCLAW_STATE_DIR:root,OPENCLAW_CONFIG_PATH:path.join(root,'openclaw.json'),OPENCLAW_GATEWAY_TOKEN:token,OPENCLAW_AGENT_DIR:path.join(root,'agents/main/agent')},
 }); fs.closeSync(fd);
 const call = (method,params={},timeout=45000) => callGatewayFromCli(method,{url:`ws://127.0.0.1:${port}`,token,timeout:String(timeout),json:true},params);
@@ -122,7 +122,11 @@ const turn = async (name,id=OWNER) => {
 async function check(label, fn) {await fn(); report.cases.push({label,passed:true});}
 try {
   let ready = false;
-  for (let i=0;i<100;i++) {try {await call('health',{},1000); ready=true; break;} catch {if (child.exitCode!==null) throw Error('isolated_gateway_exited'); await new Promise(r=>setTimeout(r,300));}}
+  for (let i=0;i<100;i++) {
+    if (child.exitCode!==null) throw Error('isolated_gateway_exited');
+    try {if ((await call('kurumi-host-control.status',{},1000)).ready === true) {ready=true; break;}} catch { /* Gateway still starting. */ }
+    await new Promise(r=>setTimeout(r,300));
+  }
   assert(ready,'isolated_gateway_not_ready');
   await check('native exec accepts display title and default-directory query returns actual output without DSH',async()=>{const r=await turn('source');assert(r.includes('DIRECT_SOURCE_SENTINEL.txt'),r);assert(r.includes(source));});
   await check('native exec selects the requested task worktree rather than confusing it with source',async()=>{const r=await turn('worktree');assert(r.includes('DIRECT_WORKTREE_SENTINEL.py'),r);assert(!r.includes('DIRECT_SOURCE_SENTINEL.txt'));});
