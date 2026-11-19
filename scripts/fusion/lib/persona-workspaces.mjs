@@ -44,7 +44,7 @@ export function personaFiles(repo, state) {
   const cfg = compileAccessConfig(JSON.parse(fs.readFileSync(path.join(repo, 'config/runtime.config.json'), 'utf8')), policy);
   const soul = readRole(repo, persona.roleFile);
   const relationships = relationshipFiles(repo, persona.relationshipFiles);
-  const identity = `# 当前角色\n\n- Name: ${persona.identityName}\n- Persona: ${persona.roleFile}，原样加载至SOUL.md\n- 所属项目: Kurumi融合助手；项目名不是当前角色名。\n`;
+  const identity = `# 当前角色\n\n- Name: ${persona.identityName}\n- Persona: ${persona.roleFile}，原样加载至SOUL.md\n- 所属项目: kurumi-fusion\n`;
   let agents = fs.readFileSync(path.join(repo, 'scripts/fusion/templates/AGENTS.md'), 'utf8');
   if (persona.agentsSubstitution) {
     const {from, to} = persona.agentsSubstitution;
@@ -82,7 +82,7 @@ export function personaFiles(repo, state) {
     add(workspace, {
       'SOUL.md': soul, 'IDENTITY.md': identity,
       'AGENTS.md': fs.readFileSync(path.join(repo, 'scripts/fusion/templates/MEMBER_AGENTS.md'), 'utf8'),
-      'USER.md': withRelationship('# 当前私聊用户\n\n这是独立身份，默认中文与Asia/Shanghai时区。没有主人资料，不共享其他QQ的记忆、文件、任务或会话。\n', relationships.member),
+      'USER.md': withRelationship('# 当前私聊用户\n\n这是独立身份，默认中文与Asia/Shanghai时区。仅使用当前账号的资料，不共享其他QQ的记忆、文件、任务或会话。\n', relationships.member),
     });
   }
   return {files: out, roleFile: persona.roleFile};

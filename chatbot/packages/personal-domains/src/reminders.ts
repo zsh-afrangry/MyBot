@@ -277,7 +277,7 @@ export function proposeReminderCreate(
       "操作：创建一次性提醒（待确认，未执行）",
       `- 时间：${payload.schedule.localDateTime}（${REMINDER_TIMEZONE}，一次）`,
       `- 内容：${payload.content}`,
-      "- 投递：仅主人 QQ 私聊",
+      "- 投递：当前账号的 QQ 私聊",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
     ]),
     confirmationInstruction: "确认",
@@ -311,7 +311,7 @@ export function proposeReminderCancellation(
     return failure("reminder_unavailable", "该提醒已经投递、正在投递或已取消，不能再取消。");
   }
   if (!sameDelivery(reminder.delivery, context.delivery)) {
-    return failure("proposal_context_mismatch", "该提醒只能在原主人 QQ 私聊上下文中取消。");
+    return failure("proposal_context_mismatch", "该提醒只能在原请求账号的 QQ 私聊上下文中取消。");
   }
   const nowUtc = store.getNowUtc();
   const payload = {
@@ -347,7 +347,7 @@ export function proposeReminderCancellation(
       "操作：取消一次性提醒（待确认，未执行）",
       `- 原时间：${formatShanghaiDateTime(reminder.scheduledAtUtc)}（${REMINDER_TIMEZONE}）`,
       `- 原内容：${reminder.content}`,
-      "- 影响：仅取消这条尚未投递的主人私聊提醒",
+      "- 影响：仅取消这条尚未投递的私聊提醒",
       `- 提案确认截止：${expiresAtDisplay.local}（${expiresAtDisplay.timezone}）`,
     ]),
     confirmationInstruction: "确认",
@@ -370,7 +370,7 @@ export function proposeReminderUpdate(
   const reminder = store.getReminder(parsed.reminderId);
   if (!reminder) return failure("reminder_not_found", "未找到该提醒，不能生成修改提案。");
   if (!sameDelivery(reminder.delivery, context.delivery)) {
-    return failure("proposal_context_mismatch", "该提醒只能在原主人 QQ 私聊上下文中修改。");
+    return failure("proposal_context_mismatch", "该提醒只能在原请求账号的 QQ 私聊上下文中修改。");
   }
   const retryStatus = store.getRetryStatus(reminder.reminderId);
   if (!canUpdate(reminder, retryStatus)) {
@@ -480,7 +480,7 @@ export async function commitReminderProposal(
     return failure("proposal_hash_mismatch", "提案内容已变化，请以最新预览为准。" );
   }
   if (!sameDelivery(proposal.delivery, context.delivery)) {
-    return failure("proposal_context_mismatch", "该提案只能在生成它的主人 QQ 私聊中确认。");
+    return failure("proposal_context_mismatch", "该提案只能在生成它的本人账号 QQ 私聊中确认。");
   }
   const expectedContextHash = requestContextHash(proposal.kind, proposal.payloadHash, context.delivery);
   if (proposal.requestContextHash !== expectedContextHash) {
@@ -525,13 +525,13 @@ function gateFailure(
 ): ReminderFailure {
   const message = code === "approval_required"
     ? proposal === undefined
-      ? "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。"
+      ? "需要该账号下一条 QQ 私聊消息中的明确确认后才能提交该提案。"
       : "需要本人下一条消息确认已展示的预览；先用personal_confirmation查询并确认具体提案，再提交。"
     : code === "grant_expired"
       ? "确认已过期，请重新确认最新提案。"
       : code === "grant_replayed"
         ? "该确认已被使用，不能重复提交。"
-        : "确认来自不同的主人 QQ 私聊上下文，不能提交该提案。";
+        : "确认与原请求的 QQ 私聊上下文不一致，不能提交该提案。";
   return failure(code, message);
 }
 

@@ -56,7 +56,7 @@ export function createPlugin() {
                                 ok: false,
                                 error: {
                                     code: "forbidden_context",
-                                    message: "此工具仅支持主人 QQ 私聊。",
+                                    message: "此工具仅限已登记的本人账号在 QQ 私聊中使用。",
                                 },
                             });
                         }
@@ -91,7 +91,7 @@ export function createPlugin() {
                                 ok: false,
                                 error: {
                                     code: "forbidden_context",
-                                    message: "此工具仅支持主人 QQ 私聊。",
+                                    message: "此工具仅限已登记的本人账号在 QQ 私聊中使用。",
                                 },
                             });
                         }
@@ -126,7 +126,7 @@ export function createPlugin() {
                                 ok: false,
                                 error: {
                                     code: "forbidden_context",
-                                    message: "此工具仅支持主人 QQ 私聊。",
+                                    message: "此工具仅限已登记的本人账号在 QQ 私聊中使用。",
                                 },
                             });
                         }

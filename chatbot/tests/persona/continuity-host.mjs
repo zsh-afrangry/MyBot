@@ -34,11 +34,11 @@ const report = {
   usage: {promptTokens: 0, completionTokens: 0},
 };
 const hash = value => createHash('sha256').update(value).digest('hex');
-const core = fs.readFileSync(path.join(repo, 'roles/世凪.md'), 'utf8');
 let activeCase, child, sequence = 1;
 const fake = ownerPolicy(); fake.subjects.push(memberRow(), memberRow(OTHER));
 const fixtureRepo = path.join(root, 'source');
 const persona = JSON.parse(fs.readFileSync(path.join(repo, 'config/persona.json'), 'utf8'));
+const core = fs.readFileSync(path.join(repo, persona.roleFile), 'utf8');
 for (const relative of ['config/persona.json', 'config/runtime.config.json', persona.roleFile,
   ...Object.values(persona.relationshipFiles), 'scripts/fusion/templates/AGENTS.md', 'scripts/fusion/templates/MEMBER_AGENTS.md']) {
   fs.mkdirSync(path.dirname(path.join(fixtureRepo, relative)), {recursive: true});

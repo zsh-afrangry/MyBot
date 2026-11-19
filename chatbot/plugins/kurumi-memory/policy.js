@@ -14,7 +14,7 @@ export function checkMemoryAction(action, permit) {
   if (action === 'delete' && !['忘记', '删除记忆'].includes(permit.verb)) throw Error('本次消息没有授权删除记忆');
 }
 export function checkMemoryText(text, permit) {
-  if (!normalize(permit.raw).includes(normalize(text))) throw Error('仅可保存本次主人原文中的事实，不自动概括或引入网页内容');
+  if (!normalize(permit.raw).includes(normalize(text))) throw Error('仅可保存本次本人原文中的事实，不自动概括或引入网页内容');
 }
 export function checkMemoryTarget(args, existing, permit) {
   const raw = normalize(permit.raw);

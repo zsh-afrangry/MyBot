@@ -6,6 +6,14 @@ import {activeSubject, agentFor, sessionFor, targetSubject} from '../../../packa
 import {account, CHANNEL, Ledger, sendPayload, stagePdf, traceFile} from '../../../packages/qq-delivery/index.js';
 import {stageImage,quoteText} from './media.js';
 import {receiveAttachments,attachmentContext,shouldReplyToFailedAttachments} from './attachments.js';
+function senderDisplayName(event,senderId){
+ const sender=event.sender;
+ if(String(sender?.user_id)!==senderId||typeof sender?.nickname!=='string')return '用户';
+ // A platform nickname is display data only. Keep it on one line and bounded;
+ // authorization and delivery continue to use the admitted sender ID.
+ const name=sender.nickname.replace(/[\p{Cc}\p{Cf}\p{Zl}\p{Zp}]/gu,' ').replace(/\s+/gu,' ').trim();
+ return [...name].slice(0,80).join('')||'用户';
+}
 export function parseInbound(event,a,selfId){
  const senderId=String(event.user_id);
  try {activeSubject(a,senderId,'chat.use');}catch{return null;}
@@ -54,7 +62,7 @@ export async function handleInbound({cfg,runtime,event,selfId,log,deliverOverrid
   if(imageFailures||msg.images.length>3)body+='\n[部分图片未加载，不得声称看到了这些图片的细节。]';
   let quote;
   if(msg.replyId){try{quote=await quoteText(msg.replyId,a,selfId,subject.qq);}catch{}if(quote)body+='\n<quoted_message_untrusted>\n'+quote+'\n</quoted_message_untrusted>';else body+='\n[引用正文未加载]';}
-  const raw={Body:body,RawBody:msg.text,BodyForAgent:body,BodyForCommands:msg.text,From:`${CHANNEL}:${subject.qq}`,To:to,SessionKey:route.sessionKey,AccountId:'default',ChatType:'direct',SenderId:subject.qq,SenderName:subject.role==='owner'?'主人':'用户',Provider:CHANNEL,Surface:CHANNEL,MessageSid:msg.messageId,Timestamp:Number.isSafeInteger(event.time)&&event.time>0?event.time*1000:Date.now(),OriginatingChannel:CHANNEL,OriginatingTo:to,CommandAuthorized:subject.permissions[subject.role==='owner'?'commands.admin':'commands.basic']===true};
+  const raw={Body:body,RawBody:msg.text,BodyForAgent:body,BodyForCommands:msg.text,From:`${CHANNEL}:${subject.qq}`,To:to,SessionKey:route.sessionKey,AccountId:'default',ChatType:'direct',SenderId:subject.qq,SenderName:senderDisplayName(event,msg.senderId),Provider:CHANNEL,Surface:CHANNEL,MessageSid:msg.messageId,Timestamp:Number.isSafeInteger(event.time)&&event.time>0?event.time*1000:Date.now(),OriginatingChannel:CHANNEL,OriginatingTo:to,CommandAuthorized:subject.permissions[subject.role==='owner'?'commands.admin':'commands.basic']===true};
   if(media.length){raw.media=media;raw.SourceModality='image';}
   if(quote){raw.ReplyToBody=quote;raw.ReplyToId=String(msg.replyId);}
   const ctx=runtime.channel.reply.finalizeInboundContext(raw);

@@ -370,7 +370,7 @@ export function commitProfileChange(
     const placeId = repository.upsertConfirmedPlace(facts.location, nowUtc);
     repository.replaceCurrentLocation({
       placeId,
-      sourceSummary: `主人确认当前所在地为${facts.location.displayName}`,
+      sourceSummary: `用户已确认当前所在地为${facts.location.displayName}`,
       atUtc: nowUtc,
     });
     if (!repository.markProposalCommitted({
@@ -405,14 +405,14 @@ function grantMessage(
   switch (code) {
     case "approval_required":
       return proposal === undefined
-        ? "需要下一条主人 QQ 私聊中的明确确认后才能提交该提案。"
+        ? "需要该账号下一条 QQ 私聊消息中的明确确认后才能提交该提案。"
         : "需要本人下一条消息确认已展示的预览；先用personal_confirmation查询并确认具体提案，再提交。";
     case "grant_expired":
       return "确认已过期，请重新确认最新提案。";
     case "grant_replayed":
       return "该确认已被使用，不能重复提交。";
     case "confirmation_context_mismatch":
-      return "确认来自不同的主人 QQ 私聊上下文，不能提交该提案。";
+      return "确认与原请求的 QQ 私聊上下文不一致，不能提交该提案。";
   }
 }
 

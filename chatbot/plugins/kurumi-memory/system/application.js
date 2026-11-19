@@ -181,7 +181,7 @@ export class RecordApplication extends RecordStore {
     if(old && canonical(old.attrs)===canonical(attrs))return old;
     // Mechanical statistics use their own record version, not the fact-command revision captured
     // by the parallel P2 prompt hook. No personality/sleep interpretation is inferred here.
-    return this.atomic(()=>{const result=this.put({...(old?{id:old.id}:{}),kind:'rhythm',about:'owner',basis:'observed',text:`已记录${rows.length}条主人可信私聊；上海时间小时分布：${hourly.map((n,h)=>n?h+'时='+n:null).filter(Boolean).join('，')}`,attrs,sources:rows.map(r=>({rawId:r.id}))},{runId:'mechanical-rhythm',actor:'program',program:true,expectedVersion:old?.version??0});this.rebuild();return result;});
+    return this.atomic(()=>{const result=this.put({...(old?{id:old.id}:{}),kind:'rhythm',about:'owner',basis:'observed',text:`已记录${rows.length}条本人账号的可信私聊；上海时间小时分布：${hourly.map((n,h)=>n?h+'时='+n:null).filter(Boolean).join('，')}`,attrs,sources:rows.map(r=>({rawId:r.id}))},{runId:'mechanical-rhythm',actor:'program',program:true,expectedVersion:old?.version??0});this.rebuild();return result;});
   }
   nextBatch({name='main',limit=50,runId}) {
     if (!runId || !Number.isInteger(limit) || limit<1 || limit>100 || !/^[a-z][a-z0-9_-]{0,39}$/.test(name)) throw fail('invalid_memory_batch');

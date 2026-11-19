@@ -22,7 +22,7 @@ const properties={action:{type:'string',enum:['status','records','pause','resume
     kind:{type:'string',enum:['interest','experience','intention']},text:{type:'string',minLength:1,maxLength:1200},
     sources:{type:'array',minItems:1,maxItems:8,items:{type:'string'}},ttlDays:{type:'integer',minimum:1,maximum:90}}}};
 export const toolDeclaration={name:'kurumi_proactive',label:'自主行动与自身记录',
-  description:'主人私聊：status/records查看自主行动及独立自身记录（records每页50条，按nextOffset继续，含已过期或旧代记录）；pause/resume暂停恢复；record_put/record_remove按真实ID/version更正删除自身记录。后台凭据：query按kind查询只读领域，remember维护自己的记录（sources须用本回合实际sourceId），forget删除已读自身记录，notify主动发言。后台不接受聊天身份、目标、权限或调度参数，不改主人记忆或业务。未提供工具/用途时不可调用。',
+  description:'本人账号私聊：status/records查看自主行动及独立自身记录（records每页50条，按nextOffset继续，含已过期或旧代记录）；pause/resume暂停恢复；record_put/record_remove按真实ID/version更正删除自身记录。后台凭据：query按kind查询只读领域，remember维护自己的记录（sources须用本回合实际sourceId），forget删除已读自身记录，notify主动发言。后台不接受聊天身份、目标、权限或调度参数，不改用户记忆或业务。未提供工具/用途时不可调用。',
   parameters:{type:'object',additionalProperties:false,required:['action'],properties}};
 export function validateSettings(value) {
   if(!value||value.enabled!==true||!Number.isSafeInteger(value.revision)||value.revision<1

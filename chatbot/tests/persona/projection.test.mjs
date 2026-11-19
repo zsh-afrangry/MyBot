@@ -80,7 +80,7 @@ test('Legacy persona without relationshipFiles remains compatible', t => {
 
 test('Incomplete, unknown and non-object relationship configurations fail before any write', async t => {
   for (const value of [null, [], {}, {owner: 'roles/relationships/本人恋人.md'},
-    {owner: 'roles/relationships/本人恋人.md', member: 'roles/relationships/普通朋友.md', unknown: 'roles/世凪.md'}]) {
+    {owner: 'roles/relationships/本人恋人.md', member: 'roles/relationships/普通朋友.md', unknown: 'roles/kurumi.md'}]) {
     await t.test(JSON.stringify(value), t => {
       const f = fixture(t); f.persona.relationshipFiles = value; f.save();
       assert.throws(() => personaFiles(f.repo, f.state), /invalid_persona_relationship_files/u);
@@ -112,7 +112,7 @@ test('Unresolved placeholders and empty relationship content fail before project
 });
 
 test('Owner template drift is explicit and replacement text is literal', async t => {
-  for (const content of ['NO_EXPECTED_HEADER', '你是 Kurumi，用户的中文个人助手。\n你是 Kurumi，用户的中文个人助手。']) {
+  for (const content of ['NO_EXPECTED_HEADER', '你是 kurumi，用户的中文个人助手。\n你是 kurumi，用户的中文个人助手。']) {
     await t.test(content.slice(0, 20), t => {
       const f = fixture(t); fs.writeFileSync(path.join(f.repo, 'scripts/fusion/templates/AGENTS.md'), content);
       assert.throws(() => personaFiles(f.repo, f.state), /persona_agents_substitution_mismatch/u);
@@ -124,15 +124,15 @@ test('Owner template drift is explicit and replacement text is literal', async t
   });
 });
 
-test('Current sources fit native per-file budgets and owner identity is no longer Kurumi/whale', t => {
+test('Current sources fit native per-file budgets and identify kurumi consistently', t => {
   const f = fixture(t), projected = personaFiles(f.repo, f.state).files;
   for (const [file, text] of projected) {
     assert(text.length < (file.endsWith('/USER.md') ? 4000 : 20000), `bootstrap budget ${file}`);
     assert(!/\{\{[^}]*\}\}/u.test(text), `placeholder ${file}`);
-    if (file.endsWith('/IDENTITY.md')) assert.match(text, /Name: 世凪/u);
+    if (file.endsWith('/IDENTITY.md')) assert.match(text, /Name: kurumi/u);
   }
   const ownerRules = projected.get(path.join(f.state, 'workspace/AGENTS.md'));
-  assert(ownerRules.includes('你是SOUL.md中的世凪'));
+  assert(ownerRules.includes('你叫 kurumi，性格以SOUL.md为准'));
   assert(!ownerRules.includes('当前临时使用SOUL.md中的小鲸鱼'));
 });
 

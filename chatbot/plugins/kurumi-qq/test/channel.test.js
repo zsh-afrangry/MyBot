@@ -12,6 +12,26 @@ const valid={post_type:'message',message_type:'private',self_id:123456789,user_i
 test('Owner and endpoint validation fail closed',()=>{const {a,cfg}=fixture();assert.equal(ownerTarget('user:365999865',a),'365999865');for(const to of ['group:365999865','123456','365999865x','user:365999865:thread'])assert.throws(()=>ownerTarget(to,a));cfg.channels['kurumi-qq'].httpUrl='http://example.com';assert.throws(()=>account(cfg));});
 test('Reject group, stranger, self, wrong bot, malformed event',()=>{const {a}=fixture();assert.equal(parseInbound(valid,a,'123456789').text,'你好');for(const patch of [{message_type:'group'},{user_id:777777},{self_id:999999},{message_id:0},{message:'[CQ:at,qq=all]'}])assert.equal(parseInbound({...valid,...patch},a,'123456789'),null);});
 test('CQ text is literal, not metadata',()=>{const {a}=fixture();const r=parseInbound({...valid,message:[{type:'text',data:{text:'[CQ:reply,id=1]'}}]},a,'123456789');assert.equal(r.replyId,undefined);});
+test('Platform nicknames are bounded display data; missing or mismatched sender metadata uses a neutral name',async t=>{
+ const {cfg,dir}=fixture();t.after(()=>fs.rmSync(dir,{recursive:true,force:true}));
+ const cases=[
+  {sender:{user_id:valid.user_id,nickname:'  阿晴\n\u202e 🐈  '},expected:'阿晴 🐈'},
+  {sender:{user_id:valid.user_id,nickname:'🐈'.repeat(100)},expected:'🐈'.repeat(80)},
+  {sender:undefined,expected:'用户'},
+  {sender:{user_id:valid.user_id,nickname:'\u0000\n\u200b '},expected:'用户'},
+  {sender:{user_id:777777,nickname:'假冒昵称'},expected:'用户'},
+  {sender:{user_id:valid.user_id,nickname:42},expected:'用户'},
+ ];
+ const seen=[];
+ const runtime={channel:{routing:{resolveAgentRoute:()=>({agentId:'main',sessionKey:'agent:main:kurumi-qq:direct:365999865'})},session:{resolveStorePath:()=>'/test',recordInboundSession:async()=>{}},reply:{finalizeInboundContext:x=>x,dispatchReplyWithBufferedBlockDispatcher:async({ctx})=>seen.push(ctx)}}};
+ for(const [i,item] of cases.entries()){
+  await handleInbound({cfg,runtime,event:{...valid,message_id:900+i,sender:item.sender},selfId:'123456789'});
+  const ctx=seen.at(-1);
+  assert.equal(ctx.SenderName,item.expected);assert(ctx.SenderName.isWellFormed());
+  assert.equal(ctx.SenderId,'365999865');assert.equal(ctx.OriginatingTo,'user:365999865');
+  assert.equal(ctx.SessionKey,'agent:main:kurumi-qq:direct:365999865');assert.equal(ctx.CommandAuthorized,true);
+ }
+});
 test('Durable ingress and egress survive restart, unknown cannot be reserved again',()=>{const {dir}=fixture();let l=new Ledger(dir);assert(l.admit('m'));assert(!l.admit('m'));assert.equal(l.reserve('send',1),null);l.close();l=new Ledger(dir);assert(!l.admit('m'));assert.equal(l.reserve('send',1).status,'unknown');assert.throws(()=>l.reserve('second',1),/budget/);l.close();});
 test('Unicode chunking never breaks surrogate pairs',()=>{const s='🐋'.repeat(20)+'\n结束';for(const limit of [1,2,7,12]){const xs=splitForQQ(s,limit);assert.equal(xs.join(''),s);assert(xs.every(x=>x.isWellFormed()));}});
 test('Media rejects arbitrary files and symlink escapes',()=>{const {dir,a}=fixture();fs.writeFileSync(path.join(dir,'text'),'not an image');assert.throws(()=>localImage(path.join(dir,'text'),a));fs.symlinkSync('/etc/hosts',path.join(dir,'escape'));assert.throws(()=>localImage(path.join(dir,'escape'),a));});
