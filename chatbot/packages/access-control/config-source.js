@@ -1,9 +1,10 @@
 // Fixed operator-selected checkout. Neither source is read from the running state directory.
 import fs from 'node:fs';
 import path from 'node:path';
-import {randomUUID} from 'node:crypto';
-import {AccessError, validatePolicy} from '../../packages/access-control/index.js';
-import {sha256} from './policy.js';
+import {createHash, randomUUID} from 'node:crypto';
+import {AccessError, validatePolicy} from './index.js';
+
+const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 function openSource(sourceRoot, basename, validate) {
   if (typeof sourceRoot !== 'string' || !path.isAbsolute(sourceRoot)

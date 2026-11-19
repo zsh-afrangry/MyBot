@@ -1,4 +1,5 @@
 import {isDeepStrictEqual} from 'node:util';
+import {randomUUID} from 'node:crypto';
 import {AccessError, accessPolicy} from '../../packages/access-control/index.js';
 import {getCategory} from './categories.js';
 import {assertFields, proposalIdPattern, sha256} from './policy.js';
@@ -83,7 +84,8 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
         return withFacts(undefined, facts => ({ok: true, ...currentStatus, ...facts, source: selected(repoList), runtime: selected(liveList)}));
       }
       case 'propose': {
-        const draft = category.build(current.policy, args.change, env);
+        const proposalId = randomUUID();
+        const draft = category.build(current.policy, args.change, {...env, proposalId});
         const change = draft.change ?? args.change;
         return withFacts(draft, facts => {
           const plan = {
@@ -93,7 +95,7 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
             change, baseHash: current.hash, nextHash: sha256(encode(draft.next)),
           };
           check();
-          const proposal = store.propose(plan, owner, scope);
+          const proposal = store.propose(plan, owner, scope, proposalId);
           const previewText = category.preview({...draft, change}, plan.baseRevision, facts);
           return {ok: true, status: 'pending', ...(!legacy ? {category: name} : {}),
             ...proposal, previewText, presentationFacts: [previewText]};
@@ -104,7 +106,7 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
         if (row.state === 'expired') throw new AccessError('access_proposal_expired');
         if (row.state !== 'pending') throw new AccessError('access_change_already_submitted');
         if (stale(row.plan)) throw new AccessError('access_policy_changed');
-        const draft = category.build(current.policy, row.plan.change, env);
+        const draft = category.build(current.policy, row.plan.change, {...env, proposalId: id});
         return withFacts(draft, facts => {
           const candidate = store.claim(id, owner, scope, plan => {
             const bytes = encode(draft.next);

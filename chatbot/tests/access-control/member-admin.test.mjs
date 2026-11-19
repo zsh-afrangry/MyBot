@@ -9,8 +9,10 @@ import {
 } from '../../packages/confirmation-core/dist/index.js';
 import {ownerInvocation} from '../../plugins/kurumi-access-admin/inbound.js';
 import {createAccessAdminService} from '../../plugins/kurumi-access-admin/service.js';
-import {openPolicySource, openRuntimeSource} from '../../plugins/kurumi-access-admin/source.js';
+import {openPolicySource, openRuntimeSource} from '../../packages/access-control/config-source.js';
 import {AccessChangeStore} from '../../plugins/kurumi-access-admin/store.js';
+import {CodingService} from '../../plugins/kurumi-coding/service.js';
+import {git} from '../../plugins/kurumi-coding/workspaces.js';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {context, MEMBER, memberRow, OTHER, OWNER, ownerPolicy} from './fixtures.mjs';
 
@@ -87,6 +89,73 @@ function fixture(t, enabledCategories = [], toolSurface, configure = () => {}) {
   return {apply, approve, commit, file, newMessage, original, ownerContext, propose, read, run,
     readIntent, root, source, sourceRoot, stateRoot, status, sync, writeIntent, writePolicy, advance: ms => { now += ms; }};
 }
+
+test('project proposals use the live coding registry, approved checks and the existing fence; commits recheck idle state and directory identity', async t => {
+  const category = 'coding_project';
+  const checked = [{name: 'synthetic check', argv: ['/usr/bin/true']}];
+  const f = fixture(t, [category], undefined, (cfg, root) => {
+    const pilot = path.join(root, 'pilot'), home = path.join(root, 'dsh');
+    fs.mkdirSync(path.join(pilot, 'repo'), {recursive: true}); fs.mkdirSync(home);
+    cfg.plugins.entries['kurumi-access-admin'].config.projectCheckProfiles = {basic: checked};
+    cfg.plugins.entries['kurumi-coding'] = {enabled: true, config: {
+      pilot: true, root: path.join(pilot, 'state'), worktrees: path.join(pilot, 'worktrees'),
+      dsh: {command: '/usr/bin/false', home, model: ['fixture', 'model']},
+      writeBoundary: {root: pilot, launcher: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'},
+      projects: [],
+    }};
+  });
+  const settings = f.readIntent().plugins.entries['kurumi-coding'].config;
+  const project = path.join(settings.writeBoundary.root, 'repo');
+  const change = {op: 'add', key: 'demo', root: project, kind: 'directory', checkProfile: 'basic'};
+  const propose = edit => f.propose(edit, category);
+  const list = () => f.run({action: 'list', category});
+  assert.deepEqual(list().checkProfiles, [{id: 'basic', checks: ['synthetic check']}]);
+  assert.throws(() => propose(change), {code: 'coding_project_registry_unavailable'});
+  const service = new CodingService(settings);
+  service.start(); t.after(() => service.stop());
+  assert.throws(() => propose({...change, checks: checked}), {code: 'invalid_access_admin_arguments'});
+  assert.throws(() => propose({...change, checkProfile: undefined}), {code: 'coding_check_profile_required'});
+  assert.throws(() => propose({...change, checkProfile: 'other'}), {code: 'coding_check_profile_not_approved'});
+  assert.throws(() => propose({...change, root: f.sourceRoot}), {code: 'coding_paths_outside_write_boundary'});
+  assert.throws(() => propose({...change, root: settings.root}), {code: 'protected_project_root'});
+  assert.throws(() => propose({...change, branch: 'main'}), {code: 'invalid_project_branch'});
+  const symlink = path.join(settings.writeBoundary.root, 'link');
+  fs.symlinkSync(project, symlink);
+  assert.throws(() => propose({...change, root: symlink}), {code: 'invalid_coding_paths'});
+
+  git(project, 'init', '-b', 'main');
+  git(project, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost', 'commit', '--allow-empty', '-m', 'Fixture');
+  git(project, 'remote', 'add', 'fixture', 'https://example.test/synthetic');
+  assert.throws(() => propose({...change, kind: 'git', branch: 'main'}), {code: 'pilot_requires_synthetic_local_repository'});
+  git(project, 'remote', 'remove', 'fixture');
+  const linked = path.join(settings.writeBoundary.root, 'linked');
+  git(project, 'worktree', 'add', '--detach', linked);
+  assert.throws(() => propose({...change, root: linked, kind: 'git', branch: 'main'}), {code: 'invalid_project_root'});
+  git(project, 'worktree', 'remove', linked);
+
+  const addGit = {...change, kind: 'git', branch: 'main'};
+  const frozen = propose(addGit);
+  assert.match(frozen.previewText, /demo.*目标分支 "main".*"basic"/u);
+  assert.throws(() => f.commit(frozen), {code: 'approval_required'});
+  service.projectLocks.add(change.key);
+  f.approve(frozen);
+  assert.throws(() => f.commit(frozen), {code: 'coding_project_tasks_unsettled'});
+  service.projectLocks.delete(change.key);
+  fs.renameSync(project, project + '-old');
+  fs.cpSync(project + '-old', project, {recursive: true});
+  assert.throws(() => f.commit(frozen), {code: 'access_policy_changed'});
+  assert.deepEqual(list().source, []);
+
+  const added = f.apply(addGit, category);
+  assert.equal(f.status(added).activation, 'pending_sync');
+  assert.deepEqual(list().runtime, []);
+  assert.equal(list().source[0].id, addGit.key);
+  assert.deepEqual(list().source[0].checks, ['synthetic check']);
+  assert(!JSON.stringify(list()).includes('/usr/bin/true'));
+  assert.deepEqual(f.readIntent().plugins.entries['kurumi-coding'].config.projects[0].checks, checked);
+  await service.stop(); f.sync();
+  assert.equal(f.status(added).activation, 'active');
+});
 
 test('QQ member changes cover registration, per-permission edits, clearing fields, disabling and removal', t => {
   const f = fixture(t);

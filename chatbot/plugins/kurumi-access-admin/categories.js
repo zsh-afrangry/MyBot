@@ -1,5 +1,6 @@
 import {AccessError, validatePolicy} from '../../packages/access-control/index.js';
 import {execRootCategory, ownerToolCategory} from './runtime-lists.js';
+import {codingProjectCategory} from './coding-projects.js';
 import {assertQq, buildMemberChange, memberPreview, memberView, recipientKey,
   stringListChange, stringListPreview, stringListView} from './policy.js';
 
@@ -41,6 +42,7 @@ const categories = {
   },
   owner_tool: ownerToolCategory,
   exec_root: execRootCategory,
+  coding_project: codingProjectCategory,
 };
 
 export const CATEGORY_NAMES = Object.freeze(Object.keys(categories));

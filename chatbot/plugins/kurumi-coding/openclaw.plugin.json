@@ -51,7 +51,6 @@
       },
       "projects": {
         "type": "array",
-        "minItems": 1,
         "items": {
           "type": "object",
           "additionalProperties": false,
@@ -71,6 +70,10 @@
             "kind": {"type": "string", "enum": ["git", "directory"]},
             "branch": {
               "type": "string"
+            },
+            "registrationId": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$"
             },
             "checks": {
               "type": "array",

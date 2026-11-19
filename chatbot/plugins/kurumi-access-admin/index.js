@@ -5,7 +5,7 @@ import {CATEGORY_NAMES} from './categories.js';
 import {ownerInvocation} from './inbound.js';
 import {TOOL} from './policy.js';
 import {createAccessAdminService} from './service.js';
-import {openPolicySource, openRuntimeSource} from './source.js';
+import {openPolicySource, openRuntimeSource} from '../../packages/access-control/config-source.js';
 import {AccessChangeStore} from './store.js';
 
 const qq = {type: 'string', pattern: '^[0-9]{5,12}$'};
@@ -24,6 +24,10 @@ const parameters = {
         op: {type: 'string', enum: ['add', 'update', 'remove', 'replace']},
         key: {type: 'string', description: 'Exact entry to add, remove or replace in a non-member list.'},
         replacement: {type: 'string', description: 'New entry for replace.'},
+        root: {type: 'string', description: 'Absolute local root for a coding_project.'},
+        kind: {type: 'string', enum: ['git', 'directory'], description: 'Project kind for a coding_project.'},
+        branch: {type: 'string', description: 'Existing target branch for a Git coding_project.'},
+        checkProfile: {type: 'string', description: 'Operator-approved check profile ID for a coding_project.'},
         qq,
         grant: {...permissions, description: 'Explicit permission set for add (required), or permissions to enable for update.'},
         revoke: {...permissions, description: 'Permissions to remove for update.'},
@@ -87,6 +91,7 @@ export default {
         'For enabled category mail_recipient, use key for one exact address, with replacement for replace. This does not send mail.',
         'For enabled category owner_tool, use key for one registered tool name. Business permissions and denials still apply.',
         'For enabled category exec_root, use key for one absolute directory path inside an operator-approved base. This only changes additional executable write directories.',
+        'For enabled category coding_project, use the stable project ID as key. Add requires root, kind, branch for Git, and an approved checkProfile from list. Update fields of that same ID or remove it; this never runs a coding task.',
         'Show the preview and wait for a later owner confirmation through personal_confirmation with domain=access.',
         'Then call commit using the approved proposalId. That writes the repository policy only.',
         'Use status to inspect a proposal after an interrupted response. A written change takes effect after operator deployment.',

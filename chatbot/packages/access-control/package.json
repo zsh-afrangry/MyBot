@@ -8,6 +8,7 @@
     ".": {
       "types": "./index.d.ts",
       "default": "./index.js"
-    }
+    },
+    "./config-source": "./config-source.js"
   }
 }

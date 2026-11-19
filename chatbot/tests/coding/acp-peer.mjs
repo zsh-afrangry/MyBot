@@ -16,10 +16,11 @@ readline.createInterface({input: process.stdin}).on('line', line => {
   else if (frame.method === 'session/set_config_option' || frame.method === 'session/close') reply(frame.id);
   else if (frame.method === 'session/prompt') {
     pending = frame.id;
-    if (mode === '--completion-fixture') {
+    if (mode === '--completion-fixture' || mode === '--project-registry-fixture') {
       const phase = resumed ? 'resume' : 'start';
       const finish = () => {
         if (!fs.existsSync(path.join(gateDir, phase))) {setTimeout(finish, 25); return;}
+        if (mode === '--project-registry-fixture') fs.writeFileSync('value.mjs', 'export const value = 2;\n');
         const update = value => send({method: 'session/update', params: {sessionId: p.sessionId, update: value}});
         update({sessionUpdate: 'tool_call', toolCallId: 'fixture-command', kind: 'execute', title: 'fixture command', status: 'in_progress'});
         update({sessionUpdate: 'tool_call_update', toolCallId: 'fixture-command', status: 'completed',

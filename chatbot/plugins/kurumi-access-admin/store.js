@@ -53,8 +53,7 @@ export class AccessChangeStore {
     }
   }
 
-  propose(plan, owner, scope) {
-    const proposalId = randomUUID();
+  propose(plan, owner, scope, proposalId = randomUUID()) {
     const payload = JSON.stringify(plan);
     const payloadHash = sha256(payload);
     const at = this.now();

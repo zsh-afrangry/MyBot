@@ -1,6 +1,7 @@
 // Isolated OpenClaw Gateway, deterministic loopback model, simulated OneBot HTTP/WS.
 // Writes only its temporary source checkout and state, plus a new --out report.
-// Uses synthetic QQ identities. No real QQ, paid model, production writes or restart.
+// Uses synthetic QQ identities and (for coding_project) a local ACP stub.
+// No real QQ, paid model, DSH, production writes or production restart.
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
@@ -16,13 +17,14 @@ import {fileURLToPath} from 'node:url';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import {WebSocketServer} from 'ws';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
+import {git} from '../../plugins/kurumi-coding/workspaces.js';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import {ownerPolicy} from './fixtures.mjs';
 import {withHostControl} from './host-config.mjs';
 
 const [flag, out, mode, category = 'member', ...extra] = process.argv.slice(2);
 assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out), 'Require a new absolute --out');
-assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'owner_tool', 'exec_root'].includes(category) && !extra.length);
+assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'owner_tool', 'exec_root', 'coding_project'].includes(category) && !extra.length);
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-access-admin-host-'));
@@ -47,21 +49,22 @@ fs.writeFileSync(path.join(source, 'scripts/fusion/templates/AGENTS.md'), '<!-- 
 fs.copyFileSync(path.join(repo, 'scripts/fusion/templates/MEMBER_AGENTS.md'), path.join(source, 'scripts/fusion/templates/MEMBER_AGENTS.md'));
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(state, file), token, {mode: 0o600});
 
-let active, proposal, child;
+let active, proposal, child, completingTask;
+const projectRun = category === 'coding_project';
 const sends = [];
 function unwrap(value) {
   for (let i = 0; i < 6; i++) {
     if (typeof value === 'string') { try { value = JSON.parse(value); } catch { return value; } }
-    else if (value?.result) value = value.result;
+    else if (value?.result && !value.task) value = value.result;
     else if (value?.content?.length === 1) value = value.content[0].text;
     else break;
   }
   return value;
 }
-function modelReply(body, tool, res) {
+function modelReply(body, tool, res, text = '宿主测试回复。') {
   const choice = tool ? {role: 'assistant', content: null, tool_calls: [{id: 'call_' + report.requests,
     type: 'function', function: {name: tool[0], arguments: JSON.stringify(tool[1])}}]}
-    : {role: 'assistant', content: '宿主测试回复。'};
+    : {role: 'assistant', content: text};
   const finish = tool ? 'tool_calls' : 'stop';
   const usage = {prompt_tokens: 1, completion_tokens: 1, total_tokens: 2};
   const common = {id: 'chatcmpl-access-admin', created: 1, model: 'fixture'};
@@ -78,8 +81,11 @@ const server = http.createServer(async (req, res) => {
     for await (const bytes of req) raw += bytes;
     res.setHeader('content-type', 'application/json');
     if (req.url === '/v1/chat/completions') {
-      assert(active && ++report.requests <= 60, 'Unexpected model request');
       const body = JSON.parse(raw);
+      assert(++report.requests <= (projectRun ? 125 : 60), 'Unexpected model request count');
+      // Only the synthetic ACP gate can release the background notice, between foreground turns.
+      if (!active && completingTask) return modelReply(body, undefined, res, '合成任务完成 ' + completingTask);
+      assert(active, 'Unexpected foreground model request');
       if (active.member) {
         const names = body.tools?.map(tool => tool.function?.name) ?? [];
         assert(!names.includes('kurumi_access') && !names.includes('personal_confirmation'));
@@ -134,11 +140,27 @@ const mail = 'kurumi-mail', mailRun = category === 'mail_recipient', toolRun = c
 const execRun = category === 'exec_root', fixed = path.join(root, 'exec-fixed');
 const base = path.join(root, 'ordinary'), extraRoot = path.join(base, '目录 A');
 const launcher = '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run';
+const coding = 'kurumi-coding', pilot = path.join(root, 'pilot'), codingRoot = path.join(pilot, 'coding-state');
+const projectRoot = path.join(pilot, 'synthetic-project'), gates = path.join(pilot, 'gates');
+const fakePeer = path.join(pilot, 'synthetic-peer'), fakeHome = path.join(pilot, 'fake-home');
+const projectCheckProfiles = Object.fromEntries(['basic', 'other'].map(id => [id, [{name: id + ' check', argv: ['/usr/bin/true']}]]));
+let projectHead;
 if (execRun) {
   fs.mkdirSync(fixed);
   fs.mkdirSync(extraRoot, {recursive: true});
 }
-const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun || toolRun ? [mail] : [])];
+if (projectRun) {
+  for (const dir of [projectRoot, gates, fakeHome]) fs.mkdirSync(dir, {recursive: true});
+  git(projectRoot, 'init', '-b', 'main');
+  fs.writeFileSync(path.join(projectRoot, 'value.mjs'), 'export const value = 1;\n');
+  git(projectRoot, 'add', '.');
+  git(projectRoot, '-c', 'user.name=Fixture', '-c', 'user.email=fixture@localhost', 'commit', '-m', 'Synthetic project');
+  projectHead = git(projectRoot, 'rev-parse', 'HEAD').trim();
+  const quote = value => "'" + value.replaceAll("'", "'\\''") + "'";
+  fs.writeFileSync(fakePeer, '#!/bin/bash\nexec ' + [process.execPath,
+    path.join(repo, 'chatbot/tests/coding/acp-peer.mjs'), '--project-registry-fixture', gates].map(quote).join(' ') + ' "$@"\n', {mode: 0o700});
+}
+const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun || toolRun ? [mail] : []), ...(projectRun ? [coding] : [])];
 const workspace = path.join(state, 'workspace');
 const model = {primary: 'fixture/fixture'};
 const config = withHostControl({
@@ -148,7 +170,8 @@ const config = withHostControl({
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
   agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
     entries: {main: {workspace, model, tools: {profile: 'messaging',
-      alsoAllow: ['personal_confirmation', 'kurumi_access', ...(mailRun ? ['email_draft', 'email_send'] : []), ...(execRun ? ['exec'] : [])],
+      alsoAllow: ['personal_confirmation', 'kurumi_access', ...(mailRun ? ['email_draft', 'email_send'] : []), ...(execRun ? ['exec'] : []),
+        ...(projectRun ? ['kurumi_code'] : [])],
       deny: ['read', 'write', 'edit', 'apply_patch', ...(!execRun ? ['exec'] : []), 'process', 'message', 'sessions_spawn'],
       ...(execRun ? {exec: {host: 'gateway', mode: 'full', timeoutSeconds: 10, notifyOnExit: false}} : {}),
     }}}},
@@ -160,9 +183,12 @@ const config = withHostControl({
       exec: {workdir: fixed, timeoutSeconds: 10, writeBoundary: {root: fixed, launcher}},
     }} : {})}, [admin]: {enabled: true, config: {sourceRoot: source,
       ...(category !== 'member' ? {enabledCategories: [category]} : {}),
-      ...(execRun ? {execDirectoryBases: [base]} : {})}},
+      ...(execRun ? {execDirectoryBases: [base]} : {}), ...(projectRun ? {projectCheckProfiles} : {})}},
     [confirmation]: {enabled: true, hooks: {allowConversationAccess: true}},
     ...(mailRun || toolRun ? {[mail]: {enabled: true}} : {}),
+    ...(projectRun ? {[coding]: {enabled: true, config: {pilot: true, root: codingRoot, worktrees: path.join(pilot, 'worktrees'),
+      dsh: {command: fakePeer, home: fakeHome, model: ['fixture', 'fixture']}, projects: [],
+      writeBoundary: {root: pilot, launcher}}}} : {}),
   }, slots: {memory: 'none'}},
   tools: {codeMode: false, deny: [...(!execRun ? ['exec'] : []), 'process', 'message', 'sessions_spawn'],
     web: {search: {enabled: false}, fetch: {enabled: false}}},
@@ -269,6 +295,19 @@ async function memberScenario() {
   assert.equal(memberResponse.sessionKey, `agent:qq-user-${member}:kurumi-qq:direct:${member}`);
   assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
   report.cases.push('Member gets an isolated session and own reply after persona projection, compilation and restart');
+
+  await turn(owner, '预览移除测试成员', [adminTool({action: 'propose', change: {op: 'remove', qq: member}}, result => {
+    assert(result.ok && result.status === 'pending'); proposal = result;
+  })]);
+  await turn(owner, '确认', [
+    confirm(result => assert(result.ok)), commit(result => assert(result.ok && result.sourceRevision === 3)),
+  ]);
+  await stop(); await start();
+  const revoked = {requests: report.requests, sends: sends.length};
+  assert((await inbound(member, '同步撤权后的测试')).ignored);
+  assert.deepEqual({requests: report.requests, sends: sends.length}, revoked);
+  assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
+  report.cases.push('Revocation removes access on restart and preserves the member workspace');
 }
 
 async function mailScenario() {
@@ -394,11 +433,96 @@ async function execScenario() {
   report.cases.push('Removal revokes new writes after sync; prior files and the fixed root are preserved');
 }
 
+async function projectScenario() {
+  const key = 'synthetic-project', select = (action, fields = {}) => ({action, category, ...fields});
+  const ok = result => assert.equal(result.ok, true, JSON.stringify(result));
+  const code = (args, verify) => ({name: 'kurumi_code', args, verify});
+  const denied = reason => result => assert(JSON.stringify(result).includes(reason), JSON.stringify(result));
+  const startTask = verify => code({action: 'start', projectId: key, task: 'Run the synthetic check.'}, verify);
+  const show = async change => {
+    const preview = await turn(owner, '预览合成编码项目变更', [adminTool(select('propose', {change}), result => {
+      ok(result); assert.equal(result.status, 'pending'); proposal = result;
+    })]);
+    const sentText = preview.sent.flatMap(msg => msg.message).filter(segment => segment.type === 'text')
+      .map(segment => segment.data.text).join('\n');
+    assert(sentText.includes(proposal.previewText));
+  };
+  const write = (...steps) => turn(owner, '确认', [
+    confirm(ok), commit(result => { ok(result); assert.equal(result.activation, 'pending_sync'); }), ...steps,
+  ]);
+  const projectList = result => assert.deepEqual(result.projects, []);
+  await turn(owner, '检查空的项目名单', [
+    code({action: 'list'}, projectList),
+    adminTool(select('propose', {change: {op: 'add', key, root: projectRoot, kind: 'git', branch: 'main',
+      checkProfile: 'invented'}}), isError('coding_check_profile_not_approved')),
+  ]);
+  await show({op: 'add', key, root: projectRoot, kind: 'git', branch: 'main', checkProfile: 'basic'});
+  await write(startTask(denied('unknown_coding_project')));
+  report.cases.push('Confirmed addition uses a known check profile and cannot start before sync');
+
+  await stop(); await start();
+  let taskId, candidate;
+  await turn(owner, '先跑测试任务并尝试移除进行中的项目', [
+    startTask(result => { assert(result.id, JSON.stringify(result)); taskId = result.id; }),
+    adminTool(select('propose', {change: {op: 'remove', key}}), isError('coding_project_tasks_unsettled')),
+  ]);
+  const db = new DatabaseSync(path.join(codingRoot, 'coding.sqlite'), {readOnly: true});
+  try {
+    completingTask = taskId;
+    fs.writeFileSync(path.join(gates, 'start'), '');
+    for (let i = 0; i < 160; i++) {
+      const task = JSON.parse(db.prepare('SELECT facts FROM coding_tasks WHERE id=?').get(taskId).facts);
+      const facts = db.prepare('SELECT facts FROM coding_results WHERE task_id=? AND round_id=?').get(taskId, task.executionRoundId);
+      if (facts && JSON.parse(facts.facts).finishedAt && ['platform_accepted', 'generation_failed', 'unknown'].includes(task.delivery?.state)) {
+        assert.equal(task.state, 'ready', JSON.stringify({state: task.state, reason: task.reason}));
+        assert.equal(task.delivery.state, 'platform_accepted', task.delivery.code);
+        break;
+      }
+      if (i === 159) assert.fail('Synthetic coding task did not settle');
+      await delay(50);
+    }
+  } finally { completingTask = undefined; db.close(); }
+  await turn(owner, '生成旧合入候选', [code({action: 'preview', taskId}, result => {
+    ok(result); candidate = result.proposalId;
+  })]);
+  const continueTask = reason => code({action: 'continue', taskId, task: 'Continue fixture.'}, denied(reason));
+  const mergeTask = reason => code({action: 'merge', taskId, proposalId: candidate}, denied(reason));
+  await show({op: 'update', key, checkProfile: 'other'});
+  await write(continueTask('coding_project_pending_sync'), mergeTask('coding_project_pending_sync'));
+  report.cases.push('While a task is active the project cannot be removed; source updates stop old execution until sync');
+
+  await stop(); await start();
+  const historical = result => assert(result.id === taskId && result.state === 'ready' && result.projectActive === false);
+  await turn(owner, '确认新检查和旧任务记录', [
+    adminTool(select('get', {key}), result => { ok(result); assert(result.inSync && result.runtime.checkProfile === 'other'); }),
+    code({action: 'status', taskId}, historical),
+    code({action: 'result', taskId}, result => { historical(result.task); assert(result.result.page.text.includes('fixture execution start')); }),
+    continueTask('coding_project_registration_changed'), mergeTask('coding_project_registration_changed'),
+  ]);
+  const history = new DatabaseSync(path.join(codingRoot, 'coding.sqlite'), {readOnly: true});
+  try {
+    assert.equal(history.prepare('SELECT status FROM confirmation_proposals WHERE proposal_id=?').get(candidate).status, 'cancelled');
+  } finally { history.close(); }
+  report.cases.push('Synced updates retire old execution and cancel the old merge candidate while preserving the historical result');
+
+  await show({op: 'remove', key});
+  await write(startTask(denied('coding_project_pending_sync')));
+  await stop(); await start();
+  await turn(owner, '验证最后一个项目撤销后记录仍能查', [
+    code({action: 'list'}, projectList), code({action: 'status', taskId}, historical),
+    startTask(denied('unknown_coding_project')), continueTask('unknown_coding_project'), mergeTask('unknown_coding_project'),
+  ]);
+  assert.equal(git(projectRoot, 'rev-parse', 'HEAD').trim(), projectHead);
+  assert.equal(fs.readFileSync(path.join(projectRoot, 'value.mjs'), 'utf8'), 'export const value = 1;\n');
+  report.cases.push('An empty registry starts normally, preserves historical files, and rejects new execution and merge');
+}
+
 try {
   await start();
   if (mailRun) await mailScenario();
   else if (toolRun) await toolScenario();
   else if (execRun) await execScenario();
+  else if (projectRun) await projectScenario();
   else await memberScenario();
   report.passed = true;
 } catch (error) {
