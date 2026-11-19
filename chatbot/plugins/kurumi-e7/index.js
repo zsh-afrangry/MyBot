@@ -6,7 +6,7 @@ import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
 import {wrapExternalContent} from 'openclaw/plugin-sdk/security-runtime';
 import {assertToolAccess} from '../../packages/access-control/index.js';
 import {ACTIONS, HERO_VIEWS, E7Error} from './policy.js';
-import {ATTRIBUTES, ROLES, REVIEW_CATEGORIES, BUILD_STATS} from './query.js';
+import {ATTRIBUTES, ROLES, REVIEW_CATEGORIES, BUILD_FILTER_FIELDS} from './query.js';
 import {E7Service} from './service.js';
 import {E7_IMAGE_TOOL, registerImageTool} from './image-tool.js';
 
@@ -37,10 +37,7 @@ export const E7_TOOL = {
     filters: {type: 'object', additionalProperties: false, properties: {
       attribute: {type: 'string', enum: ATTRIBUTES}, role: {type: 'string', enum: ROLES}, rarity: {type: 'integer', enum: [3, 4, 5]},
       effectIds: {type: 'array', minItems: 1, maxItems: 3, items: {type: 'string', maxLength: 80}, description: '仅角色，多个效果为同时满足；取dictionary真实ID'},
-      sets: {type: 'array', minItems: 1, maxItems: 3, uniqueItems: true, items: {type: 'string', minLength: 1, maxLength: 20}, description: '仅builds，站点套装名，同时包含'},
-      minStats: {type: 'object', additionalProperties: false, minProperties: 1,
-        properties: Object.fromEntries(Object.keys(BUILD_STATS).map(k => [k, {type: 'number', minimum: 0, maximum: 10000000}])),
-        description: '仅builds，面板下限；chc/chd/eff/efr为百分数点，例如chd=250代表250%'},
+      ...BUILD_FILTER_FIELDS,
     }},
     server: {type: 'string', enum: ['国服', '国际服'], description: '仅codes和news/game的list；读公告正文的get不传'},
     limit: {type: 'integer', minimum: 1, maximum: 10, description: '列表默认5项，上限10'},

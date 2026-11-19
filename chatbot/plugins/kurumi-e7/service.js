@@ -8,7 +8,8 @@ import {rankingIdentity, rankingTiers, rankingEntries, contentProjection, conten
 
 import {queryGameplay} from './gameplay.js';
 import {extractAnnouncement} from './announcements.js';
-import {E7ImageCache, selectImage, validateImageQuery} from './images.js';
+import {acceptedImagePath, E7ImageCache, selectImage, validateImageQuery} from './images.js';
+import {buildCardLayout, heroCardLayout, renderCard} from './cards.js';
 
 const contentKey = (kind, contentId) => JSON.stringify(['contentLocator', {kind, contentId}]);
 const announcementKey = id => JSON.stringify(['announcementLocator', id]);
@@ -41,6 +42,7 @@ export class E7Service {
     this.clock = clock; this.timers = timers; this.onRefresh = onRefresh;
     this.extractPdf = extractPdf;
     this.images = new E7ImageCache();
+    this.cardFlights = new Set();
     this.flights = new Map(); this.controller = new AbortController(); this.closed = false; this.started = false;
   }
   start() {
@@ -60,7 +62,7 @@ export class E7Service {
   async stop() {
     this.closed = true; this.started = false;
     if (this.timer !== undefined) this.timers.clear(this.timer); this.timer = undefined;
-    this.controller.abort(); await Promise.allSettled([...this.flights.values()]);
+    this.controller.abort(); await Promise.allSettled([...this.flights.values(), ...this.cardFlights]);
     this.images.clear();
   }
   async refresh() {
@@ -116,19 +118,65 @@ export class E7Service {
   async image(raw, {signal, trace} = {}) {
     const args = validateImageQuery(raw);
     const request = {signal, trace};
+    if (args.kind === 'hero_card' || args.kind === 'build_card') {
+      if (this.cardFlights.size >= 2) fail('image_busy');
+      const task = this.makeCard(args, request);
+      this.cardFlights.add(task);
+      try {return await task;} finally {this.cardFlights.delete(task);}
+    }
     const cards = await this.resource('cards', {}, request);
     if (!cards.data.some(r => r.code === args.heroCode)) fail('unknown_hero');
     const hero = await this.resource('hero', {heroCode: args.heroCode}, request);
-    const relative = selectImage(hero.data, args);
     const stop = signal ? AbortSignal.any([signal, this.controller.signal]) : this.controller.signal;
-    stop.throwIfAborted();
+    return this.imageAsset(args.kind, selectImage(hero.data, args), {signal: stop, trace});
+  }
+  async imageAsset(kind, relative, {signal, trace}) {
+    signal.throwIfAborted();
     const cached = this.images.get(relative, this.clock());
     if (cached) return cached;
-    const {data: bytes, contentType} = await this.client.read('heroImage', {kind: args.kind, relative}, {signal: stop, trace});
-    stop.throwIfAborted();
+    const {data: bytes, contentType} = await this.client.read('heroImage', {kind, relative}, {signal, trace});
+    signal.throwIfAborted();
     const asset = {bytes, contentType};
     this.images.set(relative, asset, this.clock());
     return asset;
+  }
+  async makeCard(args, {signal, trace}) {
+    const stop = signal ? AbortSignal.any([signal, this.controller.signal]) : this.controller.signal;
+    const request = {signal: stop, trace};
+    const cards = await this.resource('cards', {}, request);
+    const card = cards.data.find(r => r.code === args.heroCode);
+    if (!card) fail('unknown_hero');
+    const params = {heroCode: args.heroCode};
+    const caption = records => citationFor(records.map(r => ({checkedAt: new Date(r.checkedAt).toISOString()})), records.some(r => r.stale));
+    const optional = async (kind, relative) => {
+      if (!acceptedImagePath(kind, relative)) return null;
+      try {return await this.imageAsset(kind, relative, request);}
+      catch {stop.throwIfAborted(); return null;}
+    };
+    let layout, source, coverage;
+    if (args.kind === 'hero_card') {
+      const hero = await this.resource('hero', params, request);
+      const [portrait, ...items] = await Promise.all([
+        (async () => await optional('detail', hero.data.detailImageUrl) ?? await optional('avatar', hero.data.avatarUrl))(),
+        ...[1, 2, 3].map(slot => optional('skill', hero.data.skills.find(skill => skill.slot === slot)?.iconUrl)),
+      ]);
+      source = caption([cards, hero]);
+      layout = heroCardLayout(hero.data, {portrait, icons: new Map(items.map((icon, i) => [i + 1, icon])), source});
+    } else {
+      const builds = await this.resource('builds', params, request);
+      const rows = matchBuilds(builds.data.map(buildProjection), args.filters);
+      if (!rows.length) fail('no_build_samples');
+      const requested = args.count ?? 1, samples = rows.slice(0, requested);
+      let hero;
+      try {hero = await this.resource('hero', params, request);} catch {stop.throwIfAborted();}
+      const avatar = await optional('avatar', hero?.data.avatarUrl);
+      source = caption([cards, builds, ...(avatar ? [hero] : [])]);
+      coverage = {requested, shown: samples.length, matched: rows.length};
+      layout = buildCardLayout(card, {samples, requested, total: rows.length, avatar, source});
+    }
+    const asset = await renderCard(layout, request);
+    try {this.observe({kind: 'e7.card', correlation: trace ?? {}, data: {kind: args.kind, bytes: asset.bytes.length, ...coverage}});} catch {}
+    return {...asset, caption: source + '\nKurumi 制图；游戏素材版权归《第七史诗》权利方。', coverage};
   }
   async query(raw, {signal,trace} = {}) {
     const args = validateQuery(raw), resources = [];

@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
-import {spawnSync} from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import {test} from 'node:test';
+import {DatabaseSync} from 'node:sqlite';
 import {gzipSync} from 'node:zlib';
 import {checkedMetadata, inspectPcap, loadE7BotMetadata, submitAndroidCapture} from '../../plugins/kurumi-e7/account/source.js';
 import {projectAccount} from '../../plugins/kurumi-e7/account/projection.js';
-import {writeAccountWorkbooks} from '../../plugins/kurumi-e7/account/workbooks.js';
+import {writeAccountDatabase} from '../../plugins/kurumi-e7/account/storage.js';
 
 const meta = {
   version: 'account-heroes-meta-v6', excludedCharacterIds: ['excluded'],
@@ -115,44 +115,52 @@ test('the uploader refuses an unapproved or modified capture before I/O and send
   await assert.rejects(submitAndroidCapture(file, digest, {fetcher: async () => Response.json({status: 'queued'})}), /未返回已解析/);
 });
 
-test('the two private workbooks reopen as XLSX with intact text IDs, numeric attributes, filters and every relationship', async t => {
+test('the private SQLite snapshot keeps four independently queryable tables and every relationship', async t => {
   const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'kurumi-e7-account-'));
   t.after(() => fs.rm(dir, {recursive:true, force:true}));
-  const out = path.join(dir, 'new');
+  const out = path.join(dir, 'account.sqlite');
   const projected = projectAccount(account, meta);
-  await writeAccountWorkbooks(out, projected);
-  assert.equal((await fs.stat(out)).mode & 0o777, 0o700);
-  for (const book of ['equipment.xlsx', 'heroes.xlsx']) assert.equal((await fs.stat(path.join(out, book))).mode & 0o777, 0o600);
-  await assert.rejects(writeAccountWorkbooks(out, projected), {code: 'EEXIST'});
-  const check = spawnSync('/usr/bin/python3', ['-c', `
-from pathlib import Path
-from xml.etree import ElementTree as E
-from zipfile import ZipFile
-import sys
-ns = {'s': 'http://schemas.openxmlformats.org/spreadsheetml/2006/main'}
-def validate(filename, first_sheet, rowcount):
-    with ZipFile(Path(sys.argv[1]) / filename) as z:
-        assert z.testzip() is None
-        wb = E.fromstring(z.read('xl/workbook.xml'))
-        assert [s.attrib['name'] for s in wb.findall('.//s:sheet', ns)] == [first_sheet, '字段对照']
-        sheet = E.fromstring(z.read('xl/worksheets/sheet1.xml'))
-        assert sheet.find('s:autoFilter', ns).attrib['ref'].endswith(str(rowcount + 1))
-        assert sheet.find('.//s:pane', ns).attrib['state'] == 'frozen'
-        assert len(sheet.findall('.//s:row', ns)) == rowcount + 1
-        assert not sheet.findall('.//s:f', ns)
-        return sheet
-def cell(sheet, addr): return sheet.find(f'.//s:c[@r="{addr}"]', ns)
-def text(sheet, addr): return cell(sheet, addr).find('.//s:t', ns).text
-def number(sheet, addr): return float(cell(sheet, addr).find('s:v', ns).text)
-e = validate('equipment.xlsx', '装备明细', 7)
-h = validate('heroes.xlsx', '英雄明细', 4)
-assert text(e, 'A2') == '=非公式武器'
-assert text(e, 'J2') == text(h, 'B2') == '9007199254740999'
-assert number(e, 'M2') == 84 and number(e, 'T2') == 5
-assert number(e, 'U2') == .05 and cell(e, 'U2').attrib['s'] == '2'
-assert text(h, 'V2').endswith('[1] / =非公式武器 [2]')
-assert '测试神器 [3]' == text(h, 'AB3')
-assert text(h, 'AD4') == 'missing-equip [5]'
-`, out], {encoding:'utf8'});
-  assert.equal(check.status, 0, check.stderr || String(check.error));
+  const results = await Promise.all([writeAccountDatabase(out, projected), writeAccountDatabase(out, projected)]);
+  assert.deepEqual(results.map(r => r.reused).sort(), [false, true]);
+  const expected = {heroes: 4, equipment: 5, exclusive_equipment: 1, artifacts: 1};
+  for (const result of results) assert.deepEqual(result.tableCounts, expected);
+  assert.equal((await fs.stat(out)).mode & 0o777, 0o600);
+  const db = new DatabaseSync(out, {readOnly: true});
+  const all = (sql, ...parameters) => db.prepare(sql).all(...parameters).map(row => ({...row}));
+  try {
+    assert.deepEqual(all("SELECT name FROM sqlite_schema WHERE type='table' ORDER BY name").map(r => r.name), Object.keys(expected).sort());
+    for (const [table, count] of Object.entries(expected)) assert.equal(all(`SELECT COUNT(*) AS n FROM ${table}`)[0].n, count);
+    assert.deepEqual(all('PRAGMA foreign_key_check'), []);
+    assert.deepEqual(all(`SELECT h.instance_id AS hero, e.instance_id AS equipment, e.name, e.main_value,
+      json_extract(e.substats_json, '$.speed') AS speed, json_extract(e.substats_json, '$.cri') AS cri
+      FROM equipment e JOIN heroes h ON e.hero_instance_id=h.instance_id
+      WHERE h.instance_id=? AND e.slot='weapon' ORDER BY e.instance_id`, '9007199254740999'), [
+      {hero: '9007199254740999', equipment: '1', name: '=非公式武器', main_value: 84, speed: 5, cri: 0.05},
+      {hero: '9007199254740999', equipment: '2', name: '=非公式武器', main_value: 50, speed: null, cri: null},
+    ]);
+    assert.deepEqual(all("SELECT code, slot, wearer_id, hero_instance_id, catalog_status, link_status FROM equipment WHERE instance_id IN ('5','6','7') ORDER BY instance_id"), [
+      {code: 'missing-equip', slot: null, wearer_id: '46', hero_instance_id: '46', catalog_status: 'unknown', link_status: 'linked'},
+      {code: 'sword', slot: 'weapon', wearer_id: '51', hero_instance_id: null, catalog_status: 'matched', link_status: 'missing_hero'},
+      {code: 'sword', slot: 'weapon', wearer_id: null, hero_instance_id: null, catalog_status: 'matched', link_status: 'unequipped'},
+    ]);
+    assert.deepEqual(all('SELECT stars, enhance_level, limit_break, attack, health, defense, hero_instance_id FROM artifacts'),
+      [{stars: 3, enhance_level: 18, limit_break: 1, attack: 150, health: 450, defense: null, hero_instance_id: '45'}]);
+    assert.deepEqual(all('SELECT main_stat, main_value, effect_options, options_json, hero_instance_id FROM exclusive_equipment'),
+      [{main_stat: 'acc', main_value: 0.16, effect_options: 'ek_9: 2', options_json: '[["acc",0.16],["ek_9",2]]', hero_instance_id: '45'}]);
+    assert.deepEqual(all("SELECT catalog_status, code FROM heroes WHERE instance_id IN ('46','47') ORDER BY instance_id"),
+      [{catalog_status: 'excluded', code: 'excluded'}, {catalog_status: 'unknown', code: 'missing-hero'}]);
+    assert.deepEqual(all('SELECT skill_1_enhance, awakening, imprint_value FROM heroes WHERE instance_id=?', '9007199254740999'),
+      [{skill_1_enhance: 0, awakening: 0, imprint_value: 0.09}]);
+  } finally {db.close();}
+  const before = await fs.readFile(out);
+  assert.equal((await writeAccountDatabase(out, projectAccount({equips: [...account.equips].reverse(), units: account.units}, meta))).reused, true);
+  await assert.rejects(writeAccountDatabase(out, projectAccount({equips: [], units: []}, meta)), /另选 SQLite 文件/u);
+  assert.deepEqual(await fs.readFile(out), before);
+  const link = path.join(dir, 'link.sqlite');
+  await fs.symlink(out, link);
+  await assert.rejects(writeAccountDatabase(link, projected), /另选 SQLite 文件/u);
+  const broken = projectAccount(account, meta);
+  broken.equipment[0].wearer = 'does-not-exist';
+  await assert.rejects(writeAccountDatabase(path.join(dir, 'invalid.sqlite'), broken), /FOREIGN KEY/u);
+  assert.deepEqual((await fs.readdir(dir)).sort(), ['account.sqlite', 'link.sqlite']);
 });

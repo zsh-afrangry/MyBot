@@ -66,7 +66,7 @@ test('the image tool uses the trusted private requester, rechecks access and ret
   assert.equal(sent.length, 1);
 });
 
-test('different image kinds in one QQ model turn produce one physical delivery, a fresh turn can send again', async t => {
+test('different image kinds in one QQ turn only send once, and ten build samples in another turn send one PNG', async t => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'e7-image-ledger-'));
   t.after(() => fs.rmSync(dir, {recursive: true, force: true}));
   const token = path.join(dir, 'token'); fs.writeFileSync(token, 'synthetic', {mode: 0o600});
@@ -81,12 +81,23 @@ test('different image kinds in one QQ model turn produce one physical delivery, 
   });
   await new Promise(resolve => mock.listen(0, '127.0.0.1', resolve));
   t.after(() => new Promise(resolve => mock.close(resolve)));
-  const h = register({async image(args) {return {bytes: images[args.kind], contentType: 'image/webp'};}});
+  const {service, calls} = setup(t, {read: async (kind, _params, _opts, source) => {
+    if (kind === 'heroImage') throw Error('synthetic missing art');
+    return {status: 200, data: source[kind]};
+  }});
+  const h = register({async image(args, options) {
+    if (args.kind === 'build_card' || args.kind === 'hero_card') return service.image(args, options);
+    return {bytes: images[args.kind], contentType: 'image/webp'};
+  }});
   Object.assign(h.config.channels['kurumi-qq'], {
     enabled: true, httpUrl: `http://127.0.0.1:${mock.address().port}`, wsUrl: 'ws://127.0.0.1:1',
     stateDir: dir, mediaRoot: dir, httpTokenFile: token, wsTokenFile: token,
   });
-  const send = async (id, kind) => JSON.parse((await h.image().execute(id, {heroCode: 'test-hero-1', kind})).content[0].text);
+  const send = async (id, kind, extra, ctx) => JSON.parse((await h.image(ctx).execute(id, {heroCode: 'test-hero-1', kind, ...extra})).content[0].text);
+  const member = context(h.policy.subjects[1]);
+  bindImageCall(h, 'member-call', 'member-turn', member);
+  for (const kind of ['hero_card', 'build_card']) assert.equal((await send('member-call', kind, {}, member)).error.code, 'access_denied');
+  assert.equal(calls.length, 0);
   assert.equal((await send('unbound', 'avatar')).error.code, 'image_request_required');
   bindImageCall(h, 'avatar-call', 'trusted-first-turn');
   const first = await send('avatar-call', 'avatar');
@@ -97,9 +108,18 @@ test('different image kinds in one QQ model turn produce one physical delivery, 
   assert.equal(second.messageId, first.messageId);
   assert.equal(sent.length, 1);
   assert.equal(sent[0].message[1].data.file, 'base64://' + images.avatar.toString('base64'));
-  bindImageCall(h, 'another-call', 'trusted-next-turn');
-  assert.equal((await send('another-call', 'detail')).messageId, '902');
-  assert.equal(sent[1].message[1].data.file, 'base64://' + images.detail.toString('base64'));
+  bindImageCall(h, 'empty-call', 'trusted-next-turn');
+  assert.equal((await send('empty-call', 'build_card', {filters: {minStats: {spd: 1000}}})).error.code, 'no_build_samples');
+  assert.equal(sent.length, 1);
+  bindImageCall(h, 'build-call', 'trusted-build-turn');
+  const build = await send('build-call', 'build_card', {count: 10});
+  assert.equal(build.messageId, '902');
+  assert.deepEqual(build.coverage, {requested: 10, shown: 10, matched: 12});
+  assert.equal(sent.length, 2);
+  const segments = sent[1].message.filter(segment => segment.type === 'image');
+  assert.equal(segments.length, 1);
+  assert.equal(Buffer.from(segments[0].data.file.slice('base64://'.length), 'base64').subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+  assert.match(sent[1].message[0].data.text, /E7·WIKI/u);
 });
 
 test('invalid announcement body parameters return a usable list/get contract without trying the upstream', async t => {

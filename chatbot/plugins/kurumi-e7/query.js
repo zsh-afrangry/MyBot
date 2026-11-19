@@ -11,9 +11,27 @@ export const ATTRIBUTES = ['fire', 'ice', 'wind', 'light', 'dark'];
 export const ROLES = ['warrior', 'knight', 'assassin', 'ranger', 'mage', 'manauser'];
 export const REVIEW_CATEGORIES = ['RTA', 'PVP', 'PVE', '综合'];
 export const BUILD_STATS = Object.freeze({hp: 'health', atk: 'att', def: 'def', spd: 'speed', chc: 'cri', chd: 'cri_dmg', eff: 'acc', efr: 'res'});
+export const BUILD_FILTER_FIELDS = {
+  sets: {type: 'array', minItems: 1, maxItems: 3, uniqueItems: true, items: {type: 'string', minLength: 1, maxLength: 20}, description: '站点套装名，同时包含'},
+  minStats: {type: 'object', additionalProperties: false, minProperties: 1,
+    properties: Object.fromEntries(Object.keys(BUILD_STATS).map(k => [k, {type: 'number', minimum: 0, maximum: 10000000}])),
+    description: '穿戴面板下限；chc/chd/eff/efr 用百分数点，例如 chd=250 代表 250%'},
+};
 const keys = (v, allowed) => {if (!object(v) || Object.keys(v).some(k => !allowed.includes(k))) fail('invalid_query');};
 const string = (v, max = 128) => typeof v === 'string' && v.trim().length > 0 && [...v].length <= max;
 const id = v => typeof v === 'string' && /^[a-zA-Z0-9_-]{1,80}$/.test(v);
+
+export function validateBuildFilters(filters) {
+  keys(filters, Object.keys(BUILD_FILTER_FIELDS));
+  if (!Object.keys(filters).length) fail('invalid_query');
+  if ('sets' in filters && (!Array.isArray(filters.sets) || filters.sets.length < 1 || filters.sets.length > 3
+      || filters.sets.some(s => !string(s, 20) || !normalize(s)) || new Set(filters.sets.map(normalize)).size !== filters.sets.length)) fail('invalid_query');
+  if ('minStats' in filters) {
+    keys(filters.minStats, Object.keys(BUILD_STATS));
+    if (!Object.keys(filters.minStats).length || Object.values(filters.minStats).some(v => typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 10000000)) fail('invalid_query');
+  }
+}
+
 export function validateQuery(raw) {
   if (!object(raw) || !ACTIONS.includes(raw.action)) fail('unknown_action');
   const a = {...raw}, fields = {
@@ -34,16 +52,7 @@ export function validateQuery(raw) {
   if (['builds', 'reviews'].includes(a.action)) {
     if (typeof a.heroCode !== 'string' || !codePattern.test(a.heroCode)) fail('invalid_query');
     if ('category' in a && !REVIEW_CATEGORIES.includes(a.category)) fail('invalid_query');
-    if ('filters' in a) {
-      keys(a.filters, ['sets', 'minStats']);
-      if (!Object.keys(a.filters).length) fail('invalid_query');
-      if ('sets' in a.filters && (!Array.isArray(a.filters.sets) || a.filters.sets.length < 1 || a.filters.sets.length > 3
-          || a.filters.sets.some(s => !string(s, 20) || !normalize(s)) || new Set(a.filters.sets.map(normalize)).size !== a.filters.sets.length)) fail('invalid_query');
-      if ('minStats' in a.filters) {
-        keys(a.filters.minStats, Object.keys(BUILD_STATS));
-        if (!Object.keys(a.filters.minStats).length || Object.values(a.filters.minStats).some(v => typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 10000000)) fail('invalid_query');
-      }
-    }
+    if ('filters' in a) validateBuildFilters(a.filters);
   }
   if (a.action === 'search') {
     if (!['hero', 'artifact'].includes(a.kind)) fail('invalid_query');

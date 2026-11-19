@@ -15,7 +15,6 @@ const text = value => typeof value === 'string' && value.length ? value : null;
 export const SLOTS = Object.freeze({weapon: '武器', helm: '头盔', armor: '铠甲', neck: '项链', ring: '戒指', boot: '鞋子', artifact: '神器', exclusive: '专属装备'});
 export const STATS = Object.freeze({att: '攻击力', att_rate: '攻击力%', def: '防御力', def_rate: '防御力%', max_hp: '生命值',
   max_hp_rate: '生命值%', speed: '速度', cri: '暴击率', cri_dmg: '暴击伤害', acc: '效果命中', res: '效果抗性'});
-export const rates = new Set(['att_rate', 'def_rate', 'max_hp_rate', 'cri', 'cri_dmg', 'acc', 'res']);
 const ROLE = {knight:'骑士', warrior:'战士', assassin:'盗贼', ranger:'射手', mage:'魔导士', manauser:'精灵师'};
 const ATTRIBUTE = {fire:'火', ice:'冰', wind:'自然', light:'光', dark:'暗'};
 

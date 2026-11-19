@@ -1,22 +1,25 @@
 // Only assets explicitly referenced by the selected hero's published record.
 import {codePattern, fail, object} from './policy.js';
+import {validateBuildFilters} from './query.js';
 
 const PREFIX = Object.freeze({avatar: 'avatar', detail: 'detailImage', cover: 'cover', skill: 'skills', effect: 'effects'});
-export const IMAGE_KINDS = Object.freeze(Object.keys(PREFIX));
+export const IMAGE_KINDS = Object.freeze([...Object.keys(PREFIX), 'hero_card', 'build_card']);
 const TTL_MS = 7 * 86400000;
 const CACHE_BYTES = 50 * 1024 * 1024;
 
 export function validateImageQuery(args) {
-  if (!object(args) || Object.keys(args).some(k => !['heroCode', 'kind', 'skill', 'effectId'].includes(k))
+  if (!object(args) || Object.keys(args).some(k => !['heroCode', 'kind', 'skill', 'effectId', 'count', 'filters'].includes(k))
     || typeof args.heroCode !== 'string' || !codePattern.test(args.heroCode) || !IMAGE_KINDS.includes(args.kind)
     || (args.kind === 'skill' ? ![1, 2, 3].includes(args.skill) : 'skill' in args)
-    || (args.kind === 'effect' ? typeof args.effectId !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/u.test(args.effectId) : 'effectId' in args))
+    || (args.kind === 'effect' ? typeof args.effectId !== 'string' || !/^[A-Za-z0-9_-]{1,80}$/u.test(args.effectId) : 'effectId' in args)
+    || (args.kind === 'build_card' ? 'count' in args && (!Number.isInteger(args.count) || args.count < 1 || args.count > 10) : 'count' in args || 'filters' in args))
     fail('invalid_query');
+  if ('filters' in args) validateBuildFilters(args.filters);
   return args;
 }
 
 export function acceptedImagePath(kind, relative) {
-  return IMAGE_KINDS.includes(kind) && typeof relative === 'string' && relative.length <= 512 && !relative.includes('..')
+  return Object.hasOwn(PREFIX, kind) && typeof relative === 'string' && relative.length <= 512 && !relative.includes('..')
     && relative.startsWith('/static/' + PREFIX[kind] + '/')
     && /^\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_.-]+\.(?:png|jpe?g|gif|webp)$/iu.test(relative);
 }

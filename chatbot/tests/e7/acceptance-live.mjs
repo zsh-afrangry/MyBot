@@ -1,4 +1,4 @@
-// Explicit --live public E7 HTTP acceptance; --media-only checks one announcement and one avatar without sending; optional --model uses the configured official model.
+// Explicit --live public E7 HTTP acceptance; --media-only checks an announcement and an avatar, --cards-only saves card previews. Optional --model uses the configured official model.
 // Temporary public cache and new --out evidence only. No QQ delivery or production state writes.
 import fs from 'node:fs';
 import os from 'node:os';
@@ -20,8 +20,11 @@ const communityOnly = process.argv.includes('--community-only');
 const referenceOnly = process.argv.includes('--reference-only');
 const gameplayOnly=process.argv.includes('--gameplay-only');
 const mediaOnly=process.argv.includes('--media-only');
-assert([communityOnly,referenceOnly,gameplayOnly,mediaOnly].filter(Boolean).length<=1, 'Choose at most one phase selector');
-if (mediaOnly) assert(!process.argv.includes('--model'), 'Media acceptance uses no model or QQ');
+const cardsOnly = process.argv.includes('--cards-only');
+const previews = out + '.images';
+assert([communityOnly,referenceOnly,gameplayOnly,mediaOnly,cardsOnly].filter(Boolean).length<=1, 'Choose at most one phase selector');
+if (mediaOnly || cardsOnly) assert(!process.argv.includes('--model'), 'Media acceptance uses no model or QQ');
+if (cardsOnly) assert(!fs.existsSync(previews), 'Require a new preview directory');
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 const runtimeEnv = JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
 for (const name of ['HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy'])
@@ -226,8 +229,39 @@ async function mediaAcceptance() {
   assert.match(image.contentType, /^image\/(?:png|jpeg|gif|webp)$/u);
   report.image = {kind: 'avatar', contentType: image.contentType, bytes: image.bytes.length};
 }
+async function cardAcceptance() {
+  fs.mkdirSync(previews, {mode: 0o700});
+  report.cards = [];
+  async function preview(label, args) {
+    const image = await service.image(args);
+    assert.equal(image.contentType, 'image/png');
+    assert.equal(image.bytes.subarray(0, 8).toString('hex'), '89504e470d0a1a0a');
+    assert.match(image.caption, /E7·WIKI.*校对.*UTC/u);
+    const file = label + '.png';
+    fs.writeFileSync(path.join(previews, file), image.bytes, {flag: 'wx', mode: 0o600});
+    report.cards.push({label, file, width: image.bytes.readUInt32BE(16), height: image.bytes.readUInt32BE(20),
+      bytes: image.bytes.length, coverage: image.coverage, caption: image.caption});
+    return image;
+  }
+  const lua = await query('hero-card-search', {action: 'search', kind: 'hero', query: '路雅'});
+  assert.equal(lua.data.items.length, 1);
+  const heroCode = lua.data.items[0].heroCode;
+  const multipliers = await query('hero-card-multipliers', {action: 'hero', heroCode, view: 'multipliers'});
+  assert(multipliers.data.skills.some(skill => skill.groups.length));
+  await preview('lua-hero', {heroCode, kind: 'hero_card'});
+  const senya = await query('build-card-search', {action: 'search', kind: 'hero', query: '小小赛娜'});
+  assert.equal(senya.data.items.length, 1);
+  const code = senya.data.items[0].heroCode;
+  const sample = await query('build-card-samples', {action: 'builds', heroCode: code, limit: 10});
+  assert(sample.data.total > 0);
+  for (const count of [1, 10]) {
+    const image = await preview('young-senya-builds-' + count, {heroCode: code, kind: 'build_card', count});
+    assert.deepEqual(image.coverage, {requested: count, shown: Math.min(count, sample.data.total), matched: sample.data.total});
+  }
+}
 try {
-  if (mediaOnly) await mediaAcceptance();
+  if (cardsOnly) await cardAcceptance();
+  else if (mediaOnly) await mediaAcceptance();
   else if (gameplayOnly)await gameplayAcceptance();
   else if (communityOnly) await communityAcceptance();
   else if (referenceOnly) await referenceAcceptance();
