@@ -7,6 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import {spawnSync} from 'node:child_process';
+import {DatabaseSync} from 'node:sqlite';
 import {setImmediate as nextTurn} from 'node:timers/promises';
 import {withAccess, context, ownerPolicy} from '../access-control/fixtures.mjs';
 
@@ -27,7 +28,7 @@ const core = await import('../../packages/confirmation-core/dist/index.js');
 const {WeatherStore} = await import('../../packages/personal-domains/dist/store.js');
 const {proposePlanningChange, commitPlanningProposal} = await import('../../packages/personal-domains/dist/planning.js');
 const {proposeProfileChange, commitProfileChange} = await import('../../packages/personal-domains/dist/profile.js');
-const {geoLookupFixture} = await import('../../packages/personal-domains/dist/test-fixtures.js');
+const {alertFixture, currentFixture, dailyFixture, geoLookupFixture, hourlyFixture} = await import('../../packages/personal-domains/dist/test-fixtures.js');
 const {registerDomainBackend} = await import('../../packages/personal-domains/dist/confirmation-backends.js');
 const {createReminderReconcilerService} = await import('../../packages/personal-domains/dist/reminder-reconciler-service.js');
 const kinds = {weather: 1, profile: 3, planning: 3, reminder: 7};
@@ -41,9 +42,9 @@ const manager = await import(pathToFileURL(path.join(sdkDist, bundles[0])).href)
 const {GatewayScheduler} = await import(pathToFileURL(path.join(sdkDist, 'infra/gateway-scheduler.js')).href);
 const startServices = Object.values(manager).find(fn => typeof fn === 'function' && fn.name === 'startPluginServices');
 
-function collect(plugin, mode = 'full') {
+function collect(plugin, mode = 'full', pluginConfig = {}) {
   const tools = new Map(), services = [], hooks = [];
-  plugin.register({config: cfg, pluginConfig: {}, registrationMode: mode,
+  plugin.register({config: cfg, pluginConfig, registrationMode: mode,
     on(name, handler) { hooks.push({name, handler}); }, logger: {info() {}, warn() {}},
     registerTool(factory, options) { tools.set(options.name, factory); },
     registerService(service) { services.push(service); },
@@ -168,4 +169,76 @@ test('old Cron CLI addresses and new reminder CLI execute the same implementatio
     if (entry === 'cli') assert.equal(JSON.parse(child.stdout).code, 'USAGE');
     else { assert.equal(child.stdout, ''); assert.match(child.stderr, /usage: reminder-cli deliver/); }
   }
+});
+
+test('weather tool and CLI read a pre-Profile database without upgrading it', async t => {
+  const stateRoot = path.join(root, 'legacy-weather');
+  const directory = path.join(stateRoot, 'state/personal-weather');
+  fs.mkdirSync(directory, {recursive: true, mode: 0o700});
+  const file = path.join(directory, 'weather.sqlite');
+  const db = new DatabaseSync(file);
+  try {
+    // The v2 weather reader's tables from d5a933a, with neither the Profile table nor locality_name.
+    db.exec(`
+      CREATE TABLE places (
+        id INTEGER PRIMARY KEY, place_key TEXT, display_name TEXT, country_code TEXT,
+        adm1 TEXT, adm2 TEXT, district TEXT, latitude REAL, longitude REAL,
+        timezone TEXT, precision TEXT, qweather_location_id TEXT, source TEXT
+      ) STRICT;
+      CREATE TABLE notification_preferences (subject_id TEXT PRIMARY KEY, default_place_id INTEGER) STRICT;
+      CREATE TABLE location_periods (
+        id INTEGER PRIMARY KEY, subject_id TEXT, place_id INTEGER, record_state TEXT,
+        effective_from_utc INTEGER, effective_until_utc INTEGER
+      ) STRICT;
+      INSERT INTO places VALUES (1, 'legacy-county', '江苏省镇江市扬中市', 'CN', '江苏省', '镇江市', NULL,
+        32.23, 119.82, 'Asia/Shanghai', 'city', '101190704', 'owner_confirmed');
+      INSERT INTO places VALUES (2, 'legacy-period', '江苏省南京市', 'CN', '江苏省', '南京市', NULL,
+        32.04, 118.78, 'Asia/Shanghai', 'city', '101190101', 'operator');
+      INSERT INTO notification_preferences VALUES ('owner', 1);
+      INSERT INTO location_periods VALUES (1, 'owner', 2, 'confirmed', 100, 200);
+      PRAGMA user_version = 2;
+    `);
+  } finally {
+    db.close();
+  }
+  fs.chmodSync(file, 0o600);
+  const before = fs.readFileSync(file);
+
+  const reader = new WeatherStore({stateDirectory: directory, readOnly: true});
+  try {
+    assert.equal(reader.getEffectivePlace(100).place.placeKey, 'legacy-period');
+    assert.equal(reader.getEffectivePlace(200).place.placeKey, 'legacy-county');
+  } finally {
+    reader.close();
+  }
+
+  const cli = fileURLToPath(new URL('../../plugins/personal-weather/dist/cli.js', import.meta.url));
+  const health = spawnSync(process.execPath, [cli, 'health'], {encoding: 'utf8', timeout: 20000, env: {
+    ...process.env, OPENCLAW_STATE_DIR: stateRoot,
+    QWEATHER_API_HOST: 'fixture.re.qweatherapi.com', QWEATHER_API_KEY: 'fixture-only-key',
+  }});
+  assert.equal(health.status, 0, health.stdout || health.stderr);
+  assert.equal(JSON.parse(health.stdout).effectiveLocation, '江苏省镇江市扬中市');
+
+  const previousStateRoot = process.env.OPENCLAW_STATE_DIR;
+  process.env.OPENCLAW_STATE_DIR = stateRoot;
+  t.after(() => { process.env.OPENCLAW_STATE_DIR = previousStateRoot; });
+  const tokenFile = path.join(stateRoot, 'fixture-token');
+  fs.writeFileSync(tokenFile, 'synthetic-weather-credential-for-tests', {mode: 0o600});
+  const fixtures = {current: currentFixture, daily: dailyFixture, hourly: hourlyFixture, alerts: alertFixture};
+  t.mock.method(globalThis, 'fetch', async input => {
+    const component = new URL(input instanceof Request ? input.url : input).pathname.split('/').at(-1);
+    assert(Object.hasOwn(fixtures, component), `Unexpected weather request: ${component}`);
+    return Response.json(fixtures[component]);
+  });
+  const {tools} = collect(entries.weather(), 'discovery', {
+    weatherBackend: 'knowledgemap', bridgeBaseUrl: 'http://127.0.0.1:1', bridgeTokenFile: tokenFile,
+  });
+  const tool = tools.get('personal_weather_get_brief').create(context(ownerPolicy('100001').subjects[0]));
+  const response = await tool.execute('legacy-weather', {});
+  const payload = JSON.parse(response.content.find(part => part.type === 'text').text);
+  assert.equal(payload.ok, true, JSON.stringify(payload));
+  assert.equal(payload.brief.location.shortName, '镇江扬中市');
+  assert(fs.existsSync(path.join(directory, 'weather-cache.sqlite')));
+  assert.deepEqual(fs.readFileSync(file), before);
 });

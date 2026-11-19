@@ -25,6 +25,7 @@ import {
 export const CONTEXT_DATABASE_FILE = "weather.sqlite";
 /** Internal subject key for this single-owner deployment. */
 export const OWNER_SUBJECT_ID = "owner";
+const PROFILE_LOCATION_SCHEMA_VERSION = 3;
 const LATEST_SCHEMA_VERSION = 5;
 // Keep this as a string: SQLite's maximum signed integer is larger than
 // JavaScript's Number.MAX_SAFE_INTEGER, and the value is interpolated into SQL.
@@ -488,7 +489,7 @@ type PlaceRow = {
   adm1: string | null;
   adm2: string | null;
   district: string | null;
-  locality_name: string;
+  locality_name?: string | null;
   latitude: number;
   longitude: number;
   timezone: string;
@@ -646,7 +647,7 @@ const MIGRATIONS: readonly Migration[] = [
     },
   },
   {
-    version: 3,
+    version: PROFILE_LOCATION_SCHEMA_VERSION,
     name: "profile_current_location_from_weather_default",
     apply(database, appliedAtUtc) {
       database.exec(`
@@ -866,8 +867,8 @@ export class WeatherStore {
    * Resolve the weather place at a trusted system timestamp.
    *
    * Confirmed periods use half-open [from, until) semantics. A matching period
-   * overrides the configured default place; no model write or timer mutation is
-   * needed when a future period becomes effective.
+   * overrides the Profile location or the saved pre-Profile default. A future
+   * period takes effect by timestamp without a separate write or timer.
    */
   getEffectivePlace(
     atUtc: UnixSeconds = normalizeUnixSeconds(this.#now()),
@@ -909,6 +910,18 @@ export class WeatherStore {
         locationPeriodId: row.location_period_id,
         effectiveFromUtc: row.effective_from_utc,
         effectiveUntilUtc: row.effective_until_utc,
+      };
+    }
+
+    const schemaVersion = this.#database.prepare("PRAGMA user_version").get()?.user_version;
+    if (typeof schemaVersion === "number" && schemaVersion >= 1 && schemaVersion < PROFILE_LOCATION_SCHEMA_VERSION) {
+      // A read-only weather consumer can read the same confirmed place that Profile would migrate.
+      return {
+        source: "default",
+        place: this.getDefaultPlace(subjectId),
+        locationPeriodId: null,
+        effectiveFromUtc: null,
+        effectiveUntilUtc: null,
       };
     }
 
@@ -1241,6 +1254,16 @@ function applyMigrations(database: DatabaseSync, appliedAtUtc: UnixSeconds): voi
 }
 
 function mapPlace(row: PlaceRow): Place {
+  let localityName = row.locality_name;
+  if (localityName == null) {
+    // Match the locality backfill for databases that have not run migration 4.
+    const area = row.adm1 && row.adm2 ? row.adm1 + row.adm2 : "";
+    if (area && row.display_name.startsWith(area) && row.display_name.length > area.length) {
+      localityName = row.display_name.slice(area.length);
+    } else {
+      localityName = row.district?.trim() ? row.district : row.display_name;
+    }
+  }
   return {
     id: row.id,
     placeKey: row.place_key,
@@ -1249,7 +1272,7 @@ function mapPlace(row: PlaceRow): Place {
     adm1: row.adm1,
     adm2: row.adm2,
     district: row.district,
-    localityName: row.locality_name,
+    localityName,
     latitude: row.latitude,
     longitude: row.longitude,
     timezone: row.timezone,
