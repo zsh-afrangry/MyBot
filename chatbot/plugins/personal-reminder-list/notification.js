@@ -35,7 +35,7 @@ export function registerDigestNotice(api,options,{loadItems,composeNotice,now=Da
       validation={empty:!opening,multiline:/[\r\n]/u.test(opening??''),repeatsItems,
         textLength:(reply.text??'').length,lineCount:(reply.text??'').split(/\r\n|\r|\n/u).length,
         sha256:createHash('sha256').update(reply.text??'').digest('hex')};
-      const rule=validation.empty?'digest_opening_empty':validation.multiline?'digest_opening_multiline':repeatsItems?'digest_opening_repeats_items':undefined;
+      const rule=validation.empty?'digest_opening_empty':repeatsItems?'digest_opening_repeats_items':undefined;
       if(rule)throw Object.assign(Error(rule),{code:rule});
       stage='freeze';
       const text=withFacts(opening,facts);

@@ -453,6 +453,7 @@ describe("personal reminders", () => {
       const previousStateDirectory = process.env.OPENCLAW_STATE_DIR;
       process.env.OPENCLAW_STATE_DIR = baseDirectory;
       const output = vi.spyOn(process.stdout, "write").mockImplementation(() => true);
+      const errors = vi.spyOn(process.stderr, "write").mockImplementation(() => true);
       try {
         let count=0;
         const request=async(method:string,params:Record<string,unknown>)=>{
@@ -462,8 +463,13 @@ describe("personal reminders", () => {
         expect(await reminderCliMain(['deliver','--id',scheduled.reminder.reminderId],{request})).toBe(0);
         expect(await reminderCliMain(['deliver','--id',scheduled.reminder.reminderId],{request})).toBe(0);
         expect(output).toHaveBeenCalledExactlyOnceWith('模型提醒：起身活动\n');
+        output.mockClear();
+        expect(await reminderCliMain(['deliver','--id',scheduled.reminder.reminderId],{request:async()=>{throw Error('private model error');}})).toBe(1);
+        expect(output).not.toHaveBeenCalled();
+        expect(errors).not.toHaveBeenCalled();
       } finally {
         output.mockRestore();
+        errors.mockRestore();
         if (previousStateDirectory === undefined) delete process.env.OPENCLAW_STATE_DIR;
         else process.env.OPENCLAW_STATE_DIR = previousStateDirectory;
       }

@@ -2,7 +2,8 @@
 // Fixed native-Cron runner. Writes digest claims (plus expiry in SQLite mode) to
 // the configured private state; stdout is announced by OpenClaw to the configured owner QQ.
 // The authenticated domain endpoint generates a bound model notice. No raw content,
-// recipient, URL or executable is accepted from argv. Failure produces no fallback.
+// recipient, URL or executable is accepted from argv. Failures exit nonzero without
+// stdout/stderr: native Cron announces either stream. Diagnostics stay in the domain/Cron ledger.
 import {pathToFileURL} from 'node:url';
 import {requestAssistantNotice} from '../packages/response-core/index.js';
 export async function main(argv = process.argv.slice(2), {env = process.env, write = value => process.stdout.write(value), request} = {}) {
@@ -13,5 +14,5 @@ export async function main(argv = process.argv.slice(2), {env = process.env, wri
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   try { process.exitCode = await main(); }
-  catch { process.stderr.write('Reminder-list runner failed; inspect domain state and Cron run\n'); process.exitCode = 1; }
+  catch { process.exitCode = 1; }
 }

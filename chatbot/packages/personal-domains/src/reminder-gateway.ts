@@ -35,6 +35,7 @@ export function buildReminderCronAddParams(input: ReminderCronAddInput): Record<
       to: input.delivery.to,
       ...(input.delivery.accountId ? { accountId: input.delivery.accountId } : {}),
     },
+    failureAlert: false,
     deleteAfterRun: true,
   };
 }
@@ -46,6 +47,7 @@ export function buildReminderCronUpdateParams(input: ReminderCronUpdateInput): {
   return {
     id: input.jobId,
     patch: {
+      failureAlert: false,
       schedule: {
         kind: "at",
         at: new Date(input.scheduledAtUtc * 1000).toISOString(),

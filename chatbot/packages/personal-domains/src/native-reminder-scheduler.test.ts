@@ -20,6 +20,15 @@ describe('typed native reminder service',()=>{
   }finally{f.close();}
  });
  it('builds only fixed command and exact persisted owner delivery',async()=>{const f=fixture();try{await f.adapter.add({reminderId:id,scheduledAtUtc:1900000000,eventKey:'event-key',delivery:{channel:'kurumi-qq',to:'user:365999865',accountId:'default'}});expect(f.request).toHaveBeenCalledOnce();const params=f.request.mock.calls[0]?.[1] as any;expect(params.payload.cwd).toBe(f.dir);expect(params.delivery.to).toBe('user:365999865');expect(params.payload.argv.slice(1)).toEqual(['dist/reminder-cli.js','deliver','--id',id]);}finally{f.close();}});
+ it('suppresses native failure alerts on an existing owned reminder',async()=>{
+  const f=fixture();try{
+   const store={getNowUtc:()=>1899999999,listReconciliationReminders:()=>[{reminderId:id,cronJobId:job,eventKey:'event-key',status:'scheduled',scheduledAtUtc:1900000000}],getCurrentDeclarationKey:()=>undefined} as unknown as ReminderStore;
+   const request=vi.fn(async(method:string,_params:Record<string,unknown>)=>method==='cron.list'?{jobs:[{id:job,declarationKey:'event-key'}],hasMore:false}:method==='cron.runs'?{entries:[]}:{});
+   const adapter=createNativeReminderScheduler({stateDirectory:f.dir,ownerId:'365999865',port:18890,pluginRoot:f.dir,request});
+   expect((await adapter.reconcile!(store)).warnings).toEqual([]);
+   expect(request).toHaveBeenCalledWith('cron.update',{id:job,patch:{failureAlert:false}});
+  }finally{f.close();}
+ });
  it('refuses other targets, wrong times and non-domain job IDs before Gateway I/O',async()=>{const f=fixture();try{for(const to of ['group:365999865','user:123456'])await expect(f.adapter.add({reminderId:id,scheduledAtUtc:1900000000,eventKey:'event-key',delivery:{channel:'kurumi-qq',to,accountId:'default'}})).rejects.toThrow();await expect(f.adapter.remove({jobId:'00000000-0000-4000-8000-000000000000'})).rejects.toThrow();await expect(f.adapter.update!({jobId:job,scheduledAtUtc:1900000001})).rejects.toThrow();expect(f.request).not.toHaveBeenCalled();}finally{f.close();}});
  it('manages only a job bound to an eligible owner domain row',async()=>{const f=fixture();try{f.db.prepare("UPDATE reminders SET status='scheduled'").run();await f.adapter.update!({jobId:job,scheduledAtUtc:1900000000});await f.adapter.remove({jobId:job});expect(f.request).toHaveBeenCalledTimes(2);f.db.prepare("UPDATE reminders SET delivery_to='user:123456'").run();await expect(f.adapter.remove({jobId:job})).rejects.toThrow('Unowned');}finally{f.close();}});
 });

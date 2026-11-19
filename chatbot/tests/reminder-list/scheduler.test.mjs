@@ -28,10 +28,20 @@ test('fixed command payload and owner route; defaults create four jobs once', as
   assert.ok(existsSync(jobs[0].payload.argv[1]));
   assert.equal(jobs[0].payload.kind, 'command'); assert.equal(jobs[0].delivery.to, 'user:365999865'); assert.equal(jobs[0].schedule.staggerMs, 0);
   assert.equal(jobs[0].payload.env.OPENCLAW_STATE_DIR, options.root);
+  assert.equal(jobs[0].failureAlert, false);
   jobs[0].schedule = {staggerMs: 0, tz: jobs[0].schedule.tz, expr: jobs[0].schedule.expr, kind: 'cron'};
   const count = calls.length;
   assert.equal((await scheduler.sync()).ok, true);
   assert.equal(calls.slice(count).filter(c => ['cron.add', 'cron.update', 'cron.remove'].includes(c.method)).length, 0);
+});
+test('existing managed jobs stop emitting native technical failure alerts', async t => {
+  const {scheduler, jobs, calls} = setup(t);
+  await scheduler.sync();
+  delete jobs[0].failureAlert;
+  const before = calls.length;
+  assert.equal((await scheduler.sync()).ok, true);
+  assert.equal(jobs[0].failureAlert, false);
+  assert.deepEqual(calls.slice(before).filter(c => c.method === 'cron.update').map(c => c.args.patch), [{failureAlert: false}]);
 });
 test('persisted runner requires an explicit deployed backend root, never a capture fallback', t => {
   const {options} = setup(t);

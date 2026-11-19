@@ -6,7 +6,7 @@ import { buildReminderCronAddParams, buildReminderCronUpdateParams } from './rem
 import type { ReminderCronScheduler } from './reminders.js';
 import { applyReminderObservation, type ReminderReconcileResult } from './reminder-reconciler.js';
 
-type NativeJob = {id:string;declarationKey?:string;state?:{lastStatus?:string;lastDeliveryStatus?:string;lastDelivered?:boolean;lastError?:string}};
+type NativeJob = {id:string;declarationKey?:string;failureAlert?:unknown;state?:{lastStatus?:string;lastDeliveryStatus?:string;lastDelivered?:boolean;lastError?:string}};
 type NativeRun = {status?:string;deliveryStatus?:string;delivered?:boolean;runAtMs?:number;error?:string;deliveryError?:string};
 
 /** Trusted native service, never a generic model-facing Gateway tool.
@@ -51,9 +51,10 @@ export function createNativeReminderScheduler(options: {
           const job=jobs.find(j=>j.declarationKey===key||j.id===reminder.cronJobId);
           const id=job?.id??reminder.cronJobId;
           const run=id?(await cron.runs(id,1))[0]:undefined;
-          observations.push({reminder,job,run});
+          observations.push({reminder,job,run,key});
         }
-        for(const {reminder,job,run} of observations){
+        for(const {reminder,job,run,key} of observations){
+          if(job?.declarationKey===key && job.failureAlert!==false)await cron.update(job.id,{failureAlert:false});
           applyReminderObservation(store,reminder,job?{job_id:job.id,declaration_key:job.declarationKey??null,last_run_status:job.state?.lastStatus??null,last_delivery_status:job.state?.lastDeliveryStatus??null,last_delivered:job.state?.lastDelivered===undefined?null:Number(job.state.lastDelivered),last_error:job.state?.lastError??null}:undefined,
             run?{status:run.status??null,delivery_status:run.deliveryStatus??null,delivered:run.delivered===undefined?null:Number(run.delivered),run_at_ms:run.runAtMs??null,error:run.error??null,delivery_error:run.deliveryError??null}:undefined,nowUtc,result);
         }

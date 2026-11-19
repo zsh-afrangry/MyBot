@@ -20,6 +20,7 @@ export function buildJob(time, {root, ownerId, repo, storeAdapter = 'sqlite', da
         ...(dataSource === 'knowledgemap' ? {KURUMI_LIST_DATA_SOURCE: dataSource, KURUMI_KM_BASE_URL: bridgeBaseUrl, KURUMI_KM_TOKEN_FILE: bridgeTokenFile} : {})},
       timeoutSeconds: 75, noOutputTimeoutSeconds: 70, outputMaxBytes: 524288},
     delivery: {mode: 'announce', channel: 'kurumi-qq', to: `user:${ownerId}`, accountId: 'default'},
+    failureAlert: false,
     deleteAfterRun: false,
   };
 }
@@ -68,7 +69,7 @@ export function createScheduler(options) {
         if (!desired.includes(time) || seen.has(time)) { await cron.remove(job.id); continue; }
         seen.add(time);
         const expected = buildJob(time, options);
-        const fields = ['name', 'enabled', 'schedule', 'payload', 'delivery', 'sessionTarget', 'wakeMode', 'deleteAfterRun'];
+        const fields = ['name', 'enabled', 'schedule', 'payload', 'delivery', 'failureAlert', 'sessionTarget', 'wakeMode', 'deleteAfterRun'];
         const patch = Object.fromEntries(fields.filter(k => !equal(job[k], expected[k])).map(k => [k, expected[k]]));
         if (Object.keys(patch).length) await cron.update(job.id, patch);
       }

@@ -44,9 +44,10 @@ test('list opening receives only current count/time and complete item facts appe
  registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:opts=>new ListStore(opts)},{now:f.now,composeNotice:async input=>{
   assert.deepEqual(Object.keys(input.facts).sort(),['at','count','kind','timezone']);assert.equal(input.facts.count,1);
   assert(!JSON.stringify(input.facts).includes('合成事项'));assert(input.instructions.includes('不要列举或概括任何具体事项'));
-  return{text:'到时间了，来看看手头这件事吧。'};
+  return{text:'到时间了，来看看手头这件事吧。\n\n按自己的节奏来。'};
  }});
  const r=await f.run({slot:'20:00'});assert(r.ok);
+ assert(r.result.text.startsWith('到时间了，来看看手头这件事吧。\n\n按自己的节奏来。\n\n'));
  for(const value of ['合成事项','明细不能丢','越快越好'])assert.equal(r.result.text.split(value).length-1,1);
  assert.equal(r.result.text.split('事项：').length-1,1);
 });
@@ -105,7 +106,7 @@ test('one-off generation failure records a definite unsent failure with no autom
 });
 
 test('failed opening retains exact rules, exception stack and generation reference without public text leakage',async t=>{
- for(const [text,code]of [['一句开场\n一句开场','digest_opening_multiline'],['合成事项还没结束','digest_opening_repeats_items'],['','digest_opening_empty']])await t.test(code,async t=>{
+ for(const [text,code]of [['合成事项还没结束','digest_opening_repeats_items'],['','digest_opening_empty']])await t.test(code,async t=>{
   const f=fixture(t);seedList(f.root,OWNER,f.now);f.due();
   registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:o=>new ListStore(o)},{now:f.now,composeNotice:async()=>({text,runId:'gen-1',sessionId:'session-1'})});
   const r=await f.run({slot:'20:00'});assert(!r.ok);assert.equal(r.error.message,'assistant_notice_generation_failed');assert(!JSON.stringify(r).includes(text||'gen-1'));

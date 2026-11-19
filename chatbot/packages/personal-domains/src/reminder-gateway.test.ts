@@ -24,6 +24,7 @@ describe("reminder Gateway Cron adapter", () => {
         argv: [process.execPath, "dist/reminder-cli.js", "deliver", "--id", "11111111-2222-4333-8444-555555555555"],
       },
       delivery: { mode: "announce", channel: "qqbot", to: "qqbot:c2c:test-owner", accountId: "default" },
+      failureAlert: false,
       deleteAfterRun: true,
     });
     expect(params).not.toHaveProperty("job");
@@ -38,13 +39,13 @@ describe("reminder Gateway Cron adapter", () => {
     }).declarationKey).toBe("canonical-event-key:retry:2");
   });
 
-  it("updates only the existing managed job schedule", () => {
+  it("updates the managed schedule and suppresses technical failure alerts", () => {
     expect(buildReminderCronUpdateParams({
       jobId: "gateway-job-123",
       scheduledAtUtc: Math.floor(Date.parse("2026-08-12T02:10:00Z") / 1000),
     })).toEqual({
       id: "gateway-job-123",
-      patch: { schedule: { kind: "at", at: "2026-08-12T02:10:00.000Z" } },
+      patch: { failureAlert: false, schedule: { kind: "at", at: "2026-08-12T02:10:00.000Z" } },
     });
   });
 });
