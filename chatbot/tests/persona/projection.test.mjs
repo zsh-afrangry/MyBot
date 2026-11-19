@@ -34,6 +34,7 @@ test('Shared identity is identical; owner relationship and private facts never e
   assert.equal(projected.size, 12);
   const owner = path.join(f.state, 'workspace');
   assert.match(projected.get(path.join(owner, 'USER.md')), /persona-relationship-owner-v1/u);
+  assert.match(projected.get(path.join(owner, 'SOUL.md')), /你已经有恋人/u);
   for (const id of [MEMBER, OTHER]) {
     const workspace = path.join(f.state, 'users', id, 'workspace');
     for (const name of ['SOUL.md', 'IDENTITY.md']) {
@@ -42,6 +43,7 @@ test('Shared identity is identical; owner relationship and private facts never e
     const payload = [...projected].filter(([file]) => file.startsWith(workspace + path.sep)).map(([, text]) => text).join('\n');
     assert.match(projected.get(path.join(workspace, 'USER.md')), /普通朋友/u);
     assert(!payload.includes('persona-relationship-owner-v1'));
+    assert(!payload.includes(f.policy.subjects[0].qq));
     assert(!payload.includes('OWNER_PRIVATE_FACT_SENTINEL'));
     assert(!payload.includes('2026年3月13') && !payload.includes('2026-03-13'));
     assert.match(projected.get(path.join(workspace, 'AGENTS.md')), /kurumi-isolated-member-v1/u);

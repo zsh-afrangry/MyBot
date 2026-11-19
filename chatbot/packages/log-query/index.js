@@ -43,6 +43,7 @@ export * from './source-adapters.js';
 import {traceSources,SOURCES} from './sources.js';
 import {readPaperHistory} from './paper-history.js';
 import {executionTree} from './execution-tree.js';
+import {privateInteractions} from './private-interactions.js';
 /** Spread-free append: `push(...list)` overflows the call stack once a source yields ~100k rows. */
 function append(target, items) {
   for (const item of items) target.push(item);
@@ -165,6 +166,7 @@ function usage() {
   --since <30m|2h|30d|all> 相对时间窗或全部留存历史，不与--from组合
   --peer <QQ>         只看对应私聊/可信收发账号，不推测身份
   --last-turns <N>    当前时间窗内最近N个模型回合
+  --interactions-for <本人QQ>  只查其他账号的 Fusion 私聊文本，最新在前；可用 --peer / --direction / --expand
   --snapshot <类型>   memory/reminders/reminder-list/documents/cron，只读当前状态
   --stats             当前筛选范围的来源/工具失败率、耗时和模型用量
   --format <格式>     text/table/markdown；表格只显示技术字段
@@ -213,7 +215,7 @@ function usage() {
 `;
 }
 
-const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval','--keyword','--keyword-mode','--level','--context-before','--context-after','--output-bytes','--content-offset','--content-hash','--output-chars','--code','--event-key','--cron-job-id','--event-ref','--node-id','--execution-id','--detail'];
+const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval','--keyword','--keyword-mode','--level','--context-before','--context-after','--output-bytes','--content-offset','--content-hash','--output-chars','--code','--event-key','--cron-job-id','--event-ref','--node-id','--execution-id','--detail','--interactions-for','--direction'];
 const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds','--keyword':'keywords','--level':'levels'};
 const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit', '--stats':'stats','--overview':'overview','--tree':'tree', '--follow':'follow', '--show-known':'showKnown','--full-content':'fullContent'};
 
@@ -231,6 +233,10 @@ function parseArgs(argv) {
     const key = flag.slice(2).replace(/-([a-z])/gu, (_, letter) => letter.toUpperCase());
     if (LIST_FLAGS[flag]) result[LIST_FLAGS[flag]].push(value); else result[key] = value;
   }
+  if (result.interactionsFor !== undefined) {
+    const allowed = ['interactionsFor','peer','direction','eventRef','expand','from','to','since','limit','offset','contentOffset','contentHash','outputBytes','outputChars','runtimeRoot','json'];
+    if (Object.entries(result).some(([key, value]) => !allowed.includes(key) && (!Array.isArray(value) || value.length))) throw Error('Invalid private interaction query');
+  } else if (result.direction !== undefined) throw Error('Direction requires --interactions-for');
   if (['turns', 'errors', 'audit', 'stats', 'overview', 'tree', 'snapshot'].filter((name) => result[name]).length > 1) throw new Error('只能选择一个查询视图');
   if(result.format&&!['text','table','markdown'].includes(result.format))throw Error('Invalid format');
   if((result.fields||result.format&&result.format!=='text')&&(result.turns||result.errors||result.audit||result.stats||result.overview||result.snapshot))throw Error('Table formatting requires event view');
@@ -250,6 +256,11 @@ export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   const from = parseQueryInstant(args.from, args.since==='all'?0:now - duration),to = parseQueryInstant(args.to, now);
   if ((args.from&&!Number.isFinite(parseQueryInstant(args.from,NaN)))||(args.to&&!Number.isFinite(parseQueryInstant(args.to,NaN)))||!Number.isFinite(from)||!Number.isFinite(to)||from>to)throw Error('时间范围无效');
   const runtimeRoot=args.runtimeRoot??DEFAULT_RUNTIME_ROOT;
+  if (args.interactionsFor !== undefined) {
+    const result = privateInteractions({...args,runtimeRoot,from,to,ownerId:args.interactionsFor,
+      limit:Number(args.limit??10),offset:Number(args.offset??0)});
+    console.log(JSON.stringify(result,null,2));return 0;
+  }
   if(args.snapshot){const value=stateSnapshot(runtimeRoot,args.snapshot,{expand:args.expand,now});console.log(JSON.stringify(args.noText?noTextProjection(value):value,null,2));return 0;}
   const read=(start,end)=>collectEvents({from:start,to:end,runtimeRoot,snowlumaRoot:args.snowlumaRoot??DEFAULT_SNOWLUMA_ROOT,sources:args.sources.length?args.sources:undefined,expand:Boolean(args.expand || args.fullContent),fullContent:Boolean(args.fullContent),messageId:args.messageId,peer:args.peer});
   const emit=(events,start,end,following=false)=>{let offset=Number(args.offset??0);do{const rendered=renderQuery(events,{...args,offset,from:start,to:end});console.log(args.json?JSON.stringify(rendered.json,null,following?0:2):rendered.lines.join('\n'));offset=following?rendered.json.nextOffset:null;}while(offset!=null);};
