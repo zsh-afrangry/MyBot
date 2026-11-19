@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 7,
+  "revision": 8,
   "subjects": [
     {
       "qq": "365999865",
@@ -94,6 +94,26 @@
       },
       "mailRecipients": [],
       "note": "用户明确授权：与3311723223相同，仅一般聊天与自身论文检索、导入、翻译、取消及QQ文件回传；独立成员，不共享其他身份数据。"
+    },
+    {
+      "qq": "2321461694",
+      "kind": "user",
+      "role": "member",
+      "enabled": true,
+      "permissions": {
+        "chat.use": true,
+        "commands.basic": true,
+        "search.use": true,
+        "qq.reply": true,
+        "qq.file.reply": true,
+        "qq.notify": true,
+        "papers.import": true,
+        "papers.read": true,
+        "papers.translate": true,
+        "papers.cancel": true
+      },
+      "mailRecipients": [],
+      "note": "用户明确授权用于真人验收；与现有成员相同，仅一般聊天与自身论文检索、导入、翻译、取消及QQ文件回传，使用独立工作区。"
     }
   ]
 }
