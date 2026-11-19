@@ -37,10 +37,14 @@ const notes = [];
 try {
   const fence = verifyExecFence();
   const config = JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config/runtime.config.json')));
-  for (const id of ['kurumi-qq', 'kurumi-coding']) {
-    const entry = config.plugins.entries[id].config;
-    const boundary = id === 'kurumi-qq' ? entry.exec.writeBoundary : entry.writeBoundary;
-    if (boundary.launcher !== path.join(FENCE_ROOT, 'bin/landlock-run')) throw Error('Configured launcher is not Fusion-owned');
+  const entries = config.plugins.entries;
+  const boundaries = [
+    ['kurumi-host-control', entries['kurumi-host-control']?.config?.exec?.writeBoundary],
+    ['kurumi-coding', entries['kurumi-coding']?.config?.writeBoundary],
+  ];
+  const launcher = path.join(FENCE_ROOT, 'bin/landlock-run');
+  for (const [id, boundary] of boundaries) {
+    if (boundary?.launcher !== launcher) throw Error(`${id} launcher must point to the Fusion-owned executable`);
   }
   notes.push(`execution fence ${FENCE_RELEASE.name}@${FENCE_RELEASE.version}: approved tree, ${fence.enforcement}, Fusion-owned`);
 } catch (error) {problems.push(`execution fence: ${error.message} (run install-exec-fence.mjs --apply)`);}
