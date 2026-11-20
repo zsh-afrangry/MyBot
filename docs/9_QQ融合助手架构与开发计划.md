@@ -1,4 +1,4 @@
-状态：开发中（kurumi-stack 统一启停、开机策略 A 与受控整套 stop/start 复验已通过；Cron 健康判定未修正）
+状态：已完成（2026-11-21，统一启停、开机策略 A、受控整套复验与 Cron 健康判定收口）
 
 # 运行维护
 
@@ -66,7 +66,7 @@ systemctl --user status kurumi-fusion.service snowluma.service snowluma-qq.servi
 journalctl --user -u kurumi-fusion.service -n 100 --no-pager
 ```
 
-这些检查只证明检查时的运行与对齐状态，不证明 Git 已提交推送，也不证明人格体验或业务端到端成功。`health.mjs` 不发 QQ、不创建任务。QQ 断线先看 SnowLuma/QQ 服务和在线状态，不重启旧 bridge。当前配置的滚动 24 小时 500 条额度按发送预留计数，含失败和未知回执，不能靠清空历史绕过。
+这些检查只证明检查时的运行与对齐状态，不证明 Git 已提交推送，也不证明人格体验或业务端到端成功。`health.mjs` 不发 QQ、不创建任务；已启用 Cron 的 `lastRunStatus=error` 以及 `not-delivered`/`unknown` 送达会计入 `issues`，`skipped` 和 `not-requested` 视为有意行为。QQ 断线先看 SnowLuma/QQ 服务和在线状态，不重启旧 bridge。当前配置的滚动 24 小时 500 条额度按发送预留计数，含失败和未知回执，不能靠清空历史绕过。
 
 #### 配置同步
 
@@ -212,7 +212,6 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 
 - 旧 `project-fusion` 后台副本已结束使用，源码只在 kurumi-fusion 单线维护。恢复旧代码任务模式要另行确认需求和授权。
 - 共享业务的 MySQL 不在 Fusion 备份里，见[文档12](12_目录资产与Git备份整理.md)和[文档23](23_KnowledgeMap业务能力桥接.md)。
-- `health.mjs` 会列出 Cron 最后失败，但尚未把它加入 `issues`，可能同时出现 Cron error 与 `ok=true`。须核对执行、冻结正文和送达账本，不能仅凭总状态判播报成功。
 - **QQ 客户端异常退出后，协议会话长时间不恢复（低优先级，未立项修复）。** QQ 客户端崩溃后，systemd 拉起进程到 OneBot 恢复监听曾相隔约两小时二十五分。Fusion 在端口不可用期间退避重连，重连间隙的入站可能丢失，Cron 投递可能失败。崩溃与会话延迟的根因均待查，进程状态需要结合 OneBot 在线状态和真实往返判断。复查用 SnowLuma 和 Fusion 的日志。
 - KnowledgeMap 桌面旧副本已退役（移入回收站）；网站与助手 API 都跑 `/home/afrangry/repository` 同一份代码和同一个 MySQL 库，数据没有迁移动作。
 - **SnowLuma 群申请扫描反复超时（低优先级，根因未定）。** 轮询器等 QQ 协议应答的默认超时为 15 秒。一次扫描结束后再等 15 秒，因此持续超时时约每 30 秒记录一次失败。部分群申请依赖轮询补齐，影响私聊的程度待评估，Fusion 群聊关闭。
@@ -250,11 +249,9 @@ kurumi-stack stop && kurumi-stack start   # 需要 sudo 密码
 | 论文 Python 层 | `python3 chatbot/tests/papers/responses_test.py`；`/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py` |
 | 恢复工具 | `node --test scripts/fusion/test/recovery.test.mjs` |
 | 统一启停 | `node --test scripts/fusion/test/stack.test.mjs`；`kurumi-stack status` / `doctor` |
+| 运行健康判定 | `node --test scripts/fusion/test/health-cron.test.mjs` |
 
 哪些脚本可以直接运行，见 [AGENTS.md](../AGENTS.md#需要单独授权的操作)。`scripts/fusion/test-*.mjs` 会真实发 QQ、创建任务或重启服务，不能当离线测试批量运行。
 
 构建注意：`build-personal-plugins.mjs` 会先删后建 `personal-weather/dist`，服务运行时不要执行。不要删除旧的 `personal-weather/dist/reminder-cli.js`：恢复的旧 Cron 可能仍用它作执行地址，新提醒由 `personal-reminders` 处理。
 
-## 进行中：运行与端到端复验
-
-- 修正 Cron 失败的健康判定；播报生成与技术错误外发的缺口归[文档23](23_KnowledgeMap业务能力桥接.md#限制与已知问题)。

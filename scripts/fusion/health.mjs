@@ -1,7 +1,7 @@
 // Read-only operational health: valid scheduled jobs are not failures. No credentials or message contents.
 import fs from 'node:fs';import {spawnSync} from 'node:child_process';import {DatabaseSync} from 'node:sqlite';import {rpc} from './rpc.mjs';import {account} from '../../chatbot/packages/qq-delivery/index.js';import {onebot} from '../../chatbot/packages/qq-delivery/index.js';
 import {KnowledgeMapClient} from '../../chatbot/packages/knowledgemap-client/client.js';
-import {readListSource} from '../../chatbot/plugins/personal-reminder-list/data-source.js';
+import {readListSource} from '../../chatbot/plugins/personal-reminder-list/data-source.js';import {cronIssues} from './lib/health-cron.mjs';
 const state='/home/afrangry/.openclaw-fusion',cfg=JSON.parse(fs.readFileSync(state+'/openclaw.json')),acceptance=process.argv.includes('--acceptance'),r={at:new Date().toISOString(),ok:true,issues:[]};
 const issue=x=>{r.ok=false;r.issues.push(x);};
 try{await rpc('health',{},8000);r.gateway=true;}catch{issue('Gateway is unavailable');r.gateway=false;}
@@ -9,7 +9,7 @@ try{const status=await onebot(account(cfg),'get_status',{});r.qq={online:status.
 r.testIngress=cfg.channels['kurumi-qq'].testIngress===true;if(r.testIngress&&!acceptance)issue('Acceptance ingress is still enabled');
 if(r.gateway){
  try{const status=await rpc('channels.status',{probe:true},10000);r.channel=status.channelAccounts?.['kurumi-qq']?.map(x=>({running:x.running,connected:x.connected}));if(!r.channel?.some(x=>x.running&&x.connected))issue('QQ channel is disconnected');}catch{issue('QQ channel probe failed');}
- try{const result=await rpc('cron.list',{includeDisabled:true,limit:100},10000);r.cron={total:result.total??result.jobs.length,hasMore:result.hasMore??false,jobs:result.jobs.map(j=>({id:j.id,enabled:j.enabled,lastStatus:j.state?.lastStatus??null,lastDeliveryStatus:j.state?.lastDeliveryStatus??null,nextRunAtMs:j.state?.nextRunAtMs??null}))};}catch{issue('Cron state is unavailable');}
+ try{const result=await rpc('cron.list',{includeDisabled:true,limit:100},10000);const jobs=result.jobs??[];r.cron={total:result.total??jobs.length,hasMore:result.hasMore??false,jobs:jobs.map(j=>({id:j.id,enabled:j.enabled,lastRunStatus:j.state?.lastRunStatus??null,lastStatus:j.state?.lastStatus??null,lastDeliveryStatus:j.state?.lastDeliveryStatus??null,nextRunAtMs:j.state?.nextRunAtMs??null}))};const failures=cronIssues(jobs);if(failures.length){r.cronFailures=failures;for(const failure of failures)issue(failure);}}catch{issue('Cron state is unavailable');}
  if(!r.testIngress){try{await rpc('kurumi-qq.testInbound',{},3000);issue('Acceptance RPC remains available');}catch(e){r.testMethodDisabled=/unknown method|not found/i.test(e.message);if(!r.testMethodDisabled)issue('Acceptance RPC removal not verified');}}
  if(cfg.plugins?.entries?.['kurumi-host-control']?.enabled===true){
   try{r.hostControl=(await rpc('kurumi-host-control.status',{},3000)).ready===true;}catch{r.hostControl=false;}
