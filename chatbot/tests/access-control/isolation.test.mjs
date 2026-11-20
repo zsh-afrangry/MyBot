@@ -146,8 +146,8 @@ test('Persona generation shares character only; member does not inherit owner US
  const {root,cfg,policy}=await setup(t);const repo=path.join(root,'repo');
  for(const d of ['config','roles','scripts/fusion/templates'])fs.mkdirSync(path.join(repo,d),{recursive:true});
  fs.writeFileSync(path.join(repo,'config/access-control.json'),JSON.stringify(policy));fs.writeFileSync(path.join(repo,'config/runtime.config.json'),JSON.stringify(cfg));
- fs.writeFileSync(path.join(repo,'config/persona.json'),JSON.stringify({roleFile:'roles/role.md',identityName:'小鲸鱼',userFile:'OWNER_PRIVATE_SENTINEL'}));
- fs.writeFileSync(path.join(repo,'roles/role.md'),'CHARACTER_ONLY');fs.writeFileSync(path.join(repo,'scripts/fusion/templates/AGENTS.md'),'OWNER_INSTRUCTIONS\n<!-- owner-exec-scope -->');fs.writeFileSync(path.join(repo,'scripts/fusion/templates/MEMBER_AGENTS.md'),'<!-- kurumi-isolated-member-v1 -->');
+ fs.writeFileSync(path.join(repo,'config/persona.json'),JSON.stringify({roleFile:'roles/role.md',identityName:'小鲸鱼',userFile:'OWNER_PRIVATE_SENTINEL',agentsIntro:'FIXTURE_INTRO'}));
+ fs.writeFileSync(path.join(repo,'roles/role.md'),'CHARACTER_ONLY');fs.writeFileSync(path.join(repo,'scripts/fusion/templates/AGENTS.md'),'OWNER_INSTRUCTIONS\n{{PERSONA_INTRO}}\n<!-- owner-exec-scope -->');fs.writeFileSync(path.join(repo,'scripts/fusion/templates/MEMBER_AGENTS.md'),'<!-- kurumi-isolated-member-v1 -->');
  const {files}=personaFiles(repo,root);for(const [f,s] of files)applyPersonaFile(f,s);
  assert(fs.readFileSync(path.join(root,'workspace/AGENTS.md'),'utf8').includes('当前未配置原生exec'));
  const member=cfg.agents.entries['qq-user-'+MEMBER].workspace;

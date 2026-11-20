@@ -44,8 +44,8 @@ for (const dir of ['config', 'roles', 'scripts/fusion/templates']) fs.mkdirSync(
 for (const dir of ['workspace', 'channel', 'media']) fs.mkdirSync(path.join(state, dir), {recursive: true});
 writeJson(policyFile, ownerPolicy(owner));
 fs.writeFileSync(path.join(source, 'roles/fixture.md'), 'Synthetic persona');
-writeJson(path.join(source, 'config/persona.json'), {identityName: 'Fixture', roleFile: 'roles/fixture.md', userFile: 'Synthetic owner'});
-fs.writeFileSync(path.join(source, 'scripts/fusion/templates/AGENTS.md'), '<!-- owner-exec-scope -->\nUse the registered typed tools.');
+writeJson(path.join(source, 'config/persona.json'), {identityName: 'Fixture', roleFile: 'roles/fixture.md', userFile: 'Synthetic owner', agentsIntro: 'Fixture intro'});
+fs.writeFileSync(path.join(source, 'scripts/fusion/templates/AGENTS.md'), '{{PERSONA_INTRO}}\n<!-- owner-exec-scope -->\nUse the registered typed tools.');
 fs.copyFileSync(path.join(repo, 'scripts/fusion/templates/MEMBER_AGENTS.md'), path.join(source, 'scripts/fusion/templates/MEMBER_AGENTS.md'));
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(state, file), token, {mode: 0o600});
 

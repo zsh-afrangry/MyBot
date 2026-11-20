@@ -133,7 +133,7 @@ node scripts/fusion/sync-persona.mjs --apply
 
 `config/persona.json` 的 `roleFile` 指向共享角色卡，`identityName` 指定角色名；SOUL/IDENTITY对每个已启用聊天身份相同。`relationshipFiles` 可省略以兼容旧配置；一旦配置，必须且只能包含 `owner`、`member` 两项，指向 `roles/` 下的非空 Markdown。现行人格与关系素材见[文档25](../docs/25_人格、记忆与会话连续性.md)。
 
-投影依据 `access-control.json` 校验后的可信角色选关系：本人 USER 为 `userFile` 加本人关系，成员 USER 为独立用户说明加成员关系；不把本人 USER、MEMORY或会话复制给成员。本人 AGENTS 沿用模板并要求替换源恰好出现一次，成员使用专用模板。关系不改变权限或成员工具上限。
+投影依据 `access-control.json` 校验后的可信角色选关系：本人 USER 为 `userFile` 加本人关系，成员 USER 为独立用户说明加成员关系；不把本人 USER、MEMORY或会话复制给成员。本人 AGENTS 模板以 `{{PERSONA_INTRO}}` 占位，`agentsIntro` 提供非空替换文本，模板须恰好包含一次占位符；成员使用专用模板。关系不改变权限或成员工具上限。
 
 角色/关系素材只接受 `roles/` 下的普通 `.md` 文件，拒绝路径穿越、符号链接、空内容和未替换的 `{{...}}` 占位符；身份名须为非空单行。同步前完整计算并校验投影，错误配置不写文件；每个目标文件分别原子替换且权限0600，多个文件不是一个事务。同步失败后重新检查漂移再处理，不宣称整组自动回滚。
 

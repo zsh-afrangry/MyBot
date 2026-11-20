@@ -30,7 +30,7 @@ export async function fixture() {
     fs.cpSync(path.join(repo, 'chatbot/packages', pkg), path.join(source, 'chatbot/packages', pkg), {recursive: true});
   }
   sourceFile('scripts/fusion/lib/persona-workspaces.mjs', fs.readFileSync(path.join(repo, 'scripts/fusion/lib/persona-workspaces.mjs')));
-  sourceFile('scripts/fusion/templates/AGENTS.md', '# 合成主人规则\n<!-- owner-exec-scope -->\n');
+  sourceFile('scripts/fusion/templates/AGENTS.md', '# 合成主人规则\n{{PERSONA_INTRO}}\n<!-- owner-exec-scope -->\n');
   sourceFile('scripts/fusion/templates/MEMBER_AGENTS.md', '# 合成成员规则\n');
   const policy = {version: 1, revision: 1, subjects: [{
     qq: fixtureOwner, role: 'owner', kind: 'user', enabled: true,
@@ -49,7 +49,7 @@ export async function fixture() {
   put('config/runtime.config.json', runtimeIntent);
   put('config/openclaw-release.json', {version: '2026.11.1'});
   put('config/persona.json', {identityName: 'Kurumi (隔离验收)', roleFile: 'roles/fusion.md', userFile: '# 合成用户\n',
-    relationshipFiles: {owner: 'roles/owner.md', member: 'roles/member.md'}});
+    relationshipFiles: {owner: 'roles/owner.md', member: 'roles/member.md'}, agentsIntro: '合成主人开场'});
   sourceFile('roles/fusion.md', '# 合成角色\n\n温柔，表达有边界。\n');
   sourceFile('roles/owner.md', '# 主人关系\n');
   sourceFile('roles/member.md', '# 成员关系\n');

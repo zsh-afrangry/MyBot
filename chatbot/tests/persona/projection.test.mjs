@@ -114,15 +114,21 @@ test('Unresolved placeholders and empty relationship content fail before project
 });
 
 test('Owner template drift is explicit and replacement text is literal', async t => {
-  for (const content of ['NO_EXPECTED_HEADER', '你是 kurumi，用户的中文个人助手。\n你是 kurumi，用户的中文个人助手。']) {
+  for (const content of ['NO_EXPECTED_HEADER', '{{PERSONA_INTRO}}\n{{PERSONA_INTRO}}']) {
     await t.test(content.slice(0, 20), t => {
       const f = fixture(t); fs.writeFileSync(path.join(f.repo, 'scripts/fusion/templates/AGENTS.md'), content);
-      assert.throws(() => personaFiles(f.repo, f.state), /persona_agents_substitution_mismatch/u);
+      assert.throws(() => personaFiles(f.repo, f.state), /persona_agents_intro_marker_mismatch/u);
     });
   }
   await t.test('literal dollar replacement', t => {
-    const f = fixture(t); f.persona.agentsSubstitution.to = 'LITERAL $& $`'; f.save();
+    const f = fixture(t); f.persona.agentsIntro = 'LITERAL $& $`'; f.save();
     assert(personaFiles(f.repo, f.state).files.get(path.join(f.state, 'workspace/AGENTS.md')).includes('LITERAL $& $`'));
+  });
+  await t.test('empty, placeholder and non-string intro are invalid', async t => {
+    for (const value of ['', '   \n', '带占位符 {{用户名}}', 42]) await t.test(JSON.stringify(value), t => {
+      const f = fixture(t); f.persona.agentsIntro = value; f.save();
+      assert.throws(() => personaFiles(f.repo, f.state), /invalid_persona_agents_intro/u);
+    });
   });
 });
 

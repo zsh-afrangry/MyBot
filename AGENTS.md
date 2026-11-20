@@ -146,5 +146,5 @@
 
 ## 其他 agent 指令入口
 
-- 主人运行期提示词在 `scripts/fusion/templates/AGENTS.md`，由 `config/persona.json` 的 `agentsSubstitution` 替换后经 `sync-persona.mjs` 写入 `.openclaw-fusion/workspace/AGENTS.md`；成员使用 `scripts/fusion/templates/MEMBER_AGENTS.md`，同步到各自 `users/<QQ>/workspace/`。只改模板，不改运行副本；人格可共享，主人资料/记忆不可复制。
+- 主人运行期提示词在 `scripts/fusion/templates/AGENTS.md`，模板以 `{{PERSONA_INTRO}}` 占位，由 `config/persona.json` 的 `agentsIntro` 替换后经 `sync-persona.mjs` 写入 `.openclaw-fusion/workspace/AGENTS.md`；成员使用 `scripts/fusion/templates/MEMBER_AGENTS.md`，同步到各自 `users/<QQ>/workspace/`。只改模板，不改运行副本；人格可共享，主人资料/记忆不可复制。
 - `researcher` 的提示词在它的私有工作区里，不在本仓库维护。

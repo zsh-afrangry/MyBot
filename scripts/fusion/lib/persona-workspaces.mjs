@@ -45,13 +45,14 @@ export function personaFiles(repo, state) {
   const soul = readRole(repo, persona.roleFile);
   const relationships = relationshipFiles(repo, persona.relationshipFiles);
   const identity = `# 当前角色\n\n- Name: ${persona.identityName}\n- Persona: ${persona.roleFile}，原样加载至SOUL.md\n- 所属项目: kurumi-fusion\n`;
+  const introMarker = '{{PERSONA_INTRO}}';
   let agents = fs.readFileSync(path.join(repo, 'scripts/fusion/templates/AGENTS.md'), 'utf8');
-  if (persona.agentsSubstitution) {
-    const {from, to} = persona.agentsSubstitution;
-    if (typeof from !== 'string' || !from || typeof to !== 'string' ||
-        agents.split(from).length !== 2) throw Error('persona_agents_substitution_mismatch');
-    agents = agents.replace(from, () => to);
+  const intro = persona.agentsIntro;
+  if (typeof intro !== 'string' || !intro.trim() || /\{\{[^}]*\}\}/u.test(intro)) {
+    throw Error('invalid_persona_agents_intro');
   }
+  if (agents.split(introMarker).length !== 2) throw Error('persona_agents_intro_marker_mismatch');
+  agents = agents.replace(introMarker, () => intro);
   // Only the owner sees this operator-maintained scope. Prompt text describes
   // the grant; trusted host checks and the kernel fence still enforce it.
   const scopeMarker = '<!-- owner-exec-scope -->';
