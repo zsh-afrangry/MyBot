@@ -57,6 +57,24 @@ test('start and continuation retries keep exactly one backend turn for the same 
   await assert.rejects(f.run({...args, task: 'changed payload'}, f.context, 'same-start'), /coding_request_key_conflict/);
 });
 
+test('the owner can distinguish tasks in one project by title and time without replaying the tasks', async t => {
+  const f = await fixture(t), credentialLike = 'token-synthetic0123456789';
+  const a = await f.run({action: 'start', projectId: 'fixture', title: '排序检查', task: 'Synthetic original sorting instructions'});
+  const b = await f.run({action: 'start', projectId: 'fixture', title: `文件整理 ${credentialLike}`, task: 'Synthetic original file instructions'});
+  await Promise.all([f.settle(a.id), f.settle(b.id)]);
+  const before = {calls: f.calls.length, deliveries: f.deliveries.length};
+  const listed = await f.run({action: 'list'});
+  const tasks = Object.fromEntries(listed.tasks.map(task => [task.id, task]));
+  assert.equal(tasks[a.id].title, '排序检查');
+  assert.match(tasks[b.id].title, /^文件整理 /);
+  assert(Number.isFinite(tasks[a.id].createdAt));
+  assert(Number.isFinite(tasks[b.id].createdAt));
+  assert(!JSON.stringify(listed).includes(credentialLike));
+  assert(!JSON.stringify(listed).includes('Synthetic original'));
+  assert(!JSON.stringify(f.events).includes('排序检查'));
+  assert.deepEqual({calls: f.calls.length, deliveries: f.deliveries.length}, before);
+});
+
 test('failed checks create no formal commit; explicit rollback retains failed snapshot and affects only its task', async t => {
   const f = await fixture(t, {behavior: async ({cwd}) => {fs.writeFileSync(path.join(cwd, 'value.mjs'), 'export const value = 0;\n'); fs.writeFileSync(path.join(cwd, 'scratch.txt'), 'unfinished');}});
   const first = await start(f), result = await f.settle(first.id);
@@ -97,6 +115,20 @@ test('an extra ACP permission never becomes automatic approval or a tested commi
   const task = await start(f), status = await f.settle(task.id);
   assert.equal(status.state, 'needs_permission'); assert.equal(status.verifiedCommit, f.baseline);
   assert.equal(JSON.stringify(f.events).includes('not for unified log'), false);
+});
+
+test('a backend that returns cancelled after a permission rejection sends the blocked notice', async t => {
+  const f = await fixture(t, {behavior: async ({peer}) => {
+    assert.equal(await peer.args.permission({sessionId: peer.sessionId}, {toolCallId: 'extra-tool'}), false);
+    return {stopReason: 'cancelled'};
+  }});
+  const task = await start(f), status = await f.settle(task.id);
+  assert.equal(status.state, 'needs_permission');
+  assert.equal(status.verifiedCommit, f.baseline);
+  assert.equal(status.checks, undefined);
+  assert.equal(f.deliveries.length, 1);
+  assert.equal(status.delivery.state, 'platform_accepted');
+  assert.equal(status.delivery.roundId, status.executionRoundId);
 });
 
 test('permission requests accumulate privately across continuation; repeated RPCs are counted once per connection', async t => {

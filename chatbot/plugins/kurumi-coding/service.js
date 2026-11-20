@@ -4,22 +4,23 @@ import path from 'node:path';
 import {AsyncResource} from 'node:async_hooks';
 import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {AcpClient, processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/acp-client.js';
+import {processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/stdio-rpc.js';
 import {inspectOwnedRuntime, stopOwnedRuntime} from '../../packages/coding-runtime/reconciliation.js';
 import {attachProjectRegistry} from '../../packages/coding-runtime/project-registry.js';
-import {probeWriteFence, confinedProcess} from '../../packages/coding-runtime/write-fence.js';
+import {fencedDirectory, probeWriteFence, writeFenceRoots} from '../../packages/coding-runtime/write-fence.js';
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
-import {CodingResultRecorder, readCodingResult} from './results.js';
+import {CodingResultRecorder, readCodingResult, resultText} from './results.js';
 import {projectPolicy, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, fencedGit, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
-import {digest, fail, taskText} from './policy.js';
+import {digest, fail, taskText, taskTitle} from './policy.js';
 import {directoryState, directoryPlan, prepareDirectoryWriteback, runDirectoryWriteback, directoryWritebackState} from './directory-workspaces.js';
+import {DSH, createBackendClient, launchOptions, selectBackend, taskBackend} from './backends.js';
 
 const inFlight = new Set(['queued', 'running', 'checking', 'cancelling', 'merging']);
 const settings = ({projects: _projects, ...rest}) => rest;
 
 export class CodingService {
-  constructor(config, {authorize, sendText, composeNotice, assertProjectCurrent = () => {}, trace = () => {}, clientFactory = args => new AcpClient(args)} = {}) {
+  constructor(config, {authorize, sendText, composeNotice, assertProjectCurrent = () => {}, trace = () => {}, clientFactory = createBackendClient} = {}) {
     this.config = config; this.authorize = authorize; this.sendText = sendText; this.composeNotice = composeNotice; this.trace = trace;
     this.clientFactory = clientFactory; this.active = new Map(); this.projectLocks = new Set(); this.started = false;
     this.assertProjectCurrent = assertProjectCurrent;
@@ -94,39 +95,45 @@ export class CodingService {
   }
   event(task, kind, data = {}) {
     this.trace({source: 'coding', kind, correlation: {...task.correlation, taskId: task.id},
-      data: {projectId: task.projectId, backend: 'dsh-acp', state: task.state, ...(task.externalSessionId ? {externalSessionId: task.externalSessionId} : {}), ...data}});
+      data: {projectId: task.projectId, backend: taskBackend(task), state: task.state, ...(task.externalSessionId ? {externalSessionId: task.externalSessionId} : {}), ...data}});
   }
   describe(task) {
     const {id, state, projectId, base, branch, cwd, externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery, candidate, permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind} = task;
     const activeProject = !!this.registeredProject(task);
-    return {id, state, projectId, base, branch, cwd, backend: 'dsh-acp', externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery,
+    return {id, state, projectId, base, branch, cwd, backend: taskBackend(task), externalSessionId, verifiedCommit, checks, mergeChecks, reason, delivery,
       ...(activeProject ? {candidate} : {projectActive: false}), permissionSummary, executionBoundary, executionRoundId, reconciliation, workspaceKind: workspaceKind ?? 'git'};
   }
-  list(requester) { this.authorize(requester, 'tasks.read'); return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey).map(t => this.describe(t)); }
+  list(requester) {
+    this.authorize(requester, 'tasks.read');
+    return this.store.list().filter(t => t.requester.subjectId === requester.subjectId && t.requester.sessionKey === requester.sessionKey)
+      .map(t => ({...this.describe(t), title: t.title, createdAt: t.createdAt}));
+  }
   status(id, requester) { return this.describe(this.task(id, requester, true)); }
   result(id, requester, options) {
     const task = this.task(id, requester, true);
     return {task: this.describe(task), result: readCodingResult(this.store, task, options)};
   }
-  submit({projectId, task: text}, {requester, key, correlation}) {
+  submit({projectId, task: text, title: label, backend: requestedBackend}, {requester, key, correlation}) {
     this.authorize(requester, 'tasks.code');
     taskText(text);
+    const title = resultText(taskTitle(label)) || undefined;
     if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
-    const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester}));
+    const backend = selectBackend(this.config, requestedBackend);
+    const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester, title, ...(backend === DSH ? {} : {backend})}));
     const old = this.store.find(key);
     if (old) { if (old.requestHash !== requestHash) throw fail('coding_request_key_conflict'); return this.describe(this.task(old.id, requester)); }
     this.assertProjectCurrent(project);
     const id = randomUUID();
     const workspace = createWorkspace(this.config, project, id);
     const task = {id, projectId, projectRoot: project.root, projectRegistrationId: project.registrationId,
-      text, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
+      text, title, backend, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
     this.store.create(task); this.event(task, 'coding.submitted');
     this.launch(task, text); return this.describe(this.store.get(id));
   }
   launch(task, text) {
     if (this.active.has(task.id)) throw fail('coding_task_busy');
     const entry = {controller: new AbortController(), roundId: randomUUID()};
-    this.store.createResult(task, {roundId: entry.roundId, state: 'queued', startedAt: new Date().toISOString(), baseCommit: task.verifiedCommit});
+    this.store.createResult(task, {roundId: entry.roundId, state: 'queued', startedAt: new Date().toISOString(), baseCommit: task.verifiedCommit, backend: taskBackend(task)});
     this.active.set(task.id, entry);
     this.backgroundScope.runInAsyncScope(() => {
       entry.monitor = setInterval(() => {
@@ -150,33 +157,27 @@ export class CodingService {
   }
   async execute(id, text, entry) {
     let task = this.store.get(id), denied = false;
-    const project = this.project(task.projectId), directory = path.join(this.config.root, 'tasks', id);
-    fs.mkdirSync(directory, {recursive: true, mode: 0o700});
-    const patch = path.join(directory, 'acp.patch.yml');
-    const backendRoot = path.join(this.config.root, 'backend'), backendHome = path.join(backendRoot, 'dsh-home');
-    fs.mkdirSync(backendHome, {recursive: true, mode: 0o700});
-    fs.writeFileSync(patch, `- id: session-title-llm\n  disabled: true\n- id: credentials\n  config:\n    path: ${JSON.stringify(path.join(this.config.dsh.home, '.credentials.yaml'))}\n    watch: false\n- id: session-persistence-jsonl\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'sessions'))}\n- id: storage-json\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'storages'))}\n- id: attachment-local\n  config:\n    dshHome: ${JSON.stringify(backendRoot)}\n`, {mode: 0o600});
+    const project = this.project(task.projectId);
     const update = changes => { task = {...this.store.get(id), ...changes}; this.store.save(task); };
     this.authorize(task.requester, 'tasks.code'); assertTaskLocation(this.config, project, task); assertWorkspace(task); entry.controller.signal.throwIfAborted();
+    const directory = fencedDirectory(this.config.writeBoundary, path.relative(this.config.writeBoundary.root, path.join(this.config.root, 'tasks', id)));
+    const {backend, model, boundary, client: options} = launchOptions(this.config, task, directory, executionEnv());
     const audit = new PermissionAudit(directory, task, this.config.writeBoundary), roundId = entry.roundId;
-    update({state: 'running', reason: undefined, permissionSummary: audit.summary(), executionBoundary: this.boundaryFacts}); this.event(task, 'coding.running');
-    const dsh = this.config.dsh;
-    const confined = confinedProcess(this.config.writeBoundary, dsh.command, ['--profile', 'acp', '--patch', patch], task.cwd);
-    const client = this.clientFactory({command: confined.command, args: confined.args, cwd: task.cwd,
-      env: {...executionEnv(), ...confined.env, DSH_HOME: backendHome, DSH_PERMISSION_MODE: 'workspace-write', DSH_TOOLS_MODE: 'native'},
-      stderrFile: path.join(directory, 'acp.stderr'), permission: async (params, call, context) => {
+    const executionBoundary = {...this.boundaryFacts, writeRoot: boundary.root, writeRoots: writeFenceRoots(boundary)};
+    update({state: 'running', reason: undefined, permissionSummary: audit.summary(), executionBoundary}); this.event(task, 'coding.running');
+    const client = this.clientFactory({...options, permission: async (params, call, context) => {
         denied = true;
         const result = audit.reject(params, call, context, roundId);
         update({permissionSummary: result.summary});
         if (!result.duplicate) this.event(task, 'coding.permission_rejected', {decisionSource: 'owner_test_folder_only',
           externalToolCallId: call?.toolCallId, requests: result.summary.requests, rejected: result.summary.rejected});
         return false;
-      }});
+      }}, backend);
     entry.client = client; update({runtimeIdentity: client.identity});
     try {
       await client.initialize(); entry.controller.signal.throwIfAborted();
       if (sameProcess(client.identity)) update({runtimeIdentity: processIdentity(client.identity.pid), runtimeProcesses: descendants(client.identity.pid).filter(sameProcess)});
-      const externalSessionId = await client.open(task.cwd, {sessionId: task.externalSessionId, model: dsh.model});
+      const externalSessionId = await client.open(task.cwd, {sessionId: task.externalSessionId, model});
       update({externalSessionId}); entry.controller.signal.throwIfAborted(); this.event(task, 'coding.session_bound');
       const round = this.store.result(id, roundId);
       this.store.saveResult(id, {...round, state: 'running', externalSessionId});
@@ -189,13 +190,16 @@ export class CodingService {
       });
       const instruction = `Work only on the authorized task in ${task.cwd}. Read applicable AGENTS.md. Do not commit, merge, push, edit other worktrees, change services, or install system software. The host runs registered checks and creates verified commits. Keep unfinished work in this worktree. Task:\n${text}`;
       const result = await client.prompt(instruction);
-      this.store.saveResult(id, {...this.store.result(id, roundId), stopReason: result.stopReason});
-      if (entry.cancelRequested || result.stopReason === 'cancelled') {
+      this.store.saveResult(id, {...this.store.result(id, roundId), stopReason: result.stopReason, externalTurnId: result.externalTurnId});
+      // A backend can report cancellation when an extra permission was denied.
+      // Keep the owner's explicit cancellation distinct from that blocked round.
+      if (entry.cancelRequested || (!denied && result.stopReason === 'cancelled')) {
         const stopped = await client.cancellationStopped();
         update({state: stopped ? 'cancelled' : 'needs_reconciliation', reason: stopped ? entry.cancelReason : 'cancel_not_verified'});
         this.event(task, 'coding.cancelled', {stopped}); return;
       }
-      await client.request('session/close', {sessionId: externalSessionId}); await client.stop();
+      await client.closeSession(); await client.stop();
+      entry.controller.signal.throwIfAborted();
       if (denied) { update({state: 'needs_permission', reason: 'extra_backend_permission_required'}); this.event(task, 'coding.needs_permission'); await this.notify(task); return; }
       if (result.stopReason !== 'end_turn') throw fail('coding_turn_incomplete');
       this.authorize(task.requester, 'tasks.code'); assertWorkspace(task);
@@ -228,6 +232,7 @@ export class CodingService {
   continue(id, text, requester, key) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
     this.assertProjectCurrent(this.project(task.projectId));
+    selectBackend(this.config, taskBackend(task));
     taskText(text);
     if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
     const hash = digest(JSON.stringify({id, text, requester}));
@@ -434,7 +439,7 @@ export class CodingService {
       let result = readCodingResult(this.store, task, {limit: 1800});
       if (result.available && result.page.nextOffset !== null) result = readCodingResult(this.store, task, {offset: Math.max(0, result.page.totalChars - 1800), limit: 1800});
       if (!this.composeNotice) throw fail('assistant_notice_unavailable');
-      const text = await this.composeNotice({taskId:task.id,projectId:task.projectId,state:task.state,workspaceKind:task.workspaceKind,
+      const text = await this.composeNotice({taskId:task.id,projectId:task.projectId,backend:taskBackend(task),state:task.state,workspaceKind:task.workspaceKind,
         roundId:task.executionRoundId,reason:task.reason,hostChecks:task.checks,verifiedCommit:task.verifiedCommit,
         permissionSummary:task.permissionSummary,result},task.requester);
       if(typeof text!=='string' || !text.trim() || text.length>3500 || !text.includes(task.id))throw fail('assistant_notice_reply_missing');

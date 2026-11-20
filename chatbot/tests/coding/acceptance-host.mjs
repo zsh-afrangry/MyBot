@@ -37,9 +37,11 @@ fs.writeFileSync(peer, '#!/bin/bash\nexec ' + [process.execPath, fileURLToPath(n
 const tokenFile = path.join(root, 'onebot-token'); fs.writeFileSync(tokenFile, token, {mode: 0o600});
 const report = {at: new Date().toISOString(), boundary: 'Isolated Gateway and foreground QQ turn through loopback OneBot/model, synthetic ACP, and real local Git. No external model, QQ or production state.', stages: []};
 const sends = [], modelNotices = [];
+const phaseStates = {start: 'ready', resume: 'ready', failure: 'failed', blocked: 'needs_permission'};
+const noticeTasks = new Map();
 const blockedCall = 'notice-coding-probe';
 let probeSent = false, probeDenied = false;
-let socketFromGateway, taskId, modelFailure;
+let socketFromGateway, modelFailure;
 const toolCall = (id, args) => ({role: 'assistant', content: null, tool_calls: [
   {id, type: 'function', function: {name: 'kurumi_code', arguments: JSON.stringify(args)}},
 ]});
@@ -73,12 +75,14 @@ const model = http.createServer(async (req, res) => {
     const text = content => typeof content === 'string' ? content : (content ?? []).map(value => value.text ?? '').join('\n');
     const userIndex = messages.findLastIndex(value => value.role === 'user' && /FIXTURE_REQUEST_|以下是绑定当前用户的业务结果/.test(text(value.content)));
     const prompt = text(messages[userIndex]?.content);
-    const phase = /FIXTURE_REQUEST_(start|resume)/.exec(prompt)?.[1];
+    const phase = /FIXTURE_REQUEST_(start|resume|failure|blocked)/.exec(prompt)?.[1];
     let message;
     if (prompt.includes(noticeHeader)) {
-      assert(prompt.includes(taskId));
-      const execution = /fixture execution (start|resume)/.exec(prompt)?.[0];
+      const [execution, noticePhase] = /fixture execution (start|resume|failure|blocked)/.exec(prompt) ?? [];
       assert(execution);
+      const taskId = noticeTasks.get(noticePhase);
+      assert(taskId && prompt.includes(taskId));
+      assert(prompt.includes(phaseStates[noticePhase]));
       // The pinned host can retain schemas for history/prefix reuse. Force a
       // business call and verify the runtime's denial rather than count schemas.
       const probeResult = messages.slice(userIndex + 1).find(value => value.role === 'tool');
@@ -92,7 +96,7 @@ const model = http.createServer(async (req, res) => {
           probeDenied = true;
         }
         modelNotices.push({execution, schemaCount: (body.tools ?? []).length});
-        message = {role: 'assistant', content: 'Completed ' + taskId + ' ' + execution};
+        message = {role: 'assistant', content: `${phaseStates[noticePhase]} ${taskId} ${execution}`};
       }
     } else {
       assert(phase, 'Unknown foreground fixture message');
@@ -100,8 +104,9 @@ const model = http.createServer(async (req, res) => {
         message = {role: 'assistant', content: 'Accepted ' + phase};
       } else {
         assert((body.tools ?? []).some(tool => tool.function?.name === 'kurumi_code'), 'Coding tool unavailable to foreground model');
-        const args = phase === 'start' ? {action: 'start', projectId: 'fixture', task: 'Run the fixture.'}
-          : {action: 'continue', taskId, task: 'Resume the fixture.'};
+        const args = phase === 'resume'
+          ? {action: 'continue', taskId: noticeTasks.get('start'), task: 'Resume the fixture.'}
+          : {action: 'start', projectId: 'fixture', title: `Fixture ${phase}`, task: `FIXTURE_CASE_${phase}`};
         message = toolCall('coding-' + phase, args);
       }
     }
@@ -130,46 +135,55 @@ async function verifyCompletion(directory, codingRoot, stage) {
   let channel;
   try {
     // The synthetic ACP peer cannot finish until the entire initiating QQ turn is closed.
-    let previous, originalSession;
-    for (const [phase, id] of [['start', 201], ['resume', 202]]) {
+    const knownTasks = new Set(), seenRounds = new Set();
+    let originalSession;
+    for (const [index, [phase, expectedState]] of Object.entries(phaseStates).entries()) {
+      const id = 201 + index;
       socketFromGateway.send(JSON.stringify({post_type: 'message', message_type: 'private', self_id: Number(bot), user_id: Number(owner),
         message_id: id, time: Math.floor(Date.now() / 1000), message: [{type: 'text', data: {text: 'FIXTURE_REQUEST_' + phase}}]}));
       await waitFor(() => {
         const filename = path.join(directory, 'channel', 'channel.sqlite');
         if (!channel && fs.existsSync(filename) && fs.existsSync(filename + '-shm')) channel = new DatabaseSync(filename, {readOnly: true});
-        return channel?.prepare('SELECT status FROM inbound WHERE id=?').get([bot, owner, id].join(':'))?.status === 'completed';
+        if (!channel?.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='inbound'").get()) return false;
+        return channel.prepare('SELECT status FROM inbound WHERE id=?').get([bot, owner, id].join(':'))?.status === 'completed';
       }, 'closed foreground ' + phase + ' turn');
       assert(sends.some(value => value.text === 'Accepted ' + phase));
-      const [pending, ...others] = tasks();
+      const allTasks = tasks(), [pending, ...others] = allTasks.filter(task => task.state === 'running');
       assert(pending); assert.equal(others.length, 0);
-      assert.equal(pending.state, 'running');
-      assert.notEqual(pending.executionRoundId, previous);
-      taskId ??= pending.id; assert.equal(pending.id, taskId);
+      assert.equal(pending.title, `Fixture ${phase === 'resume' ? 'start' : phase}`);
+      assert(!seenRounds.has(pending.executionRoundId)); seenRounds.add(pending.executionRoundId);
+      if (phase === 'resume') assert.equal(pending.id, noticeTasks.get('start'));
+      else {assert(!knownTasks.has(pending.id)); knownTasks.add(pending.id);}
+      assert.equal(allTasks.length, knownTasks.size);
+      noticeTasks.set(phase, pending.id);
       fs.writeFileSync(path.join(gates, phase), '');
       const done = await waitFor(() => {
-        const [task] = tasks();
+        const task = tasks().find(task => task.id === pending.id);
+        if (task?.state === 'cancelled') throw Error(`${phase} unexpectedly recorded as cancelled`);
         return ['platform_accepted', 'generation_failed', 'unknown'].includes(task.delivery?.state) && task;
       }, 'terminal ' + phase + ' delivery');
-      assert.equal(done.state, 'ready');
-      assert.equal(done.checks.ok, true);
+      assert.equal(done.state, expectedState);
+      if (expectedState === 'ready') assert.equal(done.checks.ok, true);
+      else {assert.equal(done.checks, undefined); assert.equal(done.verifiedCommit, baseline);}
+      if (phase === 'blocked') assert.equal(done.permissionSummary.rejected, 1);
       assert.equal(done.delivery.state, 'platform_accepted', phase + ' notice: ' + done.delivery.code);
       assert.equal(done.delivery.roundId, pending.executionRoundId);
-      previous = pending.executionRoundId;
-      originalSession ??= done.externalSessionId;
-      assert(originalSession); assert.equal(done.externalSessionId, originalSession);
+      if (phase === 'start') {originalSession = done.externalSessionId; assert(originalSession);}
+      if (phase === 'resume') assert.equal(done.externalSessionId, originalSession);
       const stored = channel.prepare('SELECT status,message_id FROM outbound WHERE id=?').get(done.delivery.key + ':0');
       assert.equal(stored?.status, 'sent'); assert.equal(String(stored?.message_id), done.delivery.messageId);
       assert.equal(sends.filter(value => value.id === done.delivery.messageId && value.text.includes('fixture execution ' + phase)).length, 1);
     }
     assert(probeSent && probeDenied, 'The background business tool call must be denied');
-    assert.equal(tasks().length, 1, 'Notifications must not create coding tasks');
+    assert.equal(tasks().length, knownTasks.size, 'Notifications must not create coding tasks');
     const decisions = fs.readFileSync(path.join(directory, 'channel', 'access-events.jsonl'), 'utf8').trim().split('\n')
       .map(line => JSON.parse(line).data).filter(entry => entry.tool === 'kurumi_code');
-    assert.equal(decisions.filter(entry => entry.decision === 'allow').length, 2, 'Only the two foreground calls may be authorized');
-    assert.deepEqual(modelNotices.map(({execution}) => execution), ['fixture execution start', 'fixture execution resume']);
-    assert.equal(sends.length, 4);
+    const phases = Object.keys(phaseStates);
+    assert.equal(decisions.filter(entry => entry.decision === 'allow').length, phases.length, 'Only the foreground calls may be authorized');
+    assert.deepEqual(modelNotices.map(({execution}) => execution), phases.map(phase => 'fixture execution ' + phase));
+    assert.equal(sends.length, 2 * phases.length);
     assert.equal(git(source, 'rev-parse', 'HEAD').trim(), baseline);
-    stage.completion = {foregroundClosedBeforeCompletion: true, startAccepted: true, resumeAccepted: true, sameExternalSession: true,
+    stage.completion = {foregroundClosedBeforeCompletion: true, startAccepted: true, resumeAccepted: true, failureAccepted: true, permissionBlockedAccepted: true, sameExternalSession: true,
       backgroundToolDenied: true, noticeSchemaCounts: modelNotices.map(({schemaCount}) => schemaCount)};
   } finally {channel?.close(); coding.close();}
 }

@@ -1,6 +1,7 @@
-// Task-owned ACP result capture and safe presentation. No QQ, shell execution or model-supplied paths.
+// Task-owned execution result capture and safe presentation. No QQ, shell execution or model-supplied paths.
 import {redactText} from '../../packages/observability/index.js';
 import {fail} from './policy.js';
+import {CODEX, taskBackend} from './backends.js';
 
 const UUID = /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/;
 const textContent = content => Array.isArray(content) ? content.map(block => {
@@ -59,11 +60,14 @@ export function readCodingResult(store, task, {roundId = task.executionRoundId, 
     `[${tool.title} / ${tool.toolCallId} / ${tool.status}]\n${tool.text}`).join('\n\n');
   const safe = Array.from(resultText(assembled));
   if (offset > safe.length) throw fail('invalid_coding_result_page');
+  const backend = round.backend ?? taskBackend(task);
+  const executionSource = backend === CODEX ? 'codex_command_execution_results' : 'acp_execution_tool_results';
   return {available: true, taskId: task.id, roundId, currentRound: roundId === task.executionRoundId,
-    state: round.state, startedAt: round.startedAt, finishedAt: round.finishedAt, interruptedAt: round.interruptedAt, externalSessionId: round.externalSessionId,
+    backend, state: round.state, startedAt: round.startedAt, finishedAt: round.finishedAt, interruptedAt: round.interruptedAt,
+    externalSessionId: round.externalSessionId, externalTurnId: round.externalTurnId,
     stopReason: round.stopReason, reason: round.reason, verifiedCommit: round.verifiedCommit, changedFiles: (round.changedFiles ?? []).map(resultText),
     hostChecks: round.hostChecks, agentReportAvailable: report.length > 0,
     executionTools: executions.map(({toolCallId, title, status, text}) => ({toolCallId, title, status, outputRecorded: text !== undefined})),
-    page: {section, source: section === 'execution' ? 'acp_execution_tool_results' : 'agent_report_not_host_verification',
+    page: {section, source: section === 'execution' ? executionSource : 'agent_report_not_host_verification',
       text: safe.slice(offset, offset + limit).join(''), offset, nextOffset: offset + limit < safe.length ? offset + limit : null, totalChars: safe.length}};
 }
