@@ -511,7 +511,7 @@
       "naturalSegments": true,
       "segmentDelayMs": 450,
       "inboundDebounceMs": 5000,
-      "inboundDebounceMaxWaitMs": 10000,
+      "inboundDebounceMaxWaitMs": 15000,
       "replyToMode": "off"
     }
   },

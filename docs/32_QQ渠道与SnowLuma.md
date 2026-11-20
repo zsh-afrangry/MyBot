@@ -19,7 +19,7 @@
 | 配置键 | 仓库值 | 作用 |
 | --- | ---: | --- |
 | `inboundDebounceMs` | 5000 | 静默时间，范围 0–10000 ms；省略或设为 0 时即时处理 |
-| `inboundDebounceMaxWaitMs` | 10000 | 从首条起的最长收集时间，范围 1–60000 ms；缺省 10000 ms，须不小于静默时间 |
+| `inboundDebounceMaxWaitMs` | 15000 | 从首条起的最长收集时间，范围 1–60000 ms；缺省 10000 ms，须不小于静默时间 |
 
 ## 原理
 
@@ -45,5 +45,5 @@ OpenClaw 2026.11.1 的本地 OneBot WebSocket 与模拟模型派发验证通过�
 
 ## 进行中：私聊入站防抖
 
-- 2026-11-21 已通过 `sync-config.mjs --apply` 部署两个防抖键并重启 `kurumi-fusion.service`。真人观察确认合并生效；实测两条间隔 2 秒的消息合并成一轮，间隔 4 秒的消息被拆成下一轮，因此把 `inboundDebounceMs` 从 3000 调到 5000 并重新部署。待继续验证日常输入节奏下的合并效果。
+- 2026-11-21 已通过 `sync-config.mjs --apply` 部署两个防抖键并重启 `kurumi-fusion.service`。真人观察确认合并生效；实测两条间隔 2 秒的消息合并成一轮，间隔 4 秒的消息被拆成下一轮，因此把 `inboundDebounceMs` 从 3000 调到 5000 并重新部署。第二轮实测四条间隔 3–4 秒的消息合并成功，但总时长正好触及 10 秒上限，随后一条消息被拆成单独回合；故把 `inboundDebounceMaxWaitMs` 调到 15000，待继续验证。
 - 参考实现：归档 tag `archive/25-private-chat`、`archive/25-sightings-integration`（已推远端），包含旧基线上的私聊与见闻参考代码；开发对应需求时用 `git show` 或 `git diff main...<tag>` 查看，不要直接合并旧基线。
