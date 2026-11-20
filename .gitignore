@@ -11,16 +11,6 @@ workspace-attestations/
 npm/
 skill-workshop/
 
-# Local chatbot state and personal context
-chatbot/openclaw-workspace-state.json
-chatbot/memory/
-chatbot/MEMORY.md
-chatbot/USER.md
-chatbot/IDENTITY.md
-chatbot/HEARTBEAT.md
-chatbot/TOOLS.md
-chatbot/SOUL.md
-
 # Dependencies, build artefacts, and local editor files
 **/node_modules/
 **/dist/
@@ -42,8 +32,6 @@ chatbot/SOUL.md
 /qqbot/
 /session-sqlite-migration-runs/
 /tmp/
-/chatbot/DREAMS.md
-/chatbot/openclaw-workspace-state.json.migrated.*
 /chatbot/plugins/personal-weather/dist.bak.*/
 /chatbot/plugins/personal-weather/src.bak.*/
 
