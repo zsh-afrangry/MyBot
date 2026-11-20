@@ -1,4 +1,4 @@
-状态：开发中（私聊防抖已部署，待本人 QQ 行为验收）
+状态：开发中（私聊防抖已真人验收；QQ 频道/空间/群聊等接入未开展）
 
 # QQ 渠道与 SnowLuma
 
@@ -41,9 +41,9 @@ npm --prefix chatbot/plugins/kurumi-qq test
 node chatbot/scripts/log-query.mjs --since 20m --last-turns 8 --format table --no-text
 ```
 
-OpenClaw 2026.11.1 的本地 OneBot WebSocket 与模拟模型派发验证通过；真人验收用 log-query 对比连续消息是否合并成一轮。
+OpenClaw 2026.11.1 的本地 OneBot WebSocket 与模拟模型派发验证通过；本人 QQ 真人验收通过：连续 3–4 条、间隔 3–4 秒的消息在静默窗口内合并成一轮，超过窗口的间隔分别处理。
 
 ## 进行中：私聊入站防抖
 
-- 2026-11-21 已通过 `sync-config.mjs --apply` 部署两个防抖键并重启 `kurumi-fusion.service`。真人观察确认合并生效；实测两条间隔 2 秒的消息合并成一轮，间隔 4 秒的消息被拆成下一轮，因此把 `inboundDebounceMs` 从 3000 调到 5000 并重新部署。第二轮实测四条间隔 3–4 秒的消息合并成功，但总时长正好触及 10 秒上限，随后一条消息被拆成单独回合；故把 `inboundDebounceMaxWaitMs` 调到 15000，待继续验证。
-- 参考实现：归档 tag `archive/25-private-chat`、`archive/25-sightings-integration`（已推远端），包含旧基线上的私聊与见闻参考代码；开发对应需求时用 `git show` 或 `git diff main...<tag>` 查看，不要直接合并旧基线。
+- 2026-11-21 本人 QQ 真人验收通过：静默窗口 5 秒、最长收集 15 秒；连续 3–4 条、间隔 3–4 秒的消息合并成一轮，超过窗口的间隔分别处理。
+- 后续 QQ 频道、QQ 空间、群聊等接入尚未展开；本文当前只覆盖 SnowLuma OneBot 私聊。
