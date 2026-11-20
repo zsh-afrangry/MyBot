@@ -216,7 +216,6 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 - **QQ 客户端异常退出后，协议会话长时间不恢复（低优先级，未立项修复）。** QQ 客户端崩溃后，systemd 拉起进程到 OneBot 恢复监听曾相隔约两小时二十五分。Fusion 在端口不可用期间退避重连，重连间隙的入站可能丢失，Cron 投递可能失败。崩溃与会话延迟的根因均待查，进程状态需要结合 OneBot 在线状态和真实往返判断。复查用 SnowLuma 和 Fusion 的日志。
 - 管理台当前安装副本来自未合并分支 `dsh-eb157d61-6417`（新增 Git 工作树与分支只读页面），与 main 的安装哈希不同；`doctor` 按警告展示。是否合并进 main 或按 main 重新安装，由主人决定。
 - KnowledgeMap 桌面旧副本已退役（移入回收站）；网站与助手 API 都跑 `/home/afrangry/repository` 同一份代码和同一个 MySQL 库，数据没有迁移动作。
-- `sync-config --diff` 仍报告 2 个私聊防抖键未同步（见[文档32](32_QQ渠道与SnowLuma.md)），与本次启停改动无关，按对应需求的部署流程处理。
 - **SnowLuma 群申请扫描反复超时（低优先级，根因未定）。** 轮询器等 QQ 协议应答的默认超时为 15 秒。一次扫描结束后再等 15 秒，因此持续超时时约每 30 秒记录一次失败。部分群申请依赖轮询补齐，影响私聊的程度待评估，Fusion 群聊关闭。
 
 ## 如何验证

@@ -1,4 +1,4 @@
-状态：开发中（私聊防抖已离线验证，未部署）
+状态：开发中（私聊防抖已部署，待本人 QQ 行为验收）
 
 # QQ 渠道与 SnowLuma
 
@@ -44,4 +44,5 @@ OpenClaw 2026.11.1 的本地 OneBot WebSocket 与模拟模型派发验证通过�
 
 ## 进行中：私聊入站防抖
 
-- 部署后用本人 QQ 验证短时间连续发送三条时只提交一轮，以及静默超过阈值时分别处理。
+- 2026-11-21 已通过 `sync-config.mjs --apply` 部署两个防抖键并重启 `kurumi-fusion.service`；待本人 QQ 验证短时间连续发送三条时只提交一轮，以及静默超过阈值时分别处理。
+- 参考实现：归档 tag `archive/25-private-chat`、`archive/25-sightings-integration`（已推远端），包含旧基线上的私聊与见闻参考代码；开发对应需求时用 `git show` 或 `git diff main...<tag>` 查看，不要直接合并旧基线。
