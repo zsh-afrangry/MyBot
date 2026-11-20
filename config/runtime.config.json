@@ -510,6 +510,8 @@
       "dailySendLimit": 500,
       "naturalSegments": true,
       "segmentDelayMs": 450,
+      "inboundDebounceMs": 3000,
+      "inboundDebounceMaxWaitMs": 10000,
       "replyToMode": "off"
     }
   },

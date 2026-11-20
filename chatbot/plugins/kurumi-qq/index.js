@@ -3,7 +3,7 @@ import {registerHostToolBoundary, reportAcceptedInbound} from '../../packages/ho
 import WebSocket from 'ws';
 import {registerAcceptanceTools} from './src/acceptance.js';
 import {account, CHANNEL, token, onebot, sendPayload} from '../../packages/qq-delivery/index.js';
-import {handleInbound} from './src/inbound.js';
+import {createOneBotInbound,handleInbound} from './src/inbound.js';
 import {registerStickerTool} from './src/stickers.js';
 export const plugin={
  id:CHANNEL,meta:{id:CHANNEL,label:'Kurumi QQ',selectionLabel:'Kurumi QQ (OneBot)',docsPath:'/channels/kurumi-qq',blurb:'QQ private channel with explicit identity permissions'},
@@ -17,23 +17,30 @@ export const plugin={
  gateway:{startAccount:async (ctx,{runtime,onAcceptedInbound}={})=>{
   const a=ctx.account;const login=await onebot(a,'get_login_info',{});const selfId=String(login.user_id);
   if(selfId===a.ownerId)throw Error('Bot identity must differ from owner');
-  let socket,timer,stopped=false;const pending=new Set();
-  await new Promise(resolve=>{
-   const connect=()=>{
+  const inbound=createOneBotInbound({cfg:ctx.cfg,runtime,selfId,log:ctx.log,signal:ctx.abortSignal,onAcceptedInbound});
+  let socket,timer,stopped=false;
+  const {promise:stopping,resolve:signalStopped}=Promise.withResolvers();
+  const connect=()=>{
+   if(stopped)return;
+   socket=new WebSocket(a.wsUrl,{headers:{authorization:`Bearer ${token(a,'ws')}`},maxPayload:2*1024*1024});
+   socket.on('open',()=>{ctx.setStatus({...ctx.getStatus(),running:true,connected:true});ctx.log?.info('Kurumi QQ OneBot connected');});
+   socket.on('message',data=>{
     if(stopped)return;
-    socket=new WebSocket(a.wsUrl,{headers:{authorization:`Bearer ${token(a,'ws')}`},maxPayload:2*1024*1024});
-    socket.on('open',()=>{ctx.setStatus({...ctx.getStatus(),running:true,connected:true});ctx.log?.info('Kurumi QQ OneBot connected');});
-    socket.on('message',data=>{
-     let event;try{event=JSON.parse(data.toString());}catch{return;}
-     const task=handleInbound({cfg:ctx.cfg,runtime,event,selfId,log:ctx.log,signal:ctx.abortSignal,onAcceptedInbound}).catch(()=>ctx.log?.error('Kurumi QQ inbound failed; see task state')).finally(()=>pending.delete(task));pending.add(task);
-    });
-    socket.on('error',()=>ctx.log?.warn('Kurumi QQ socket error'));
-    socket.on('close',()=>{ctx.setStatus({...ctx.getStatus(),connected:false});if(!stopped)timer=setTimeout(connect,3000);});
-   };
-   const stop=()=>{stopped=true;clearTimeout(timer);socket?.close();resolve();};
-   ctx.abortSignal.addEventListener('abort',stop,{once:true});if(ctx.abortSignal.aborted)stop();else connect();
-  });
-  await Promise.allSettled(pending);
+    let event;try{event=JSON.parse(data.toString());}catch{return;}
+    void inbound.enqueue(event).catch(()=>ctx.log?.error?.('Kurumi QQ inbound failed; see task state'));
+   });
+   socket.on('error',()=>ctx.log?.warn('Kurumi QQ socket error'));
+   socket.on('close',()=>{ctx.setStatus({...ctx.getStatus(),connected:false});if(!stopped)timer=setTimeout(connect,3000);});
+  };
+  const stop=()=>{stopped=true;clearTimeout(timer);socket?.close();signalStopped();};
+  ctx.abortSignal.addEventListener('abort',stop,{once:true});
+  try{
+   if(ctx.abortSignal.aborted)stop();else connect();
+   await stopping;
+  }finally{
+   ctx.abortSignal.removeEventListener('abort',stop);
+   await inbound.close();
+  }
  }}
 };
 export default {id:CHANNEL,name:'Kurumi QQ',description:'Isolated identity-scoped OneBot channel',register(api){
