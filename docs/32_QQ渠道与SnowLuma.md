@@ -18,7 +18,7 @@
 
 | 配置键 | 仓库值 | 作用 |
 | --- | ---: | --- |
-| `inboundDebounceMs` | 3000 | 静默时间，范围 0–10000 ms；省略或设为 0 时即时处理 |
+| `inboundDebounceMs` | 5000 | 静默时间，范围 0–10000 ms；省略或设为 0 时即时处理 |
 | `inboundDebounceMaxWaitMs` | 10000 | 从首条起的最长收集时间，范围 1–60000 ms；缺省 10000 ms，须不小于静默时间 |
 
 ## 原理
@@ -38,11 +38,12 @@
 
 ```bash
 npm --prefix chatbot/plugins/kurumi-qq test
+node chatbot/scripts/log-query.mjs --since 20m --last-turns 8 --format table --no-text
 ```
 
-OpenClaw 2026.11.1 的本地 OneBot WebSocket 与模拟模型派发验证通过。
+OpenClaw 2026.11.1 的本地 OneBot WebSocket 与模拟模型派发验证通过；真人验收用 log-query 对比连续消息是否合并成一轮。
 
 ## 进行中：私聊入站防抖
 
-- 2026-11-21 已通过 `sync-config.mjs --apply` 部署两个防抖键并重启 `kurumi-fusion.service`；待本人 QQ 验证短时间连续发送三条时只提交一轮，以及静默超过阈值时分别处理。
+- 2026-11-21 已通过 `sync-config.mjs --apply` 部署两个防抖键并重启 `kurumi-fusion.service`。真人观察确认合并生效；实测两条间隔 2 秒的消息合并成一轮，间隔 4 秒的消息被拆成下一轮，因此把 `inboundDebounceMs` 从 3000 调到 5000 并重新部署。待继续验证日常输入节奏下的合并效果。
 - 参考实现：归档 tag `archive/25-private-chat`、`archive/25-sightings-integration`（已推远端），包含旧基线上的私聊与见闻参考代码；开发对应需求时用 `git show` 或 `git diff main...<tag>` 查看，不要直接合并旧基线。
