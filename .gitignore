@@ -1,40 +1,19 @@
-# OpenClaw runtime state and host-specific configuration
+# 本地密钥与运行配置：真实文件位于 .openclaw-fusion，此处的同名文件只用于防止误拷入仓库
 .env
+gateway.systemd.env
 openclaw.json
 openclaw.json.*
-gateway.systemd.env
-identity/
-agents/
-logs/
-state/
-workspace-attestations/
-npm/
-skill-workshop/
 
-# Dependencies, build artefacts, and local editor files
+# 依赖、构建产物与编辑器文件
 **/node_modules/
 **/dist/
 *.log
 .DS_Store
 
-# Test and acceptance script output; never committed (see AGENTS.md 文档管理规范)
+# 测试与验收输出，不提交（见 AGENTS.md 文档管理规范）
 /test-output/
 /docs/e7_capture_*.pcap
 
-# Host-generated state, credentials, caches and local recovery copies
-/.codex/
-/backups/
-/cache/
-/completions/
-/config-journal-fingerprint.key
-/exec-approvals.json
-/plugin-skills/
-/qqbot/
-/session-sqlite-migration-runs/
-/tmp/
-/chatbot/plugins/personal-weather/dist.bak.*/
-/chatbot/plugins/personal-weather/src.bak.*/
-
-# Python bytecode from acceptance probes
+# 验收探针产生的 Python 字节码
 __pycache__/
 *.pyc
