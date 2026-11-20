@@ -13,11 +13,13 @@ export function compileAccessConfig(input, value) {
   const entries = cfg.agents.entries;
   for (const key of Object.keys(entries)) if (/^qq-user-\d+$/.test(key)) delete entries[key];
   cfg.bindings = (cfg.bindings ?? []).filter(b => !/^qq-user-\d+$/.test(b.agentId));
+  const sightingsEnabled = cfg.plugins?.allow?.includes('kurumi-sightings') && cfg.plugins.entries?.['kurumi-sightings']?.enabled === true;
   for (const row of policy.subjects) {
     if (row.kind !== 'user' || row.role === 'owner' || !row.enabled || !row.permissions['chat.use']) continue;
     const agentId = agentFor(row);
     entries[agentId] = {workspace: path.join(path.dirname(entries.main.workspace), 'users', row.qq, 'workspace'),
-      model: structuredClone(entries.main.model), tools: {profile: 'full', allow: [...MEMBER_TOOLS],
+      model: structuredClone(entries.main.model), tools: {profile: 'full',
+        allow: [...MEMBER_TOOLS, ...(sightingsEnabled && row.permissions['sightings.read'] === true ? ['kurumi_sightings'] : [])],
         deny: ['read','write','edit','apply_patch','exec','process','message','sessions_spawn','sessions_list','sessions_history','automations','kurumi_memory']}};
     cfg.bindings.unshift({agentId, match: {channel: 'kurumi-qq', accountId: 'default', peer: {kind: 'direct', id: row.qq}}});
   }

@@ -1,0 +1,10 @@
+{
+  "id": "kurumi-sightings",
+  "name": "Public browsing sightings",
+  "version": "0.1.0",
+  "description": "Read records produced by independent public browsing. No automatic cross-session imports or model writes.",
+  "activation": {"onStartup": true},
+  "contracts": {"tools": ["kurumi_sightings"]},
+  "toolMetadata": {"kurumi_sightings": {"optional": true, "replaySafe": true}},
+  "configSchema": {"type": "object", "additionalProperties": false, "properties": {}}
+}

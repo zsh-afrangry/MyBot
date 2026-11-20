@@ -13,10 +13,11 @@ export const OWNER_PERMISSIONS = Object.freeze([
   'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'e7.image', 'host.exec', 'logs.read',
   'proactive.read', 'proactive.manage', 'proactive.use', 'proactive.notify',
 ]);
-export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
+export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS, 'sightings.read']);
 export const MEMBER_TOOLS = Object.freeze(['session_status', 'web_search', 'web_fetch', 'kurumi_document', 'kurumi_translate', 'kurumi_document_send']);
 
 const DIRECT = {
+  kurumi_sightings: 'sightings.read',
   kurumi_logs:'logs.read', dispatch_action:'chat.use', tool_search: 'chat.use', tool_describe:'chat.use', tool_call:'chat.use', session_status: 'chat.use', web_search: 'search.use', web_fetch: 'search.use', exec: 'host.exec', e7_image: 'e7.image',
   personal_weather_get_brief: 'weather.read', personal_profile_state_get: 'profile.read',
   personal_profile_change_propose: 'profile.manage', personal_profile_change_commit: 'profile.manage',
