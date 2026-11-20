@@ -592,3 +592,70 @@ export async function system(ctx) {
           div('', h('small', null, label), typeof val === 'string' || val == null ? mono(val) : val)))),
       banner('配置生效', '仓库配置与运行文件各有用途。管理台的保存动作只改源文件，配置同步、重启和备份恢复由 Fusion 的运维入口执行。')));
 }
+
+const gitSubject = subject => !subject ? '（无提交信息）'
+  : subject.length > 46 ? subject.slice(0, 45) + '…' : subject;
+
+function gitCounts(data) {
+  const c = data.counts;
+  return div('summary-grid',
+    ...[['当前检出', data.current.detached ? 'detached' : data.current.branch ?? '—', data.current.head],
+      ['本地分支', c.branches], ['工作树', c.worktrees], ['detached 工作树', c.detachedWorktrees],
+      ['有改动工作树', c.dirtyWorktrees], ['未合入分支', c.unmergedBranches],
+      ['可回收工作树', c.recoverableWorktrees], ['基准分支', data.root.base, data.root.label],
+    ].map(([label, value, detail]) => div('', h('small', null, label), h('strong', null, String(value)),
+      detail ? muted(detail) : null)));
+}
+
+function gitWorktreeState(worktree) {
+  const tags = [];
+  if (worktree.main) tags.push(chip('主仓', 'rose'));
+  if (worktree.missing) tags.push(chip('目录不存在', 'red'));
+  else if (worktree.prunable) tags.push(chip('prunable', 'red'));
+  if (worktree.locked) tags.push(chip('locked', 'amber'));
+  if (worktree.merged === false) tags.push(chip('未合入 +' + (worktree.ahead ?? '?'), 'amber'));
+  if (worktree.recoverable) tags.push(chip('可回收', 'green'));
+  return tags.length ? div('tag-wall', tags) : muted('—');
+}
+
+function gitWorktreeTable(data) {
+  return table(['工作树', '检出', 'HEAD', '最近提交', '未提交', '状态'], data.worktrees.map(worktree => [
+    div('row-title', h('strong', null, worktree.label ?? '—'),
+      h('small', null, worktree.main ? '主仓库' : worktree.missing ? '检出目录已不存在' : '工作树')),
+    worktree.branch ? mono(worktree.branch) : chip('detached', 'amber'),
+    mono(worktree.head ?? '—'),
+    div('row-title', h('small', null, worktree.commit ? time(worktree.commit.at) : '无法读取'),
+      h('small', null, gitSubject(worktree.commit?.subject))),
+    worktree.dirty === null ? muted('—') : worktree.dirty ? chip(worktree.dirty + ' 个改动', 'amber') : chip('干净', 'green'),
+    gitWorktreeState(worktree),
+  ]));
+}
+
+function gitBranchTable(data) {
+  return table(['分支', 'HEAD', '相对 ' + data.root.base, '最后提交', '检出位置'], data.branches.map(branch => [
+    div('row-title', h('strong', null, branch.name), branch.current ? chip('当前', 'rose') : null),
+    mono(branch.head ?? '—'),
+    div('tag-wall', branch.merged === true ? chip('已合入', 'green')
+      : branch.merged === false ? chip('未合入 +' + (branch.ahead ?? '?'), 'amber') : muted('未知'),
+      branch.behind > 0 ? muted('落后 ' + branch.behind) : null),
+    div('row-title', h('small', null, branch.at ? time(branch.at) : '—'),
+      h('small', null, gitSubject(branch.subject))),
+    branch.worktreeLabel ? mono(branch.worktreeLabel) : muted('无检出'),
+  ]));
+}
+
+export async function git(ctx) {
+  const data = await ctx.api('/git');
+  const head = heading('运维 / 版本控制', 'Git 工作树与分支',
+    '查看主仓库的工作树、本地分支、未合入提交和未提交改动。');
+  if (!data.available) {
+    return stack(head, panel('Git 仓库', '当前源码目录无法读取 Git 状态。', empty('无法读取 Git 状态',
+      data.reason === 'git_unavailable' ? '本机没有可用的 git 命令。' : '源码目录不是 Git 仓库，或 git 无法在该目录运行。', 'warning')));
+  }
+  return stack(head,
+    banner('只读视图', '页面只执行 git 查询：不会创建工作树、切换或删除分支，也不修改仓库。“可回收”只表示干净且已合入基准分支，是否删除仍由你在终端决定。'),
+    panel('仓库摘要', data.root.label + ' · 基准分支 ' + data.root.base + ' · 读取于 ' + time(data.generatedAt, true), gitCounts(data)),
+    panel('工作树', '实时来自 git worktree list。detached 表示 HEAD 直接指向某个提交，不占分支名。' +
+      (data.counts.missingWorktrees ? ' 有检出目录已不存在，可在终端运行 git worktree prune。' : ''), gitWorktreeTable(data)),
+    panel('本地分支', '来自 refs/heads；检出位置为空表示该分支当前没有工作树。', gitBranchTable(data)));
+}

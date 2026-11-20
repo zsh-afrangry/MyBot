@@ -28,6 +28,7 @@ const icons = {
   inbox: '<path d="M4 10 7 4h10l3 6v9H4v-9Zm0 1h5l1 3h4l1-3h5"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v2"/>',
   command: '<path d="M4 6h16v12H4zm3 4 2 2-2 2m5 0h4"/>',
+  git: '<circle cx="6" cy="5" r="2.3"/><circle cx="6" cy="19" r="2.3"/><circle cx="18" cy="9" r="2.3"/><path d="M6 7.3v9.4M18 11.3c0 3.3-2.6 5.4-6 5.4H8.3"/>',
   dots: '<path d="M5 12h.01m7 0h.01m7 0h.01" stroke-width="3"/>',
 };
 

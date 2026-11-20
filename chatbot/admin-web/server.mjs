@@ -9,6 +9,7 @@ import {loadChanges} from './changes.mjs';
 import {document, inventory, serviceStatus} from './inventory.mjs';
 import {memory, operations} from './observations.mjs';
 import {logSources, parseLogQuery, queryLogs} from './logs.mjs';
+import {gitOverview} from './git.mjs';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const SESSION_AGE = 8 * 3600;
@@ -210,6 +211,7 @@ export async function createConsole({sourceRoot, runtimeRoot, stateRoot, docsRoo
       else if (method === 'GET' && /^\/api\/ops\/(cron|runs|mail|coding|reminders|papers|documents)$/u.test(p)) {
         result = operations(context, p.slice('/api/ops/'.length));
       } else if (method === 'GET' && p === '/api/audit') result = {rows: readAudit(stateRoot)};
+      else if (method === 'GET' && p === '/api/git') result = await gitOverview(context);
       else if (method === 'POST' && p === '/api/change/preview') {
         const input = await body(req);
         if (sessions.get(sessionToken) !== session || session.until < Date.now()) throw new Problem(401, '请先登录管理台。');
