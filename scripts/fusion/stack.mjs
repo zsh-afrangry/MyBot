@@ -795,7 +795,7 @@ function stripComments(text) {
 function adminWebHash() {
   const files = [
     'chatbot/admin-web/common.mjs', 'chatbot/admin-web/changes.mjs', 'chatbot/admin-web/inventory.mjs',
-    'chatbot/admin-web/observations.mjs', 'chatbot/admin-web/logs.mjs', 'chatbot/admin-web/server.mjs', 'chatbot/admin-web/package.json',
+    'chatbot/admin-web/observations.mjs', 'chatbot/admin-web/logs.mjs', 'chatbot/admin-web/git.mjs', 'chatbot/admin-web/server.mjs', 'chatbot/admin-web/package.json',
     'chatbot/admin-web/public/index.html', 'chatbot/admin-web/public/mark.svg', 'chatbot/admin-web/public/app.js',
     'chatbot/admin-web/public/pages.js', 'chatbot/admin-web/public/components.js', 'chatbot/admin-web/public/styles.css',
     'docs/33_Fusion后端Web界面.md',
