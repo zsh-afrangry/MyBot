@@ -74,7 +74,7 @@
 
 ### 运行边界
 
-- 专用 API 常驻在 `127.0.0.1:3086`，由 `knowledgemap-assistant.service` 运行，读取网站同一业务数据库和后端配置。网站 `localhost:3000` 和开发后端 `127.0.0.1:3085` 不是助手的日常依赖。`/api/health` 只证明进程存活。
+- 专用 API 常驻在 `127.0.0.1:3086`，由 `knowledgemap-assistant.service` 运行，读取网站同一业务数据库和后端配置。网站是 `knowledgemap-web.service` 的 `127.0.0.1:8020`（Tailscale 8443）；网站和助手都跑 `/home/afrangry/repository`，桌面旧副本已退役。网站 `localhost:3000` 和开发后端 `127.0.0.1:3085` 不是助手的日常依赖，3085 现在由 Fusion 管理台使用。`/api/health` 只证明进程存活。
 - 助手通过专用认证的 `/api/assistant/` 访问天气、账单、标签和共享事项，拿不到任意 HTTP、SQL 或数据库凭据，也不使用网站登录密钥；CORS 不当认证。
 
 ### 写入与查询契约

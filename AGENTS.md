@@ -29,6 +29,7 @@
 | 人格 | `node scripts/fusion/sync-persona.mjs --diff` → `--apply`（四份受管文件；可信角色选择关系，不复制记忆/历史；本机宿主下一回合加载） |
 | 身份/权限 | `node chatbot/scripts/access-control.mjs --check/--matrix`，按文档24准备独立工作区、同步配置并重启；不直接改运行名单 |
 | 领域插件 | [开发与验证](docs/9_QQ融合助手架构与开发计划.md#开发与验证)中列出的 `node --test` 与 `npm --prefix ... run build` |
+| 统一启停 / 端口清单 | 改 `config/stack.json` 或 `scripts/fusion/stack.mjs` 后跑 `node --test scripts/fusion/test/stack.test.mjs`，再用 `kurumi-stack status`、`kurumi-stack doctor` 核对 |
 | 收尾自检 | `health.mjs`、`verify-dependencies.mjs`、`sync-config.mjs`、`sync-persona.mjs` 四项全过 |
 
 配置对齐、依赖自持、服务健康只证明系统没有偏离仓库；它们**不证明**代码已提交或已推送。验收结论写明版本、真实或模拟层级、失败和未覆盖范围；重叠样本不累计为一次全项目回归。沙箱或模拟通过不等于真实模型或 QQ 往返通过。
@@ -39,11 +40,11 @@
 
 - 任何远端写入：`git push`、改远端分支或标签。
 - 停写快照与备份恢复：`backup-state.mjs --quiesce`、`restore-verify.mjs`。
-- DSH/Fusion 启停：`Start-DSH.sh` / `Stop-DSH.sh`（会停 `dsh-web.service`，只检查并保留 SnowLuma/QQ，需要 sudo 密码）。
+- 整套启停：`kurumi-stack start`、`kurumi-stack stop`（默认停管理台/Fusion/DSH，保留 QQ/SnowLuma/KnowledgeMap）、`stop --all`、`restart <组件>`（会操作 `dsh-web.service`，需要 sudo 密码；桌面点击或旧 `Start-DSH.sh`/`Stop-DSH.sh` 等价）。安装/部署：`kurumi-stack install`（含 sudo 步骤）。
 - 真实外发：`scripts/fusion/test-*.mjs` 会真实发本人 QQ、创建任务或重启服务；`testIngress` 保持关闭。
 - 清理或删除：运行目录的数据库与账本是投递对账证据，不删除、不重建。
 
-脚本能否直接运行按文件名判断：只有 `*.test.mjs`、`*.test.js`、`*.test.ts` 是离线测试，可以批量运行。`scripts/fusion/test-*.mjs` 一律需要授权。`acceptance-*`（尤其带 `live`、`model` 的）和其余运维脚本，运行前先读脚本头部注释确认副作用；会真实外发、调用付费模型或写运行目录的需要授权。
+脚本能否直接运行按文件名判断：只有 `*.test.mjs`、`*.test.js`、`*.test.ts` 是离线测试，可以批量运行。`scripts/fusion/test-*.mjs` 一律需要授权。`acceptance-*`（尤其带 `live`、`model` 的）和其余运维脚本，运行前先读脚本头部注释确认副作用；会真实外发、调用付费模型或写运行目录的需要授权。`kurumi-stack status`/`doctor`/`logs` 只读，可直接运行；`start`/`stop`/`restart`/`install` 按上一节的授权规则处理。
 
 ## 触及禁用限制时必须先告知
 

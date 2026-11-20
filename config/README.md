@@ -9,6 +9,7 @@
 | 位置 | 内容 | 是否进 Git |
 |---|---|---|
 | `config/runtime.config.json` | 运行配置的**权威副本**：模型、agent、插件、频道、工具策略、日志 | ✅ |
+| `config/stack.json` | 整套服务的统一管理清单：组件、端口、启动顺序、探针与开机策略；由 `kurumi-stack` 读取，不是运行配置 | ✅ |
 | `config/access-control.json` | QQ 身份/显式功能权限/邮件目标的唯一编辑来源；同步时编译到运行配置 | ✅ 无凭据，含已授权 QQ 与目标邮箱 |
 | `config/persona.json` | 当前角色声明（共享角色卡、按可信角色选择的关系素材、身份名、AGENTS 替换） | ✅ |
 | `config/plugins.package.json` + `config/plugins.package-lock.json` | 第三方插件清单与锁文件 | ✅ |

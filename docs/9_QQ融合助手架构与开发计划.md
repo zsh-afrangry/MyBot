@@ -1,4 +1,4 @@
-状态：开发中（运维入口可用；Cron 健康判定、整套启停与端到端复验未完成）
+状态：开发中（kurumi-stack 统一启停与开机策略 A 已落地并通过离线、边界与安装后验证；受控整套 stop/start 端到端复验待授权，Cron 健康判定未修正）
 
 # 运行维护
 
@@ -12,32 +12,52 @@
 | --- | --- |
 | 源码主仓库 | `/home/afrangry/kurumi-fusion`，保存源码和配置意图 |
 | 私有运行状态 | `/home/afrangry/.openclaw-fusion`，凭据、会话、数据库、任务状态 |
-| 共享业务 | `/home/afrangry/repository` 的 KnowledgeMap MySQL；`knowledgemap-assistant.service` 在 loopback 3086 提供 API |
+| 共享业务 | `/home/afrangry/repository` 的 KnowledgeMap MySQL；`knowledgemap-assistant.service` 在 loopback 3086 提供 API；网站由 `knowledgemap-web.service` 在 8020 提供，Tailscale 8443 转发 |
 | QQ 传输 | `/home/afrangry/snowluma`，由 `snowluma.service`、`snowluma-qq.service` 管理 |
+| DSH | `/opt/deepseek-harness`，`dsh-web.service` 在 3080，不消费 QQ |
+| 管理台 | `~/.local/share/kurumi-admin-web/<版本哈希>/`，`kurumi-admin-web.service` 在 3085 |
 | 恢复材料 | `/home/afrangry/kurumi-backups`，见[文档12](12_目录资产与Git备份整理.md) |
 
-融合助手不依赖 `/home/afrangry/.openclaw`。
+融合助手不依赖 `/home/afrangry/.openclaw`。KnowledgeMap 只保留 `/home/afrangry/repository` 一份事实源，桌面旧副本已退役。
+
+### 端口登记
+
+唯一事实源是 [`config/stack.json`](../config/stack.json)，新增端口先改清单并通过唯一性校验，再改本文；`kurumi-stack status`/`doctor` 会检查实际监听与声明是否一致。
+
+| 端口 | 组件 | 说明 |
+| --- | --- | --- |
+| 3080 | dsh | DSH Web；Tailscale Serve 443 转发 |
+| 3082 / 3083 / 3084 | snowluma | WebUI / OneBot HTTP / OneBot WS（OneBot 是 SnowLuma 的接口，不是独立进程） |
+| 3085 | admin-web | Fusion 管理台；旧文档写的 KnowledgeMap 开发后端也已停用，不再占用该端口 |
+| 3086 | km-api | KnowledgeMap 助手业务 API |
+| 8020 | km-web | KnowledgeMap 网站；Tailscale Serve 8443 转发 |
+| 18890 | fusion | OpenClaw Gateway |
+| 3306 / 27017 | mysql / mongodb | 外部 MySQL / KnowledgeMap MongoDB |
+| 3081 | — | 旧 `qq-bridge` 控制台已停用，空置 |
 
 ## 接口
 
 ### 服务
 
-- `kurumi-fusion.service`：默认助手，Gateway 监听本机 18890。模板在 `scripts/fusion/systemd/`，`Wants=` 含 SnowLuma 两个单元，`Conflicts=` 含 `qq-bridge.service` 和 `openclaw-gateway.service`。
-- `knowledgemap-assistant.service`：常驻业务 API，独立于网站开发服务器。
-- `snowluma.service`、`snowluma-qq.service`提供 QQ 传输，OneBot HTTP 发送使用本机 3083，WebSocket 接收事件使用 3084。
-- `qq-bridge.service`、`openclaw-gateway.service`：旧消费者，保持屏蔽，不与 Fusion 同时运行。
-- `dsh-web.service`：可独立运行，不消费 QQ。
-- `testIngress=false`：验收入口关闭，日常不运行真实外发的测试脚本。
+统一管理清单是 [`config/stack.json`](../config/stack.json)：9 个组件，`kind` 区分系统单元与用户单元，`order` 决定启动顺序（停止反向）。清单同时登记端口、探针、启动超时、是否需要图形会话和外部依赖。`testIngress=false`：验收入口关闭，日常不运行真实外发的测试脚本。
 
-实时的 active/enabled 状态以 `health.mjs` 为准，不以本节为准。
+- `kurumi-fusion.service`（18890）是默认助手；模板在 `scripts/fusion/systemd/`，`Wants=` SnowLuma 两单元，`Conflicts=` 旧消费者。
+- `knowledgemap-assistant.service`（3086）与 `knowledgemap-web.service`（8020，Tailscale 8443，Mongo 由 `Wants=` 拉起）都从 `/home/afrangry/repository` 运行。
+- `snowluma.service` + `snowluma-qq.service` 提供 QQ 传输（3082/3083/3084）；QQ 客户端需要图形会话 `:0`。
+- `dsh-web.service`（3080）独立运行、不消费 QQ；`kurumi-admin-web.service`（3085）是管理台安装副本，仓库改动后用 `install-admin-web.mjs` 重装。
+- `qq-bridge.service`、`openclaw-gateway.service` 是旧消费者，保持屏蔽。
+
+开机策略是 `bootPolicy: auto`：所有受管用户单元（含 MongoDB、KnowledgeMap 网站）和 DSH 都应在开机后自启，`kurumi-stack doctor` 检查实际状态。运行状态以 `kurumi-stack status` 为统一视图；QQ、Gateway、Cron、数据库的语义健康仍以 `health.mjs` 为准，`status` 会内嵌它的摘要。
 
 ### 日常操作
 
-在 `/home/afrangry/kurumi-fusion` 执行，按当前任务选一组。
+在 `/home/afrangry/kurumi-fusion` 执行，按当前任务选一组。跨模块链路还原见[文档18](18_跨模块链路日志查询.md)。
 
 #### 只读检查（日常自检）
 
 ```bash
+kurumi-stack status                       # 统一状态表（含 health.mjs 摘要）
+kurumi-stack doctor                       # 单元、开机策略、部署漂移、转发、端口冲突
 node scripts/fusion/health.mjs            # 运行连接、服务、数据库、Cron、旧消费者、testIngress
 node scripts/fusion/verify-dependencies.mjs   # 依赖与批准版本
 node scripts/fusion/sync-config.mjs       # 配置意图与运行配置是否一致（默认只读）
@@ -46,7 +66,7 @@ systemctl --user status kurumi-fusion.service snowluma.service snowluma-qq.servi
 journalctl --user -u kurumi-fusion.service -n 100 --no-pager
 ```
 
-这四项只证明检查时的运行与对齐状态，不证明 Git 已提交推送，也不证明人格体验或业务端到端成功。`health.mjs` 不发 QQ、不创建任务。QQ 断线先看 SnowLuma/QQ 服务和在线状态，不重启旧 bridge。当前配置的滚动 24 小时 500 条额度按发送预留计数，含失败和未知回执，不能靠清空历史绕过。
+这些检查只证明检查时的运行与对齐状态，不证明 Git 已提交推送，也不证明人格体验或业务端到端成功。`health.mjs` 不发 QQ、不创建任务。QQ 断线先看 SnowLuma/QQ 服务和在线状态，不重启旧 bridge。当前配置的滚动 24 小时 500 条额度按发送预留计数，含失败和未知回执，不能靠清空历史绕过。
 
 #### 配置同步
 
@@ -60,54 +80,91 @@ node scripts/fusion/sync-persona.mjs --apply
 
 运行配置变更后要重启服务。只改四份受管人格文件时，宿主下一回合加载。身份登记有工作区准备顺序，见[文档24](24_统一身份与权限管理.md)。受管键、删除语义和凭据入口见[配置契约](../config/README.md)。行为模板 `scripts/fusion/templates/AGENTS.md` 改后按这个流程投影到运行 workspace。
 
-#### 服务启停
+#### 统一启停（kurumi-stack）
 
-这些命令会改变服务状态，按本次授权执行。
-
-```bash
-systemctl --user restart kurumi-fusion.service
-systemctl --user stop kurumi-fusion.service
-systemctl --user start kurumi-fusion.service
-```
-
-停服务要用 `stop`，只杀子进程会被 Restart 策略拉起。`run-gateway.mjs` 是前台入口，日常不与 systemd 并开。`install-service.mjs` 会禁用旧助手并启用融合，只用于明确的切换。
-
-#### DSH 与融合栈统一启停
+入口：`~/.local/bin/kurumi-stack`（仓库源 `scripts/fusion/stack.mjs`），桌面「Kurumi 栈」图标等价于 `kurumi-stack start`。调试单个单元仍可用 `systemctl --user restart kurumi-fusion.service`；`run-gateway.mjs` 是前台入口，日常不与 systemd 并开；`install-service.mjs` 只用于明确的旧助手切换。安装（每台机器一次）：
 
 ```bash
-cd /opt/deepseek-harness
-./Start-DSH.sh
-./Stop-DSH.sh
+kurumi-stack install            # 安装命令/桌面快捷方式、启用用户单元自启、更新 /opt 启动器
+kurumi-stack install --no-sudo  # 只做用户级步骤，打印待执行的 sudo 命令
 ```
 
-脚本直接操作 DSH 和融合助手。QQ 传输由独立单元管理，Fusion 的 `Wants=` 可以在启动时拉起依赖单元。
+`install` 的系统级步骤需要 sudo 密码：`systemctl enable dsh-web.service`，以及把仓库里的 `Start-DSH.sh`/`Stop-DSH.sh` 部署到 `/opt/deepseek-harness/`。脚本不保存密码；没有终端时只打印命令，不会卡住。
 
-| 动作 | Start | Stop |
-| --- | --- | --- |
-| `dsh-web.service`（系统） | 启动 | 停止 |
-| `kurumi-fusion.service`（用户） | 启动 | 先停止 |
-| `snowluma`、`snowluma-qq` | 脚本检查状态，允许 systemd 按 `Wants=` 拉起 | 脚本不停止 |
-| 旧 `qq-bridge`、`openclaw-gateway` | 由 `Conflicts=` 停止 | 不单独操作 |
-
-- `snowluma-qq` 重启后须等客户端更新、登录和协议会话恢复，耗时无固定保证；期间 3083/3084 可能不监听，日常重启 Fusion 不会要求重启已运行的 QQ 服务。
-- Start 的退出码包含 QQ 状态：QQ 传输未运行时以非零退出。这是“未就绪”，不是“启动失败”，此时融合助手可能已经在跑。
-- Stop 之后助手不可用，QQ 通道仍在，停机期间没有融合回复。
-- Start 会等待健康检查，失败以非零退出并显示原因，可以重复执行。状态摘要包含 DSH 3080、Fusion 18890、SnowLuma WebUI 3082、OneBot HTTP 3083、OneBot WS 3084 和 QQ 在线状态，由 `scripts/fusion/stack-summary.mjs` 生成。Start 另显示可用的 DSH 入口，该入口可能包含认证信息。`--verbose` 看完整健康 JSON。Stop 的默认输出区分“已停止”和“已停止，退出状态异常”，`--verbose` 显示原始 ActiveState/Result。SnowLuma 曾超过停止期限被 SIGKILL，所以要看 `ActiveState` 和 `Result`，不能把“进程停止”当作“正常退出”。
-- 脚本源在 `scripts/fusion/launchers/`，实际入口在 `/opt/deepseek-harness/`（所有者 `dsh:dsh`，权限 755）。改了源文件必须同步到实际入口，否则以部署副本为准。脚本不保存 sudo 密码。
-
-### 跨模块链路查询
-
-还原一轮 QQ 对话用只读入口 `chatbot/scripts/log-query.mjs`，规则见[文档18](18_跨模块链路日志查询.md)：
+日常命令：
 
 ```bash
-node chatbot/scripts/log-query.mjs --message-id=<QQ消息ID>
-node chatbot/scripts/log-query.mjs --proposal-id <提案ID> --json
-node chatbot/scripts/log-query.mjs --source papers --contains <job_ID> --json
+kurumi-stack status          # 服务、端口、自启、QQ 在线一张表
+kurumi-stack start           # 收敛：健康组件只检查，异常退出/未运行的才拉起
+kurumi-stack start --repair  # 允许重启“运行中但探针异常”的组件
+kurumi-stack stop            # 默认停管理台、Fusion、DSH；保留 QQ/SnowLuma/KnowledgeMap
+kurumi-stack stop --all      # 停整套（保留 MySQL 外部依赖；KM 网站停后 8443 暂时指向关闭端口）
+kurumi-stack stop --dry-run  # 预览停止顺序与各组件状态，不执行
+kurumi-stack start --dry-run # 预览本次会拉起哪些组件
+kurumi-stack restart <组件>   # 显式重启单个组件
+kurumi-stack logs <组件> [-f] # journalctl；同时提示 SnowLuma/Fusion 的文件日志位置
+kurumi-stack doctor          # 只读诊断：单元、开机策略、部署漂移、转发、端口冲突
 ```
 
-没有消息 ID 时给明确的 `--from`/`--to`，无时区的时间按 `Asia/Shanghai`。查询不调用 Gateway、OneBot、模型或 Cron，输出可能含私聊正文，不提交到 Git。
+`/opt/deepseek-harness/Start-DSH.sh` 和 `Stop-DSH.sh` 是兼容入口的薄 wrapper，分别等价于 `kurumi-stack start` / `stop`。
+
+`start` 的边界（不是 restart-all）：
+
+| 组件状态 | `start` 的行为 |
+| --- | --- |
+| active 且端口/探针正常 | 只检查，不重启 |
+| active 但探针异常 | 先等宽限时间；仍异常只报告，不自动重启（`--repair` 或 `restart` 才重启） |
+| failed（异常退出） | `reset-failed` 后拉起 |
+| inactive（干净停止） | 拉起（点击启动即表示要求它运行） |
+| activating / deactivating | 等待到稳定状态，不重复启动 |
+| 外部依赖（MySQL） | 只检查，永不启停 |
+| 无图形会话时的 SnowLuma/QQ | 不启动，报告需要 `:0` |
+| 未运行但端口被未知进程占用 | 拒绝启动该组件，避免双实例 |
+
+退出码：`0` = 所有组件健康且语义自检通过；`1` = 有失败、降级或语义自检未通过；`2` = 用法/清单错误。`start` 结束会打印本机/Tailscale 入口（DSH、KnowledgeMap、SnowLuma WebUI、管理台），只在终端输出，不写入日志。
+
+`stop` 先确认 sudo 可用（DSH 是系统单元）；无终端或密码不可用时整次停止不执行，避免只停一半。默认 `stop` 之后 QQ 通道仍在线、KnowledgeMap 网站仍在，消息可以排队；`--all` 才是整套停机。
+
+`snowluma-qq` 重启后须等客户端更新、登录和协议会话恢复，耗时无固定保证；期间 3083/3084 可能不监听。日常重启 Fusion 或 DSH 不会要求重启已运行的 QQ 服务。
+
+`start` 会等待各组件的探针就绪，再跑一次 `health.mjs`；重复执行是幂等的，第二次不会改变健康组件的启动时间。
+
+#### 日常使用速查
+
+| 场景 | 命令 |
+| --- | --- |
+| 看一眼是否正常 | `kurumi-stack status`（全好时退出码 0） |
+| 点一下自检/拉起（桌面图标同此） | `kurumi-stack start` |
+| 运行中但怀疑异常 | `kurumi-stack doctor` → `kurumi-stack restart <组件>` |
+| 允许重启运行中但探针异常的 | `kurumi-stack start --repair` |
+| 只操作指定组件 | `kurumi-stack start --only=fusion,admin-web` |
+| 临时下班（消息可排队） | `kurumi-stack stop` |
+| 整套停机维护 | `kurumi-stack stop --all` |
+| 看日志 | `kurumi-stack logs <组件> [-f]` |
+| 改过启动器后重新部署 | `kurumi-stack install` |
+
+本机入口（`start` 在终端结束时也会打印；DSH token 和 KnowledgeMap 口令随之输出）：
+
+| 服务 | 入口 |
+| --- | --- |
+| DSH | `http://127.0.0.1:3080/`（带 token 的链接以 `start` 输出为准） |
+| KnowledgeMap | `http://127.0.0.1:8020/`（口令在 `~/.local/state/knowledgemap-launcher/web.json`） |
+| SnowLuma WebUI | `http://127.0.0.1:3082/` |
+| Fusion 管理台 | `http://127.0.0.1:3085/`（口令：`cat ~/.local/state/kurumi-admin-web/access-key`） |
+
+只读命令（`status`、`doctor`、`logs`、`--dry-run`）可直接运行；`start`、`stop`、`restart`、`install` 会改变服务或系统状态，助手代跑前需要主人授权，见 [AGENTS.md](../AGENTS.md#需要单独授权的操作)。
 
 ## 原理
+
+### 统一管理（清单 + 收敛式启停）
+
+systemd 仍是唯一 supervisor，不引入 Docker 或 pm2。`config/stack.json` 是组件、端口、探针、启动顺序和开机策略的唯一声明；`scripts/fusion/stack.mjs` 只做编排，不复制服务逻辑。判断组件状态时组合四种事实：`systemctl show` 的 ActiveState/UnitFileState、`ss` 的实际监听端口、回环 HTTP/TCP 探针、`health.mjs` 的语义检查。
+
+`start` 是收敛而不是 restart-all：健康组件只检查；failed 的 `reset-failed` 后拉起；inactive 的拉起；运行中但探针异常的只报告，`--repair` 才重启。这样避免“点一下启动把正在初始化或降级的组件全部打断”。只通过 systemd 操作进程，不 kill；单元未运行而端口已被占用时拒绝启动，避免双实例；外部 MySQL 只检查。sudo 只在真实终端请求一次，不保存密码；无终端时转为待执行命令。
+
+开机策略 A：清单里 `boot.enabled` 的受管单元都要 enable，DSH 也不例外；`doctor` 对照清单与实际 UnitFileState，因此漏启用会被发现。`install` 负责安装命令/桌面快捷方式和用户单元；系统级三步（启用 DSH、部署 `/opt` 启动器）在终端里由 sudo 完成。
+
+KnowledgeMap 只保留 `/home/afrangry/repository` 为事实源；启动器改为写持久用户单元（不再 `systemd-run` 临时单元），已存在的 8443 转发在指向本服务时保留，避免每次启动都请求 sudo。迁移用一次 `--adopt`。管理台是独立安装副本，`doctor` 对比安装版本与 main 的哈希；安装版来自未合并分支时按警告展示，不自动降级。
 
 ### 诊断日志与保留
 
@@ -157,6 +214,9 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 - 共享业务的 MySQL 不在 Fusion 备份里，见[文档12](12_目录资产与Git备份整理.md)和[文档23](23_KnowledgeMap业务能力桥接.md)。
 - `health.mjs` 会列出 Cron 最后失败，但尚未把它加入 `issues`，可能同时出现 Cron error 与 `ok=true`。须核对执行、冻结正文和送达账本，不能仅凭总状态判播报成功。
 - **QQ 客户端异常退出后，协议会话长时间不恢复（低优先级，未立项修复）。** QQ 客户端崩溃后，systemd 拉起进程到 OneBot 恢复监听曾相隔约两小时二十五分。Fusion 在端口不可用期间退避重连，重连间隙的入站可能丢失，Cron 投递可能失败。崩溃与会话延迟的根因均待查，进程状态需要结合 OneBot 在线状态和真实往返判断。复查用 SnowLuma 和 Fusion 的日志。
+- 管理台当前安装副本来自未合并分支 `dsh-eb157d61-6417`（新增 Git 工作树与分支只读页面），与 main 的安装哈希不同；`doctor` 按警告展示。是否合并进 main 或按 main 重新安装，由主人决定。
+- KnowledgeMap 桌面旧副本已退役（移入回收站）；网站与助手 API 都跑 `/home/afrangry/repository` 同一份代码和同一个 MySQL 库，数据没有迁移动作。
+- `sync-config --diff` 仍报告 2 个私聊防抖键未同步（见[文档32](32_QQ渠道与SnowLuma.md)），与本次启停改动无关，按对应需求的部署流程处理。
 - **SnowLuma 群申请扫描反复超时（低优先级，根因未定）。** 轮询器等 QQ 协议应答的默认超时为 15 秒。一次扫描结束后再等 15 秒，因此持续超时时约每 30 秒记录一次失败。部分群申请依赖轮询补齐，影响私聊的程度待评估，Fusion 群聊关闭。
 
 ## 如何验证
@@ -183,6 +243,7 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 | 邮件与论文 Node 层 | `node --test chatbot/plugins/kurumi-mail/test/*.test.js chatbot/tests/papers/*.test.mjs` |
 | 论文 Python 层 | `python3 chatbot/tests/papers/responses_test.py`；`/home/afrangry/.openclaw-fusion/venvs/paper-translation/bin/python chatbot/tests/papers/engine_test.py` |
 | 恢复工具 | `node --test scripts/fusion/test/recovery.test.mjs` |
+| 统一启停 | `node --test scripts/fusion/test/stack.test.mjs`；`kurumi-stack status` / `doctor` |
 
 哪些脚本可以直接运行，见 [AGENTS.md](../AGENTS.md#需要单独授权的操作)。`scripts/fusion/test-*.mjs` 会真实发 QQ、创建任务或重启服务，不能当离线测试批量运行。
 
@@ -190,5 +251,7 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 
 ## 进行中：运行与端到端复验
 
+- 系统级安装已于 2026-11-21 完成：`dsh-web.service` 已开机自启，`/opt/deepseek-harness/` 的 Start/Stop 已换成 kurumi-stack wrapper，`doctor` 不再有失败项。
+- 受控 `kurumi-stack stop` → `start` 的整套端到端复验（DSH/Fusion 启停、QQ 真实往返、Cron 投递）需要主人明确授权后执行；目前只验证了“健康组件不重启、干净停止的管理台才被拉起”的边界，没有停止 DSH/Fusion。
+- 管理台安装副本与 main 不一致的处理（合并分支或重新安装）由主人决定。
 - 修正 Cron 失败的健康判定；播报生成与技术错误外发的缺口归[文档23](23_KnowledgeMap业务能力桥接.md#限制与已知问题)。
-- 整套 DSH 启停和后台模型 90 秒严格断言待复验。会话归档产品的保留、导出和恢复策略另待决定。
