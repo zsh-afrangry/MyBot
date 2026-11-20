@@ -20,7 +20,7 @@ Kurumi 同时提供角色陪伴和工作协助。管理台让主人从浏览器�
 
 - `http://127.0.0.1:3085/`，用户服务 `kurumi-admin-web.service`；相邻的 DeepSeek Harness（3080）、SnowLuma（3082）、KnowledgeMap 网站（8020）和助手 API（3086）由 `kurumi-stack` 统一管理，状态用 `kurumi-stack status` 查看。管理台是独立安装副本，仓库改动后用安装脚本更新。
 - 首次启动创建 `~/.local/state/kurumi-admin-web/access-key`（0600）。在本机终端运行 `cat ~/.local/state/kurumi-admin-web/access-key`，把内容粘贴到登录页。同目录保存管理台的变更摘要。
-- 安装或更新：`/usr/bin/node scripts/fusion/install-admin-web.mjs`，随后 `systemctl --user restart kurumi-admin-web.service`。脚本只安装管理台代码和自己的用户服务，默认以主仓库为配置来源。可用 `--source`、`--runtime`、`--port` 显式选择目标。当前运行副本可能来自尚未合并的分支；`kurumi-stack doctor` 会对比安装哈希并提示。
+- 安装或更新：`/usr/bin/node scripts/fusion/install-admin-web.mjs`，随后 `systemctl --user restart kurumi-admin-web.service`。脚本只安装管理台代码和自己的用户服务，默认以主仓库为配置来源。可用 `--source`、`--runtime`、`--port` 显式选择目标。`kurumi-stack doctor` 会对比安装副本与 main 的哈希，不一致时提示重新安装。
 
 ## 原理
 

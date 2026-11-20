@@ -1,4 +1,4 @@
-状态：开发中（kurumi-stack 统一启停与开机策略 A 已落地并通过离线、边界与安装后验证；受控整套 stop/start 端到端复验待授权，Cron 健康判定未修正）
+状态：开发中（kurumi-stack 统一启停、开机策略 A 与受控整套 stop/start 复验已通过；Cron 健康判定未修正）
 
 # 运行维护
 
@@ -164,7 +164,7 @@ systemd 仍是唯一 supervisor，不引入 Docker 或 pm2。`config/stack.json`
 
 开机策略 A：清单里 `boot.enabled` 的受管单元都要 enable，DSH 也不例外；`doctor` 对照清单与实际 UnitFileState，因此漏启用会被发现。`install` 负责安装命令/桌面快捷方式和用户单元；系统级三步（启用 DSH、部署 `/opt` 启动器）在终端里由 sudo 完成。
 
-KnowledgeMap 只保留 `/home/afrangry/repository` 为事实源；启动器改为写持久用户单元（不再 `systemd-run` 临时单元），已存在的 8443 转发在指向本服务时保留，避免每次启动都请求 sudo。迁移用一次 `--adopt`。管理台是独立安装副本，`doctor` 对比安装版本与 main 的哈希；安装版来自未合并分支时按警告展示，不自动降级。
+KnowledgeMap 只保留 `/home/afrangry/repository` 为事实源；启动器改为写持久用户单元（不再 `systemd-run` 临时单元），已存在的 8443 转发在指向本服务时保留，避免每次启动都请求 sudo。迁移用一次 `--adopt`。管理台是独立安装副本，`doctor` 对比安装版本与 main 的哈希；不一致时提示重新安装，不自动降级。
 
 ### 诊断日志与保留
 
@@ -214,11 +214,18 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 - 共享业务的 MySQL 不在 Fusion 备份里，见[文档12](12_目录资产与Git备份整理.md)和[文档23](23_KnowledgeMap业务能力桥接.md)。
 - `health.mjs` 会列出 Cron 最后失败，但尚未把它加入 `issues`，可能同时出现 Cron error 与 `ok=true`。须核对执行、冻结正文和送达账本，不能仅凭总状态判播报成功。
 - **QQ 客户端异常退出后，协议会话长时间不恢复（低优先级，未立项修复）。** QQ 客户端崩溃后，systemd 拉起进程到 OneBot 恢复监听曾相隔约两小时二十五分。Fusion 在端口不可用期间退避重连，重连间隙的入站可能丢失，Cron 投递可能失败。崩溃与会话延迟的根因均待查，进程状态需要结合 OneBot 在线状态和真实往返判断。复查用 SnowLuma 和 Fusion 的日志。
-- 管理台当前安装副本来自未合并分支 `dsh-eb157d61-6417`（新增 Git 工作树与分支只读页面），与 main 的安装哈希不同；`doctor` 按警告展示。是否合并进 main 或按 main 重新安装，由主人决定。
 - KnowledgeMap 桌面旧副本已退役（移入回收站）；网站与助手 API 都跑 `/home/afrangry/repository` 同一份代码和同一个 MySQL 库，数据没有迁移动作。
 - **SnowLuma 群申请扫描反复超时（低优先级，根因未定）。** 轮询器等 QQ 协议应答的默认超时为 15 秒。一次扫描结束后再等 15 秒，因此持续超时时约每 30 秒记录一次失败。部分群申请依赖轮询补齐，影响私聊的程度待评估，Fusion 群聊关闭。
 
 ## 如何验证
+
+### 整套启停复验
+
+```bash
+kurumi-stack stop && kurumi-stack start   # 需要 sudo 密码
+```
+
+2026-11-21 通过：DSH、Fusion、管理台重启，QQ/SnowLuma/KnowledgeMap 保持运行；重启后 `doctor` 15 项 / 0 警告，`health.mjs` 全绿（QQ 在线、频道已连接）。停机窗口内没有制造真实 QQ 入站，消息排队行为未做真人往返验证。
 
 ### 开发与验证
 
@@ -250,7 +257,4 @@ PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global opencla
 
 ## 进行中：运行与端到端复验
 
-- 系统级安装已于 2026-11-21 完成：`dsh-web.service` 已开机自启，`/opt/deepseek-harness/` 的 Start/Stop 已换成 kurumi-stack wrapper，`doctor` 不再有失败项。
-- 受控 `kurumi-stack stop` → `start` 的整套端到端复验（DSH/Fusion 启停、QQ 真实往返、Cron 投递）需要主人明确授权后执行；目前只验证了“健康组件不重启、干净停止的管理台才被拉起”的边界，没有停止 DSH/Fusion。
-- 管理台安装副本与 main 不一致的处理（合并分支或重新安装）由主人决定。
 - 修正 Cron 失败的健康判定；播报生成与技术错误外发的缺口归[文档23](23_KnowledgeMap业务能力桥接.md#限制与已知问题)。
