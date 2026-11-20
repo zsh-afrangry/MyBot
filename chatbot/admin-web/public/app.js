@@ -4,7 +4,7 @@ import * as pages from './pages.js';
 const navigation = [
   ['工作台', [['overview', '总览', 'home'], ['modules', '项目地图', 'layers']]],
   ['角色与数据', [['persona', '人格与关系', 'soul'], ['memory', '记忆', 'memory'], ['access', '身份与白名单', 'shield']]],
-  ['运行维护', [['tasks', '任务与调度', 'task'], ['logs', '链路日志', 'logs'], ['system', '运行配置', 'system']]],
+  ['运行维护', [['tasks', '任务与调度', 'task'], ['logs', '链路日志', 'logs'], ['git', 'Git 工作树与分支', 'git'], ['system', '运行配置', 'system']]],
 ];
 const app = document.querySelector('#app');
 const sessionKey = 'kurumi-admin-session';
