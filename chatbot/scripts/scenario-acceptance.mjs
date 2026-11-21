@@ -43,6 +43,8 @@ const scenarios = {
   'access-exec': admin('exec_root', '普通目录写入范围同步与撤权', ['Landlock']),
   'access-project': admin('coding_project', '项目准入、检查预设与历史任务', ['Landlock', 'Git']),
   'qq-feedback': {target:'isolated', file:'acceptance/acceptance-qq-feedback-host.mjs', workload:'QQ 私聊分段受理、引用回认和主人查询', timeoutMs:90000},
+  'qq-evidence-gaps': {target:'isolated',file:'acceptance/test-evidence.mjs',
+    args:['chatbot/tests/log-query/qq-evidence.test.mjs'],workload:'QQ 业务证据的缺失、故障、时间范围和相邻告警',timeoutMs:30000},
   'daily-feedback': {target:'isolated', file:'acceptance/acceptance-daily-feedback-host.mjs',
     workload:'空清单跳过、天气取数失败后 QQ 受理与计划时刻回查',
     requires:['KnowledgeMap FastAPI/SQLite test server'], timeoutMs:160000},

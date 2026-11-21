@@ -298,7 +298,8 @@ export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   }
   if (args.qqEvidence) {
     const channelEvents = collectEvents({from,to,runtimeRoot,sources:['channel-delivery']});
-    const result = qqEvidence({...args,runtimeRoot,from,to,channelEvents,limit:Number(args.limit??10),offset:Number(args.offset??0)});
+    const runtimeEvents = collectEvents({from,to,runtimeRoot,sources:['openclaw-runtime']});
+    const result = qqEvidence({...args,runtimeRoot,from,to,channelEvents,runtimeEvents,limit:Number(args.limit??10),offset:Number(args.offset??0)});
     console.log(JSON.stringify(result,null,2));return 0;
   }
   if(args.snapshot){const value=stateSnapshot(runtimeRoot,args.snapshot,{expand:args.expand,now});console.log(JSON.stringify(args.noText?noTextProjection(value):value,null,2));return 0;}
