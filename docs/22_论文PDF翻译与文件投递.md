@@ -1,4 +1,4 @@
-状态：已完成（2026-11-20，主人整篇与成员真人链路验收）
+状态：已完成（2026-11-22，逐份交付反馈隔离验收）
 
 # 论文 PDF 翻译与文件投递
 
@@ -23,6 +23,8 @@
 | `kurumi_translate` | `start`/`status`/`list`/`cancel`，使用真实 `documentId`/`jobId`。返回排队不代表完成 | `papers.translate`、`papers.read`、`papers.cancel` |
 | `kurumi_document_send` | 只接受受管文档或产物 ID，投递给可信请求人自己的 QQ。不接收路径、URL 或其他收件人 | 见[文档24](24_统一身份与权限管理.md) |
 
+用 `kurumi_translate(action=status, jobId)` 查看每份译稿的登记结果和该任务的自动投递。用 `kurumi_document(action=get, documentId)` 回查单个产物的投递和草稿记录。两处均返回 `feedback`。QQ 上传历史和邮件草稿各最多返回最近 10 条匹配记录，更多记录以 `truncated` 标示。
+
 只有题名时先 `find`，无命中再用 `web_search` 找准确 URL 后 `fetch`。论文正文、文件名、网页不是身份或授权来源。 服务端参数取自受管配置，模型不能传端点、密钥、命令、并发、预算或超时；原生 exec 的受管文件边界见[文档28](28_本机编码工具委托与实验任务.md#主人原生exec)。
 
 ### 默认与登记组合
@@ -43,6 +45,7 @@
 | 配置键 | 源码缺省 | 生产值 | 范围与含义 |
 | --- | --- | --- | --- |
 | `liveTranslationEnabled` | false | true | 付费翻译开关 |
+| `feedbackActions` | 三项启用 | 沿用默认 | 分别选择 `paper.translate`、`paper.qq_upload`、`paper.mail_draft` |
 | `maxPages` | 30 | 50 | 1–500，本次页数上限，超限须明确页码，不截页 |
 | `maxRequests` | 300 | 300 | 1–2000，所有实际 API 尝试共同计数 |
 | `maxReportedTokens` | 150000 | 600000 | 100–2000000，整篇已报告 token 预算，不是金额硬上限 |
@@ -112,8 +115,8 @@ flowchart LR
 - 追踪事件 `paper.qq_receive`（类型、状态、错误码、成功 ID）和 `paper.qq_ingress_route`（是否派发模型）可按 QQ 消息 ID 查询，不记文件名、正文和签名 URL。查询见[文档18](18_跨模块链路日志查询.md)。
 - 任务状态：queued → running → succeeded / failed / cancelled / interrupted。会话 ID 和调用 ID 生成幂等键，同键不同参数拒绝，重放不再付费。
 - 投递状态与任务状态分开：`not_requested`、`dispatching`、`platform_accepted`、`failed_or_unknown`。succeeded 只表示产物已登记。Gateway 重启时未完成任务标为 interrupted，遗留的 dispatching 标为 `failed_or_unknown`，都不自动重译、不自动重发。
-- QQ 文件上传经过 QQ 插件的发送配额和持久账本。OneBot 上传回执没有 `message_id` 时不伪造。回执未知的由本人决定是否重新投递。
-- 邮件只消费受管文档或产物 ID，源文件变化、草稿快照和确认完整性见[文档20](20_邮件能力与横切扩展.md)。
+- QQ 按任务和产物类别定位本轮自动上传，按产物 ID 查询文件的上传历史。已受理、明确拒绝及回执未知各自显示。缺少文件关联的旧记录只展示可核实的事实。当前 QQ 文件回执只证明平台受理，客户端送达和已读仍为未知。
+- 邮件草稿按冻结附件中的产物 ID 关联。仅有 `mail.history` 和 `email_outbox` 的主人可看草稿 ID 和创建时间。草稿是否已送交 SMTP 可用邮件回执核对。 [文档20](20_邮件能力与横切扩展.md)
 
 ### 受管 PDF 重命名
 
@@ -181,6 +184,7 @@ flowchart LR
 
 ```bash
 /usr/bin/node --test chatbot/tests/papers/*.test.mjs
+node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario paper-feedback
 python3 chatbot/tests/papers/responses_test.py
 python3 chatbot/tests/papers/concurrency_test.py
 python3 chatbot/tests/papers/reliability_test.py
@@ -191,5 +195,7 @@ python3 chatbot/tests/papers/trace.test.py
 ```
 
 版本 `869faf9` 的真实验收：主人 34 页整篇以官方 DeepSeek Flash/high 完成并确认 QQ 收件，已报告用量 312,409 / 600,000 tokens、272 次请求，无校验重试、渠道失败或用量未知；成员单页及复用缓存的 23 页整篇收件通过。全文与公式质量、MAX、改名及长期体验不在此结论内。
+
+交付反馈场景使用模拟翻译器、回环 OneBot 和真实邮件草稿工具，覆盖两份生成、一份受理、另一份回执丢失并关联草稿，以及重启后的只读回查。
 
 `chatbot/tests/papers/` 下的 `acceptance-*` 脚本不是离线测试。其中 `acceptance-host.mjs`、`acceptance-file-ingress.mjs`、`acceptance-api.py`、`acceptance.mjs` 会访问公开站点、调用真实模型或付费翻译 API，`acceptance.mjs` 加 `--send-qq` 或 `--send-mail` 才向本人外发；`acceptance-download.mjs` 只访问公开论文站点并校验 PDF，不调用模型和外发；`acceptance-worker.mjs`、`acceptance-notification-host.mjs` 只起隔离进程，不用凭据或外发。运行前先读脚本头部注释并取得授权，每次用新的 `--out`，不自动续跑付费任务。

@@ -3,7 +3,7 @@ import {sendDocument as uploadDocument} from './files.js';
 import {sendImage, sendPayload} from './transport.js';
 
 export {account, CHANNEL, ownerAuthorized, ownerTarget, token} from './config.js';
-export {qqFileUrl, sendDocument, stagePdf, traceFile} from './files.js';
+export {qqFileUrl, readDocumentDeliveries, sendDocument, stagePdf, traceFile} from './files.js';
 export {Ledger} from './ledger.js';
 export {presentForQQ} from './presentation.js';
 export {localImage, onebot, sendImage, sendPayload, sendSegments} from './transport.js';

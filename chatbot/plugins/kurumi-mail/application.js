@@ -4,10 +4,9 @@
 // service. Nothing here imports a concrete store: the confirmation backend, the tools and the
 // acceptance script all receive `openStore` from this object, so replacing the store is a matter of
 // registering another implementation rather than editing callers.
-import { homedir } from "node:os";
-import { join, resolve } from "node:path";
 import { createMailRegistry } from "./adapters.js";
 import { createMailService } from "./service.js";
+export { mailStateDirectory, openClawStateDirectory } from "../../packages/mail-state/index.js";
 
 /** Environment keys, expanded from runtime-env.json by run-gateway.mjs. */
 export const ENV_USER = "KURUMI_MAIL_USER";
@@ -16,14 +15,6 @@ export const ENV_HOST = "KURUMI_MAIL_HOST";
 export const ENV_PORT = "KURUMI_MAIL_PORT";
 const DEFAULT_HOST = "smtp.qq.com";
 const DEFAULT_PORT = 465;
-
-export function openClawStateDirectory(env = process.env) {
-  return env.OPENCLAW_STATE_DIR?.trim() ? resolve(env.OPENCLAW_STATE_DIR) : join(homedir(), ".openclaw-fusion");
-}
-
-export function mailStateDirectory(env = process.env) {
-  return join(openClawStateDirectory(env), "state", "kurumi-mail");
-}
 
 /** Read configuration without ever exposing the authorization code. */
 export function readMailConfig(env = process.env) {

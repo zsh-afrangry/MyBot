@@ -10,6 +10,10 @@
       "root": {"type": "string"},
       "python": {"type": "string"},
       "credentialsFile": {"type": "string"},
+      "feedbackActions": {
+        "type": "array", "uniqueItems": true,
+        "items": {"type": "string", "enum": ["paper.translate", "paper.qq_upload", "paper.mail_draft"]}
+      },
       "liveTranslationEnabled": {"type": "boolean", "default": false},
       "maxPages": {"type": "integer", "minimum": 1, "maximum": 500, "default": 30},
       "maxRequests": {"type": "integer", "minimum": 1, "maximum": 2000, "default": 300},

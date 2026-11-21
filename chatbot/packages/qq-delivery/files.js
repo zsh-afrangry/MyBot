@@ -1,4 +1,7 @@
 // Authorized private PDF ingress/egress, sharing the managed document catalog. Contract: docs/22.
+import {existsSync} from 'node:fs';
+import path from 'node:path';
+import {DatabaseSync} from 'node:sqlite';
 import {Documents, documentRoot, MAX_PDF_BYTES, inspectPdf} from '../documents/index.js';
 import {account} from './config.js';
 import {onebot} from './transport.js';
@@ -84,16 +87,61 @@ export async function stagePdf(segment, cfg, {subjectId, signal, apiCall = onebo
     },
   });
 }
+const filePrefix = (account, peer) => peer === account.ownerId ? 'pdf:' : 'pdf:subject:' + peer + ':';
+
+function fileAttempt(row, prefix, documentId) {
+  let data;
+  try { data = JSON.parse(row.message_id); } catch {}
+  if (data?.documentId && data.documentId !== documentId) return undefined;
+  const job = /^(job_[a-f0-9]{24}):(dual|mono)$/u.exec(row.id.slice(prefix.length));
+  const accepted = row.status === 'sent' && data?.documentId === documentId &&
+    data.channel === 'kurumi-qq' && data.status === 'platform_accepted';
+  const platformStatus = accepted ? 'accepted' : row.status === 'failed' ? 'rejected' : 'unknown';
+  return {
+    platformStatus, attemptedAt: new Date(row.at).toISOString(),
+    source: job ? 'translation_job' : 'file_upload',
+    ...(job && {jobId: job[1], kind: job[2]}),
+    ...(accepted && data.fileId != null && {fileId: data.fileId}),
+  };
+}
+
+/** Read existing upload receipts for one authorized artifact, including explicitly requested resends. */
+export function readDocumentDeliveries({cfg, to, documentId, key}) {
+  const a = account(cfg), peer = targetSubject(to, cfg, 'papers.read').qq;
+  const prefix = filePrefix(a, peer);
+  const file = path.join(a.stateDir, 'channel.sqlite');
+  if (!existsSync(file)) return {attempts: [], truncated: false};
+  const db = new DatabaseSync(file, {readOnly: true});
+  try {
+    // File rows store a JSON reference in the receipt field. Legacy sent rows already
+    // contain the ID. Pre-upgrade unresolved automatic rows can be joined by the job key.
+    const rows = db.prepare(`
+      SELECT id, status, message_id, at FROM outbound
+      WHERE id GLOB ? AND id NOT GLOB ?
+        AND CASE WHEN json_valid(message_id) THEN json_extract(message_id, '$.documentId') END = ?
+      ORDER BY at DESC, rowid DESC LIMIT 11
+    `).all(prefix + '*', peer === a.ownerId ? 'pdf:subject:*' : '', documentId);
+    const row = key && db.prepare('SELECT id, status, message_id, at FROM outbound WHERE id = ?').get(prefix + key);
+    return {
+      attempts: rows.slice(0, 10).map(item => fileAttempt(item, prefix, documentId)),
+      truncated: rows.length > 10,
+      automatic: row ? fileAttempt(row, prefix, documentId) : undefined,
+    };
+  } finally { db.close(); }
+}
+
 export async function sendDocument({cfg, to, documentId, key, signal, apiCall = onebot}) {
   const a = account(cfg),target=targetSubject(to,cfg,'qq.file.reply').qq; signal?.throwIfAborted();
   const doc = new Documents(documentRoot(cfg,target)).get(documentId);
   if (!key || typeof key !== 'string') throw Error('Stable file delivery key required');
   const ledger = new Ledger(a.stateDir);
   try {
-    const deliveryKey = target===a.ownerId ? 'pdf:' + key : 'pdf:subject:' + target + ':' + key;
-    const prior = ledger.reserve(deliveryKey, a.sendLimit, a.dailySendLimit ?? 120);
+    const deliveryKey = filePrefix(a, target) + key;
+    const prior = ledger.reserve(deliveryKey, a.sendLimit, a.dailySendLimit ?? 120, undefined, JSON.stringify({documentId}));
     if (prior) {
-      if (prior.status === 'sent') return {...JSON.parse(prior.message_id), duplicate: true};
+      const receipt = JSON.parse(prior.message_id);
+      if (receipt?.documentId && receipt.documentId !== documentId) throw Error('File delivery key reused with a different PDF');
+      if (prior.status === 'sent' && receipt?.documentId === documentId) return {...receipt, duplicate: true};
       throw Error('Previous PDF delivery unresolved/failed; manual reconciliation required');
     }
     try {

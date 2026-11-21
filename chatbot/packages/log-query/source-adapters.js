@@ -582,7 +582,7 @@ export function readChannelDelivery(file, from, to, options = {}) {
     return readDeliveryRows(db,from,to).map(row => {
       const feedback = replyFeedbackData(row);
       return event({at: row.at, source: 'channel-delivery', kind: 'qq.delivery_state',
-        correlation: correlationFrom({qqMessageId: row.message_id == null ? undefined : String(row.message_id),
+        correlation: correlationFrom({qqMessageId: row.message_id == null || row.id.startsWith('pdf:') ? undefined : String(row.message_id),
           eventKey:row.delivery_key, recipientId:row.peer, senderId:row.bot, runId:feedback.runId}),
         data: {ledgerId: row.id, status: row.status, snapshotOfCurrentState: true, ...feedback},
         sourceRef: sourceRef(file, 0, row.delivery_key ? {table:'qq_reply_parts',id:row.id} : {table:'outbound'})});

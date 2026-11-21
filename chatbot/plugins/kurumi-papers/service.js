@@ -42,7 +42,7 @@ export class PaperService {
     try { const job=this.get(id); if(this.authorize && (!requester || this.binding(job)?.subjectId!==requester.subjectId))throw Error('not_owned'); return job; }
     catch {throw Object.assign(Error('paper_resource_not_found'),{code:'paper_resource_not_found'});}
   }
-  status(id, requester) {
+  status(id, requester, readFeedback) {
     const job = this.scopedGet(id,requester), usage = path.join(this.documents.root, 'work', id, 'usage.json');
     if (job.status === 'running' && fs.existsSync(usage) && !fs.lstatSync(usage).isSymbolicLink()) {
       try { job.usage = JSON.parse(fs.readFileSync(usage)); } catch {}
@@ -51,7 +51,9 @@ export class PaperService {
     if (job.status === 'running' && fs.existsSync(progress) && !fs.lstatSync(progress).isSymbolicLink()) {
       try { job.engineProgress = JSON.parse(fs.readFileSync(progress)); } catch {}
     }
-    return this.explain(job);
+    const view = this.explain(job);
+    const feedback = readFeedback?.(job);
+    return feedback?.length ? {...view, feedback} : view;
   }
   explain(job) {
     const summary = failureSummary(job,this.config);
@@ -176,14 +178,16 @@ export class PaperService {
       }
       signal.throwIfAborted(); job.status = 'succeeded'; job.delivery = {status: 'not_requested'}; this.save(job);
       if (job.deliveryTarget === 'qq') {
-        job.delivery = {status: 'dispatching', receipts: []}; this.save(job);
+        job.delivery = {status: 'dispatching', receipts: [], attemptedKinds: []}; this.save(job);
         for (const kind of selectedOutputs(job.deliveryKind)) {
           signal.throwIfAborted();
           this.check(job,'qq.file.reply');
+          job.delivery.attemptedKinds.push(kind);
+          this.save(job);
           this.span(job,'delivery:'+kind,'stage','投递 PDF').emit('running');
           const receipt = await this.sendFile(job.artifacts[kind], id + ':' + kind, signal, this.binding(job));
           const deliverySpan=this.span(job,'delivery:'+kind,'stage','投递 PDF');deliverySpan.emit('completed',{details:{receipt:deliverySpan.detail(receipt)}});
-          job.delivery.receipts.push(receipt); this.save(job);
+          job.delivery.receipts.push({...receipt, kind}); this.save(job);
         }
         job.delivery.status = 'platform_accepted'; this.save(job);
       }
