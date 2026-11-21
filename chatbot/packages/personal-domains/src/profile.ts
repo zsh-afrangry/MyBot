@@ -2,6 +2,8 @@ import { freezeConfirmationFacts } from "@kurumi/confirmation-core";
 import { createHash } from "node:crypto";
 import { WeatherError, type WeatherErrorCode } from "./errors.js";
 import { formatTimestamp } from "./time-display.js";
+import { locationSavedFeedback } from "./change-feedback.js";
+import { observeFeedback } from "../../feedback-core/index.js";
 
 import { type ConfirmationScope } from "@kurumi/confirmation-core";
 import { OWNER_SUBJECT_ID } from "./store.js";
@@ -132,6 +134,7 @@ export interface ProfileCommitResult {
   status: "committed";
   proposalId: string;
   idempotent: boolean;
+  feedback?: ReturnType<typeof locationSavedFeedback>;
   currentLocation: ProfileLocationSummary;
   effects: {
     currentLocationChanged: true;
@@ -333,7 +336,13 @@ export function commitProfileChange(
     }
 
     if (proposal.status === "committed") {
-      return committedResult(proposal.proposalId, store.getCurrentLocation(), true);
+      let savedLocation: string | undefined;
+      if (scope) observeFeedback("current_location.set", undefined, () => {
+        savedLocation = repository.getCommittedLocationName(proposal, scope);
+      });
+      const feedback = savedLocation && proposal.committedAtUtc !== null
+        ? locationSavedFeedback(proposal.proposalId, savedLocation, proposal.committedAtUtc) : undefined;
+      return committedResult(proposal.proposalId, store.getCurrentLocation(), true, feedback);
     }
     if (proposal.status !== "pending") {
       return profileFailure("proposal_unavailable", "该提案已不可提交，请重新创建一条新的提案。");
@@ -394,7 +403,9 @@ export function commitProfileChange(
       }),
       atUtc: nowUtc,
     });
-    return committedResult(proposal.proposalId, store.getCurrentLocation(), false);
+    const current = store.getCurrentLocation();
+    return committedResult(proposal.proposalId, current, false,
+      locationSavedFeedback(proposal.proposalId, current.place.displayName, nowUtc));
   });
 }
 
@@ -431,6 +442,7 @@ function committedResult(
   proposalId: string,
   currentLocation: CurrentLocation,
   idempotent: boolean,
+  feedback?: ProfileCommitResult["feedback"],
 ): ProfileCommitResult {
   return {
     ok: true,
@@ -438,6 +450,7 @@ function committedResult(
     status: "committed",
     proposalId,
     idempotent,
+    ...(feedback && {feedback}),
     currentLocation: summarizeCurrentLocation(currentLocation),
     effects: currentLocationEffects(),
   };

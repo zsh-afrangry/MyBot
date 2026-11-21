@@ -1,6 +1,8 @@
 import {createHash} from 'node:crypto';
 import {assertToolAccess} from '../../packages/access-control/index.js';
 import {createQqDelivery} from '../../packages/qq-delivery/index.js';
+import {businessFeedback, notificationFeedback, observeFeedback} from '../../packages/feedback-core/index.js';
+import {createTrustedOwnerRequest} from '../../packages/trusted-inbound/index.js';
 import {IMAGE_KINDS} from './images.js';
 import {E7Error} from './policy.js';
 import {BUILD_FILTER_FIELDS} from './query.js';
@@ -34,38 +36,76 @@ const MESSAGES = {
   cancelled: '图片请求已取消',
 };
 const text = result => ({content: [{type: 'text', text: JSON.stringify(result)}]});
+const action = 'e7.image';
+const noResults = new Set(['no_build_samples', 'unknown_hero', 'image_unavailable']);
 
 export function registerImageTool(api, service, telemetry, deliveryFactory = createQqDelivery) {
   const name = E7_IMAGE_TOOL.name;
-  api.registerTool({contextVersion: 2, create: ctx => ({...E7_IMAGE_TOOL, async execute(callId, args, signal) {
-    const config = () => ctx.getRuntimeConfig?.() ?? api.config;
-    const check = () => {
-      const actor = assertToolAccess(ctx, config(), name);
-      if (!actor.owner) throw new E7Error('access_denied');
-      ctx.assertInvocationCurrent();
-      signal?.throwIfAborted();
-      return actor;
-    };
-    try {
-      const actor = check();
-      if (typeof callId !== 'string' || !callId) throw new E7Error('invalid_query');
-      const runId = telemetry.resolve(ctx, callId, name);
-      if (!runId || !ctx.sessionId) throw new E7Error('image_request_required');
-      const trace = {sessionKey: ctx.sessionKey, sessionId: ctx.sessionId, toolCallId: callId, runId};
-      // A model may call again with a different ID or image kind. The ledger must see the same key.
-      const requestKey = createHash('sha256').update(JSON.stringify([actor.id, ctx.sessionId, runId])).digest('hex');
-      const {bytes, contentType, caption, coverage} = await service.image(args, {signal, trace});
-      check();
-      const {channel, messageId, replayed} = await deliveryFactory(config).sendImage({
-        to: 'user:' + actor.id, bytes, contentType, signal, key: 'e7:run:' + requestKey,
-        text: caption ?? '图片版权归《第七史诗》官方，经 E7·WIKI 获取。', assertDirectAdapterHandoff: check,
-      });
-      return text(replayed ? {status: 'already_sent', channel, messageId, message: '本轮已有一张图片的回执，这次没有发送新图'}
-        : {status: 'sent', channel, messageId, ...(coverage ? {coverage} : {})});
-    } catch (error) {
-      const denied = ['identity_not_enabled', 'capability_not_allowed', 'untrusted_identity_context', 'unmapped_tool'].includes(error.code);
-      const code = signal?.aborted ? 'cancelled' : denied ? 'access_denied' : (error instanceof E7Error || ['qq_category_daily_limit', 'qq_receipt_unresolved'].includes(error.code)) ? error.code : 'image_delivery_failed';
-      return text({status: 'unavailable', error: {code, message: MESSAGES[code] ?? '未取得图片投递回执，本轮不要再次发送'}});
-    }
-  }})}, {name, optional: true});
+  const inbound = createTrustedOwnerRequest(api.config.channels?.['kurumi-qq']?.ownerId);
+  if (api.registrationMode === 'full' || api.registrationMode === undefined) {
+    api.on('reply_dispatch', inbound.receive);
+    api.on('session_end', inbound.end);
+    api.on('before_reset', inbound.end);
+  }
+  api.registerTool({contextVersion: 2, create: ctx => {
+    const request = inbound.current();
+    return {...E7_IMAGE_TOOL, async execute(callId, args, signal) {
+      const config = () => ctx.getRuntimeConfig?.() ?? api.config;
+      const check = () => {
+        const actor = assertToolAccess(ctx, config(), name);
+        if (!actor.owner) throw new E7Error('access_denied');
+        ctx.assertInvocationCurrent();
+        signal?.throwIfAborted();
+        return actor;
+      };
+      let binding, recordFailure, imageReady = false;
+      try {
+        const actor = check();
+        if (typeof callId !== 'string' || !callId) throw new E7Error('invalid_query');
+        const runId = telemetry.resolve(ctx, callId, name);
+        if (!runId || !ctx.sessionId) throw new E7Error('image_request_required');
+        const trace = {sessionKey: ctx.sessionKey, sessionId: ctx.sessionId, toolCallId: callId, runId};
+        // Different tool calls in the same run share the original send reservation.
+        const key = 'e7:run:' + createHash('sha256').update(JSON.stringify([actor.id, ctx.sessionId, runId])).digest('hex');
+        const to = 'user:' + actor.id;
+        const delivery = deliveryFactory(config);
+        if (request) observeFeedback(action, api.logger, () => {
+          const {messageId: sourceMessageId} = inbound.require(request, ctx, config());
+          binding = {action, sourceMessageId, runId};
+          recordFailure = (imageStatus, code) => observeFeedback(action, api.logger, () => {
+            check();
+            delivery.recordImageFeedback?.({to, key, ...binding, imageStatus,
+              evidence: {code, ...(imageStatus === 'no_results' && {matched: 0})}});
+          });
+        });
+        const {bytes, contentType, caption, coverage} = await service.image(args, {signal, trace});
+        check();
+        imageReady = true;
+        const evidence = {heroCode: args.heroCode, kind: args.kind, ...(coverage && {coverage})};
+        const {channel, messageId, replayed} = await delivery.sendImage({
+          to, bytes, contentType, signal, key,
+          text: caption ?? '图片版权归《第七史诗》官方，经 E7·WIKI 获取。', assertDirectAdapterHandoff: check,
+          ...(binding && {feedback: {...binding, evidence, log: api.logger}}),
+        });
+        const result = replayed ? {status: 'already_sent', channel, messageId, message: '本轮已有一张图片的回执，这次没有发送新图'}
+          : {status: 'sent', channel, messageId, ...(coverage && {coverage})};
+        return text(binding ? {...result, sourceMessageId: binding.sourceMessageId,
+          feedback: businessFeedback(action, 'succeeded', replayed ? {} : evidence),
+          notification: notificationFeedback({action: 'qq.image', platformStatus: 'accepted'}),
+        } : result);
+      } catch (error) {
+        const denied = ['identity_not_enabled', 'capability_not_allowed', 'untrusted_identity_context', 'unmapped_tool'].includes(error.code);
+        const code = signal?.aborted ? 'cancelled' : denied ? 'access_denied' : (error instanceof E7Error || ['qq_category_daily_limit', 'qq_receipt_unresolved'].includes(error.code)) ? error.code : 'image_delivery_failed';
+        const empty = noResults.has(code);
+        if (!imageReady && !denied) recordFailure?.(empty ? 'no_results' : 'failed', code);
+        return text({status: 'unavailable', error: {code, message: MESSAGES[code] ?? '未取得图片投递回执，本轮不要再次发送'},
+          ...(binding && !denied && !signal?.aborted && {
+            sourceMessageId: binding.sourceMessageId,
+            feedback: businessFeedback(action, imageReady ? 'succeeded' : empty ? 'skipped' : 'failed', {code}),
+            notification: notificationFeedback({action: 'qq.image', platformStatus: error.rejected ? 'rejected' : imageReady && code !== 'qq_category_daily_limit' ? 'unknown' : 'not_attempted'}),
+          }),
+        });
+      }
+    }};
+  }}, {name, optional: true});
 }

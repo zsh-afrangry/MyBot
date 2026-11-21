@@ -1,9 +1,9 @@
-import { Type } from 'typebox';
+import { Type, type Static } from 'typebox';
 import { jsonResult } from 'openclaw/plugin-sdk/agent-runtime';
 import type { AnyAgentTool } from 'openclaw/plugin-sdk/plugin-entry';
 import { defineToolPlugin } from 'openclaw/plugin-sdk/tool-plugin';
 import { scopeFromToolContext } from '@kurumi/confirmation-core';
-import { authorizeTools, isTrustedOwnerPrivateQq, forbiddenResult, planningCommitParameters } from './tool-common.js';
+import { authorizeTools, isTrustedOwnerPrivateQq, forbiddenResult, changeStateParameters, planningCommitParameters } from './tool-common.js';
 import { resolvePersonalWeatherConfig } from './config.js';
 import { QWeatherClient } from './qweather-client.js';
 import { KnowledgeMapWeatherClient } from './knowledgemap-client.js';
@@ -16,7 +16,7 @@ import { createProfileCatalog } from './profile-catalog.js';
 import { commitProfileChange, getProfileState, proposeProfileChange, profileProposalError } from './profile.js';
 import { registerDomainBackend } from './confirmation-backends.js';
 import { registerInteractionHooks } from './interaction/index.js';
-const profileStateParameters = Type.Object({}, { additionalProperties: false });
+import { readChangeFeedback } from './change-feedback.js';
 const profileChangeParameters = Type.Object({
     schema_version: Type.Literal(1),
     request: Type.Object({
@@ -33,17 +33,20 @@ export function createPlugin() {
             tool({
                 name: "personal_profile_state_get",
                 label: "Personal Profile state",
-                description: "Read the owner's minimized Profile state, currently limited to the confirmed current location and pending Profile proposals. Present confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers. Owner QQ private chat only; this tool never changes state.",
-                parameters: profileStateParameters,
+                description: "Read the owner's current location and pending Profile proposals. Pass proposal_id to verify the location saved by that proposal separately from the current location. Use expiresAtDisplay and its timezone for confirmation deadlines.",
+                parameters: changeStateParameters,
                 optional: true,
                 factory: ({ toolContext }): AnyAgentTool => ({
                     name: "personal_profile_state_get",
                     label: "Personal Profile state",
-                    description: "Read the owner's current Profile location without changing any state. Present pending proposal confirmation deadlines from expiresAtDisplay with its timezone, not epoch numbers.",
-                    parameters: profileStateParameters,
-                    async execute() {
+                    description: "Read current Profile state or verify the saved location for proposal_id.",
+                    parameters: changeStateParameters,
+                    async execute(_callId, rawParams) {
                         if (!isTrustedOwnerPrivateQq(toolContext))
                             return forbiddenResult();
+                        const proposalId = (rawParams as Static<typeof changeStateParameters> | undefined)?.proposal_id;
+                        if (proposalId !== undefined)
+                            return jsonResult(readChangeFeedback('location_set', proposalId, scopeFromToolContext(toolContext)));
                         let store: WeatherStore | undefined;
                         try {
                             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
@@ -93,13 +96,13 @@ export function createPlugin() {
             tool({
                 name: "personal_profile_change_commit",
                 label: "Commit a Profile change",
-                description: "Commit exactly one frozen current-location Profile proposal after explicit owner confirmation. The proposal ID and payload hash must match; it changes no trip, reminder, Cron, memory, or file.",
+                description: "Commit one frozen current-location proposal after explicit owner confirmation. The ID and hash must match. Report the saved place from feedback.evidence.savedLocation.",
                 parameters: planningCommitParameters,
                 optional: true,
                 factory: ({ toolContext }): AnyAgentTool => ({
                     name: "personal_profile_change_commit",
                     label: "Commit a Profile change",
-                    description: "Commit one hash-matched pending current location change in the owner's QQ private chat. Repeated confirmation is idempotent.",
+                    description: "Commit a hash-matched current location change in the owner's QQ private chat. Report the saved place from feedback.evidence.savedLocation. Repeated confirmation is idempotent.",
                     parameters: planningCommitParameters,
                     async execute(_toolCallId, params) {
                         if (!isTrustedOwnerPrivateQq(toolContext))

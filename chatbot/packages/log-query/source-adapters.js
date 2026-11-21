@@ -12,6 +12,7 @@ const lineIdentity=value=>createHash('sha256').update(value).digest('hex');
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {readDeliveryRows,replyFeedbackData} from '../qq-delivery/private-text-feedback.js';
+import {readImageFeedback} from '../qq-delivery/image-feedback.js';
 import {readHostRecords} from '../session-records/index.js';
 import {
   correlationFrom,
@@ -579,7 +580,8 @@ export function readChannelDelivery(file, from, to, options = {}) {
   if (!fs.existsSync(file)) return [];
   const db = new DatabaseSync(file, {readOnly: true});
   try {
-    return readDeliveryRows(db,from,to).map(row => {
+    db.exec('PRAGMA busy_timeout=2000; BEGIN');
+    const events = readDeliveryRows(db,from,to).map(row => {
       const feedback = replyFeedbackData(row);
       return event({at: row.at, source: 'channel-delivery', kind: 'qq.delivery_state',
         correlation: correlationFrom({qqMessageId: row.message_id == null || row.id.startsWith('pdf:') ? undefined : String(row.message_id),
@@ -587,6 +589,12 @@ export function readChannelDelivery(file, from, to, options = {}) {
         data: {ledgerId: row.id, status: row.status, snapshotOfCurrentState: true, ...feedback},
         sourceRef: sourceRef(file, 0, row.delivery_key ? {table:'qq_reply_parts',id:row.id} : {table:'outbound'})});
     });
+    for (const image of readImageFeedback(db, from, to, options.messageId)) {
+      events.push(event({...image, source: 'channel-delivery', kind: 'qq.image_feedback',
+        sourceRef: sourceRef(file, 0, {table: 'qq_image_feedback', id: image.correlation.eventKey})}));
+    }
+    db.exec('COMMIT');
+    return events;
   } finally { db.close(); }
 }
 

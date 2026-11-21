@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 
 import {
   checkApprovalGrant,
+  confirmationProposalMatchesScope,
   markConfirmationProposalCommitted,
   markConfirmationProposalExpired,
   type ConfirmationGrantCheck,
@@ -18,6 +19,7 @@ export interface LocationSetProposalForCommit {
   payloadHash: string;
   requestContextHash: string | null;
   expiresAtUtc: UnixSeconds;
+  committedAtUtc: UnixSeconds | null;
   resultPlaceId: number | null;
 }
 
@@ -38,7 +40,7 @@ export class ProfileRepository {
   getLocationSetProposal(proposalId: string): LocationSetProposalForCommit | undefined {
     const row = this.#database.prepare(`
       SELECT proposal_id, kind, status, payload_json, payload_hash,
-             request_context_hash, expires_at_utc, result_entity_type, result_entity_id
+             request_context_hash, expires_at_utc, committed_at_utc, result_entity_type, result_entity_id
       FROM change_proposals
       WHERE proposal_id = ? AND subject_id = ? AND kind = 'location_set'
       LIMIT 1
@@ -53,10 +55,28 @@ export class ProfileRepository {
       payloadHash: row.payload_hash,
       requestContextHash: row.request_context_hash,
       expiresAtUtc: row.expires_at_utc,
+      committedAtUtc: row.committed_at_utc,
       resultPlaceId: row.result_entity_type === "profile_current_location"
         ? row.result_entity_id
         : null,
     };
+  }
+
+  getCommittedLocationName(proposal: LocationSetProposalForCommit, scope: ConfirmationScope): string | undefined {
+    if (proposal.status !== "committed" || proposal.resultPlaceId === null || proposal.committedAtUtc === null) return;
+    if (!confirmationProposalMatchesScope(this.#database, {
+      proposalId: proposal.proposalId, domain: "personal_profile", subjectId: this.#subjectId,
+      payloadHash: proposal.payloadHash, scope,
+    })) return;
+    const row = this.#database.prepare(`
+      SELECT json_extract(change_summary_json, '$.displayName') AS name
+      FROM audit_log
+      WHERE proposal_id=? AND subject_id=? AND actor_kind='owner'
+        AND action='profile.current_location.updated' AND entity_type='profile_current_location'
+        AND entity_id=? AND created_at_utc=?
+      ORDER BY id DESC LIMIT 1
+    `).get(proposal.proposalId, this.#subjectId, String(proposal.resultPlaceId), proposal.committedAtUtc);
+    return typeof row?.name === "string" && row.name ? row.name : undefined;
   }
 
   expirePendingProposal(proposalId: string, atUtc: UnixSeconds): boolean {
@@ -229,6 +249,7 @@ type ProposalRow = {
   payload_hash: string;
   request_context_hash: string | null;
   expires_at_utc: number;
+  committed_at_utc: number | null;
   result_entity_type: string | null;
   result_entity_id: number | null;
 };

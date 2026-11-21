@@ -13,7 +13,7 @@ test('shared package preserves its complete runtime public API without leaking s
     'narrowNaturalConfirmationBackend', 'listNaturalConfirmations', 'confirmNaturalProposal', 'confirmNaturalProposals',
     'MAX_CONFIRMATION_TARGETS', 'naturalConfirmationTextAllowed',
     'prepareConfirmationPreview', 'recordConfirmationDelivery', 'freezeConfirmationFacts',
-    'CONFIRMATION_GATE_SCHEMA_SQL', 'buildConfirmationInstruction', 'checkApprovalGrant', 'confirmationBackendIds',
+    'CONFIRMATION_GATE_SCHEMA_SQL', 'buildConfirmationInstruction', 'checkApprovalGrant', 'confirmationBackendIds', 'confirmationProposalMatchesScope',
     'createPublicUuid', 'ensureConfirmationGateSchema', 'findConfirmationProposalForInbound', 'issueApprovalGrant',
     'listConfirmationProposalsForInbound', 'listPendingConfirmationProposals', 'markConfirmationProposalCommitted',
     'markConfirmationProposalExpired', 'parseConfirmationText', 'recordRegisteredConfirmation',
@@ -30,6 +30,11 @@ test('grant consumption can roll back with a business transaction and then commi
     requesterSenderId: subjectId, sessionKey, deliveryContext: {to: `user:${subjectId}`, accountId: 'default'}});
   core.registerConfirmationProposal(db, {proposalId: id, domain: 'independent-notes', actionKind: 'note.save',
     subjectId, payloadHash: hash, scope, createdAtUtc: now - 1, expiresAtUtc: now + 600});
+  const identity = {proposalId: id, domain: 'independent-notes', subjectId, payloadHash: hash, scope};
+  assert(core.confirmationProposalMatchesScope(db, identity));
+  assert(!core.confirmationProposalMatchesScope(db, {...identity, domain: 'planning'}));
+  assert(!core.confirmationProposalMatchesScope(db, {...identity, payloadHash: 'b'.repeat(64)}));
+  assert(!core.confirmationProposalMatchesScope(db, {...identity, scope: {...scope, delivery: ['target:user:100002', 'account:default']}}));
   const proposal = core.listPendingConfirmationProposals(db, {subjectId, scope, nowUtc: now})[0];
   core.issueApprovalGrant(db, {proposal, confirmationMessageId: 'confirmed', scope, nowUtc: now});
   const check = {proposalId: id, domain: proposal.domain, subjectId, payloadHash: hash, scope, nowUtc: now, consume: true};

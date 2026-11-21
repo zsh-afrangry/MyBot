@@ -198,7 +198,14 @@ describe("Profile P0 current_location", () => {
         proposal_id: proposal.proposalId,
         payload_hash: proposal.payloadHash,
       }, CONFIRMATION_SCOPE);
-      expect(repeated).toMatchObject({ ok: true, idempotent: true });
+      expect(repeated).toMatchObject({ ok: true, idempotent: true, feedback: committed.feedback });
+      const differentScope = { ...CONFIRMATION_SCOPE, delivery: ["target:qqbot:c2c:another-owner", "account:default"] };
+      const foreignReplay = commitProfileChange(store, {
+        proposal_id: proposal.proposalId,
+        payload_hash: proposal.payloadHash,
+      }, differentScope);
+      expect(foreignReplay).not.toHaveProperty("feedback");
+      expect(store.readChangeOutcome("location_set", proposal.proposalId, differentScope)).toBeUndefined();
 
       const afterCommit = new DatabaseSync(databasePath, { readOnly: true });
       try {

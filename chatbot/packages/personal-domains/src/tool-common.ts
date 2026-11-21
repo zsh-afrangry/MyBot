@@ -13,6 +13,11 @@ export const planningCommitParameters = Type.Object({
     }),
     payload_hash: Type.String({ minLength: 64, maxLength: 64, pattern: "^[a-f0-9]{64}$" }),
 }, { additionalProperties: false });
+export const changeStateParameters = Type.Object({
+    proposal_id: Type.Optional(Type.String({...planningCommitParameters.properties.proposal_id,
+        description: 'Optional exact proposal ID for a read-only check of the saved result. Omit for the current overview.',
+    })),
+}, { additionalProperties: false });
 /** Read-only scheduled weather is restricted to the configured owner's native main Cron lane.
  * This grants no Profile, planning, reminder or memory write authority. */
 export function isTrustedWeatherRead(ctx: Parameters<typeof isTrustedOwnerPrivateQq>[0], ownerId: unknown): boolean {

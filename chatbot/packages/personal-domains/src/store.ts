@@ -10,6 +10,7 @@ import { ProfileRepository } from "./profile-repository.js";
 import {
   ensureConfirmationGateSchema,
   createPublicUuid,
+  confirmationProposalMatchesScope,
   findConfirmationProposalForInbound,
   issueApprovalGrant,
   listConfirmationProposalsForInbound,
@@ -1079,6 +1080,37 @@ export class WeatherStore {
       }));
       this.#database.exec("COMMIT");
       return result;
+    } catch (error) {
+      this.#database.exec("ROLLBACK");
+      throw error;
+    }
+  }
+
+  /** One snapshot of the scoped proposal, its stored outcome and the present location. */
+  readChangeOutcome(kind: "location_set" | "trip_create", proposalId: string, scope: ConfirmationScope) {
+    this.#assertOpen();
+    this.#database.exec("BEGIN");
+    try {
+      const subjectId = OWNER_SUBJECT_ID, database = this.#database;
+      const profile = kind === "location_set" ? new ProfileRepository({database, subjectId}) : undefined;
+      const planning = kind === "trip_create" ? new PlanningRepository({database, subjectId}) : undefined;
+      const proposal = profile
+        ? profile.getLocationSetProposal(proposalId)
+        : planning?.getTripCreateProposal(proposalId);
+      if (!proposal || !confirmationProposalMatchesScope(database, {
+        proposalId, subjectId, scope, domain: profile ? "personal_profile" : "planning", payloadHash: proposal.payloadHash,
+      })) {
+        database.exec("COMMIT");
+        return undefined;
+      }
+      const current = this.getCurrentLocation();
+      const asOfUtc = this.getNowUtc();
+      const outcome = proposal.kind === "location_set"
+        ? {...proposal, displayName: profile?.getCommittedLocationName(proposal, scope)}
+        : {...proposal, trip: proposal.status === "committed" && proposal.resultTripId !== null
+          ? planning?.getTripSummary(proposal.resultTripId) : undefined};
+      database.exec("COMMIT");
+      return {proposal: outcome, current, asOfUtc};
     } catch (error) {
       this.#database.exec("ROLLBACK");
       throw error;

@@ -1,17 +1,17 @@
-import { Type } from 'typebox';
+import { Type, type Static } from 'typebox';
 import { jsonResult } from 'openclaw/plugin-sdk/agent-runtime';
 import type { AnyAgentTool } from 'openclaw/plugin-sdk/plugin-entry';
 import { defineToolPlugin } from 'openclaw/plugin-sdk/tool-plugin';
 import { scopeFromToolContext } from '@kurumi/confirmation-core';
-import { authorizeTools, isTrustedOwnerPrivateQq, forbiddenResult, planningCommitParameters } from './tool-common.js';
+import { authorizeTools, isTrustedOwnerPrivateQq, forbiddenResult, changeStateParameters, planningCommitParameters } from './tool-common.js';
 import { asWeatherError } from './errors.js';
 import { WeatherStore } from './store.js';
 import { weatherStateDirectory } from './paths.js';
 import { commitPlanningProposal, getPlanningState, proposePlanningChange, TRANSPORT_MODES, TIME_PRECISIONS } from './planning.js';
 import { registerDomainBackend } from './confirmation-backends.js';
 import { registerInteractionHooks } from './interaction/index.js';
+import { readChangeFeedback } from './change-feedback.js';
 const configSchema = Type.Object({}, { additionalProperties: false });
-const planningStateParameters = Type.Object({}, { additionalProperties: false });
 const planningTimeWindowSchema = Type.Object({
     earliest: Type.String({ minLength: 1, maxLength: 80, description: "User-supported earliest instant in ISO-8601 with Z or numeric UTC offset, including when precision is date. Never invent an instant for an unknown date." }),
     latest: Type.String({ minLength: 1, maxLength: 80, description: "User-supported latest instant in ISO-8601 with Z or numeric UTC offset; not before earliest and at most 31 days after it." }),
@@ -42,15 +42,15 @@ export function createPlugin() {
             tool({
                 name: "personal_planning_state_get",
                 label: "Personal planning state",
-                description: "Read a minimized summary of the owner's weather place, daily brief schedule, saved trips, and pending proposals. Present trip dates from displayTimes and confirmation deadlines from expiresAtDisplay with their timezones; do not calculate dates from epoch seconds. Preserve time precision. Owner QQ private chat only; this tool never changes state.",
-                parameters: planningStateParameters,
+                description: "Read the owner's current location, weather schedule, saved trips and pending proposals. Pass proposal_id to verify that specific trip and show its destination separately from the current location. Preserve date precision and use displayTimes and expiresAtDisplay.",
+                parameters: changeStateParameters,
                 optional: true,
                 factory: ({ toolContext }): AnyAgentTool => ({
                     name: "personal_planning_state_get",
                     label: "Personal planning state",
-                    description: "Read the owner's minimized weather and travel planning state. Present trip dates from displayTimes and confirmation deadlines from expiresAtDisplay with their timezones, preserving precision; do not calculate dates from epoch seconds. This tool is read-only.",
-                    parameters: planningStateParameters,
-                    async execute() {
+                    description: "Read current planning state or verify the saved trip for proposal_id.",
+                    parameters: changeStateParameters,
+                    async execute(_callId, rawParams) {
                         if (!isTrustedOwnerPrivateQq(toolContext)) {
                             return jsonResult({
                                 ok: false,
@@ -60,6 +60,9 @@ export function createPlugin() {
                                 },
                             });
                         }
+                        const proposalId = (rawParams as Static<typeof changeStateParameters> | undefined)?.proposal_id;
+                        if (proposalId !== undefined)
+                            return jsonResult(readChangeFeedback('trip_create', proposalId, scopeFromToolContext(toolContext)));
                         let store: WeatherStore | undefined;
                         try {
                             store = new WeatherStore({ stateDirectory: weatherStateDirectory() });
@@ -112,13 +115,13 @@ export function createPlugin() {
             tool({
                 name: "personal_planning_change_commit",
                 label: "Commit a personal planning proposal",
-                description: "Commit exactly one previously previewed owner travel proposal after explicit owner confirmation. The proposal ID and payload hash must match the frozen pending proposal. This writes only a planned trip record; it never changes the weather location, reminders, Cron, files, or host. Only trip.create is supported: do not offer to update, complete or delete an already committed trip.",
+                description: "Commit exactly one previously previewed trip.create proposal after explicit owner confirmation. Match its frozen ID and hash. Report the saved destination from feedback.evidence.destination. The only write is a planned trip record.",
                 parameters: planningCommitParameters,
                 optional: true,
                 factory: ({ toolContext }): AnyAgentTool => ({
                     name: "personal_planning_change_commit",
                     label: "Commit a personal planning proposal",
-                    description: "Commit a hash-matched pending trip proposal in the owner's QQ private chat. This cannot change weather location or schedules. Only trip.create is supported: do not offer to update, complete or delete an already committed trip.",
+                    description: "Commit a hash-matched pending trip.create proposal in the owner's QQ private chat. Report the saved destination from feedback.evidence.destination. The only write is a planned trip record.",
                     parameters: planningCommitParameters,
                     async execute(_toolCallId, params) {
                         if (!isTrustedOwnerPrivateQq(toolContext)) {

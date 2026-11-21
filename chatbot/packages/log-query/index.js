@@ -63,7 +63,7 @@ export function collectEvents({from, to, runtimeRoot = DEFAULT_RUNTIME_ROOT, sno
     catch(error){status.status='read_failed';status.reason=error.code??'source_read_error';}
   };
   if(include('cron-runs'))read('cron-runs',path.join(runtimeRoot,'state','openclaw.sqlite'),o=>readCronRuns(runtimeRoot,from,to,o));
-  if(include('channel-delivery'))read('channel-delivery',path.join(runtimeRoot,'channel','channel.sqlite'),o=>readChannelDelivery(path.join(runtimeRoot,'channel','channel.sqlite'),from,to,o));
+  if(include('channel-delivery'))read('channel-delivery',path.join(runtimeRoot,'channel','channel.sqlite'),o=>readChannelDelivery(path.join(runtimeRoot,'channel','channel.sqlite'),from,to,{...o,messageId}));
   if(include('snowluma'))read('snowluma',path.join(snowlumaRoot,'runtime','logs'),o=>readSnowLumaLogs(snowlumaRoot,from,to,o));
   if(include('openclaw-runtime'))read('openclaw-runtime',runtimeRoot,o=>{
     const list=[];for(const name of fs.readdirSync(runtimeRoot).filter(n=>/^runtime(?:\.\d+)?\.log$/u.test(n)).sort())append(list,readRuntimeLog(path.join(runtimeRoot,name),from,to,o));return list;
@@ -127,7 +127,7 @@ export function filterEvents(events, filters = {}) {
   }
   if(filters.lastTurns!==undefined)events=selectRecentTurns(events,Number(filters.lastTurns));
   if (filters.messageId) {
-    events = events.filter(item => item.kind !== 'reminder-list.feedback'
+    events = events.filter(item => !['reminder-list.feedback', 'qq.image_feedback'].includes(item.kind)
       || item.correlation.qqMessageId === String(filters.messageId));
   }
   const idFilters = ['messageId', 'proposalId', 'runId', 'sessionKey', 'reminderId'];

@@ -10,6 +10,22 @@ import { boundedText, assertHash, assertUnixSeconds } from "./validation.js";
 
 const CONFIRMATION_GRANT_TTL_SECONDS = 5 * 60;
 
+/** Check a retained proposal's identity on a read-only connection. */
+export function confirmationProposalMatchesScope(database: DatabaseSync, input: {
+  proposalId: string;
+  domain: ConfirmationDomain;
+  subjectId: string;
+  payloadHash: string;
+  scope: ConfirmationScope;
+}): boolean {
+  if (!database.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='confirmation_proposals'").get()) return false;
+  const row = database.prepare(`
+    SELECT scope_json FROM confirmation_proposals
+    WHERE proposal_id=? AND domain=? AND subject_id=? AND payload_hash=?
+  `).get(input.proposalId, input.domain, input.subjectId, input.payloadHash) as { scope_json: string } | undefined;
+  return !!row && scopesMatch(parseScope(row.scope_json), input.scope);
+}
+
 export function registerConfirmationProposal(
   database: DatabaseSync,
   input: {

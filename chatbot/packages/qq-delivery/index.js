@@ -1,6 +1,7 @@
 // Shared QQ transport, document delivery and receipts. Contracts: docs/21, docs/22.
 import {sendDocument as uploadDocument} from './files.js';
 import {sendImage, sendPayload} from './transport.js';
+import {recordImageFeedback} from './image-feedback.js';
 
 export {account, CHANNEL, ownerAuthorized, ownerTarget, token} from './config.js';
 export {qqFileUrl, readDocumentDeliveries, sendDocument, stagePdf, traceFile} from './files.js';
@@ -17,5 +18,6 @@ export function createQqDelivery(cfg) {
     sendDocument: ({to, documentId, key, signal}) => uploadDocument({cfg: cfg(), to, documentId, key, signal}),
     sendText: ({to, text, key, signal}) => sendPayload({cfg: cfg(), to, text, key, signal}),
     sendImage: options => sendImage({...options, cfg: cfg()}),
+    recordImageFeedback: options => recordImageFeedback(cfg(), options),
   };
 }

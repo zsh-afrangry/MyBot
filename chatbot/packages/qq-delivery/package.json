@@ -5,6 +5,7 @@
   "exports": {
     ".": "./index.js",
     "./image.js": "./image.js",
+    "./image-feedback.js": "./image-feedback.js",
     "./cron-text-feedback.js": {
       "types": "./cron-text-feedback.d.ts",
       "default": "./cron-text-feedback.js"

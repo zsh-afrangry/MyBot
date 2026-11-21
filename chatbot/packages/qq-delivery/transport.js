@@ -6,6 +6,8 @@ import {Ledger} from './ledger.js';
 import {setTimeout as pause} from 'node:timers/promises';
 import {presentForQQ} from './presentation.js';
 import {imageType, MAX_IMAGE_BYTES} from './image.js';
+import {imageDeliveryPrefix, recordImageFeedback, subjectDeliveryPrefix, writeImageFeedback} from './image-feedback.js';
+import {observeFeedback} from '../feedback-core/index.js';
 export async function onebot(a,action,params,signal,{timeoutMs=15000}={}){
  const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeoutMs)]):AbortSignal.timeout(timeoutMs)});
  if(!r.ok)throw Error(`OneBot HTTP ${r.status}`);
@@ -22,17 +24,17 @@ export function localImage(file,a){
  if(!imageType(bytes))throw Error('Unsupported image bytes');
  return {type:'image',data:{file:'base64://'+bytes.toString('base64')}};
 }
-const deliveryPrefix=(target,a)=>target===a.ownerId?'':'subject:'+target+':';
 export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
  const a=account(cfg),target=ownerTarget(to,a);
  // Preserve legacy owner receipt keys; every member has a separate idempotency namespace.
- const subjectPrefix=deliveryPrefix(target,a);
+ const subjectPrefix=subjectDeliveryPrefix(target,a.ownerId);
  id=subjectPrefix+id;
  if(!Array.isArray(message)||!message.length||message.some(x=>!['text','reply','image'].includes(x.type)))throw Error('Invalid message segments');
  context.signal?.throwIfAborted();
  const l=new Ledger(a.stateDir);
  try{
-  const prior=l.reserve(id,a.sendLimit,a.dailySendLimit??120,context.quota?{...context.quota,prefix:subjectPrefix+context.quota.prefix}:undefined);
+  const onReserve=context.onReserve && (db=>context.onReserve(db,id,target));
+  const prior=l.reserve(id,a.sendLimit,a.dailySendLimit??120,context.quota?{...context.quota,prefix:subjectPrefix+context.quota.prefix}:undefined,null,onReserve);
   if(prior){
    if(prior.status==='sent')return {channel:'kurumi-qq',messageId:prior.message_id,...(context.reportReplay?{replayed:true}:{})};
    throw Object.assign(Error('Previous QQ send unresolved/failed; manual reconciliation required'),{code:'qq_receipt_unresolved'});
@@ -47,7 +49,7 @@ export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
   }catch(e){if(e.rejected)l.failed(id);throw e;}
  }finally{l.close();}
 }
-export async function sendImage({cfg,to,bytes,contentType,key,text='',signal,dailyLimit=20,assertDirectAdapterHandoff}){
+export async function sendImage({cfg,to,bytes,contentType,key,text='',signal,dailyLimit=20,assertDirectAdapterHandoff,feedback}){
  signal?.throwIfAborted();
  if(typeof key!=='string'||!key||key.length>512)throw Error('Stable image delivery key required');
  const type=imageType(bytes);
@@ -56,7 +58,19 @@ export async function sendImage({cfg,to,bytes,contentType,key,text='',signal,dai
  const segments=[];
  if(text)segments.push({type:'text',data:{text}});
  segments.push({type:'image',data:{file:'base64://'+bytes.toString('base64')}});
- return sendSegments(cfg,to,segments,'image:'+key,{signal,assertDirectAdapterHandoff,reportReplay:true,quota:{prefix:'image:',limit:dailyLimit}});
+ const observation = feedback && {...feedback, imageStatus: 'generated'};
+ const onReserve = observation && ((db,id,peer)=>observeFeedback(observation.action, observation.log,
+   ()=>writeImageFeedback(db,{...observation,id,peer,reserved:true})));
+ try {
+  return await sendSegments(cfg,to,segments,imageDeliveryPrefix+key,{signal,assertDirectAdapterHandoff,reportReplay:true,
+   quota:{prefix:imageDeliveryPrefix,limit:dailyLimit},onReserve});
+ }catch(error){
+  if(observation)observeFeedback(observation.action,observation.log,()=>{
+   assertDirectAdapterHandoff?.();
+   recordImageFeedback(cfg,{...observation,to,key});
+  });
+  throw error;
+ }
 }
 export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliveryQueueId,deliveryPartIndex,signal,onPlatformSendDispatch,assertDirectAdapterHandoff,onDeliveryResult,onTextPlan}){
  key??=deliveryQueueId?`delivery:${deliveryQueueId}:${deliveryPartIndex??0}`:randomUUID();
@@ -66,7 +80,7 @@ export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliver
  const media=mediaUrl?localImage(mediaUrl,mediaAccount):null;
  const {pieces,paced}=presentForQQ(text,a.chunkLimit??1200,a.naturalSegments!==false);
  if(!pieces.length&&media)pieces.push('');
- if(pieces.length&&!media)onTextPlan?.(deliveryPrefix(target,a)+key,pieces.length);
+ if(pieces.length&&!media)onTextPlan?.(subjectDeliveryPrefix(target,a.ownerId)+key,pieces.length);
  let last;
  for(let i=0;i<pieces.length;i++){
   if(i>0&&paced)await pause(a.segmentDelayMs??450,undefined,{signal});

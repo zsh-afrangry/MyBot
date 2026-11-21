@@ -1,5 +1,6 @@
 import { freezeConfirmationFacts } from "@kurumi/confirmation-core";
-import { formatDateTime as formatPlanningDateTime, formatTimestamp } from "./time-display.js";
+import { presentTrip, tripSavedFeedback } from "./change-feedback.js";
+import { formatTimestamp } from "./time-display.js";
 // Preserve the existing planning export for callers and regression tests.
 export { formatDateTime as formatPlanningDateTime } from "./time-display.js";
 import { createHash } from "node:crypto";
@@ -158,6 +159,7 @@ export interface PlanningCommitResult {
   proposalId: string;
   status: "committed";
   idempotent: boolean;
+  feedback: ReturnType<typeof tripSavedFeedback>;
   trip: TripSummary;
   locationPeriodCreated: false;
   weatherLocationChanged: false;
@@ -208,17 +210,7 @@ export function getPlanningState(store: WeatherStore): PlanningState {
         timezone: preferences.dailyTimezone,
       },
     },
-    trips: store.listTripSummaries().map(trip => ({
-      ...trip,
-      displayTimes: {
-        timezone: currentLocation.place.timezone,
-        timezoneSource: "profile.currentLocation" as const,
-        departureEarliest: formatPlanningDateTime(trip.departureEarliestUtc, currentLocation.place.timezone),
-        departureLatest: formatPlanningDateTime(trip.departureLatestUtc, currentLocation.place.timezone),
-        arrivalEarliest: formatPlanningDateTime(trip.arrivalEarliestUtc, currentLocation.place.timezone),
-        arrivalLatest: formatPlanningDateTime(trip.arrivalLatestUtc, currentLocation.place.timezone),
-      },
-    })),
+    trips: store.listTripSummaries().map(trip => presentTrip(trip, currentLocation.place.timezone)),
     pendingProposals: store.listPendingProposals().map(proposal => ({
       ...proposal, expiresAtDisplay: formatTimestamp(proposal.expiresAtUtc, currentLocation.place.timezone),
     })),
@@ -627,6 +619,7 @@ function committedResult(
     proposalId,
     status: "committed",
     idempotent,
+    feedback: tripSavedFeedback(proposalId, trip),
     trip,
     locationPeriodCreated: false,
     weatherLocationChanged: false,
