@@ -32,6 +32,7 @@ const groups = [
     ['logs', '跨模块链路日志', [18], ['kurumi-logs'], 'logs'],
     ['recovery', '备份、恢复与资产', [12], [], 'system'],
     ['console', 'Fusion 管理台', [33], [], 'overview'],
+    ['acceptance', '通用场景验收', [36], [], null],
   ]],
 ];
 
