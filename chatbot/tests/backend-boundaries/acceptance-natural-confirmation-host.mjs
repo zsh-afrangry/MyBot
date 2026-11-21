@@ -14,6 +14,7 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
 import {scenarioProgress,scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
+import {assertionDiagnostics} from '../acceptance/assertion-diagnostics.mjs';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import assert from 'node:assert/strict';
 
@@ -42,7 +43,7 @@ function readConfiguredModel(){
  return {modelId,primary,url:url.href.replace(/\/$/,'')+'/chat/completions',key};
 }
 const seenModelCalls=new Set();
-let active,host,due,loseDueReceipt=false,runningStep;
+let active,host,due,loseDueReceipt=false,runningStep,modelDiagnostic;
 const historyLookup='management-feedback-reads-historical-cancellation';
 function beginStep(step,phase='check'){
  runningStep={step,phase};
@@ -97,7 +98,11 @@ const model=http.createServer(async(req,res)=>{
    else{tool=['dispatch_action',{id:step[0],args:typeof step[1]==='function'?step[1]():step[1]}];active.expected=step[2];active.next++;active.discovered=false;}}
   const message=tool?{role:'assistant',content:progress?'我先核对已有信息，再处理这一步。':null,tool_calls:[{id:'call_'+report.requests,type:'function',function:{name:tool[0],arguments:JSON.stringify(tool[1])}}]}:{role:'assistant',content:'模型自然说明：请核对这些信息，再告诉我是否确认。'};
   complete(res,body,message);
- }catch(error){report.modelError=error.message;console.error('FIXTURE_MODEL_ERROR',error.message);res.writeHead(400);res.end(JSON.stringify({error:{message:'isolated_confirmation_fixture_failed'}}));}
+ }catch(error){
+  report.modelError=error.message;
+  modelDiagnostic=assertionDiagnostics(error);
+  console.error('FIXTURE_MODEL_ERROR',error.message);res.writeHead(400);res.end(JSON.stringify({error:{message:'isolated_confirmation_fixture_failed'}}));
+ }
 });
 function complete(res,body,message){
  const reason=message.tool_calls?'tool_calls':'stop',usage={prompt_tokens:1,completion_tokens:1,total_tokens:2};
@@ -423,6 +428,12 @@ try{
  }
 }catch(error){
  report.blocked ||= runningStep?.phase==='environment';
+ if(report.modelError==='fixture_history_summary_rejected' && runningStep?.step===historyLookup){
+  report.failureDetails={code:'fixture_history_summary_rejected',expected:'提醒回查返回已取消',
+   actual:'消息已入站，模型替身返回模拟摘要请求拒绝',assertionStatus:'not_run'};
+ }else if(fault==='gateway-start'){
+  report.failureDetails={code:'fixture_gateway_start_unavailable',expected:'网关通过健康检查',actual:'模拟网关启动失败'};
+ }else report.failureDetails=modelDiagnostic ?? assertionDiagnostics(error);
  finishStep('failed');report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;
 }
 finally{

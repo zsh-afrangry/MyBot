@@ -63,7 +63,7 @@ node chatbot/scripts/scenario-acceptance.mjs --target production [--scenario dep
 
 --out 须位于仓库的 test-output/ 内，是尚不存在的报告文件。
 --model 仅用于独立实例的 confirmation，调用已配置的真实模型。
---diagnostic-fault gateway-start|reminder-lookup 用于复现独立 confirmation 的受控失败。
+--diagnostic-fault 用于复现独立场景的受控失败：confirmation 可用 gateway-start 或 reminder-lookup，bills-feedback 可用 bills-assertion。
 生产目标目前只覆盖只读部署核验。`;
 
 function options(args) {
@@ -84,8 +84,11 @@ function options(args) {
   if (result.model && (result.target !== 'isolated' || result.scenario !== 'confirmation')) {
     throw Error('--model requires --target isolated --scenario confirmation');
   }
-  if (result['diagnostic-fault'] && (result.target!=='isolated' || result.scenario!=='confirmation' || result.model
-    || !['gateway-start','reminder-lookup'].includes(result['diagnostic-fault']))) throw Error('Invalid isolated diagnostic failure sample');
+  const faultScenario = {'gateway-start':'confirmation','reminder-lookup':'confirmation','bills-assertion':'bills-feedback'};
+  if (result['diagnostic-fault'] && (result.target!=='isolated' || result.model ||
+    !Object.hasOwn(faultScenario,result['diagnostic-fault']) || result.scenario!==faultScenario[result['diagnostic-fault']])) {
+    throw Error('Invalid isolated diagnostic failure sample');
+  }
   return result;
 }
 
@@ -187,7 +190,10 @@ async function runIsolated(id, model, directory, signal, diagnosticFault) {
         : stage.phase==='check' ? 'check_failed' : 'scenario_failed';
     const previous = lastPassed ?? (Array.isArray(data?.cases)
       ? data.cases.filter(row=>row?.passed===true||row?.status==='passed').at(-1)?.label : undefined);
+    const observed = data?.failureDetails ?? (Array.isArray(data?.cases)
+      ? data.cases.find(row=>row.status==='failed' && row.label===stage.step)?.diagnostic : undefined);
     return {...stage,category,...(previous&&{lastPassed:previous}),
+      ...(observed && {diagnostic:observed}),
       remainingChecks:blocked&&stage.phase==='environment' ? 'not_started'
         : firstFailed?.phase==='check' && id==='confirmation' ? 'stopped' : 'unverified'};
   };

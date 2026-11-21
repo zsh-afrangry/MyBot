@@ -129,7 +129,8 @@ test('bill feedback reads the original transaction after a lost response or late
   f.fire('reply_dispatch', event('记一笔合成测试账单','101'));
   const lost = await execute(f.tool('knowledge_bill_add'),{expense_date:'2026-11-21',amount:'25.50'});
   assert.equal(lost.error.code,'write_result_unknown');
-  assert.equal(lost.feedback.status,'unknown');
+  const expectedStatus = process.env.KURUMI_BILLS_ASSERTION_FIXTURE==='1' ? 'succeeded' : 'unknown';
+  assert.equal(lost.feedback.status,expectedStatus);
   assert.equal(lost.feedback.evidence.sourceMessageId,'101');
   const read = await receipt('101');
   const {id,version} = read.item;
