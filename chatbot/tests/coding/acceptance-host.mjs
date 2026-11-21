@@ -4,20 +4,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import http from 'node:http';
-import net from 'node:net';
-import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {randomBytes} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
-import {setTimeout as delay} from 'node:timers/promises';
 import {DatabaseSync} from 'node:sqlite';
 import assert from 'node:assert/strict';
-import {WebSocketServer} from 'ws';
 import {git} from '../../plugins/kurumi-coding/workspaces.js';
-import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
+import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
+import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
 
 const out = process.argv[process.argv.indexOf('--out') + 1];
 if (!process.argv.includes('--out') || !path.isAbsolute(out ?? '') || fs.existsSync(out)) throw Error('Require a new absolute --out');
@@ -36,37 +33,19 @@ fs.mkdirSync(gates);
 fs.writeFileSync(peer, '#!/bin/bash\nexec ' + [process.execPath, fileURLToPath(new URL('./acp-peer.mjs', import.meta.url)), '--completion-fixture', gates].map(quote).join(' ') + ' "$@"\n', {mode: 0o700});
 const tokenFile = path.join(root, 'onebot-token'); fs.writeFileSync(tokenFile, token, {mode: 0o600});
 const report = {at: new Date().toISOString(), boundary: 'Isolated Gateway and foreground QQ turn through loopback OneBot/model, synthetic ACP, and real local Git. No external model, QQ or production state.', stages: []};
-const sends = [], modelNotices = [];
+const modelNotices = [];
 const phaseStates = {start: 'ready', resume: 'ready', failure: 'failed', blocked: 'needs_permission'};
 const noticeTasks = new Map();
 const blockedCall = 'notice-coding-probe';
 let probeSent = false, probeDenied = false;
-let socketFromGateway, modelFailure;
+let modelFailure;
 const toolCall = (id, args) => ({role: 'assistant', content: null, tool_calls: [
   {id, type: 'function', function: {name: 'kurumi_code', arguments: JSON.stringify(args)}},
 ]});
 const readJson = async req => {let data = ''; for await (const chunk of req) data += chunk; return JSON.parse(data);};
 const listen = async server => {server.listen(0, '127.0.0.1'); await once(server, 'listening'); return '127.0.0.1:' + server.address().port;};
-const onebot = http.createServer(async (req, res) => {
-  try {
-    assert.equal(req.headers.authorization, 'Bearer ' + token);
-    const params = await readJson(req);
-    let data = {};
-    if (req.url === '/get_login_info') data = {user_id: Number(bot)};
-    if (req.url === '/send_private_msg') {
-      assert.equal(String(params.user_id), owner);
-      data.message_id = 42000 + sends.length;
-      sends.push({id: String(data.message_id), text: params.message.filter(value => value.type === 'text').map(value => value.data.text).join('')});
-    }
-    res.end(JSON.stringify({status: 'ok', retcode: 0, data}));
-  } catch {res.writeHead(500).end('OneBot fixture error');}
-});
-const onebotAddress = await listen(onebot);
-const ws = new WebSocketServer({server: onebot});
-ws.on('connection', (socket, request) => {
-  if (request.headers.authorization !== 'Bearer ' + token) {socket.close(1008); return;}
-  socketFromGateway = socket;
-});
+const onebot = await createOneBotPeer({token, botId: bot, subjects: [owner]});
+const {sends} = onebot;
 const model = http.createServer(async (req, res) => {
   try {
     const body = await readJson(req);
@@ -120,34 +99,24 @@ const model = http.createServer(async (req, res) => {
   } catch (error) {modelFailure = error.message; res.writeHead(400).end('Model fixture error');}
 });
 const modelAddress = await listen(model);
-async function waitFor(read, description) {
-  for (let i = 0; i < 220; i++) {
-    if (modelFailure) throw Error(modelFailure);
-    const value = read(); if (value) return value;
-    await delay(50);
-  }
-  throw Error('Timed out waiting for ' + description);
+function check() {
+  onebot.check();
+  if (modelFailure) throw Error(modelFailure);
 }
+const waitFor = (read, description) => waitForAcceptance(() => {check(); return read();}, description);
 async function verifyCompletion(directory, codingRoot, stage) {
-  await waitFor(() => socketFromGateway?.readyState === 1, 'loopback OneBot connection');
+  await waitFor(onebot.connected, 'loopback OneBot connection');
+  const channelDir = path.join(directory, 'channel');
   const coding = new DatabaseSync(path.join(codingRoot, 'coding.sqlite'), {readOnly: true});
   const tasks = () => coding.prepare('SELECT facts FROM coding_tasks').all().map(row => JSON.parse(row.facts));
-  let channel;
   try {
     // The synthetic ACP peer cannot finish until the entire initiating QQ turn is closed.
     const knownTasks = new Set(), seenRounds = new Set();
     let originalSession;
-    for (const [index, [phase, expectedState]] of Object.entries(phaseStates).entries()) {
-      const id = 201 + index;
-      socketFromGateway.send(JSON.stringify({post_type: 'message', message_type: 'private', self_id: Number(bot), user_id: Number(owner),
-        message_id: id, time: Math.floor(Date.now() / 1000), message: [{type: 'text', data: {text: 'FIXTURE_REQUEST_' + phase}}]}));
-      await waitFor(() => {
-        const filename = path.join(directory, 'channel', 'channel.sqlite');
-        if (!channel && fs.existsSync(filename) && fs.existsSync(filename + '-shm')) channel = new DatabaseSync(filename, {readOnly: true});
-        if (!channel?.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='inbound'").get()) return false;
-        return channel.prepare('SELECT status FROM inbound WHERE id=?').get([bot, owner, id].join(':'))?.status === 'completed';
-      }, 'closed foreground ' + phase + ' turn');
-      assert(sends.some(value => value.text === 'Accepted ' + phase));
+    for (const [phase, expectedState] of Object.entries(phaseStates)) {
+      const id = await onebot.send(onebot.message(owner, 'FIXTURE_REQUEST_' + phase));
+      await waitForOneBotTurn(channelDir, [id], {check});
+      assert(sends.some(value => value.accepted && textOfSend(value) === 'Accepted ' + phase));
       const allTasks = tasks(), [pending, ...others] = allTasks.filter(task => task.state === 'running');
       assert(pending); assert.equal(others.length, 0);
       assert.equal(pending.title, `Fixture ${phase === 'resume' ? 'start' : phase}`);
@@ -170,9 +139,9 @@ async function verifyCompletion(directory, codingRoot, stage) {
       assert.equal(done.delivery.roundId, pending.executionRoundId);
       if (phase === 'start') {originalSession = done.externalSessionId; assert(originalSession);}
       if (phase === 'resume') assert.equal(done.externalSessionId, originalSession);
-      const stored = channel.prepare('SELECT status,message_id FROM outbound WHERE id=?').get(done.delivery.key + ':0');
+      const stored = readOneBotLedger(channelDir, db => db.prepare('SELECT status,message_id FROM outbound WHERE id=?').get(done.delivery.key + ':0'));
       assert.equal(stored?.status, 'sent'); assert.equal(String(stored?.message_id), done.delivery.messageId);
-      assert.equal(sends.filter(value => value.id === done.delivery.messageId && value.text.includes('fixture execution ' + phase)).length, 1);
+      assert.equal(sends.filter(value => value.accepted && value.messageId === done.delivery.messageId && textOfSend(value).includes('fixture execution ' + phase)).length, 1);
     }
     assert(probeSent && probeDenied, 'The background business tool call must be denied');
     assert.equal(tasks().length, knownTasks.size, 'Notifications must not create coding tasks');
@@ -185,43 +154,28 @@ async function verifyCompletion(directory, codingRoot, stage) {
     assert.equal(git(source, 'rev-parse', 'HEAD').trim(), baseline);
     stage.completion = {foregroundClosedBeforeCompletion: true, startAccepted: true, resumeAccepted: true, failureAccepted: true, permissionBlockedAccepted: true, sameExternalSession: true,
       backgroundToolDenied: true, noticeSchemaCounts: modelNotices.map(({schemaCount}) => schemaCount)};
-  } finally {channel?.close(); coding.close();}
+  } finally {coding.close();}
 }
 async function run(enabled) {
   const directory = path.join(root, enabled ? 'enabled' : 'disabled'); fs.mkdirSync(directory);
-  const socket = net.createServer(); socket.listen(0, '127.0.0.1'); await once(socket, 'listening');
-  const port = socket.address().port; await new Promise(r => socket.close(r));
   const codingRoot = path.join(directory, 'coding');
   const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'}, root: codingRoot, worktrees: path.join(directory, 'worktrees'), dsh: {command: peer, home: dshHome, model: ['fixture', 'fixture']}, projects: [{id: 'fixture', root: source, branch: 'main', checks: [{name: 'fixture check', argv: [process.execPath, '-e', 'process.exit(0)']}]}]};
   const config = withHostControl(compileAccessConfig({
-    gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
     agents: {ownership: 'explicit', defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}, systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['kurumi_code']}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://' + modelAddress + '/v1', apiKey: 'synthetic', api: 'openai-completions',
       models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 262144, maxTokens: 1000}]}}},
     plugins: {allow: ['kurumi-coding', 'kurumi-qq'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-coding'), path.join(repo, 'chatbot/plugins/kurumi-qq')]},
       entries: {'kurumi-coding': {enabled, config: pluginConfig}, 'kurumi-qq': {enabled}}, slots: {memory: 'none'}},
-    channels: {'kurumi-qq': {enabled, httpUrl: 'http://' + onebotAddress, wsUrl: 'ws://' + onebotAddress, httpTokenFile: tokenFile, wsTokenFile: tokenFile,
+    channels: {'kurumi-qq': {enabled, httpUrl: onebot.httpUrl, wsUrl: onebot.wsUrl, httpTokenFile: tokenFile, wsTokenFile: tokenFile,
       stateDir: path.join(directory, 'channel'), mediaRoot: path.join(directory, 'media'), testIngress: false}},
     session: {dmScope: 'per-channel-peer'}, cron: {enabled: false}, update: {checkOnStart: false}, tools: {toolSearch: false, codeMode: false, web: {search: {enabled: false}, fetch: {enabled: false}}}, logging: {file: path.join(directory, 'runtime.log')},
   }, ownerPolicy(owner)), repo);
   fs.mkdirSync(config.agents.defaults.workspace);
-  const configFile = path.join(directory, 'openclaw.json'); fs.writeFileSync(configFile, JSON.stringify(config), {mode: 0o600});
-  const fd = fs.openSync(path.join(directory, 'gateway.log'), 'w', 0o600);
-  const child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
-    cwd: repo, detached: true, stdio: ['ignore', fd, fd],
-    env: {PATH: process.env.PATH, HOME: directory, LANG: 'C.UTF-8', OPENCLAW_STATE_DIR: directory, OPENCLAW_CONFIG_PATH: configFile,
-      OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_AGENT_DIR: path.join(directory, 'agents/main/agent')},
-  }); fs.closeSync(fd);
-  const call = (method, params = {}, timeout = 10000) => callGatewayFromCli(method,
-    {url: `ws://127.0.0.1:${port}`, token, timeout: String(timeout), json: true}, params);
-  const stage = {enabled}; report.stages.push(stage);
+  const host = await startIsolatedGateway({repo, root: directory, token, configure: () => config});
+  const {call} = host;
+  const stage = {enabled, configSha256: host.configSha256}; report.stages.push(stage);
   try {
-    let ready = false;
-    for (let i = 0; i < 100; i++) {
-      try {await call('health', {}, 1000); ready = true; break;}
-      catch {if (child.exitCode !== null) throw Error('Isolated Gateway exited'); await new Promise(r => setTimeout(r, 300));}
-    }
-    assert(ready, 'Gateway readiness timed out');
+    await host.ready();
     const plugins = await call('plugins.list'), catalog = await call('tools.catalog', {agentId: 'main', includePlugins: true});
     const plugin = plugins.plugins.find(p => p.id === 'kurumi-coding'); assert(plugin);
     const names = catalog.groups.filter(g => g.pluginId === 'kurumi-coding').flatMap(g => g.tools.map(t => t.id));
@@ -235,11 +189,8 @@ async function run(enabled) {
     stage.error = error.message;
     throw error;
   } finally {
-    const exited = once(child, 'exit'); let killed = false;
-    try {process.kill(-child.pid, 'SIGTERM');} catch {}
-    const timer = setTimeout(() => {killed = true; try {process.kill(-child.pid, 'SIGKILL');} catch {}}, 8000); timer.unref();
-    if (child.exitCode === null && child.signalCode === null) await exited;
-    clearTimeout(timer); stage.gracefulStop = !killed; assert.equal(killed, false);
+    stage.gracefulStop = await host.close();
+    assert(stage.gracefulStop, 'Isolated Gateway did not stop gracefully');
     assert.equal(fs.existsSync(path.join(codingRoot, 'service.lock')), false); stage.serviceLockReleased = true;
   }
 }
@@ -247,11 +198,10 @@ try {await run(true); await run(false); report.passed = true;}
 catch (error) {report.passed = false; report.error = {name: error.name, message: error.message}; process.exitCode = 1;}
 finally {
   report.finishedAt = new Date().toISOString();
-  for (const client of ws.clients) client.terminate();
-  await new Promise(resolve => ws.close(resolve));
-  for (const server of [onebot, model]) server.closeAllConnections();
-  await Promise.all([onebot, model].map(server => new Promise(resolve => server.close(resolve))));
-  if (report.passed) fs.rmSync(root, {recursive: true, force: true}); else report.diagnosticDirectory = root;
-  fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx'});
+  model.closeAllConnections();
+  await Promise.all([onebot.close(), new Promise(resolve => model.close(resolve))]);
+  if (report.passed) {fs.rmSync(root, {recursive: true, force: true}); report.fixtureRemoved = !fs.existsSync(root);}
+  else report.diagnosticDirectory = root;
+  fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});
   console.log(JSON.stringify({passed: report.passed, stages: report.stages.length, error: report.error}));
 }

@@ -3,35 +3,21 @@
 // No real model, production DB, external weather or QQ. Requires KnowledgeMap checkout.
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
-import {mkdtempSync, writeFileSync, rmSync, existsSync} from 'node:fs';
+import {mkdtempSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import net from 'node:net';
-import {KnowledgeMapClient} from '../../packages/knowledgemap-client/client.js';
 import {manageRemoteList} from '../../plugins/personal-reminder-list/remote.js';
+import {startIsolatedKnowledgeMap} from './isolated-api.mjs';
 
 test('two entry points share tasks and bills through actual HTTP, including conflict/replay', {timeout: 30000}, async t => {
-  const km = process.env.KM_TEST_REPO ?? '/home/afrangry/repository';
-  assert.ok(existsSync(join(km, 'backend/tests/assistant_server.py')), 'KM_TEST_REPO must contain document18 test server');
-  const root = mkdtempSync(join(tmpdir(), 'km-cross-http-')), tokenFile = join(root, 'token');
-  writeFileSync(tokenFile, 'b'.repeat(64), {mode: 0o600});
-  const probe = net.createServer(); await new Promise(resolve => probe.listen(0, '127.0.0.1', resolve));
-  const port = probe.address().port; await new Promise(resolve => probe.close(resolve));
-  const child = spawn('/home/afrangry/miniconda3/envs/desheng/bin/python', [join(km, 'backend/tests/assistant_server.py'), '--port', String(port), '--token-file', tokenFile], {stdio: ['ignore', 'ignore', 'pipe']});
-  let errors = ''; child.stderr.on('data', x => errors += x.toString());
-  t.after(async () => {child.kill('SIGTERM'); await new Promise(resolve => child.exitCode !== null ? resolve() : child.once('exit', resolve)); rmSync(root, {recursive: true, force: true});});
-  const client = new KnowledgeMapClient({baseUrl: `http://127.0.0.1:${port}`, tokenFile, trace() {}});
-  let ready = false;
-  for (let i = 0; i < 50; i++) {
-    try {ready = (await client.request('/api/assistant/status')).ok; break;} catch {}
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-  assert.ok(ready, 'isolated API failed to start: ' + errors.slice(-1000));
-  const web = async (path, method = 'GET', body) => {
-    const result = await fetch(`http://127.0.0.1:${port}/api/${path}`, {method, headers: {'content-type': 'application/json'}, ...(body ? {body: JSON.stringify(body)} : {})});
-    assert.ok(result.ok, `${path}: ${result.status}`); return result.status === 204 ? null : result.json();
-  };
+  const root = mkdtempSync(join(tmpdir(), 'km-cross-http-'));
+  let fixture;
+  t.after(async () => {
+    try {if (fixture) assert.equal(await fixture.close(), true, 'KnowledgeMap API did not stop cleanly');}
+    finally {rmSync(root, {recursive: true, force: true});}
+  });
+  fixture = await startIsolatedKnowledgeMap(root);
+  const {client, web} = fixture;
   const request = {sessionKey: 'isolated-owner', messageId: 'm1'};
   const added = await manageRemoteList(client, {action: 'add', title: '查党员材料', note: '活动后越快越好', ddl: null}, request);
   assert.equal(added.item.ddl, null);

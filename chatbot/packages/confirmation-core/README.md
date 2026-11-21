@@ -50,11 +50,13 @@ natural path can authorize them. The additive `confirmation_previews` and
 - `scope.ts`, `types.ts`: trusted scope and shared contracts.
 - `schema.ts`, `store.ts`: shared tables and transaction-level grant checks.
 - `registry.ts`: backend lifecycle and legacy unique routing.
+- `request-backends.ts`: per-turn backend selection for the isolated request contract in [docs/36](../../../docs/36_通用场景验收.md#确认测试作用域).
 - `natural-store.ts`: domain-owned SQLite natural adapter and domain narrowing.
 - `natural-service.ts`: candidate/selection/presentation coordination.
 - `presentation.ts`: prepared-preview and successful-delivery correlation.
 - `current-request.ts`: process-local trusted-request fence, without grants.
 
-Consumers import the package root. Registration and receipt APIs are internal
+Domain consumers import the package root. The trusted acceptance host uses
+`@kurumi/confirmation-core/acceptance`. Registration and receipt APIs are internal
 trusted-plugin capabilities, never tools exposed directly to the model.
 Current integration and verification: [docs/21](../../../docs/21_后端职责分层与代码整理.md).

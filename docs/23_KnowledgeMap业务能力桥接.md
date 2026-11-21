@@ -144,6 +144,8 @@ Fusion 和 KnowledgeMap 分别采集，Fusion 的 SQLite 快照不含 MySQL，�
 
 ## 如何验证
 
+网站接口创建的测试账单能经 Fusion 回读，见[文档36的隔离场景](36_通用场景验收.md#如何验证)。
+
 离线用例，不外发、不碰生产：
 
 ```bash

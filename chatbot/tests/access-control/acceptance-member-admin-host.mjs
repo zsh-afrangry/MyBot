@@ -1,10 +1,11 @@
 // Isolated OpenClaw Gateway, deterministic loopback model, simulated OneBot HTTP/WS.
 // Writes only its temporary source checkout and state, plus a new --out report.
+// owner_tool starts the real KnowledgeMap API on a disposable SQLite database.
 // Uses synthetic QQ identities and (for coding_project) a local ACP stub.
 // No real QQ, paid model, DSH, production writes or production restart.
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
-import {randomBytes} from 'node:crypto';
+import {createHash, randomBytes} from 'node:crypto';
 import {once} from 'node:events';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -15,10 +16,11 @@ import {DatabaseSync} from 'node:sqlite';
 import {setTimeout as delay} from 'node:timers/promises';
 import {fileURLToPath} from 'node:url';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
-import {WebSocketServer} from 'ws';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {git} from '../../plugins/kurumi-coding/workspaces.js';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
+import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
+import {startIsolatedKnowledgeMap} from '../knowledgemap/isolated-api.mjs';
 import {ownerPolicy} from './fixtures.mjs';
 import {withHostControl} from './host-config.mjs';
 
@@ -29,29 +31,35 @@ const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-access-admin-host-'));
 const state = path.join(root, 'state');
+const channelDir = path.join(state, 'channel');
 const source = path.join(root, 'source');
 const policyFile = path.join(source, 'config/access-control.json');
 const intentFile = path.join(source, 'config/runtime.config.json');
 const runtimeFile = path.join(state, 'openclaw.json');
 const owner = '100001', bot = '100002', member = '100003';
+const toolRun = category === 'owner_tool', projectRun = category === 'coding_project';
 const token = randomBytes(24).toString('hex');
 const readPolicy = () => JSON.parse(fs.readFileSync(policyFile, 'utf8'));
 const writeJson = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', {mode: 0o600});
 const report = {openclaw: JSON.parse(fs.readFileSync(path.join(repo, 'node_modules/openclaw/package.json'))).version,
-  boundary: 'Isolated Gateway, deterministic model and simulated OneBot. Synthetic source and state.', category, cases: [], requests: 0};
+  boundary: 'Isolated Gateway, deterministic model and simulated OneBot. Synthetic source and state.',
+  category, cases: [], requests: 0, primaryModel: 'fixture/fixture'};
 
 for (const dir of ['config', 'roles', 'scripts/fusion/templates']) fs.mkdirSync(path.join(source, dir), {recursive: true});
 for (const dir of ['workspace', 'channel', 'media']) fs.mkdirSync(path.join(state, dir), {recursive: true});
-writeJson(policyFile, ownerPolicy(owner));
+const policy = ownerPolicy(owner);
+if (toolRun) policy.subjects.push({qq: member, kind: 'user', role: 'member', enabled: true,
+  permissions: {'chat.use': true, 'qq.reply': true}, mailRecipients: []});
+writeJson(policyFile, policy);
 fs.writeFileSync(path.join(source, 'roles/fixture.md'), 'Synthetic persona');
 writeJson(path.join(source, 'config/persona.json'), {identityName: 'Fixture', roleFile: 'roles/fixture.md', userFile: 'Synthetic owner', agentsIntro: 'Fixture intro'});
 fs.writeFileSync(path.join(source, 'scripts/fusion/templates/AGENTS.md'), '{{PERSONA_INTRO}}\n<!-- owner-exec-scope -->\nUse the registered typed tools.');
 fs.copyFileSync(path.join(repo, 'scripts/fusion/templates/MEMBER_AGENTS.md'), path.join(source, 'scripts/fusion/templates/MEMBER_AGENTS.md'));
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(state, file), token, {mode: 0o600});
 
-let active, proposal, child, completingTask;
-const projectRun = category === 'coding_project';
-const sends = [];
+let active, proposal, child, completingTask, knowledgeMap, liveConfig;
+const onebot = await createOneBotPeer({token, botId: bot, subjects: [owner, member]});
+const {sends} = onebot;
 function unwrap(value) {
   for (let i = 0; i < 6; i++) {
     if (typeof value === 'string') { try { value = JSON.parse(value); } catch { return value; } }
@@ -77,57 +85,46 @@ function modelReply(body, tool, res, text = '宿主测试回复。') {
 }
 const server = http.createServer(async (req, res) => {
   try {
+    if (req.url !== '/v1/chat/completions' || req.method !== 'POST') {res.writeHead(404).end(); return;}
     let raw = '';
     for await (const bytes of req) raw += bytes;
     res.setHeader('content-type', 'application/json');
-    if (req.url === '/v1/chat/completions') {
-      const body = JSON.parse(raw);
-      assert(++report.requests <= (projectRun ? 125 : 60), 'Unexpected model request count');
-      // Only the synthetic ACP gate can release the background notice, between foreground turns.
-      if (!active && completingTask) return modelReply(body, undefined, res, '合成任务完成 ' + completingTask);
-      assert(active, 'Unexpected foreground model request');
-      if (active.member) {
-        const names = body.tools?.map(tool => tool.function?.name) ?? [];
-        assert(!names.includes('kurumi_access') && !names.includes('personal_confirmation'));
-      }
-      if (active.observe) {
-        const last = body.messages.findLast(message => message.role === 'tool');
-        active.observe(unwrap(last?.content));
-        active.observe = undefined;
-      }
-      const step = active.steps[active.next];
-      if (!step) return modelReply(body, undefined, res);
-      if (step.searchOnly) {
-        active.next++;
-        active.observe = step.verify;
-        return modelReply(body, ['tool_search', {query: step.name, limit: 1}], res);
-      }
-      if (!active.found) {
-        active.found = true;
-        return modelReply(body, ['tool_search', {query: step.name, limit: 1}], res);
-      }
-      active.found = false;
+    const body = JSON.parse(raw);
+    assert(++report.requests <= (projectRun ? 125 : toolRun ? 90 : 60), 'Unexpected model request count');
+    // Only the synthetic ACP gate can release the background notice, between foreground turns.
+    if (!active && completingTask) return modelReply(body, undefined, res, '合成任务完成 ' + completingTask);
+    assert(active, 'Unexpected foreground model request');
+    if (active.member) {
+      const names = body.tools?.map(tool => tool.function?.name) ?? [];
+      assert(!names.includes('kurumi_access') && !names.includes('personal_confirmation'));
+    }
+    if (active.observe) {
+      const last = body.messages.findLast(message => message.role === 'tool');
+      active.observe(unwrap(last?.content));
+      active.observe = undefined;
+    }
+    const step = active.steps[active.next];
+    if (!step) return modelReply(body, undefined, res, active.reply);
+    if (step.searchOnly) {
       active.next++;
       active.observe = step.verify;
-      return modelReply(body, ['dispatch_action', {id: step.name, args: typeof step.args === 'function' ? step.args() : step.args}], res);
+      return modelReply(body, ['tool_search', {query: step.name, limit: 1}], res);
     }
-    assert.equal(req.headers.authorization, 'Bearer ' + token);
-    let data = {};
-    if (req.url === '/get_login_info') data = {user_id: Number(bot)};
-    if (req.url === '/send_private_msg') {
-      const args = JSON.parse(raw);
-      assert([owner, member].includes(String(args.user_id)));
-      sends.push(args);
-      data = {message_id: 20000 + sends.length};
+    if (!step.direct && !active.found) {
+      active.found = true;
+      active.observe = step.verifySearch;
+      return modelReply(body, ['tool_search', {query: step.name, limit: 1}], res);
     }
-    return res.end(JSON.stringify({status: 'ok', retcode: 0, data}));
+    active.found = false;
+    active.next++;
+    active.observe = step.verify;
+    return modelReply(body, ['dispatch_action', {id: step.name, args: typeof step.args === 'function' ? step.args() : step.args}], res);
   } catch (error) {
     report.fixtureError = error.message;
     res.writeHead(400);
     res.end(JSON.stringify({error: {message: 'isolated_access_fixture_failed'}}));
   }
 });
-const ws = new WebSocketServer({server});
 server.listen(0, '127.0.0.1');
 await once(server, 'listening');
 const probe = net.createServer().listen(0, '127.0.0.1');
@@ -136,7 +133,7 @@ const port = probe.address().port;
 await new Promise(resolve => probe.close(resolve));
 const endpoint = `127.0.0.1:${server.address().port}`;
 const admin = 'kurumi-access-admin', confirmation = 'personal-confirmation';
-const mail = 'kurumi-mail', mailRun = category === 'mail_recipient', toolRun = category === 'owner_tool';
+const mail = 'kurumi-mail', mailRun = category === 'mail_recipient', bills = 'kurumi-knowledgemap';
 const execRun = category === 'exec_root', fixed = path.join(root, 'exec-fixed');
 const base = path.join(root, 'ordinary'), extraRoot = path.join(base, '目录 A');
 const launcher = '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run';
@@ -160,12 +157,13 @@ if (projectRun) {
   fs.writeFileSync(fakePeer, '#!/bin/bash\nexec ' + [process.execPath,
     path.join(repo, 'chatbot/tests/coding/acp-peer.mjs'), '--project-registry-fixture', gates].map(quote).join(' ') + ' "$@"\n', {mode: 0o700});
 }
-const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun || toolRun ? [mail] : []), ...(projectRun ? [coding] : [])];
+const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun ? [mail] : []), ...(toolRun ? [bills] : []), ...(projectRun ? [coding] : [])];
 const workspace = path.join(state, 'workspace');
 const model = {primary: 'fixture/fixture'};
 const config = withHostControl({
   gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
-  models: {providers: {fixture: {baseUrl: `http://${endpoint}/v1`, apiKey: 'synthetic', api: 'openai-completions',
+  discovery: {mdns: {mode: 'off'}}, update: {checkOnStart: false},
+  models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${endpoint}/v1`, apiKey: 'synthetic', api: 'openai-completions',
     models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200,
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
   agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
@@ -175,9 +173,9 @@ const config = withHostControl({
       deny: ['read', 'write', 'edit', 'apply_patch', ...(!execRun ? ['exec'] : []), 'process', 'message', 'sessions_spawn'],
       ...(execRun ? {exec: {host: 'gateway', mode: 'full', timeoutSeconds: 10, notifyOnExit: false}} : {}),
     }}}},
-  channels: {'kurumi-qq': {enabled: true, httpUrl: `http://${endpoint}`, wsUrl: `ws://${endpoint}`,
+  channels: {'kurumi-qq': {enabled: true, httpUrl: onebot.httpUrl, wsUrl: onebot.wsUrl,
     httpTokenFile: path.join(state, 'http-token'), wsTokenFile: path.join(state, 'ws-token'),
-    stateDir: path.join(state, 'channel'), mediaRoot: path.join(state, 'media'), testIngress: true, dailySendLimit: 100, segmentDelayMs: 0}},
+    stateDir: channelDir, mediaRoot: path.join(state, 'media'), testIngress: !toolRun, dailySendLimit: 100, segmentDelayMs: 0}},
   plugins: {allow: [...plugins], load: {paths: plugins.map(id => path.join(repo, 'chatbot/plugins', id))}, entries: {
     'kurumi-qq': {enabled: true, ...(execRun ? {config: {
       exec: {workdir: fixed, timeoutSeconds: 10, writeBoundary: {root: fixed, launcher}},
@@ -185,7 +183,7 @@ const config = withHostControl({
       ...(category !== 'member' ? {enabledCategories: [category]} : {}),
       ...(execRun ? {execDirectoryBases: [base]} : {}), ...(projectRun ? {projectCheckProfiles} : {})}},
     [confirmation]: {enabled: true, hooks: {allowConversationAccess: true}},
-    ...(mailRun || toolRun ? {[mail]: {enabled: true}} : {}),
+    ...(mailRun ? {[mail]: {enabled: true}} : {}),
     ...(projectRun ? {[coding]: {enabled: true, config: {pilot: true, root: codingRoot, worktrees: path.join(pilot, 'worktrees'),
       dsh: {command: fakePeer, home: fakeHome, model: ['fixture', 'fixture']}, projects: [],
       writeBoundary: {root: pilot, launcher}}}} : {}),
@@ -194,28 +192,31 @@ const config = withHostControl({
     web: {search: {enabled: false}, fetch: {enabled: false}}},
   session: {dmScope: 'per-channel-peer'}, cron: {enabled: false}, logging: {file: path.join(state, 'runtime.log')},
 }, repo);
-writeJson(intentFile, config);
 const call = (method, params = {}, timeout = 40000) => callGatewayFromCli(method,
-  {url: `ws://127.0.0.1:${port}`, token, timeout: String(timeout), json: true}, params);
+  {config: liveConfig, url: `ws://127.0.0.1:${port}`, token, timeout: String(timeout), json: true}, params,
+  {deviceIdentity: null, sharedStateMode: 'read-only'});
 
 async function start() {
   for (const [file, contents] of personaFiles(source, state).files) applyPersonaFile(file, contents);
-  writeJson(runtimeFile, compileAccessConfig(JSON.parse(fs.readFileSync(intentFile)), readPolicy()));
+  liveConfig = compileAccessConfig(JSON.parse(fs.readFileSync(intentFile)), readPolicy());
+  writeJson(runtimeFile, liveConfig);
   const fd = fs.openSync(path.join(state, 'gateway.log'), 'a', 0o600);
   try {
     child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run',
       '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
-      cwd: repo, detached: true, stdio: ['ignore', fd, fd], env: {PATH: process.env.PATH, HOME: process.env.HOME,
+      cwd: toolRun ? state : repo, detached: true, stdio: ['ignore', fd, fd], env: {PATH: process.env.PATH, HOME: toolRun ? state : process.env.HOME,
         OPENCLAW_EXEC_SHELL_SNAPSHOT: '0',
         LANG: 'C.UTF-8', OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_STATE_DIR: state, OPENCLAW_CONFIG_PATH: runtimeFile,
         OPENCLAW_AGENT_DIR: path.join(state, 'agents/main/agent')},
     });
   } finally { fs.closeSync(fd); }
+  let ready = false;
   for (let i = 0; i < 60; i++) {
     assert.equal(child.exitCode, null, 'Isolated Gateway exited during startup');
-    try { await call('health', {}, 1200); return; } catch { await delay(300); }
+    try { await call('health', {}, 1200); ready = true; break; } catch { await delay(300); }
   }
-  assert.fail('Isolated Gateway not ready');
+  assert(ready, 'Isolated Gateway not ready');
+  if (toolRun) await waitForAcceptance(onebot.connected, 'OneBot socket');
 }
 
 async function stop() {
@@ -233,24 +234,38 @@ const inbound = (from, text) => call('kurumi-qq.testInbound', {event: {post_type
 async function turn(from, text, steps) {
   active = {next: 0, steps, member: from === member};
   const start = sends.length;
-  const result = await inbound(from, text);
+  let sessionKey;
+  if (toolRun) {
+    const id = await onebot.send(onebot.message(from, text));
+    await waitForOneBotTurn(channelDir, [id], {timeoutMs: 20000, check() {
+      onebot.check(); assert(!report.fixtureError, report.fixtureError);
+    }});
+  } else {
+    const result = await inbound(from, text);
+    assert(result.ok && result.modelDispatched, JSON.stringify(result));
+    sessionKey = result.sessionKey;
+  }
+  onebot.check();
   assert(!report.fixtureError, report.fixtureError);
-  assert(result.ok && result.modelDispatched, JSON.stringify(result));
   assert.equal(active.next, steps.length);
   assert.equal(active.observe, undefined, 'Last tool result not observed');
   active = undefined;
   const sent = sends.slice(start);
-  assert(sent.length >= 1 && sent.every(message => String(message.user_id) === from));
-  return {sent, sessionKey: result.sessionKey};
+  assert(sent.length >= 1 && sent.every(message => message.accepted && String(message.user_id) === from));
+  if (toolRun) for (const entry of sent) {
+    const receipt = readOneBotLedger(channelDir, db => db.prepare('SELECT status FROM outbound WHERE message_id=?').get(entry.messageId));
+    assert.equal(receipt?.status, 'sent', 'OneBot receipt was not recorded');
+  }
+  return {sent, sessionKey};
 }
 const adminTool = (args, verify) => ({name: 'kurumi_access', args, verify});
 const confirm = verify => ({name: 'personal_confirmation', args: () => ({action: 'confirm', domain: 'access',
   proposalId: proposal.proposalId, payloadHash: proposal.payloadHash}), verify});
 const commit = verify => adminTool(() => ({action: 'commit', proposalId: proposal.proposalId}), verify);
 const isError = code => result => assert.deepEqual({ok: result.ok, code: result.code}, {ok: false, code});
-function readAudit(sql) {
+function readAudit(sql, ...params) {
   const db = new DatabaseSync(path.join(state, 'state/access-admin/changes.sqlite'), {readOnly: true});
-  try { return db.prepare(sql).get(); } finally { db.close(); }
+  try { return db.prepare(sql).get(...params); } finally { db.close(); }
 }
 
 async function memberScenario() {
@@ -358,42 +373,111 @@ async function mailScenario() {
 }
 
 async function toolScenario() {
-  const name = 'email_status';
+  const name = 'knowledge_bills_get';
+  const seeded = await knowledgeMap.web('bills/', 'POST', {expense_date: '2026-10-17', amount: '36.80', note: '白名单验收账单'});
+  assert(Number.isSafeInteger(seeded.id) && seeded.version === 1 && seeded.amount === '36.80');
+  const readIntent = () => JSON.parse(fs.readFileSync(intentFile));
+  const originalIntent = readIntent(), grantedIntent = structuredClone(originalIntent);
+  grantedIntent.agents.entries.main.tools.alsoAllow.push(name);
   const select = (action, fields = {}) => ({action, category, ...fields});
   const ok = result => assert.equal(result.ok, true, JSON.stringify(result));
-  const show = change => turn(owner, '预览合成工具名单变更', [adminTool(select('propose', {change}), result => {
+  const entry = (source, runtime) => adminTool(select('get', {key: name}), result => {
     ok(result);
-    assert(result.previewText.includes(change.key));
-    proposal = result;
-  })]);
-  const notVisible = {name, searchOnly: true, verify: result => assert(!JSON.stringify(result).includes('"name":"' + name + '"'))};
-  await turn(owner, '核对未开放工具', [
-    notVisible,
+    assert.deepEqual({source: result.source, runtime: result.runtime, inSync: result.inSync, available: result.available.includes(name)},
+      {source, runtime, inSync: source === runtime, available: runtime === name});
+  });
+  const status = (id, activation) => adminTool({action: 'status', proposalId: id}, result => {
+    ok(result);
+    assert.equal(result.activation, activation);
+  });
+  const appears = result => JSON.stringify(result).includes('"name":"' + name + '"');
+  const notVisible = {name, searchOnly: true, verify: result => assert(!appears(result), 'Bill tool should be hidden')};
+  const query = {action: 'list', query: seeded.note};
+  const denied = {name, args: query, direct: true, verify: result => {
+    assert.match(JSON.stringify(result), /not found|not available|unknown|unavailable|forbidden|not allowed/i);
+  }};
+  const queried = {name, args: query, verifySearch: result => assert(appears(result), 'Bill tool should be visible'), verify: result => {
+    ok(result);
+    assert.equal(result.total, 1);
+    const [{id, version, note, amount}] = result.items;
+    assert.deepEqual({id, version, note, amount},
+      {id: seeded.id, version: seeded.version, note: seeded.note, amount: seeded.amount});
+    active.reply = '账单「' + note + '」金额 ' + amount + ' 元。';
+  }};
+  const assertReply = ({sent}) => {
+    assert(sent.map(textOfSend).join('\n').includes('账单「' + seeded.note + '」金额 ' + seeded.amount + ' 元。'));
+  };
+  const traceFile = path.join(state, 'state/knowledgemap/trace.jsonl');
+  const reads = count => {
+    const records = fs.existsSync(traceFile) ? fs.readFileSync(traceFile, 'utf8').trim().split('\n').map(line => JSON.parse(line)) : [];
+    assert.equal(records.length, count, 'Unexpected KnowledgeMap bridge request count');
+    for (const record of records) {
+      assert.deepEqual({method: record.data.method, path: record.data.path, status: record.data.status},
+        {method: 'GET', path: '/api/assistant/bills', status: 200});
+    }
+    report.knowledgeMapReads = count;
+  };
+  const show = async (op, sameTurn = false) => {
+    const before = readIntent();
+    const preview = await turn(owner, (op === 'add' ? '加上' : '移除') + '主人工具白名单里的账单查询工具，先给我看预览。', [
+      adminTool(select('propose', {change: {op, key: name}}), result => {
+        ok(result);
+        assert(result.status === 'pending' && result.previewText.includes(name));
+        proposal = result;
+      }),
+      ...(sameTurn ? [confirm(isError('confirmation_not_explicit')), commit(isError('approval_required'))] : []),
+    ]);
+    assert(preview.sent.map(textOfSend).join('\n').includes(proposal.previewText), 'OneBot must receive the frozen tool change');
+    const receipt = readAudit('SELECT presented_at_utc, presentation_message_id FROM confirmation_previews WHERE proposal_id=?', proposal.proposalId);
+    assert(receipt.presented_at_utc && preview.sent.some(message => message.messageId === receipt.presentation_message_id));
+    assert.deepEqual(readIntent(), before);
+    assert.equal(readAudit('SELECT COUNT(*) AS count FROM approval_grants WHERE proposal_id=?', proposal.proposalId).count, 0);
+    return proposal.proposalId;
+  };
+  const write = (...steps) => turn(owner, '确认', [
+    confirm(result => {ok(result); assert.equal(result.status, 'authorized');}),
+    commit(result => {ok(result); assert.equal(result.activation, 'pending_sync');}),
+    commit(isError('access_change_already_submitted')),
+    ...steps,
+  ]);
+  await assert.rejects(call('kurumi-qq.testInbound', {}, 3000), /unknown method|not found/iu);
+  const billMessage = '查一下备注为「' + seeded.note + '」的那笔账单金额。';
+  await turn(owner, billMessage, [
+    entry(null, null), notVisible, denied,
     adminTool(select('propose', {change: {op: 'add', key: 'exec'}}), isError('owner_tool_unavailable')),
   ]);
-  await show({op: 'add', key: name});
-  await turn(owner, '确认', [confirm(ok), commit(ok)]);
-  assert(JSON.parse(fs.readFileSync(intentFile)).agents.entries.main.tools.alsoAllow.includes(name));
-  report.cases.push('Only an available mapped tool can be added; host-denied exec remains denied');
+  reads(0);
+  report.cases.push('Before allowlisting, the bill tool is hidden and denied; a host-denied tool cannot be added');
+
+  const addition = await show('add', true);
+  report.cases.push('A frozen preview reaches OneBot; same-turn assent and commit do not write or issue a grant');
+  await write(entry(name, null));
+  assert.deepEqual(readIntent(), grantedIntent);
+  await turn(owner, billMessage, [notVisible, denied]);
+  reads(0);
+  report.cases.push('Later assent writes only one source entry; the unsynced runtime still denies the bill tool');
+
   await stop(); await start();
-  await turn(owner, '查看新工具并调用只读状态', [
-    adminTool(select('get', {key: name}), result => {
-      ok(result); assert(result.inSync && result.runtime === name && result.available.includes(name));
-    }),
-    {name, args: {probe: false}, verify: result => assert.equal(result.ok, true, JSON.stringify(result))},
-  ]);
-  report.cases.push('Confirmed tool becomes visible and its read-only call is allowed by the trusted host after sync');
-  await show({op: 'remove', key: name});
-  await turn(owner, '确认', [confirm(ok), commit(ok)]);
+  assertReply(await turn(owner, billMessage, [status(addition, 'active'), entry(name, name), queried]));
+  reads(1);
+  report.cases.push('After synchronization and restart, the owner reads the exact website fixture bill through the real API and receives it on OneBot');
+  await turn(member, billMessage, [notVisible, denied]);
+  reads(1);
+  report.cases.push('An admitted member cannot discover or run the owner bill tool and causes no business request');
+
+  const removal = await show('remove');
+  await write(entry(null, name));
+  assert.deepEqual(readIntent(), originalIntent);
+  assertReply(await turn(owner, billMessage, [status(removal, 'pending_sync'), queried]));
+  reads(2);
+  report.cases.push('Confirmed removal restores the source; the unsynced running instance still permits the read');
+
   await stop(); await start();
-  await turn(owner, '核对移除后的工具', [
-    notVisible,
-    {...notVisible, name, searchOnly: false, verify: result => assert(/not found|not available|unknown|unavailable/i.test(JSON.stringify(result)))},
-    adminTool(select('get', {key: name}), result => {
-      ok(result); assert(result.inSync && result.runtime === null && !result.available.includes(name));
-    }),
-  ]);
-  report.cases.push('Removal takes effect in tool search and execution; administration remains usable');
+  await turn(owner, billMessage, [status(removal, 'active'), entry(null, null), notVisible, denied]);
+  reads(2);
+  assert.deepEqual(await knowledgeMap.web('bills/' + seeded.id), seeded);
+  assert.equal(readAudit("SELECT COUNT(*) AS count FROM approval_grants WHERE status='consumed'").count, 2);
+  report.cases.push('After the removal is synchronized, the tool is hidden and denied while the bill and administration are intact');
 }
 
 async function execScenario() {
@@ -518,6 +602,15 @@ async function projectScenario() {
 }
 
 try {
+  if (toolRun) {
+    report.boundary = 'Real isolated Gateway and KnowledgeMap FastAPI/SQLite; loopback OneBot WebSocket/HTTP and deterministic model.';
+    report.uncovered = ['real model semantics', 'real QQ platform', 'production configuration activation or KnowledgeMap MySQL'];
+    try { knowledgeMap = await startIsolatedKnowledgeMap(root); }
+    catch (error) { report.blocked = true; throw error; }
+    config.plugins.entries[bills] = {enabled: true, config: knowledgeMap.config};
+  }
+  writeJson(intentFile, config);
+  report.configSha256 = createHash('sha256').update(fs.readFileSync(intentFile)).digest('hex');
   await start();
   if (mailRun) await mailScenario();
   else if (toolRun) await toolScenario();
@@ -532,12 +625,17 @@ try {
   process.exitCode = 1;
 } finally {
   await stop();
-  for (const client of ws.clients) client.terminate();
-  await new Promise(resolve => ws.close(resolve));
+  await onebot.close();
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));
+  if (knowledgeMap && !await knowledgeMap.close()) {
+    report.passed = false;
+    report.error ??= 'KnowledgeMap API did not stop cleanly';
+    process.exitCode = 1;
+  }
+  if (report.passed) fs.rmSync(root, {recursive: true, force: true});
+  report.fixtureCleaned = !fs.existsSync(root);
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});
-  if (report.passed) fs.rmSync(root, {recursive: true, force: true});
   console.log(JSON.stringify({passed: report.passed, cases: report.cases.length, error: report.fixtureError ?? report.error, evidence: out}));
 }
