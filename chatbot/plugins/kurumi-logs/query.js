@@ -14,6 +14,15 @@ export function cliArguments(config, q, {ownerId} = {}) {
     return args;
   }
   args.push('--from',q.from,'--to',q.to,'--output-bytes','18000','--output-chars','12000');
+  if (q.view === 'qq-messages') {
+    const peer = q.peer ?? ownerId;
+    if (typeof peer !== 'string' || !QQ_ID.test(peer)) throw new LogQueryError('invalid_query');
+    args.push('--qq-messages',`--peer=${peer}`,'--limit',String(q.limit),'--offset',String(q.offset));
+    for (const [key,flag] of [['direction','--direction'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) {
+      if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
+    }
+    return args;
+  }
   if (q.view === 'interactions') {
     if (typeof ownerId !== 'string' || !QQ_ID.test(ownerId) || q.peer === ownerId) throw new LogQueryError('invalid_query');
     args.push(`--interactions-for=${ownerId}`,'--limit',String(q.limit),'--offset',String(q.offset));

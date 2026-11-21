@@ -323,12 +323,16 @@ function attachInboundRun(events) {
   }
 }
 
-function transcriptEvents(dbFile, from, to, {expand = false, fullContent = false} = {}) {
+function transcriptEvents(dbFile, from, to, {expand = false, fullContent = false, privateSessionKey} = {}) {
   const event = input => normalizeQueryEvent(input,{fullContent});
   const output = [];
   try {
-    const {rows, windows} = readHostRecords(dbFile, {from, to});
+    const {rows, windows} = readHostRecords(dbFile, {from, to, sessionKey: privateSessionKey});
+    const privateWindows = privateSessionKey && windows.filter(window => window.sessionKey === privateSessionKey
+      && window.channel === 'kurumi-qq' && window.accountId === 'default' && window.chatType === 'direct');
+    const privateIds = privateWindows && new Set(privateWindows.map(window => window.sessionId));
     for (const row of rows) {
+      if (privateIds && !privateIds.has(row.sessionId)) continue;
       const record = row.record;
       const message = record.message ?? {};
       const window = windows.find((candidate) => candidate.sessionId === row.sessionId);
@@ -403,7 +407,7 @@ function transcriptEvents(dbFile, from, to, {expand = false, fullContent = false
       }
     }
     attachInboundRun(output);
-    return {events: output, windows};
+    return {events: output, windows: privateWindows || windows};
   } catch (error) { if(error.code==='ENOENT')return {events:output,windows:[]};throw error; }
 }
 

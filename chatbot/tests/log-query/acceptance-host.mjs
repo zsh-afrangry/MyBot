@@ -22,6 +22,7 @@ async function run(enabled){
  queries.tree={view:'tree',sources:['papers'],executionId:'paper:fixture'};
  queries.body={...queries.tree,nodeId:'node:'+traceId('paper:fixture','request'),detail:'response'};
  queries.interactions={view:'interactions',since:'10m',direction:'inbound'};
+ queries.qq_messages={view:'qq-messages',since:'10m',direction:'inbound',limit:50};
  const memberText='MEMBER_CHAT_FIXTURE '+ '公开测试内容'.repeat(70) +' END_MEMBER_CHAT_FIXTURE';
  const toolText=value=>{
   if(Array.isArray(value))return value.map(toolText).join('\n');
@@ -71,6 +72,10 @@ async function run(enabled){
      }else if(mode==='reference'&&tools.length===1){
       const ref=last.items.find(i=>i.code==='中文/原因 空格:失败')?.eventRef;assert(ref,'reference_missing');
       delta={role:'assistant',tool_calls:[{index:0,id:'log-'+stage.modelRequests,type:'function',function:{name:'kurumi_logs',arguments:JSON.stringify({sources:['trace-events'],from:last.from,to:last.to,eventRef:ref,expand:true})}}]};
+     }else if(mode==='qq_messages'&&tools.length===1){
+      const item=last.items.find(row=>row.preview.includes('LOG_CASE:long_id'));
+      assert(item?.eventRef&&item.direction==='inbound');
+      delta={role:'assistant',tool_calls:[{index:0,id:'log-'+stage.modelRequests,type:'function',function:{name:'kurumi_logs',arguments:JSON.stringify({view:'events',sources:['openclaw-session'],from:last.from,to:last.to,eventRef:item.eventRef})}}]};
      }else if(mode==='interactions'&&tools.length===1){
       assert.equal(last.total,1);const item=last.items[0];assert.equal(item.peer,member);assert.equal(item.direction,'inbound');assert.equal(item.textTruncated,true);
       assert(item.text.includes('MEMBER_CHAT_FIXTURE'));assert(!item.text.includes('END_MEMBER_CHAT_FIXTURE'));
@@ -89,6 +94,7 @@ async function run(enabled){
       if(mode==='large')assert.equal(result.events[0].data.body,expectedLong);
       if(mode==='tree')assert.equal(result.nodes[0].usage.totalTokens,20);
       if(mode==='body'){assert.equal(result.detail.content.body,'SYNTHETIC_RESPONSE');assert.equal(result.detail.content.authorization,'[REDACTED]');}
+      if(mode==='qq_messages'){assert.equal(last.total,1);assert.match(last.events[0].data.text,/LOG_CASE:long_id/);}
       if(mode==='interactions'){assert.equal(last.items[0].peer,member);assert.equal(last.items[0].textTruncated,false);assert(last.items[0].text.includes(memberText));}
       toolCalls+=tools.length;stage.queries.push({mode,passed:true,fragments:tools.length,completeContentVerified:true});delta={role:'assistant',content:'LOG_OK:'+mode};
      }
@@ -135,6 +141,7 @@ async function run(enabled){
    assert.equal(plugin.runtime.state,'active');assert.deepEqual(names,['kurumi_logs']);
    assert(fs.readdirSync(state+'/tmp',{recursive:true}).some(p=>String(p).includes('node_modules/kurumi-logs/query.js')),'captured plugin missing');stage.capturedModuleObserved=true;
    for(const mode of Object.keys(queries)){
+    if(mode==='qq_messages')fs.symlinkSync(state+'/agents/main',source+'/agents/main','dir');
     if(mode==='interactions'){
      socket.send(JSON.stringify({time:Math.floor(Date.now()/1000),self_id:Number(bot),post_type:'message',message_type:'private',user_id:Number(member),message_id:++seq,message:[{type:'text',data:{text:'LOG_CASE:member '+memberText}}]}));
      for(let n=0;n<400&&!memberReply;n++){if(modelError)throw Error(modelError);await new Promise(r=>setTimeout(r,100));}assert(memberReply,'actual member reply missing');

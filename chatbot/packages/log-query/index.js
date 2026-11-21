@@ -44,6 +44,7 @@ import {traceSources,SOURCES} from './sources.js';
 import {readPaperHistory} from './paper-history.js';
 import {executionTree} from './execution-tree.js';
 import {privateInteractions} from './private-interactions.js';
+import {qqMessages} from './qq-messages.js';
 import {dailyFeedbackQuery} from './daily-feedback-query.js';
 import {readDailyFeedback} from './daily-feedback.js';
 /** Spread-free append: `push(...list)` overflows the call stack once a source yields ~100k rows. */
@@ -177,6 +178,7 @@ function usage() {
   --since <30m|2h|30d|all> 相对时间窗或全部留存历史，不与--from组合
   --peer <QQ>         只看对应私聊/可信收发账号，不推测身份
   --last-turns <N>    当前时间窗内最近N个模型回合
+  --qq-messages      按 --peer 和时段查私聊消息候选，可用 --direction
   --interactions-for <本人QQ>  只查其他账号的 Fusion 私聊文本，最新在前；可用 --peer / --direction / --expand
   --snapshot <类型>   memory/reminders/reminder-list/documents/cron，只读当前状态
   --stats             当前筛选范围的来源/工具失败率、耗时和模型用量
@@ -229,7 +231,7 @@ function usage() {
 
 const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval','--keyword','--keyword-mode','--level','--context-before','--context-after','--output-bytes','--content-offset','--content-hash','--output-chars','--code','--event-key','--cron-job-id','--event-ref','--node-id','--execution-id','--detail','--interactions-for','--direction','--daily-feedback','--scheduled-at'];
 const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds','--keyword':'keywords','--level':'levels'};
-const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit', '--stats':'stats','--overview':'overview','--tree':'tree', '--follow':'follow', '--show-known':'showKnown','--full-content':'fullContent'};
+const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit', '--stats':'stats','--overview':'overview','--tree':'tree', '--follow':'follow', '--show-known':'showKnown','--full-content':'fullContent','--qq-messages':'qqMessages'};
 
 function parseArgs(argv) {
   const result = {sources: [], excludeSources: [], kinds: [], excludeKinds: [], keywords:[], levels:[]};
@@ -252,7 +254,10 @@ function parseArgs(argv) {
   if (result.interactionsFor !== undefined) {
     const allowed = ['interactionsFor','peer','direction','eventRef','expand','from','to','since','limit','offset','contentOffset','contentHash','outputBytes','outputChars','runtimeRoot','json'];
     if (Object.entries(result).some(([key, value]) => !allowed.includes(key) && (!Array.isArray(value) || value.length))) throw Error('Invalid private interaction query');
-  } else if (result.direction !== undefined) throw Error('Direction requires --interactions-for');
+  } else if (result.qqMessages) {
+    const allowed = ['qqMessages','peer','direction','from','to','since','limit','offset','contentOffset','contentHash','outputBytes','outputChars','runtimeRoot','json'];
+    if (Object.entries(result).some(([key,value]) => !allowed.includes(key) && (!Array.isArray(value) || value.length))) throw Error('Invalid QQ message query');
+  } else if (result.direction !== undefined) throw Error('Direction requires --interactions-for or --qq-messages');
   if (['turns', 'errors', 'audit', 'stats', 'overview', 'tree', 'snapshot'].filter((name) => result[name]).length > 1) throw new Error('只能选择一个查询视图');
   if(result.format&&!['text','table','markdown'].includes(result.format))throw Error('Invalid format');
   if((result.fields||result.format&&result.format!=='text')&&(result.turns||result.errors||result.audit||result.stats||result.overview||result.snapshot))throw Error('Table formatting requires event view');
@@ -280,6 +285,10 @@ export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   if (args.interactionsFor !== undefined) {
     const result = privateInteractions({...args,runtimeRoot,from,to,ownerId:args.interactionsFor,
       limit:Number(args.limit??10),offset:Number(args.offset??0)});
+    console.log(JSON.stringify(result,null,2));return 0;
+  }
+  if (args.qqMessages) {
+    const result = qqMessages({...args,runtimeRoot,from,to,limit:Number(args.limit??10),offset:Number(args.offset??0)});
     console.log(JSON.stringify(result,null,2));return 0;
   }
   if(args.snapshot){const value=stateSnapshot(runtimeRoot,args.snapshot,{expand:args.expand,now});console.log(JSON.stringify(args.noText?noTextProjection(value):value,null,2));return 0;}
