@@ -175,6 +175,14 @@ export function applyReminderObservation(
     return;
   }
 
+  // The host may have dispatched before losing the provider response.
+  if (status.delivery_status === "unknown") {
+    if (store.markReminderDeliveryUnknown({ reminderId: reminder.reminderId, code: "delivery_unknown", atUtc: nowUtc })) {
+      result.failed += 1;
+    }
+    return;
+  }
+
   const deliveryFailed = status.status === "error"
     || status.delivery_status === "failed"
     || status.delivered === 0;

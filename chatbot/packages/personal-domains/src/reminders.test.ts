@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { main as reminderCliMain } from "./reminder-cli.js";
 import { reminderStateDirectory } from "./paths.js";
 import { ReminderStore, REMINDER_TIMEZONE } from "./reminder-store.js";
+import { queryReminderFeedback } from "./reminder-feedback.js";
 import {
   commitReminderProposal as commitReminderProposalImpl,
   getReminderState,
@@ -379,6 +380,30 @@ describe("personal reminders", () => {
       expect(cancellation.error.message).toContain("不确定");
       expect(scheduler.remove).not.toHaveBeenCalled();
       expect(store.getRetryStatus(scheduled.reminder.reminderId)).toBe("unknown");
+
+      const readOnlyStore = new ReminderStore({stateDirectory:store.stateDirectory, readOnly:true});
+      const inspectSchedule = vi.fn<NonNullable<ReminderCronScheduler["inspectSchedule"]>>();
+      try {
+        const read = () => queryReminderFeedback({
+          store:readOnlyStore, scheduler:{...scheduler.value, inspectSchedule},
+          delivery:CONTEXT.delivery, actions:new Set(["reminder.create"]), proposalId:created.proposalId,
+        });
+        inspectSchedule.mockResolvedValueOnce({status:"absent"});
+        expect(await read()).toMatchObject({
+          proposal:{status:"committed"},
+          feedback:{status:"unknown", evidence:{failureCode:"cron_add_unknown", cronStatus:"absent"}},
+        });
+        inspectSchedule.mockResolvedValueOnce({
+          status:"active", cronJobId:"verified-existing-job", scheduledAtUtc:scheduled.reminder.scheduledAtUtc,
+        });
+        expect(await read()).toMatchObject({
+          feedback:{status:"scheduled", evidence:{actualScheduledAtLocal:"2026-08-12 20:30"}},
+        });
+        expect(scheduler.add).toHaveBeenCalledTimes(1);
+        expect(store.getRetryStatus(scheduled.reminder.reminderId)).toBe("unknown");
+      } finally {
+        readOnlyStore.close();
+      }
     } finally {
       store.close();
     }

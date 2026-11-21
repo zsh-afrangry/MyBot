@@ -2,5 +2,13 @@
   "name": "@kurumi/qq-delivery",
   "private": true,
   "type": "module",
-  "exports": "./index.js"
+  "exports": {
+    ".": "./index.js",
+    "./image.js": "./image.js",
+    "./cron-text-feedback.js": {
+      "types": "./cron-text-feedback.d.ts",
+      "default": "./cron-text-feedback.js"
+    },
+    "./private-text-feedback.js": "./private-text-feedback.js"
+  }
 }

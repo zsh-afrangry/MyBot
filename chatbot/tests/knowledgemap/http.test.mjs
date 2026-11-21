@@ -6,7 +6,11 @@ import assert from 'node:assert/strict';
 import {mkdtempSync, rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
-import {manageRemoteList} from '../../plugins/personal-reminder-list/remote.js';
+import {fileURLToPath} from 'node:url';
+import {manageRemoteList,registerRemoteList} from '../../plugins/personal-reminder-list/remote.js';
+import {sharedToolDeclarations} from '../../plugins/personal-reminder-list/index.js';
+import {collectEvents,renderQuery} from '../../packages/log-query/index.js';
+import {withAccess} from '../access-control/fixtures.mjs';
 import {startIsolatedKnowledgeMap} from './isolated-api.mjs';
 
 test('two entry points share tasks and bills through actual HTTP, including conflict/replay', {timeout: 30000}, async t => {
@@ -100,4 +104,61 @@ test('two entry points share tasks and bills through actual HTTP, including conf
   assert.equal(shared.filter(item => item.title === unknownAdd.title).length, 1);
   assert.equal(shared.length, 9);
   t.diagnostic('真实HTTP双向读写、每消息多目标/8槽位、同参重放/异参409、丢失响应后同键核对、账单维护、版本冲突、精确金额/月汇总通过；SQLite隔离，无生产或QQ写入。');
+});
+
+test('one list request preserves each item result and historical feedback lookup is read-only', {timeout:30000}, async t => {
+  const root = mkdtempSync(join(tmpdir(),'km-list-feedback-'));
+  const previousRoot = process.env.OPENCLAW_STATE_DIR;
+  process.env.OPENCLAW_STATE_DIR = root;
+  let fixture;
+  t.after(async () => {
+    if (previousRoot === undefined) delete process.env.OPENCLAW_STATE_DIR;
+    else process.env.OPENCLAW_STATE_DIR = previousRoot;
+    try { if (fixture) assert.equal(await fixture.close(),true); }
+    finally { rmSync(root,{recursive:true,force:true}); }
+  });
+  const owner = '770001', sessionKey = 'agent:main:kurumi-qq:direct:'+owner;
+  fixture = await startIsolatedKnowledgeMap(root);
+  const {client,web} = fixture;
+  const hooks = {}, tools = {};
+  const config = withAccess({channels:{'kurumi-qq':{ownerId:owner}}});
+  registerRemoteList({
+    config, pluginConfig:{backendRoot:fileURLToPath(new URL('../../',import.meta.url))}, on(name,fn) {hooks[name] = fn;},
+    registerTool(factory,meta) {tools[meta.name] = factory;},
+    registerService() {},
+  },sharedToolDeclarations,{clientFactory:()=>client});
+  const ctx = {sessionKey,sessionId:'fixture',senderIsOwner:true,requesterSenderId:owner,
+    messageChannel:'kurumi-qq',assertInvocationCurrent() {}};
+  const begin = messageId => hooks.reply_dispatch({ctx:{
+    RawBody:'合成事项维护', MessageSid:messageId, Timestamp:Date.now(), ChatType:'direct',
+    CommandAuthorized:true, SenderId:owner, SessionKey:sessionKey, OriginatingChannel:'kurumi-qq', OriginatingTo:'user:'+owner,
+  }});
+  const manage = async (args,callId) => {
+    const response = await tools.personal_reminder_list_manage.create(ctx).execute(callId,args);
+    return JSON.parse(response.content[0].text);
+  };
+  const first = await web('calendar-events/','POST',{title:'待完成甲'});
+  const second = await web('calendar-events/','POST',{title:'待完成乙'});
+  const changed = await web('calendar-events/'+second.id,'PATCH',{title:'已修改乙',expected_version:second.version});
+  begin('701');
+  const a = await manage({action:'complete',id:'km:'+first.id,expectedVersion:first.version},'done-a');
+  const b = await manage({action:'complete',id:'km:'+second.id,expectedVersion:second.version},'stale-b');
+  assert.equal(a.feedback.status,'succeeded');
+  assert.equal(a.feedback.evidence.version,first.version+1);
+  assert.equal(b.feedback.status,'failed');
+  assert.equal(b.feedback.evidence.code,'version_conflict');
+
+  begin('702');
+  const retry = await manage({action:'complete',id:'km:'+second.id,expectedVersion:changed.version},'done-b');
+  assert.equal(retry.feedback.status,'succeeded');
+  const before = await web('calendar-events/');
+  const options = {from:0,to:Date.now()+5000,runtimeRoot:root,sources:['personal-reminder-list']};
+  const result = renderQuery(collectEvents(options),{...options,messageId:'701',kind:'reminder-list.feedback',
+    noText:true}).json.events;
+  assert.deepEqual(result.map(event=>[event.data.status,event.data.evidence.itemId]),[
+    ['succeeded','km:'+first.id],['failed','km:'+second.id],
+  ]);
+  assert.equal(result[1].data.evidence.code,'version_conflict');
+  assert.equal(result[0].data.evidence.version,first.version+1);
+  assert.deepEqual(await web('calendar-events/'),before);
 });

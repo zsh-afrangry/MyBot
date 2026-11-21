@@ -196,10 +196,18 @@ export class SmtpClient {
       .map((line) => (line.startsWith(".") ? `.${line}` : line))
       .join("\r\n")
       .replace(/\r\n?$/, "");
-    this.#socket.write(`${stuffed}\r\n.\r\n`);
-    const reply = await this.#reply("data");
-    if (reply.code !== 250) throw new SmtpError("message_rejected", `message rejected (${reply.code})`, {stage: "data", responseCode: reply.code, permanent: reply.code >= 500});
-    return reply;
+    let reply;
+    try {
+      this.#socket.write(`${stuffed}\r\n.\r\n`);
+      reply = await this.#reply("data");
+    } catch {
+      throw new SmtpError("delivery_unknown", "SMTP reply after message submission is unavailable", {stage: "data"});
+    }
+    if (reply.code === 250) return reply;
+    if (reply.code >= 400 && reply.code < 600) {
+      throw new SmtpError("message_rejected", `message rejected (${reply.code})`, {stage: "data", responseCode: reply.code, permanent: reply.code >= 500});
+    }
+    throw new SmtpError("delivery_unknown", `unexpected reply after message submission (${reply.code})`, {stage: "data", responseCode: reply.code});
   }
 
   async quit() {

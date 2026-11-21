@@ -52,8 +52,13 @@ export async function createOneBotPeer({token, botId, subjects, reply, methods =
         assert(sends.length < maxSends, 'Fixture send budget exceeded');
         const messageId = String(20001 + sends.length);
         const record = {...args, messageId};
-        const entry = {...record, accepted: reply?.(record) !== 'reject'};
+        const responseMode = reply?.(record);
+        const entry = {...record, accepted:responseMode !== 'reject'};
         sends.push(entry);
+        if (responseMode === 'lose-receipt') {
+          req.socket.destroy();
+          return;
+        }
         if (!entry.accepted) {
           res.end(JSON.stringify({status: 'failed', retcode: 100, data: null}));
           return;

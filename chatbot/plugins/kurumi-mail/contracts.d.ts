@@ -48,7 +48,7 @@ export interface NormalizedSend {
 }
 
 export interface NormalizedOutbox {
-  action?: 'list' | 'audit' | 'cancel';
+  action?: 'list' | 'audit' | 'receipt' | 'cancel';
   draftId?: string;
   limit?: number;
   problem?: string;
@@ -76,7 +76,7 @@ export interface Draft {
   subject: string;
   text: string;
   attachments: Array<{documentId?: string; filename: string; contentType: string; bytes: number; sha256: string}>;
-  status: 'pending' | 'sent' | 'failed' | 'cancelled';
+  status: 'pending' | 'sent' | 'failed' | 'cancelled' | 'unknown';
   createdAtUtc: number;
   expiresAtUtc: number;
   sentAtUtc?: number;
@@ -89,6 +89,25 @@ export interface AuditEntry {
   action: string;
   draftId?: string;
   detail: object;
+}
+
+interface DraftReceipt {
+  draftId: string;
+  state: Draft['status'];
+  proposalState: 'pending' | 'committed' | 'expired' | 'cancelled' | null;
+  approved: boolean;
+  createdAtUtc: number;
+  expiresAtUtc: number;
+  sentAtUtc?: number;
+  messageId?: string;
+  lastError?: string;
+  detail: {
+    code?: string;
+    stage?: string;
+    responseCode?: number;
+    acceptedCount?: number;
+    rejectedCount?: number;
+  };
 }
 
 export type GrantCheck =
@@ -105,14 +124,15 @@ export interface Store {
 
   createDraft(input: DraftInput, scope: object): {draftId: string; payloadHash: string; instruction: string; expiresAtUtc: number};
   getDraft(draftId: string): Draft | undefined;
+  getReceipt(draftId: string): DraftReceipt | undefined;
   readAttachments(draftId: string): Array<{filename: string; contentType: string; content: Uint8Array}>;
   listDrafts(args?: {status?: string; limit?: number}): Draft[];
   listAudit(args?: {limit?: number}): AuditEntry[];
 
   /** Consumes the owner's approval for exactly this draft content. */
-  consumeApproval(args: {draftId: string; scope: object}): GrantCheck;
-  markSent(draftId: string, args: {messageId: string; response?: string}): void;
-  markFailed(draftId: string, error: object): void;
+  consumeApproval(args: {draftId: string; scope: object; messageId?: string}): GrantCheck;
+  markSent(draftId: string, args: {messageId: string; response?: string; responseCode?: number; acceptedCount?: number; rejectedCount?: number}): number | void;
+  markFailed(draftId: string, error: object, attempt?: {messageId: string}): void;
   cancelDraft(draftId: string): boolean;
 
   /**

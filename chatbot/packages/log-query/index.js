@@ -124,10 +124,19 @@ export function filterEvents(events, filters = {}) {
     events=events.filter(e=>e.correlation.subjectId===filters.peer||e.correlation.senderId===filters.peer||e.correlation.recipientId===filters.peer||String(e.correlation.sessionKey??'').endsWith(':kurumi-qq:direct:'+filters.peer));
   }
   if(filters.lastTurns!==undefined)events=selectRecentTurns(events,Number(filters.lastTurns));
+  if (filters.messageId) {
+    events = events.filter(item => item.kind !== 'reminder-list.feedback'
+      || item.correlation.qqMessageId === String(filters.messageId));
+  }
   const idFilters = ['messageId', 'proposalId', 'runId', 'sessionKey', 'reminderId'];
   const requested = idFilters.filter((name) => filters[name]);
   if (!requested.length) return events.filter((item) => matchesQuery(item,filters));
-  const seeds = events.filter((item) => requested.every((name) => Object.values(item.correlation).some((value) => String(value) === String(filters[name]))));
+  const seeds = events.filter(item => requested.every(name => {
+    if (name === 'messageId' && item.source === 'channel-delivery') {
+      return [item.correlation.qqMessageId, item.data.sourceMessageId, item.data.receiptId].includes(String(filters.messageId));
+    }
+    return Object.values(item.correlation).some(value => String(value) === String(filters[name]));
+  }));
   const selected = new Set(seeds);
   // Correlation closure joins a QQ turn to its tool result and a reminder
   // proposal to its committed/delivered record without broadening to every

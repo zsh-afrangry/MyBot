@@ -44,6 +44,7 @@ function fakeStore({ closeCounter } = {}) {
       return { draftId, payloadHash: "a".repeat(64), instruction: `确认 ${String(sequence).padStart(12, "0")}`, expiresAtUtc: 1_800_086_400 };
     },
     getDraft(draftId) { record("getDraft"); return drafts.get(draftId); },
+    getReceipt(draftId) { record("getReceipt"); return drafts.get(draftId); },
     listDrafts() { record("listDrafts"); return [...drafts.values()]; },
     listAudit() { record("listAudit"); return [{ atUtc: 1, action: "fake", detail: {} }]; },
     consumeApproval() { record("consumeApproval"); return { ok: true, grantId: "fake-grant" }; },
@@ -65,7 +66,7 @@ function registryWith(store, policy = defaultMailPolicy, { policyId = "default",
   const registry = createAdapterRegistry({
     domain: "mail-test",
     policyMethods: ["normalizeDraft", "normalizeSend", "normalizeOutbox", "assertRecipientsAllowed"],
-    storeMethods: ["nowUtc", "close", "createDraft", "getDraft", "listDrafts", "listAudit", "consumeApproval",
+    storeMethods: ["nowUtc", "close", "createDraft", "getDraft", "getReceipt", "listDrafts", "listAudit", "consumeApproval",
       "markSent", "markFailed", "cancelDraft", "listInboundConfirmationCandidates", "recordInboundConfirmation"],
   });
   registry.registerPolicy(policyId, policy);

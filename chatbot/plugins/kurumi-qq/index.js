@@ -3,6 +3,7 @@ import {registerHostToolBoundary, reportAcceptedInbound} from '../../packages/ho
 import WebSocket from 'ws';
 import {registerAcceptanceTools} from './src/acceptance.js';
 import {account, CHANNEL, token, onebot, sendPayload} from '../../packages/qq-delivery/index.js';
+import {reconcileQueuedText,sendQueuedText} from '../../packages/qq-delivery/cron-text-feedback.js';
 import {createOneBotInbound,handleInbound} from './src/inbound.js';
 import {registerStickerTool} from './src/stickers.js';
 export const plugin={
@@ -13,7 +14,13 @@ export const plugin={
  reload:{configPrefixes:[`channels.${CHANNEL}`]},
  messaging:{normalizeTarget:raw=>String(raw).replace(/^kurumi-qq:/,''),targetResolver:{looksLikeId:raw=>/^(?:user:)?\d+$/.test(raw),hint:'user:<authorized QQ>'}},
  agentPrompt:{inboundFormattingHints:()=>['使用自然中文和适合 QQ 的简短段落。默认普通发送；仅为明确回复较早消息或区分话题才使用显式引用标签。不要输出内部工具日志。任务未实际完成时不要声称已完成。']},
- outbound:{deliveryMode:'direct',textChunkLimit:4000,resolveTarget:({to})=>to?{ok:true,to}:{ok:false,error:Error('Authorized target required')},sendText:args=>sendPayload(args),sendMedia:args=>sendPayload(args)},
+ outbound:{deliveryMode:'direct',textChunkLimit:4000,resolveTarget:({to})=>to?{ok:true,to}:{ok:false,error:Error('Authorized target required')},sendText:sendQueuedText,sendMedia:args=>sendPayload(args)},
+ message:{durableFinal:{
+  capabilities:{text:true,reconcileUnknownSend:true},
+  automaticUnknownSendReconciliation:true,
+  reconcileUnknownSendKinds:{text:true},
+  reconcileUnknownSend:reconcileQueuedText,
+ }},
  gateway:{startAccount:async (ctx,{runtime,onAcceptedInbound}={})=>{
   const a=ctx.account;const login=await onebot(a,'get_login_info',{});const selfId=String(login.user_id);
   if(selfId===a.ownerId)throw Error('Bot identity must differ from owner');

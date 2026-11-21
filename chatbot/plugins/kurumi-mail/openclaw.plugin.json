@@ -13,6 +13,12 @@
         },
         "description": "Recipient allowlist (exact addresses). Empty means no recipient is permitted; there is no wildcard."
       },
+      "feedbackActions": {
+        "type": "array",
+        "items": {"type": "string", "enum": ["mail.draft", "mail.send"]},
+        "uniqueItems": true,
+        "description": "Mail actions that expose feedback. Defaults to both actions."
+      },
       "policyAdapter": {
         "type": "string",
         "description": "Registered policy id to use. Defaults to 'default'. An unknown id fails loudly at load."

@@ -35,10 +35,11 @@ export async function stageImage(segment,a){
   if(!saved.contentType?.startsWith('image/'))throw Error('Not image media');return saved;
  }finally{await guarded?.release();}
 }
-export async function quoteText(id,a,selfId,peerId=a.ownerId){
- if(!/^-?[1-9]\d*$/.test(String(id)))return null;
+export async function readPrivateQuote(id,a,selfId,peerId=a.ownerId){
+ if(!/^-?[1-9]\d*$/.test(String(id))||!Number.isSafeInteger(Number(id)))return null;
  const m=await onebot(a,'get_msg',{message_id:Number(id)});
  const from=String(m.sender?.user_id??m.user_id),to=String(m.target_id);
  if(m.message_type!=='private'||!((from===peerId&&to===String(selfId))||(from===String(selfId)&&to===peerId)))return null;
- return (m.message??[]).filter(x=>x.type==='text').map(x=>String(x.data?.text??'')).join('').slice(0,4000);
+ const text=(m.message??[]).filter(x=>x.type==='text').map(x=>String(x.data?.text??'')).join('').slice(0,4000);
+ return {text, exactOutgoing:from===String(selfId)&&String(m.message_id)===String(id)};
 }

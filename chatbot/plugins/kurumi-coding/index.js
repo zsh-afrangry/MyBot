@@ -13,12 +13,14 @@ import {CodingStore} from './store.js';
 import {codingRequest, authorizeRequester, confirmationScope} from './inbound.js';
 import {DSH, CODEX, availableBackends} from './backends.js';
 import {fail} from './policy.js';
+import {codingFeedbackActions,codingRoundFeedback} from './feedback.js';
 const json = result => ({content: [{type: 'text', text: JSON.stringify(result)}], details: result});
 export function createCodingPlugin(dependencies = {}) {
   return {id: 'kurumi-coding', name: 'Kurumi coding delegation pilot', register(api) {
     const full = api.registrationMode === undefined || api.registrationMode === 'full';
     const currentConfig = createRuntimeConfigReader(api.config);
     const trace = createToolTrace(['kurumi_code']); trace.attach(api);
+    const feedbackActions = new Set(api.pluginConfig.feedbackActions ?? codingFeedbackActions);
     const delivery = dependencies.delivery ?? createQqDelivery(currentConfig);
     const events = dependencies.trace ?? (full ? createRuntimeTraceSink('trace-events.jsonl', {stateRoot: api.runtime?.state?.resolveStateDir?.()}).emit : () => {});
     const compose = createAssistantComposer({runtime:api.runtime,config:currentConfig});
@@ -84,6 +86,16 @@ export function createCodingPlugin(dependencies = {}) {
           case 'preview': result = await service.preview(args.taskId, requester, confirmationScope(ctx)); break;
           case 'merge': result = await service.merge(args.taskId, args.proposalId, requester, confirmationScope(ctx), () => {ctx.assertInvocationCurrent(); signal?.throwIfAborted();}); break;
           default: throw fail('unknown_coding_action');
+        }
+        if (['start','continue','status','result','merge','cancel','reconcile'].includes(args.action) && feedbackActions.size) {
+          const task = args.action === 'result' ? result.task : result;
+          const roundId = args.action === 'result' ? result.result.roundId : task.executionRoundId;
+          try {
+            const round = roundId && service.store.result(task.id,roundId);
+            const action = ['start','continue'].includes(args.action) ? 'coding.'+args.action : 'coding.complete';
+            const feedback = codingRoundFeedback(action,task,round,feedbackActions);
+            if (feedback.length) return json({...result,feedback});
+          } catch { api.logger?.warn?.('Coding feedback unavailable'); }
         }
         return json(result);
       }})}, {name: 'kurumi_code', optional: true});

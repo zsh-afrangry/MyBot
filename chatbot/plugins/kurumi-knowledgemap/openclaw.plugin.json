@@ -2,7 +2,14 @@
   "id":"kurumi-knowledgemap","name":"KnowledgeMap bills","version":"0.2.0",
   "description":"Owner-only shared bills: create, query, single-record update and delete",
   "activation":{"onStartup":true},
-  "configSchema":{"type":"object","additionalProperties":false,"required":["tokenFile"],"properties":{"baseUrl":{"type":"string"},"tokenFile":{"type":"string","pattern":"^/"}}},
+  "configSchema":{
+    "type":"object","additionalProperties":false,"required":["tokenFile"],
+    "properties":{
+      "baseUrl":{"type":"string"},
+      "tokenFile":{"type":"string","pattern":"^/"},
+      "feedbackActions":{"type":"array","uniqueItems":true,"items":{"type":"string","enum":["bill.create","bill.update","bill.delete"]}}
+    }
+  },
   "contracts":{"tools":["knowledge_bills_get","knowledge_bill_add","knowledge_bill_manage"]},
   "toolMetadata":{"knowledge_bills_get":{"optional":true},"knowledge_bill_add":{"optional":true},"knowledge_bill_manage":{"optional":true}}
 }

@@ -38,7 +38,7 @@ function readConfiguredModel(){
  return {modelId,primary,url:url.href.replace(/\/$/,'')+'/chat/completions',key};
 }
 const seenModelCalls=new Set();
-let active,host,due;
+let active,host,due,loseDueReceipt=false;
 const channelDir=path.join(root,'channel');
 const futureDay=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',dateStyle:'short'}).format(Date.now()+2*86400000);
 const localTime=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'short'});
@@ -71,13 +71,13 @@ const model=http.createServer(async(req,res)=>{
    assert(Date.now()>=due.at,'Reminder composition started before due');
    due.sendOffset=sends.length;
    due.noticeCalls++;
-   return complete(res,body,{role:'assistant',content:'到点了，记得看看这条合成提醒。'});
+   return complete(res,body,{role:'assistant',content:due.lost?'到点了，回执故障模拟。':'到点了，记得看看这条合成提醒。'});
   }
   const all=JSON.stringify(body.messages);assert(all.includes('KURUMI_CONFIRMATION_CURRENT_USER'),'missing trusted current user prompt');
   assert(all.includes('不要求用户抄确认码'),'missing authorized confirmation rules');
   if(active.fragments)assert(all.includes(JSON.stringify(active.fragments.join('\n')).slice(1,-1)),'message fragments did not arrive in one turn');
   const last=body.messages.findLast(m=>m.role==='tool');
-  if(active.expected){const result=decode(last?.content);assert.equal(result.ok,active.expected.ok,JSON.stringify(result));if(active.expected.code)assert.equal(result.code,active.expected.code);active.expected=undefined;}
+  if(active.expected){const result=decode(last?.content);assert.equal(result.ok,active.expected.ok,JSON.stringify(result));if(active.expected.code)assert.equal(result.code,active.expected.code);active.expected.verify?.(result);active.expected=undefined;}
   const step=active.steps[active.next];let tool;
   if(step){if(!active.discovered){tool=['tool_search',{query:step[0],limit:1}];active.discovered=true;}
    else{tool=['dispatch_action',{id:step[0],args:typeof step[1]==='function'?step[1]():step[1]}];active.expected=step[2];active.next++;active.discovered=false;}}
@@ -96,15 +96,25 @@ function complete(res,body,message){
 }
 await new Promise(r=>model.listen(0,'127.0.0.1',r));
 const onebot=await createOneBotPeer({token,botId:bot,subjects:[owner],
- reply:({message})=>JSON.stringify(message).includes('未投递测试项')?'reject':undefined});
+ reply(record) {
+  const text=textOfSend(record);
+  if(text.includes('未投递测试项'))return 'reject';
+  if(loseDueReceipt && text.includes('到点了，回执故障模拟。'))return 'lose-receipt';
+ },
+ methods:{get_msg({message_id}){
+  const source=sends.find(row=>row.messageId===String(message_id));
+  assert(source?.accepted);
+  return {message_type:'private',message_id,sender:{user_id:Number(bot)},target_id:source.user_id,message:source.message};
+ }},
+});
 const {sends}=onebot;
 for(const dir of ['workspace','channel','media'])fs.mkdirSync(path.join(root,dir));
 for(const file of ['http-token','ws-token'])fs.writeFileSync(path.join(root,file),token,{mode:0o600});
 const ids=['kurumi-qq','personal-reminders','personal-confirmation'];
 const tools=['personal_confirmation','personal_reminder_propose','personal_reminder_commit','personal_reminder_state_get',
- 'personal_reminder_cancel_propose','personal_reminder_cancel_commit'];
+ 'personal_reminder_cancel_propose','personal_reminder_cancel_commit','personal_reminder_change_propose','personal_reminder_change_commit'];
 const cfg=()=>withHostControl(compileAccessConfig({
- models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'synthetic',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:1200,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
+ models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'synthetic',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:128000,maxTokens:1200,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
  agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'}},entries:{main:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},tools:{profile:'full',allow:tools,deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
  channels:{'kurumi-qq':{enabled:true,httpUrl:onebot.httpUrl,wsUrl:onebot.wsUrl,httpTokenFile:path.join(root,'http-token'),wsTokenFile:path.join(root,'ws-token'),stateDir:channelDir,mediaRoot:path.join(root,'media'),testIngress:false,inboundDebounceMs:200,inboundDebounceMaxWaitMs:1000,dailySendLimit:100,segmentDelayMs:0}},
  plugins:{allow:ids,load:{paths:ids.map(id=>path.join(repo,'chatbot/plugins',id))},entries:Object.fromEntries(ids.map(id=>[id,{enabled:true,...(id==='personal-confirmation'?{hooks:{allowConversationAccess:true}}:{}),...(id==='personal-reminders'?{config:{reminderBackend:'native-service',reminderRunnerRoot:path.join(repo,'chatbot/plugins/personal-reminders')}}:{})}])),slots:{memory:'none'}},
@@ -159,20 +169,21 @@ async function actualCases(){
 const propose=(content,at=futureDay+'T20:00')=>['personal_reminder_propose',{schema_version:1,request:{kind:'reminder.create',content,schedule:{timezone:'Asia/Shanghai',local_date_time:at}}},{ok:true}];
 const confirmation=(expected={ok:true},i=-1)=>['personal_confirmation',()=>({action:'confirm',...select(i)}),expected];
 
-async function scheduleDueReminder(){
+async function scheduleDueReminder(lost=false){
  const beforeReminders=count('reminders'),beforeGrants=count('approval_grants');
  const jobIds=async()=>(await host.call('cron.list',{includeDisabled:true})).jobs.map(job=>job.id).sort();
  const beforeJobs=await jobIds();
  // The domain enforces a full minute of lead time and minute-granular input.
- const at=Math.ceil((Date.now()+75000)/60000)*60000,content='合成验收：检查准时提醒';
- due={at,content,noticeCalls:0};
+ const at=Math.ceil((Date.now()+75000)/60000)*60000;
+ const content=lost?'合成验收：模拟到点投递回执丢失':'合成验收：检查准时提醒';
+ due={at,content,noticeCalls:0,lost};
  const time=localTime.format(at);
- await turn('due-reminder-preview-does-not-schedule',`请在 ${time} 提醒我：${content}。先给预览。`,[propose(content,time.replace(' ','T'))],async sent=>{
+ await turn(lost?'lost-qq-receipt-preview':'due-reminder-preview-does-not-schedule',`请在 ${time} 提醒我：${content}。先给预览。`,[propose(content,time.replace(' ','T'))],async sent=>{
   assert(sent.some(s=>s.accepted&&textOfSend(s).includes(content)));
   assert.equal(count('reminders'),beforeReminders);assert.equal(count('approval_grants'),beforeGrants);
   assert.deepEqual(await jobIds(),beforeJobs);
  });
- await turn('due-reminder-next-turn-registers-one-native-job','确认。',[
+ await turn(lost?'lost-qq-receipt-registers-one-native-job':'due-reminder-next-turn-registers-one-native-job','确认。',[
   ['personal_confirmation',{action:'list',domain:'personal_reminder'},{ok:true}],confirmation(),['personal_reminder_commit',()=>commit(),{ok:true}],
  ],async()=>{
   assert.equal(count('reminders'),beforeReminders+1);
@@ -217,8 +228,61 @@ async function verifyDueReminder(){
   assert.equal((await history()).entries.length,1);
   assert(!(await host.call('cron.list',{includeDisabled:true})).jobs.some(job=>job.id===due.jobId));
  });
+ await turn('read-due-reminder-run-and-host-receipt','那条到点提醒的执行结果是什么？',[
+  ['personal_reminder_state_get',{reminder_id:due.reminderId},{ok:true,verify(result){
+   assert.equal(result.feedback.status,'finished');
+   assert.equal(result.notification.action,'reminder.delivery');
+   assert.equal(result.notification.status,'succeeded');
+   assert.deepEqual(result.notification.evidence,{
+    source:'cron.runs',cronJobId:due.jobId,runAtMs:run.runAtMs,runId:'cron:'+due.jobId+':'+run.runAtMs,
+    hostDeliveryStatus:'reported_sent',noticeStatus:'generated',
+   });
+   assert.deepEqual(result.notification.segments.map(part=>part.messageId),notices.map(row=>row.messageId));
+   assert(result.notification.segments.every(part=>part.platformStatus==='accepted'&&part.recipientStatus==='unverified'));
+  }}],
+ ],async()=>{
+  assert.equal(due.noticeCalls,1);
+  assert.equal((await history()).entries.length,1);
+  const rows=readOneBotLedger(channelDir,db=>db.prepare("SELECT COUNT(*) n FROM outbound WHERE status='sent' AND message_id IN ("+
+   notices.map(()=>'?').join(',')+')').get(...notices.map(notice=>notice.messageId)));
+  assert.equal(rows.n,notices.length);
+ });
+ const quoted=[{type:'reply',data:{id:notices[0].messageId}},{type:'text',data:{text:'收到了。'}}];
+ const acknowledgement=onebot.message(owner,quoted);
+ await turn('acknowledge-exact-due-message',acknowledgement,[]);
+ await turn('read-acknowledged-notice-segment','我确认收到的是哪一段？',[
+  ['personal_reminder_state_get',{reminder_id:due.reminderId},{ok:true,verify(result){
+   const [first,...others]=result.notification.segments;
+   assert.equal(first.recipientStatus,'acknowledged');
+   assert.equal(first.receiptId,String(acknowledgement.message_id));
+   assert(others.every(part=>part.recipientStatus==='unverified'));
+  }}],
+ ]);
  report.dueReminder={cronRuns:1,noticeCalls:due.noticeCalls,oneBotReceipts:notices.map(s=>s.messageId),scheduledAt:new Date(due.at).toISOString(),
   runAt:new Date(run.runAtMs).toISOString(),finalState:'delivered',cronRemovedAfterRun:true};
+}
+async function verifyLostReceipt() {
+ const history=()=>host.call('cron.runs',{id:due.jobId,limit:5},5000);
+ const run=await waitForAcceptance(async()=>{onebot.check();return (await history()).entries[0];},'Cron run with lost QQ reply',{
+  timeoutMs:Math.max(0,due.at-Date.now())+45000,pollMs:500,
+ });
+ assert.equal(run.deliveryStatus,'unknown');
+ assert.equal(due.noticeCalls,1);
+ const sendsForNotice=()=>sends.filter(s=>textOfSend(s).includes('到点了，回执故障模拟。')).length;
+ assert.equal(sendsForNotice(),1);
+ await turn('read-unknown-delivery-without-resending','刚才回执丢失的到点通知发了吗？',[
+  ['personal_reminder_state_get',{reminder_id:due.reminderId},{ok:true,verify(result){
+   assert.equal(result.notification.evidence.hostDeliveryStatus,'unknown');
+   assert.equal(result.notification.evidence.noticeStatus,'generated');
+   const [first,...others]=result.notification.segments;
+   assert.equal(first.platformStatus,'unknown');
+   assert.equal(first.messageId,null);
+   assert(others.every(part=>part.platformStatus==='not_attempted'));
+  }}],
+ ],async()=>{
+  assert.equal((await history()).entries.length,1);
+  assert.equal(sendsForNotice(),1);
+ });
 }
 try{
  if(realModel){
@@ -284,19 +348,54 @@ try{
 
  const [reminder]=query("SELECT reminder_id,cron_job_id FROM reminders WHERE content='宿主测试甲'");
  assert(reminder?.cron_job_id);
+ const reminderId=reminder.reminder_id, originalJobId=reminder.cron_job_id;
+ const time=futureDay+'T21:30', plannedTime=futureDay+' 21:30';
+ const checkSchedule=(state, expectedTime)=>({ok:true,verify(result){
+  assert.equal(result.feedback.status,state);
+  assert.equal(result.feedback.evidence.reminderId,reminderId);
+  if(expectedTime)assert.equal(result.feedback.evidence.actualScheduledAtLocal,expectedTime);
+ }});
+ const jobsBefore=(await host.call('cron.list',{includeDisabled:true})).jobs.map(job=>job.id).sort();
+ await turn('management-feedback-verifies-registered-time','核对宿主测试甲是否已设置',[
+  ['personal_reminder_state_get',{reminder_id:reminderId},checkSchedule('scheduled',futureDay+' 20:00')],
+ ]);
+ await turn('management-feedback-pending-change','把宿主测试甲改到晚上九点半，先给预览。',[
+  ['personal_reminder_change_propose',{schema_version:1,request:{kind:'reminder.update',reminder_id:reminderId,
+    schedule:{timezone:'Asia/Shanghai',local_date_time:time}}},{ok:true}],
+ ]);
+ await turn('management-feedback-confirms-pending-proposal-and-old-time','改期现在生效了吗？',[
+  ['personal_reminder_state_get',()=>({proposal_id:select().proposalId}),{ok:true,verify(result){
+   assert.equal(result.proposal.status,'pending_confirmation');
+  }}],
+  ['personal_reminder_state_get',{reminder_id:reminderId},checkSchedule('scheduled',futureDay+' 20:00')],
+ ]);
+ await turn('management-feedback-verifies-change-in-place','确认改期。',[
+  confirmation(),['personal_reminder_change_commit',()=>commit(),checkSchedule('scheduled',plannedTime)],
+ ],async()=>{
+  const jobs=(await host.call('cron.list',{includeDisabled:true})).jobs;
+  assert.deepEqual(jobs.map(job=>job.id).sort(),jobsBefore);
+  assert.equal(Date.parse(jobs.find(job=>job.id===originalJobId).schedule.at),Date.parse(time+':00+08:00'));
+ });
  await turn('cancel-reminder-preview','取消宿主测试甲，先给预览。',[
   ['personal_reminder_cancel_propose',{schema_version:1,request:{kind:'reminder.cancel',reminder_id:reminder.reminder_id}},{ok:true}],
  ],()=>assert.equal(query('SELECT status FROM reminders WHERE reminder_id=?',reminder.reminder_id)[0].status,'scheduled'));
  await turn('later-assent-cancels-only-the-target-reminder','确认取消宿主测试甲。',[
-  confirmation(),['personal_reminder_cancel_commit',()=>commit(),{ok:true}],
+  confirmation(),['personal_reminder_cancel_commit',()=>commit(),checkSchedule('cancelled')],
  ],async()=>{
   assert.equal(query('SELECT status FROM reminders WHERE reminder_id=?',reminder.reminder_id)[0].status,'cancelled');
   assert(!(await host.call('cron.list',{includeDisabled:true})).jobs.some(job=>job.id===reminder.cron_job_id));
  });
+ await turn('management-feedback-reads-historical-cancellation','刚才那条现在取消了吗？',[
+  ['personal_reminder_state_get',{reminder_id:reminderId},checkSchedule('cancelled')],
+ ],async()=>assert.deepEqual((await host.call('cron.list',{includeDisabled:true})).jobs.map(job=>job.id).sort(),
+  jobsBefore.filter(id=>id!==originalJobId)));
  // Earlier checks' jobs are far in the future. This reminder must execute
  // and be removed by native Cron before the temporary instance is cleaned up.
  await scheduleDueReminder();
  await verifyDueReminder();
+ loseDueReceipt=true;
+ await scheduleDueReminder(true);
+ await verifyLostReceipt();
  report.passed=true;
  }
 }catch(error){report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;}

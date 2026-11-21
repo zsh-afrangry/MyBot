@@ -9,7 +9,10 @@ import {imageType, MAX_IMAGE_BYTES} from './image.js';
 export async function onebot(a,action,params,signal,{timeoutMs=15000}={}){
  const r=await fetch(new URL('/'+action,a.httpUrl),{method:'POST',headers:{'content-type':'application/json',authorization:`Bearer ${token(a,'http')}`},body:JSON.stringify(params),signal:signal?AbortSignal.any([signal,AbortSignal.timeout(timeoutMs)]):AbortSignal.timeout(timeoutMs)});
  if(!r.ok)throw Error(`OneBot HTTP ${r.status}`);
- const data=await r.json();if(data.status!=='ok'||data.retcode!==0){const e=Error(`OneBot rejected action (${data.retcode})`);e.rejected=true;throw e;}return data.data;
+ const data=await r.json();
+ if(data?.status==='failed'&&Number.isInteger(data.retcode)&&data.retcode!==0)throw Object.assign(Error(`OneBot rejected action (${data.retcode})`),{rejected:true});
+ if(data?.status!=='ok'||data.retcode!==0)throw Error('Invalid OneBot action receipt');
+ return data.data;
 }
 export function localImage(file,a){
  // Only explicitly staged media; symlink escapes and arbitrary files are rejected.
@@ -19,10 +22,11 @@ export function localImage(file,a){
  if(!imageType(bytes))throw Error('Unsupported image bytes');
  return {type:'image',data:{file:'base64://'+bytes.toString('base64')}};
 }
+const deliveryPrefix=(target,a)=>target===a.ownerId?'':'subject:'+target+':';
 export async function sendSegments(cfg,to,message,id=randomUUID(),context={}){
  const a=account(cfg),target=ownerTarget(to,a);
  // Preserve legacy owner receipt keys; every member has a separate idempotency namespace.
- const subjectPrefix=target===a.ownerId?'':'subject:'+target+':';
+ const subjectPrefix=deliveryPrefix(target,a);
  id=subjectPrefix+id;
  if(!Array.isArray(message)||!message.length||message.some(x=>!['text','reply','image'].includes(x.type)))throw Error('Invalid message segments');
  context.signal?.throwIfAborted();
@@ -54,7 +58,7 @@ export async function sendImage({cfg,to,bytes,contentType,key,text='',signal,dai
  segments.push({type:'image',data:{file:'base64://'+bytes.toString('base64')}});
  return sendSegments(cfg,to,segments,'image:'+key,{signal,assertDirectAdapterHandoff,reportReplay:true,quota:{prefix:'image:',limit:dailyLimit}});
 }
-export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliveryQueueId,deliveryPartIndex,signal,onPlatformSendDispatch,assertDirectAdapterHandoff,onDeliveryResult}){
+export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliveryQueueId,deliveryPartIndex,signal,onPlatformSendDispatch,assertDirectAdapterHandoff,onDeliveryResult,onTextPlan}){
  key??=deliveryQueueId?`delivery:${deliveryQueueId}:${deliveryPartIndex??0}`:randomUUID();
  const a=account(cfg),target=ownerTarget(to,a);
  const mediaAccount=target===a.ownerId?a:{...a,mediaRoot:path.join(a.mediaRoot,'subjects',target)};
@@ -62,6 +66,7 @@ export async function sendPayload({cfg,to,text='',mediaUrl,replyToId,key,deliver
  const media=mediaUrl?localImage(mediaUrl,mediaAccount):null;
  const {pieces,paced}=presentForQQ(text,a.chunkLimit??1200,a.naturalSegments!==false);
  if(!pieces.length&&media)pieces.push('');
+ if(pieces.length&&!media)onTextPlan?.(deliveryPrefix(target,a)+key,pieces.length);
  let last;
  for(let i=0;i<pieces.length;i++){
   if(i>0&&paced)await pause(a.segmentDelayMs??450,undefined,{signal});

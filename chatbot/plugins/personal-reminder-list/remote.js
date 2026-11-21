@@ -11,6 +11,7 @@ import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/
 import {KnowledgeMapClient, BridgeError, requestKey} from '../../packages/knowledgemap-client/client.js';
 import {createBridgeInbound} from '../../packages/knowledgemap-client/inbound.js';
 import {createToolTrace} from '../../packages/knowledgemap-client/tool-trace.js';
+import {businessFeedback,observeFeedback} from '../../packages/feedback-core/index.js';
 
 export class ListControlStore extends ListStore {
   expire() {return 0;}
@@ -42,12 +43,13 @@ export function taskItem(row) {
 }
 
 export const maxItemsPerMessage = 8;
+const itemActions = ['add', 'update', 'complete', 'void', 'reopen'];
 // Default title normalization for add slots: NFKC, trim, collapse whitespace. Case and punctuation are kept.
 export const normalizeTitle = title => typeof title === 'string' ? title.normalize('NFKC').trim().replace(/\s+/g, ' ') : '';
 
-export async function manageRemoteList(client, args, request, {runId, signal} = {}) {
+export async function manageRemoteList(client, args, request, {runId, signal, onFeedback, log} = {}) {
   const allowed = ['action', 'id', 'query', 'expectedVersion', 'title', 'content', 'note', 'ddl', 'tone'];
-  if (Object.keys(args).some(k => !allowed.includes(k)) || !['add', 'update', 'complete', 'void', 'reopen'].includes(args.action)) throw Error('未知事项参数或动作');
+  if (Object.keys(args).some(k => !allowed.includes(k)) || !itemActions.includes(args.action)) throw Error('未知事项参数或动作');
   const fields = {};
   for (const [tool, api] of [['title', 'title'], ['content', 'detail'], ['note', 'note'], ['tone', 'tone']]) if (tool in args) fields[api] = args[tool];
   if ('ddl' in args) {
@@ -71,10 +73,28 @@ export async function manageRemoteList(client, args, request, {runId, signal} = 
   const slots = request.listSlots ??= new Set();
   if (!slots.has(slot) && slots.size >= maxItemsPerMessage) throw Error(`一条消息最多维护${maxItemsPerMessage}项；其余请在下一条消息里说`);
   slots.add(slot);
-  const result = await client.request('/api/assistant/tasks', {method: 'POST', key: requestKey('tasks', request, slot), runId, signal,
-    body: {action: args.action, ...(id === undefined ? {} : {id, expected_version: args.expectedVersion}), fields}});
-  if (result.ok !== true || !result.item) throw new BridgeError('write_result_unknown', '未得到确定维护结果；仅用相同参数重试核对');
-  return {...result, item: taskItem(result.item), dataSource: 'knowledgemap'};
+  const key = requestKey('tasks', request, slot);
+  const action = 'reminder-list.'+args.action;
+  const record = (status, evidence) => {
+    if (!onFeedback) return;
+    const feedback = businessFeedback(action,status,{
+      source:'knowledgemap', sourceMessageId:request.messageId, eventKey:key,
+      ...(id === undefined ? {} : {itemId:args.id, expectedVersion:args.expectedVersion}), ...evidence,
+    });
+    observeFeedback(action,log,()=>onFeedback(feedback));
+  };
+  try {
+    const result = await client.request('/api/assistant/tasks', {method:'POST', key, runId, signal,
+      body:{action:args.action, ...(id === undefined ? {} : {id, expected_version:args.expectedVersion}), fields}});
+    if (result.ok !== true || !result.item) throw new BridgeError('write_result_unknown', '未得到确定维护结果，同参才可重试');
+    const item = taskItem(result.item);
+    record('succeeded',{itemId:item.id,version:item.version});
+    return {...result, item, dataSource:'knowledgemap'};
+  } catch (error) {
+    const unknown = !(error instanceof BridgeError) || ['write_result_unknown','invalid_response'].includes(error.code);
+    record(unknown ? 'unknown' : 'failed',{code:error instanceof BridgeError ? error.code : 'write_result_unknown'});
+    throw error;
+  }
 }
 
 export async function runRemoteDigest(options, client, time, write = value => process.stdout.write(value)) {
@@ -98,6 +118,7 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
     dataSource: 'knowledgemap', bridgeBaseUrl: api.pluginConfig.bridgeBaseUrl, bridgeTokenFile: api.pluginConfig.bridgeTokenFile,
     openStore: opts => new ListControlStore(opts), logger: api.logger};
   const scheduler = createScheduler(options), manageControls = createListService(defaultListPolicy);
+  const feedbackActions = new Set(api.pluginConfig.feedbackActions ?? itemActions.map(action=>'reminder-list.'+action));
   const trace = createToolTrace(declarations.map(t => t.name)); trace.attach(api);
   if (api.registrationMode === 'full' || api.registrationMode === undefined) {
     api.on('reply_dispatch', event => inbound.receive(event));
@@ -118,6 +139,7 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
     return {...declaration, async execute(callId, args = {}, signal) {
       const config = ctx.getRuntimeConfig?.() ?? api.config;
       if (!ownerAuthorized(ctx, config, declaration.name==='personal_reminder_list_get'?'reminder-list.read':['schedule','pause','resume'].includes(args.action)?'reminder-list.schedule':'reminder-list.manage')) return {content: [{type: 'text', text: JSON.stringify({ok: false, error: {code: 'forbidden_context', message: '只支持本人QQ私聊'}})}]};
+      let feedback;
       try {
         ctx.assertInvocationCurrent(); signal?.throwIfAborted();
         const runId = trace.resolve(ctx, callId, declaration.name);
@@ -136,11 +158,21 @@ export function registerRemoteList(api, declarations, {clientFactory = options =
             try {result = manageControls(store, args, {...request, actions: new Set([args.action])}, {runId});}
             finally {store.close();}
             if (result.ok) result.scheduleSync = await scheduler.sync();
-          } else result = await manageRemoteList(client, args, request, {runId, signal});
+          } else result = await manageRemoteList(client, args, request, {
+            runId, signal, log:api.logger,
+            ...(feedbackActions.has('reminder-list.'+args.action) && {onFeedback(observed) {
+              feedback = observed;
+              const store = new ListControlStore(options);
+              try {
+                store.audit('feedback', observed.evidence.itemId, observed, {...request,runId});
+              } finally {store.close();}
+            }}),
+          });
         }
-        return {content: [{type: 'text', text: JSON.stringify(result)}]};
+        return {content: [{type:'text',text:JSON.stringify(feedback ? {...result,feedback} : result)}]};
       } catch (error) {
-        return {content: [{type: 'text', text: JSON.stringify(error instanceof BridgeError ? error.toJSON() : {ok: false, error: {code: 'request_rejected', message: String(error.message).slice(0, 240)}})}]};
+        const rejected = error instanceof BridgeError ? error.toJSON() : {ok:false,error:{code:'request_rejected',message:String(error.message).slice(0,240)}};
+        return {content: [{type:'text',text:JSON.stringify(feedback ? {...rejected,feedback} : rejected)}]};
       }
     }};
   }}, {name: declaration.name, optional: true});

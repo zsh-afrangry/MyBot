@@ -37,7 +37,7 @@ const sharedParameters = {
     id: {type: 'string', pattern: '^km:[1-9]\\d*$'}}},
 };
 // Shared mode keys writes per message+target (remote.js), so one message may maintain several items.
-const sharedManageLimit = '一条消息可维护最多8个不同事项，每项单独调用；同一消息内同一标题只新增一次、同一事项只改一次，结果逐项说明，已成功项不回滚；结果未知只用相同参数重试核对。schedule/pause/resume一条消息一项。';
+const sharedManageLimit = '一条消息可维护最多8个不同事项，每项单独调用；同一消息内同一标题只新增一次、同一事项只改一次，按每项 feedback 报告结果，已成功项独立生效；结果未知只用相同参数重试。schedule/pause/resume一条消息一项。';
 export const sharedToolDeclarations = toolDeclarations.map(d => ({...d, parameters: sharedParameters[d.name],
   ...(d.name === 'personal_reminder_list_manage' ? {description: d.description.replace('一条消息一项。', sharedManageLimit)} : {})}));
 export function createReminderListPlugin({registry} = {}) {

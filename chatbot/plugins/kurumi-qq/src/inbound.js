@@ -6,7 +6,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {activeSubject, agentFor, sessionFor, targetSubject} from '../../../packages/access-control/index.js';
 import {account, CHANNEL, Ledger, sendPayload, stagePdf, traceFile} from '../../../packages/qq-delivery/index.js';
-import {stageImage,quoteText} from './media.js';
+import {isReceiptReply,privateTextFeedback} from '../../../packages/qq-delivery/private-text-feedback.js';
+import {stageImage,readPrivateQuote} from './media.js';
 import {receiveAttachments,attachmentContext,shouldReplyToFailedAttachments} from './attachments.js';
 const MAX_TEXT_LENGTH=16000;
 const MAX_BATCH_MESSAGES=16;
@@ -61,7 +62,8 @@ function admitInbound({a,cfg,runtime,selfId,onAcceptedInbound,ingressKind='onebo
   const activity=subject.role==='owner'&&onAcceptedInbound?Promise.resolve(onAcceptedInbound({origin:ingressKind,
    subjectId:subject.qq,agentId:route.agentId,sessionKey:route.sessionKey,messageId:msg.messageId,postType:event.post_type,occurredAt})):undefined;
   activity?.catch(()=>{}); // Settlement below observes errors even if they occur before the timer fires.
-  return {entry:{msg,route,timestamp,activity,senderName:senderDisplayName(event,msg.senderId),
+  const receiptObservedAt=ingressKind==='onebot'&&isReceiptReply(event)?Date.now():null;
+  return {entry:{msg,route,timestamp,activity,receiptObservedAt,senderName:senderDisplayName(event,msg.senderId),
    textOnly:event.post_type==='message'&&event.message.every(segment=>segment.type==='text')}};
  }catch(e){ledger.finish(msg.id,'failed');throw e;}
 }
@@ -75,7 +77,10 @@ async function runAdmittedInbound(options,ledger,entries,turnAdoptionLifecycle){
   options.signal?.throwIfAborted();
   await Promise.all(entries.map(entry=>entry.activity));
   options.signal?.throwIfAborted();
-  const result=await dispatchInbound(options,entries,turnAdoptionLifecycle);
+  const {msg}=entries.at(-1);
+  const feedback=options.ingressKind==='onebot' && options.a.privateTextFeedback!==false
+   ?privateTextFeedback(ledger.db,{selfId:options.selfId,peer:msg.senderId,sourceMessage:msg.messageId,log:options.log}):undefined;
+  const result=await dispatchInbound(options,entries,turnAdoptionLifecycle,feedback);
   finishBatch(ledger,entries,'completed');
   return result;
  }catch(e){finishBatch(ledger,entries,'failed');throw e;}
@@ -133,7 +138,7 @@ export function createOneBotInbound(options){
  };
 }
 
-async function dispatchInbound({a,cfg,runtime,selfId,log,deliverOverride,signal,stageFile=stagePdf,stageMedia=stageImage,composeNotice},entries,turnAdoptionLifecycle){
+async function dispatchInbound({a,cfg,runtime,selfId,log,deliverOverride,signal,stageFile=stagePdf,stageMedia=stageImage,composeNotice},entries,turnAdoptionLifecycle,feedback){
   const {msg,route,timestamp,senderName}=entries.at(-1);
   const subject=activeSubject(cfg,msg.senderId,'chat.use');
   assertInboundRoute(cfg,subject,route);
@@ -149,7 +154,13 @@ async function dispatchInbound({a,cfg,runtime,selfId,log,deliverOverride,signal,
   for(const image of msg.images.slice(0,3)){try{const m=await stageMedia(image,mediaAccount);media.push({path:m.path,contentType:m.contentType,kind:'image'});}catch{signal?.throwIfAborted();imageFailures++;}}
   if(imageFailures||msg.images.length>3)body+='\n[部分图片未加载，不得声称看到了这些图片的细节。]';
   let quote;
-  if(msg.replyId){try{quote=await quoteText(msg.replyId,a,selfId,subject.qq);}catch{}if(quote)body+='\n<quoted_message_untrusted>\n'+quote+'\n</quoted_message_untrusted>';else body+='\n[引用正文未加载]';}
+  if(msg.replyId){
+   let original;
+   try{original=await readPrivateQuote(msg.replyId,a,selfId,subject.qq);}catch{}
+   if(original?.exactOutgoing && entries.at(-1).receiptObservedAt!=null)
+    feedback?.acknowledge(String(msg.replyId),entries.at(-1).receiptObservedAt);
+   quote=original?.text;
+   if(quote)body+='\n<quoted_message_untrusted>\n'+quote+'\n</quoted_message_untrusted>';else body+='\n[引用正文未加载]';}
   // Only the agent-facing body is joined. Commands and trusted request hooks
   // still see one original message with its own ID and timestamp.
   const raw={Body:body,RawBody:msg.text,BodyForAgent:body,BodyForCommands:msg.text,From:`${CHANNEL}:${subject.qq}`,To:to,SessionKey:route.sessionKey,AccountId:a.accountId,ChatType:'direct',SenderId:subject.qq,SenderName:senderName,Provider:CHANNEL,Surface:CHANNEL,MessageSid:msg.messageId,Timestamp:timestamp,OriginatingChannel:CHANNEL,OriginatingTo:to,CommandAuthorized:subject.permissions[subject.role==='owner'?'commands.admin':'commands.basic']===true};
@@ -183,7 +194,7 @@ async function dispatchInbound({a,cfg,runtime,selfId,log,deliverOverride,signal,
    if(urls.length>1)throw Error('Multiple media pending implementation');
    const args={cfg,to,signal,text:payload.text??'',mediaUrl:urls[0],replyToId:payload.replyToId,key:`in:${msg.id}:${index++}`};
    targetSubject(to,cfg,'qq.reply');
-   const receipt=await (deliverOverride??sendPayload)(args);
+   const receipt=await (deliverOverride??sendPayload)({...args,onTextPlan:feedback?.plan});
    if(info.kind==='final'&&subject.role==='owner'&&receipt?.messageId&&payload.text)recordConfirmationDelivery({accountId:'default',conversationId:to,sourceMessageId:msg.messageId,messageId:String(receipt.messageId),text:payload.text});
   };
   await runtime.channel.reply.dispatchReplyWithBufferedBlockDispatcher({ctx,cfg,dispatcherOptions:{deliver:deliverReply,

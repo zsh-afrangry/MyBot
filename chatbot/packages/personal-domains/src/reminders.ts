@@ -66,6 +66,8 @@ export interface ReminderCommitInput {
 }
 
 export interface ReminderCronScheduler {
+  inspectSchedule?(reminder: StoredReminder, declarationKey: string): Promise<import('./reminder-feedback.js').ReminderScheduleObservation>;
+  inspectRun?(reminder: StoredReminder): Promise<import('./reminder-feedback.js').ReminderRunObservation | undefined>;
   /** Public Host snapshot adapter; avoids private scheduler schema coupling. */
   reconcile?(store: ReminderStore, nowUtc?: number): Promise<import("./reminder-reconciler.js").ReminderReconcileResult>;
   add(input: ReminderCronAddInput): Promise<{ jobId: string }>;
@@ -611,7 +613,7 @@ async function commitCancelProposal(
     try {
       await scheduler.remove({ jobId: reminder.cronJobId });
     } catch {
-      return failure("scheduler_failed", "未能安全移除定时任务，因此没有取消这条提醒。" );
+      return failure("scheduler_failed", "定时任务的移除结果尚未核实。请查询提醒与定时任务的当前状态。" );
     }
   }
   if (!store.commitCancellationProposal({

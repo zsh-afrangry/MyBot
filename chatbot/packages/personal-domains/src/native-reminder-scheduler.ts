@@ -6,8 +6,24 @@ import { buildReminderCronAddParams, buildReminderCronUpdateParams } from './rem
 import type { ReminderCronScheduler } from './reminders.js';
 import { applyReminderObservation, type ReminderReconcileResult } from './reminder-reconciler.js';
 
-type NativeJob = {id:string;declarationKey?:string;failureAlert?:unknown;state?:{lastStatus?:string;lastDeliveryStatus?:string;lastDelivered?:boolean;lastError?:string}};
-type NativeRun = {status?:string;deliveryStatus?:string;delivered?:boolean;runAtMs?:number;error?:string;deliveryError?:string};
+type NativeJob = {
+  id: string;
+  declarationKey?: string;
+  enabled?: boolean;
+  schedule?: {kind?: string; at?: string};
+  delivery?: {mode?: string; channel?: string; to?: string; accountId?: string};
+  failureAlert?: unknown;
+  state?: {lastStatus?: string; lastDeliveryStatus?: string; lastDelivered?: boolean; lastError?: string};
+};
+type NativeRun = {
+  jobId?: string;
+  status?: string;
+  deliveryStatus?: string;
+  delivered?: boolean;
+  runAtMs?: number;
+  error?: string;
+  deliveryError?: string;
+};
 
 /** Trusted native service, never a generic model-facing Gateway tool.
  * The operator installs this backend. Every effect must refer to an existing
@@ -38,6 +54,38 @@ export function createNativeReminderScheduler(options: {
     } finally { db.close(); }
   };
   return {
+    async inspectSchedule(reminder, declarationKey) {
+      const jobs = await cron.listJobs();
+      const candidates = jobs.filter(job => job.id === reminder.cronJobId || job.declarationKey === declarationKey);
+      if (!candidates.length) return {status:'absent'};
+      const job = candidates[0];
+      if (candidates.length !== 1 || !job || (reminder.cronJobId && job.id !== reminder.cronJobId)
+        || typeof job.id !== 'string' || !job.id || job.enabled !== true || job.schedule?.kind !== 'at'
+        || job.delivery?.mode !== 'announce' || job.delivery.channel !== reminder.delivery.channel
+        || job.delivery.to !== reminder.delivery.to
+        || (job.delivery.accountId ?? 'default') !== (reminder.delivery.accountId ?? 'default')) {
+        return {status:'mismatch'};
+      }
+      const scheduledAtUtc = Date.parse(job.schedule.at ?? '') / 1000;
+      return Number.isSafeInteger(scheduledAtUtc)
+        ? {status:'active', cronJobId:job.id, scheduledAtUtc}
+        : {status:'mismatch'};
+    },
+    async inspectRun(reminder) {
+      if (!reminder.cronJobId) return undefined;
+      const [run] = await cron.runs(reminder.cronJobId, 1);
+      if (!run || run.jobId !== reminder.cronJobId || typeof run.runAtMs !== 'number'
+        || !Number.isSafeInteger(run.runAtMs) || run.runAtMs < reminder.scheduledAtUtc * 1000) return undefined;
+      return {
+        cronJobId: reminder.cronJobId,
+        runAtMs: run.runAtMs,
+        executionStatus: run.status === 'ok' ? 'succeeded' : run.status === 'error' ? 'failed'
+          : run.status === 'skipped' ? 'skipped' : 'unknown',
+        hostDeliveryStatus: run.deliveryStatus === 'delivered' && run.delivered === true ? 'reported_sent'
+          : run.deliveryStatus === 'not-delivered' ? 'not_delivered'
+            : run.deliveryStatus === 'not-requested' ? 'not_requested' : 'unknown',
+      };
+    },
     async reconcile(store,nowUtc=store.getNowUtc()) {
       const reminders=store.listReconciliationReminders();
       const result:ReminderReconcileResult={scanned:reminders.length,jobsAdopted:0,delivered:0,failed:0,warnings:[]};

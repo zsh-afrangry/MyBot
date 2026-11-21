@@ -98,11 +98,12 @@ export function normalizeOutboxArgs(args = {}) {
   const input = args && typeof args === "object" ? args : {};
   const action = input.action === undefined || input.action === null ? "list" : String(input.action);
   const limit = Number.isInteger(input.limit) ? Math.min(Math.max(input.limit, 1), 50) : undefined;
-  const draftId = input.draftId === undefined || input.draftId === null ? undefined : String(input.draftId);
-  if (!["list", "audit", "cancel"].includes(action)) {
-    return { action, draftId, limit, problem: `'action' must be one of list, audit, cancel (received ${JSON.stringify(action)})` };
+  const draftId = input.draftId === undefined || input.draftId === null ? undefined : String(input.draftId).trim();
+  if (!["list", "audit", "receipt", "cancel"].includes(action)) {
+    return { action, draftId, limit, problem: `'action' must be one of list, audit, receipt, cancel (received ${JSON.stringify(action)})` };
   }
   if (action === "cancel" && !draftId) return { action, draftId, limit, problem: "'draftId' is required to cancel a draft" };
+  if (action === "receipt" && !draftId) return { action, draftId, limit, problem: "'draftId' is required to query a receipt" };
   return { action, draftId, limit };
 }
 

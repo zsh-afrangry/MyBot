@@ -81,9 +81,10 @@ test("email_outbox defaults to listing (regression)", () => {
   assert.equal(normalizeOutboxArgs({}).problem, undefined);
 });
 
-test("email_outbox rejects an unknown action and a cancel without a draft id", () => {
-  assert.match(normalizeOutboxArgs({ action: "flush" }).problem, /must be one of list, audit, cancel/u);
+test("email_outbox requires a draft id for cancel and receipt, and rejects unknown actions", () => {
+  assert.match(normalizeOutboxArgs({ action: "flush" }).problem, /must be one of list, audit, receipt, cancel/u);
   assert.match(normalizeOutboxArgs({ action: "cancel" }).problem, /draftId.*required/u);
+  assert.match(normalizeOutboxArgs({ action: "receipt", draftId: " " }).problem, /draftId.*required/u);
   assert.equal(normalizeOutboxArgs({ action: "cancel", draftId: "abc" }).problem, undefined);
   assert.equal(normalizeOutboxArgs({ action: "audit", limit: 999 }).limit, 50);
   assert.equal(normalizeOutboxArgs({ action: "list", limit: 0 }).limit, 1);

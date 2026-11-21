@@ -3,7 +3,7 @@ import { Type } from 'typebox';
 import { jsonResult } from 'openclaw/plugin-sdk/agent-runtime';
 import type { AnyAgentTool } from 'openclaw/plugin-sdk/plugin-entry';
 import { defineToolPlugin } from 'openclaw/plugin-sdk/tool-plugin';
-import { authorizeTools, isTrustedOwnerPrivateQq, trustedReminderContext, forbiddenResult, publicReminderError, planningCommitParameters } from './tool-common.js';
+import { authorizeTools, trustedReminderContext, forbiddenResult, publicReminderError, planningCommitParameters } from './tool-common.js';
 import { callGatewayTool } from 'openclaw/plugin-sdk/agent-harness-runtime';
 import { createNativeReminderScheduler } from './native-reminder-scheduler.js';
 import { reminderStateDirectory } from './paths.js';
@@ -14,8 +14,22 @@ import { commitReminderProposal, getReminderState, proposeReminderCancellation, 
 import { ReminderStore } from './reminder-store.js';
 import { registerDomainBackend } from './confirmation-backends.js';
 import { registerInteractionHooks } from './interaction/index.js';
-const configSchema = Type.Object({ reminderBackend: Type.Optional(Type.Literal('native-service')), reminderRunnerRoot: Type.Optional(Type.String()) }, { additionalProperties: false });
-const reminderStateParameters = Type.Object({}, { additionalProperties: false });
+import {
+    queryReminderFeedback, readReminderFeedback, reminderFeedbackActions, sameReminderOwner,
+    type ReminderFeedbackAction,
+} from './reminder-feedback.js';
+import type { TrustedReminderContext } from './reminders.js';
+const configSchema = Type.Object({
+    reminderBackend: Type.Optional(Type.Literal('native-service')),
+    reminderRunnerRoot: Type.Optional(Type.String()),
+    feedbackActions: Type.Optional(Type.Array(Type.Union(reminderFeedbackActions.map(action => Type.Literal(action))), {uniqueItems:true})),
+}, {additionalProperties:false});
+const reminderIdPattern = '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$';
+const reminderStateParameters = Type.Object({
+    reminder_id: Type.Optional(Type.String({pattern:reminderIdPattern, description:'Exact reminder ID, including cancelled reminders. Read-only scheduler lookup.'})),
+    proposal_id: Type.Optional(Type.String({pattern:reminderIdPattern, description:'Exact proposal ID to check pending confirmation or the current schedule after commit.'})),
+}, {additionalProperties:false, maxProperties:1});
+const stateDescription = "Read the owner's active one-time reminders. Supply reminder_id to verify the current schedule, past cancellation or due notification. Supply proposal_id to verify confirmation and its resulting reminder. Use one exact ID from prior tool results. Use feedback.status for the verified schedule. Notification segments report platform acceptance and recipient acknowledgement separately. An empty segments list leaves exact QQ receipts unverified.";
 const reminderCreateParameters = Type.Object({
     schema_version: Type.Literal(1),
     request: Type.Object({
@@ -67,6 +81,24 @@ const reminderUpdateParameters = Type.Object({
 const reminderCommitParameters = planningCommitParameters;
 export function createPlugin() {
     let nativeReminderScheduler: ReminderCronScheduler | undefined;
+    let qqStateDirectory: string | undefined;
+    let feedbackActions = new Set<ReminderFeedbackAction>(reminderFeedbackActions);
+
+    const reminderIdRegex = new RegExp(reminderIdPattern, 'u');
+    async function commitWithFeedback(store: ReminderStore, params: unknown, context: TrustedReminderContext, action: ReminderFeedbackAction) {
+        const scheduler = createGatewayReminderScheduler();
+        const result = await commitReminderProposal(store, params, context, scheduler);
+        if (!feedbackActions.has(action)) return result;
+        if (!result.ok || result.kind !== action.replace('.', '_')) return result;
+
+        try {
+            const reminder = store.getReminder(result.reminder.reminderId);
+            if (reminder && sameReminderOwner(reminder.delivery, context.delivery)) {
+                return {...result, feedback: await readReminderFeedback(store, reminder, scheduler)};
+            }
+        } catch { /* A feedback read failure does not change the commit result. */ }
+        return {...result, feedback: {action:'reminder.schedule', status:'unknown'}};
+    }
     function createGatewayReminderScheduler(): ReminderCronScheduler {
         if (nativeReminderScheduler)
             return nativeReminderScheduler;
@@ -110,19 +142,35 @@ export function createPlugin() {
     const plugin = defineToolPlugin({ id: 'personal-reminders', name: 'Personal Reminders', description: 'Independent owner one-off reminders', activation: { onStartup: true }, configSchema, tools: tool => [tool({
                 name: "personal_reminder_state_get",
                 label: "Personal reminder state",
-                description: "Read the owner's active one-time reminder summaries. Owner QQ private chat only; this tool cannot create, change, cancel, send, or manage Cron jobs.",
+                description: stateDescription,
                 parameters: reminderStateParameters,
                 optional: true,
                 factory: ({ toolContext }): AnyAgentTool => ({
                     name: "personal_reminder_state_get",
                     label: "Personal reminder state",
-                    description: "Read active owner-private reminders without changing anything.",
+                    description: stateDescription,
                     parameters: reminderStateParameters,
-                    async execute() {
-                        if (!isTrustedOwnerPrivateQq(toolContext))
+                    async execute(_toolCallId, params) {
+                        const context = trustedReminderContext(toolContext);
+                        if (!context)
                             return forbiddenResult();
                         let store: ReminderStore | undefined;
                         try {
+                            const {reminder_id:reminderId, proposal_id:proposalId} = (params ?? {}) as {reminder_id?:string; proposal_id?:string};
+                            if (reminderId !== undefined || proposalId !== undefined) {
+                                const id = reminderId ?? proposalId;
+                                if ((reminderId !== undefined && proposalId !== undefined) || typeof id !== 'string'
+                                    || !reminderIdRegex.test(id)) {
+                                    return jsonResult({ok:false,error:{code:'invalid_input'}});
+                                }
+                                store = new ReminderStore({stateDirectory:reminderStateDirectory(), readOnly:true});
+                                return jsonResult(await queryReminderFeedback({
+                                    store, scheduler:createGatewayReminderScheduler(), delivery:context.delivery, actions:feedbackActions,
+                                    ...(qqStateDirectory === undefined ? {} : {qqStateDirectory}),
+                                    ...(reminderId === undefined ? {} : {reminderId}),
+                                    ...(proposalId === undefined ? {} : {proposalId}),
+                                }));
+                            }
                             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
                             if (nativeReminderScheduler?.reconcile)
                                 await nativeReminderScheduler.reconcile(store);
@@ -192,7 +240,7 @@ export function createPlugin() {
                         let store: ReminderStore | undefined;
                         try {
                             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-                            return jsonResult(await commitReminderProposal(store, params, context, createGatewayReminderScheduler()));
+                            return jsonResult(await commitWithFeedback(store, params, context, 'reminder.create'));
                         }
                         catch (error) {
                             return jsonResult({
@@ -256,7 +304,7 @@ export function createPlugin() {
                         let store: ReminderStore | undefined;
                         try {
                             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-                            return jsonResult(await commitReminderProposal(store, params, context, createGatewayReminderScheduler()));
+                            return jsonResult(await commitWithFeedback(store, params, context, 'reminder.update'));
                         }
                         catch (error) {
                             return jsonResult({
@@ -320,7 +368,7 @@ export function createPlugin() {
                         let store: ReminderStore | undefined;
                         try {
                             store = new ReminderStore({ stateDirectory: reminderStateDirectory() });
-                            return jsonResult(await commitReminderProposal(store, params, context, createGatewayReminderScheduler()));
+                            return jsonResult(await commitWithFeedback(store, params, context, 'reminder.cancel'));
                         }
                         catch (error) {
                             return jsonResult({
@@ -336,6 +384,11 @@ export function createPlugin() {
             })] });
     const register = authorizeTools(plugin).register;
     plugin.register = api => {
+        const selected = api.pluginConfig?.feedbackActions;
+        const channelState = api.config.channels?.['kurumi-qq']?.stateDir;
+        qqStateDirectory = typeof channelState === 'string' ? channelState : undefined;
+        feedbackActions = new Set(Array.isArray(selected)
+            ? reminderFeedbackActions.filter(action => selected.includes(action)) : reminderFeedbackActions);
         register(api);
         if (api.registrationMode !== 'full')
             return;

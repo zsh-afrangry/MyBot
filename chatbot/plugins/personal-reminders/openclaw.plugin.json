@@ -16,6 +16,14 @@
       },
       "reminderRunnerRoot": {
         "type": "string"
+      },
+      "feedbackActions": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "enum": ["reminder.create", "reminder.update", "reminder.cancel", "reminder.delivery"]
+        }
       }
     }
   },

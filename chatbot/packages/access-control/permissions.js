@@ -25,7 +25,7 @@ const DIRECT = {
   personal_reminder_change_propose: 'reminders.manage', personal_reminder_change_commit: 'reminders.manage',
   personal_reminder_cancel_propose: 'reminders.manage', personal_reminder_cancel_commit: 'reminders.manage',
   personal_reminder_list_get: 'reminder-list.read',
-  kurumi_sticker: 'stickers.use', email_status: 'mail.status', email_draft: 'mail.draft', email_send: 'mail.send', email_outbox: 'mail.history',
+  kurumi_sticker: 'stickers.use', email_status: 'mail.status', email_draft: 'mail.draft', email_send: 'mail.send',
   knowledge_bills_get: 'bills.read', knowledge_bill_add: 'bills.manage', knowledge_bill_manage: 'bills.manage',
   sessions_list: 'sessions.read', sessions_history: 'sessions.read',
   kurumi_document_send: 'qq.file.reply',
@@ -45,6 +45,7 @@ function actions(groups, fallback) {
 }
 
 const POLICIES = {
+  email_outbox: actions({'mail.history': [undefined, null, 'list', 'audit', 'receipt', 'cancel']}),
   personal_confirmation: {
     resolve: args => ['list', 'preview', 'confirm'].includes(args.action) && Object.hasOwn(CONFIRMATION, args.domain)
       ? CONFIRMATION[args.domain][args.action === 'confirm' ? 1 : 0] : undefined,

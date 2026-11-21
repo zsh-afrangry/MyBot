@@ -4,7 +4,7 @@ import path from 'node:path';
 import {AsyncResource} from 'node:async_hooks';
 import {randomUUID} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/stdio-rpc.js';
+import {processIdentity, sameProcess, descendants} from '../../packages/coding-runtime/acp-client.js';
 import {inspectOwnedRuntime, stopOwnedRuntime} from '../../packages/coding-runtime/reconciliation.js';
 import {attachProjectRegistry} from '../../packages/coding-runtime/project-registry.js';
 import {fencedDirectory, probeWriteFence, writeFenceRoots} from '../../packages/coding-runtime/write-fence.js';
@@ -429,8 +429,8 @@ export class CodingService {
     task = current;
     const key = `coding:${task.id}:${task.executionRoundId ?? task.verifiedCommit}:${task.state}`;
     if (task.delivery?.key === key) return;
-    this.store.save({...task,delivery:{state:'generating',key,roundId:task.executionRoundId}});
-    let sending = false;
+    let attempt = {state: 'generating', key, roundId: task.executionRoundId};
+    this.store.saveDelivery(task, attempt);
     try {
       this.authorize(task.requester, 'tasks.read');
       this.authorize(task.requester, 'qq.reply');
@@ -448,18 +448,20 @@ export class CodingService {
       this.authorize(task.requester,'tasks.read');this.authorize(task.requester,'qq.reply');
       const bodyHash = digest(text);
       if (result.available) this.store.saveResult(task.id, {...this.store.result(task.id, result.roundId), notification: {key, text, bodyHash}});
-      this.store.save({...this.store.get(task.id), delivery: {state: 'sending', key, roundId: task.executionRoundId, bodyHash}});
-      sending = true;
+      const sending = {...attempt, state: 'sending', bodyHash};
+      this.store.saveDelivery(latest, sending);
+      attempt = sending;
       const receipt = await this.sendText({to: task.requester.to, text, key});
       if (receipt?.channel !== 'kurumi-qq' || typeof receipt.messageId !== 'string' || !/^-?[1-9][0-9]*$/.test(receipt.messageId)) throw fail('missing_delivery_receipt');
-      if(this.store.get(task.id).delivery?.key!==key || this.store.get(task.id).executionRoundId!==task.executionRoundId)return;
-      this.store.save({...this.store.get(task.id), delivery: {...this.store.get(task.id).delivery, state: 'platform_accepted', messageId: receipt.messageId}});
-      this.event(this.store.get(task.id), 'coding.delivery', {state: 'platform_accepted'});
+      const state = 'platform_accepted';
+      if (this.store.settleDelivery(task.id, attempt, {state, messageId: receipt.messageId})) {
+        this.event(this.store.get(task.id), 'coding.delivery', {state});
+      }
     } catch (e) {
-      if(this.store.get(task.id).delivery?.key!==key || this.store.get(task.id).executionRoundId!==task.executionRoundId)return;
-      const state = sending ? 'unknown' : 'generation_failed';
-      this.store.save({...this.store.get(task.id), delivery: {...this.store.get(task.id).delivery, key, roundId: task.executionRoundId, state, code: e.code ?? 'delivery_failed'}});
-      this.event(this.store.get(task.id), 'coding.delivery', {state});
+      const state = attempt.state === 'sending' ? 'unknown' : 'generation_failed';
+      if (this.store.settleDelivery(task.id, attempt, {state, code: e.code ?? 'delivery_failed'})) {
+        this.event(this.store.get(task.id), 'coding.delivery', {state});
+      }
     }
   }
   finishResult(task) {

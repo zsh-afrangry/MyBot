@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS mail_audit (
   draft_id TEXT,
   detail_json TEXT NOT NULL DEFAULT '{}'
 );
+CREATE INDEX IF NOT EXISTS mail_audit_draft ON mail_audit (draft_id);
 `;
 
 /** Canonical hash of everything that would leave the machine. Changing any field invalidates approval. */
@@ -254,6 +255,37 @@ export class MailStore {
     };
   }
 
+  getReceipt(draftId) {
+    const row = this.#db.prepare(`
+      SELECT d.draft_id, d.status, d.created_at_utc, d.expires_at_utc, d.sent_at_utc, d.message_id, d.last_error,
+        p.status AS proposal_status,
+        EXISTS (
+          SELECT 1 FROM approval_grants g
+          WHERE g.proposal_id = p.proposal_id AND g.subject_id = p.subject_id
+            AND g.payload_hash = d.payload_hash AND g.status = 'pending' AND g.expires_at_utc > ?
+        ) AS approved,
+        (SELECT a.detail_json FROM mail_audit a
+         WHERE a.draft_id = d.draft_id AND a.action IN ('sent', 'failed', 'delivery_unknown')
+         ORDER BY a.rowid DESC LIMIT 1) AS delivery_detail
+      FROM mail_drafts d
+      LEFT JOIN confirmation_proposals p ON p.proposal_id = d.draft_id AND p.payload_hash = d.payload_hash
+      WHERE d.draft_id = ?
+    `).get(this.nowUtc(), String(draftId));
+    if (!row) return undefined;
+    return {
+      draftId: row.draft_id,
+      state: row.status,
+      proposalState: row.proposal_status,
+      approved: Boolean(row.approved),
+      createdAtUtc: row.created_at_utc,
+      expiresAtUtc: row.expires_at_utc,
+      sentAtUtc: row.sent_at_utc ?? undefined,
+      messageId: row.message_id ?? undefined,
+      lastError: row.last_error ?? undefined,
+      detail: JSON.parse(row.delivery_detail ?? "{}"),
+    };
+  }
+
   /** Immutable draft bytes stay in the private SQLite DB, never in model-visible draft listings. */
   readAttachments(draftId) {
     const row = this.#db.prepare("SELECT attachments_json FROM mail_drafts WHERE draft_id = ?").get(String(draftId));
@@ -281,19 +313,42 @@ export class MailStore {
       .map((row) => ({ atUtc: Number(row.at_utc), action: row.action, draftId: row.draft_id ?? undefined, detail: JSON.parse(row.detail_json) }));
   }
 
-  markSent(draftId, { messageId, response }) {
-    this.#db
-      .prepare("UPDATE mail_drafts SET status = 'sent', sent_at_utc = ?, message_id = ?, delivery_response = ?, last_error = NULL WHERE draft_id = ?")
-      .run(this.nowUtc(), String(messageId ?? ""), String(response ?? "").slice(0, 500), String(draftId));
-    markConfirmationProposalCommitted(this.#db, { proposalId: String(draftId), subjectId: OWNER_SUBJECT_ID, atUtc: this.nowUtc() });
-    this.#audit("sent", draftId, {messageId: String(messageId ?? "")});
+  markSent(draftId, { messageId, response, responseCode, acceptedCount, rejectedCount }) {
+    return this.#recordDelivery(draftId, {
+      status: "sent", messageId, response: String(response ?? "").slice(0, 500),
+      detail: {messageId, responseCode, acceptedCount, rejectedCount},
+    });
   }
 
-  markFailed(draftId, error) {
-    this.#db
-      .prepare("UPDATE mail_drafts SET status = 'failed', last_error = ? WHERE draft_id = ?")
-      .run(`${error?.code ?? "error"}: ${String(error?.message ?? error).slice(0, 300)}`, String(draftId));
-    this.#audit("failed", draftId, {code: String(error?.code ?? "error")});
+  markFailed(draftId, error, { messageId } = {}) {
+    const code = String(error?.code ?? "error");
+    return this.#recordDelivery(draftId, {
+      status: code === "delivery_unknown" ? "unknown" : "failed", messageId,
+      lastError: `${code}: ${String(error?.message ?? error).slice(0, 300)}`,
+      detail: {code, stage: error?.stage ?? "send", responseCode: error?.responseCode},
+    });
+  }
+
+  #recordDelivery(draftId, {status, messageId, response = null, lastError = null, detail}) {
+    const sentAtUtc = status === "sent" ? this.nowUtc() : null;
+    this.#db.exec("BEGIN IMMEDIATE");
+    try {
+      const result = this.#db.prepare(`
+        UPDATE mail_drafts SET status = ?, sent_at_utc = ?, message_id = COALESCE(?, message_id),
+          delivery_response = ?, last_error = ?
+        WHERE draft_id = ? AND (status = 'pending' OR (status = 'unknown' AND message_id = ?))
+      `).run(status, sentAtUtc, messageId ?? null, response, lastError, String(draftId), messageId ?? null);
+      if (!result.changes) throw new Error("Mail draft delivery state changed");
+      if (sentAtUtc !== null) {
+        markConfirmationProposalCommitted(this.#db, {proposalId: String(draftId), subjectId: OWNER_SUBJECT_ID, atUtc: sentAtUtc});
+      }
+      this.#audit(status === "unknown" ? "delivery_unknown" : status, draftId, detail);
+      this.#db.exec("COMMIT");
+      return sentAtUtc ?? undefined;
+    } catch (error) {
+      this.#db.exec("ROLLBACK");
+      throw error;
+    }
   }
 
   cancelDraft(draftId) {
@@ -316,7 +371,13 @@ export class MailStore {
     this.#db.exec('BEGIN IMMEDIATE');
     try {
       const result = this.#consumeApproval(input);
-      if (result.ok) markConfirmationProposalCommitted(this.#db, {proposalId: String(input.draftId), subjectId: OWNER_SUBJECT_ID, atUtc: this.nowUtc()});
+      if (result.ok) {
+        markConfirmationProposalCommitted(this.#db, {proposalId: String(input.draftId), subjectId: OWNER_SUBJECT_ID, atUtc: this.nowUtc()});
+        if (input.messageId) {
+          this.#db.prepare("UPDATE mail_drafts SET status = 'unknown', message_id = ? WHERE draft_id = ?")
+            .run(input.messageId, String(input.draftId));
+        }
+      }
       this.#db.exec('COMMIT');
       return result;
     } catch (error) { this.#db.exec('ROLLBACK'); throw error; }

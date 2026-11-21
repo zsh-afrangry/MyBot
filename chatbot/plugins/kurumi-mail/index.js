@@ -18,6 +18,7 @@ import { ENV_AUTH_CODE, ENV_USER, createMailApplication, mailStateDirectory, rea
 import { normalizeAllowlist } from "./policy.js";
 import { defaultConnector, SmtpClient } from "./smtp.js";
 import {Documents, documentRoot} from '../../packages/documents/index.js';
+import {mailDraftFeedback, mailFeedbackActions, mailReceiptFeedback, mailSendFeedback} from "./feedback.js";
 
 const PLUGIN_ID = "kurumi-mail";
 const BACKEND_ID = "kurumi-mail";
@@ -32,7 +33,7 @@ function json(value) {
   return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
 }
 
-export function createMailPlugin({ registry } = {}) {
+export function createMailPlugin({ registry, connector } = {}) {
   const plugin = {
   id: PLUGIN_ID,
   name: "Kurumi mail",
@@ -45,6 +46,7 @@ export function createMailPlugin({ registry } = {}) {
       storeAdapter: api.pluginConfig?.storeAdapter,
       resolveAttachment: id => new Documents(documentRoot(api.config)).get(id),
     });
+    const feedbackActions = new Set(api.pluginConfig?.feedbackActions ?? mailFeedbackActions);
     const storeOptions = () => ({ stateDirectory: mailStateDirectory(), allowedRecipients: allowlistOf(api) });
     /** Open the selected store for one operation. Nothing here constructs a concrete store. */
     const withStore = (work) => {
@@ -183,7 +185,10 @@ export function createMailPlugin({ registry } = {}) {
           signal?.throwIfAborted();
           const scope = requireConfirmationScope(ctx);
           const result = withStore((store) => application.directives.createDraft(store, args, scope, allowlistOf(api)));
-          if (result.ok) result.from = readMailConfig().user || null;
+          if (result.ok) {
+            result.from = readMailConfig().user || null;
+            if (feedbackActions.has("mail.draft")) result.feedback = mailDraftFeedback(result);
+          }
           return json(result);
         },
       }),
@@ -197,7 +202,7 @@ export function createMailPlugin({ registry } = {}) {
         description:
           "Deliver a draft that the owner has already approved. Requires the draft id from email_draft plus the approval the host "
           + "recorded via personal_confirmation from the current owner reply. Without that approval this returns approval_required and "
-          + "sends nothing; repeated sends are refused. Owner private chat only.",
+          + "sends nothing; repeated sends are refused. For an unknown SMTP result, use email_outbox receipt to check the original draft. Owner private chat only.",
         // Same reasoning as email_draft: shape stays permissive, content is checked at runtime.
         // Models tend to echo the confirmation line back as an extra field; rejecting the call over
         // that key would cost a turn without adding any safety, because approval is never taken from
@@ -216,11 +221,15 @@ export function createMailPlugin({ registry } = {}) {
           const scope = requireConfirmationScope(ctx);
           const store = application.openStore(storeOptions());
           try {
-            return json(await application.directives.sendDraft(store, args, {
+            const result = await application.directives.sendDraft(store, args, {
               scope,
               config: readMailConfig(),
               allowedRecipients: allowlistOf(api),
-            }));
+              connector,
+              logger: api.logger,
+            });
+            if (result.status && feedbackActions.has("mail.send")) result.feedback = mailSendFeedback(result);
+            return json(result);
           } finally {
             store.close();
           }
@@ -234,14 +243,15 @@ export function createMailPlugin({ registry } = {}) {
         name: "email_outbox",
         label: "Mail drafts and audit",
         description:
-          "List mail drafts and their status (pending/sent/failed/cancelled), read the recent audit trail, or cancel a pending draft. "
-          + "Read-only except for cancel. Owner private chat only.",
+          "List drafts, read their audit trail, query the receipt for a specific draft, or cancel a pending draft. "
+          + "Use action=receipt with draftId to check confirmation and SMTP status. SMTP acceptance records server acceptance. "
+          + "Inbox delivery and read status require separate evidence. Read-only except for cancel. Owner private chat only.",
         parameters: {
           type: "object",
           additionalProperties: true,
           properties: {
-            action: { type: "string", enum: ["list", "audit", "cancel"], description: "Defaults to list." },
-            draftId: { type: "string", description: "Required for cancel." },
+            action: { type: "string", enum: ["list", "audit", "receipt", "cancel"], description: "Defaults to list." },
+            draftId: { type: "string", description: "Required for receipt or cancel." },
             limit: { type: "number", minimum: 1, maximum: 50 },
           },
         },
@@ -254,6 +264,12 @@ export function createMailPlugin({ registry } = {}) {
             if (input.problem) return { ok: false, code: "invalid_action", reason: input.problem };
             if (input.action === "list") return { ok: true, action: "list", drafts: store.listDrafts({ limit: input.limit ?? 10 }) };
             if (input.action === "audit") return { ok: true, action: "audit", entries: store.listAudit({ limit: input.limit ?? 10 }) };
+            if (input.action === "receipt") {
+              if (!feedbackActions.size) return {ok: false, code: "feedback_disabled"};
+              const receipt = store.getReceipt(input.draftId);
+              if (!receipt) return {ok: false, code: "unknown_draft"};
+              return {ok: true, action: "receipt", draftId: receipt.draftId, feedback: mailReceiptFeedback(receipt, store.nowUtc(), feedbackActions)};
+            }
             const cancelled = store.cancelDraft(input.draftId);
             return { ok: cancelled, cancelled, action: "cancel", draftId: input.draftId };
           }));

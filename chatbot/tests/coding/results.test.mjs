@@ -105,6 +105,10 @@ test('continuation records a new round even without code changes, and old output
   assert.equal(f.deliveries.length, 2); assert.notEqual(f.deliveries[0].key, f.deliveries[1].key);
   const old = await f.run({action: 'result', taskId: task.id, roundId: first.executionRoundId});
   assert.equal(old.result.currentRound, false); assert.match(old.result.page.text, /actual turn 1/);
+  const oldDelivery=old.feedback.find(item=>item.action==='coding.delivery');
+  assert.equal(oldDelivery.evidence.roundId,first.executionRoundId);
+  assert.equal(oldDelivery.evidence.messageId,'1');
+  assert.equal(second.feedback.find(item=>item.action==='coding.delivery').evidence.messageId,'2');
   assert.match((await f.run({action: 'result', taskId: task.id})).result.page.text, /actual turn 2/);
   await f.service.notify(f.service.store.get(task.id)); assert.equal(f.deliveries.length, 2);
   const stale = {...f.service.store.get(task.id), executionRoundId: first.executionRoundId};
@@ -114,6 +118,7 @@ test('continuation records a new round even without code changes, and old output
   const restarted = new CodingService(f.pluginConfig, {authorize() {}, clientFactory() {throw Error('must not launch');}, sendText() {throw Error('must not resend');}});
   restarted.start(); t.after(() => restarted.stop());
   assert.equal(restarted.result(task.id, requester, {roundId: first.executionRoundId}).result.page.text, old.result.page.text);
+  assert.equal(restarted.store.result(task.id,first.executionRoundId).delivery.messageId,'1');
   assert.equal(restarted.active.size, 0);
 });
 
@@ -121,6 +126,9 @@ test('unknown delivery is retained once; status/result reads cannot restart codi
   const f = await fixture(t, {delivery: async () => {throw Object.assign(Error('uncertain send'), {code: 'transport_unknown'});}, behavior: async ({peer}) => execution(peer, 'actual completed output')});
   const task = await start(f), ready = await f.settle(task.id);
   assert.equal(ready.state, 'ready'); assert.equal(ready.delivery.state, 'unknown');
+  assert.equal(ready.feedback.find(item=>item.action==='coding.complete').evidence.integration,'pending_review');
+  assert.equal(ready.feedback.find(item=>item.action==='coding.complete').evidence.checkStatus,'passed');
+  assert.equal(ready.feedback.find(item=>item.action==='coding.delivery').status,'unknown');
   for (let i = 0; i < 3; i++) {
     await f.run({action: 'result', taskId: task.id}); await f.service.notify(f.service.store.get(task.id));
   }
@@ -243,4 +251,30 @@ test('a delayed generation failure cannot overwrite notification state belonging
   f.service.store.save({...latest,executionRoundId:newRound,delivery:{state:'platform_accepted',key:'new-round',roundId:newRound,messageId:'42'}});
   release();await f.service.idle(task.id);
   assert.equal(f.service.store.get(task.id).delivery.key,'new-round');assert.equal(f.service.store.get(task.id).delivery.state,'platform_accepted');assert.equal(f.deliveries.length,0);
+});
+
+test('a late QQ receipt settles only the round that sent the notice', async t => {
+  let reachedSend, release;
+  const sending = new Promise(resolve => { reachedSend = resolve; });
+  const receipt = new Promise(resolve => { release = resolve; });
+  const f = await fixture(t, {
+    behavior: async ({peer}) => execution(peer, 'old round output'),
+    delivery: () => { reachedSend(); return receipt; },
+  });
+  const task = await start(f);
+  await sending;
+  try {
+    const {store} = f.service;
+    const newerRoundId = '11111111-1111-4111-8111-111111111111';
+    store.createResult(store.get(task.id), {roundId: newerRoundId, state: 'queued'});
+    store.saveDelivery(store.get(task.id), {roundId: newerRoundId, key: 'newer', state: 'platform_accepted', messageId: '42'});
+  } finally {
+    release({channel: 'kurumi-qq', messageId: '41'});
+  }
+  await f.service.idle(task.id);
+  const original = await f.run({action: 'result', taskId: task.id, roundId: task.executionRoundId});
+  const feedback = original.feedback.find(report => report.action === 'coding.delivery');
+  assert.equal(feedback.status, 'platform_accepted');
+  assert.equal(feedback.evidence.messageId, '41');
+  assert.equal(f.service.store.get(task.id).delivery.messageId, '42');
 });

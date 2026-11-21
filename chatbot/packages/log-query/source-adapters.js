@@ -11,6 +11,7 @@ import {createHash} from 'node:crypto';
 const lineIdentity=value=>createHash('sha256').update(value).digest('hex');
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
+import {readDeliveryRows,replyFeedbackData} from '../qq-delivery/private-text-feedback.js';
 import {readHostRecords} from '../session-records/index.js';
 import {
   correlationFrom,
@@ -467,8 +468,8 @@ export function readReminderListDatabase(file, from, to, options = {}) {
       return event({at: row.at_ms, source: 'personal-reminder-list', kind: `reminder-list.${row.action}`,
         correlation: correlationFrom({qqMessageId: row.qq_message_id, sessionKey: row.session_key,
           runId: row.run_id??details.generation?.runId??details.runId, sessionId:details.generation?.sessionId,
-          reminderId: row.item_id, eventKey: details.slotKey, cronJobId: details.cronJobId}),
-        data: {action: row.action, status: details.after?.status, previousStatus: details.before?.status,
+          reminderId: row.item_id, eventKey: details.evidence?.eventKey ?? details.slotKey, cronJobId: details.cronJobId}),
+        data: row.action==='feedback' ? details : {action: row.action, status: details.after?.status, previousStatus: details.before?.status,
           count: details.count, settings: details.settings, reason: details.reason,code:details.code,
           ...(row.action==='notice.generation_failed'?{exceptionRecordedInAudit:details.error!==undefined,validationRecordedInAudit:details.validation!==undefined,
             generationReferenceRecorded:!!details.generation?.runId}:{}),
@@ -578,11 +579,14 @@ export function readChannelDelivery(file, from, to, options = {}) {
   if (!fs.existsSync(file)) return [];
   const db = new DatabaseSync(file, {readOnly: true});
   try {
-    return db.prepare('SELECT id, status, message_id, at FROM outbound WHERE at BETWEEN ? AND ? ORDER BY at, id').all(from, to)
-      .map(row => event({at: row.at, source: 'channel-delivery', kind: 'qq.delivery_state',
-        correlation: correlationFrom({qqMessageId: row.message_id == null ? undefined : String(row.message_id)}),
-        data: {ledgerId: row.id, status: row.status, snapshotOfCurrentState: true},
-        sourceRef: sourceRef(file, 0, {table: 'outbound'})}));
+    return readDeliveryRows(db,from,to).map(row => {
+      const feedback = replyFeedbackData(row);
+      return event({at: row.at, source: 'channel-delivery', kind: 'qq.delivery_state',
+        correlation: correlationFrom({qqMessageId: row.message_id == null ? undefined : String(row.message_id),
+          eventKey:row.delivery_key, recipientId:row.peer, senderId:row.bot, runId:feedback.runId}),
+        data: {ledgerId: row.id, status: row.status, snapshotOfCurrentState: true, ...feedback},
+        sourceRef: sourceRef(file, 0, row.delivery_key ? {table:'qq_reply_parts',id:row.id} : {table:'outbound'})});
+    });
   } finally { db.close(); }
 }
 

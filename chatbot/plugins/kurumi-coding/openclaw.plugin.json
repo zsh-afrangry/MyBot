@@ -24,6 +24,14 @@
       "worktrees": {
         "type": "string"
       },
+      "feedbackActions": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "enum": ["coding.start", "coding.continue", "coding.complete", "coding.delivery"]
+        }
+      },
       "dsh": {
         "type": "object",
         "additionalProperties": false,

@@ -31,6 +31,12 @@ export class CodingStore {
   save(task) { this.db.prepare('UPDATE coding_tasks SET facts=? WHERE id=?').run(JSON.stringify({...task, updatedAt: Date.now()}), task.id); }
   createResult(task, round) {
     this.transaction(() => {
+      const previous = task.executionRoundId && this.result(task.id,task.executionRoundId);
+      if (previous) this.saveResult(task.id,{
+        ...previous,
+        ...(task.delivery?.roundId === previous.roundId && {delivery:task.delivery}),
+        ...(['merged','written_back'].includes(task.state) && {integration:task.state}),
+      });
       this.db.prepare('INSERT INTO coding_results VALUES (?,?,?)').run(task.id, round.roundId, JSON.stringify(round));
       this.save({...task, executionRoundId: round.roundId, state: 'queued', checks: undefined, mergeChecks: undefined, candidate: undefined, reason: undefined, delivery: undefined});
     });
@@ -41,6 +47,25 @@ export class CodingStore {
   }
   saveResult(taskId, round) {
     this.db.prepare('UPDATE coding_results SET facts=? WHERE task_id=? AND round_id=?').run(JSON.stringify(round), taskId, round.roundId);
+  }
+  saveDelivery(task, delivery) {
+    this.transaction(() => {
+      const round = delivery.roundId && this.result(task.id,delivery.roundId);
+      if (round) this.saveResult(task.id,{...round,delivery});
+      this.save({...task,delivery});
+    });
+  }
+  settleDelivery(taskId, attempt, outcome) {
+    return this.transaction(() => {
+      const current = this.get(taskId);
+      const round = attempt.roundId && this.result(taskId, attempt.roundId);
+      const matches = delivery => delivery?.key === attempt.key && delivery.state === attempt.state;
+      const delivery = {...attempt, ...outcome};
+      if (matches(round?.delivery)) this.saveResult(taskId, {...round, delivery});
+      const isCurrent = current?.executionRoundId === attempt.roundId && matches(current?.delivery);
+      if (isCurrent) this.save({...current, delivery});
+      return isCurrent;
+    });
   }
   appendResultEvent(taskId, roundId, event) {
     this.db.prepare(`INSERT INTO coding_result_events SELECT ?,?,COALESCE(MAX(seq),0)+1,?

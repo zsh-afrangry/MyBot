@@ -43,6 +43,14 @@
       "bridgeBaseUrl": {
         "type": "string"
       },
+      "feedbackActions": {
+        "type": "array",
+        "uniqueItems": true,
+        "items": {
+          "type": "string",
+          "enum": ["reminder-list.add", "reminder-list.update", "reminder-list.complete", "reminder-list.void", "reminder-list.reopen"]
+        }
+      },
       "bridgeTokenFile": {
         "type": "string",
         "pattern": "^/"
