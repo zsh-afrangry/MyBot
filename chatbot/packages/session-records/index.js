@@ -6,7 +6,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {zstdDecompressSync} from 'node:zlib';
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 const decode = (json, zstd) => json || zstdDecompressSync(zstd, {maxOutputLength: 64 * 1024 * 1024}).toString('utf8');
-export function readHostRecords(file, {from = 0, to = Number.MAX_SAFE_INTEGER, sessionKey, archives = false} = {}) {
+export function readHostRecords(file, {from = 0, to = Number.MAX_SAFE_INTEGER, sessionKey, sessionId, archives = false} = {}) {
   if (!fs.existsSync(file)) return {rows: [], windows: []};
   const db = new DatabaseSync(file, {readOnly: true});
   try {
@@ -14,23 +14,26 @@ export function readHostRecords(file, {from = 0, to = Number.MAX_SAFE_INTEGER, s
     let windows = [];
     try {windows = db.prepare(`SELECT session_id AS sessionId, session_key AS sessionKey, created_at AS createdAt,
       updated_at AS updatedAt, channel, account_id AS accountId, chat_type AS chatType,
-      primary_conversation_id AS conversationId FROM session_windows`).all();} catch { /* legacy diagnostics */ }
+      primary_conversation_id AS conversationId FROM session_windows${sessionId ? ' WHERE session_id=?' : ''}`).all(...(sessionId ? [sessionId] : []));} catch { /* legacy diagnostics */ }
     const windowMap = new Map(windows.map(w => [w.sessionId, w]));
     const rows = [], seen = new Set();
-    const add = (sessionId, seq, raw, createdAt, window, source) => {
+    const add = (id, seq, raw, createdAt, window, source) => {
       const record = JSON.parse(raw), eventHash = hash(raw), at = Date.parse(record.timestamp) || Number(record.timestamp) || createdAt;
-      if (at < from || at > to || (sessionKey && window?.sessionKey !== sessionKey)) return;
-      const key = JSON.stringify([sessionId, seq, eventHash]); if (seen.has(key)) return; seen.add(key);
-      rows.push({sessionId, seq, eventHash, record, raw, createdAt: at, window, source});
+      if (at < from || at > to || (sessionKey && window?.sessionKey !== sessionKey) || (sessionId && id !== sessionId)) return;
+      const key = JSON.stringify([id, seq, eventHash]); if (seen.has(key)) return; seen.add(key);
+      rows.push({sessionId: id, seq, eventHash, record, raw, createdAt: at, window, source});
     };
     for (const row of db.prepare(`SELECT session_id, seq, event_json, event_zstd, created_at FROM transcript_events
-      WHERE created_at BETWEEN ? AND ? ORDER BY created_at,seq`).iterate(from, to)) {
+      WHERE created_at BETWEEN ? AND ?${sessionId ? ' AND session_id=?' : ''} ORDER BY created_at,seq`).iterate(from, to, ...(sessionId ? [sessionId] : []))) {
       if (sessionKey && windowMap.get(row.session_id)?.sessionKey !== sessionKey) continue;
       add(row.session_id, row.seq, decode(row.event_json, row.event_zstd), row.created_at, windowMap.get(row.session_id), 'transcript_events');
     }
     if (archives && db.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name='session_transcript_archives'").get()) {
-      const query = `SELECT archive_name,session_id,session_key,archive_blob,archive_sha256,encoding,created_at FROM session_transcript_archives${sessionKey ? ' WHERE session_key=?' : ''} ORDER BY created_at`;
-      for (const row of db.prepare(query).iterate(...(sessionKey ? [sessionKey] : []))) {
+      const filter = sessionId ? ' WHERE session_id=?' : sessionKey ? ' WHERE session_key=?' : '';
+      const query = `SELECT archive_name,session_id,session_key,archive_blob,archive_sha256,encoding,created_at FROM session_transcript_archives${filter} ORDER BY created_at`;
+      const selector = sessionId || sessionKey;
+      for (const row of db.prepare(query).iterate(...(selector ? [selector] : []))) {
+        if (sessionKey && row.session_key !== sessionKey) continue;
         const bytes = Buffer.from(row.archive_blob); if (hash(bytes) !== row.archive_sha256) throw Error('Transcript archive hash mismatch');
         if (!['zstd', 'identity', 'jsonl', 'plain'].includes(row.encoding)) throw Error('Unsupported transcript archive encoding');
         const text = (row.encoding === 'zstd' ? zstdDecompressSync(bytes, {maxOutputLength: 64 * 1024 * 1024}) : bytes).toString('utf8');

@@ -1,4 +1,4 @@
-export function readQqCronFeedback(stateDir: string, runId: string, peer: string): Array<{
+export function readQqCronFeedback(stateDir: string, runId: string, peer: string, endedAtMs?: number): Array<{
   action: 'qq.cron_text';
   runId: string;
   messageId: string | null;

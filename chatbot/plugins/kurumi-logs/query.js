@@ -7,7 +7,13 @@ export function cliArguments(config, q, {ownerId} = {}) {
   // deployment root locates this fixed backend; import.meta.url cannot do so.
   // Fit the actual text weight as well as bytes. Leave room below the host's
   // minimum 16k live text cap and this plugin's 24KiB final envelope cap.
-  const args = [logQueryRunner(config.backendRoot),'--runtime-root',config.runtimeRoot,'--from',q.from,'--to',q.to,'--json','--output-bytes','18000','--output-chars','12000'];
+  const args = [logQueryRunner(config.backendRoot),'--runtime-root',config.runtimeRoot,'--json'];
+  if (q.view === 'daily-feedback') {
+    args.push('--daily-feedback', q.broadcast, '--scheduled-at', q.scheduledAt);
+    if (q.cronJobId) args.push('--cron-job-id', q.cronJobId);
+    return args;
+  }
+  args.push('--from',q.from,'--to',q.to,'--output-bytes','18000','--output-chars','12000');
   if (q.view === 'interactions') {
     if (typeof ownerId !== 'string' || !QQ_ID.test(ownerId) || q.peer === ownerId) throw new LogQueryError('invalid_query');
     args.push(`--interactions-for=${ownerId}`,'--limit',String(q.limit),'--offset',String(q.offset));

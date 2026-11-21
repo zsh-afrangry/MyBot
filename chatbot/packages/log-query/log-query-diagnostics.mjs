@@ -11,7 +11,7 @@ import {pairCalls,collectErrors,localTime,groupTurns} from './log-query-views.mj
 import {backgroundUsage} from './execution-tree.js';
 const readJson = file => JSON.parse(fs.readFileSync(file,'utf8'));
 const exists = file => fs.existsSync(file);
-function database(file,work) {
+export function database(file,work) {
  if(!exists(file))return {available:false,reason:'source_missing'};
  const db=new DatabaseSync(file,{readOnly:true});
  try{db.exec('PRAGMA busy_timeout=2000; BEGIN');const result=work(db);db.exec('COMMIT');return result;}finally{db.close();}

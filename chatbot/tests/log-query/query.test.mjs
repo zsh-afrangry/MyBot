@@ -31,6 +31,14 @@ test('retained history is unrestricted; typed filters and deployment roots remai
  assert.equal(Date.parse(queryOptions({since:'8d'},NOW).to)-Date.parse(queryOptions({since:'8d'},NOW).from),8*86400000);
  const local=queryOptions({from:'2026-11-10 08:00',to:'2026-11-10 09:00',messageId:'-12'},NOW);assert.equal(local.from,'2026-11-10T00:00:00.000Z');
 });
+test('daily feedback accepts a precise planned time and regularizes neither invalid dates nor mixed filters', () => {
+ const q = {view:'daily-feedback', broadcast:'reminder-list', scheduledAt:'2026-11-10T08:00'};
+ assert.deepEqual(queryOptions(q, NOW), q);
+ for (const args of [{broadcast:'cron'}, {scheduledAt:'2026-02-30T08:00'}, {scheduledAt:'2026-11-10T08:00:01'},
+   {cronJobId:'not-a-job-id'}, {since:'all'}, {peer:'900002'}, {runtimeRoot:'/tmp'}]) {
+   assert.throws(() => queryOptions({...q, ...args}, NOW), {code:'invalid_query'});
+ }
+});
 test('new permission is owner-only and member matrix cannot enable it',()=>{
  assert(OWNER_PERMISSIONS.includes('logs.read'));assert(!SHARED_PERMISSIONS.includes('logs.read'));assert.equal(toolPermission('kurumi_logs'),'logs.read');
  const p=ownerPolicy('900001'),m=memberRow('900002');m.permissions['logs.read']=true;p.subjects.push(m);assert.throws(()=>validatePolicy(p));
@@ -124,7 +132,7 @@ test('relocated plugin adapter still queries the configured backend instead of i
  const f=fixture(t),capture=path.join(f.root,'capture/package-0/node_modules/kurumi-logs');fs.mkdirSync(capture,{recursive:true});
  fs.writeFileSync(path.join(f.root,'capture/package-0/package.json'),JSON.stringify({type:'module'}));
  for(const name of ['query.js','policy.js'])fs.copyFileSync(new URL('../../plugins/kurumi-logs/'+name,import.meta.url),path.join(capture,name));
- for (const file of ['log-query/sources.js','access-control/index.js','access-control/permissions.js']) {
+ for (const file of ['log-query/sources.js','log-query/daily-feedback-query.js','access-control/index.js','access-control/permissions.js']) {
   const target=path.resolve(capture,'../../packages',file);fs.mkdirSync(path.dirname(target),{recursive:true});
   fs.copyFileSync(new URL('../../packages/'+file,import.meta.url),target);
  }

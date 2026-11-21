@@ -2,5 +2,9 @@
   "name": "@kurumi/log-query",
   "private": true,
   "type": "module",
-  "exports": {".":"./index.js","./sources.js":"./sources.js"}
+  "exports": {
+    ".": "./index.js",
+    "./daily-feedback-query.js": "./daily-feedback-query.js",
+    "./sources.js": "./sources.js"
+  }
 }

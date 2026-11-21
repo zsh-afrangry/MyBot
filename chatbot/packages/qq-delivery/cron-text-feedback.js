@@ -38,18 +38,18 @@ export async function sendQueuedText(args) {
   } finally { ledger?.close(); }
 }
 
-function readParts(stateDir, runId, peer) {
+function readParts(stateDir, runId, peer, endedAtMs) {
   const file = path.join(stateDir,'channel.sqlite');
   if (!existsSync(file)) return [];
   const db = new DatabaseSync(file,{readOnly:true});
   try {
-    db.exec('PRAGMA busy_timeout=1000');
-    return readCronDeliveryParts(db,runId,peer);
+    db.exec('PRAGMA busy_timeout=1000; BEGIN');
+    return readCronDeliveryParts(db,runId,peer,endedAtMs);
   } finally { db.close(); }
 }
 
-export function readQqCronFeedback(stateDir, runId, peer) {
-  return readParts(stateDir,runId,peer).map(row => ({
+export function readQqCronFeedback(stateDir, runId, peer, endedAtMs) {
+  return readParts(stateDir,runId,peer,endedAtMs).map(row => ({
     ...replyFeedbackData(row),
     messageId: row.message_id,
     deliveryKey: row.delivery_key,

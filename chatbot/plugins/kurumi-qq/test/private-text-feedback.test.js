@@ -8,6 +8,7 @@ import test from 'node:test';
 import {readChannelDelivery} from '../../../packages/log-query/index.js';
 import {Ledger,sendPayload} from '../../../packages/qq-delivery/index.js';
 import {privateTextFeedback} from '../../../packages/qq-delivery/private-text-feedback.js';
+import {readQqCronFeedback} from '../../../packages/qq-delivery/cron-text-feedback.js';
 import {memberRow,withAccess} from '../../../tests/access-control/fixtures.mjs';
 import {handleInbound} from '../src/inbound.js';
 
@@ -97,6 +98,27 @@ test('Early acknowledgement waits for a unique platform receipt; ambiguous ids s
   ledger.sent(key+':0','123');assert.equal(f.rows()[0].recipientStatus,'acknowledged');
   ledger.reserve(key+':1');ledger.sent(key+':1','123');
   assert(f.rows().every(r=>r.recipientStatus==='unverified'));
+});
+
+test('Scheduled weather receipts require a unique delivery start inside the same Cron occurrence', async t => {
+  const f = await fixture(t);
+  const prefix = 'cron:12345678-1234-1234-1234-123456789abc:';
+  const start = 1795296489000;
+  const record = (offset, id) => {
+    const key = 'weather:' + id;
+    f.observe(prefix + (start + offset)).plan(key, 1);
+    f.ledger.reserve(key + ':0');
+    f.ledger.sent(key + ':0', id);
+  };
+  record(-1, 101);
+  record(2000, 102);
+  record(4000, 103);
+  const read = (peer = owner) => readQqCronFeedback(f.channel.stateDir, prefix + start, peer, start + 4000);
+  assert.deepEqual(read().map(part => part.messageId), ['102']);
+  assert.deepEqual(read(member), []);
+  assert.deepEqual(readQqCronFeedback(f.channel.stateDir, prefix + start, owner), []);
+  record(3000, 104);
+  assert.deepEqual(read(), []);
 });
 
 test('Disabled, synthetic and legacy replies retain their native receipts; observer fault leaves delivery intact',async t=>{

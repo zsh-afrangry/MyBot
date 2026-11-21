@@ -44,6 +44,8 @@ import {traceSources,SOURCES} from './sources.js';
 import {readPaperHistory} from './paper-history.js';
 import {executionTree} from './execution-tree.js';
 import {privateInteractions} from './private-interactions.js';
+import {dailyFeedbackQuery} from './daily-feedback-query.js';
+import {readDailyFeedback} from './daily-feedback.js';
 /** Spread-free append: `push(...list)` overflows the call stack once a source yields ~100k rows. */
 function append(target, items) {
   for (const item of items) target.push(item);
@@ -210,6 +212,7 @@ function usage() {
   --tree              业务分类、执行和节点；--node-id 展开子节点，--detail 读取命名明细\n  --execution-id <ID> 限定执行；--node-id <ID> 定位节点；--detail <名称> 如 request/response/receipt\n  --overview          错误码、来源与业务尝试概览，含稳定eventRef
   --event-ref <引用>  精确展开该事件（仍限时间/来源）
   --event-key <键>    精确业务键，列表为日期T时刻
+  --daily-feedback <reminder-list|weather> --scheduled-at <时间>  按计划时刻核对播报与QQ受理
   --cron-job-id <ID> 精确Cron任务
   --code <错误码>    精确筛选业务及嵌套异常码
   --errors            只看错误与拒绝，并按错误码计数
@@ -224,7 +227,7 @@ function usage() {
 `;
 }
 
-const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval','--keyword','--keyword-mode','--level','--context-before','--context-after','--output-bytes','--content-offset','--content-hash','--output-chars','--code','--event-key','--cron-job-id','--event-ref','--node-id','--execution-id','--detail','--interactions-for','--direction'];
+const VALUE_FLAGS = ['--from', '--to', '--contains', '--message-id', '--proposal-id', '--run-id', '--session-key', '--reminder-id', '--source', '--exclude-source', '--kind', '--exclude-kind', '--runtime-root', '--snowluma-root', '--limit', '--since', '--peer', '--last-turns', '--snapshot', '--format', '--fields', '--offset', '--interval','--keyword','--keyword-mode','--level','--context-before','--context-after','--output-bytes','--content-offset','--content-hash','--output-chars','--code','--event-key','--cron-job-id','--event-ref','--node-id','--execution-id','--detail','--interactions-for','--direction','--daily-feedback','--scheduled-at'];
 const LIST_FLAGS = {'--source': 'sources', '--exclude-source': 'excludeSources', '--kind': 'kinds', '--exclude-kind': 'excludeKinds','--keyword':'keywords','--level':'levels'};
 const BOOLEAN_FLAGS = {'--no-text': 'noText', '--json': 'json', '--raw': 'raw', '--expand': 'expand', '--full': 'expand', '--turns': 'turns', '--errors': 'errors', '--audit': 'audit', '--stats':'stats','--overview':'overview','--tree':'tree', '--follow':'follow', '--show-known':'showKnown','--full-content':'fullContent'};
 
@@ -242,6 +245,10 @@ function parseArgs(argv) {
     const key = flag.slice(2).replace(/-([a-z])/gu, (_, letter) => letter.toUpperCase());
     if (LIST_FLAGS[flag]) result[LIST_FLAGS[flag]].push(value); else result[key] = value;
   }
+  if (result.dailyFeedback !== undefined) {
+    const allowed = ['dailyFeedback', 'scheduledAt', 'cronJobId', 'runtimeRoot', 'json'];
+    if (Object.entries(result).some(([key, value]) => !allowed.includes(key) && (!Array.isArray(value) || value.length))) throw Error('Invalid daily feedback query');
+  } else if (result.scheduledAt !== undefined) throw Error('Scheduled time requires --daily-feedback');
   if (result.interactionsFor !== undefined) {
     const allowed = ['interactionsFor','peer','direction','eventRef','expand','from','to','since','limit','offset','contentOffset','contentHash','outputBytes','outputChars','runtimeRoot','json'];
     if (Object.entries(result).some(([key, value]) => !allowed.includes(key) && (!Array.isArray(value) || value.length))) throw Error('Invalid private interaction query');
@@ -261,10 +268,15 @@ function parseArgs(argv) {
 export function runCli(argv = process.argv.slice(2), now = Date.now()) {
   const args = parseArgs(argv);
   if (args.help) { console.log(usage()); return 0; }
+  const runtimeRoot=args.runtimeRoot??DEFAULT_RUNTIME_ROOT;
+  if (args.dailyFeedback !== undefined) {
+    const query = dailyFeedbackQuery({broadcast: args.dailyFeedback, scheduledAt: args.scheduledAt, cronJobId: args.cronJobId});
+    console.log(JSON.stringify(readDailyFeedback(runtimeRoot, query, now), null, 2));
+    return 0;
+  }
   const duration=args.since && args.since!=='all'?parseDuration(args.since):60*60*1000;
   const from = parseQueryInstant(args.from, args.since==='all'?0:now - duration),to = parseQueryInstant(args.to, now);
   if ((args.from&&!Number.isFinite(parseQueryInstant(args.from,NaN)))||(args.to&&!Number.isFinite(parseQueryInstant(args.to,NaN)))||!Number.isFinite(from)||!Number.isFinite(to)||from>to)throw Error('时间范围无效');
-  const runtimeRoot=args.runtimeRoot??DEFAULT_RUNTIME_ROOT;
   if (args.interactionsFor !== undefined) {
     const result = privateInteractions({...args,runtimeRoot,from,to,ownerId:args.interactionsFor,
       limit:Number(args.limit??10),offset:Number(args.offset??0)});

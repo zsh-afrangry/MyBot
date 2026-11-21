@@ -2,6 +2,7 @@
 import path from 'node:path';
 import fs from 'node:fs';
 import {QQ_ID} from '../../packages/access-control/index.js';
+import {dailyFeedbackQuery} from '../../packages/log-query/daily-feedback-query.js';
 export {QQ_SOURCES as SOURCES} from '../../packages/log-query/sources.js';
 import {QQ_SOURCES as SOURCES} from '../../packages/log-query/sources.js';
 export const RESULT_BYTES = 24 * 1024;
@@ -20,6 +21,11 @@ export function settings(raw) {
 export function queryOptions(raw = {}, now = Date.now()) {
   if (!object(raw)) fail('invalid_query');
   const view = raw.view ?? 'events';
+  if (view === 'daily-feedback') {
+    if (Object.keys(raw).some(key => !['view', 'broadcast', 'scheduledAt', 'cronJobId'].includes(key))) fail('invalid_query');
+    try { dailyFeedbackQuery(raw); } catch { fail('invalid_query'); }
+    return raw;
+  }
   const interactions = view === 'interactions';
   const allowed = interactions ? INTERACTION_OPTIONS : ['view','from','to','since','sources','runId','messageId','kind','limit','offset','contains','keywords','keywordMode','levels','noText','expand','raw','contextBefore','contextAfter','contentOffset','contentHash','eventRef','eventKey','cronJobId','code','nodeId','executionId','detail'];
   if (!['events','errors','stats','overview','tree','interactions'].includes(view) || Object.keys(raw).some(k => !allowed.includes(k)) || (raw.since !== undefined && raw.from !== undefined)) fail('invalid_query');

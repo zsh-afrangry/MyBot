@@ -74,8 +74,20 @@ const trackedParts = `
           WHERE ack.bot=p.bot AND ack.peer=p.peer AND ack.quoted_id=o.message_id AND ack.observed_at>=o.at
           ORDER BY ack.observed_at,ack.rowid LIMIT 1)`;
 
-export function readCronDeliveryParts(db, runId, peer) {
+export function readCronDeliveryParts(db, runId, peer, endedAtMs) {
   if (!hasReplyFeedback(db)) return [];
+  if (endedAtMs !== undefined) {
+    const startIndex = runId.lastIndexOf(':') + 1;
+    const prefix = runId.slice(0, startIndex);
+    const startedAtMs = Number(runId.slice(startIndex));
+    const ids = db.prepare('SELECT DISTINCT source_message FROM qq_reply_parts WHERE source_message GLOB ? AND peer=?')
+      .all(prefix + '*', peer).map(row => row.source_message).filter(id => {
+        const suffix = id.slice(startIndex);
+        return /^\d+$/u.test(suffix) && Number(suffix) >= startedAtMs && Number(suffix) < endedAtMs;
+      });
+    if (ids.length !== 1) return [];
+    [runId] = ids;
+  }
   return db.prepare(trackedParts + ' WHERE p.source_message=? AND p.peer=? ORDER BY p.part').all(runId,peer);
 }
 
