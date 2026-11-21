@@ -14,7 +14,7 @@ const orderOf = (p: ConfirmationPreview) => p.presentationOrder ?? (p.presentedA
 function withBackends<T>(event: ConfirmationInboundEvent, work: (opened: Opened) => T): T {
   const opened: ConfirmationBackend[] = [];
   try {
-    const providers = confirmationBackendProviders();
+    const providers = confirmationBackendProviders(event);
     if (!providers.length) throw Error('no_backends');
     const rows: Opened = [];
     for (const provider of providers) {

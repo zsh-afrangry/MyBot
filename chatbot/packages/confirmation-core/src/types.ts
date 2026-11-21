@@ -8,7 +8,7 @@ export interface ConfirmationScope {
   /** The strongest runtime correlation available for this conversation. */
   primary: string;
   /** Delivery/conversation aliases used when the host omits a session key. */
-  delivery: string[];
+  delivery: readonly string[];
 }
 
 export interface ConfirmationInboundEvent {

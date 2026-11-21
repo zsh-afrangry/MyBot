@@ -1,6 +1,7 @@
 import { parseConfirmationText } from "./protocol.js";
 import { scopeFromInboundEvent } from "./scope.js";
 import type { ConfirmationInboundEvent, ConfirmationProposalRow, NaturalConfirmationBackend } from "./types.js";
+import { ACCEPTANCE_CONFIRMATION_CHANNEL, isScopedConfirmationSession, scopedConfirmationProviders } from './request-backends.js';
 
 /** Business storage stays with its domain, including grant/commit transactions. */
 export interface ConfirmationBackend {
@@ -22,7 +23,11 @@ function registry(): Map<string, ConfirmationBackendProvider> {
   return host[key] ??= new Map();
 }
 /** Internal transport/service composition, shared across host-loaded copies. */
-export function confirmationBackendProviders(): readonly ConfirmationBackendProvider[] { return [...registry().values()]; }
+export function confirmationBackendProviders(event: ConfirmationInboundEvent): readonly ConfirmationBackendProvider[] {
+  if (event.channel === ACCEPTANCE_CONFIRMATION_CHANNEL) return scopedConfirmationProviders(event) ?? [];
+  if (isScopedConfirmationSession(event.sessionKey)) return [];
+  return [...registry().values()];
+}
 export function registerConfirmationBackend(provider: ConfirmationBackendProvider): () => void {
   const id = provider.id;
   if (registry().has(id)) throw new Error(`Confirmation backend already registered: ${id}`);

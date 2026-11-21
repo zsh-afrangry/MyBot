@@ -7,6 +7,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./acceptance": {
+      "types": "./dist/acceptance.d.ts",
+      "import": "./dist/acceptance.js"
     }
   },
   "files": [

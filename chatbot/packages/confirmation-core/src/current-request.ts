@@ -1,13 +1,17 @@
 import type { ConfirmationInboundEvent, ConfirmationScope, NaturalConfirmationSelection } from './types.js';
 import { scopeFromInboundEvent } from './scope.js';
+import { ACCEPTANCE_CONFIRMATION_CHANNEL, isScopedConfirmationSession, scopedConfirmationPermit, type ConfirmationPermit } from './request-backends.js';
 
 const key = Symbol.for('kurumi.confirmation.current-requests.v1');
-type Permit = {messageId: string; at: number; targets?: readonly NaturalConfirmationSelection[]};
-const host = globalThis as typeof globalThis & {[key]?: Map<string, Permit>};
+const host = globalThis as typeof globalThis & {[key]?: Map<string, ConfirmationPermit>};
 const permits = () => host[key] ??= new Map();
+const permitFor = (scope: ConfirmationScope) => scope.primary.startsWith('session:')
+  && isScopedConfirmationSession(scope.primary.slice('session:'.length)) ? scopedConfirmationPermit(scope) : permits().get(scope.primary);
 
 /** Host provenance only. Capturing a request neither issues nor consumes an approval. */
 export function captureNaturalConfirmationRequest(event: ConfirmationInboundEvent): void {
+  // The host-created scope owns its permit for exactly the async request lifetime.
+  if (event.channel === ACCEPTANCE_CONFIRMATION_CHANNEL) return;
   const scope = scopeFromInboundEvent(event);
   if (!scope || !event.messageId || !Number.isFinite(event.timestamp)) return;
   // Re-observing the same delivery must not clear its already frozen target set.
@@ -18,7 +22,7 @@ export function captureNaturalConfirmationRequest(event: ConfirmationInboundEven
 
 export function currentConfirmationTargets(event: ConfirmationInboundEvent): readonly NaturalConfirmationSelection[] | undefined {
   const scope = scopeFromInboundEvent(event);
-  const permit = scope && permits().get(scope.primary);
+  const permit = scope && permitFor(scope);
   return permit && permit.messageId === event.messageId ? permit.targets : undefined;
 }
 
@@ -26,7 +30,7 @@ export function currentConfirmationTargets(event: ConfirmationInboundEvent): rea
 export function bindConfirmationTargets(event: ConfirmationInboundEvent, targets: readonly NaturalConfirmationSelection[], nowMs: number): boolean {
   const scope = scopeFromInboundEvent(event);
   if (!scope || !event.messageId || !naturalConfirmationRequestCurrent(scope, event.messageId, nowMs / 1000)) return false;
-  const permit = permits().get(scope.primary)!;
+  const permit = permitFor(scope)!;
   const keyOf = (p: NaturalConfirmationSelection) => JSON.stringify([p.domain, p.proposalId, p.payloadHash]);
   const keys = (rows: readonly NaturalConfirmationSelection[]) => rows.map(keyOf).sort().join('\n');
   if (permit.targets) return keys(permit.targets) === keys(targets);
@@ -38,6 +42,6 @@ export function clearNaturalConfirmationRequest(sessionKey: string, messageId?: 
   if (!messageId || permits().get(key)?.messageId === messageId) permits().delete(key);
 }
 export function naturalConfirmationRequestCurrent(scope: ConfirmationScope, messageId: string, nowUtc: number): boolean {
-  const permit = permits().get(scope.primary);
+  const permit = permitFor(scope);
   return !!permit && permit.messageId === messageId && permit.at <= nowUtc * 1000 + 30000 && permit.at > nowUtc * 1000 - 300000;
 }

@@ -1,11 +1,12 @@
 import type { ConfirmationScope, ConfirmationToolContext, ConfirmationInboundEvent } from "./types.js";
 import { boundedText } from "./validation.js";
+import { isScopedConfirmationSession, scopedConfirmationScope } from './request-backends.js';
 
 const MAX_SCOPE_VALUE_LENGTH = 500;
 
 export function scopeFromToolContext(input: ConfirmationToolContext): ConfirmationScope | undefined {
   const channel = input.messageChannel ?? input.deliveryContext?.channel;
-  if (!["qqbot", "kurumi-qq"].includes(channel ?? "") || input.senderIsOwner !== true) return undefined;
+  if (!["qqbot", "kurumi-qq"].includes(channel ?? "") || input.senderIsOwner !== true || isScopedConfirmationSession(input.sessionKey)) return undefined;
   const target = input.deliveryContext?.to?.trim();
   if (!target) return undefined;
   if (channel === "qqbot" && !/^(?:qqbot:)?c2c:/u.test(target)) return undefined;
@@ -25,7 +26,9 @@ export function scopeFromToolContext(input: ConfirmationToolContext): Confirmati
 
 /** Binds inbound data to an owner-authorized proposal; does not grant tool access. */
 export function scopeFromInboundEvent(event: ConfirmationInboundEvent): ConfirmationScope | undefined {
-  if (!["qqbot", "kurumi-qq"].includes(event.channel) || event.isGroup) return undefined;
+  const trusted = scopedConfirmationScope(event);
+  if (trusted) return trusted;
+  if (!["qqbot", "kurumi-qq"].includes(event.channel) || event.isGroup || isScopedConfirmationSession(event.sessionKey)) return undefined;
   if (event.channel === "kurumi-qq" && (event.conversationId !== `user:${event.senderId}`
     || !/^[0-9]{5,12}$/u.test(event.senderId ?? "")
     || event.sessionKey !== `agent:main:kurumi-qq:direct:${event.senderId}`)) return undefined;
@@ -83,6 +86,6 @@ export function parseScope(value: string): ConfirmationScope {
   }
 }
 
-function uniqueStrings(values: Array<string | undefined>): string[] {
+function uniqueStrings(values: readonly (string | undefined)[]): string[] {
   return [...new Set(values.filter((value): value is string => Boolean(value && value.length > 0)))];
 }
