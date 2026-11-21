@@ -47,7 +47,7 @@ const readPolicy = () => JSON.parse(fs.readFileSync(policyFile, 'utf8'));
 const writeJson = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', {mode: 0o600});
 const report = {openclaw: JSON.parse(fs.readFileSync(path.join(repo, 'node_modules/openclaw/package.json'))).version,
   boundary: 'Isolated Gateway, deterministic model and loopback OneBot WebSocket/HTTP. Canonical config sync on synthetic source and state.',
-  category, cases: [], requests: 0, primaryModel: 'fixture/fixture'};
+  category, cases: [], feedback: [], requests: 0, primaryModel: 'fixture/fixture'};
 
 for (const dir of ['config', 'roles', 'scripts/fusion/templates']) fs.mkdirSync(path.join(source, dir), {recursive: true});
 for (const dir of ['workspace', 'channel', 'media']) fs.mkdirSync(path.join(state, dir), {recursive: true});
@@ -165,7 +165,8 @@ const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun ? [mail] : []), .
 const workspace = path.join(state, 'workspace');
 const model = {primary: 'fixture/fixture'};
 const config = withHostControl({
-  gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
+  gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false},
+    reload: {mode: 'off'}},
   discovery: {mdns: {mode: 'off'}}, update: {checkOnStart: false},
   models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${endpoint}/v1`, apiKey: 'synthetic', api: 'openai-completions',
     models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200,
@@ -290,7 +291,33 @@ async function assertMemberRejected() {
 const adminTool = (args, verify) => ({name: 'kurumi_access', args, verify});
 const confirm = verify => ({name: 'personal_confirmation', args: () => ({action: 'confirm', domain: 'access',
   proposalId: proposal.proposalId, payloadHash: proposal.payloadHash}), verify});
-const commit = verify => adminTool(() => ({action: 'commit', proposalId: proposal.proposalId}), verify);
+function verifyFeedback(result, runtimeStatus, sourceStatus = 'current') {
+  assert.equal(result.ok, true);
+  assert.equal(result.status, 'written');
+  const {action, status, evidence} = result.feedback;
+  assert.equal(action, 'access.' + category);
+  assert.equal(status, 'written');
+  assert.equal(evidence.proposalId, result.proposalId);
+  assert.equal(evidence.source.status, sourceStatus);
+  assert.equal(evidence.runtime.status, runtimeStatus);
+  for (const side of [evidence.source, evidence.runtime]) assert.match(side.listSha256, /^[a-f0-9]{64}$/u);
+  if (category === 'member' || mailRun) {
+    assert.equal(evidence.source.revision, readPolicy().revision);
+    assert.equal(evidence.runtime.revision, liveConfig.channels['kurumi-qq'].accessControl.revision);
+  }
+  if (sourceStatus === 'current') {
+    assert.equal(evidence.source.listSha256 === evidence.runtime.listSha256, runtimeStatus === 'active');
+  }
+  report.feedback.push(evidence);
+}
+const commit = verify => adminTool(() => ({action: 'commit', proposalId: proposal.proposalId}), result => {
+  verify(result);
+  if (result.ok) verifyFeedback(result, 'pending_sync');
+});
+const changeStatus = (draft, runtimeStatus, sourceStatus) => ({
+  ...adminTool({action: 'status', proposalId: draft.proposalId}, result => verifyFeedback(result, runtimeStatus, sourceStatus)),
+  direct: true,
+});
 const isError = code => result => assert.deepEqual({ok: result.ok, code: result.code}, {ok: false, code});
 function readAudit(sql, ...params) {
   const db = new DatabaseSync(path.join(state, 'state/access-admin/changes.sqlite'), {readOnly: true});
@@ -327,8 +354,13 @@ async function memberScenario() {
   await assertMemberRejected();
   report.cases.push('Runtime still denies the member before deployment');
 
+  const added = proposal;
+  assert.equal(syncConfig({...syncRoots, args: ['--apply']}), 0);
+  assert.equal(JSON.parse(fs.readFileSync(runtimeFile)).channels['kurumi-qq'].accessControl.revision, 2);
+  await turn(owner, '只同步到磁盘后查询运行状态', [changeStatus(added, 'pending_sync')]);
+  report.cases.push('A newer configuration on disk is still pending until the gateway loads it');
   await restart();
-  await turn(owner, '查询已经同步的合成成员', [adminTool({action: 'get', qq: member}, result => {
+  await turn(owner, '查询已经同步的合成成员', [changeStatus(added, 'active'), adminTool({action: 'get', qq: member}, result => {
     assert(result.ok && result.inSync);
     assert.deepEqual(result.runtime, result.source);
   })]);
@@ -344,8 +376,10 @@ async function memberScenario() {
   })]);
   await turn(owner, '确认', [
     confirm(result => assert(result.ok)), commit(result => assert(result.ok && result.sourceRevision === 3)),
+    changeStatus(added, 'active', 'superseded'),
   ]);
   await restart();
+  await turn(owner, '核对原登记和移除', [changeStatus(added, 'not_active', 'superseded'), changeStatus(proposal, 'active')]);
   await assertMemberRejected();
   assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
   report.cases.push('Revocation removes access on restart and preserves the member workspace');
@@ -382,17 +416,18 @@ async function mailScenario() {
   await restart();
   let draftId;
   await turn(owner, '查看生效并准备草稿', [
-    adminTool({action: 'status', proposalId: added.proposalId}, result => assert(result.ok && result.activation === 'active')),
+    changeStatus(added, 'active'),
     draft(result => { assert(result.ok && result.cc.includes(recipient)); draftId = result.draftId; }),
   ]);
   report.cases.push('Compiled mail policy permits the new address after deployment');
   await show({op: 'remove', key: recipient});
-  await turn(owner, '确认', [confirm(ok), commit(ok)]);
+  await turn(owner, '确认', [confirm(ok), commit(ok), changeStatus(added, 'active', 'superseded')]);
   await restart();
   await turn(owner, '核对撤销后的草稿与发送校验', [
     {name: 'email_send', args: {draftId}, verify: result => assert(!result.sent && result.code === 'recipient_not_allowed')},
     draft(isError('recipient_not_allowed')),
     {name: 'email_draft', args: {...draftArgs, to: recipient, cc: []}, verify: isError('recipient_not_allowed')},
+    changeStatus(added, 'not_active', 'superseded'),
     adminTool(select('get', {key: recipient}), result => assert(result.ok && result.inSync && result.source === null && result.runtime === null)),
   ]);
   report.cases.push('Revocation rejects both To and Cc, including an older draft, without opening SMTP');
@@ -412,10 +447,7 @@ async function toolScenario() {
     assert.deepEqual({source: result.source, runtime: result.runtime, inSync: result.inSync, available: result.available.includes(name)},
       {source, runtime, inSync: source === runtime, available: runtime === name});
   });
-  const status = (id, activation) => adminTool({action: 'status', proposalId: id}, result => {
-    ok(result);
-    assert.equal(result.activation, activation);
-  });
+  const status = (id, runtimeStatus, sourceStatus) => changeStatus({proposalId: id}, runtimeStatus, sourceStatus);
   const appears = result => JSON.stringify(result).includes('"name":"' + name + '"');
   const notVisible = {name, searchOnly: true, verify: result => assert(!appears(result), 'Bill tool should be hidden')};
   const query = {action: 'list', query: seeded.note};
@@ -493,12 +525,12 @@ async function toolScenario() {
   const removal = await show('remove');
   await write(entry(null, name));
   assert.deepEqual(readIntent(), originalIntent);
-  assertReply(await turn(owner, billMessage, [status(removal, 'pending_sync'), queried]));
+  assertReply(await turn(owner, billMessage, [status(removal, 'pending_sync'), status(addition, 'active', 'superseded'), queried]));
   reads(2);
   report.cases.push('Confirmed removal restores the source; the unsynced running instance still permits the read');
 
   await restart();
-  await turn(owner, billMessage, [status(removal, 'active'), entry(null, null), notVisible, denied]);
+  await turn(owner, billMessage, [status(removal, 'active'), status(addition, 'not_active', 'superseded'), entry(null, null), notVisible, denied]);
   reads(2);
   assert.deepEqual(await knowledgeMap.web('bills/' + seeded.id), seeded);
   assert.equal(readAudit("SELECT COUNT(*) AS count FROM approval_grants WHERE status='consumed'").count, 2);
@@ -522,20 +554,24 @@ async function execScenario() {
   ]);
   await show('add');
   await turn(owner, '确认', [confirm(ok), commit(ok), probe(extraRoot)]);
+  const added = proposal;
   assert(!fs.existsSync(file));
   report.cases.push('Outside approved bases is refused and a newly written source entry does not yet allow writing');
   await restart();
   assert(fs.readFileSync(path.join(workspace, 'AGENTS.md'), 'utf8').includes(extraRoot));
-  await turn(owner, '验证运行中的目录限制', [probe(extraRoot), forbidden(result => assert(/denied|permitted/i.test(JSON.stringify(result))))]);
+  await turn(owner, '验证运行中的目录限制', [changeStatus(added, 'active'), probe(extraRoot),
+    forbidden(result => assert(/denied|permitted/i.test(JSON.stringify(result))))]);
   assert.equal(fs.readFileSync(file, 'utf8'), 'fixture');
   assert(!fs.existsSync(path.join(source, 'should-not-exist')));
   report.cases.push('Persona projects the new scope; real isolated exec writes in the added root and refuses the source tree');
   await show('remove');
-  await turn(owner, '确认', [confirm(ok), commit(ok)]);
+  await turn(owner, '确认', [confirm(ok), commit(ok), changeStatus(added, 'active', 'superseded')]);
   await restart();
   assert(!fs.readFileSync(path.join(workspace, 'AGENTS.md'), 'utf8').includes(extraRoot));
   fs.renameSync(file, path.join(extraRoot, 'preserved.txt'));
-  await turn(owner, '核对撤销不删除资料并验固定根', [probe(extraRoot), probe(fixed)]);
+  await turn(owner, '核对撤销不删除资料并验固定根', [
+    changeStatus(added, 'not_active', 'superseded'), changeStatus(proposal, 'active'), probe(extraRoot), probe(fixed),
+  ]);
   assert(!fs.existsSync(file));
   assert.equal(fs.readFileSync(path.join(extraRoot, 'preserved.txt'), 'utf8'), 'fixture');
   assert.equal(fs.readFileSync(path.join(fixed, 'canary.txt'), 'utf8'), 'fixture');
@@ -567,11 +603,13 @@ async function projectScenario() {
   ]);
   await show({op: 'add', key, root: projectRoot, kind: 'git', branch: 'main', checkProfile: 'basic'});
   await write(startTask(denied('unknown_coding_project')));
+  const added = proposal;
   report.cases.push('Confirmed addition uses a known check profile and cannot start before sync');
 
   await restart();
   let taskId, candidate;
   await turn(owner, '先跑测试任务并尝试移除进行中的项目', [
+    changeStatus(added, 'active'),
     startTask(result => { assert(result.id, JSON.stringify(result)); taskId = result.id; }),
     adminTool(select('propose', {change: {op: 'remove', key}}), isError('coding_project_tasks_unsettled')),
   ]);
@@ -597,12 +635,13 @@ async function projectScenario() {
   const continueTask = reason => code({action: 'continue', taskId, task: 'Continue fixture.'}, denied(reason));
   const mergeTask = reason => code({action: 'merge', taskId, proposalId: candidate}, denied(reason));
   await show({op: 'update', key, checkProfile: 'other'});
-  await write(continueTask('coding_project_pending_sync'), mergeTask('coding_project_pending_sync'));
+  await write(changeStatus(added, 'active', 'superseded'), continueTask('coding_project_pending_sync'), mergeTask('coding_project_pending_sync'));
   report.cases.push('While a task is active the project cannot be removed; source updates stop old execution until sync');
 
   await restart();
   const historical = result => assert(result.id === taskId && result.state === 'ready' && result.projectActive === false);
   await turn(owner, '确认新检查和旧任务记录', [
+    changeStatus(added, 'not_active', 'superseded'), changeStatus(proposal, 'active'),
     adminTool(select('get', {key}), result => { ok(result); assert(result.inSync && result.runtime.checkProfile === 'other'); }),
     code({action: 'status', taskId}, historical),
     code({action: 'result', taskId}, result => { historical(result.task); assert(result.result.page.text.includes('fixture execution start')); }),

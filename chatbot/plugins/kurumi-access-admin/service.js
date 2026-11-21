@@ -3,6 +3,7 @@ import {randomUUID} from 'node:crypto';
 import {AccessError, accessPolicy} from '../../packages/access-control/index.js';
 import {getCategory} from './categories.js';
 import {assertFields, proposalIdPattern, sha256} from './policy.js';
+import {accessChangeResult} from './feedback.js';
 
 const encode = policy => JSON.stringify(policy, null, 2) + '\n';
 const actions = {
@@ -12,13 +13,6 @@ const actions = {
   commit: ['action', 'proposalId'],
   status: ['action', 'proposalId'],
 };
-
-function applied(list, category, {before, after}) {
-  const oldKey = before === null ? null : category.key(before);
-  const newKey = after === null ? null : category.key(after);
-  if (oldKey !== null && oldKey !== newKey && list.some(row => category.key(row) === oldKey)) return false;
-  return newKey === null || list.some(row => category.key(row) === newKey && isDeepStrictEqual(row, after));
-}
 
 export function createAccessAdminService(source, store, {runtimeSource, sourceRoot, stateRoot} = {}) {
   function readSource(owner) {
@@ -54,6 +48,7 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
       runtimeOwner: runtime.subjects.find(row => row.role === 'owner'), toolSurface};
     const repoList = category.list(current.policy);
     const liveList = category.live(runtime, config);
+    const feedbackActions = new Set(config.plugins?.entries?.['kurumi-access-admin']?.config?.feedbackActions ?? ['access.' + name]);
     const currentStatus = {
       ...(!legacy ? {category: name} : {}),
       ...revisions,
@@ -89,7 +84,8 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
         const change = draft.change ?? args.change;
         return withFacts(draft, facts => {
           const plan = {
-            ...(!legacy ? {category: name, before: draft.before, after: draft.after} : {}),
+            ...(!legacy ? {category: name} : {}),
+            before: draft.before, after: draft.after,
             ...(runtimeTarget ? {accessHash: identity.hash} : {baseRevision: current.policy.revision}),
             ...(facts ? {facts} : {}),
             change, baseHash: current.hash, nextHash: sha256(encode(draft.next)),
@@ -134,12 +130,15 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
               return {state: 'unknown', code: 'access_source_write_unknown'};
             }
           });
-          return {ok: result.state === 'written', status: result.state, proposalId: id,
+          const written = result.state === 'written';
+          const reply = {ok: written, status: result.state, proposalId: id,
             ...(!legacy ? {category: name} : {}),
-            ...(result.code ? {code: result.code} : {
-              ...(!runtimeTarget ? {sourceRevision: draft.next.revision} : {}), activation: 'pending_sync',
-            }),
-            ...(!runtimeTarget ? {runtimeRevision: runtime.revision} : {})};
+            ...(result.code && {code: result.code}),
+            ...revisions,
+            ...(written && !runtimeTarget && {sourceRevision: draft.next.revision})};
+          return accessChangeResult(reply, {name, category, feedbackActions, liveList,
+            repoList: written ? category.list(draft.next) : repoList,
+            plan: {...row.plan, before: draft.before, after: draft.after}});
         });
       }
       case 'status': {
@@ -149,14 +148,10 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
         if (confirmedWrite) status = 'written';
         else if (row.state === 'writing') status = 'unknown';
         else if (row.state === 'pending' && stale(row.plan)) status = 'stale';
-        const activation = !legacy && status === 'written'
-          ? (!applied(repoList, category, row.plan) ? 'superseded'
-            : applied(liveList, category, row.plan) ? 'active' : 'pending_sync')
-          : undefined;
-        return {ok: true, ...currentStatus, proposalId: id, status, change: row.plan.change,
+        const reply = {ok: true, ...currentStatus, proposalId: id, status, change: row.plan.change,
           ...(!runtimeTarget ? {plannedRevision: row.plan.baseRevision + 1} : {}), expiresAtUtc: row.expires_at_utc,
-          ...(activation ? {activation} : {}),
           ...(row.error && !confirmedWrite ? {code: row.error} : {})};
+        return accessChangeResult(reply, {name, category, plan: row.plan, repoList, liveList, feedbackActions});
       }
       default: throw new AccessError('unknown_access_admin_action');
     }

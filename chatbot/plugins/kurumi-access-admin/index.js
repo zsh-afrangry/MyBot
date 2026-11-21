@@ -93,8 +93,9 @@ export default {
         'For enabled category exec_root, use key for one absolute directory path inside an operator-approved base. This only changes additional executable write directories.',
         'For enabled category coding_project, use the stable project ID as key. Add requires root, kind, branch for Git, and an approved checkProfile from list. Update fields of that same ID or remove it; this never runs a coding task.',
         'Show the preview and wait for a later owner confirmation through personal_confirmation with domain=access.',
-        'Then call commit using the approved proposalId. That writes the repository policy only.',
-        'Use status to inspect a proposal after an interrupted response. A written change takes effect after operator deployment.',
+        'Then call commit using the approved proposalId. This saves the repository intent.',
+        'Use status with the proposalId for read-only verification. Report feedback.status (write outcome), evidence.source.status (current or superseded), and evidence.runtime.status (active, pending_sync or not_active) separately.',
+        'Runtime status reflects the loaded list. A superseded source change can still be active at runtime until the following deployment.',
       ].join(' '),
       parameters,
       async execute(_callId, args, signal) {

@@ -87,7 +87,7 @@ function fixture(t, enabledCategories = [], toolSurface, configure = () => {}) {
     return proposal;
   }
   return {apply, approve, commit, file, newMessage, original, ownerContext, propose, read, run,
-    readIntent, root, source, sourceRoot, stateRoot, status, sync, writeIntent, writePolicy, advance: ms => { now += ms; }};
+    readIntent, root, source, sourceRoot, stateRoot, status, store, sync, writeIntent, writePolicy, advance: ms => { now += ms; }};
 }
 
 test('project proposals use the live coding registry, approved checks and the existing fence; commits recheck idle state and directory identity', async t => {
@@ -170,8 +170,13 @@ test('QQ member changes cover registration, per-permission edits, clearing field
   assert.throws(() => f.commit(proposal), {code: 'approval_required'});
   assert.equal(f.read(), initial);
   f.approve(proposal);
-  assert.deepEqual(f.commit(proposal), {ok: true, status: 'written', proposalId: proposal.proposalId,
+  const {feedback, ...written} = f.commit(proposal);
+  assert.deepEqual(written, {ok: true, status: 'written', proposalId: proposal.proposalId,
     sourceRevision: 2, activation: 'pending_sync', runtimeRevision: 1});
+  assert.equal(feedback.action, 'access.member');
+  assert.equal(feedback.status, 'written');
+  assert.equal(feedback.evidence.source.status, 'current');
+  assert.equal(feedback.evidence.runtime.status, 'pending_sync');
   assert.throws(() => f.commit(proposal), {code: 'access_change_already_submitted'});
   assert.equal(f.status(proposal).status, 'written');
   assert.equal(fs.statSync(f.file).mode & 0o777, 0o640);
@@ -194,6 +199,70 @@ test('QQ member changes cover registration, per-permission edits, clearing field
   f.apply({op: 'remove', qq: MEMBER});
   assert.deepEqual(JSON.parse(f.read()), {...f.original, revision: 5});
   assert.equal(fs.readFileSync(memberFile, 'utf8'), 'member data');
+});
+
+test('member removal stays pending until its revision loads even when the member was never loaded', t => {
+  const f = fixture(t);
+  f.apply(add);
+  const removal = f.apply({op: 'remove', qq: MEMBER});
+  const before = f.status(removal).feedback.evidence;
+  assert.equal(before.source.revision, 3);
+  assert.equal(before.runtime.revision, 1);
+  assert.equal(before.runtime.status, 'pending_sync');
+  assert.equal(before.source.listSha256, before.runtime.listSha256);
+  f.sync();
+  assert.equal(f.status(removal).feedback.evidence.runtime.status, 'active');
+});
+
+test('legacy member updates are checked using the fields retained in the proposal', t => {
+  const f = fixture(t);
+  const proposal = f.apply({op: 'update', qq: OTHER, revoke: ['qq.reply'], expiresAt: '2028-02-29T10:00:00+08:00'});
+  const {plan} = f.store.get(proposal.proposalId, OWNER);
+  delete plan.before;
+  delete plan.after;
+  f.store.db.prepare('UPDATE access_changes SET plan=? WHERE id=?').run(JSON.stringify(plan), proposal.proposalId);
+  assert.equal(f.status(proposal).activation, 'pending_sync');
+  f.sync();
+  assert.equal(f.status(proposal).activation, 'active');
+  f.apply({op: 'update', qq: OTHER, grant: ['qq.reply']});
+  const {feedback} = f.status(proposal);
+  assert.equal(feedback.evidence.source.status, 'superseded');
+  assert.equal(feedback.evidence.runtime.status, 'active');
+});
+
+test('write recovery checks the frozen revision without claiming the approval again', t => {
+  const f = fixture(t);
+  const proposal = f.propose(add);
+  f.approve(proposal);
+  let interrupted = false;
+  const result = f.run({action: 'commit', proposalId: proposal.proposalId}, f.ownerContext, {
+    read() {
+      if (interrupted) throw Error('temporary fixture read failure');
+      return f.source.read();
+    },
+    write(expected, content) {
+      f.source.write(expected, content);
+      interrupted = true;
+      throw Error('fixture acknowledgement lost');
+    },
+  });
+  assert.equal(result.feedback.status, 'unknown');
+  assert.equal(result.feedback.evidence.runtime.status, 'unverified');
+  const status = f.status(proposal);
+  assert.equal(status.feedback.status, 'written');
+  assert.equal(status.feedback.evidence.runtime.status, 'pending_sync');
+  assert.equal(f.store.get(proposal.proposalId, OWNER).state, 'unknown');
+  f.sync();
+  assert.equal(f.status(proposal).feedback.evidence.runtime.status, 'active');
+});
+
+test('feedback can be enabled for one whitelist without changing the other proposal results', t => {
+  const f = fixture(t, ['mail_recipient'], undefined, intent => {
+    intent.plugins.entries['kurumi-access-admin'].config.feedbackActions = ['access.mail_recipient'];
+  });
+  assert.equal(f.status(f.apply(add)).feedback, undefined);
+  const mail = f.apply({op: 'add', key: 'fixture@example.test'}, 'mail_recipient');
+  assert.equal(f.status(mail).feedback.action, 'access.mail_recipient');
 });
 
 test('only the current owner private chat can call member administration and protected fields refuse changes', t => {
