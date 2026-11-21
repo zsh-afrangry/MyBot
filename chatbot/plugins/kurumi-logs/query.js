@@ -14,11 +14,12 @@ export function cliArguments(config, q, {ownerId} = {}) {
     return args;
   }
   args.push('--from',q.from,'--to',q.to,'--output-bytes','18000','--output-chars','12000');
-  if (q.view === 'qq-messages') {
+  if (q.view === 'qq-messages' || q.view === 'qq-evidence') {
+    const evidence = q.view === 'qq-evidence';
     const peer = q.peer ?? ownerId;
-    if (typeof peer !== 'string' || !QQ_ID.test(peer)) throw new LogQueryError('invalid_query');
-    args.push('--qq-messages',`--peer=${peer}`,'--limit',String(q.limit),'--offset',String(q.offset));
-    for (const [key,flag] of [['direction','--direction'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) {
+    if (typeof peer !== 'string' || !QQ_ID.test(peer) || evidence && peer!==ownerId) throw new LogQueryError('invalid_query');
+    args.push(evidence?'--qq-evidence':'--qq-messages',`--peer=${peer}`,'--limit',String(q.limit),'--offset',String(q.offset));
+    for (const [key,flag] of [['direction','--direction'],['messageId','--message-id'],['eventRef','--event-ref'],['contentOffset','--content-offset'],['contentHash','--content-hash']]) {
       if (q[key] !== undefined) args.push(`${flag}=${q[key]}`);
     }
     return args;

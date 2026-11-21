@@ -4,7 +4,7 @@
 // Uses synthetic QQ identities and (for coding_project) a local ACP stub.
 // No real QQ, paid model, DSH, production writes or production restart.
 import assert from 'node:assert/strict';
-import {spawn} from 'node:child_process';
+import {execFileSync, spawn} from 'node:child_process';
 import {createHash, randomBytes} from 'node:crypto';
 import {once} from 'node:events';
 import fs from 'node:fs';
@@ -276,7 +276,7 @@ async function turn(from, text, steps) {
     const receipt = readOneBotLedger(channelDir, db => db.prepare('SELECT status FROM outbound WHERE message_id=?').get(entry.messageId));
     assert.equal(receipt?.status, 'sent', 'OneBot receipt was not recorded');
   }
-  return {sent};
+  return {sent,messageId:id.split(':').at(-1)};
 }
 
 async function assertMemberRejected() {
@@ -326,6 +326,10 @@ function readAudit(sql, ...params) {
 
 async function memberScenario() {
   const initial = readPolicy();
+  const evidence = (...selection) => JSON.parse(execFileSync(process.execPath, [
+    path.join(repo,'chatbot/scripts/log-query.mjs'),'--runtime-root',state,
+    '--peer',owner,'--since','1h','--qq-evidence',...selection,'--json',
+  ],{encoding:'utf8'}));
   const preview = await turn(owner, '登记合成成员并直接确认', [
     adminTool({action: 'list'}, result => assert(result.ok && result.inSync && result.source.length === 0)),
     adminTool({action: 'propose', change: {op: 'add', qq: member, grant: ['chat.use', 'qq.reply']}}, result => {
@@ -341,7 +345,7 @@ async function memberScenario() {
   assert.deepEqual(readPolicy(), initial);
   report.cases.push('Frozen preview delivered and same-turn confirmation refused');
 
-  await turn(owner, '确认', [
+  const addedTurn = await turn(owner, '确认', [
     confirm(result => assert(result.ok && result.status === 'authorized')),
     commit(result => assert(result.ok && result.sourceRevision === 2 && result.runtimeRevision === 1)),
     commit(isError('access_change_already_submitted')),
@@ -350,6 +354,16 @@ async function memberScenario() {
   assert.deepEqual(readPolicy().subjects.slice(0, -1), initial.subjects);
   assert.equal(readAudit('SELECT status FROM approval_grants').status, 'consumed');
   report.cases.push('Later owner assent writes once and reports pending runtime sync');
+  const initialEvidence = evidence('--message-id',addedTurn.messageId);
+  assert.equal(initialEvidence.total,1);
+  const first = initialEvidence.items[0];
+  assert.equal(first.proposalId,proposal.proposalId);
+  assert.equal(first.preview.sourceMessageId,preview.messageId);
+  assert.equal(first.preview.status,'presented');
+  assert(first.confirmations.some(item=>item.sourceMessageId===addedTurn.messageId && item.status==='consumed'));
+  assert.equal(first.write.sourceRevision,2);
+  assert(first.versionChecks.some(item=>item.runtime?.revision===1 && item.runtime.status==='pending_sync'));
+  assert(first.replies.some(item=>item.sourceMessageId===addedTurn.messageId && item.platformStatus==='accepted'));
 
   await assertMemberRejected();
   report.cases.push('Runtime still denies the member before deployment');
@@ -374,12 +388,29 @@ async function memberScenario() {
   await turn(owner, '预览移除测试成员', [adminTool({action: 'propose', change: {op: 'remove', qq: member}}, result => {
     assert(result.ok && result.status === 'pending'); proposal = result;
   })]);
-  await turn(owner, '确认', [
+  const removedTurn = await turn(owner, '确认', [
     confirm(result => assert(result.ok)), commit(result => assert(result.ok && result.sourceRevision === 3)),
     changeStatus(added, 'active', 'superseded'),
   ]);
   await restart();
   await turn(owner, '核对原登记和移除', [changeStatus(added, 'not_active', 'superseded'), changeStatus(proposal, 'active')]);
+  const before = sends.length, sourceBefore = fs.readFileSync(policyFile);
+  const original = evidence('--message-id',addedTurn.messageId);
+  const removed = evidence('--message-id',removedTurn.messageId);
+  assert.deepEqual(original.items.map(item=>item.proposalId),[added.proposalId]);
+  assert.deepEqual(removed.items.map(item=>item.proposalId),[proposal.proposalId]);
+  assert(original.items[0].versionChecks.some(item=>item.runtime?.revision===2 && item.runtime.status==='active'));
+  assert(removed.items[0].versionChecks.some(item=>item.runtime?.revision===3 && item.runtime.status==='active'));
+  const candidates = JSON.parse(execFileSync(process.execPath,[
+    path.join(repo,'chatbot/scripts/log-query.mjs'),'--runtime-root',state,
+    '--peer',owner,'--since','1h','--qq-messages','--direction','inbound','--limit','50','--json',
+  ],{encoding:'utf8'}));
+  const confirmations = candidates.items.filter(item=>item.preview==='确认').reverse();
+  assert.equal(confirmations.length,2);
+  assert.deepEqual(evidence('--event-ref',confirmations[0].eventRef).items.map(item=>item.proposalId),[added.proposalId]);
+  assert.equal(sends.length,before);
+  assert.deepEqual(fs.readFileSync(policyFile),sourceBefore);
+  report.cases.push('Read-only QQ evidence separates two proposals and retains loaded-version observations');
   await assertMemberRejected();
   assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
   report.cases.push('Revocation removes access on restart and preserves the member workspace');

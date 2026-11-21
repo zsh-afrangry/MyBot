@@ -71,6 +71,13 @@ export function normalizeToolResult(value) {
     && !['toolResult', 'tool'].includes(node.role));
   const businessOutcome = businessLayers.some(node => node.ok === false || failureStatus(node.status)) ? 'error'
     : businessLayers.some(node => node.ok === true || ['ok', 'success', 'succeeded'].includes(node.status)) ? 'ok' : 'unknown';
+  const access = businessLayers.findLast(node => node.feedback?.action === 'access.member'
+    && typeof node.proposalId === 'string' && node.feedback.evidence?.proposalId === node.proposalId);
+  const versionEvidence = side => {
+    const value = access?.feedback.evidence[side];
+    return Number.isSafeInteger(value?.revision) && typeof value.status === 'string'
+      ? {revision:value.revision, status:value.status} : undefined;
+  };
   return {
     businessOutcome,
     summary: redactValue(summary),
@@ -81,5 +88,6 @@ export function normalizeToolResult(value) {
     // private values. A different hash alone does not identify which field changed.
     ...(business ? {resultFingerprint: createHash('sha256').update(JSON.stringify(canonical(business))).digest('hex')} : {}),
     ...(targets.size ? {targetResults: redactValue([...targets.values()])} : {}),
+    ...(access ? {accessVersions:{proposalId:access.proposalId, source:versionEvidence('source'), runtime:versionEvidence('runtime')}} : {}),
   };
 }
