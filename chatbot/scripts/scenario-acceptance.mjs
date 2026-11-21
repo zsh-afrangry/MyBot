@@ -63,10 +63,11 @@ node chatbot/scripts/scenario-acceptance.mjs --target production [--scenario dep
 
 --out 须位于仓库的 test-output/ 内，是尚不存在的报告文件。
 --model 仅用于独立实例的 confirmation，调用已配置的真实模型。
+--diagnostic-fault gateway-start|reminder-lookup 用于复现独立 confirmation 的受控失败。
 生产目标目前只覆盖只读部署核验。`;
 
 function options(args) {
-  const result = {}, valueFlags = new Set(['target', 'scenario', 'out']);
+  const result = {}, valueFlags = new Set(['target', 'scenario', 'out','diagnostic-fault']);
   for (let i = 0; i < args.length; i++) {
     const flag = args[i], key = flag.slice(2);
     if (!flag.startsWith('--') || Object.hasOwn(result, key)) throw Error('Unknown or duplicate option: ' + flag);
@@ -83,6 +84,8 @@ function options(args) {
   if (result.model && (result.target !== 'isolated' || result.scenario !== 'confirmation')) {
     throw Error('--model requires --target isolated --scenario confirmation');
   }
+  if (result['diagnostic-fault'] && (result.target!=='isolated' || result.scenario!=='confirmation' || result.model
+    || !['gateway-start','reminder-lookup'].includes(result['diagnostic-fault']))) throw Error('Invalid isolated diagnostic failure sample');
   return result;
 }
 
@@ -122,7 +125,7 @@ function revision() {
   return {commit: git('rev-parse', 'HEAD').toString().trim(), dirty: diff.length > 0 || untracked.length > 0, diffSha256: hash.digest('hex')};
 }
 
-async function runIsolated(id, model, directory, signal) {
+async function runIsolated(id, model, directory, signal, diagnosticFault) {
   const evidence = join(directory, id + '.json');
   const scenario = scenarios[id];
   const timeoutMs = model ? scenario.modelTimeoutMs : scenario.timeoutMs;
@@ -132,16 +135,31 @@ async function runIsolated(id, model, directory, signal) {
     catch {return false;}
   };
   const missing = info.requires.filter(name => Object.hasOwn(localDependencies, name) && !executable(name));
-  if (missing.length) return {...info, status: 'blocked', reason: 'missing_dependencies', missing};
-  const argv = [join(repo, 'chatbot/tests', scenario.file), '--out', evidence, ...(scenario.args ?? []), ...(model ? ['--model'] : [])];
+  if (missing.length) return {...info, status: 'blocked', reason: 'missing_dependencies', missing,
+    failure:{phase:'environment',step:'dependencies',category:'blocked'}};
+  const argv = [join(repo, 'chatbot/tests', scenario.file), '--out', evidence, ...(scenario.args ?? []), ...(model ? ['--model'] : []),
+    ...(diagnosticFault ? ['--diagnostic-fault',diagnosticFault] : [])];
+  let current, lastPassed, firstFailed, stoppedAt;
   const start = performance.now();
   const result = await new Promise(resolveResult => {
     if (signal.aborted) return resolveResult({reason: 'interrupted'});
     const child = spawn(process.execPath, argv, {cwd: repo, detached: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc']});
+    child.on('message', message => {
+      if (message?.type!=='scenario-progress' || typeof message.step!=='string' || message.step.length>240
+        || !['environment','check','cleanup'].includes(message.phase)) return;
+      const step = {phase:message.phase,step:message.step};
+      if (message.state==='started') current=step;
+      if (message.state==='failed') firstFailed??=step;
+      if (message.state==='passed') {
+        if (message.phase==='check') lastPassed=message.step;
+        if (current?.step===message.step) current=undefined;
+      }
+    });
     let reason, forced;
     const stop = why => {
       if (reason) return;
       reason = why;
+      stoppedAt = current;
       if (child.connected) child.disconnect();
       // The fixture closes its gateway/API first. Bound the wait for an
       // unresponsive runner too, without treating it as verified cleanup.
@@ -162,17 +180,30 @@ async function runIsolated(id, model, directory, signal) {
     child.once('exit', finish);
   });
   info.durationMs = Math.round(performance.now() - start);
+  const failure = (reason, blocked = false, data) => {
+    const stage = stoppedAt ?? firstFailed ?? current ?? (blocked ? {phase:'environment',step:'runner-start'} : {phase:'scenario'});
+    const category = reason==='scenario_timeout' ? 'timeout' : reason==='interrupted' ? 'interrupted'
+      : blocked ? 'blocked' : reason==='scenario_finished_without_evidence' ? 'missing_report'
+        : stage.phase==='check' ? 'check_failed' : 'scenario_failed';
+    const previous = lastPassed ?? (Array.isArray(data?.cases)
+      ? data.cases.filter(row=>row?.passed===true||row?.status==='passed').at(-1)?.label : undefined);
+    return {...stage,category,...(previous&&{lastPassed:previous}),
+      remainingChecks:blocked&&stage.phase==='environment' ? 'not_started'
+        : firstFailed?.phase==='check' && id==='confirmation' ? 'stopped' : 'unverified'};
+  };
   try {
     const data = JSON.parse(readFileSync(evidence, 'utf8'));
-    return {...info, status: result.reason ? 'failed' : result.code === 0 && data.passed === true ? 'passed' : data.blocked ? 'blocked' : 'failed',
+    const status = result.reason ? 'failed' : result.code === 0 && data.passed === true ? 'passed' : data.blocked ? 'blocked' : 'failed';
+    return {...info, status,
       ...(result.reason && {reason: result.reason}),
+      ...(status!=='passed' && {failure:failure(result.reason,status==='blocked',data)}),
       cases: data.cases?.length ?? data.stages?.length ?? 0,
       ...(typeof data.configSha256 === 'string' && {configSha256: data.configSha256}),
       ...(typeof data.primaryModel === 'string' && {primaryModel: data.primaryModel}),
       cleanupVerified: data.fixtureCleaned ?? data.fixtureRemoved ?? null, evidence};
   } catch {
-    return {...info, status: result.reason === 'scenario_could_not_start' ? 'blocked' : 'failed',
-      reason: result.reason ?? 'scenario_finished_without_evidence', exitCode: result.code,
+    const blocked = result.reason==='scenario_could_not_start', reason = result.reason ?? 'scenario_finished_without_evidence';
+    return {...info, status:blocked?'blocked':'failed',reason,failure:failure(reason,blocked),exitCode: result.code,
       signal: result.exitSignal, cleanupVerified: null};
   }
 }
@@ -205,7 +236,7 @@ try {
         try {
           for (const id of args.scenario ? [args.scenario] : Object.keys(scenarios).filter(id => scenarios[id].target === 'isolated')) {
             if (controller.signal.aborted) break;
-            report.scenarios.push(await runIsolated(id, args.model, evidence, controller.signal));
+            report.scenarios.push(await runIsolated(id, args.model, evidence, controller.signal,args['diagnostic-fault']));
           }
           if (controller.signal.aborted) report.reason = 'interrupted';
         } finally {

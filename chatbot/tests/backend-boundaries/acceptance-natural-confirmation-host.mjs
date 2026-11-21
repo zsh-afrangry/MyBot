@@ -13,10 +13,14 @@ import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
+import {scenarioProgress,scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import assert from 'node:assert/strict';
 
 const progress=process.argv.includes('--progress'),realModel=process.argv.includes('--model');
+const faultIndex=process.argv.indexOf('--diagnostic-fault');
+const fault=faultIndex<0 ? undefined : process.argv[faultIndex+1];
+assert(faultIndex<0 || !realModel && ['gateway-start','reminder-lookup'].includes(fault),'Require an isolated diagnostic fault');
 assert(!(progress&&realModel),'Choose deterministic --progress or explicit --model');
 const out=process.argv[process.argv.indexOf('--out')+1];
 if(!process.argv.includes('--out')||!path.isAbsolute(out??'')||fs.existsSync(out))throw Error('Require a new absolute --out');
@@ -38,7 +42,16 @@ function readConfiguredModel(){
  return {modelId,primary,url:url.href.replace(/\/$/,'')+'/chat/completions',key};
 }
 const seenModelCalls=new Set();
-let active,host,due,loseDueReceipt=false;
+let active,host,due,loseDueReceipt=false,runningStep;
+const historyLookup='management-feedback-reads-historical-cancellation';
+function beginStep(step,phase='check'){
+ runningStep={step,phase};
+ scenarioProgress(step,'started',phase);
+}
+function finishStep(state){
+ if(runningStep)scenarioProgress(runningStep.step,state,runningStep.phase);
+ runningStep=undefined;
+}
 const channelDir=path.join(root,'channel');
 const futureDay=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',dateStyle:'short'}).format(Date.now()+2*86400000);
 const localTime=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',dateStyle:'short',timeStyle:'short'});
@@ -61,6 +74,7 @@ const model=http.createServer(async(req,res)=>{
   }
   // Model fixture transcripts are synthetic, retained only on a failed local fixture.
   fs.appendFileSync(path.join(root,'model-fixture.jsonl'),JSON.stringify(body)+'\n',{mode:0o600});
+  if(fault==='reminder-lookup' && active.label===historyLookup) throw Error('fixture_history_summary_rejected');
   const user=body.messages.findLast(m=>m.role==='user'&&!String(m.content??'').startsWith('OpenClaw runtime context:'));
   if(JSON.stringify(user?.content??'').includes('这是已由本人确认且已到时间的一次性提醒')){
    assert(due);
@@ -136,7 +150,7 @@ async function exchange(text,{status='completed'}={}){
  const ids=[],start=sends.length;
  for(const fragment of [text].flat())ids.push(await onebot.send(typeof fragment==='string'?onebot.message(owner,fragment):fragment));
  await waitForOneBotTurn(channelDir,ids,{status,timeoutMs:realModel?180000:20000,check(){
-  onebot.check();assert(!report.modelError,report.modelError);
+  scenarioSignal.throwIfAborted();onebot.check();assert(!report.modelError,report.modelError);
  }});
  const sent=sends.slice(start);
  for(const entry of sent.filter(s=>s.accepted)){
@@ -146,14 +160,16 @@ async function exchange(text,{status='completed'}={}){
  return sent;
 }
 async function turn(label,text,steps,verify,options){
+ beginStep(label);
  active={label,steps,next:0,discovered:false,fragments:Array.isArray(text)?text:undefined};
  const sent=await exchange(text,options);
  assert.equal(active.next,steps.length);assert(!active.expected,'last tool result was not observed');
- await verify?.(sent);report.cases.push({label,passed:true,toolCalls:steps.length,receiptCount:sent.filter(s=>s.accepted).length});console.log(JSON.stringify({case:label,passed:true}));
+ await verify?.(sent);report.cases.push({label,passed:true,toolCalls:steps.length,receiptCount:sent.filter(s=>s.accepted).length});finishStep('passed');console.log(JSON.stringify({case:label,passed:true}));
 }
 async function actualTurn(label,text,verify){
+ beginStep(label);
  active={label};const requests=report.requests,sent=await exchange(text);
- await verify(sent);report.cases.push({label,passed:true,requests:report.requests-requests,receiptCount:sent.filter(s=>s.accepted).length});console.log(JSON.stringify({case:label,passed:true}));}
+ await verify(sent);report.cases.push({label,passed:true,requests:report.requests-requests,receiptCount:sent.filter(s=>s.accepted).length});finishStep('passed');console.log(JSON.stringify({case:label,passed:true}));}
 const count=(table,where='1')=>query('SELECT COUNT(*) n FROM '+table+' WHERE '+where)[0].n;
 async function actualCases(){
  await actualTurn('model-single-preview',`请帮我创建一个一次性提醒：${futureDay} 晚上八点，提醒我做合成验收甲。先给预览，不要直接提交。`,sent=>{assert.equal(count('confirmation_proposals'),1);assert.equal(count('approval_grants'),0);assert.equal(count('confirmation_previews','presented_at_utc IS NOT NULL'),1);assert(JSON.stringify(sent).includes('合成验收甲'));});
@@ -285,6 +301,8 @@ async function verifyLostReceipt() {
  });
 }
 try{
+ beginStep('gateway-start','environment');
+ if(fault==='gateway-start') throw Error('fixture_gateway_start_unavailable');
  if(realModel){
   try{upstream=readConfiguredModel();report.primaryModel=upstream.primary;}
   catch{report.blocked=true;throw Error('Configured DeepSeek model or credential is unavailable');}
@@ -294,6 +312,7 @@ try{
  await host.ready();
  await waitForAcceptance(onebot.connected,'OneBot socket');
  await assert.rejects(host.call('kurumi-qq.testInbound',{},3000),/unknown method|not found/iu);
+ finishStep('passed');
  if(realModel){await actualCases();report.passed=true;}else{
  await turn('same-message-cannot-confirm','生成一个测试提醒并直接确认',[propose('宿主测试甲'),confirmation({ok:false,code:'proposal_not_presented'})],sent=>{
   assert(sent.length>0);assert(JSON.stringify(sent).includes('模型自然说明'));assert(query('SELECT presented_at_utc FROM confirmation_previews')[0].presented_at_utc);assert.equal(query('SELECT * FROM approval_grants').length,0);
@@ -385,24 +404,33 @@ try{
   assert.equal(query('SELECT status FROM reminders WHERE reminder_id=?',reminder.reminder_id)[0].status,'cancelled');
   assert(!(await host.call('cron.list',{includeDisabled:true})).jobs.some(job=>job.id===reminder.cron_job_id));
  });
- await turn('management-feedback-reads-historical-cancellation','刚才那条现在取消了吗？',[
+ await turn(historyLookup,'刚才那条现在取消了吗？',[
   ['personal_reminder_state_get',{reminder_id:reminderId},checkSchedule('cancelled')],
  ],async()=>assert.deepEqual((await host.call('cron.list',{includeDisabled:true})).jobs.map(job=>job.id).sort(),
   jobsBefore.filter(id=>id!==originalJobId)));
  // Earlier checks' jobs are far in the future. This reminder must execute
  // and be removed by native Cron before the temporary instance is cleaned up.
  await scheduleDueReminder();
+ beginStep('due-reminder-delivery');
  await verifyDueReminder();
+ finishStep('passed');
  loseDueReceipt=true;
  await scheduleDueReminder(true);
+ beginStep('lost-reminder-receipt');
  await verifyLostReceipt();
+ finishStep('passed');
  report.passed=true;
  }
-}catch(error){report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;}
+}catch(error){
+ report.blocked ||= runningStep?.phase==='environment';
+ finishStep('failed');report.passed=false;report.error=error.message;report.diagnosticsRoot=root;process.exitCode=1;
+}
 finally{
+ beginStep('fixture-cleanup','cleanup');
  report.gracefulStop=await host?.close()??null;
  model.closeAllConnections();await Promise.all([onebot.close(),new Promise(r=>model.close(r))]);
  if(report.gracefulStop===false){report.passed=false;report.error??='Isolated Gateway did not stop gracefully';report.diagnosticsRoot=root;process.exitCode=1;}
+ finishStep(report.gracefulStop===false?'failed':'passed');
  report.configSha256=host?.configSha256;
  if(report.passed){fs.rmSync(root,{recursive:true,force:true});report.fixtureRemoved=!fs.existsSync(root);}
  report.finishedAt=new Date().toISOString();fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n',{flag:'wx',mode:0o600});

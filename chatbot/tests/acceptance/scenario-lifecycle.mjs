@@ -2,6 +2,9 @@
 // shutting down resources in separate process groups.
 const controller = new AbortController();
 export const scenarioSignal = controller.signal;
+export function scenarioProgress(step, state, phase = 'check') {
+  if (process.connected) process.send({type:'scenario-progress',step,state,phase}, () => {});
+}
 if (typeof process.send === 'function') {
   if (process.connected) {
     process.once('disconnect', () => controller.abort(Error('Scenario interrupted')));
