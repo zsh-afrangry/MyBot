@@ -26,7 +26,7 @@ export async function fixture() {
   const put = (file, data) => sourceFile(file, JSON.stringify(data, null, 2) + '\n');
   const workspace = path.join(runtime, 'workspace');
   fs.mkdirSync(workspace, {recursive: true, mode: 0o700});
-  for (const pkg of ['access-control', 'memory-continuity', 'observability', 'log-query', 'session-records', 'qq-delivery']) {
+  for (const pkg of ['access-control', 'memory-continuity', 'observability', 'log-query', 'session-records', 'qq-delivery', 'feedback-core']) {
     fs.cpSync(path.join(repo, 'chatbot/packages', pkg), path.join(source, 'chatbot/packages', pkg), {recursive: true});
   }
   sourceFile('scripts/fusion/lib/persona-workspaces.mjs', fs.readFileSync(path.join(repo, 'scripts/fusion/lib/persona-workspaces.mjs')));
