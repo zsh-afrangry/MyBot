@@ -13,18 +13,11 @@ import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
+import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import assert from 'node:assert/strict';
 
 const progress=process.argv.includes('--progress'),realModel=process.argv.includes('--model');
 assert(!(progress&&realModel),'Choose deterministic --progress or explicit --model');
-let upstream;
-if(realModel){
- const source=JSON.parse(fs.readFileSync(new URL('../../../config/runtime.config.json',import.meta.url)));
- const primary=source.agents.entries.main.model?.primary??source.agents.defaults.model.primary;const [providerId,modelId]=primary.split('/'),provider=source.models.providers[providerId];
- const privateEnv=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json'));
- assert.equal(new URL(provider.baseUrl).hostname,'api.deepseek.com');const key=privateEnv[provider.apiKey?.id];assert(key);
- upstream={modelId,primary,url:provider.baseUrl.replace(/\/$/,'')+'/chat/completions',key};
-}
 const out=process.argv[process.argv.indexOf('--out')+1];
 if(!process.argv.includes('--out')||!path.isAbsolute(out??'')||fs.existsSync(out))throw Error('Require a new absolute --out');
 const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-natural-host-'));
@@ -32,7 +25,18 @@ const owner='100001',bot='100002',token=randomBytes(24).toString('hex');
 const report={at:new Date().toISOString(),boundary:'Isolated OpenClaw, formal QQ ingress/debounce, domain hooks/tools/SQLite and loopback OneBot receipts. No QQ platform, SMTP, production state or restart.',
  cognition:realModel?'configured-provider':'deterministic fixture',ingress:'onebot-websocket',testIngress:false,
  nativeCron:!realModel,cases:[],requests:0};
-if(realModel)report.primaryModel=upstream.primary;
+let upstream;
+function readConfiguredModel(){
+ const source=JSON.parse(fs.readFileSync(path.join(repo,'config/runtime.config.json'),'utf8'));
+ const primary=source.agents.entries.main.model?.primary??source.agents.defaults.model.primary;
+ const [providerId,modelId]=primary.split('/'),provider=source.models.providers[providerId];
+ const url=new URL(provider.baseUrl);
+ if(url.origin!=='https://api.deepseek.com'||url.username||url.password||url.search||url.hash||!modelId)throw Error('unsupported_model_endpoint');
+ const privateEnv=JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json','utf8'));
+ const key=privateEnv[provider.apiKey?.id];
+ if(typeof key!=='string'||!key)throw Error('model_credential_unavailable');
+ return {modelId,primary,url:url.href.replace(/\/$/,'')+'/chat/completions',key};
+}
 const seenModelCalls=new Set();
 let active,host,due;
 const channelDir=path.join(root,'channel');
@@ -51,7 +55,7 @@ const model=http.createServer(async(req,res)=>{
   if(realModel){
    assert(report.requests<=50,'real model request budget');
    for(const m of body.messages??[])for(const c of m.tool_calls??[]){if(seenModelCalls.has(c.id))continue;seenModelCalls.add(c.id);let a;try{a=JSON.parse(c.function.arguments);}catch{a={};}report.modelCalls??=[];report.modelCalls.push({name:c.function.name,action:a.action??a.args?.action??null,domain:a.domain??a.args?.domain??null});}
-   const response=await fetch(upstream.url,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+upstream.key},signal:AbortSignal.timeout(60000),body:JSON.stringify({...body,model:upstream.modelId,max_tokens:2000,temperature:0})});
+   const response=await fetch(upstream.url,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:'Bearer '+upstream.key},signal:AbortSignal.timeout(60000),body:JSON.stringify({...body,model:upstream.modelId,max_tokens:2000,temperature:0})});
    if(!response.ok)throw Error('Official model HTTP '+response.status);
    res.writeHead(200,{'Content-Type':response.headers.get('content-type')??'application/json'});for await(const chunk of response.body)res.write(chunk);res.end();return;
   }
@@ -95,10 +99,10 @@ const onebot=await createOneBotPeer({token,botId:bot,subjects:[owner],
  reply:({message})=>JSON.stringify(message).includes('未投递测试项')?'reject':undefined});
 const {sends}=onebot;
 for(const dir of ['workspace','channel','media'])fs.mkdirSync(path.join(root,dir));
-fs.writeFileSync(path.join(root,'workspace/AGENTS.md'),realModel?fs.readFileSync(path.join(repo,'scripts/fusion/templates/AGENTS.md'),'utf8'):'Use the registered typed business tools.');
 for(const file of ['http-token','ws-token'])fs.writeFileSync(path.join(root,file),token,{mode:0o600});
 const ids=['kurumi-qq','personal-reminders','personal-confirmation'];
-const tools=['personal_confirmation','personal_reminder_propose','personal_reminder_commit','personal_reminder_state_get'];
+const tools=['personal_confirmation','personal_reminder_propose','personal_reminder_commit','personal_reminder_state_get',
+ 'personal_reminder_cancel_propose','personal_reminder_cancel_commit'];
 const cfg=()=>withHostControl(compileAccessConfig({
  models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'synthetic',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:1200,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
  agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'}},entries:{main:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},tools:{profile:'full',allow:tools,deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
@@ -106,9 +110,21 @@ const cfg=()=>withHostControl(compileAccessConfig({
  plugins:{allow:ids,load:{paths:ids.map(id=>path.join(repo,'chatbot/plugins',id))},entries:Object.fromEntries(ids.map(id=>[id,{enabled:true,...(id==='personal-confirmation'?{hooks:{allowConversationAccess:true}}:{}),...(id==='personal-reminders'?{config:{reminderBackend:'native-service',reminderRunnerRoot:path.join(repo,'chatbot/plugins/personal-reminders')}}:{})}])),slots:{memory:'none'}},
  session:{dmScope:'per-channel-peer'},cron:{enabled:!realModel},update:{checkOnStart:false},logging:{file:path.join(root,'runtime.log')},tools:{...(realModel?{codeMode:false}:{}),deny:['exec','process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},
 },ownerPolicy(owner),repo),repo);
+function preparePersona(){
+ if(!realModel){fs.writeFileSync(path.join(root,'workspace/AGENTS.md'),'Use the registered typed business tools.');return;}
+ const source=path.join(root,'persona-source');
+ const put=(file,bytes)=>{fs.mkdirSync(path.dirname(file),{recursive:true,mode:0o700});fs.writeFileSync(file,bytes,{mode:0o600});};
+ const {identityName,roleFile}=JSON.parse(fs.readFileSync(path.join(repo,'config/persona.json'),'utf8'));
+ put(path.join(source,'config/persona.json'),JSON.stringify({identityName,roleFile,
+  userFile:'这是一次虚构提醒场景。时区为 Asia/Shanghai。',agentsIntro:'你正在协助合成测试用户。'}));
+ put(path.join(source,'config/access-control.json'),JSON.stringify(ownerPolicy(owner)));
+ put(path.join(source,'config/runtime.config.json'),JSON.stringify(cfg()));
+ for(const file of [roleFile,'scripts/fusion/templates/AGENTS.md']) put(path.join(source,file),fs.readFileSync(path.join(repo,file)));
+ for(const [file,text] of personaFiles(source,root).files)applyPersonaFile(file,text);
+}
 async function exchange(text,{status='completed'}={}){
  const ids=[],start=sends.length;
- for(const fragment of [text].flat())ids.push(await onebot.send(onebot.message(owner,fragment)));
+ for(const fragment of [text].flat())ids.push(await onebot.send(typeof fragment==='string'?onebot.message(owner,fragment):fragment));
  await waitForOneBotTurn(channelDir,ids,{status,timeoutMs:realModel?180000:20000,check(){
   onebot.check();assert(!report.modelError,report.modelError);
  }});
@@ -205,6 +221,11 @@ async function verifyDueReminder(){
   runAt:new Date(run.runAtMs).toISOString(),finalState:'delivered',cronRemovedAfterRun:true};
 }
 try{
+ if(realModel){
+  try{upstream=readConfiguredModel();report.primaryModel=upstream.primary;}
+  catch{report.blocked=true;throw Error('Configured DeepSeek model or credential is unavailable');}
+ }
+ preparePersona();
  host=await startIsolatedGateway({repo,root,token,configure:cfg});
  await host.ready();
  await waitForAcceptance(onebot.connected,'OneBot socket');
@@ -247,6 +268,31 @@ try{
  },{status:'failed'});
  await turn('next-message-cannot-confirm-rejected-preview','确认',[confirmation({ok:false,code:'proposal_not_presented'})]);
  assert.equal(query('SELECT * FROM approval_grants').length,5);report.progressRequested=progress;report.progressObserved=sends.some(s=>JSON.stringify(s).includes('我先核对已有信息'));if(progress)assert(report.progressObserved,'Explicit assistant progress must be visible');
+ const replay = onebot.message(owner,'预览用于重放核对和过期核对的提醒');
+ await turn('expiry-fixture-preview',replay,[propose('过期测试项')]);
+ const expired = select();
+ const beforeReplay = count('confirmation_proposals');
+ await onebot.send(replay);
+ await turn('replayed-inbound-does-not-create-a-second-proposal','核对重放记录',[],()=>assert.equal(count('confirmation_proposals'),beforeReplay));
+ const expiryDb = new DatabaseSync(dbfile);
+ try {
+  assert.equal(expiryDb.prepare('UPDATE confirmation_proposals SET expires_at_utc=created_at_utc WHERE proposal_id=?')
+   .run(expired.proposalId).changes,1);
+ } finally {expiryDb.close();}
+ await turn('expired-preview-cannot-authorize','确认过期测试项',[confirmation({ok:false,code:'proposal_unavailable'})],
+  ()=>assert.equal(count('approval_grants'),5));
+
+ const [reminder]=query("SELECT reminder_id,cron_job_id FROM reminders WHERE content='宿主测试甲'");
+ assert(reminder?.cron_job_id);
+ await turn('cancel-reminder-preview','取消宿主测试甲，先给预览。',[
+  ['personal_reminder_cancel_propose',{schema_version:1,request:{kind:'reminder.cancel',reminder_id:reminder.reminder_id}},{ok:true}],
+ ],()=>assert.equal(query('SELECT status FROM reminders WHERE reminder_id=?',reminder.reminder_id)[0].status,'scheduled'));
+ await turn('later-assent-cancels-only-the-target-reminder','确认取消宿主测试甲。',[
+  confirmation(),['personal_reminder_cancel_commit',()=>commit(),{ok:true}],
+ ],async()=>{
+  assert.equal(query('SELECT status FROM reminders WHERE reminder_id=?',reminder.reminder_id)[0].status,'cancelled');
+  assert(!(await host.call('cron.list',{includeDisabled:true})).jobs.some(job=>job.id===reminder.cron_job_id));
+ });
  // Earlier checks' jobs are far in the future. This reminder must execute
  // and be removed by native Cron before the temporary instance is cleaned up.
  await scheduleDueReminder();

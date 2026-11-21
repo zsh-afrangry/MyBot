@@ -142,6 +142,9 @@ try {
     return value;
   };
   await assert.rejects(host.call(pluginId + '.turn', {lane: 'a', step: 'read', sender: owner}), /Invalid fixture admission/u);
+  await assert.rejects(host.call(pluginId + '.turn', {lane: 'a', step: 'preview', mode: 'expired'}), /invalid_scoped_confirmation_request/u);
+  assert.deepEqual(query('a', 'SELECT * FROM confirmation_proposals'), []);
+  checked('expired-test-authority-does-not-open-a-confirmation');
   const noLease = await turn('a', 'read', 'no-lease');
   assert.equal(noLease.toolResult, undefined);
   assert(noLease.decisions.some(row => row.tool === tool && row.allowed === false));

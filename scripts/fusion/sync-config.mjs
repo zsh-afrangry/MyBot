@@ -22,18 +22,9 @@
 //   node scripts/fusion/sync-config.mjs --apply    # write the repo intent into the runtime
 import fs from 'node:fs';
 import path from 'node:path';
+import {pathToFileURL} from 'node:url';
 import { STATE_DIR, REPO_ROOT } from './lib/runtime-paths.mjs';
 import {compileAccessConfig} from '../../chatbot/packages/access-control/config.js';
-
-const CANONICAL = path.join(REPO_ROOT, 'config/runtime.config.json');
-const LIVE = path.join(STATE_DIR, 'openclaw.json');
-
-const argv = new Set(process.argv.slice(2));
-const APPLY = argv.has('--apply');
-const DIFF = argv.has('--diff') || APPLY;
-const deferredPlugins = process.argv.slice(2).filter(value => value.startsWith('--defer-plugin='))
-  .map(value => value.slice('--defer-plugin='.length));
-if (deferredPlugins.length && !APPLY && !argv.has('--diff')) throw Error('--defer-plugin requires --apply or --diff; normal --check always checks full intent');
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const show = (v) => JSON.stringify(v);
@@ -123,7 +114,7 @@ function detectDeletions(canonical, live, managed, changed) {
 // --- self test ------------------------------------------------------------------------
 // Regression coverage for the deletion semantics. Runs against in-memory objects only; it never
 // reads or writes the live config. Invoked with --selftest.
-if (argv.has('--selftest')) {
+function selftest() {
   const cases = [
     {
       name: 'whole managed block deleted from repo',
@@ -196,75 +187,99 @@ if (argv.has('--selftest')) {
     console.log(`  ${rejected ? 'PASS' : 'FAIL'}  plugin deferral rejects ${variant}`);
   }
   console.log(bad ? `\nselftest FAILED (${bad})` : '\nselftest passed');
-  process.exit(bad ? 1 : 0);
+  return bad ? 1 : 0;
 }
 
-if (!fs.existsSync(CANONICAL)) throw new Error(`Missing canonical config: ${CANONICAL}`);
-if (!fs.existsSync(LIVE)) throw new Error(`Missing runtime config: ${LIVE} (is the fusion runtime initialised?)`);
+// The CLI always uses canonical roots. The isolated acceptance host uses the
+// same sync and rollback code with disposable roots and credentials.
+export function syncConfig({repoRoot, stateRoot, rollbackRoot, args = [], log = console}) {
+  const CANONICAL = path.join(repoRoot, 'config/runtime.config.json');
+  const LIVE = path.join(stateRoot, 'openclaw.json');
 
-const rawCanonical = compileAccessConfig(JSON.parse(fs.readFileSync(CANONICAL, 'utf8')),
-  JSON.parse(fs.readFileSync(path.join(REPO_ROOT, 'config/access-control.json'), 'utf8')));
-const managedList = rawCanonical._managed;
-if (!Array.isArray(managedList) || !managedList.length) {
-  throw new Error(`${CANONICAL} must declare "_managed": [<top-level keys the repository owns>]`);
-}
-const managed = new Set(managedList);
-const intent = structuredClone(rawCanonical);
-delete intent._managed;
+  const argv = new Set(args);
+  const APPLY = argv.has('--apply');
+  const DIFF = argv.has('--diff') || APPLY;
+  const deferredPlugins = args.filter(value => value.startsWith('--defer-plugin='))
+    .map(value => value.slice('--defer-plugin='.length));
+  if (deferredPlugins.length && !APPLY && !argv.has('--diff')) throw Error('--defer-plugin requires --apply or --diff; normal --check always checks full intent');
 
-// Report unmanaged keys actually present so the split stays visible rather than implicit.
-const live = JSON.parse(fs.readFileSync(LIVE, 'utf8'));
-const canonical = deferPluginEntries(intent, live, deferredPlugins);
-for (const id of deferredPlugins) console.log(`  DEFERRED plugins.entries.${id}: keep complete live entry; normal --check still compares full repo intent`);
-if(live.channels?.['kurumi-qq']?.ownerId && live.channels['kurumi-qq'].ownerId!==canonical.channels['kurumi-qq'].ownerId)throw Error('owner_change_requires_explicit_data_migration');
-const hostMaintained = Object.keys(live).filter((k) => !managed.has(k));
+  if (!fs.existsSync(CANONICAL)) throw new Error(`Missing canonical config: ${CANONICAL}`);
+  if (!fs.existsSync(LIVE)) throw new Error(`Missing runtime config: ${LIVE} (is the fusion runtime initialised?)`);
 
-const { changed, onlyRuntime } = compare(canonical, live, '', managed, false);
-// Managed keys use two-way comparison so deletions inside a managed subtree are detected, and a
-// whole managed block missing from the repository is treated as a deletion too.
-const deletions = detectDeletions(canonical, live, managed, changed);
-
-if (DIFF) {
-  for (const c of changed) {
-    console.log(`  ${c.kind.toUpperCase().padEnd(8)} ${c.path}`);
-    console.log(`            repo    : ${show(c.want)}`);
-    if (c.kind === 'differs') console.log(`            runtime : ${show(c.got)}`);
+  const rawCanonical = compileAccessConfig(JSON.parse(fs.readFileSync(CANONICAL, 'utf8')),
+    JSON.parse(fs.readFileSync(path.join(repoRoot, 'config/access-control.json'), 'utf8')));
+  const managedList = rawCanonical._managed;
+  if (!Array.isArray(managedList) || !managedList.length) {
+    throw new Error(`${CANONICAL} must declare "_managed": [<top-level keys the repository owns>]`);
   }
-  for (const c of deletions) {
-    console.log(`  DELETED  ${c.path}`);
-    console.log(`            runtime : ${show(c.got)}   (removed from repo -> --apply removes it)`);
+  const managed = new Set(managedList);
+  const intent = structuredClone(rawCanonical);
+  delete intent._managed;
+
+  // Report unmanaged keys actually present so the split stays visible rather than implicit.
+  const live = JSON.parse(fs.readFileSync(LIVE, 'utf8'));
+  const canonical = deferPluginEntries(intent, live, deferredPlugins);
+  for (const id of deferredPlugins) log.log(`  DEFERRED plugins.entries.${id}: keep complete live entry; normal --check still compares full repo intent`);
+  if(live.channels?.['kurumi-qq']?.ownerId && live.channels['kurumi-qq'].ownerId!==canonical.channels['kurumi-qq'].ownerId)throw Error('owner_change_requires_explicit_data_migration');
+  const hostMaintained = Object.keys(live).filter((k) => !managed.has(k));
+
+  const { changed, onlyRuntime } = compare(canonical, live, '', managed, false);
+  // Managed keys use two-way comparison so deletions inside a managed subtree are detected, and a
+  // whole managed block missing from the repository is treated as a deletion too.
+  const deletions = detectDeletions(canonical, live, managed, changed);
+
+  if (DIFF) {
+    for (const c of changed) {
+      log.log(`  ${c.kind.toUpperCase().padEnd(8)} ${c.path}`);
+      log.log(`            repo    : ${show(c.want)}`);
+      if (c.kind === 'differs') log.log(`            runtime : ${show(c.got)}`);
+    }
+    for (const c of deletions) {
+      log.log(`  DELETED  ${c.path}`);
+      log.log(`            runtime : ${show(c.got)}   (removed from repo -> --apply removes it)`);
+    }
+    for (const p of onlyRuntime.filter(p => !deletions.some(d => p === d.path || p.startsWith(d.path + '.'))))
+      log.log(`  RUNTIME-ONLY ${p}  (preserved)`);
+    log.log(`\n  repo-managed top-level keys : ${[...managed].join(', ')}`);
+    log.log(`  host-maintained keys kept   : ${hostMaintained.length ? hostMaintained.join(', ') : '(none)'}`);
   }
-  for (const p of onlyRuntime.filter(p => !deletions.some(d => p === d.path || p.startsWith(d.path + '.'))))
-    console.log(`  RUNTIME-ONLY ${p}  (preserved)`);
-  console.log(`\n  repo-managed top-level keys : ${[...managed].join(', ')}`);
-  console.log(`  host-maintained keys kept   : ${hostMaintained.length ? hostMaintained.join(', ') : '(none)'}`);
+
+  if (!changed.length && !deletions.length) {
+    log.log(deferredPlugins.length
+      ? `deployment subset in sync; ${deferredPlugins.join(', ')} deferred; normal --check still required for full intent`
+      : `config in sync with ${CANONICAL} (${managed.size} managed key(s), ${hostMaintained.length} host-maintained kept)`);
+    return 0;
+  }
+
+  if (!APPLY) {
+    log.error(`\nconfig DRIFT: ${changed.length} changed, ${deletions.length} deleted-in-repo key(s)`);
+    log.error('Run with --diff to inspect, or --apply to write the repo intent into the runtime.');
+    return 1;
+  }
+
+  fs.mkdirSync(rollbackRoot, {recursive:true,mode:0o700});
+  const backup = path.join(rollbackRoot, 'openclaw.before.json');
+  fs.copyFileSync(LIVE, backup);
+  fs.chmodSync(backup, 0o600);
+  const temporary = `${LIVE}.tmp.${process.pid}`;
+  try {
+    fs.writeFileSync(temporary, JSON.stringify(merge(canonical, live, managed), null, 2) + '\n', { mode: 0o600, flag: 'wx' });
+    fs.renameSync(temporary, LIVE);
+  } finally { fs.rmSync(temporary, {force:true}); }
+  log.log(`applied: ${changed.length} changed, ${deletions.length} removed`);
+  log.log(`  backup          : ${backup}`);
+  log.log(`  managed keys    : ${managed.size} replaced from repo${deferredPlugins.length ? '; explicitly deferred plugin entries kept from live' : ''}`);
+  log.log(`  host-maintained : ${hostMaintained.length} key(s) kept as-is`);
+  log.log('  state untouched : state/, channel/, agents/, workspace/, media/ were not opened');
+  return 0;
 }
 
-if (!changed.length && !deletions.length) {
-  console.log(deferredPlugins.length
-    ? `deployment subset in sync; ${deferredPlugins.join(', ')} deferred; normal --check still required for full intent`
-    : `config in sync with ${CANONICAL} (${managed.size} managed key(s), ${hostMaintained.length} host-maintained kept)`);
-  process.exit(0);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  const args = process.argv.slice(2);
+  process.exitCode = args.includes('--selftest') ? selftest() : syncConfig({
+    repoRoot: REPO_ROOT,
+    stateRoot: STATE_DIR,
+    rollbackRoot: '/home/afrangry/kurumi-backups/.working/config-sync',
+    args,
+  });
 }
-
-if (!APPLY) {
-  console.error(`\nconfig DRIFT: ${changed.length} changed, ${deletions.length} deleted-in-repo key(s)`);
-  console.error('Run with --diff to inspect, or --apply to write the repo intent into the runtime.');
-  process.exit(1);
-}
-
-const rollbackRoot = '/home/afrangry/kurumi-backups/.working/config-sync';
-fs.mkdirSync(rollbackRoot, {recursive:true,mode:0o700});
-const backup = path.join(rollbackRoot, 'openclaw.before.json');
-fs.copyFileSync(LIVE, backup);
-fs.chmodSync(backup, 0o600);
-const temporary = `${LIVE}.tmp.${process.pid}`;
-try {
-  fs.writeFileSync(temporary, JSON.stringify(merge(canonical, live, managed), null, 2) + '\n', { mode: 0o600, flag: 'wx' });
-  fs.renameSync(temporary, LIVE);
-} finally { fs.rmSync(temporary, {force:true}); }
-console.log(`applied: ${changed.length} changed, ${deletions.length} removed`);
-console.log(`  backup          : ${backup}`);
-console.log(`  managed keys    : ${managed.size} replaced from repo${deferredPlugins.length ? '; explicitly deferred plugin entries kept from live' : ''}`);
-console.log(`  host-maintained : ${hostMaintained.length} key(s) kept as-is`);
-console.log('  state untouched : state/, channel/, agents/, workspace/, media/ were not opened');

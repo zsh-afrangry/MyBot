@@ -6,8 +6,9 @@ import {join} from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {setTimeout as delay} from 'node:timers/promises';
 import {WebSocket, WebSocketServer} from 'ws';
+import {scenarioSignal} from './scenario-lifecycle.mjs';
 
-export async function waitForAcceptance(read, description, {timeoutMs = 15000, pollMs = 30, signal} = {}) {
+export async function waitForAcceptance(read, description, {timeoutMs = 15000, pollMs = 30, signal = scenarioSignal} = {}) {
   const deadline = performance.now() + timeoutMs;
   do {
     signal?.throwIfAborted();
@@ -24,7 +25,7 @@ export function textOfSend(entry) {
 }
 
 // Test-only peer. It accepts only its own loopback connection and identities.
-export async function createOneBotPeer({token, botId, subjects, reply, maxSends = 200}) {
+export async function createOneBotPeer({token, botId, subjects, reply, methods = {}, maxSends = 200}) {
   const allowed = new Set(subjects.map(String));
   assert(typeof token === 'string' && token.length > 0 && /^[0-9]{5,12}$/.test(botId));
   assert(allowed.size > 0 && !allowed.has(String(botId)) && [...allowed].every(id => /^[0-9]{5,12}$/.test(id)));
@@ -35,7 +36,9 @@ export async function createOneBotPeer({token, botId, subjects, reply, maxSends 
     if (!authorized(req)) {res.writeHead(401).end(); return;}
     try {
       assert.equal(req.method, 'POST');
-      if (!['/get_login_info', '/send_private_msg'].includes(req.url)) {res.writeHead(404).end(); return;}
+      const method = req.url.slice(1);
+      const custom = Object.hasOwn(methods, method) ? methods[method] : undefined;
+      if (!['get_login_info', 'send_private_msg'].includes(method) && !custom) {res.writeHead(404).end(); return;}
       let raw = '';
       for await (const chunk of req) {
         raw += chunk;
@@ -43,7 +46,7 @@ export async function createOneBotPeer({token, botId, subjects, reply, maxSends 
       }
       const args = JSON.parse(raw);
       let data = {user_id: Number(botId)};
-      if (req.url === '/send_private_msg') {
+      if (method === 'send_private_msg') {
         assert(allowed.has(String(args.user_id)), 'Send targeted an unregistered fixture subject');
         assert(Array.isArray(args.message) && args.message.length > 0, 'Expected OneBot segments');
         assert(sends.length < maxSends, 'Fixture send budget exceeded');
@@ -56,7 +59,7 @@ export async function createOneBotPeer({token, botId, subjects, reply, maxSends 
           return;
         }
         data = {message_id: Number(messageId)};
-      }
+      } else if (custom) data = await custom(args);
       res.setHeader('content-type', 'application/json');
       res.end(JSON.stringify({status: 'ok', retcode: 0, data}));
     } catch (error) {

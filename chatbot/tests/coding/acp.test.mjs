@@ -59,13 +59,23 @@ test('cancel verifies its own child heartbeat stopped and does not signal the te
   assert.equal(await f.client.cancellationStopped(), true);
   const size = fs.statSync(f.marker).size; await delay(100); assert.equal(fs.statSync(f.marker).size, size); assert.equal(sameProcess(parent), true);
 });
-test('cancellation of a registered check terminates its own process tree', async t => {
+for (const stop of ['cancel', 'timeout']) test('registered check ' + stop + ' terminates its own process tree', async t => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-check-stop-'));
   t.after(() => fs.rmSync(root, {recursive: true, force: true}));
   const marker = path.join(root, 'heartbeat'), controller = new AbortController();
   const code = "const{spawn}=require('child_process');spawn(process.execPath,['-e',`setInterval(()=>require('fs').appendFileSync(process.argv[1],'x'),20)`,process.argv[1]],{stdio:'inherit'});setInterval(()=>{},1000)";
-  const checking = runChecks({checks: [{name: 'owned check', argv: [process.execPath, '-e', code, marker]}]}, root, path.join(root, 'check.log'), controller.signal);
+  const checking = runChecks({checks: [{name: 'owned check', argv: [process.execPath, '-e', code, marker],
+    ...(stop === 'timeout' && {timeoutMs: 1500})}]}, root, path.join(root, 'check.log'), controller.signal);
   for (let i = 0; i < 100 && !fs.existsSync(marker); i++) await delay(20);
-  assert.ok(fs.existsSync(marker)); controller.abort(); await assert.rejects(checking, {name: 'AbortError'});
+  assert.ok(fs.existsSync(marker));
+  if (stop === 'cancel') {
+    controller.abort();
+    await assert.rejects(checking, {name: 'AbortError'});
+  } else {
+    const result = await checking;
+    assert.equal(result.ok, false);
+    assert.equal(result.rows[0].timedOut, true);
+    assert.equal(result.rows[0].stopped, true);
+  }
   const size = fs.statSync(marker).size; await delay(100); assert.equal(fs.statSync(marker).size, size);
 });

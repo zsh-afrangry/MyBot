@@ -16,10 +16,12 @@ import {DatabaseSync} from 'node:sqlite';
 import {setTimeout as delay} from 'node:timers/promises';
 import {fileURLToPath} from 'node:url';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
-import {compileAccessConfig} from '../../packages/access-control/config.js';
+import {agentFor, sessionFor} from '../../packages/access-control/index.js';
 import {git} from '../../plugins/kurumi-coding/workspaces.js';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
+import {syncConfig} from '../../../scripts/fusion/sync-config.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
+import {closeOnScenarioDisconnect, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
 import {startIsolatedKnowledgeMap} from '../knowledgemap/isolated-api.mjs';
 import {ownerPolicy} from './fixtures.mjs';
 import {withHostControl} from './host-config.mjs';
@@ -36,13 +38,15 @@ const source = path.join(root, 'source');
 const policyFile = path.join(source, 'config/access-control.json');
 const intentFile = path.join(source, 'config/runtime.config.json');
 const runtimeFile = path.join(state, 'openclaw.json');
+const syncRoots = {repoRoot: source, stateRoot: state, rollbackRoot: path.join(root, 'rollback'),
+  log: {log() {}, error() {}}};
 const owner = '100001', bot = '100002', member = '100003';
 const toolRun = category === 'owner_tool', projectRun = category === 'coding_project';
 const token = randomBytes(24).toString('hex');
 const readPolicy = () => JSON.parse(fs.readFileSync(policyFile, 'utf8'));
 const writeJson = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', {mode: 0o600});
 const report = {openclaw: JSON.parse(fs.readFileSync(path.join(repo, 'node_modules/openclaw/package.json'))).version,
-  boundary: 'Isolated Gateway, deterministic model and simulated OneBot. Synthetic source and state.',
+  boundary: 'Isolated Gateway, deterministic model and loopback OneBot WebSocket/HTTP. Canonical config sync on synthetic source and state.',
   category, cases: [], requests: 0, primaryModel: 'fixture/fixture'};
 
 for (const dir of ['config', 'roles', 'scripts/fusion/templates']) fs.mkdirSync(path.join(source, dir), {recursive: true});
@@ -57,7 +61,7 @@ fs.writeFileSync(path.join(source, 'scripts/fusion/templates/AGENTS.md'), '{{PER
 fs.copyFileSync(path.join(repo, 'scripts/fusion/templates/MEMBER_AGENTS.md'), path.join(source, 'scripts/fusion/templates/MEMBER_AGENTS.md'));
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(state, file), token, {mode: 0o600});
 
-let active, proposal, child, completingTask, knowledgeMap, liveConfig;
+let active, proposal, child, stopCurrent, removeDisconnectHandler, completingTask, knowledgeMap, liveConfig;
 const onebot = await createOneBotPeer({token, botId: bot, subjects: [owner, member]});
 const {sends} = onebot;
 function unwrap(value) {
@@ -175,7 +179,7 @@ const config = withHostControl({
     }}}},
   channels: {'kurumi-qq': {enabled: true, httpUrl: onebot.httpUrl, wsUrl: onebot.wsUrl,
     httpTokenFile: path.join(state, 'http-token'), wsTokenFile: path.join(state, 'ws-token'),
-    stateDir: channelDir, mediaRoot: path.join(state, 'media'), testIngress: !toolRun, dailySendLimit: 100, segmentDelayMs: 0}},
+    stateDir: channelDir, mediaRoot: path.join(state, 'media'), testIngress: false, dailySendLimit: 100, segmentDelayMs: 0}},
   plugins: {allow: [...plugins], load: {paths: plugins.map(id => path.join(repo, 'chatbot/plugins', id))}, entries: {
     'kurumi-qq': {enabled: true, ...(execRun ? {config: {
       exec: {workdir: fixed, timeoutSeconds: 10, writeBoundary: {root: fixed, launcher}},
@@ -197,54 +201,69 @@ const call = (method, params = {}, timeout = 40000) => callGatewayFromCli(method
   {deviceIdentity: null, sharedStateMode: 'read-only'});
 
 async function start() {
+  scenarioSignal.throwIfAborted();
   for (const [file, contents] of personaFiles(source, state).files) applyPersonaFile(file, contents);
-  liveConfig = compileAccessConfig(JSON.parse(fs.readFileSync(intentFile)), readPolicy());
-  writeJson(runtimeFile, liveConfig);
+  const previous = fs.readFileSync(runtimeFile);
+  assert.equal(syncConfig({...syncRoots, args: ['--apply']}), 0);
+  const current = fs.readFileSync(runtimeFile);
+  if (!current.equals(previous)) {
+    assert(fs.readFileSync(path.join(syncRoots.rollbackRoot, 'openclaw.before.json')).equals(previous),
+      'Sync must preserve the prior configuration');
+  }
+  assert.equal(syncConfig(syncRoots), 0, 'The applied runtime must pass the canonical sync check');
+  liveConfig = JSON.parse(current);
   const fd = fs.openSync(path.join(state, 'gateway.log'), 'a', 0o600);
   try {
     child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run',
       '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
-      cwd: toolRun ? state : repo, detached: true, stdio: ['ignore', fd, fd], env: {PATH: process.env.PATH, HOME: toolRun ? state : process.env.HOME,
+      cwd: state, detached: true, stdio: ['ignore', fd, fd], env: {PATH: process.env.PATH, HOME: state,
         OPENCLAW_EXEC_SHELL_SNAPSHOT: '0',
         LANG: 'C.UTF-8', OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_STATE_DIR: state, OPENCLAW_CONFIG_PATH: runtimeFile,
         OPENCLAW_AGENT_DIR: path.join(state, 'agents/main/agent')},
     });
   } finally { fs.closeSync(fd); }
+  stopCurrent = undefined;
+  removeDisconnectHandler = closeOnScenarioDisconnect(stop);
   let ready = false;
   for (let i = 0; i < 60; i++) {
+    scenarioSignal.throwIfAborted();
     assert.equal(child.exitCode, null, 'Isolated Gateway exited during startup');
-    try { await call('health', {}, 1200); ready = true; break; } catch { await delay(300); }
+    try { await call('health', {}, 1200); ready = true; break; } catch { await delay(300, undefined, {signal: scenarioSignal}); }
   }
   assert(ready, 'Isolated Gateway not ready');
-  if (toolRun) await waitForAcceptance(onebot.connected, 'OneBot socket');
+  await waitForAcceptance(onebot.connected, 'OneBot socket');
 }
 
-async function stop() {
-  if (!child || child.exitCode !== null || child.signalCode !== null) return;
+function stop() {
+  return stopCurrent ??= stopGateway();
+}
+
+async function stopGateway() {
+  removeDisconnectHandler?.();
+  if (!child || child.exitCode !== null || child.signalCode !== null) return true;
   const exited = once(child, 'exit');
   child.kill('SIGTERM');
-  const timer = setTimeout(() => { try { process.kill(-child.pid, 'SIGKILL'); } catch {} }, 8000);
+  let forced = false;
+  const timer = setTimeout(() => {
+    forced = true;
+    try { process.kill(-child.pid, 'SIGKILL'); } catch {}
+  }, 8000);
   try { await exited; } finally { clearTimeout(timer); }
+  return !forced;
 }
 
-let sequence = 100;
-const inbound = (from, text) => call('kurumi-qq.testInbound', {event: {post_type: 'message', message_type: 'private',
-  self_id: Number(bot), user_id: Number(from), message_id: ++sequence, time: Math.floor(Date.now() / 1000),
-  message: [{type: 'text', data: {text}}]}});
+async function restart() {
+  if (!await stop()) throw Error('Failed to stop the isolated Gateway before synchronization');
+  await start();
+}
+
 async function turn(from, text, steps) {
   active = {next: 0, steps, member: from === member};
   const start = sends.length;
-  let sessionKey;
-  if (toolRun) {
-    const id = await onebot.send(onebot.message(from, text));
-    await waitForOneBotTurn(channelDir, [id], {timeoutMs: 20000, check() {
-      onebot.check(); assert(!report.fixtureError, report.fixtureError);
-    }});
-  } else {
-    const result = await inbound(from, text);
-    assert(result.ok && result.modelDispatched, JSON.stringify(result));
-    sessionKey = result.sessionKey;
-  }
+  const id = await onebot.send(onebot.message(from, text));
+  await waitForOneBotTurn(channelDir, [id], {timeoutMs: 20000, check() {
+    onebot.check(); assert(!report.fixtureError, report.fixtureError);
+  }});
   onebot.check();
   assert(!report.fixtureError, report.fixtureError);
   assert.equal(active.next, steps.length);
@@ -252,11 +271,21 @@ async function turn(from, text, steps) {
   active = undefined;
   const sent = sends.slice(start);
   assert(sent.length >= 1 && sent.every(message => message.accepted && String(message.user_id) === from));
-  if (toolRun) for (const entry of sent) {
+  for (const entry of sent) {
     const receipt = readOneBotLedger(channelDir, db => db.prepare('SELECT status FROM outbound WHERE message_id=?').get(entry.messageId));
     assert.equal(receipt?.status, 'sent', 'OneBot receipt was not recorded');
   }
-  return {sent, sessionKey};
+  return {sent};
+}
+
+async function assertMemberRejected() {
+  const repliesBefore = sends.filter(message => String(message.user_id) === member).length;
+  const id = await onebot.send(onebot.message(member, '成员入口测试'));
+  // Both frames use the same socket. An admitted member would already have a
+  // ledger row by the time the owner's following frame reaches completion.
+  await turn(owner, '核对入口处理顺序', []);
+  assert.equal(readOneBotLedger(channelDir, db => db.prepare('SELECT status FROM inbound WHERE id=?').get(id)), undefined);
+  assert.equal(sends.filter(message => String(message.user_id) === member).length, repliesBefore);
 }
 const adminTool = (args, verify) => ({name: 'kurumi_access', args, verify});
 const confirm = verify => ({name: 'personal_confirmation', args: () => ({action: 'confirm', domain: 'access',
@@ -295,19 +324,18 @@ async function memberScenario() {
   assert.equal(readAudit('SELECT status FROM approval_grants').status, 'consumed');
   report.cases.push('Later owner assent writes once and reports pending runtime sync');
 
-  const before = {requests: report.requests, sends: sends.length};
-  assert((await inbound(member, '同步前的测试')).ignored);
-  assert.deepEqual({requests: report.requests, sends: sends.length}, before);
+  await assertMemberRejected();
   report.cases.push('Runtime still denies the member before deployment');
 
-  await stop();
-  await start();
+  await restart();
   await turn(owner, '查询已经同步的合成成员', [adminTool({action: 'get', qq: member}, result => {
     assert(result.ok && result.inSync);
     assert.deepEqual(result.runtime, result.source);
   })]);
-  const memberResponse = await turn(member, '工作区准备后的测试', []);
-  assert.equal(memberResponse.sessionKey, `agent:qq-user-${member}:kurumi-qq:direct:${member}`);
+  await turn(member, '工作区准备后的测试', []);
+  const subject = readPolicy().subjects.find(row => row.qq === member);
+  const catalog = await call('tools.effective', {agentId: agentFor(subject), sessionKey: sessionFor(subject)});
+  assert.equal(catalog.agentId, agentFor(subject));
   assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
   report.cases.push('Member gets an isolated session and own reply after persona projection, compilation and restart');
 
@@ -317,10 +345,8 @@ async function memberScenario() {
   await turn(owner, '确认', [
     confirm(result => assert(result.ok)), commit(result => assert(result.ok && result.sourceRevision === 3)),
   ]);
-  await stop(); await start();
-  const revoked = {requests: report.requests, sends: sends.length};
-  assert((await inbound(member, '同步撤权后的测试')).ignored);
-  assert.deepEqual({requests: report.requests, sends: sends.length}, revoked);
+  await restart();
+  await assertMemberRejected();
   assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
   report.cases.push('Revocation removes access on restart and preserves the member workspace');
 }
@@ -353,7 +379,7 @@ async function mailScenario() {
   report.cases.push('QQ preview and later confirmation write only the source; unsynced Cc remains refused');
   const added = proposal;
 
-  await stop(); await start();
+  await restart();
   let draftId;
   await turn(owner, '查看生效并准备草稿', [
     adminTool({action: 'status', proposalId: added.proposalId}, result => assert(result.ok && result.activation === 'active')),
@@ -362,7 +388,7 @@ async function mailScenario() {
   report.cases.push('Compiled mail policy permits the new address after deployment');
   await show({op: 'remove', key: recipient});
   await turn(owner, '确认', [confirm(ok), commit(ok)]);
-  await stop(); await start();
+  await restart();
   await turn(owner, '核对撤销后的草稿与发送校验', [
     {name: 'email_send', args: {draftId}, verify: result => assert(!result.sent && result.code === 'recipient_not_allowed')},
     draft(isError('recipient_not_allowed')),
@@ -440,7 +466,6 @@ async function toolScenario() {
     commit(isError('access_change_already_submitted')),
     ...steps,
   ]);
-  await assert.rejects(call('kurumi-qq.testInbound', {}, 3000), /unknown method|not found/iu);
   const billMessage = '查一下备注为「' + seeded.note + '」的那笔账单金额。';
   await turn(owner, billMessage, [
     entry(null, null), notVisible, denied,
@@ -457,7 +482,7 @@ async function toolScenario() {
   reads(0);
   report.cases.push('Later assent writes only one source entry; the unsynced runtime still denies the bill tool');
 
-  await stop(); await start();
+  await restart();
   assertReply(await turn(owner, billMessage, [status(addition, 'active'), entry(name, name), queried]));
   reads(1);
   report.cases.push('After synchronization and restart, the owner reads the exact website fixture bill through the real API and receives it on OneBot');
@@ -472,7 +497,7 @@ async function toolScenario() {
   reads(2);
   report.cases.push('Confirmed removal restores the source; the unsynced running instance still permits the read');
 
-  await stop(); await start();
+  await restart();
   await turn(owner, billMessage, [status(removal, 'active'), entry(null, null), notVisible, denied]);
   reads(2);
   assert.deepEqual(await knowledgeMap.web('bills/' + seeded.id), seeded);
@@ -499,7 +524,7 @@ async function execScenario() {
   await turn(owner, '确认', [confirm(ok), commit(ok), probe(extraRoot)]);
   assert(!fs.existsSync(file));
   report.cases.push('Outside approved bases is refused and a newly written source entry does not yet allow writing');
-  await stop(); await start();
+  await restart();
   assert(fs.readFileSync(path.join(workspace, 'AGENTS.md'), 'utf8').includes(extraRoot));
   await turn(owner, '验证运行中的目录限制', [probe(extraRoot), forbidden(result => assert(/denied|permitted/i.test(JSON.stringify(result))))]);
   assert.equal(fs.readFileSync(file, 'utf8'), 'fixture');
@@ -507,7 +532,7 @@ async function execScenario() {
   report.cases.push('Persona projects the new scope; real isolated exec writes in the added root and refuses the source tree');
   await show('remove');
   await turn(owner, '确认', [confirm(ok), commit(ok)]);
-  await stop(); await start();
+  await restart();
   assert(!fs.readFileSync(path.join(workspace, 'AGENTS.md'), 'utf8').includes(extraRoot));
   fs.renameSync(file, path.join(extraRoot, 'preserved.txt'));
   await turn(owner, '核对撤销不删除资料并验固定根', [probe(extraRoot), probe(fixed)]);
@@ -544,7 +569,7 @@ async function projectScenario() {
   await write(startTask(denied('unknown_coding_project')));
   report.cases.push('Confirmed addition uses a known check profile and cannot start before sync');
 
-  await stop(); await start();
+  await restart();
   let taskId, candidate;
   await turn(owner, '先跑测试任务并尝试移除进行中的项目', [
     startTask(result => { assert(result.id, JSON.stringify(result)); taskId = result.id; }),
@@ -563,7 +588,7 @@ async function projectScenario() {
         break;
       }
       if (i === 159) assert.fail('Synthetic coding task did not settle');
-      await delay(50);
+      await delay(50, undefined, {signal: scenarioSignal});
     }
   } finally { completingTask = undefined; db.close(); }
   await turn(owner, '生成旧合入候选', [code({action: 'preview', taskId}, result => {
@@ -575,7 +600,7 @@ async function projectScenario() {
   await write(continueTask('coding_project_pending_sync'), mergeTask('coding_project_pending_sync'));
   report.cases.push('While a task is active the project cannot be removed; source updates stop old execution until sync');
 
-  await stop(); await start();
+  await restart();
   const historical = result => assert(result.id === taskId && result.state === 'ready' && result.projectActive === false);
   await turn(owner, '确认新检查和旧任务记录', [
     adminTool(select('get', {key}), result => { ok(result); assert(result.inSync && result.runtime.checkProfile === 'other'); }),
@@ -591,7 +616,7 @@ async function projectScenario() {
 
   await show({op: 'remove', key});
   await write(startTask(denied('coding_project_pending_sync')));
-  await stop(); await start();
+  await restart();
   await turn(owner, '验证最后一个项目撤销后记录仍能查', [
     code({action: 'list'}, projectList), code({action: 'status', taskId}, historical),
     startTask(denied('unknown_coding_project')), continueTask('unknown_coding_project'), mergeTask('unknown_coding_project'),
@@ -603,15 +628,17 @@ async function projectScenario() {
 
 try {
   if (toolRun) {
-    report.boundary = 'Real isolated Gateway and KnowledgeMap FastAPI/SQLite; loopback OneBot WebSocket/HTTP and deterministic model.';
+    report.boundary += ' Real KnowledgeMap FastAPI with disposable SQLite.';
     report.uncovered = ['real model semantics', 'real QQ platform', 'production configuration activation or KnowledgeMap MySQL'];
     try { knowledgeMap = await startIsolatedKnowledgeMap(root); }
     catch (error) { report.blocked = true; throw error; }
     config.plugins.entries[bills] = {enabled: true, config: knowledgeMap.config};
   }
-  writeJson(intentFile, config);
+  writeJson(intentFile, {_managed: Object.keys(config), ...config});
+  writeJson(runtimeFile, {});
   report.configSha256 = createHash('sha256').update(fs.readFileSync(intentFile)).digest('hex');
   await start();
+  await assert.rejects(call('kurumi-qq.testInbound', {}, 3000), /unknown method|not found/iu);
   if (mailRun) await mailScenario();
   else if (toolRun) await toolScenario();
   else if (execRun) await execScenario();
@@ -624,7 +651,11 @@ try {
   report.diagnosticsRoot = root;
   process.exitCode = 1;
 } finally {
-  await stop();
+  if (!await stop()) {
+    report.passed = false;
+    report.error ??= 'Isolated Gateway did not stop gracefully';
+    process.exitCode = 1;
+  }
   await onebot.close();
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));

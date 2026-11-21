@@ -151,7 +151,7 @@ export function buildScopeFixture({root}) {
     api.registerGatewayMethod(pluginId + '.turn', async ({params, respond, hasCurrentClientAuthority}) => {
       const lane = lanes.get(params?.lane), text = Object.hasOwn(actions, params?.step) ? actions[params.step] : undefined;
       if (!lane || !text || Object.keys(params).some(k => !['lane', 'step', 'mode'].includes(k)) ||
-        ![undefined, 'drop-receipt', 'no-lease'].includes(params.mode) || busy.has(lane) || !hasCurrentClientAuthority?.()) {
+        ![undefined, 'drop-receipt', 'no-lease', 'expired'].includes(params.mode) || busy.has(lane) || !hasCurrentClientAuthority?.()) {
         respond(false, undefined, {code: 'INVALID_REQUEST', message: 'Invalid fixture admission'}); return;
       }
       const start = decisions.length, agent = api.runtime.agent;
@@ -168,7 +168,8 @@ export function buildScopeFixture({root}) {
           if (!entry?.sessionId) throw Error('Fixture session missing');
           const runId = randomUUID(), messageId = randomUUID();
           return withScopedConfirmationBackends({event: {channel, senderId: lane.subject, accountId: lane.subject,
-            conversationId: 'inbox:' + lane.subject, sessionKey: lane.sessionKey, messageId, timestamp: Date.now(),
+            conversationId: 'inbox:' + lane.subject, sessionKey: lane.sessionKey, messageId,
+            timestamp: Date.now() - (params.mode === 'expired' ? 301000 : 0),
             content: text, senderIsOwner: false, isGroup: false}, providers: [lane.provider]}, async (event, scope) => {
             const turn = {runId, lane, event, scope, sessionId: entry.sessionId, messageId, binding: Object.freeze({})};
             if (params.mode !== 'no-lease') turns.set(runId, turn);

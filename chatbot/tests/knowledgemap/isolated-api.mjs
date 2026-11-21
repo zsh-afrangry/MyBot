@@ -9,6 +9,7 @@ import {createServer} from 'node:net';
 import {join, resolve} from 'node:path';
 import {KnowledgeMapClient} from '../../packages/knowledgemap-client/client.js';
 import {waitForAcceptance} from '../acceptance/onebot-peer.mjs';
+import {closeOnScenarioDisconnect} from '../acceptance/scenario-lifecycle.mjs';
 
 export async function startIsolatedKnowledgeMap(root) {
   const repo = resolve(process.env.KM_TEST_REPO ?? '/home/afrangry/repository');
@@ -44,12 +45,14 @@ export async function startIsolatedKnowledgeMap(root) {
     child.once('error', error => {fault = error; done();});
   });
   const close = () => stopped ??= (async () => {
+    removeDisconnectHandler();
     if (fault || child.exitCode !== null || child.signalCode !== null) return true;
     child.kill('SIGTERM');
     let forced = false;
     const timer = setTimeout(() => {forced = true; child.kill('SIGKILL');}, 5000);
     try {await exited; return !forced;} finally {clearTimeout(timer);}
   })();
+  const removeDisconnectHandler = closeOnScenarioDisconnect(close);
   const config = {baseUrl, tokenFile};
   const client = new KnowledgeMapClient({...config, trace() {}});
   try {

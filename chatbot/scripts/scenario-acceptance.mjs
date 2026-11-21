@@ -2,18 +2,37 @@
 // --model on isolated confirmation calls the configured paid model with synthetic conversations.
 import {execFileSync, spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
-import {closeSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
+import {accessSync, closeSync, constants, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const repo = fileURLToPath(new URL('../../', import.meta.url)).replace(/\/$/u, '');
+const localDependencies = {
+  Landlock: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run',
+  Git: '/usr/bin/git',
+  Poppler: '/usr/bin/pdfinfo',
+  Bubblewrap: '/usr/bin/bwrap',
+};
+const admin = (category, workload, requires = []) => ({
+  target: 'isolated', file: 'access-control/acceptance-member-admin-host.mjs',
+  args: ['--category', category], workload, requires, timeoutMs: 180000,
+});
 const scenarios = {
   confirmation: {target: 'isolated', file: 'backend-boundaries/acceptance-natural-confirmation-host.mjs',
-    workload: '确认、提醒写入、拒收和到点回执（--model 仅测对话与确认）'},
-  coding: {target: 'isolated', file: 'coding/acceptance-host.mjs', workload: '编码启动、续接、失败回传'},
-  'knowledge-bills-access': {target: 'isolated', file: 'access-control/acceptance-member-admin-host.mjs',
-    argv: ['--category', 'owner_tool'], workload: 'KnowledgeMap 查账与主人工具白名单同步、撤权'},
-  'scope-proof': {target: 'isolated', file: 'acceptance/acceptance-scope-host.mjs', workload: '同进程作用域技术验证'},
+    workload: '确认、提醒写入、拒收和到点回执（--model 仅测对话与确认）', timeoutMs: 240000, modelTimeoutMs: 360000},
+  coding: {target: 'isolated', file: 'coding/acceptance-host.mjs', workload: '编码启动、续接、失败回传',
+    requires: ['Landlock', 'Git'], timeoutMs: 120000},
+  'coding-recovery': {target: 'isolated', file: 'acceptance/test-evidence.mjs',
+    args: ['chatbot/tests/coding/acp.test.mjs', 'chatbot/tests/coding/reconciliation.test.mjs', 'chatbot/tests/coding/flow.test.mjs'],
+    workload: '编码服务取消、等待超时和重启后核对', requires: ['Landlock', 'Git'], timeoutMs: 120000},
+  'access-member': admin('member', '成员确认新增、隔离会话和撤权'),
+  'access-mail': admin('mail_recipient', '收件人同步及旧草稿拒绝'),
+  'knowledge-bills-access': admin('owner_tool', 'KnowledgeMap 查账与主人工具白名单同步、撤权', ['KnowledgeMap FastAPI/SQLite test server']),
+  'access-exec': admin('exec_root', '普通目录写入范围同步与撤权', ['Landlock']),
+  'access-project': admin('coding_project', '项目准入、检查预设与历史任务', ['Landlock', 'Git']),
+  media: {target: 'isolated', file: 'acceptance/acceptance-media-host.mjs',
+    workload: '引用、图片、PDF 和单次回传', requires: ['Poppler', 'Bubblewrap'], timeoutMs: 90000},
+  'scope-proof': {target: 'isolated', file: 'acceptance/acceptance-scope-host.mjs', workload: '同进程作用域技术验证', timeoutMs: 90000},
   deployment: {target: 'production', workload: '在用进程、工具目录、健康和配置对齐'},
 };
 const usage = `node chatbot/scripts/scenario-acceptance.mjs --list
@@ -81,26 +100,58 @@ function revision() {
   return {commit: git('rev-parse', 'HEAD').toString().trim(), dirty: diff.length > 0 || untracked.length > 0, diffSha256: hash.digest('hex')};
 }
 
-async function runIsolated(id, model, directory) {
+async function runIsolated(id, model, directory, signal) {
   const evidence = join(directory, id + '.json');
   const scenario = scenarios[id];
-  const argv = [join(repo, 'chatbot/tests', scenario.file), '--out', evidence, ...(scenario.argv ?? []), ...(model ? ['--model'] : [])];
-  // Each child owns the timeout and cleanup for its temporary gateway and peer.
+  const timeoutMs = model ? scenario.modelTimeoutMs : scenario.timeoutMs;
+  const info = {name: id, timeoutMs, requires: scenario.requires ?? []};
+  const executable = name => {
+    try {accessSync(localDependencies[name], constants.X_OK); return true;}
+    catch {return false;}
+  };
+  const missing = info.requires.filter(name => Object.hasOwn(localDependencies, name) && !executable(name));
+  if (missing.length) return {...info, status: 'blocked', reason: 'missing_dependencies', missing};
+  const argv = [join(repo, 'chatbot/tests', scenario.file), '--out', evidence, ...(scenario.args ?? []), ...(model ? ['--model'] : [])];
+  const start = performance.now();
   const result = await new Promise(resolveResult => {
-    const child = spawn(process.execPath, argv, {cwd: repo, stdio: 'ignore'});
-    child.once('error', () => resolveResult(null));
-    child.once('close', (code, signal) => resolveResult({code, signal}));
+    if (signal.aborted) return resolveResult({reason: 'interrupted'});
+    const child = spawn(process.execPath, argv, {cwd: repo, detached: true, stdio: ['ignore', 'ignore', 'ignore', 'ipc']});
+    let reason, forced;
+    const stop = why => {
+      if (reason) return;
+      reason = why;
+      if (child.connected) child.disconnect();
+      // The fixture closes its gateway/API first. Bound the wait for an
+      // unresponsive runner too, without treating it as verified cleanup.
+      forced = setTimeout(() => child.kill('SIGKILL'), 12000);
+    };
+    const interrupt = () => stop('interrupted');
+    const deadline = setTimeout(() => stop('scenario_timeout'), timeoutMs);
+    signal.addEventListener('abort', interrupt, {once: true});
+    const finish = (code, exitSignal) => {
+      clearTimeout(deadline);
+      clearTimeout(forced);
+      signal.removeEventListener('abort', interrupt);
+      resolveResult({code, exitSignal, reason});
+    };
+    child.once('error', () => {
+      if (!reason) {reason = 'scenario_could_not_start'; finish(null, null);}
+    });
+    child.once('exit', finish);
   });
-  if (!result) return {name: id, status: 'blocked', reason: 'scenario_could_not_start'};
+  info.durationMs = Math.round(performance.now() - start);
   try {
     const data = JSON.parse(readFileSync(evidence, 'utf8'));
-    return {name: id, status: result.code === 0 && data.passed === true ? 'passed' : data.blocked ? 'blocked' : 'failed',
+    return {...info, status: result.reason ? 'failed' : result.code === 0 && data.passed === true ? 'passed' : data.blocked ? 'blocked' : 'failed',
+      ...(result.reason && {reason: result.reason}),
       cases: data.cases?.length ?? data.stages?.length ?? 0,
       ...(typeof data.configSha256 === 'string' && {configSha256: data.configSha256}),
-      ...(typeof data.primaryModel === 'string' && {primaryModel: data.primaryModel}), evidence};
+      ...(typeof data.primaryModel === 'string' && {primaryModel: data.primaryModel}),
+      cleanupVerified: data.fixtureCleaned ?? data.fixtureRemoved ?? null, evidence};
   } catch {
-    return {name: id, status: result.signal ? 'failed' : 'blocked', reason: 'scenario_finished_without_evidence',
-      exitCode: result.code, signal: result.signal};
+    return {...info, status: result.reason === 'scenario_could_not_start' ? 'blocked' : 'failed',
+      reason: result.reason ?? 'scenario_finished_without_evidence', exitCode: result.code,
+      signal: result.exitSignal, cleanupVerified: null};
   }
 }
 
@@ -125,16 +176,27 @@ try {
           cases: data.checks.length, evidence: file});
         report.uncovered = data.uncovered;
       } else {
-        for (const id of args.scenario ? [args.scenario] : Object.keys(scenarios).filter(id => scenarios[id].target === 'isolated')) {
-          report.scenarios.push(await runIsolated(id, args.model, evidence));
+        const controller = new AbortController();
+        const stop = () => controller.abort();
+        process.on('SIGINT', stop);
+        process.on('SIGTERM', stop);
+        try {
+          for (const id of args.scenario ? [args.scenario] : Object.keys(scenarios).filter(id => scenarios[id].target === 'isolated')) {
+            if (controller.signal.aborted) break;
+            report.scenarios.push(await runIsolated(id, args.model, evidence, controller.signal));
+          }
+          if (controller.signal.aborted) report.reason = 'interrupted';
+        } finally {
+          process.removeListener('SIGINT', stop);
+          process.removeListener('SIGTERM', stop);
         }
-        report.uncovered = ['real QQ delivery', 'production interaction',
+        report.uncovered = ['real QQ delivery', 'production interaction', 'real DSH/Codex backend and production MySQL',
           ...(args.model ? ['native reminder due-time delivery in the real-model run'] : ['real-model behavior']),
           'unregistered domain scenarios'];
       }
       const after = revision();
       report.sourceStable = before.diffSha256 === after.diffSha256 && before.commit === after.commit;
-      report.status = !report.sourceStable || report.scenarios.some(row => row.status === 'failed') ? 'failed'
+      report.status = report.reason === 'interrupted' || !report.sourceStable || report.scenarios.some(row => row.status === 'failed') ? 'failed'
         : report.scenarios.some(row => row.status === 'blocked') ? 'blocked' : 'passed';
     } catch {
       report.status = 'blocked';
