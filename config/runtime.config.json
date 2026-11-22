@@ -475,7 +475,7 @@
             },
             {
               "id": "writeback-test",
-              "root": "/home/afrangry/文档/kurumi-writeback-test",
+              "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/writeback-test",
               "kind": "directory",
               "checks": [
                 {
