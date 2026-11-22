@@ -113,6 +113,21 @@ export class CodingService {
     const task = this.task(id, requester, true);
     return {task: this.describe(task), result: readCodingResult(this.store, task, options)};
   }
+  // Archive reads every task of the subject across sessions; write actions keep the original session binding.
+  archive(id, requester) {
+    this.authorize(requester, 'tasks.read');
+    if (!id) return this.store.list().filter(t => t.requester.subjectId === requester.subjectId)
+      .map(t => ({id: t.id, title: t.title ?? null, projectId: t.projectId, state: t.state, createdAt: t.createdAt, workspaceKind: t.workspaceKind ?? 'git'}));
+    const task = this.store.get(id);
+    if (!task || task.requester.subjectId !== requester.subjectId) throw fail('unknown_coding_task');
+    const rounds = this.store.rounds(id).map(round => ({roundId: round.roundId, state: round.state, startedAt: round.startedAt, finishedAt: round.finishedAt,
+      stopReason: round.stopReason, changedFiles: round.changedFiles, verifiedCommit: round.verifiedCommit,
+      ...(round.delivery ? {delivery: {state: round.delivery.state, code: round.delivery.code, messageId: round.delivery.messageId, roundId: round.delivery.roundId}} : {}),
+      hostChecks: round.hostChecks ? {ok: round.hostChecks.ok, rows: round.hostChecks.rows?.map(({name, code, signal, skipped}) => ({name, code, signal, skipped}))} : undefined}));
+    const preview = this.store.latestPreview(id);
+    return {...this.describe(task), title: task.title ?? null, createdAt: task.createdAt, rounds,
+      ...(preview?.payload?.taskCommit ? {taskCommit: preview.payload.taskCommit, candidate: preview.payload.candidate} : {})};
+  }
   submit({projectId, task: text, title: label, backend: requestedBackend}, {requester, key, correlation}) {
     this.authorize(requester, 'tasks.code');
     taskText(text);

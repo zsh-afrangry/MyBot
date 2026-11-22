@@ -60,7 +60,7 @@ const POLICIES = {
   kurumi_memory_records: actions({'memory.read': ['search', 'get', 'history'],
     'memory.manage': ['write', 'revise', 'supersede', 'retract', 'forget']}),
   kurumi_memory_raw: actions({'memory.raw.read': ['around', 'search']}),
-  kurumi_code: actions({'tasks.read': ['list', 'status', 'result', 'diff'],
+  kurumi_code: actions({'tasks.read': ['list', 'status', 'result', 'diff', 'archive'],
     'tasks.code': ['start', 'continue', 'cancel', 'rollback', 'reconcile', 'preview', 'merge']}),
   kurumi_task: {
     resolve: args => args.action === 'start' ? args.kind === 'research' ? 'tasks.research' : 'tasks.code' : 'tasks.read',

@@ -74,6 +74,13 @@ export class CodingStore {
   resultEvents(taskId, roundId) {
     return this.db.prepare('SELECT facts FROM coding_result_events WHERE task_id=? AND round_id=? ORDER BY seq').all(taskId, roundId).map(row => JSON.parse(row.facts));
   }
+  rounds(taskId) {
+    return this.db.prepare('SELECT facts FROM coding_results WHERE task_id=? ORDER BY rowid').all(taskId).map(row => JSON.parse(row.facts));
+  }
+  latestPreview(taskId) {
+    const row = this.db.prepare('SELECT id, payload FROM coding_previews WHERE task_id=? ORDER BY rowid DESC LIMIT 1').get(taskId);
+    return row ? {id: row.id, payload: JSON.parse(row.payload)} : null;
+  }
   transaction(action) {
     this.db.exec('BEGIN IMMEDIATE');
     try { const result = action(); this.db.exec('COMMIT'); return result; }
