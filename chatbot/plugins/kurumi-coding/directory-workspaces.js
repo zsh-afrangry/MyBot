@@ -5,7 +5,7 @@ import path from 'node:path';
 import {createHash, randomUUID} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {confinedProcess} from '../../packages/coding-runtime/write-fence.js';
+import {confinedProcess} from '@kurumi/coding-runtime/write-fence';
 const fail = code => Object.assign(Error(code), {code});
 const digest = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 function hashFile(file) {

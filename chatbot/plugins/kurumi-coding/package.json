@@ -9,6 +9,7 @@
     ]
   },
   "dependencies": {
-    "@kurumi/confirmation-core": "file:../../packages/confirmation-core"
+    "@kurumi/confirmation-core": "file:../../packages/confirmation-core",
+    "@kurumi/coding-runtime": "file:../../packages/coding-runtime"
   }
 }
