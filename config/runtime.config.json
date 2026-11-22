@@ -472,6 +472,11 @@
                   "timeoutMs": 15000
                 }
               ]
+            },
+            {
+              "id": "writeback-test",
+              "root": "/home/afrangry/文档/kurumi-writeback-test",
+              "kind": "directory"
             }
           ],
           "writeBoundary": {
