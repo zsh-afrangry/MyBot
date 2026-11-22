@@ -92,6 +92,33 @@ function fixture(t){
  fs.writeFileSync(path.join(root,'channel/trace-events.jsonl'),[{source:'reminder-list',kind:'reminder-list.notice.generation_failed',at,data:{status:'generation_failed',text:'private-body',apiKey:'private-key'}},{source:'e7',kind:'e7.http',at,data:{httpStatus:304}},{source:'e7',kind:'e7.http',at,data:{httpStatus:500}}].map(x=>JSON.stringify({schemaVersion:1,...x})).join('\n')+'\n');
  return {root,config:{backendRoot:BACKEND,runtimeRoot:root,snowlumaRoot:root},file:path.join(root,'channel/trace-events.jsonl')};
 }
+test('run queries keep one Cron execution and its linked detail', async t => {
+  const f = fixture(t);
+  const cronJobId = 'fixture-schedule';
+  const runId = 'first-run';
+  const call = {sessionKey: 'fixture-session', toolCallId: 'first-call'};
+  const rows = [
+    ['fixture.first_run', {...call, cronJobId, runId, eventKey: 'shared-slot'}],
+    ['fixture.call_detail', {...call, cronJobId}],
+    ['fixture.second_run', {cronJobId, runId: 'second-run', eventKey: 'shared-slot'}],
+    ['fixture.job_only', {cronJobId}],
+    ['fixture.other_id', {eventKey: runId}],
+  ].map(([kind, correlation], i) => ({
+    at: new Date(NOW - 1000 + i).toISOString(), source: 'fixture', kind, correlation, data: {},
+  }));
+  fs.writeFileSync(f.file, rows.map(row => JSON.stringify(row)).join('\n') + '\n');
+
+  const service = new LogQueryService(f.config, {now: () => NOW});
+  const kinds = async filters => {
+    const result = await service.query({sources: ['trace-events'], ...filters});
+    return result.events.map(event => event.kind);
+  };
+  assert.deepEqual(await kinds({runId}), ['fixture.first_run', 'fixture.call_detail']);
+  assert.deepEqual(await kinds({runId, cronJobId}), ['fixture.first_run', 'fixture.call_detail']);
+  assert.deepEqual(await kinds({runId: 'second-run'}), ['fixture.second_run']);
+  assert.deepEqual(await kinds({runId: 'shared-slot'}), []);
+  assert.deepEqual(await kinds({cronJobId}), rows.slice(0, 4).map(row => row.kind));
+});
 test('real CLI reports generation failures, excludes HTTP304, and leaves source bytes unchanged',async t=>{
  const f=fixture(t),hash=()=>createHash('sha256').update(fs.readFileSync(f.file)).digest('hex'),before=hash();
  const service=new LogQueryService(f.config,{now:()=>NOW});

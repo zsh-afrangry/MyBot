@@ -132,10 +132,15 @@ export function filterEvents(events, filters = {}) {
     events = events.filter(item => !['reminder-list.feedback', 'qq.image_feedback'].includes(item.kind)
       || item.correlation.qqMessageId === String(filters.messageId));
   }
+  const runId = filters.runId ? String(filters.runId) : undefined;
+  if (runId) {
+    events = events.filter(item => item.correlation.runId == null || String(item.correlation.runId) === runId);
+  }
   const idFilters = ['messageId', 'proposalId', 'runId', 'sessionKey', 'reminderId'];
   const requested = idFilters.filter((name) => filters[name]);
   if (!requested.length) return events.filter((item) => matchesQuery(item,filters));
   const seeds = events.filter(item => requested.every(name => {
+    if (name === 'runId') return String(item.correlation.runId ?? '') === runId;
     if (name === 'messageId' && item.source === 'channel-delivery') {
       return [item.correlation.qqMessageId, item.data.sourceMessageId, item.data.receiptId].includes(String(filters.messageId));
     }
@@ -147,7 +152,9 @@ export function filterEvents(events, filters = {}) {
   // event in the conversation's session.
   // A nested tool's parentToolCallId names the outer call, so both IDs share
   // the toolCallId namespace.
-  const keys = ['executionId','spanId','qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'cronJobId', 'eventKey', 'runId', 'taskId', 'toolCallId'];
+  const keys = ['executionId','spanId','qqMessageId', 'replyToId', 'proposalId', 'payloadHash', 'reminderId', 'eventKey', 'runId', 'taskId', 'toolCallId'];
+  // A Cron job ID identifies the schedule shared by all its executions.
+  if (!runId) keys.push('cronJobId');
   const namespace = key => key==='parentToolCallId'?'toolCallId':key==='parentSpanId'?'spanId':key;
   const joinValues = (item) => [...keys, 'parentToolCallId','parentSpanId'].filter((key) => item.correlation[key]).flatMap((key) => {
     const name=namespace(key),c=item.correlation;
@@ -198,7 +205,7 @@ function usage() {
   --context-after <N> 命中后事件数0..1000，仍限本次时间/来源
   --message-id <ID>   按 QQ 消息 ID 筛选（自动带出同一链路的事件）
   --proposal-id <ID>  按提醒提案筛选
-  --run-id <ID>       按后台/模型运行 ID 筛选
+  --run-id <ID>       按运行 ID 查单次后台或模型执行
   --session-key <键>  按 OpenClaw 会话筛选
   --reminder-id <ID>  按提醒 ID 筛选
   --source <名称>     可重复；限制为适配器名称。snowluma-messages须显式选择并附message-id/peer
@@ -217,7 +224,7 @@ function usage() {
   --event-ref <引用>  精确展开该事件（仍限时间/来源）
   --event-key <键>    精确业务键，列表为日期T时刻
   --daily-feedback <reminder-list|weather> --scheduled-at <时间>  按计划时刻核对播报与QQ受理
-  --cron-job-id <ID> 精确Cron任务
+  --cron-job-id <ID> 按 Cron 任务 ID 查询任务历史
   --code <错误码>    精确筛选业务及嵌套异常码
   --errors            只看错误与拒绝，并按错误码计数
   --audit             每回合被拒绝的工具与同一工具的连续重试
