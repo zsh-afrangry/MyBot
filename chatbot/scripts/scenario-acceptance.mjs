@@ -192,8 +192,11 @@ async function runIsolated(id, model, directory, signal, diagnosticFault) {
       ? data.cases.filter(row=>row?.passed===true||row?.status==='passed').at(-1)?.label : undefined);
     const observed = data?.failureDetails ?? (Array.isArray(data?.cases)
       ? data.cases.find(row=>row.status==='failed' && row.label===stage.step)?.diagnostic : undefined);
+    const reference = data?.failureReference ?? (observed?.assertion
+      ? {status:'available',kind:'assertion',...observed.assertion}
+      : {status:'unavailable',reason:'reference_not_reported'});
     return {...stage,category,...(previous&&{lastPassed:previous}),
-      ...(observed && {diagnostic:observed}),
+      ...(observed && {diagnostic:observed}),reference,
       remainingChecks:blocked&&stage.phase==='environment' ? 'not_started'
         : firstFailed?.phase==='check' && id==='confirmation' ? 'stopped' : 'unverified'};
   };

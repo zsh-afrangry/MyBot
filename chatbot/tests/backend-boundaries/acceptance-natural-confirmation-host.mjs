@@ -15,6 +15,8 @@ import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitF
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
 import {scenarioProgress,scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
 import {assertionDiagnostics} from '../acceptance/assertion-diagnostics.mjs';
+import {readQqTranscript} from '../../packages/log-query/qq-messages.js';
+import {eventReference} from '../../packages/log-query/log-query-privacy.mjs';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import assert from 'node:assert/strict';
 
@@ -43,15 +45,28 @@ function readConfiguredModel(){
  return {modelId,primary,url:url.href.replace(/\/$/,'')+'/chat/completions',key};
 }
 const seenModelCalls=new Set();
-let active,host,due,loseDueReceipt=false,runningStep,modelDiagnostic;
+let active,host,due,loseDueReceipt=false,runningStep,modelDiagnostic,failedStep;
 const historyLookup='management-feedback-reads-historical-cancellation';
 function beginStep(step,phase='check'){
- runningStep={step,phase};
+ runningStep={step,phase,startedAt:Date.now()};
  scenarioProgress(step,'started',phase);
 }
 function finishStep(state){
  if(runningStep)scenarioProgress(runningStep.step,state,runningStep.phase);
  runningStep=undefined;
+}
+function failureReference(step, finishedAt){
+ if(!step?.inbound?.length)return {status:'unavailable',reason:'no_inbound_for_failed_step'};
+ const {events}=readQqTranscript(root,owner,step.startedAt,Date.parse(finishedAt));
+ const inbound=events.filter(event=>event.kind==='agent.inbound');
+ if(inbound.length!==1)return {status:'unavailable',reason:'inbound_not_uniquely_recorded'};
+ const [anchor]=inbound,runId=anchor.correlation.runId,eventRef=eventReference(anchor);
+ const from=new Date(step.startedAt).toISOString(),to=finishedAt;
+ return {status:'available',kind:'log-query',runtimeRoot:root,from,to,eventRef,messageIds:step.inbound,
+  ...(runId&&{runId}),command:'node',args:[
+   path.join(repo,'chatbot/scripts/log-query.mjs'),'--runtime-root',root,'--from',from,'--to',to,
+   '--source','openclaw-session',runId?'--run-id='+runId:'--event-ref='+eventRef,'--no-text','--json',
+  ]};
 }
 const channelDir=path.join(root,'channel');
 const futureDay=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Shanghai',dateStyle:'short'}).format(Date.now()+2*86400000);
@@ -154,6 +169,7 @@ function preparePersona(){
 async function exchange(text,{status='completed'}={}){
  const ids=[],start=sends.length;
  for(const fragment of [text].flat())ids.push(await onebot.send(typeof fragment==='string'?onebot.message(owner,fragment):fragment));
+ if(runningStep)runningStep.inbound=ids.map(id=>id.split(':').at(-1));
  await waitForOneBotTurn(channelDir,ids,{status,timeoutMs:realModel?180000:20000,check(){
   scenarioSignal.throwIfAborted();onebot.check();assert(!report.modelError,report.modelError);
  }});
@@ -427,6 +443,7 @@ try{
  report.passed=true;
  }
 }catch(error){
+ failedStep=runningStep;
  report.blocked ||= runningStep?.phase==='environment';
  if(report.modelError==='fixture_history_summary_rejected' && runningStep?.step===historyLookup){
   report.failureDetails={code:'fixture_history_summary_rejected',expected:'提醒回查返回已取消',
@@ -444,6 +461,8 @@ finally{
  finishStep(report.gracefulStop===false?'failed':'passed');
  report.configSha256=host?.configSha256;
  if(report.passed){fs.rmSync(root,{recursive:true,force:true});report.fixtureRemoved=!fs.existsSync(root);}
- report.finishedAt=new Date().toISOString();fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n',{flag:'wx',mode:0o600});
+ report.finishedAt=new Date().toISOString();
+ if(!report.passed)report.failureReference=failureReference(failedStep,report.finishedAt);
+ fs.mkdirSync(path.dirname(out),{recursive:true});fs.writeFileSync(out,JSON.stringify(report,null,2)+'\n',{flag:'wx',mode:0o600});
  console.log(JSON.stringify({passed:report.passed,cases:report.cases.length,requests:report.requests,error:report.error,evidence:out}));
 }
