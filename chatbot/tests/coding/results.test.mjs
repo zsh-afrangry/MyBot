@@ -75,7 +75,7 @@ test('the default composer resolves the original owner session and delivers to t
     {agentId: 'main', generationKey: sessionKey, sessionId: 'fixture-current-session', messageTo: to, agentAccountId: accountId});
   assert.equal(f.deliveries.length, 1);
   assert.equal(f.deliveries[0].to, to);
-  assert.equal(f.deliveries[0].text, `Synthetic completion ${task.id}`);
+  assert.equal(f.deliveries[0].text, `【编码任务 ${task.id.slice(0, 8)}】\nSynthetic completion ${task.id}`);
 });
 
 test('redaction precedes paging and handles credentials split across agent chunks', async t => {

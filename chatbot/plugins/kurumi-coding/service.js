@@ -439,10 +439,13 @@ export class CodingService {
       let result = readCodingResult(this.store, task, {limit: 1800});
       if (result.available && result.page.nextOffset !== null) result = readCodingResult(this.store, task, {offset: Math.max(0, result.page.totalChars - 1800), limit: 1800});
       if (!this.composeNotice) throw fail('assistant_notice_unavailable');
-      const text = await this.composeNotice({taskId:task.id,projectId:task.projectId,backend:taskBackend(task),state:task.state,workspaceKind:task.workspaceKind,
+      const body = await this.composeNotice({taskId:task.id,projectId:task.projectId,backend:taskBackend(task),state:task.state,workspaceKind:task.workspaceKind,
         roundId:task.executionRoundId,reason:task.reason,hostChecks:task.checks,verifiedCommit:task.verifiedCommit,
         permissionSummary:task.permissionSummary,result},task.requester);
-      if(typeof text!=='string' || !text.trim() || text.length>3500 || !text.includes(task.id))throw fail('assistant_notice_reply_missing');
+      // The plugin owns task identity: the header is composed here, so the model body never has to echo the full id.
+      if(typeof body!=='string' || !body.trim() || body.length>3300)throw fail('assistant_notice_reply_missing');
+      const header = `【编码任务 ${task.id.slice(0, 8)}${task.title ? '·' + task.title : ''}】`;
+      const text = `${header}\n${body.trim()}`;
       const latest=this.store.get(task.id);
       if(!this.started || latest.executionRoundId!==task.executionRoundId || latest.state!==task.state)throw fail('notification_task_changed');
       this.authorize(task.requester,'tasks.read');this.authorize(task.requester,'qq.reply');
