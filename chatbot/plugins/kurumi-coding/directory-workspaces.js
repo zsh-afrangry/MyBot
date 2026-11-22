@@ -100,9 +100,17 @@ export function runDirectoryWriteback(boundary, project, transaction) {
   const command = confinedProcess(boundary, process.execPath, [fileURLToPath(import.meta.url), '--writeback', transaction.file, project.root, transaction.planHash], project.root);
   const result = spawnSync(command.command, command.args, {cwd: project.root, env: {PATH: '/usr/bin:/bin', LANG: 'C.UTF-8', ...command.env}, encoding: 'utf8'});
   let receipt;
-  try {receipt = JSON.parse(result.stdout);} catch {throw fail('directory_writeback_requires_reconciliation');}
+  try {receipt = JSON.parse(result.stdout);} catch {recordSpawnFailure(transaction.file, result); throw fail('directory_writeback_requires_reconciliation');}
   if (result.status !== 0 || !receipt.ok) throw fail(receipt.code ?? 'directory_writeback_requires_reconciliation');
   return receipt;
+}
+function recordSpawnFailure(file, result) {
+  try {
+    const journal = JSON.parse(fs.readFileSync(file));
+    journal.spawn = {status: result.status, signal: result.signal ?? null, error: result.error?.code ?? null,
+      stderr: (result.stderr ?? '').slice(0, 800), stdout: (result.stdout ?? '').slice(0, 300)};
+    saveJournal(file, journal);
+  } catch { /* Journal unavailable; reconciliation still verifies facts on disk. */ }
 }
 function currentFact(root, name) {
   try {return fact(relative(root, name), name);} catch (e) {if (e.code === 'ENOENT') return null; throw e;}
