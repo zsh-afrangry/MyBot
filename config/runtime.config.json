@@ -476,7 +476,17 @@
             {
               "id": "writeback-test",
               "root": "/home/afrangry/文档/kurumi-writeback-test",
-              "kind": "directory"
+              "kind": "directory",
+              "checks": [
+                {
+                  "name": "writeback baseline files",
+                  "argv": [
+                    "/usr/bin/node",
+                    "-e",
+                    "const fs=require('fs');process.exit(fs.existsSync('a.txt')&&fs.existsSync('b.txt')?0:1)"
+                  ]
+                }
+              ]
             }
           ],
           "writeBoundary": {
