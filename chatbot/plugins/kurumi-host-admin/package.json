@@ -1,0 +1,15 @@
+{
+  "name": "@kurumi/host-admin",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Owner-confirmed declarative privileged host operations.",
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ]
+  },
+  "dependencies": {
+    "@kurumi/confirmation-core": "file:../../packages/confirmation-core"
+  }
+}

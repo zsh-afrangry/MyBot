@@ -13,6 +13,7 @@ const mappingInputs = new Map([
   ['automations', [{action: 'list'}]],
   ['e7_data', [{action: 'codes'}]],
   ['kurumi_access', [{action: 'list'}]],
+  ['kurumi_host_admin', [{action: 'list'}]],
   ['kurumi_code', [{action: 'list'}]],
   ['kurumi_document', [{action: 'list'}]],
   ['kurumi_memory', [{action: 'list'}]],

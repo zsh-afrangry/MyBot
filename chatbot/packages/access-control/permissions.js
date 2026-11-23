@@ -10,7 +10,7 @@ export const OWNER_PERMISSIONS = Object.freeze([
   'weather.read', 'profile.read', 'profile.manage', 'planning.read', 'planning.manage',
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
   'memory.read', 'memory.manage', 'memory.raw.read', 'memory.organize', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
-  'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'e7.image', 'host.exec', 'logs.read',
+  'automations.read', 'automations.manage', 'sessions.read', 'e7.read', 'e7.image', 'host.exec', 'host.sudo.read', 'host.sudo.manage', 'logs.read',
   'proactive.read', 'proactive.manage', 'proactive.use', 'proactive.notify',
 ]);
 export const PERMISSIONS = Object.freeze([...SHARED_PERMISSIONS, ...OWNER_PERMISSIONS]);
@@ -33,7 +33,7 @@ const DIRECT = {
 const CONFIRMATION = {
   personal_reminder: ['reminders.read', 'reminders.manage'], personal_profile: ['profile.read', 'profile.manage'],
   planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'], coding: ['tasks.read', 'tasks.code'],
-  access: ['access.manage', 'access.manage'],
+  access: ['access.manage', 'access.manage'], host_sudo: ['host.sudo.read', 'host.sudo.manage'],
 };
 
 function actions(groups, fallback) {
@@ -52,6 +52,7 @@ const POLICIES = {
     permissions: [...new Set(Object.values(CONFIRMATION).flat())],
   },
   kurumi_access: actions({'access.manage': ['list', 'get', 'propose', 'commit', 'status']}),
+  kurumi_host_admin: actions({'host.sudo.read': ['list', 'status'], 'host.sudo.manage': ['propose', 'commit']}),
   kurumi_proactive: actions({'proactive.read': ['status', 'records'], 'proactive.manage': ['pause', 'resume', 'record_put', 'record_remove'],
     'proactive.use': ['query', 'remember', 'forget', 'sources'], 'proactive.notify': ['notify']}),
   e7_data: actions({'e7.read': ['search', 'hero', 'artifact', 'dictionary', 'codes', 'news', 'builds', 'reviews', 'rankings', 'content', 'gvg', 'fates', 'packs']}),

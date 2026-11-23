@@ -1,0 +1,42 @@
+{
+  "id": "kurumi-host-admin",
+  "name": "Kurumi host administration",
+  "description": "Owner-confirmed declarative privileged host operations.",
+  "version": "0.1.0",
+  "activation": {"onStartup": true},
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["actions"],
+    "properties": {
+      "sudoCommand": {"type": "string", "minLength": 2, "maxLength": 4096},
+      "systemctlCommand": {"type": "string", "minLength": 2, "maxLength": 4096},
+      "timeoutMs": {"type": "integer", "minimum": 1000, "maximum": 60000},
+      "proposalTtlSeconds": {"type": "integer", "minimum": 60, "maximum": 86400},
+      "actions": {
+        "type": "array",
+        "minItems": 1,
+        "maxItems": 32,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "template", "target", "label", "impact"],
+          "properties": {
+            "id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{0,63}$"},
+            "template": {"type": "string", "enum": ["service.restart"]},
+            "target": {"type": "string", "pattern": "^[a-zA-Z0-9@_.-]{1,128}\\.service$"},
+            "label": {"type": "string", "minLength": 1, "maxLength": 80},
+            "impact": {"type": "string", "minLength": 1, "maxLength": 200},
+            "leaseEligible": {"type": "boolean"}
+          }
+        }
+      }
+    }
+  },
+  "contracts": {
+    "tools": ["kurumi_host_admin"]
+  },
+  "toolMetadata": {
+    "kurumi_host_admin": {"optional": true}
+  }
+}

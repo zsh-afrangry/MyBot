@@ -42,6 +42,8 @@ const scenarios = {
     workload:'译稿逐份回查、QQ 回执丢失与冻结邮件附件',timeoutMs:60000},
   'access-exec': admin('exec_root', '普通目录写入范围同步与撤权', ['Landlock']),
   'access-project': admin('coding_project', '项目准入、检查预设与历史任务', ['Landlock', 'Git']),
+  'host-admin': {target: 'isolated', file: 'host-admin/acceptance-host.mjs',
+    workload: '受控系统操作确认、拒绝、防重放、exec隔离与状态核验', requires: ['Landlock'], timeoutMs: 120000},
   'qq-feedback': {target:'isolated', file:'acceptance/acceptance-qq-feedback-host.mjs', workload:'QQ 私聊分段受理、引用回认和主人查询', timeoutMs:90000},
   'qq-evidence-gaps': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/log-query/qq-evidence.test.mjs'],workload:'QQ 业务证据的缺失、故障、时间范围和相邻告警',timeoutMs:30000},
