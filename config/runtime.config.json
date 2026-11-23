@@ -77,6 +77,8 @@
             "kurumi_code",
             "exec",
             "kurumi_host_admin",
+            "kurumi_files",
+            "kurumi_lease",
             "kurumi_logs",
             "kurumi_access"
           ],
@@ -213,6 +215,7 @@
       "kurumi-e7",
       "kurumi-coding",
       "kurumi-host-admin",
+      "kurumi-files",
       "deepseek",
       "kurumi-logs"
     ],
@@ -237,6 +240,7 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-e7",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-coding",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-host-admin",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-files",
         "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/deepseek-provider",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-logs"
       ]
@@ -251,10 +255,6 @@
           "exec": {
             "writeBoundary": {
               "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029",
-              "additionalRoots": [
-                "/home/afrangry/下载",
-                "/home/afrangry/文档"
-              ],
               "launcher": "/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run"
             },
             "workdir": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/source",
@@ -521,6 +521,43 @@
               "label": "重启远程桌面服务",
               "impact": "重启期间远程桌面连接会短暂断开并需重新连接。",
               "leaseEligible": false
+            }
+          ]
+        }
+      },
+      "kurumi-files": {
+        "enabled": true,
+        "config": {
+          "homeDir": "/home/afrangry",
+          "defaultWorkspace": "/home/afrangry/kurumi-space",
+          "t0Roots": [
+            {
+              "path": "/home/afrangry/kurumi-space",
+              "label": "Kurumi 草稿与默认工作区"
+            }
+          ],
+          "t1Roots": [
+            {
+              "path": "/home/afrangry/下载",
+              "label": "下载"
+            },
+            {
+              "path": "/home/afrangry/文档",
+              "label": "文档"
+            }
+          ],
+          "t2Roots": [
+            {
+              "path": "/home/afrangry/repository",
+              "label": "KnowledgeMap 仓库（阶段 2A 只读）",
+              "readOnly": true,
+              "allowLease": false
+            },
+            {
+              "path": "/home/afrangry/kurumi-fusion",
+              "label": "Kurumi Fusion 仓库（阶段 2A 只读）",
+              "readOnly": true,
+              "allowLease": false
             }
           ]
         }

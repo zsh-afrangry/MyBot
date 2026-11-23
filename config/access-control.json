@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 13,
+  "revision": 14,
   "subjects": [
     {
       "qq": "365999865",
@@ -51,6 +51,10 @@
         "host.exec": true,
         "host.sudo.read": true,
         "host.sudo.manage": true,
+        "files.read": true,
+        "files.manage": true,
+        "lease.read": true,
+        "lease.manage": true,
         "logs.read": true
       },
       "mailRecipients": [
