@@ -1,0 +1,79 @@
+{
+  "id": "kurumi-files",
+  "name": "Kurumi tiered file management",
+  "description": "Tiered owner file operations with automatic recovery snapshots and bounded task leases.",
+  "version": "0.1.0",
+  "activation": {"onStartup": true},
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "homeDir": {"type": "string", "minLength": 2, "maxLength": 4096},
+      "defaultWorkspace": {"type": "string", "minLength": 2, "maxLength": 4096},
+      "t0Roots": {
+        "type": "array",
+        "maxItems": 32,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "label"],
+          "properties": {
+            "path": {"type": "string", "minLength": 2, "maxLength": 4096},
+            "label": {"type": "string", "minLength": 1, "maxLength": 80},
+            "readOnly": {"type": "boolean"},
+            "allowLease": {"type": "boolean"}
+          }
+        }
+      },
+      "t1Roots": {
+        "type": "array",
+        "maxItems": 32,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "label"],
+          "properties": {
+            "path": {"type": "string", "minLength": 2, "maxLength": 4096},
+            "label": {"type": "string", "minLength": 1, "maxLength": 80},
+            "readOnly": {"type": "boolean"},
+            "allowLease": {"type": "boolean"}
+          }
+        }
+      },
+      "t2Roots": {
+        "type": "array",
+        "maxItems": 32,
+        "items": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "label"],
+          "properties": {
+            "path": {"type": "string", "minLength": 2, "maxLength": 4096},
+            "label": {"type": "string", "minLength": 1, "maxLength": 80},
+            "readOnly": {"type": "boolean"},
+            "allowLease": {"type": "boolean"}
+          }
+        }
+      },
+      "t3Roots": {
+        "type": "array",
+        "maxItems": 64,
+        "items": {"type": "string", "minLength": 1, "maxLength": 4096}
+      },
+      "maxReadChars": {"type": "integer", "minimum": 1000, "maximum": 200000},
+      "maxWriteBytes": {"type": "integer", "minimum": 1024, "maximum": 67108864},
+      "maxBatchItems": {"type": "integer", "minimum": 1, "maximum": 500},
+      "maxSnapshotFileBytes": {"type": "integer", "minimum": 1024, "maximum": 134217728},
+      "maxSnapshotTotalBytes": {"type": "integer", "minimum": 65536, "maximum": 2147483648},
+      "snapshotRetentionDays": {"type": "integer", "minimum": 1, "maximum": 365},
+      "proposalTtlSeconds": {"type": "integer", "minimum": 60, "maximum": 86400}
+    }
+  },
+  "contracts": {
+    "tools": ["kurumi_files", "kurumi_lease"]
+  },
+  "toolMetadata": {
+    "kurumi_files": {"optional": true},
+    "kurumi_lease": {"optional": true}
+  }
+}

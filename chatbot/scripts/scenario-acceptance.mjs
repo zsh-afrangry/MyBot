@@ -44,6 +44,8 @@ const scenarios = {
   'access-project': admin('coding_project', '项目准入、检查预设与历史任务', ['Landlock', 'Git']),
   'host-admin': {target: 'isolated', file: 'host-admin/acceptance-host.mjs',
     workload: '受控系统操作确认、拒绝、防重放、exec隔离与状态核验', requires: ['Landlock'], timeoutMs: 120000},
+  'host-files': {target: 'isolated', file: 'files/acceptance-host.mjs',
+    workload: '分级文件工具、自动快照恢复、exec边界迁移与有界任务租约', requires: ['Landlock'], timeoutMs: 120000},
   'qq-feedback': {target:'isolated', file:'acceptance/acceptance-qq-feedback-host.mjs', workload:'QQ 私聊分段受理、引用回认和主人查询', timeoutMs:90000},
   'qq-evidence-gaps': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/log-query/qq-evidence.test.mjs'],workload:'QQ 业务证据的缺失、故障、时间范围和相邻告警',timeoutMs:30000},

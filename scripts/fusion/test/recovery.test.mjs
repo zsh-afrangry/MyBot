@@ -80,3 +80,19 @@ for(const id of ['kurumi-qq','kurumi-host-control']){
   const legacy={plugins:{entries:{}}};disableProactiveRecovery(legacy);assert.deepEqual(legacy,{plugins:{entries:{}}});
  });
 }
+test('recovery disables kurumi-files and strips ordinary-file roots without altering unrelated plugins',()=>{
+ const cfg={
+  plugins:{
+   entries:{
+    'kurumi-files':{enabled:true,config:{defaultWorkspace:'/home/afrangry/kurumi-space',t0Roots:[{path:'/home/afrangry/kurumi-space',label:'草稿区'}],t1Roots:[{path:'/home/afrangry/下载',label:'下载'}],t2Roots:[{path:'/home/afrangry/repository',label:'repo',readOnly:true}],homeDir:'/home/afrangry'}},
+    'kurumi-coding':{enabled:true,config:{writeBoundary:{root:'/tmp/r/pilot'}}},
+   },
+  },
+ };
+ const coding=structuredClone(cfg.plugins.entries['kurumi-coding']);
+ disableOwnerFileRecovery(cfg);
+ assert.equal(cfg.plugins.entries['kurumi-files'].enabled,false);
+ for(const key of ['t0Roots','t1Roots','t2Roots','defaultWorkspace'])assert.equal(cfg.plugins.entries['kurumi-files'].config[key],undefined);
+ assert.equal(cfg.plugins.entries['kurumi-files'].config.homeDir,'/home/afrangry');
+ assert.deepEqual(cfg.plugins.entries['kurumi-coding'],coding);
+});

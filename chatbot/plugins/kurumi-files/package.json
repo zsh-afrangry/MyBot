@@ -1,0 +1,12 @@
+{
+  "name": "@kurumi/files",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tiered owner file management with automatic recovery snapshots and scoped task leases.",
+  "openclaw": {
+    "extensions": [
+      "./index.js"
+    ]
+  }
+}

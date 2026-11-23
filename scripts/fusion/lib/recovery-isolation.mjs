@@ -40,6 +40,13 @@ export function disableOwnerFileRecovery(cfg){
   delete exec.writeBoundary.additionalRoots;
   exec.workdir=path.join(exec.writeBoundary.root,'source');
  }
+ const filesEntry=cfg.plugins?.entries?.['kurumi-files'];
+ if(filesEntry){
+  filesEntry.enabled=false;
+  if(filesEntry.config&&typeof filesEntry.config==='object'){
+   for(const key of ['t0Roots','t1Roots','t2Roots','defaultWorkspace'])delete filesEntry.config[key];
+  }
+ }
 }
 // A recovery copy never starts paid paper jobs, even outside its test sandbox.
 export function disablePaperRecovery(cfg,runtime){

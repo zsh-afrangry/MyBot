@@ -1,0 +1,11 @@
+{
+  "name": "@kurumi/scoped-lease",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.js",
+    "./policy.js": "./policy.js",
+    "./store.js": "./store.js"
+  }
+}

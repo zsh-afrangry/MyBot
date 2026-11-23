@@ -49,6 +49,10 @@ test('Every current main tool is mapped; new tools and dangerous native/member o
  for(const action of ['list','get','propose','commit','status']){assert.equal(hook(c,owner,'kurumi_access',{action}),undefined);assert(hook(c,member,'kurumi_access',{action}));}
  for(const action of ['list','status','propose','commit']){assert.equal(hook(c,owner,'kurumi_host_admin',{action}),undefined);assert(hook(c,member,'kurumi_host_admin',{action}));}
  for(const action of ['exec','run',undefined])assert(hook(c,owner,'kurumi_host_admin',{action}));
+ for(const action of ['roots','list','stat','read','search','snapshots','status','mkdir','write','edit','copy','move','delete','restore','propose','commit','apply_leased']){assert.equal(hook(c,owner,'kurumi_files',{action}),undefined);assert(hook(c,member,'kurumi_files',{action}));}
+ for(const action of ['exec','chmod',undefined])assert(hook(c,owner,'kurumi_files',{action}));
+ for(const action of ['list','status','propose','commit','revoke','revoke_all']){assert.equal(hook(c,owner,'kurumi_lease',{action}),undefined);assert(hook(c,member,'kurumi_lease',{action}));}
+ for(const action of ['exec','extend',undefined])assert(hook(c,owner,'kurumi_lease',{action}));
 });
 test('Compile matrix into all identity fields plus independent member agent/tools/binding without mutating inputs',()=>{
  const source={channels:{'kurumi-qq':{}},commands:{},plugins:{entries:{'personal-weather':{config:{}},'kurumi-mail':{}}},agents:{entries:{main:{workspace:'/isolated/workspace',model:{primary:'fake/model'},tools:{deny:['exec']}}}},bindings:[{agentId:'main',match:{channel:'kurumi-qq'}}]};
@@ -90,7 +94,7 @@ test('Background lanes are limited to configured owner tasks and read-only weath
 
 test('Natural confirmation checks each domain and action against the current identity permissions',()=>{
  const c=cfg(),[owner,member]=c.channels['kurumi-qq'].accessControl.subjects;
- for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send'],['coding','tasks.read','tasks.code'],['host_sudo','host.sudo.read','host.sudo.manage']]){
+ for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send'],['coding','tasks.read','tasks.code'],['host_sudo','host.sudo.read','host.sudo.manage'],['host_files','files.read','files.manage'],['scoped_lease','lease.read','lease.manage']]){
   for(const action of ['list','preview','confirm']){assert.equal(hook(c,owner,'personal_confirmation',{domain,action}),undefined);assert(hook(c,member,'personal_confirmation',{domain,action}));}
   owner.permissions[write]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'confirm'}));assert.equal(hook(c,owner,'personal_confirmation',{domain,action:'list'}),undefined);owner.permissions[write]=true;
   owner.permissions[read]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'list'}));assert(hook(c,owner,'personal_confirmation',{domain,action:'preview'}));owner.permissions[read]=true;

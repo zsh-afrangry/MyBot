@@ -12,9 +12,9 @@ function fixture() {
  return {cfg,policy,tool:(row=policy.subjects[0])=>factory.create({...context(row),getRuntimeConfig:()=>cfg})};
 }
 const target=domain=>({domain,proposalId:'12345678-1234-4234-8234-123456789abc',payloadHash:'a'.repeat(64)});
-test('a reminder outer domain cannot grant mail, QQ member administration, or host_sudo permissions',async()=>{
+test('a reminder outer domain cannot grant mail, QQ member administration, host_sudo, host_files, or scoped_lease permissions',async()=>{
  const f=fixture();
- for(const [domain,permission] of [['mail','mail.send'],['access','access.manage'],['host_sudo','host.sudo.manage']]){
+ for(const [domain,permission] of [['mail','mail.send'],['access','access.manage'],['host_sudo','host.sudo.manage'],['host_files','files.manage'],['scoped_lease','lease.manage']]){
   f.policy.subjects[0].permissions[permission]=false;
   await assert.rejects(()=>f.tool().execute('call',{action:'confirm',domain:'personal_reminder',targets:[target('personal_reminder'),target(domain)]}),{code:'capability_not_allowed'});
  }
@@ -31,7 +31,7 @@ test('member identity cannot inherit owner confirmation, even when the outer dom
 });
 test('tool discovery includes exact domains, re-preview instruction and bounded multi-target schema',async()=>{
  const f=fixture(),tool=f.tool();assert(tool.parameters.required.includes('domain'));
- assert.deepEqual(tool.parameters.properties.domain.enum,['personal_reminder','personal_profile','planning','mail','coding','access','host_sudo']);
+ assert.deepEqual(tool.parameters.properties.domain.enum,['personal_reminder','personal_profile','planning','mail','coding','access','host_sudo','host_files','scoped_lease']);
  assert.equal(tool.parameters.properties.targets.maxItems,16);assert.match(tool.description,/MUST use action=preview/);
  const result=await tool.execute('unbound',{action:'confirm',domain:'personal_reminder',targets:[target('personal_reminder')]});
  assert.equal(result.details.code,'confirmation_not_current');
