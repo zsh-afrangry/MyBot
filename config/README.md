@@ -147,6 +147,7 @@ OpenClaw 每回合重新核对 bootstrap 文件；文档25的真实隔离宿主�
 | --- | --- | --- |
 | 列表：`dataSource/bridgeBaseUrl/bridgeTokenFile/backendRoot/defaultTimes` | 共享工具及固定runner共同读取；`backendRoot`指持久`/home/afrangry/kurumi-fusion/chatbot`。`defaultTimes`只用于首次建库，个人设置不被同步覆盖 | [每日播报](../docs/23_KnowledgeMap业务能力桥接.md#每日播报)、[存储与切换](../docs/23_KnowledgeMap业务能力桥接.md#原理) |
 | 四领域：`plugins.entries.personal-{weather,profile,planning,reminders}` | 独立allow/load/开关；天气持天气参数，Profile持地理解析和可选地点目录，一次性提醒的`reminderRunnerRoot`指持久reminders插件 | [2天气与资料](../docs/2_天气模块.md#接口)、[21插件生命周期](../docs/21_后端职责分层与代码整理.md#插件生命周期) |
+| 共享城市：`personal-profile.config.shareDefaultCity` | 当前为 true；只读接口与网站鉴权边界见业务文档 | [23共享城市](../docs/23_KnowledgeMap业务能力桥接.md#原理) |
 | 阅读：`kurumi-research.config.cacheRoot` | 显式缓存位置，不从QQ频道目录推导 | [21共享边界](../docs/21_后端职责分层与代码整理.md#共享代码的唯一实现) |
 | 记忆：`continuity.enabled/summaryTtlDays/maxContextChars` | 仓库为true/7/6000；TTL范围1–30天、缺省7；资料预算2000–12000字符、缺省6000 | [25存储与检索](../docs/25_人格、记忆与会话连续性.md#记忆存储与检索) |
 | 连续性适配器：`continuityPolicyAdapter/continuityStoreAdapter` | 当前`current-owner/sqlite`，不与旧`policyAdapter/storeAdapter`混用；配置选择不自动迁移数据 | [25](../docs/25_人格、记忆与会话连续性.md)、[21适配器](../docs/21_后端职责分层与代码整理.md#适配器注册表) |
