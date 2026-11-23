@@ -49,6 +49,10 @@
           "knowledgemap"
         ]
       },
+      "shareDefaultCity": {
+        "type": "boolean",
+        "description": "Expose the confirmed owner location to the authenticated KnowledgeMap website."
+      },
       "bridgeBaseUrl": {
         "type": "string"
       },

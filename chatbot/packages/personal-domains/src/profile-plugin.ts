@@ -17,6 +17,7 @@ import { commitProfileChange, getProfileState, proposeProfileChange, profileProp
 import { registerDomainBackend } from './confirmation-backends.js';
 import { registerInteractionHooks } from './interaction/index.js';
 import { readChangeFeedback } from './change-feedback.js';
+import { registerSharedLocationRoute } from './shared-location.js';
 const profileChangeParameters = Type.Object({
     schema_version: Type.Literal(1),
     request: Type.Object({
@@ -127,6 +128,10 @@ export function createPlugin() {
         register(api);
         if (api.registrationMode !== 'full')
             return;
+        const profileConfig = api.pluginConfig as {shareDefaultCity?: boolean; bridgeTokenFile?: string} | undefined;
+        if (profileConfig?.shareDefaultCity === true) {
+            registerSharedLocationRoute(api, {stateDirectory: weatherStateDirectory(), tokenFile: profileConfig.bridgeTokenFile});
+        }
         weatherTrace.attach(api);
         registerInteractionHooks(api, { clarificationTools: ['personal_profile_change_propose'], proposalTools: ['personal_profile_change_propose'] });
         registerDomainBackend(api, { id: 'personal-profile', domain: 'personal_profile', open: () => new WeatherStore({ stateDirectory: weatherStateDirectory() }) });

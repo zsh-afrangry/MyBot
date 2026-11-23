@@ -43,14 +43,24 @@ const {GatewayScheduler} = await import(pathToFileURL(path.join(sdkDist, 'infra/
 const startServices = Object.values(manager).find(fn => typeof fn === 'function' && fn.name === 'startPluginServices');
 
 function collect(plugin, mode = 'full', pluginConfig = {}) {
-  const tools = new Map(), services = [], hooks = [];
+  const tools = new Map(), services = [], hooks = [], routes = [];
   plugin.register({config: cfg, pluginConfig, registrationMode: mode,
     on(name, handler) { hooks.push({name, handler}); }, logger: {info() {}, warn() {}},
     registerTool(factory, options) { tools.set(options.name, factory); },
     registerService(service) { services.push(service); },
+    registerHttpRoute(route) { routes.push(route); },
   });
-  return {tools, services, hooks};
+  return {tools, services, hooks, routes};
 }
+
+test('shared current-location route is opt-in and never registered during discovery', () => {
+  assert.equal(collect(entries.profile()).routes.length, 0);
+  assert.equal(collect(entries.profile(), 'discovery', {shareDefaultCity:true}).routes.length, 0);
+  const found = collect(entries.profile(), 'full', {shareDefaultCity:true, bridgeTokenFile:'/fixture/token'}).routes;
+  assert.equal(found.length, 1);
+  assert.deepEqual({path:found[0].path, auth:found[0].auth, match:found[0].match},
+    {path:'/plugins/personal-profile/current-location', auth:'plugin', match:'exact'});
+});
 async function start(services) {
   return startServices({scheduler: new GatewayScheduler(), config: cfg, workspaceDir: root, throwOnStartError: true,
     registry: {plugins: [], services: services.map(service => ({pluginId: service.id, id: service.id, service}))}});

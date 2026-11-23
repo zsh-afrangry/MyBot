@@ -34,4 +34,5 @@ export const profileGeoConfigSchema = Type.Object({
     apiHost: Type.Optional(geoConfigSchema.properties.apiHost),
     apiKey: Type.Optional(geoConfigSchema.properties.apiKey),
     locationCatalog: Type.Optional(Type.Array(profileCatalogEntrySchema, {minItems: 1, maxItems: 512})),
+    shareDefaultCity: Type.Optional(Type.Boolean()),
 }, {additionalProperties: false});

@@ -1,4 +1,4 @@
-状态：开发中（共享业务已部署；播报稳定性、共享默认城市与长期验收未完成）
+状态：开发中（共享城市已隔离验收，生产待部署；播报稳定性与长期验收未完成）
 
 # KnowledgeMap共享业务：提醒列表、记账与天气
 
@@ -10,7 +10,7 @@
 | --- | --- | --- |
 | 待做事项 / 提醒列表 | 查询、新增、修改、完成、作废、恢复；每日播报 | 一次性到点提醒是另一种能力，见[文档3](3_个人提醒.md) |
 | 记账 | 新增、查询、月汇总、单笔修改和实际删除；分类取自真实标签目录 | 唯一目标直接执行，歧义先澄清；不批量，不承诺删除可撤销 |
-| 天气 | 地点查询、天气读取，说明观测时间、数据时效和失败 | 不同步两端默认城市；天气模块见[文档2](2_天气模块.md) |
+| 天气 | 地点查询、天气读取，说明观测时间、数据时效和失败 | 网页默认跟随已确认所在地；实现已隔离验证，生产待部署。天气模块见[文档2](2_天气模块.md) |
 
 不做：TradeSim、Notes/知识图谱、条件事件触发、通用工作流引擎、批量账单维护。
 
@@ -70,6 +70,7 @@
 | `bridgeBaseUrl` | 业务 API 地址，当前 `http://127.0.0.1:3086` |
 | `bridgeTokenFile` / `tokenFile` | 专用助手 token 文件，位于 `~/.config/knowledgemap/assistant-token`，权限 600 |
 | `personal-weather.config.weatherBackend` | 当前为 `knowledgemap` |
+| `personal-profile.config.shareDefaultCity` | 开启供鉴权网站使用的只读所在地接口 |
 
 旧 Cron 载荷可带 `KURUMI_KM_BASE_URL`、`KURUMI_KM_TOKEN_FILE`。当前 runner 调用宿主 RPC，由宿主插件的受管配置决定业务 API 连接。
 
@@ -77,6 +78,7 @@
 
 - 专用 API 常驻在 `127.0.0.1:3086`，由 `knowledgemap-assistant.service` 运行，读取网站同一业务数据库和后端配置。网站是 `knowledgemap-web.service` 的 `127.0.0.1:8020`（Tailscale 8443）；网站和助手都跑 `/home/afrangry/repository`，桌面旧副本已退役。网站 `localhost:3000` 和开发后端 `127.0.0.1:3085` 不是助手的日常依赖，3085 现在由 Fusion 管理台使用。`/api/health` 只证明进程存活。
 - 助手通过专用认证的 `/api/assistant/` 访问天气、账单、标签和共享事项，拿不到任意 HTTP、SQL 或数据库凭据，也不使用网站登录密钥；CORS 不当认证。
+- 网站通过网关的 `/plugins/personal-profile/current-location` 只读当前所在地；只允许回环 GET，使用既有助手凭据派生的专用密钥，不能用该密钥调用助手业务 API。网站端 `/api/weather/owner` 仅在鉴权 Web 宿主开放。
 
 ### 写入与查询契约
 
@@ -122,6 +124,7 @@ flowchart LR
 - **持久切换标记** `state/personal-reminder-list/data-source.json`：固定 runner 即使收到旧 Cron 参数也读取共享数据，旧 SQLite 的业务读写遇到标记会拒绝。工具、调度器和 runner 必须同批使用共享模式，不从旧库静默回退。
 - **同步 Store 不能承载 HTTP**：Fusion 的同步 Policy/Store 拒绝 Promise/thenable，共享待做走显式异步应用边界（`remote.js`）。`policyAdapter/storeAdapter`、同步 `application.js` 和 `intake.js` 只服务未切换的 SQLite 实现与隔离回归。适配器契约见[文档21](21_后端职责分层与代码整理.md)。
 - **不引入**通用工作流引擎或另一套同步机制；模型先查列表/标签，再调用维护接口。
+- **共享城市**：本人确认的 Profile 所在地是唯一事实，网站默认跟随；页面可见时每 5 分钟及重新可见时刷新。网页选点只保存本浏览器偏好，可恢复跟随，不写 QQ 所在地或播报。旧浏览器地点保留作读取失败时的回退，并显示原因；无旧地点时回退网站默认地点。
 
 ### 回退约束
 
@@ -137,7 +140,7 @@ Fusion 和 KnowledgeMap 分别采集，Fusion 的 SQLite 快照不含 MySQL，�
 
 ## 限制与已知问题
 
-- 共享默认城市未做：Fusion 的当前所在地与网站默认城市各存各的，当前只共享天气查询。
+- 共享城市已通过隔离网关、鉴权网站与浏览器验收，尚未部署或核对真实运行。地点无和风 Location ID 时，网站天气接口使用保留两位小数的经纬度。
 - 播报开场、失败输出与诊断的规则见[文档21](21_后端职责分层与代码整理.md#统一表达与通知)。播报成功以事项正文和投递账本为准。
 - 账单字段或分类选择错误时，后端拒绝执行，模型可以根据错误结果重新提出正确的操作。
 - 单消息多项维护的本人 QQ 验证样本为每消息 3 项；8/9 项上限、重试和冲突只有离线与隔离 HTTP 证据。
@@ -152,6 +155,7 @@ Fusion 和 KnowledgeMap 分别采集，Fusion 的 SQLite 快照不含 MySQL，�
 ```bash
 /usr/bin/node --test chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/bills.test.mjs chatbot/tests/knowledgemap/http.test.mjs
 /usr/bin/node --test chatbot/tests/reminder-list/*.test.mjs
+node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario shared-city
 ```
 
 `bridge.test.mjs` 覆盖播报失败/防重/设置竞态、空列表只记 skipped、旧 runner 防旧写和共享模式工具声明；`http.test.mjs` 起本机独立 FastAPI/SQLite，核对两入口数据一致；`chatbot/tests/reminder-list/` 是 SQLite 实现的回归，不证明共享业务。
@@ -169,6 +173,6 @@ Fusion 和 KnowledgeMap 分别采集，Fusion 的 SQLite 快照不含 MySQL，�
 
 ## 进行中：共享城市与业务复验
 
-- 明确共享默认城市的行为与设置迁移。
+- 共享城市完成隔离验收；按两端部署顺序同步配置并复核真实网站与读取边界。
 - 复验播报全天四个时段、长期运行及长时故障恢复。
 - 补验账单的本人 QQ 往返和连续对话。

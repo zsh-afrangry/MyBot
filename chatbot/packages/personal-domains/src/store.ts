@@ -314,6 +314,7 @@ export type UnixSeconds = number;
 
 export interface WeatherStoreOptions {
   readOnly?: boolean;
+  readOnlyBusyTimeoutMs?: number;
   /** Dedicated state directory. The store enforces mode 0700 on this directory. */
   stateDirectory: string;
   /** Injectable clock for deterministic migrations/tests. Value is Unix seconds. */
@@ -749,11 +750,13 @@ export class WeatherStore {
 
   constructor(options: WeatherStoreOptions) {
     if (options.readOnly) {
+      const busyTimeout = options.readOnlyBusyTimeoutMs ?? 5000;
+      if (!Number.isSafeInteger(busyTimeout) || busyTimeout < 0 || busyTimeout > 5000) throw Error('Invalid read-only busy timeout');
       const location=readOnlyLocation(options.stateDirectory,CONTEXT_DATABASE_FILE);
       this.stateDirectory=location.directory;this.databasePath=location.file;
       this.#now=options.now??currentUnixSeconds;
       this.#database=new DatabaseSync(this.databasePath,{readOnly:true});
-      this.#database.exec('PRAGMA busy_timeout=5000');
+      this.#database.exec(`PRAGMA busy_timeout=${busyTimeout}`);
       return;
     }
     this.stateDirectory = prepareStateDirectory(options.stateDirectory);
