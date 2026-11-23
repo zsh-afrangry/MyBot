@@ -31,6 +31,7 @@ function accessProjection(cfg) {
     exec: entries['kurumi-host-control'].config.exec,
     projects: entries['kurumi-coding'].config.projects,
     projectWriteBoundary: entries['kurumi-coding'].config.writeBoundary,
+    hostAdmin: entries['kurumi-host-admin']?.config,
   };
 }
 
@@ -109,7 +110,7 @@ export async function verifyProductionDeployment({repo}) {
     await step('loaded-plugins', async () => {
       const result = await rpc('plugins.list');
       const plugins = result.plugins.map(p => ({id: p.id, state: p.runtime?.state ?? null}));
-      const required = ['kurumi-qq', 'kurumi-host-control', 'kurumi-access-admin', 'personal-confirmation', 'kurumi-mail', 'kurumi-coding'];
+      const required = ['kurumi-qq', 'kurumi-host-control', 'kurumi-access-admin', 'personal-confirmation', 'kurumi-mail', 'kurumi-coding', 'kurumi-host-admin'];
       if (required.some(id => !plugins.some(p => p.id === id && p.state === 'active'))) {
         throw Error('required_plugins_missing');
       }

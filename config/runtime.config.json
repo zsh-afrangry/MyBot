@@ -76,6 +76,7 @@
             "e7_image",
             "kurumi_code",
             "exec",
+            "kurumi_host_admin",
             "kurumi_logs",
             "kurumi_access"
           ],
@@ -211,6 +212,7 @@
       "personal-reminders",
       "kurumi-e7",
       "kurumi-coding",
+      "kurumi-host-admin",
       "deepseek",
       "kurumi-logs"
     ],
@@ -234,6 +236,7 @@
         "/home/afrangry/kurumi-fusion/chatbot/plugins/personal-reminders",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-e7",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-coding",
+        "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-host-admin",
         "/home/afrangry/.openclaw-fusion/plugins/node_modules/@openclaw/deepseek-provider",
         "/home/afrangry/kurumi-fusion/chatbot/plugins/kurumi-logs"
       ]
@@ -505,6 +508,21 @@
           "runtimeRoot": "/home/afrangry/.openclaw-fusion",
           "snowlumaRoot": "/home/afrangry/snowluma",
           "backendRoot": "/home/afrangry/kurumi-fusion"
+        }
+      },
+      "kurumi-host-admin": {
+        "enabled": true,
+        "config": {
+          "actions": [
+            {
+              "id": "restart_todeskd",
+              "template": "service.restart",
+              "target": "todeskd.service",
+              "label": "重启远程桌面服务",
+              "impact": "重启期间远程桌面连接会短暂断开并需重新连接。",
+              "leaseEligible": false
+            }
+          ]
         }
       }
     },
