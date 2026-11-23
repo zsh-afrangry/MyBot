@@ -393,6 +393,7 @@
       "personal-profile": {
         "enabled": true,
         "config": {
+          "shareDefaultCity": true,
           "apiHost": "${QWEATHER_API_HOST}",
           "apiKey": {
             "source": "env",
