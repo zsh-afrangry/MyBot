@@ -1,8 +1,8 @@
-import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「账单维护」与「如何验证」。
 // Real model/host, production API/MySQL/browser and weather; synthetic owner ingress.
 // Explicit --live required. Restarts Fusion; no real QQ send. Cleans only marked test bills.
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {resolve, join} from 'node:path';

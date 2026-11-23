@@ -1,8 +1,8 @@
-import {withHostControl} from '../access-control/host-config.mjs';
-import {compileAccessConfig} from '../../packages/access-control/config.js';
 #!/usr/bin/env node
 // 对应文档：docs/23_KnowledgeMap业务能力桥接.md「如何验证」。
 // Real model + real isolated OpenClaw dispatch + FastAPI/SQLite; mock OneBot. No QQ/production writes.
+import {withHostControl} from '../access-control/host-config.mjs';
+import {compileAccessConfig} from '../../packages/access-control/config.js';
 import fs from 'node:fs';
 import http from 'node:http';
 import net from 'node:net';
@@ -55,6 +55,7 @@ cfg.agents.entries = {main: {...cfg.agents.entries.main, workspace: join(root, '
   profile: 'messaging', alsoAllow: ['personal_reminder_list_get', 'personal_reminder_list_manage', 'knowledge_bills_get', 'knowledge_bill_add', 'knowledge_bill_manage'],
   deny: ['read', 'write', 'edit', 'exec', 'process', 'message', 'sessions_spawn', 'automations'],
 }}};
+cfg.bindings = (cfg.bindings ?? []).filter(binding => binding.agentId === 'main');
 cfg.plugins = {allow: ['kurumi-qq', 'personal-reminder-list', 'kurumi-knowledgemap'], load: {paths: ['kurumi-qq', 'personal-reminder-list', 'kurumi-knowledgemap'].map(p => join(repo, 'chatbot/plugins', p))},
   entries: {'kurumi-qq': {enabled: true},
     'personal-reminder-list': {enabled: true, config: {backendRoot: join(repo, 'chatbot'), defaultTimes: ['23:58'], dataSource: 'knowledgemap', bridgeBaseUrl: api.baseUrl, bridgeTokenFile: tokenFile}},
@@ -95,7 +96,8 @@ try {
   await turn('host-noDDL-add', '提醒列表加一条：收晾好的衣服，无DDL。', async () => {assert.equal((await api.allTasks()).length, 1); assert.equal((await api.allTasks())[0].event_date, null);});
   await turn('host-reset', '/new', async () => {});
   await turn('host-semantic-void', '收晾好衣服这件事取消了，帮我从提醒列表作废。', async () => {assert.equal((await api.allTasks()).length, 0); assert.ok((await api.allTasks({history: true}))[0].archived_at);});
-  await turn('host-monthly', '查一下2026年10月的账单支出和结余。', async result => {assert.match(JSON.stringify(result.captured), /14/);});
+  const billDate = (await api.request('/api/assistant/bills')).items[0].expense_date;
+  await turn('host-monthly', `查一下${billDate.slice(0, 4)}年${Number(billDate.slice(5, 7))}月的账单支出和结余。`, async result => {assert.match(JSON.stringify(result.captured), /14/);});
   await turn('host-schedule', '把提醒列表每天播报改成08:15和18:15两次。', async () => {
     const db = new DatabaseSync(join(root, 'state/personal-reminder-list/list.sqlite'), {readOnly: true});
     try {assert.equal(db.prepare('SELECT times_json FROM settings').get().times_json, '["08:15","18:15"]');} finally {db.close();}

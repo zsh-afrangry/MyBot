@@ -1,4 +1,4 @@
-状态：开发中（共享城市已部署；播报稳定性与长期验收未完成）
+状态：开发中（共享城市已部署；本人 QQ 账单连续对话待验）
 
 # KnowledgeMap共享业务：提醒列表、记账与天气
 
@@ -155,12 +155,15 @@ Fusion 和 KnowledgeMap 分别采集，Fusion 的 SQLite 快照不含 MySQL，�
 ```bash
 /usr/bin/node --test chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/bills.test.mjs chatbot/tests/knowledgemap/http.test.mjs
 /usr/bin/node --test chatbot/tests/reminder-list/*.test.mjs
+/usr/bin/node --test chatbot/tests/response/notification.test.mjs
 node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario shared-city
 ```
 
 `bridge.test.mjs` 覆盖播报失败/防重/设置竞态、空列表只记 skipped、旧 runner 防旧写和共享模式工具声明；`http.test.mjs` 起本机独立 FastAPI/SQLite，核对两入口数据一致；`chatbot/tests/reminder-list/` 是 SQLite 实现的回归，不证明共享业务。
 
 共享城市通过隔离网关与浏览器场景，并在生产鉴权网站核对真实天气、选点及恢复跟随；未发送 QQ 消息，所在地版本保持不变。
+
+默认四个播报时段及模型故障后的恢复通过隔离时钟与模拟模型验证；账单连续对话通过真实模型与隔离宿主验证，未验收本人 QQ 账单往返和长期运行。
 
 带副作用的验收脚本，运行前读头部注释：
 
@@ -175,6 +178,6 @@ node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario shared
 
 ## 进行中：业务复验
 
-- 复验播报全天四个时段、长期运行及长时故障恢复。
-- 2026-11-23 四个播报时段的开场生成失败，关联 DeepSeek 连接错误；另一个定时任务的投递结果未知，需核对。
-- 补验账单的本人 QQ 往返和连续对话。
+- 补验账单的本人 QQ 往返和连续对话；长期观察播报稳定性及长时故障恢复。
+- 2026-11-23 四个播报时段的开场生成失败，关联 DeepSeek 连接错误；当前真实模型已可返回文本。
+- 同日天气任务的四次执行回执为投递未开始，但按计划时刻回查仍为投递未知，不自动补发。

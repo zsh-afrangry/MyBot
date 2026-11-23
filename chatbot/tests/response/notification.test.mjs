@@ -90,6 +90,24 @@ test('remote list reads the API snapshot before claim; API failure is not an emp
  assert.equal((await f.run({slot:'20:00'})).ok,false);unavailable=false;
  const r=await f.run({slot:'20:00'});assert(r.ok);assert(r.result.text.includes('网站合成事项'));assert(r.result.text.includes('条件保留'));assert(!r.result.text.includes('事项：合成事项〔'));
 });
+test('shared list composes all default slots and resumes at a later slot after model failure',async t=>{
+ const f=fixture(t);let at,modelAvailable=true;
+ registerDigestNotice(f.api,{root:f.root,ownerId:OWNER,openStore:opts=>new ListControlStore(opts)},{
+  now:()=>at,loadItems:async()=>[{id:'km:17',title:'网站合成事项',ddl:null,note:'条件保留'}],
+  composeNotice:async()=>{if(!modelAvailable)throw Error('model unavailable');return{text:'模型自然说明'};},
+ });
+ for(const slot of ['00:00','08:00','12:00','18:00']){
+  at=Date.parse(`2026-11-30T${slot}:05+08:00`);
+  const result=await f.run({slot});assert(result.ok);assert(result.result.text.includes('网站合成事项'));
+  assert(result.result.text.includes('2026-11-30 '+slot));
+  assert.deepEqual((await f.run({slot})).result,{});
+ }
+ at=Date.parse('2026-12-01T00:00:05+08:00');modelAvailable=false;
+ const failed=await f.run({slot:'00:00'});assert(!failed.ok);assert(!failed.result?.text);
+ modelAvailable=true;assert.deepEqual((await f.run({slot:'00:00'})).result,{});
+ at=Date.parse('2026-12-01T08:00:05+08:00');
+ const recovered=await f.run({slot:'08:00'});assert(recovered.ok);assert(recovered.result.text.includes('网站合成事项'));
+});
 test('one-off notice cannot claim early or twice and preserves frozen time/content after model generation',async t=>{
  const f=fixture(t),id=await seedReminder(f.root,OWNER,f.now);let calls=0;
  registerReminderNotice(f.api,{open:()=>new ReminderStore({stateDirectory:f.root+'/state/personal-reminders',now:()=>Math.floor(f.now()/1000)}),composeNotice:async input=>{calls++;input.check();return{text:'模型自然提醒'};}});
