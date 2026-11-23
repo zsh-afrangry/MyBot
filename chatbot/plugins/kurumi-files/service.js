@@ -986,6 +986,8 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
         if (!pattern && !query) fail('invalid_files_arguments');
         const nameMatcher = compileSearchMatcher(pattern);
         const maxResults = Math.max(1, Math.min(100, Number.isSafeInteger(args.maxResults) ? args.maxResults : 30));
+        const HEAVY_IGNORED_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv']);
+        const targetBase = path.basename(target.canonicalPath);
 
         const matches = [];
         let visited = 0;
@@ -994,7 +996,12 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
         const queue = [target.canonicalPath];
         while (queue.length > 0 && matches.length < maxResults && visited < 2000) {
           const dir = queue.shift();
-          const children = fs.readdirSync(dir, {withFileTypes: true}).sort((a, b) => a.name.localeCompare(b.name));
+          let children;
+          try {
+            children = fs.readdirSync(dir, {withFileTypes: true}).sort((a, b) => a.name.localeCompare(b.name));
+          } catch {
+            continue;
+          }
           for (const child of children) {
             visited++;
             if (visited > 2000) { truncated = true; break; }
@@ -1004,7 +1011,11 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
             if (child.isSymbolicLink()) continue;
 
             if (child.isDirectory()) {
-              queue.push(childPath);
+              const skipProtectedBranch = cls.readOnly && !target.readOnly;
+              const skipHeavyBranch = HEAVY_IGNORED_DIRS.has(child.name) && targetBase !== child.name;
+              if (!skipProtectedBranch && !skipHeavyBranch) {
+                queue.push(childPath);
+              }
               if (nameMatcher && !query && nameMatcher.test(child.name)) {
                 matches.push({path: childPath, kind: 'dir', tier: cls.tier});
                 if (matches.length >= maxResults) { truncated = true; break; }
@@ -1017,9 +1028,14 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
             if (!query) {
               matches.push({path: childPath, kind: 'file', tier: cls.tier});
             } else {
-              const st = fs.lstatSync(childPath);
-              if (st.size > 512 * 1024) continue;
-              const buf = fs.readFileSync(childPath);
+              let buf;
+              try {
+                const st = fs.lstatSync(childPath);
+                if (st.size > 512 * 1024) continue;
+                buf = fs.readFileSync(childPath);
+              } catch {
+                continue;
+              }
               if (buf.includes(0)) continue;
               const lines = buf.toString('utf8').split(/\r?\n/u);
               const idx = lines.findIndex(line => line.includes(query));

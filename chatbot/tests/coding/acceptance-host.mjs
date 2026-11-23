@@ -42,7 +42,7 @@ let modelFailure;
 const toolCall = (id, args) => ({role: 'assistant', content: null, tool_calls: [
   {id, type: 'function', function: {name: 'kurumi_code', arguments: JSON.stringify(args)}},
 ]});
-const readJson = async req => {let data = ''; for await (const chunk of req) data += chunk; return JSON.parse(data);};
+const readJson = async req => {const chunks = []; for await (const chunk of req) chunks.push(chunk); return JSON.parse(Buffer.concat(chunks).toString('utf8'));};
 const listen = async server => {server.listen(0, '127.0.0.1'); await once(server, 'listening'); return '127.0.0.1:' + server.address().port;};
 const onebot = await createOneBotPeer({token, botId: bot, subjects: [owner]});
 const {sends} = onebot;

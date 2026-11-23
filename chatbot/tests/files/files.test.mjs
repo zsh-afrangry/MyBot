@@ -378,6 +378,101 @@ test('batch cleanup confirmation, drift detection, no replay, and leased batch/T
   }, cfgObj, req), {code: 'lease_revoked'});
 });
 
+test('Stage 2B homeDir broad T1 protects dotfiles, toolchains, nested redlines, search budget, and cleanup', async t => {
+  const env = setupEnv('stage2b-');
+  const desktop = path.join(env.homeDir, '桌面');
+  const miniconda = path.join(env.homeDir, 'miniconda3', 'envs', 'py');
+  const xwechat = path.join(env.homeDir, '.xwechat');
+  const keyrings = path.join(env.homeDir, '.local', 'share', 'keyrings');
+  const kmConfig = path.join(env.homeDir, '.config', 'knowledgemap');
+  const cacheDir = path.join(env.homeDir, '.cache', 'pip');
+  for (const dir of [desktop, miniconda, xwechat, keyrings, kmConfig, cacheDir]) {
+    fs.mkdirSync(dir, {recursive: true});
+  }
+  fs.writeFileSync(path.join(xwechat, 'session.db'), 'WECHAT_SECRET');
+  fs.writeFileSync(path.join(keyrings, 'login.keyring'), 'KEYRING_SECRET');
+  fs.writeFileSync(path.join(kmConfig, 'tokens.json'), 'KM_TOKEN');
+  fs.writeFileSync(path.join(miniconda, 'conda.txt'), 'needle-ignore-in-toolchain');
+  fs.writeFileSync(path.join(cacheDir, 'wheel.txt'), 'needle-ignore-in-cache');
+  fs.writeFileSync(path.join(env.repoReadOnly, 'notes.md'), 'needle-ignore-in-repo');
+  fs.writeFileSync(path.join(desktop, 'todo.md'), 'needle-in-desktop\n');
+
+  const stage2bConfig = {
+    ...env.rawConfig,
+    t1Roots: [{path: env.homeDir, label: '主目录一般工作区'}],
+  };
+  let nowMs = 1_800_000_000_000;
+  const cfg = validateFilesConfig(stage2bConfig, {stateRoot: env.stateRoot});
+  const filesStore = new FilesStore(env.stateRoot, cfg, () => nowMs);
+  const leaseStore = new ScopedLeaseStore(env.stateRoot, () => nowMs);
+  t.after(() => { filesStore.close(); leaseStore.close(); });
+
+  const service = createFilesService(stage2bConfig, filesStore, leaseStore, {stateRoot: env.stateRoot, trace() {}});
+  const helper = makeActor();
+  const req = {actor: helper.actor, scope: helper.scope, check() {}, isInteractiveOwner: true};
+  const cfgObj = {channels: {'kurumi-qq': {ownerId: helper.row.qq, accessControl: ownerPolicy(helper.row.qq)}}};
+
+  // Writable desktop/downloads work directly under T1 with auto-snapshots, while dotfiles/toolchains stay protected.
+  const desktopNote = path.join(desktop, 'summary.txt');
+  const created = await service({action: 'write', path: desktopNote, content: 'v1', mode: 'create'}, cfgObj, req);
+  assert.equal(created.tier, 'T1');
+  const edited = await service({action: 'write', path: desktopNote, content: 'v2', mode: 'overwrite'}, cfgObj, req);
+  assert(edited.snapshotId);
+
+  // Nested sensitive T3 directories stay invisible and unreadable even with homeDir as T1.
+  for (const redPath of [
+    path.join(xwechat, 'session.db'),
+    path.join(keyrings, 'login.keyring'),
+    path.join(kmConfig, 'tokens.json'),
+    path.join(desktop, '.env.prod'),
+  ]) {
+    await assert.rejects(() => service({action: 'read', path: redPath}, cfgObj, req), {code: 'files_redline_denied'});
+  }
+  await assert.rejects(() => service({
+    action: 'write', path: path.join(desktop, '.env.prod'), content: 'SECRET=1', mode: 'create',
+  }, cfgObj, req), {code: 'files_redline_denied'});
+
+  // Modifying/creating dotfiles directly under homeDir or writing inside miniconda3 is blocked as readOnly T2.
+  for (const [protectedPath, mode] of [
+    [path.join(env.homeDir, '.bashrc'), 'overwrite'],
+    [path.join(env.homeDir, '.evil-profile'), 'create'],
+    [path.join(miniconda, 'site.py'), 'create'],
+  ]) {
+    await assert.rejects(() => service({
+      action: 'write', path: protectedPath, content: 'blocked', mode,
+    }, cfgObj, req), {code: 'files_t2_readonly_denied'});
+  }
+  await assert.rejects(() => service({
+    action: 'mkdir', path: path.join(env.homeDir, '.hidden-evil-dir'),
+  }, cfgObj, req), {code: 'files_t2_readonly_denied'});
+
+  // Listing homeDir skips T3 redlines and labels miniconda3/.bashrc as readOnly T2, kurumi-space as T0, 桌面 as T1.
+  const listing = await service({action: 'list', path: env.homeDir}, cfgObj, req);
+  const byName = new Map(listing.entries.map(e => [e.name, e]));
+  assert(!byName.has('.ssh'));
+  assert(!byName.has('.xwechat'));
+  assert.equal(byName.get('kurumi-space')?.tier, 'T0');
+  assert.equal(byName.get('桌面')?.tier, 'T1');
+  assert.equal(byName.get('桌面')?.readOnly, false);
+  assert.equal(byName.get('.bashrc')?.tier, 'T2');
+  assert.equal(byName.get('.bashrc')?.readOnly, true);
+  assert.equal(byName.get('miniconda3')?.tier, 'T2');
+  assert.equal(byName.get('miniconda3')?.readOnly, true);
+
+  // Searching homeDir skips readOnly subtrees (.cache, miniconda3, repository) and finds 桌面/todo.md cleanly.
+  const foundHome = await service({action: 'search', path: env.homeDir, query: 'needle-'}, cfgObj, req);
+  assert.deepEqual(foundHome.matches.map(m => m.path), [path.join(desktop, 'todo.md')]);
+
+  // Explicit search inside readOnly repository still works.
+  const foundRepo = await service({action: 'search', path: env.repoReadOnly, query: 'needle-'}, cfgObj, req);
+  assert.deepEqual(foundRepo.matches.map(m => m.path), [path.join(env.repoReadOnly, 'notes.md')]);
+
+  // cleanup_dir directly on homeDir (even includeRoot: false + pattern) must always fail closed.
+  await assert.rejects(() => service({
+    action: 'propose', operation: 'cleanup_dir', path: env.homeDir, includeRoot: false, pattern: '*.tmp',
+  }, cfgObj, req), {code: 'files_tier_root_protected'});
+});
+
 test('OpenClaw service manager starts/stops kurumi-files and cleans both confirmation backends', async t => {
   const sdkDist = path.dirname(fileURLToPath(import.meta.resolve('openclaw')));
   const bundles = fs.readdirSync(sdkDist).filter(name => /^services-.*\.mjs$/.test(name)

@@ -39,12 +39,14 @@ export async function createOneBotPeer({token, botId, subjects, reply, methods =
       const method = req.url.slice(1);
       const custom = Object.hasOwn(methods, method) ? methods[method] : undefined;
       if (!['get_login_info', 'send_private_msg'].includes(method) && !custom) {res.writeHead(404).end(); return;}
-      let raw = '';
+      const chunks = [];
+      let rawBytes = 0;
       for await (const chunk of req) {
-        raw += chunk;
-        assert(raw.length <= 16 * 1024 * 1024, 'Fixture payload exceeds its bound');
+        rawBytes += chunk.length;
+        assert(rawBytes <= 16 * 1024 * 1024, 'Fixture payload exceeds its bound');
+        chunks.push(chunk);
       }
-      const args = JSON.parse(raw);
+      const args = JSON.parse(Buffer.concat(chunks).toString('utf8'));
       let data = {user_id: Number(botId)};
       if (method === 'send_private_msg') {
         assert(allowed.has(String(args.user_id)), 'Send targeted an unregistered fixture subject');

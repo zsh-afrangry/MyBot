@@ -32,8 +32,12 @@ const workspace = path.join(state, 'workspace');
 const memberWorkspace = path.join(state, 'users/100003/workspace');
 const fakeHome = path.join(root, 'fake-home');
 const kurumiSpace = path.join(fakeHome, 'kurumi-space');
+const desktop = path.join(fakeHome, '桌面');
 const downloads = path.join(fakeHome, '下载');
 const documents = path.join(fakeHome, '文档');
+const miniconda = path.join(fakeHome, 'miniconda3', 'envs', 'base');
+const xwechatDir = path.join(fakeHome, '.xwechat');
+const keyringsDir = path.join(fakeHome, '.local', 'share', 'keyrings');
 const repoRo = path.join(fakeHome, 'repository');
 const sshDir = path.join(fakeHome, '.ssh');
 const execSandbox = path.join(root, 'exec-sandbox');
@@ -48,8 +52,12 @@ for (const dir of [
   workspace,
   memberWorkspace,
   kurumiSpace,
+  desktop,
   downloads,
   documents,
+  miniconda,
+  xwechatDir,
+  keyringsDir,
   repoRo,
   sshDir,
   execSandbox,
@@ -59,6 +67,11 @@ for (const dir of [
 }
 
 fs.writeFileSync(path.join(sshDir, 'id_ed25519'), 'PRIVATE_SSH_KEY_SENTINEL');
+fs.writeFileSync(path.join(xwechatDir, 'session.db'), 'PRIVATE_XWECHAT_SENTINEL');
+fs.writeFileSync(path.join(keyringsDir, 'login.keyring'), 'PRIVATE_KEYRING_SENTINEL');
+fs.writeFileSync(path.join(fakeHome, '.bashrc'), 'export PATH=$PATH\n');
+fs.writeFileSync(path.join(miniconda, 'pkg.py'), 'CONDA_TOOL_NEEDLE=1\n');
+fs.writeFileSync(path.join(desktop, 'desk-note.txt'), 'DESK_NEEDLE_OK\n');
 fs.writeFileSync(path.join(downloads, '.env.local'), 'SECRET_ENV_SENTINEL=1\n');
 fs.writeFileSync(path.join(repoRo, 'README.md'), 'repository-readonly-content\n');
 fs.symlinkSync(path.join(sshDir, 'id_ed25519'), path.join(downloads, 'escape-to-ssh'));
@@ -134,10 +147,10 @@ function modelReply(body, tool, res, text = '宿主测试回复。') {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url !== '/v1/chat/completions' || req.method !== 'POST') { res.writeHead(404).end(); return; }
-    let raw = '';
-    for await (const bytes of req) raw += bytes;
+    const chunks = [];
+    for await (const bytes of req) chunks.push(bytes);
     res.setHeader('content-type', 'application/json');
-    const body = JSON.parse(raw);
+    const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
     assert(++report.requests <= 140, 'Unexpected model request count');
     assert(active, 'Unexpected foreground model request');
     if (active.member) {
@@ -263,10 +276,7 @@ const buildConfig = () => compileAccessConfig(withHostControl({
           homeDir: fakeHome,
           defaultWorkspace: kurumiSpace,
           t0Roots: [{path: kurumiSpace, label: 'Kurumi 草稿区'}],
-          t1Roots: [
-            {path: downloads, label: '下载'},
-            {path: documents, label: '文档'},
-          ],
+          t1Roots: [{path: fakeHome, label: '主目录一般工作区'}],
           t2Roots: [{path: repoRo, label: '仓库只读区', readOnly: true, allowLease: false}],
         },
       },
@@ -418,14 +428,16 @@ try {
   await step('kurumi_files performs T0/T1 single-file CRUD with automatic snapshots and verified restore', async () => {
     const spaceFile = path.join(kurumiSpace, 'draft.md');
     const dlFile = path.join(downloads, 'note.txt');
-    await turn(owner, '在草稿区和下载目录读写并还原测试文件', [
+    const deskFile = path.join(desktop, 'stage2b.txt');
+    await turn(owner, '在草稿区和主目录一般工作区读写并还原测试文件', [
       {
         name: 'kurumi_files',
         args: {action: 'roots'},
         verify(result) {
           assert.equal(result.ok, true);
           assert.equal(result.defaultWorkspace, kurumiSpace);
-          assert.equal(result.t1Roots.length, 2);
+          assert.equal(result.t1Roots.length, 1);
+          assert.equal(result.t1Roots[0].path, fakeHome);
         },
       },
       {
@@ -435,6 +447,24 @@ try {
         verify(result) {
           assert.equal(result.ok, true);
           assert.equal(result.tier, 'T0');
+        },
+      },
+      {
+        name: 'kurumi_files',
+        direct: true,
+        args: {action: 'write', path: deskFile, content: 'desktop-v1', mode: 'create'},
+        verify(result) {
+          assert.equal(result.ok, true);
+          assert.equal(result.tier, 'T1');
+        },
+      },
+      {
+        name: 'kurumi_files',
+        direct: true,
+        args: {action: 'search', path: fakeHome, query: 'NEEDLE'},
+        verify(result) {
+          assert.equal(result.ok, true);
+          assert.deepEqual(result.matches.map(m => m.path), [path.join(desktop, 'desk-note.txt')]);
         },
       },
       {
@@ -485,7 +515,7 @@ try {
     assert(editSnapshotId && deleteSnapshotId && editSnapshotId !== deleteSnapshotId);
   });
 
-  await step('T2 read-only, T3 redlines, and symlink escapes are rejected across read and write', async () => {
+  await step('T2 read-only, dotfiles, toolchains, T3 redlines, and symlink escapes are rejected', async () => {
     await turn(owner, '试试读取只读仓以及敏感路径和软链逃逸', [
       {
         name: 'kurumi_files',
@@ -500,6 +530,30 @@ try {
         direct: true,
         args: {action: 'write', path: path.join(repoRo, 'hack.txt'), content: 'no'},
         verify: result => assert.deepEqual({ok: result.ok, code: result.code}, {ok: false, code: 'files_t2_readonly_denied'}),
+      },
+      {
+        name: 'kurumi_files',
+        direct: true,
+        args: {action: 'write', path: path.join(fakeHome, '.evil-rc'), content: 'no'},
+        verify: result => assert.deepEqual({ok: result.ok, code: result.code}, {ok: false, code: 'files_t2_readonly_denied'}),
+      },
+      {
+        name: 'kurumi_files',
+        direct: true,
+        args: {action: 'write', path: path.join(miniconda, 'evil.py'), content: 'no'},
+        verify: result => assert.deepEqual({ok: result.ok, code: result.code}, {ok: false, code: 'files_t2_readonly_denied'}),
+      },
+      {
+        name: 'kurumi_files',
+        direct: true,
+        args: {action: 'read', path: path.join(xwechatDir, 'session.db')},
+        verify: result => assert.deepEqual({ok: result.ok, code: result.code}, {ok: false, code: 'files_redline_denied'}),
+      },
+      {
+        name: 'kurumi_files',
+        direct: true,
+        args: {action: 'read', path: path.join(keyringsDir, 'login.keyring')},
+        verify: result => assert.deepEqual({ok: result.ok, code: result.code}, {ok: false, code: 'files_redline_denied'}),
       },
       {
         name: 'kurumi_files',
@@ -557,7 +611,7 @@ try {
     ], '已整理清理清单并展示，确认后再执行。');
 
     const sentText = pvTurn.sent.map(textOfSend).join('\n');
-    for (const fact of cleanupProposal.presentationFacts) assert(sentText.includes(fact));
+    for (const fact of cleanupProposal.presentationFacts) assert(sentText.includes(fact), `Missing fact ${JSON.stringify(fact)} in sentText: ${JSON.stringify(sentText)}`);
     assert(!/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/iu.test(sentText));
     assert(readFilesAudit('SELECT presented_at_utc FROM confirmation_previews WHERE proposal_id=?', cleanupProposal.proposalId)?.presented_at_utc);
     assert(fs.existsSync(cleanupDir));

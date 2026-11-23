@@ -212,6 +212,7 @@ export function buildOperationPlan(operation, args, cfg, redlineList, {requireLe
     case 'cleanup_dir': {
       const includeRoot = args.includeRoot === true;
       const target = resolveSafePath(args.path, cfg, redlineList, {forWrite: true, allowRootItself: !includeRoot});
+      if (cfg.homeDir && target.canonicalPath === cfg.homeDir) fail('files_tier_root_protected');
       assertPlanTierAllowed(target, false, requireLeaseEligible);
       if (!target.exists || !target.lstat?.isDirectory()) fail('files_not_directory');
       const namePattern = typeof args.pattern === 'string' && args.pattern.trim() ? args.pattern.trim() : null;

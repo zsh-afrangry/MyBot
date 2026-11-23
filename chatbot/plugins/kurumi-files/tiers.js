@@ -26,8 +26,40 @@ export const HOME_REDLINE_ENTRIES = Object.freeze([
   '.aws',
   '.kube',
   '.config/knowledgemap',
+  '.config/gh',
+  '.config/git',
+  '.config/QQ',
+  '.config/google-chrome',
+  '.config/google-chrome-beta',
+  '.config/google-chrome-for-testing',
+  '.config/google-chrome-unstable',
+  '.config/google-chrome-headless',
+  '.config/microsoft-edge',
+  '.config/opera',
+  '.config/vivaldi',
+  '.config/clash',
+  '.config/clash-verge',
+  '.config/io.github.clash-verge-rev.clash-verge-rev',
+  '.local/share/keyrings',
+  '.local/share/kurumi-coding-pilot-20261029',
+  '.local/share/kurumi-admin-web',
+  '.local/share/kurumi-fusion',
+  '.local/share/dsh-launcher-update-20261010',
+  '.local/share/knowledgemap',
+  '.local/share/opencode',
+  '.xwechat',
+  '.arkcli',
+  '.claude',
   '.claude.json',
   '.claude.json.backup',
+  '.copilot',
+  '.gemini',
+  '.opencode',
+  '.cc-switch',
+  '.ollama',
+  '.vscode-server',
+  '.antigravity-ide',
+  '.antigravity-ide-server',
   '.codex',
   '.dsh',
   '.netrc',
@@ -38,6 +70,15 @@ export const HOME_REDLINE_ENTRIES = Object.freeze([
   '.Xauthority',
   'kurumi-whitelist-acceptance',
 ]);
+
+export const HOME_PROTECTED_READONLY_ENTRIES = Object.freeze([
+  'miniconda3',
+  'snap',
+  'Applications',
+  'kurumi-archive',
+]);
+
+const HOME_PROTECTED_READONLY_SET = new Set(HOME_PROTECTED_READONLY_ENTRIES);
 
 const ALLOWED_ENV_EXAMPLES = /^\.env\.(?:example|sample|template)$/iu;
 const ENV_REDLINE = /^\.env(?:\..+)?$/iu;
@@ -129,19 +170,21 @@ export function classifyNormalizedPath(normPath, cfg, redlineList) {
     }
   }
 
-  // Stage 2B readiness: dotfiles/dotdirs directly under homeDir never slip into writable T1.
+  // Dotfiles/dotdirs and known toolchains/archives directly under homeDir never slip into writable T1.
   if (cfg.homeDir && insideRoot(normPath, cfg.homeDir) && normPath !== cfg.homeDir) {
     const relative = path.relative(cfg.homeDir, normPath);
     const firstSeg = relative.split(path.sep)[0];
-    if (firstSeg.startsWith('.')) {
+    const isDotEntry = firstSeg.startsWith('.');
+    const isProtectedSubtree = isDotEntry || HOME_PROTECTED_READONLY_SET.has(firstSeg);
+    if (isProtectedSubtree) {
       const explicitNonT1 = candidates.some(
         c => (c.tier === 'T0' || c.tier === 'T2') && c.matchedRoot !== cfg.homeDir,
       );
       if (!explicitNonT1) {
         return {
           tier: 'T2',
-          matchedRoot: path.join(cfg.homeDir, firstSeg),
-          label: '主目录隐藏配置（默认只读保护）',
+          matchedRoot: cfg.homeDir,
+          label: isDotEntry ? '主目录隐藏配置（默认只读保护）' : '主目录工具链/归档（默认只读保护）',
           readOnly: true,
           allowLease: false,
         };
