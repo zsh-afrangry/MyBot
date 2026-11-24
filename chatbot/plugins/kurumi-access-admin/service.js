@@ -1,6 +1,7 @@
 import {isDeepStrictEqual} from 'node:util';
 import {randomUUID} from 'node:crypto';
 import {AccessError, accessPolicy} from '../../packages/access-control/index.js';
+import {effectiveMailSenders} from '../../packages/access-control/mail-senders.js';
 import {getCategory} from './categories.js';
 import {assertFields, proposalIdPattern, sha256} from './policy.js';
 import {accessChangeResult} from './feedback.js';
@@ -42,17 +43,24 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
     const target = runtimeTarget ? runtimeSource : source;
     const current = runtimeTarget ? target.read() : identity;
     if (runtimeTarget) getCategory(name, current.policy);
-    const revisions = runtimeTarget ? {} : {sourceRevision: current.policy.revision, runtimeRevision: runtime.revision};
+    const senderView = policy => name === 'mail_sender'
+      ? effectiveMailSenders(config, stateRoot, {sourcePolicy: policy}) : null;
+    const projection = senderView(identity.policy);
+    const revisions = runtimeTarget ? {} : {
+      sourceRevision: current.policy.revision, runtimeRevision: projection?.revision ?? runtime.revision,
+    };
     const env = {config, intent: current.policy, sourceRoot, stateRoot,
       owner: identity.policy.subjects.find(row => row.role === 'owner'),
       runtimeOwner: runtime.subjects.find(row => row.role === 'owner'), toolSurface};
     const repoList = category.list(current.policy);
-    const liveList = category.live(runtime, config);
+    const liveList = projection?.entries ?? category.live(runtime, config);
     const feedbackActions = new Set(config.plugins?.entries?.['kurumi-access-admin']?.config?.feedbackActions ?? ['access.' + name]);
     const currentStatus = {
       ...(!legacy ? {category: name} : {}),
       ...revisions,
-      inSync: legacy ? isDeepStrictEqual(runtime, current.policy) : isDeepStrictEqual(liveList, repoList),
+      inSync: projection?.available === false ? false
+        : legacy ? isDeepStrictEqual(runtime, current.policy) : isDeepStrictEqual(liveList, repoList),
+      ...(projection?.available === false && {runtimeUnavailable: true}),
     };
     const assertUnchanged = () => {
       if ((runtimeTarget && source.read().hash !== identity.hash) || target.read().hash !== current.hash) {
@@ -131,12 +139,14 @@ export function createAccessAdminService(source, store, {runtimeSource, sourceRo
             }
           });
           const written = result.state === 'written';
+          const effective = written ? senderView(draft.next) : projection;
           const reply = {ok: written, status: result.state, proposalId: id,
             ...(!legacy ? {category: name} : {}),
             ...(result.code && {code: result.code}),
             ...revisions,
-            ...(written && !runtimeTarget && {sourceRevision: draft.next.revision})};
-          return accessChangeResult(reply, {name, category, feedbackActions, liveList,
+            ...(written && !runtimeTarget && {sourceRevision: draft.next.revision}),
+            ...(effective && {runtimeRevision: effective.revision, ...(!effective.available && {runtimeUnavailable: true})})};
+          return accessChangeResult(reply, {name, category, feedbackActions, liveList: effective?.entries ?? liveList,
             repoList: written ? category.list(draft.next) : repoList,
             plan: {...row.plan, before: draft.before, after: draft.after}});
         });

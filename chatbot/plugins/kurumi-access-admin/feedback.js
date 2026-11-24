@@ -40,7 +40,8 @@ export function accessChangeResult(result, {name, category, plan, repoList, live
       && matchesChange(category, list, plan);
     const sourceMatches = matchesVersion(repoList, result.sourceRevision);
     sourceStatus = sourceMatches ? 'current' : 'superseded';
-    if (matchesVersion(liveList, result.runtimeRevision)) runtimeStatus = 'active';
+    if (result.runtimeUnavailable) runtimeStatus = 'unverified';
+    else if (matchesVersion(liveList, result.runtimeRevision)) runtimeStatus = 'active';
     else runtimeStatus = sourceMatches ? 'pending_sync' : 'not_active';
     result.activation = sourceMatches ? runtimeStatus : 'superseded';
   }

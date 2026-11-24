@@ -53,7 +53,7 @@ const entry: ReturnType<typeof definePluginEntry> = definePluginEntry({
       description: 'REQUIRED domain mapping: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding, QQ member=access, controlled host admin=host_sudo, controlled files=host_files, scoped task lease=scoped_lease, bill batch import=bills_import, inbox sensitive action/untrusted email unlock=mail_inbox. Coding, access, host_sudo, host_files, scoped_lease, bills_import and mail_inbox confirm one target at a time. '
         + 'Read pending proposals with action=list. To re-display, MUST use action=preview; list is not a presentation receipt. '
         + 'Resolve the current owner confirmation to previously delivered frozen previews. '
-        + 'For one use action=confirm with its real proposalId/payloadHash. For explicit multiple use ONE call with complete targets (max 16, outer domain=first target). '
+        + 'For one use action=confirm with its real proposalId/payloadHash. For explicit multiple in a domain supporting multi-target confirmation use ONE call with complete targets (max 16, outer domain=first target). A bill import of multiple files uses one grouped preview and one proposal, without targets. '
         + 'Then call the matching domain commit for EACH authorized target; report partial/unknown outcomes accurately. '
         + 'Do not require a code. Ambiguous/negative/quoted statements or a request to change the proposal need clarification/new preview. '
         + 'New proposals cannot be confirmed in the same message. Owner private chat only.',

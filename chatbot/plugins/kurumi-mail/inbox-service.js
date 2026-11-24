@@ -204,7 +204,9 @@ export async function executeInboxAction({
   const accountId = resolveAccountId(args?.account);
   const imapConfig = readImapConfig();
   const folder = String(args?.folder ?? "INBOX").trim() || "INBOX";
-  const allowedSenders = normalizeAllowlist(allowedSendersOf(runtimeCfg));
+  const currentSenders = () => normalizeAllowlist(allowedSendersOf(
+    assertOwnerContext(ctx, api.config, expectedPermission),
+  ));
   const filesConfig = runtimeCfg?.plugins?.entries?.["kurumi-files"]?.config;
 
   const store = openStore();
@@ -269,6 +271,7 @@ export async function executeInboxAction({
         const selected = uids.slice(-limit).reverse();
         const headers = await client.uidFetchHeaders(selected);
         const byUid = new Map(headers.map(h => [h.uid, h]));
+        const allowedSenders = currentSenders();
         return {
           uidValidity: mbox.uidValidity,
           exists: mbox.exists,
@@ -338,7 +341,7 @@ export async function executeInboxAction({
       const trust = resolveTrust({
         fromAddress: parsed.from.address,
         authFailed: parsed.authFailed,
-        allowedSenders,
+        allowedSenders: currentSenders(),
         activeGrant,
       });
 

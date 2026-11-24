@@ -148,13 +148,14 @@ export function stringListView(entries) {
   return [...new Set(entries)].sort();
 }
 
-export function stringListPreview(label, before, after, effect, revision) {
+export function stringListPreview(label, before, after, effect, revision,
+  activation = '确认后保存到仓库，按名单同步流程生效。') {
   return [
     label + '白名单预览',
     '修改前：' + (before === null ? '无记录' : JSON.stringify(before)),
     '修改后：' + (after === null ? '无记录' : JSON.stringify(after)),
     ...(revision === undefined ? [] : ['配置版本：' + revision + ' → ' + (revision + 1)]),
     effect,
-    '确认后保存到仓库，按名单同步流程生效。',
+    activation,
   ].join('\n');
 }

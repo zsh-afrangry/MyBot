@@ -8,7 +8,28 @@ type Opened = {backend: NaturalConfirmationBackend; rows: ConfirmationPreview[]}
 const matches = (p: NaturalConfirmationSelection, s: NaturalConfirmationSelection) => p.domain === s.domain
   && p.proposalId === s.proposalId && p.payloadHash === s.payloadHash;
 export const MAX_CONFIRMATION_TARGETS = 16;
-const bareAssent = (content: string) => /^(?:我\s*)?(?:确认|同意|批准|可以|好的?|没问题|yes|ok)[。！!]?$/iu.test(normalizedContent(content));
+const orderedAssent = /^(?:(?:嗯+|好(?:的)?|行)[，,\s]*)?(?:请|你(?:就)?|就)?\s*(?:依次|逐份|逐个|按(?:这个|刚才的)顺序)\s*(?:提交|导入)(?:吧|即可|就(?:行|好|可以))?[。！!]?$/u;
+const digestDisplayPreference = /^(?:以后|今后|后续)?\s*(?:sha-?256\s*的?)?\s*(?:具体的?)?哈希值?(?:就)?(?:不用|不必|不要|别)(?:再)?(?:展示|显示|列出)(?:给我)?了?(?:[，,]\s*你自己知道就行)?$/iu;
+const digestDisplayException = /^如果(?:遇到)?(?:两个|两份)?(?:文件的?)?哈希值?(?:一致|相同)(?:时|的话?)?[，,]?\s*(?:再|才|就)?(?:单独)?(?:注明|说明|提醒)(?:一下|就行)?$/u;
+
+function confirmationText(text: string): string {
+  // Only detach a separate display preference. Conditions or changes to
+  // the action itself still go through the exclusions below.
+  const boundary = /[。；;！!]\s*(?:对了|另外)[，,:：]\s*/u.exec(text);
+  if (!boundary) return text;
+  const [preference, exception, ...other] = text.slice(boundary.index + boundary[0].length)
+    .replace(/[。；;！!]$/u, '').split(/[。；;！!]/u).map(part => part.trim());
+  if (other.length || !digestDisplayPreference.test(preference ?? '')
+    || (exception !== undefined && !digestDisplayException.test(exception))) return text;
+  return text.slice(0, boundary.index).trimEnd();
+}
+
+function bareAssent(content: string): boolean {
+  const text = confirmationText(normalizedContent(content));
+  return /^(?:我\s*)?(?:确认(?:导入|提交)?|同意|批准|可以|好的?|没问题|yes|ok)[。！!]?$/iu.test(text)
+    || orderedAssent.test(text);
+}
+
 const orderOf = (p: ConfirmationPreview) => p.presentationOrder ?? (p.presentedAtUtc ?? 0) * 1000;
 
 function withBackends<T>(event: ConfirmationInboundEvent, work: (opened: Opened) => T): T {
@@ -51,15 +72,18 @@ export function markConfirmationPresented(event: ConfirmationInboundEvent, selec
 
 /** Bounded exclusions, not a target/title classifier. The assistant resolves intent and reference. */
 export function naturalConfirmationTextAllowed(content: string): boolean {
-  const text = normalizedContent(content);
-  if (!text || text.length > 2000 || /[?？]/u.test(text)) return false;
+  const normalized = normalizedContent(content);
+  if (!normalized || normalized.length > 2000) return false;
+  const text = confirmationText(normalized);
+  if (/[?？]/u.test(text)) return false;
   if (/^(?:[“"「『]|引用|转述|他说|她说|别人说|如果|假如|假设|什么|怎么|如何|是否|能否)/u.test(text)) return false;
   if (/(?:如果|假如|假设|他说|她说|别人说)|确认(?:是什么|的意思|是什么意思)|(?:知道了|收到|先放着|先放一放|稍后再说)/u.test(text)) return false;
   if (/(?:不(?:用|要|必|再)?|别|取消|撤回|暂缓|拒绝)\s*确认|不(?:同意|批准)|(?:先|暂时?)别|不要(?:发送|发信|执行|提交)/u.test(text)) return false;
   if (/(?:不过|但是|但|先).*(?:改成|改为|换成|调整)|[，,]\s*(?:请|把|再)?\s*(?:改成|改为|换成|调整)/u.test(text)) return false;
   // Intent/reference remains the assistant's job. Assent need not begin or end
   // the sentence (e.g. “只确认刚才两项中的第二项，第一项先不要动”).
-  return /(?:确认|同意|批准|可以|没问题|就按|按.*办|发吧|发送|执行|就这样|\byes\b|\bok\b)/iu.test(text);
+  return orderedAssent.test(text)
+    || /(?:确认|同意|批准|可以|没问题|就按|按.*办|发吧|发送|执行|就这样|\byes\b|\bok\b)/iu.test(text);
 }
 
 function requestError(event: ConfirmationInboundEvent, nowMs: number): string | undefined {
@@ -70,14 +94,13 @@ function requestError(event: ConfirmationInboundEvent, nowMs: number): string | 
   if (!naturalConfirmationTextAllowed(event.content)) return 'confirmation_not_explicit';
 }
 
-function confirmOne(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, stores: Opened, nowMs: number, batch = false): NaturalConfirmationResult {
+function confirmOne(event: ConfirmationInboundEvent, selection: NaturalConfirmationSelection, stores: Opened, nowMs: number): NaturalConfirmationResult {
   const uses = stores.flatMap(s => s.backend.used(event));
   const bound = currentConfirmationTargets(event);
   if (bound ? !bound.some(p => matches(p, selection)) || uses.some(p => !bound.some(t => matches(p, t)))
     : uses.some(p => !matches(p, selection))) return {ok: false, code: 'confirmation_already_used'};
   const found = stores.flatMap(s => s.rows.filter(p => matches(p, selection)).map(p => ({backend: s.backend, proposal: p})));
   if (found.length !== 1) return {ok: false, code: found.length ? 'confirmation_target_ambiguous' : 'proposal_unavailable'};
-  if (batch && !found[0]!.backend.supportsBatch) return {ok: false, code: 'confirmation_batch_unsupported'};
   const row = found[0]!.proposal;
   if (!row.previewText || row.presentedAtUtc === null || row.sourceMessageId === event.messageId
     || row.presentedAtUtc > Math.floor(event.timestamp! / 1000)) return {ok: false, code: 'proposal_not_presented'};
@@ -114,12 +137,19 @@ export function confirmNaturalProposals(event: ConfirmationInboundEvent, selecti
   }
   if (selections.length > 1 && bareAssent(event.content)) return {ok: false, code: 'confirmation_target_ambiguous', results: []};
   return withBackends(event, stores => {
+    // An unsupported request cannot bind a set that later authorizes multiple
+    // singleton calls. Reject the whole set before recording any authority.
+    if (selections.length > 1 && stores.some(({backend, rows}) => !backend.supportsBatch
+      && rows.some(row => selections.some(choice => matches(row, choice))))) {
+      return {ok: false, code: 'confirmation_batch_unsupported', status: 'rejected',
+        results: selections.map(selection => ({...selection, ok: false, code: 'confirmation_batch_unsupported'}))};
+    }
     const used = stores.flatMap(s => s.backend.used(event));
     if ((!currentConfirmationTargets(event) && used.length) || !bindConfirmationTargets(event, selections, nowMs)) {
       return {ok: false, code: 'confirmation_targets_locked', results: []};
     }
     const results = selections.map(selection => {
-      try { return {...selection, ...confirmOne(event, selection, stores, nowMs, selections.length > 1)}; }
+      try { return {...selection, ...confirmOne(event, selection, stores, nowMs)}; }
       // A storage exception may follow a committed grant. Report uncertainty;
       // never retry it or pretend a cross-store rollback happened.
       catch { return {...selection, ok: false, code: 'confirmation_outcome_unknown'}; }

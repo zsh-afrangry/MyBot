@@ -60,7 +60,8 @@ const categories = {
       return {...changeRow, next};
     },
     preview: ({before, after}, revision) => stringListPreview('邮件发件人', before, after,
-      '同步后收件箱发件人按新白名单判定信任；未列入的发件人仍需单封确认。', revision),
+      '收件箱仅对名单内且邮件认证未失败的发件人自动信任；其他邮件需单封确认。', revision,
+      '确认并写入成功后，本条发件人变更即时生效。'),
   },
   owner_tool: ownerToolCategory,
   exec_root: execRootCategory,

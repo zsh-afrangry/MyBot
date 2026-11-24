@@ -138,6 +138,21 @@ it.each(['不用确认了','我不确认','不要发送','他说：“确认”'
 it.each(['确认','确认今晚八点那条','今晚八点那条确认','就按刚才那个提醒办','可以发送','确认取消那条提醒'])('accepts explicit natural assent: %s',text=>{
   expect(naturalConfirmationTextAllowed(text)).toBe(true);
 });
+it.each([
+  '嗯，你依次提交就行',
+  '那份确认。对了，后续哈希值不用显示给我。',
+  '好，你逐份导入就行。对了，以后sha256的具体的哈希值不用展示给我。如果遇到两个哈希值相同的单独说明。',
+])('accepts ordered assent and a separate display preference: %s', text => {
+  expect(naturalConfirmationTextAllowed(text)).toBe(true);
+});
+it.each([
+  '如果今天数据齐了，你依次提交就行',
+  '先别提交。对了，以后哈希值不用显示给我。',
+  '嗯，你依次提交就行。对了，如果发现还有其他账单再执行。',
+  '嗯，你依次提交就行。对了，以后哈希值不用显示给我。不过先把金额改成九元。',
+])('keeps conditions, withdrawals and changes outside the display exception: %s', text => {
+  expect(naturalConfirmationTextAllowed(text)).toBe(false);
+});
 
 describe('explicit bounded multi-target natural confirmation', () => {
   it('authorizes two targets from the original Q10 sentence in the same message, without approving a third', () => {
@@ -175,6 +190,9 @@ describe('explicit bounded multi-target natural confirmation', () => {
     const f=fixture(false);try {const a=f.proposal(),b=f.proposal();f.present(a);f.present(b);const e=f.event('这两个都确认');captureNaturalConfirmationRequest(e);
       expect(confirmNaturalProposals(e,[a,b],f.now())).toMatchObject({ok:false,results:[{code:'confirmation_batch_unsupported'},{code:'confirmation_batch_unsupported'}]});
       expect(f.db.prepare('SELECT COUNT(*) n FROM approval_grants').get()).toEqual({n:0});
+      expect(confirmNaturalProposal(e,a,f.now()).ok).toBe(true);
+      expect(confirmNaturalProposal(e,b,f.now())).toMatchObject({code:'confirmation_already_used'});
+      expect(f.db.prepare('SELECT COUNT(*) n FROM approval_grants').get()).toEqual({n:1});
     }finally{f.close();}
   });
   it('reports a storage exception after issuing a grant as unknown instead of retrying it', () => {

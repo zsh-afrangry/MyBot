@@ -24,6 +24,7 @@ import { defaultConnector, SmtpClient } from "./smtp.js";
 import {Documents, documentRoot} from '../../packages/documents/index.js';
 import { createRuntimeTraceSink } from "../../packages/observability/index.js";
 import { createToolTrace } from "../../packages/observability/tool-trace.js";
+import { effectiveMailSenders } from "../../packages/access-control/mail-senders.js";
 import {mailDraftFeedback, mailFeedbackActions, mailReceiptFeedback, mailSendFeedback} from "./feedback.js";
 
 const PLUGIN_ID = "kurumi-mail";
@@ -33,10 +34,6 @@ const ALL_MAIL_FEEDBACK_ACTIONS = [...mailFeedbackActions, "mail.inbox.access", 
 
 function allowlistOf(api, cfg) {
   return normalizeAllowlist((cfg ?? api.config)?.plugins?.entries?.[PLUGIN_ID]?.config?.allowedRecipients ?? api.pluginConfig?.allowedRecipients);
-}
-
-function allowedSendersOf(api, cfg) {
-  return normalizeAllowlist((cfg ?? api.config)?.plugins?.entries?.[PLUGIN_ID]?.config?.allowedSenders ?? api.pluginConfig?.allowedSenders);
 }
 
 function json(value) {
@@ -58,6 +55,7 @@ export function createMailPlugin({ registry, connector, imapConnector = defaultI
     });
     const feedbackActions = new Set(api.pluginConfig?.feedbackActions ?? ALL_MAIL_FEEDBACK_ACTIONS);
     const effectiveStateRoot = () => overrideStateRoot ?? api.runtime?.state?.resolveStateDir?.() ?? openClawStateDirectory();
+    const senderPolicy = cfg => effectiveMailSenders(cfg ?? api.config, effectiveStateRoot());
     const effectiveMailDir = () => overrideStateRoot ? path.join(overrideStateRoot, "state", "kurumi-mail") : mailStateDirectory();
     const storeOptions = () => ({ stateDirectory: effectiveMailDir(), allowedRecipients: allowlistOf(api) });
     const openInboxStore = () => new InboxStore({ stateDirectory: effectiveMailDir() });
@@ -152,7 +150,7 @@ export function createMailPlugin({ registry, connector, imapConnector = defaultI
           const config = readMailConfig();
           const imapConfig = readImapConfig();
           const allowedRecipients = allowlistOf(api, resolvedCfg);
-          const allowedSenders = allowedSendersOf(api, resolvedCfg);
+          const senders = senderPolicy(resolvedCfg);
           const result = {
             ok: true,
             configured: config.configured,
@@ -162,7 +160,8 @@ export function createMailPlugin({ registry, connector, imapConnector = defaultI
             imapHost: imapConfig.host,
             imapPort: imapConfig.port,
             allowedRecipients,
-            allowedSenders,
+            allowedSenders: normalizeAllowlist(senders.entries),
+            senderPolicyAvailable: senders.available,
             policyAdapter: application.policyId,
             storeAdapter: application.storeId,
             confirmationBackendRegistered: confirmationBackendIds().includes(BACKEND_ID),
@@ -347,6 +346,7 @@ export function createMailPlugin({ registry, connector, imapConnector = defaultI
         label: "Manage IMAP inbox & untrusted sender access",
         description:
           "Owner private chat only. Browse folders, list/search headers, read emails, save attachments to workspace mail-attachments/, "
+          + "Use the original filename in replies. Saved paths and digests are for tool calls. Mention identical file contents only when established. "
           + "mark read/unread, and move/trash emails without physical EXPUNGE. "
           + "Senders outside allowedSenders or failing SPF/DKIM only expose safe metadata; use propose_access -> personal_confirmation(domain=\"mail_inbox\") -> commit_access "
           + "to unlock one email for 24h (or propose 长期信任 via kurumi_access category=mail_sender). move/trash require propose_manage -> personal_confirmation(domain=\"mail_inbox\") -> commit_manage.",
@@ -393,7 +393,7 @@ export function createMailPlugin({ registry, connector, imapConnector = defaultI
               api,
               imapConnector,
               openStore: openInboxStore,
-              allowedSendersOf: cfg => allowedSendersOf(api, cfg),
+              allowedSendersOf: cfg => senderPolicy(cfg).entries,
               stateRoot: effectiveStateRoot(),
               feedbackActions,
               emitTrace,
