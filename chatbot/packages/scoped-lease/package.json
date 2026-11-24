@@ -6,6 +6,7 @@
   "exports": {
     ".": "./index.js",
     "./policy.js": "./policy.js",
-    "./store.js": "./store.js"
+    "./store.js": "./store.js",
+    "./tiers.js": "./tiers.js"
   }
 }

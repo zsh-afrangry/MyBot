@@ -55,7 +55,7 @@ const POLICIES = {
   kurumi_access: actions({'access.manage': ['list', 'get', 'propose', 'commit', 'status']}),
   kurumi_host_admin: actions({'host.sudo.read': ['list', 'status'], 'host.sudo.manage': ['propose', 'commit']}),
   kurumi_files: actions({
-    'files.read': ['roots', 'list', 'stat', 'read', 'search', 'snapshots', 'status'],
+    'files.read': ['roots', 'list', 'stat', 'read', 'read_structured', 'search', 'snapshots', 'status'],
     'files.manage': ['mkdir', 'write', 'edit', 'copy', 'move', 'delete', 'restore', 'propose', 'commit', 'apply_leased'],
   }),
   kurumi_lease: actions({'lease.read': ['list', 'status'], 'lease.manage': ['propose', 'commit', 'revoke', 'revoke_all']}),

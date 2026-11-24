@@ -4,7 +4,16 @@ import {sendImage, sendPayload} from './transport.js';
 import {recordImageFeedback} from './image-feedback.js';
 
 export {account, CHANNEL, ownerAuthorized, ownerTarget, token} from './config.js';
-export {qqFileUrl, readDocumentDeliveries, sendDocument, stagePdf, traceFile} from './files.js';
+export {
+  MAX_WORKSPACE_FILE_BYTES,
+  OWNER_WORKSPACE_FILE_TYPES,
+  qqFileUrl,
+  readDocumentDeliveries,
+  sendDocument,
+  stageAttachment,
+  stagePdf,
+  traceFile,
+} from './files.js';
 export {Ledger} from './ledger.js';
 export {presentForQQ} from './presentation.js';
 export {localImage, onebot, sendImage, sendPayload, sendSegments} from './transport.js';

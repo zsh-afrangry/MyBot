@@ -3,6 +3,7 @@ import {AccessError} from '../../packages/access-control/index.js';
 import {registerConfirmationBackend} from '../../packages/confirmation-core/dist/index.js';
 import {createRuntimeTraceSink} from '../../packages/observability/index.js';
 import {createToolTrace} from '../../packages/observability/tool-trace.js';
+import {OfficeReaderError} from '../../packages/office-reader/index.js';
 import {
   ELIGIBLE_LEASE_ACTIONS,
   LEASE_TOOL,
@@ -43,12 +44,14 @@ const filesParameters = {
     action: {
       type: 'string',
       enum: [
-        'roots', 'list', 'stat', 'read', 'search', 'snapshots', 'status',
+        'roots', 'list', 'stat', 'read', 'read_structured', 'search', 'snapshots', 'status',
         'mkdir', 'write', 'edit', 'copy', 'move', 'delete', 'restore',
         'propose', 'commit', 'apply_leased',
       ],
     },
     operation: {type: 'string', enum: OPERATION_ENUM},
+    format: {type: 'string', enum: ['auto', 'csv', 'tsv', 'xlsx', 'docx']},
+    sheet: {type: 'string', maxLength: 128},
     path: {type: 'string', maxLength: 4096},
     sourcePath: {type: 'string', maxLength: 4096},
     targetPath: {type: 'string', maxLength: 4096},
@@ -114,7 +117,7 @@ const json = result => ({content: [{type: 'text', text: JSON.stringify(result)}]
 
 function handleKnownError(error, signal, fallbackCode, api, logLabel) {
   signal?.throwIfAborted();
-  if (error instanceof FilesError || error instanceof ScopedLeaseError || error instanceof AccessError) {
+  if (error instanceof FilesError || error instanceof ScopedLeaseError || error instanceof AccessError || error instanceof OfficeReaderError) {
     return json({ok: false, code: error.code});
   }
   api.logger?.warn?.(logLabel);

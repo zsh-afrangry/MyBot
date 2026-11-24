@@ -12,6 +12,10 @@
 
 命令、带码确认和含引用或媒体的消息单独处理。收到这类消息时，先提交同一会话内已收集的文本，再提交该消息。
 
+### 主人私聊文件落地工作区
+
+当 `kurumi-files` 启用且主人具备 `files.manage` 时，主人 QQ 私聊发送的非 PDF 常见办公/文本文件（`xlsx`、`csv`、`tsv`、`docx`、`txt`、`md`、`json`，单文件 ≤ 16 MiB）由 `qq-delivery.stageAttachment` 清洗文件名（中和红线文件名）后保存至默认工作区 `qq-inbox/<YYYY-MM-DD>/`，并将 `staged_to_workspace` 真实路径交由当前回合的 `kurumi_files` 或后续导入工具处理。PDF 仍按[文档22](22_论文PDF翻译与文件投递.md)进入文档库；成员入口严格维持仅限 PDF。
+
 ## 接口
 
 在 [`config/runtime.config.json`](../config/runtime.config.json) 的 `channels.kurumi-qq` 调整参数，按[配置同步契约](../config/README.md#应用与生效)生效。

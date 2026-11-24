@@ -2,6 +2,7 @@ import {randomUUID} from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import {businessFeedback} from '../../packages/feedback-core/index.js';
+import {readStructuredFile} from '../../packages/office-reader/index.js';
 import {
   LEASE_DOMAIN,
   assertFields as assertLeaseFields,
@@ -37,6 +38,7 @@ const FILE_ACTIONS = Object.freeze({
   list: ['action', 'path', 'maxEntries'],
   stat: ['action', 'path'],
   read: ['action', 'path', 'offset', 'limit'],
+  read_structured: ['action', 'path', 'format', 'sheet', 'offset', 'limit', 'query'],
   search: ['action', 'path', 'pattern', 'query', 'maxResults'],
   snapshots: ['action', 'pathPrefix', 'limit'],
   status: ['action', 'proposalId'],
@@ -975,6 +977,48 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
           nextOffset,
           hasMore: nextOffset !== null,
           content: slice,
+        };
+      }
+
+      case 'read_structured': {
+        const target = resolveSafePath(args.path, cfg, redlineList, {forWrite: false});
+        if (!target.exists) fail('files_not_found');
+        const st = fs.lstatSync(target.canonicalPath);
+        if (!st.isFile()) fail('files_not_regular_file');
+        if (st.size > 16 * 1024 * 1024) fail('files_read_file_too_large');
+        const offset = args.offset ?? 0;
+        if (!Number.isSafeInteger(offset) || offset < 0) fail('invalid_files_arguments');
+        const limit = args.limit ?? 50;
+        if (!Number.isSafeInteger(limit) || limit < 1 || limit > 500) fail('invalid_files_arguments');
+        const format = args.format ?? 'auto';
+        const sheet = typeof args.sheet === 'string' && args.sheet.trim() ? args.sheet.trim() : undefined;
+        const query = typeof args.query === 'string' && args.query.trim() ? args.query.trim() : undefined;
+        const buf = fs.readFileSync(target.canonicalPath);
+        const parsed = readStructuredFile(buf, {
+          filename: path.basename(target.canonicalPath),
+          format,
+          sheet,
+          offset,
+          limit,
+          query,
+        });
+        emitTrace(trace, {
+          source: 'trace-events',
+          kind: 'files.read_structured',
+          correlation,
+          data: {
+            tier: target.tier,
+            format: parsed.format,
+            sizeBytes: buf.length,
+          },
+        });
+        return {
+          ok: true,
+          path: target.path,
+          tier: target.tier,
+          sizeBytes: buf.length,
+          sha256: sha256(buf),
+          ...parsed,
         };
       }
 

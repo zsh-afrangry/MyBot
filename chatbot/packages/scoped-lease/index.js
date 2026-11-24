@@ -17,3 +17,21 @@ export {
   validateLeasePlan,
 } from './policy.js';
 export {ScopedLeaseStore} from './store.js';
+export {
+  DEFAULT_FILES_LIMITS,
+  FilesError,
+  HOME_PROTECTED_READONLY_ENTRIES,
+  HOME_REDLINE_ENTRIES,
+  SYSTEM_REDLINE_PATHS,
+  assertNotTierRoot,
+  buildRedlineSet,
+  canApplyLeaseToTierInfo,
+  classifyNormalizedPath,
+  ensureWorkspaceSubdir,
+  filesFail,
+  isInsideRedlineTree,
+  isRedlineFilename,
+  isTierRootPath,
+  resolveSafePath,
+  validateFilesConfig,
+} from './tiers.js';

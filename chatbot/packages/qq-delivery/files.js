@@ -1,8 +1,10 @@
-// Authorized private PDF ingress/egress, sharing the managed document catalog. Contract: docs/22.
-import {existsSync} from 'node:fs';
+// Authorized private PDF ingress/egress and owner workspace file staging. Contracts: docs/22, docs/32, docs/38.
+import {createHash} from 'node:crypto';
+import {chmodSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync} from 'node:fs';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
 import {Documents, documentRoot, MAX_PDF_BYTES, inspectPdf} from '../documents/index.js';
+import {ensureWorkspaceSubdir, isRedlineFilename, resolveSafePath} from '../scoped-lease/tiers.js';
 import {account} from './config.js';
 import {onebot} from './transport.js';
 import {Ledger} from './ledger.js';
@@ -12,11 +14,43 @@ import https from 'node:https';
 import {Readable} from 'node:stream';
 import {activeSubject, targetSubject} from '../access-control/index.js';
 
+export const OWNER_WORKSPACE_FILE_TYPES = Object.freeze(['xlsx', 'csv', 'tsv', 'docx', 'txt', 'md', 'json']);
+export const MAX_WORKSPACE_FILE_BYTES = 16 * 1024 * 1024;
+
 export function traceFile(cfg, event) {
   try { createTraceSink(documentRoot(cfg) + '/events.jsonl').emit({source: 'papers', ...event}); } catch {}
 }
 
+function traceWorkspaceFile(a, event) {
+  try { createTraceSink(path.join(a.stateDir, 'trace-events.jsonl')).emit({source: 'trace-events', ...event}); } catch {}
+}
+
 const receiveError = (code, message) => Object.assign(Error(message), {code});
+const bufferSha256 = buf => createHash('sha256').update(buf).digest('hex');
+
+function shanghaiDayString(now = Date.now()) {
+  return new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Shanghai'}).format(new Date(now));
+}
+
+function sanitizeWorkspaceFilename(rawName, fileType) {
+  const base = String(rawName ?? '')
+    .replaceAll('\\', '/')
+    .split('/')
+    .at(-1)
+    .normalize('NFC')
+    .replace(/[\p{Cc}\p{Cf}]/gu, '_')
+    .trim();
+  const suffix = '.' + fileType;
+  const rawStem = base.toLowerCase().endsWith(suffix) ? base.slice(0, -suffix.length) : base;
+  let stem = rawStem.replace(/^\.+/u, '_').replaceAll('/', '_').trim();
+  if (!stem) stem = 'file';
+  stem = Array.from(stem).slice(0, 120).join('');
+  let candidate = `${stem}${suffix}`;
+  if (isRedlineFilename(candidate)) {
+    candidate = `file_${candidate}`;
+  }
+  return candidate;
+}
 
 // CDN download addresses are data from the authenticated OneBot result, not arbitrary user URLs.
 export function qqFileUrl(value) {
@@ -48,14 +82,19 @@ async function fetchQqFile(url, options) {
     req.once('error', reject);
   });
 }
-export async function stagePdf(segment, cfg, {subjectId, signal, apiCall = onebot, fetcher = fetchQqFile, inspect} = {}) {
-  const a = account(cfg), data = segment.data ?? segment;
-  subjectId ??= a.ownerId;
-  activeSubject(cfg, subjectId, 'papers.import');
+async function downloadPrivateQqFile(a, segment, {
+  subjectId,
+  signal,
+  apiCall = onebot,
+  fetcher = fetchQqFile,
+  maxBytes,
+  sizeErrorCode,
+  downloadErrorCode,
+}) {
+  const data = segment.data ?? segment;
   const filename = String(data.name ?? data.file_name ?? data.file ?? '');
-  if (!/\.pdf$/i.test(filename)) throw receiveError('unsupported_file_type', 'Only PDF uploads are accepted');
   if (/[\x00-\x1f]/.test(filename)) throw receiveError('invalid_file_metadata', 'Invalid QQ file name');
-  if (Number(data.size ?? data.file_size) > MAX_PDF_BYTES) throw receiveError('pdf_size_limit_exceeded', 'PDF exceeds 25 MiB');
+  if (Number(data.size ?? data.file_size) > maxBytes) throw receiveError(sizeErrorCode, 'File exceeds size limit');
   const fileId = String(data.file_id ?? data.id ?? data.file ?? '');
   if (!fileId || fileId.length > 512 || /[\x00-\x1f]/.test(fileId)) throw receiveError('missing_qq_file_id', 'Missing QQ file ID');
   let size = 0; const chunks = [];
@@ -64,17 +103,39 @@ export async function stagePdf(segment, cfg, {subjectId, signal, apiCall = onebo
     const url = qqFileUrl(r?.url);
     const stop = signal ? AbortSignal.any([signal, AbortSignal.timeout(60000)]) : AbortSignal.timeout(60000);
     const response = await fetcher(url, {redirect: 'manual', signal: stop});
-    if (response.status !== 200) throw receiveError('pdf_download_failed', 'QQ PDF download failed');
-    if (Number(response.headers.get('content-length')) > MAX_PDF_BYTES) throw receiveError('pdf_size_limit_exceeded', 'PDF exceeds 25 MiB');
-    for await (const part of response.body) { size += part.length; if (size > MAX_PDF_BYTES) throw receiveError('pdf_size_limit_exceeded', 'PDF exceeds 25 MiB'); chunks.push(Buffer.from(part)); }
+    if (response.status !== 200) throw receiveError(downloadErrorCode, 'QQ file download failed');
+    if (Number(response.headers.get('content-length')) > maxBytes) throw receiveError(sizeErrorCode, 'File exceeds size limit');
+    for await (const part of response.body) {
+      size += part.length;
+      if (size > maxBytes) throw receiveError(sizeErrorCode, 'File exceeds size limit');
+      chunks.push(Buffer.from(part));
+    }
   } catch (error) {
     signal?.throwIfAborted();
     // Do not expose signed URLs, platform errors or response bodies in the model-facing result.
-    if (error?.code === 'pdf_size_limit_exceeded') throw error;
-    throw receiveError('pdf_download_failed', 'QQ PDF download failed');
+    if (error?.code === sizeErrorCode) throw error;
+    throw receiveError(downloadErrorCode, 'QQ file download failed');
   }
+  return {filename, fileId, bytes: Buffer.concat(chunks)};
+}
+
+export async function stagePdf(segment, cfg, {subjectId, signal, apiCall = onebot, fetcher = fetchQqFile, inspect} = {}) {
+  const a = account(cfg), data = segment.data ?? segment;
+  subjectId ??= a.ownerId;
   activeSubject(cfg, subjectId, 'papers.import');
-  return new Documents(documentRoot(cfg,subjectId)).add(Buffer.concat(chunks), {filename, source: {type: 'qq', fileId}}, {signal,
+  const rawName = String(data.name ?? data.file_name ?? data.file ?? '');
+  if (!/\.pdf$/i.test(rawName)) throw receiveError('unsupported_file_type', 'Only PDF uploads are accepted');
+  const {filename, fileId, bytes} = await downloadPrivateQqFile(a, segment, {
+    subjectId,
+    signal,
+    apiCall,
+    fetcher,
+    maxBytes: MAX_PDF_BYTES,
+    sizeErrorCode: 'pdf_size_limit_exceeded',
+    downloadErrorCode: 'pdf_download_failed',
+  });
+  activeSubject(cfg, subjectId, 'papers.import');
+  return new Documents(documentRoot(cfg,subjectId)).add(bytes, {filename, source: {type: 'qq', fileId}}, {signal,
     inspect: async (...args) => {
       try {
         const details = await (inspect ?? inspectPdf)(...args);
@@ -87,6 +148,91 @@ export async function stagePdf(segment, cfg, {subjectId, signal, apiCall = onebo
     },
   });
 }
+
+export async function stageAttachment(segment, cfg, {
+  subjectId,
+  signal,
+  apiCall = onebot,
+  fetcher = fetchQqFile,
+  inspect,
+  messageId,
+  sessionKey,
+  now = Date.now,
+} = {}) {
+  const a = account(cfg), data = segment.data ?? segment;
+  subjectId ??= a.ownerId;
+  const rawName = String(data.name ?? data.file_name ?? data.file ?? '');
+  const fileType = /\.([a-z0-9]{1,16})$/i.exec(rawName)?.[1].toLowerCase() ?? 'unknown';
+  if (fileType === 'pdf') {
+    const doc = await stagePdf(segment, cfg, {subjectId, signal, apiCall, fetcher, inspect});
+    return {...doc, kind: 'pdf'};
+  }
+  if (!OWNER_WORKSPACE_FILE_TYPES.includes(fileType)) {
+    throw receiveError('unsupported_file_type', 'Unsupported QQ attachment type');
+  }
+  const subject = activeSubject(cfg, subjectId);
+  if (subject.role !== 'owner' || subject.permissions['files.manage'] !== true) {
+    throw receiveError('unsupported_file_type', 'Workspace file staging requires owner files.manage');
+  }
+  const filesEntry = cfg.plugins?.entries?.['kurumi-files'];
+  if (!filesEntry || filesEntry.enabled !== true || !filesEntry.config?.defaultWorkspace) {
+    throw receiveError('unsupported_file_type', 'Workspace file staging is not enabled');
+  }
+  const {filename, bytes} = await downloadPrivateQqFile(a, segment, {
+    subjectId,
+    signal,
+    apiCall,
+    fetcher,
+    maxBytes: MAX_WORKSPACE_FILE_BYTES,
+    sizeErrorCode: 'file_size_limit_exceeded',
+    downloadErrorCode: 'file_download_failed',
+  });
+  activeSubject(cfg, subjectId, 'files.manage');
+
+  const dayDir = shanghaiDayString(now());
+  const {cfg: filesCfg, redlineList, directory} = ensureWorkspaceSubdir(filesEntry.config, ['qq-inbox', dayDir]);
+  const fileHash = bufferSha256(bytes);
+  const safeName = sanitizeWorkspaceFilename(filename, fileType);
+  const targetPath = path.join(directory, `${fileHash.slice(0, 12)}_${safeName}`);
+  const safeTarget = resolveSafePath(targetPath, filesCfg, redlineList, {forWrite: true, allowRootItself: false});
+
+  if (safeTarget.exists) {
+    const existing = readFileSync(safeTarget.canonicalPath);
+    if (bufferSha256(existing) !== fileHash) {
+      const tmp = path.join(directory, `.tmp-${process.pid}-${Date.now()}-${safeName}`);
+      writeFileSync(tmp, bytes, {mode: 0o600});
+      renameSync(tmp, safeTarget.canonicalPath);
+      chmodSync(safeTarget.canonicalPath, 0o600);
+    }
+  } else {
+    const tmp = path.join(directory, `.tmp-${process.pid}-${Date.now()}-${safeName}`);
+    writeFileSync(tmp, bytes, {mode: 0o600});
+    renameSync(tmp, safeTarget.canonicalPath);
+    chmodSync(safeTarget.canonicalPath, 0o600);
+  }
+
+  traceWorkspaceFile(a, {
+    kind: 'qq.workspace_file_receive',
+    correlation: {
+      ...(messageId ? {qqMessageId: String(messageId)} : {}),
+      ...(sessionKey ? {sessionKey: String(sessionKey)} : {}),
+    },
+    data: {
+      fileType,
+      sizeBytes: bytes.length,
+      sha256: fileHash,
+      status: 'staged_to_workspace',
+    },
+  });
+
+  return {
+    kind: 'workspace_file',
+    path: safeTarget.canonicalPath,
+    sha256: fileHash,
+    sizeBytes: bytes.length,
+  };
+}
+stageAttachment.supportsWorkspaceFiles = true;
 const filePrefix = (account, peer) => peer === account.ownerId ? 'pdf:' : 'pdf:subject:' + peer + ':';
 
 function fileAttempt(row, prefix, documentId) {
