@@ -1,9 +1,9 @@
 // Offline temporary points: preserve R1 until enough newer verified points exist; reject stale proof.
 import test from 'node:test';import assert from 'node:assert/strict';
-import fs from 'node:fs';import path from 'node:path';
+import fs from 'node:fs';import os from 'node:os';import path from 'node:path';
 import {hashFile,ensureArtifact} from '../lib/backup-layout.mjs';import {retentionPlan,artifactRetentionPlan} from '../lib/backup-retention.mjs';
 test('retention excludes incomplete, failed, legacy and changed points',()=>{
- const root=fs.mkdtempSync('/tmp/kurumi-retention-');
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-retention-'));
  try{
   function point(name,stamp,extra={}){const dir=path.join(root,name);fs.mkdirSync(dir);fs.writeFileSync(dir+'/EXPECTED.json',JSON.stringify({formatVersion:3,stamp}));fs.writeFileSync(dir+'/MANIFEST.sha256','fixture');fs.writeFileSync(dir+'/VERIFIED.json',JSON.stringify({ok:true,level:'isolated-gateway',manifestHash:hashFile(dir+'/MANIFEST.sha256'),expectedHash:hashFile(dir+'/EXPECTED.json'),...extra}));return dir;}
   point('R1','1');point('R2','2');point('failed','9',{ok:false});point('upgrade-only','6',{level:'upgrade-rehearsal'});const interrupted=point('interrupted','8');fs.writeFileSync(interrupted+'/INCOMPLETE.json','{}');const changed=point('changed','7');fs.appendFileSync(changed+'/EXPECTED.json',' ');fs.mkdirSync(root+'/legacy');
@@ -12,7 +12,7 @@ test('retention excludes incomplete, failed, legacy and changed points',()=>{
  }finally{fs.rmSync(root,{recursive:true});}
 });
 test('artifact retention preserves surviving and incomplete references, and only plans checked unreferenced archives',t=>{
- const root=fs.mkdtempSync('/tmp/kurumi-artifact-retention-');t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-artifact-retention-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const source=root+'/source';fs.mkdirSync(source);
  const artifact=value=>{fs.writeFileSync(source+'/entry',value);return ensureArtifact('sdk','1.0',source,root+'/artifacts');};
  const old=artifact('old'),current=artifact('current'),unfinished=artifact('unfinished'),orphan=artifact('orphan');
@@ -30,7 +30,7 @@ test('artifact retention preserves surviving and incomplete references, and only
  assert.throws(()=>artifactRetentionPlan(root,{removePoints:['R1']}),/checksum mismatch/);
 });
 test('missing or unsafe references prevent artifact cleanup planning',t=>{
- const root=fs.mkdtempSync('/tmp/kurumi-artifact-missing-');t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
+ const root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-artifact-missing-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  fs.mkdirSync(root+'/point');const expected=root+'/point/EXPECTED.json';
  fs.writeFileSync(expected,JSON.stringify({formatVersion:3,artifacts:[{name:'missing.tar.gz'}]}));
  assert.throws(()=>artifactRetentionPlan(root),/Referenced artifact missing/);
