@@ -80,7 +80,9 @@
             "kurumi_files",
             "kurumi_lease",
             "kurumi_logs",
-            "kurumi_access"
+            "kurumi_access",
+            "email_inbox",
+            "knowledge_bill_import"
           ],
           "deny": [
             "read",
@@ -285,7 +287,8 @@
             "mail_recipient",
             "owner_tool",
             "exec_root",
-            "coding_project"
+            "coding_project",
+            "mail_sender"
           ],
           "execDirectoryBases": [
             "/home/afrangry/kurumi-whitelist-acceptance/exec"
