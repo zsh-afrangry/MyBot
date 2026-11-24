@@ -4,7 +4,7 @@ import {serviceLease} from '../lib/backup-service.mjs';
 import {captureWorkingTree} from '../lib/working-tree-backup.mjs';
 import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs,disableOwnerFileRecovery,disableExternalCodingRecovery,disableProactiveRecovery} from '../lib/recovery-isolation.mjs';
 import {lockedPackages} from '../lib/package-manifests.mjs';
-const tmp=()=>fs.mkdtempSync('/tmp/kurumi-recovery-test-');
+const tmp=()=>fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-recovery-test-'));
 function mock(initial,failStart=false){let state=initial;const calls=[];const run=(_cmd,args)=>{if(args.includes('show'))return {status:0,stdout:state};if(args.includes('stop')){calls.push('stop');state='inactive';return {status:0};}if(args.includes('start')){calls.push('start');if(failStart)return {status:1};state='active';return {status:0};}throw Error('unexpected');};return {run,calls};}
 test('recovery discovers every locked plugin and only builds declared build scripts',()=>{
  const dir=tmp();

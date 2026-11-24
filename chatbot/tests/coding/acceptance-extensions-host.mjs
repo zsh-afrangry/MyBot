@@ -9,7 +9,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {git} from '../../plugins/kurumi-coding/workspaces.js';
+import {git, runChecks} from '../../plugins/kurumi-coding/workspaces.js';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy, memberRow} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
@@ -355,6 +355,25 @@ try {
   assert.equal(fs.readFileSync(path.join(fakeRuntimeCanary, 'openclaw.json'), 'utf8'), '{"runtime":"untouched"}\n');
   assert.equal(Boolean(readOneBotLedger(path.join(state, 'channel'), db => db.prepare("SELECT count(*) as c FROM outbound WHERE status='sent'").get()).c), true);
   report.cases.push({name: 'stage3b_self_maintenance_gateway_gate', passed: true});
+
+  // Verify the actual kurumi-fusion checks declared in config/runtime.config.json pass inside a clean detached worktree under Landlock.
+  const realCodingCfg = JSON.parse(fs.readFileSync(path.join(repo, 'config/runtime.config.json'), 'utf8')).plugins.entries['kurumi-coding']?.config;
+  const realFusionProject = realCodingCfg?.projects?.find(p => p.id === 'kurumi-fusion');
+  assert.ok(realFusionProject && realCodingCfg?.writeBoundary?.launcher, 'kurumi-fusion coding project config present');
+  const kfWorktree = path.join(boundary, 'kf-real-worktree');
+  const kfCheckLog = path.join(boundary, 'kf-real-checks.log');
+  execFileSync('/usr/bin/git', ['worktree', 'add', '--detach', kfWorktree, 'HEAD'], {cwd: repo, stdio: 'pipe'});
+  try {
+    const kfChecks = await runChecks(realFusionProject, kfWorktree, kfCheckLog, undefined, {
+      root: boundary,
+      launcher: realCodingCfg.writeBoundary.launcher,
+    });
+    assert.equal(kfChecks.ok, true, `real kurumi-fusion checks failed under Landlock: ${JSON.stringify(kfChecks)}`);
+    assert.equal(kfChecks.rows.every(r => !r.skipped && r.code === 0), true);
+  } finally {
+    try { execFileSync('/usr/bin/git', ['worktree', 'remove', '--force', kfWorktree], {cwd: repo, stdio: 'pipe'}); } catch {}
+  }
+  report.cases.push({name: 'stage3b_real_kurumi_fusion_checks_under_landlock', passed: true});
 
   report.passed = true;
 } catch (error) {
