@@ -491,6 +491,78 @@
                   ]
                 }
               ]
+            },
+            {
+              "id": "repository",
+              "root": "/home/afrangry/repository",
+              "branch": "master",
+              "externalRoot": true,
+              "allowRemote": true,
+              "checks": [
+                {
+                  "name": "python syntax check",
+                  "argv": [
+                    "/home/afrangry/miniconda3/bin/python3",
+                    "-B",
+                    "-c",
+                    "import ast, pathlib; [ast.parse(p.read_text('utf-8'), filename=str(p)) for p in sorted(pathlib.Path('.').rglob('*.py')) if '.git' not in p.parts and 'node_modules' not in p.parts]"
+                  ],
+                  "timeoutMs": 30000
+                },
+                {
+                  "name": "git diff check",
+                  "argv": [
+                    "/usr/bin/git",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                    "diff",
+                    "--check",
+                    "HEAD"
+                  ],
+                  "timeoutMs": 15000
+                }
+              ]
+            },
+            {
+              "id": "kurumi-fusion",
+              "root": "/home/afrangry/kurumi-fusion",
+              "branch": "main",
+              "externalRoot": true,
+              "allowRemote": true,
+              "selfMaintenance": true,
+              "checks": [
+                {
+                  "name": "pure node boundary and stack tests",
+                  "argv": [
+                    "/usr/bin/node",
+                    "--test",
+                    "chatbot/tests/backend-boundaries/dependencies.test.mjs",
+                    "scripts/fusion/test/stack.test.mjs"
+                  ],
+                  "timeoutMs": 20000
+                },
+                {
+                  "name": "js syntax check",
+                  "argv": [
+                    "/usr/bin/node",
+                    "-e",
+                    "const fs=require('fs'),p=require('path'),{execFileSync}=require('child_process');const walk=d=>{for(const e of fs.readdirSync(d,{withFileTypes:true})){if(e.name==='node_modules'||e.name==='dist'||e.name==='.git')continue;const f=p.join(d,e.name);if(e.isDirectory())walk(f);else if(/\\.(mjs|js)$/.test(e.name))execFileSync(process.execPath,['--check',f]);}};for(const root of ['chatbot','scripts/fusion'])walk(root);"
+                  ],
+                  "timeoutMs": 30000
+                },
+                {
+                  "name": "git diff check",
+                  "argv": [
+                    "/usr/bin/git",
+                    "-c",
+                    "core.hooksPath=/dev/null",
+                    "diff",
+                    "--check",
+                    "HEAD"
+                  ],
+                  "timeoutMs": 15000
+                }
+              ]
             }
           ],
           "writeBoundary": {
