@@ -9,7 +9,7 @@
 | 模块 | 能力 | 边界 |
 | --- | --- | --- |
 | 待做事项 / 提醒列表 | 查询、新增、修改、完成、作废、恢复；每日播报 | 一次性到点提醒是另一种能力，见[文档3](3_个人提醒.md) |
-| 记账 | 新增、查询、月汇总、单笔修改、实际删除与导出 `.xlsx` 批量导入；分类取自真实标签目录 | 单笔唯一目标直接执行，歧义先澄清；批量导入走 `bills_import` 二次确认与指纹防重（生产待启用） |
+| 记账 | 新增、查询、月汇总、单笔修改、实际删除与导出 `.xlsx` 批量导入；分类取自真实标签目录 | 单笔唯一目标直接执行，歧义先澄清；批量导入走 `bills_import` 二次确认与指纹防重 |
 | 天气 | 地点查询、天气读取，说明观测时间、数据时效和失败 | 网页默认跟随已确认所在地；天气模块见[文档2](2_天气模块.md) |
 
 不做：TradeSim、Notes/知识图谱、条件事件触发、通用工作流引擎、批量账单维护。
@@ -57,7 +57,7 @@
 | `knowledge_bills_get` | `bills.read` | 账单查询：`tags` 查真实分类，`list` 按日期/分类/备注分页，`get` 按 id 取单笔和 version，`monthly` 月汇总 |
 | `knowledge_bill_add` | `bills.manage` | 新增一笔，必需 `amount`（十进制字符串）和 `expense_date`（YYYY-MM-DD） |
 | `knowledge_bill_manage` | `bills.manage` | `action=update\|delete`，带 `id` 和 `expected_version` |
-| `knowledge_bill_import` | `bills.read`（`preview\|status\|batches`）/ `bills.manage`（`commit`） | 导出 `.xlsx` 批量预览、未知分类统计、`bills_import` 确认与幂等导入（生产待启用） |
+| `knowledge_bill_import` | `bills.read`（`preview\|status\|batches`）/ `bills.manage`（`commit`） | 导出 `.xlsx` 批量预览、未知分类统计、`bills_import` 确认与幂等导入 |
 | `personal_reminder_list_get` | `reminder-list.read` | 查询共享有效项或历史，同时返回本地播报设置 |
 | `personal_reminder_list_manage` | `reminder-list.manage`；`schedule/pause/resume` 为 `reminder-list.schedule` | 新增、修改、完成、作废、恢复和播报设置 |
 | `personal_weather_get_brief` | `weather.read` | 天气，见[文档2](2_天气模块.md) |
