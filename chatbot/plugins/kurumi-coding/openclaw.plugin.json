@@ -24,6 +24,9 @@
       "worktrees": {
         "type": "string"
       },
+      "autoPreviewOnReady": {
+        "type": "boolean"
+      },
       "feedbackActions": {
         "type": "array",
         "uniqueItems": true,

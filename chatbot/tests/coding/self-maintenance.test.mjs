@@ -166,3 +166,34 @@ test('selfMaintenance blocks protected diffs, escaping symlinks, and skipped che
   assert.match(fs.readFileSync(path.join(selfRepo, 'chatbot/pkg/math.mjs'), 'utf8'), /Number\(a\)/);
   assert.equal(fs.readFileSync(path.join(fakeRuntime, 'openclaw.json'), 'utf8'), canaryBefore);
 });
+
+test('autoPreviewOnReady reports blocked preview error without failing notification when selfMaintenance blocks protected diff', async t => {
+  const {selfRepo} = setupSyntheticFusion('self-autopv-blocked-');
+  const seenFacts = [];
+  const f = await fixture(t, {
+    composeNotice: async facts => { seenFacts.push(facts); return `blocked=${facts.mergePreview?.code}`; },
+    configure: plugin => {
+      plugin.autoPreviewOnReady = true;
+      plugin.projects.push({
+        id: 'self-maint',
+        root: selfRepo,
+        branch: 'main',
+        externalRoot: true,
+        selfMaintenance: true,
+        checks: [{name: 'safe-check', argv: ['/usr/bin/node', '-e', 'process.exit(0)']}],
+      });
+    },
+    behavior: async ({cwd}) => {
+      fs.writeFileSync(path.join(cwd, 'config/access-control.json'), '{"subjects":[{"qq":"999"}]}\n');
+    },
+  });
+
+  const task = await f.run({action: 'start', projectId: 'self-maint', task: 'Touch protected access-control'});
+  const ready = await f.settle(task.id);
+  assert.equal(ready.state, 'ready');
+  assert.equal(ready.delivery.state, 'platform_accepted');
+  assert.equal(f.deliveries.length, 1);
+  assert.match(f.deliveries[0].text, /blocked=self_maintenance_protected_diff/);
+  assert.equal(seenFacts[0].mergePreview?.status, 'blocked');
+  assert.equal(f.service.store.latestPreview(task.id), null);
+});
