@@ -188,7 +188,7 @@ export class CodingService {
         if (!result.duplicate) this.event(task, 'coding.permission_rejected', {decisionSource: 'owner_test_folder_only',
           externalToolCallId: call?.toolCallId, requests: result.summary.requests, rejected: result.summary.rejected});
         return false;
-      }}, backend);
+      }}, backend, this.config);
     entry.client = client; update({runtimeIdentity: client.identity});
     try {
       await client.initialize(); entry.controller.signal.throwIfAborted();

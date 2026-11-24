@@ -25,6 +25,8 @@ const scenarios = {
   'coding-recovery': {target: 'isolated', file: 'acceptance/test-evidence.mjs',
     args: ['chatbot/tests/coding/acp.test.mjs', 'chatbot/tests/coding/reconciliation.test.mjs', 'chatbot/tests/coding/flow.test.mjs', 'chatbot/tests/coding/archive.test.mjs'],
     workload: '编码服务取消、等待超时、重启核对与档案聚合', requires: ['Landlock', 'Git'], timeoutMs: 120000},
+  'coding-extensions': {target: 'isolated', file: 'coding/acceptance-extensions-host.mjs',
+    workload: '外部真实 Git 仓库、自维护禁区闸门与可扩展 CLI 适配器', requires: ['Landlock', 'Git'], timeoutMs: 120000},
   'access-member': admin('member', '成员确认新增、隔离会话和撤权'),
   'access-mail': admin('mail_recipient', '收件人同步及旧草稿拒绝'),
   'knowledge-bills-access': admin('owner_tool', 'KnowledgeMap 查账与主人工具白名单同步、撤权', ['KnowledgeMap FastAPI/SQLite test server']),

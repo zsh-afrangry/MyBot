@@ -11,7 +11,7 @@ import {createQqDelivery} from '../../packages/qq-delivery/index.js';
 import {CodingService} from './service.js';
 import {CodingStore} from './store.js';
 import {codingRequest, authorizeRequester, confirmationScope} from './inbound.js';
-import {DSH, CODEX, availableBackends} from './backends.js';
+import {DSH, CODEX, availableBackends, describeBackends} from './backends.js';
 import {fail} from './policy.js';
 import {codingFeedbackActions,codingRoundFeedback} from './feedback.js';
 const json = result => ({content: [{type: 'text', text: JSON.stringify(result)}], details: result});
@@ -62,7 +62,7 @@ export function createCodingPlugin(dependencies = {}) {
       parameters: {type: 'object', additionalProperties: false, required: ['action'], properties: {
         action: {type: 'string', enum: ['list', 'archive', 'start', 'status', 'result', 'continue', 'cancel', 'rollback', 'reconcile', 'diff', 'preview', 'merge']},
         projectId: {type: 'string'}, taskId: {type: 'string'}, task: {type: 'string', maxLength: 8000},
-        backend: {type: 'string', enum: [DSH, CODEX], description: 'Optional backend for start only. Check enabled backends with list.'},
+        backend: {type: 'string', pattern: '^[a-z][a-z0-9-]{0,39}$', description: 'Optional backend ID for start only. Check enabled backends with list.'},
         title: {type: 'string', maxLength: 96, description: 'Optional short non-sensitive task name for start.'}, proposalId: {type: 'string'},
         roundId: {type: 'string'}, section: {type: 'string', enum: ['execution', 'agent_report']},
         offset: {type: 'integer', minimum: 0}, limit: {type: 'integer', minimum: 1, maximum: 12000},
@@ -73,7 +73,7 @@ export function createCodingPlugin(dependencies = {}) {
         if (args.action !== 'start' && args.backend !== undefined) throw fail('coding_backend_only_for_start');
         let result;
         switch (args.action) {
-          case 'list': result = {backends: availableBackends(api.pluginConfig), projects: api.pluginConfig.projects.map(p => ({id: p.id, kind: p.kind ?? 'git', ...(p.branch ? {branch: p.branch} : {})})), tasks: service.list(requester)}; break;
+          case 'list': result = {backends: availableBackends(api.pluginConfig), backendDetails: describeBackends(api.pluginConfig), projects: api.pluginConfig.projects.map(p => ({id: p.id, kind: p.kind ?? 'git', ...(p.branch ? {branch: p.branch} : {})})), tasks: service.list(requester)}; break;
           case 'archive': result = service.archive(args.taskId, requester); break;
           case 'start': result = service.submit({projectId: args.projectId, task: args.task, title: args.title, backend: args.backend}, {requester, key,
             correlation: {sessionId: ctx.sessionId, sessionKey: ctx.sessionKey, ...(trace.resolve(ctx, callId, 'kurumi_code') ? {runId: trace.resolve(ctx, callId, 'kurumi_code')} : {})}}); break;

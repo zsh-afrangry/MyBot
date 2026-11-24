@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./acp-client": "./acp-client.js",
+    "./cli-client": "./cli-client.js",
     "./codex-client": "./codex-client.js",
     "./reconciliation": "./reconciliation.js",
     "./project-registry": "./project-registry.js",
