@@ -538,12 +538,8 @@
           ],
           "t1Roots": [
             {
-              "path": "/home/afrangry/下载",
-              "label": "下载"
-            },
-            {
-              "path": "/home/afrangry/文档",
-              "label": "文档"
+              "path": "/home/afrangry",
+              "label": "主目录一般文件（受保护项除外）"
             }
           ],
           "t2Roots": [
