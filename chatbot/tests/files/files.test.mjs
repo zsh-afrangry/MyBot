@@ -463,6 +463,16 @@ test('Stage 2B homeDir broad T1 protects dotfiles, toolchains, nested redlines, 
   const foundHome = await service({action: 'search', path: env.homeDir, query: 'needle-'}, cfgObj, req);
   assert.deepEqual(foundHome.matches.map(m => m.path), [path.join(desktop, 'todo.md')]);
 
+  // Filename search traverses >2100 writable entries cleanly without prematurely truncating at 2000.
+  const bulkDir = path.join(desktop, 'bulk');
+  fs.mkdirSync(bulkDir);
+  for (let i = 0; i < 2105; i++) fs.writeFileSync(path.join(bulkDir, `item-${i}.txt`), 'x');
+  const deepNeedle = path.join(bulkDir, 'zzz-deep-target.md');
+  fs.writeFileSync(deepNeedle, 'ok');
+  const foundBulk = await service({action: 'search', path: env.homeDir, pattern: '*zzz-deep-target*'}, cfgObj, req);
+  assert.equal(foundBulk.truncated, false);
+  assert.deepEqual(foundBulk.matches.map(m => m.path), [deepNeedle]);
+
   // Explicit search inside readOnly repository still works.
   const foundRepo = await service({action: 'search', path: env.repoReadOnly, query: 'needle-'}, cfgObj, req);
   assert.deepEqual(foundRepo.matches.map(m => m.path), [path.join(env.repoReadOnly, 'notes.md')]);

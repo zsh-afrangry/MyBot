@@ -1,6 +1,7 @@
 // Starts one isolated Fusion Gateway with the real QQ adapter, a temporary
 // test-scope plugin, a deterministic model and a loopback OneBot peer.
 // Separated fixture DBs/notification worker only. No paid model, real QQ, production data or service changes.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from './fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
@@ -34,12 +35,7 @@ function startModel() {
   return createServer(async (req, res) => {
     try {
       assert(++report.requests <= 25, 'Fixture model budget exceeded');
-      let raw = '';
-      for await (const chunk of req) {
-        raw += chunk;
-        assert(raw.length < 2 * 1024 * 1024, 'Fixture model input exceeds bound');
-      }
-      const body = JSON.parse(raw), messages = body.messages ?? [];
+      const body = await readFixtureJson(req, {maxBytes: 2 * 1024 * 1024}), messages = body.messages ?? [];
       const prompt = JSON.stringify(messages), visible = body.tools?.map(t => t.function?.name) ?? [];
       const userIndex = messages.findLastIndex(m => m.role === 'user' &&
         /OWNER_SCOPE_LANE|SCOPE_STEP=/u.test(JSON.stringify(m.content ?? '')));
@@ -116,7 +112,7 @@ try {
       [agentId]: {workspace: testWorkspace, tools: {allow: [tool]}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://127.0.0.1:' + model.address().port + '/v1',
       apiKey: 'synthetic', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture', input: ['text'],
-        reasoning: false, contextWindow: 64000, maxTokens: 1000}]}}},
+        reasoning: false, contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1000}]}}},
     plugins: {allow: ['kurumi-qq', pluginId], load: {paths: [join(repo, 'chatbot/plugins/kurumi-qq'), plugin]},
       entries: {'kurumi-qq': {enabled: true}, [pluginId]: {enabled: true}}, slots: {memory: 'none'}},
     channels: {'kurumi-qq': {enabled: true, httpUrl: peer.httpUrl, wsUrl: peer.wsUrl, httpTokenFile: tokenFile,

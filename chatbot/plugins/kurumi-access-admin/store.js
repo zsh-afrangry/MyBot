@@ -7,16 +7,17 @@ import {
   markConfirmationProposalCommitted, registerConfirmationProposal,
 } from '@kurumi/confirmation-core';
 import {AccessError} from '../../packages/access-control/index.js';
+import {accessChangeFile} from '../../packages/access-control/mail-senders.js';
 import {DOMAIN, sha256} from './policy.js';
 
 export class AccessChangeStore {
   constructor(stateRoot, now = Date.now) {
     if (typeof stateRoot !== 'string' || !path.isAbsolute(stateRoot)
       || fs.realpathSync(stateRoot) !== stateRoot) throw new AccessError('access_state_root_invalid');
-    const directory = path.join(stateRoot, 'state', 'access-admin');
+    const file = accessChangeFile(stateRoot);
+    const directory = path.dirname(file);
     fs.mkdirSync(directory, {recursive: true, mode: 0o700});
     if (fs.realpathSync(directory) !== directory) throw new AccessError('access_state_path_invalid');
-    const file = path.join(directory, 'changes.sqlite');
     const stat = fs.lstatSync(file, {throwIfNoEntry: false});
     if (stat && (!stat.isFile() || stat.nlink !== 1)) throw new AccessError('access_state_path_invalid');
     const db = new DatabaseSync(file);

@@ -1,4 +1,5 @@
 // Isolated OpenClaw, loopback OneBot and deterministic model. Uses only temporary accounts and state.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from './fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {once} from 'node:events';
@@ -54,8 +55,7 @@ try{
   }}});
   model=createServer(async(req,res)=>{
     try{
-      let body='';for await(const chunk of req)body+=chunk;
-      const request=JSON.parse(body),message={role:'assistant',...modelReply(request)};
+      const request=await readFixtureJson(req),message={role:'assistant',...modelReply(request)};
       const finish=message.tool_calls?'tool_calls':'stop',base={id:'fixture-'+mode,model:'fixture',created:1};
       if(!request.stream)return res.setHeader('content-type','application/json').end(JSON.stringify({...base,
         object:'chat.completion',choices:[{index:0,message,finish_reason:finish}]}));
@@ -70,7 +70,7 @@ try{
     agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},heartbeat:{every:'0m'},model:{primary:'fixture/fixture'}},
       entries:{main:{workspace,tools:{allow:['kurumi_logs']}}}},
     models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:'http://127.0.0.1:'+model.address().port+'/v1',
-      apiKey:'fixture',api:'openai-completions',models:[{id:'fixture',name:'fixture',contextWindow:64000,maxTokens:600}]}}},
+      apiKey:'fixture',api:'openai-completions',models:[{id:'fixture',name:'fixture',contextWindow: FIXTURE_CONTEXT_WINDOW,maxTokens:600}]}}},
     plugins:{allow:plugins,load:{paths:plugins.map(id=>join(repo,'chatbot/plugins',id))},slots:{memory:'none'},
       entries:{'kurumi-qq':{enabled:true},'kurumi-logs':{enabled:true,config:{backendRoot:repo,runtimeRoot:root,snowlumaRoot:root}}}},
     channels:{'kurumi-qq':{enabled:true,httpUrl:peer.httpUrl,wsUrl:peer.wsUrl,httpTokenFile:tokenFile,wsTokenFile:tokenFile,
@@ -100,7 +100,8 @@ try{
   report.passed=true;
 }catch(error){report.error=(modelError??error).message;}
 finally{
-  if(await gateway?.close()===false){report.passed=false;report.error??='Gateway shutdown failed';}
+  report.gatewayStopped=await gateway?.close()??null;
+  if(report.gatewayStopped===false){report.passed=false;report.error??='Gateway shutdown failed';}
   model?.closeAllConnections();await Promise.all([peer?.close(),model&&new Promise(resolve=>model.close(resolve))]);
   report.configSha256=gateway?.configSha256;
   if(report.passed)rmSync(root,{recursive:true,force:true});else {report.diagnosticsRoot=root;process.exitCode=1;}

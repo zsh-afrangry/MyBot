@@ -1,6 +1,7 @@
 // Isolated OpenClaw Gateway acceptance for kurumi-files and @kurumi/scoped-lease (docs/37 Stage 2A).
 // Uses local deterministic model, loopback OneBot WebSocket/HTTP, and real Landlock exec.
 // Never touches user ~/下载, ~/文档, ~/kurumi-space, real QQ, or paid models; writes only disposable state and --out.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
@@ -147,10 +148,8 @@ function modelReply(body, tool, res, text = '宿主测试回复。') {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url !== '/v1/chat/completions' || req.method !== 'POST') { res.writeHead(404).end(); return; }
-    const chunks = [];
-    for await (const bytes of req) chunks.push(bytes);
+    const body = await readFixtureJson(req);
     res.setHeader('content-type', 'application/json');
-    const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
     assert(++report.requests <= 140, 'Unexpected model request count');
     assert(active, 'Unexpected foreground model request');
     if (active.member) {
@@ -222,7 +221,7 @@ const buildConfig = () => compileAccessConfig(withHostControl({
         baseUrl: `http://${endpoint}/v1`,
         apiKey: 'synthetic',
         api: 'openai-completions',
-        models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}],
+        models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}],
       },
     },
   },
@@ -782,7 +781,7 @@ try {
   process.exitCode = 1;
 } finally {
   scenarioProgress('stop isolated gateway', 'started', 'cleanup');
-  const stopped = await stop();
+  const stopped = report.gatewayStopped = await stop();
   scenarioProgress('stop isolated gateway', stopped ? 'passed' : 'failed', 'cleanup');
   if (!stopped) {
     report.passed = false;
@@ -793,6 +792,7 @@ try {
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));
   if (report.passed) fs.rmSync(root, {recursive: true, force: true});
+  else report.diagnosticsRoot ??= root;
   report.fixtureCleaned = !fs.existsSync(root);
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});

@@ -5,6 +5,7 @@ import {createHash} from 'node:crypto';
 import {accessSync, closeSync, constants, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {deploymentFailures, failureDiagnostic, fixtureCleanup, fixtureReference} from '../tests/acceptance/scenario-reporting.mjs';
 
 const repo = fileURLToPath(new URL('../../', import.meta.url)).replace(/\/$/u, '');
 const localDependencies = {
@@ -84,7 +85,7 @@ node chatbot/scripts/scenario-acceptance.mjs --target production [--scenario dep
 
 --out 须位于仓库的 test-output/ 内，是尚不存在的报告文件。
 --model 仅用于独立实例的 confirmation，调用已配置的真实模型。
---diagnostic-fault 用于复现独立场景的受控失败：confirmation 可用 gateway-start 或 reminder-lookup，bills-feedback 可用 bills-assertion。
+--diagnostic-fault 用于复现独立场景的受控失败：confirmation 可用 gateway-start 或 reminder-lookup，bills-feedback 可用 bills-assertion，host-admin 可用 host-fixture。
 生产目标目前只覆盖只读部署核验。`;
 
 function options(args) {
@@ -105,7 +106,7 @@ function options(args) {
   if (result.model && (result.target !== 'isolated' || result.scenario !== 'confirmation')) {
     throw Error('--model requires --target isolated --scenario confirmation');
   }
-  const faultScenario = {'gateway-start':'confirmation','reminder-lookup':'confirmation','bills-assertion':'bills-feedback'};
+  const faultScenario = {'gateway-start':'confirmation','reminder-lookup':'confirmation','bills-assertion':'bills-feedback','host-fixture':'host-admin'};
   if (result['diagnostic-fault'] && (result.target!=='isolated' || result.model ||
     !Object.hasOwn(faultScenario,result['diagnostic-fault']) || result.scenario!==faultScenario[result['diagnostic-fault']])) {
     throw Error('Invalid isolated diagnostic failure sample');
@@ -213,11 +214,14 @@ async function runIsolated(id, model, directory, signal, diagnosticFault) {
       ? data.cases.filter(row=>row?.passed===true||row?.status==='passed').at(-1)?.label : undefined);
     const observed = data?.failureDetails ?? (Array.isArray(data?.cases)
       ? data.cases.find(row=>row.status==='failed' && row.label===stage.step)?.diagnostic : undefined);
-    const reference = data?.failureReference ?? (observed?.assertion
+    const exactReference = data?.failureReference ?? (observed?.assertion
       ? {status:'available',kind:'assertion',...observed.assertion}
       : {status:'unavailable',reason:'reference_not_reported'});
+    const fallbackReference = exactReference.status === 'available' ? undefined : fixtureReference(data, repo);
+    const reference = fallbackReference ? {...fallbackReference, exactReference: exactReference.reason} : exactReference;
+    const diagnostic = failureDiagnostic(data, observed);
     return {...stage,category,...(previous&&{lastPassed:previous}),
-      ...(observed && {diagnostic:observed}),reference,
+      ...(diagnostic && {diagnostic}),reference,
       remainingChecks:blocked&&stage.phase==='environment' ? 'not_started'
         : firstFailed?.phase==='check' && id==='confirmation' ? 'stopped' : 'unverified'};
   };
@@ -230,11 +234,12 @@ async function runIsolated(id, model, directory, signal, diagnosticFault) {
       cases: data.cases?.length ?? data.stages?.length ?? 0,
       ...(typeof data.configSha256 === 'string' && {configSha256: data.configSha256}),
       ...(typeof data.primaryModel === 'string' && {primaryModel: data.primaryModel}),
-      cleanupVerified: data.fixtureCleaned ?? data.fixtureRemoved ?? null, evidence};
+      cleanupVerified: data.fixtureCleaned ?? data.fixtureRemoved ?? null,
+      cleanup: fixtureCleanup(data), evidence};
   } catch {
     const blocked = result.reason==='scenario_could_not_start', reason = result.reason ?? 'scenario_finished_without_evidence';
     return {...info, status:blocked?'blocked':'failed',reason,failure:failure(reason,blocked),exitCode: result.code,
-      signal: result.exitSignal, cleanupVerified: null};
+      signal: result.exitSignal, cleanupVerified: null, cleanup: fixtureCleanup()};
   }
 }
 
@@ -256,7 +261,9 @@ try {
         const file = join(evidence, 'deployment.json');
         writeFileSync(file, JSON.stringify(data, null, 2) + '\n', {mode: 0o600, flag: 'wx'});
         report.scenarios.push({name: 'deployment', status: data.passed ? 'passed' : data.blocked ? 'blocked' : 'failed',
-          cases: data.checks.length, evidence: file});
+          cases: data.checks.length, ...(!data.passed && {failure: {phase: 'deployment',
+            category: data.blocked ? 'blocked' : 'check_failed', failedChecks: deploymentFailures(data),
+            ...(data.blocked && {reason: data.blocked})}}), evidence: file});
         report.uncovered = data.uncovered;
       } else {
         const controller = new AbortController();

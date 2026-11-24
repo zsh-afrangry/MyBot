@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 14,
+  "revision": 16,
   "subjects": [
     {
       "qq": "365999865",
@@ -55,12 +55,21 @@
         "files.manage": true,
         "lease.read": true,
         "lease.manage": true,
-        "logs.read": true
+        "logs.read": true,
+        "mail.inbox.read": true,
+        "mail.inbox.attachment": true,
+        "mail.inbox.manage": true
       },
       "mailRecipients": [
         "365999865@qq.com"
       ],
-      "note": "原主人；保留现有能力。新增QQ由操作者另行登记。"
+      "note": "原主人；保留现有能力。新增QQ由操作者另行登记。",
+      "mailSenders": [
+        "1794511189@qq.com",
+        "365999865@qq.com",
+        "zsh1794511189@gmail.com",
+        "wallet@email.vivo.com"
+      ]
     },
     {
       "qq": "3311723223",

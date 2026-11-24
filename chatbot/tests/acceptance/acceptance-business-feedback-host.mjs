@@ -1,5 +1,6 @@
 // Disposable OpenClaw, deterministic cognition and loopback OneBot only.
 // Runs real domain tools and renders fixture E7 cards, or confirms and reads a temporary Profile/Planning SQLite database.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from './fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {once} from 'node:events';
@@ -56,9 +57,7 @@ function complete(request, response, message) {
 async function respond(req, res) {
   try {
     assert(active && ++calls <= 70, 'Unexpected fixture model request');
-    let body = '';
-    for await (const part of req) body += part;
-    const request = JSON.parse(body);
+    const request = await readFixtureJson(req);
     if (active.expected) {
       const last = request.messages.findLast(message => message.role === 'tool');
       assert(last, 'The host did not return the current tool result');
@@ -284,7 +283,7 @@ try {
     agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'},
       heartbeat: {every: '0m'}, model: {primary: 'fixture/fixture'}}, entries: {main: {workspace, tools: {allow: tools}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://127.0.0.1:' + model.address().port + '/v1',
-      apiKey: 'fixture', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture', contextWindow: 64000, maxTokens: 1200}]}}},
+      apiKey: 'fixture', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture', contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200}]}}},
     plugins: {allow: plugins, load: {paths: plugins.map(id => join(repo, 'chatbot/plugins', id))},
       slots: {memory: 'none'}, entries},
     channels: {'kurumi-qq': {enabled: true, httpUrl: peer.httpUrl, wsUrl: peer.wsUrl, httpTokenFile: tokenFile, wsTokenFile: tokenFile,
@@ -300,7 +299,8 @@ try {
 } catch (error) {
   report.error = (fault ?? error).stack;
 } finally {
-  if (await gateway?.close() === false) {report.passed = false; report.error ??= 'Gateway shutdown failed';}
+  report.gatewayStopped = await gateway?.close() ?? null;
+  if (report.gatewayStopped === false) {report.passed = false; report.error ??= 'Gateway shutdown failed';}
   model?.closeAllConnections();
   await Promise.all([peer?.close(), model && new Promise(resolve => model.close(resolve))]);
   report.configSha256 = gateway?.configSha256;

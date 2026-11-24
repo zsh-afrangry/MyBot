@@ -1,6 +1,7 @@
 // Real isolated Gateway, typed hooks, deferred tools, SQLite, native Cron and loopback OneBot WebSocket/HTTP.
 // Default cognition is deterministic. Explicit --model uses the configured official model; still no real QQ/SMTP or production writes.
 // Requires a new absolute --out evidence file; failed fixtures stay in /tmp for diagnosis.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
 import fs from 'node:fs';
 import http from 'node:http';
@@ -80,7 +81,7 @@ function decode(value){for(let i=0;i<7;i++){if(typeof value==='string'){try{valu
 const model=http.createServer(async(req,res)=>{
  try{
   assert(active);assert(++report.requests<=150,'request budget');
-  let raw='';for await(const c of req)raw+=c;const body=JSON.parse(raw);
+  const body=await readFixtureJson(req);
   if(realModel){
    assert(report.requests<=50,'real model request budget');
    for(const m of body.messages??[])for(const c of m.tool_calls??[]){if(seenModelCalls.has(c.id))continue;seenModelCalls.add(c.id);let a;try{a=JSON.parse(c.function.arguments);}catch{a={};}report.modelCalls??=[];report.modelCalls.push({name:c.function.name,action:a.action??a.args?.action??null,domain:a.domain??a.args?.domain??null});}
@@ -148,7 +149,7 @@ const ids=['kurumi-qq','personal-reminders','personal-confirmation'];
 const tools=['personal_confirmation','personal_reminder_propose','personal_reminder_commit','personal_reminder_state_get',
  'personal_reminder_cancel_propose','personal_reminder_cancel_commit','personal_reminder_change_propose','personal_reminder_change_commit'];
 const cfg=()=>withHostControl(compileAccessConfig({
- models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'synthetic',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:128000,maxTokens:1200,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
+ models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'synthetic',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:realModel?128000:FIXTURE_CONTEXT_WINDOW,maxTokens:1200,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
  agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'}},entries:{main:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},tools:{profile:'full',allow:tools,deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
  channels:{'kurumi-qq':{enabled:true,httpUrl:onebot.httpUrl,wsUrl:onebot.wsUrl,httpTokenFile:path.join(root,'http-token'),wsTokenFile:path.join(root,'ws-token'),stateDir:channelDir,mediaRoot:path.join(root,'media'),testIngress:false,inboundDebounceMs:200,inboundDebounceMaxWaitMs:1000,dailySendLimit:100,segmentDelayMs:0}},
  plugins:{allow:ids,load:{paths:ids.map(id=>path.join(repo,'chatbot/plugins',id))},entries:Object.fromEntries(ids.map(id=>[id,{enabled:true,...(id==='personal-confirmation'?{hooks:{allowConversationAccess:true}}:{}),...(id==='personal-reminders'?{config:{reminderBackend:'native-service',reminderRunnerRoot:path.join(repo,'chatbot/plugins/personal-reminders')}}:{})}])),slots:{memory:'none'}},

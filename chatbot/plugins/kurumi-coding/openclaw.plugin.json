@@ -24,6 +24,9 @@
       "worktrees": {
         "type": "string"
       },
+      "autoPreviewOnReady": {
+        "type": "boolean"
+      },
       "feedbackActions": {
         "type": "array",
         "uniqueItems": true,
@@ -86,6 +89,7 @@
             "promptMode": {"type": "string", "enum": ["stdin", "arg", "flag"]},
             "promptFlag": {"type": "string"},
             "homeDir": {"type": "string"},
+            "configFile": {"type": "string"},
             "env": {"type": "object", "additionalProperties": {"type": "string"}}
           }
         }

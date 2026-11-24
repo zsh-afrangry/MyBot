@@ -3,6 +3,7 @@
 // owner_tool starts the real KnowledgeMap API on a disposable SQLite database.
 // Uses synthetic QQ identities and (for coding_project) a local ACP stub.
 // No real QQ, paid model, DSH, production writes or production restart.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
 import {createHash, randomBytes} from 'node:crypto';
@@ -92,10 +93,8 @@ function modelReply(body, tool, res, text = '宿主测试回复。') {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url !== '/v1/chat/completions' || req.method !== 'POST') {res.writeHead(404).end(); return;}
-    let raw = '';
-    for await (const bytes of req) raw += bytes;
+    const body = await readFixtureJson(req);
     res.setHeader('content-type', 'application/json');
-    const body = JSON.parse(raw);
     assert(++report.requests <= (projectRun ? 125 : toolRun ? 90 : 60), 'Unexpected model request count');
     // Only the synthetic ACP gate can release the background notice, between foreground turns.
     if (!active && completingTask) return modelReply(body, undefined, res, '合成任务完成 ' + completingTask);
@@ -171,7 +170,7 @@ const config = withHostControl({
     reload: {mode: 'off'}},
   discovery: {mdns: {mode: 'off'}}, update: {checkOnStart: false},
   models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${endpoint}/v1`, apiKey: 'synthetic', api: 'openai-completions',
-    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200,
+    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200,
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
   agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
     entries: {main: {workspace, model, tools: {profile: 'messaging',
@@ -203,17 +202,17 @@ const call = (method, params = {}, timeout = 40000) => callGatewayFromCli(method
   {config: liveConfig, url: `ws://127.0.0.1:${port}`, token, timeout: String(timeout), json: true}, params,
   {deviceIdentity: null, sharedStateMode: 'read-only'});
 
-async function start() {
+async function start({synchronize = true} = {}) {
   scenarioSignal.throwIfAborted();
   for (const [file, contents] of personaFiles(source, state).files) applyPersonaFile(file, contents);
   const previous = fs.readFileSync(runtimeFile);
-  assert.equal(syncConfig({...syncRoots, args: ['--apply']}), 0);
+  if (synchronize) assert.equal(syncConfig({...syncRoots, args: ['--apply']}), 0);
   const current = fs.readFileSync(runtimeFile);
   if (!current.equals(previous)) {
     assert(fs.readFileSync(path.join(syncRoots.rollbackRoot, 'openclaw.before.json')).equals(previous),
       'Sync must preserve the prior configuration');
   }
-  assert.equal(syncConfig(syncRoots), 0, 'The applied runtime must pass the canonical sync check');
+  if (synchronize) assert.equal(syncConfig(syncRoots), 0, 'The applied runtime must pass the canonical sync check');
   liveConfig = JSON.parse(current);
   const fd = fs.openSync(path.join(state, 'gateway.log'), 'a', 0o600);
   try {
@@ -262,9 +261,9 @@ async function stopGateway() {
   return !forced;
 }
 
-async function restart() {
+async function restart(options) {
   if (!await stop()) throw Error('Failed to stop the isolated Gateway before synchronization');
-  await start();
+  await start(options);
 }
 
 async function turn(from, text, steps) {
@@ -312,7 +311,7 @@ function verifyFeedback(result, runtimeStatus, sourceStatus = 'current') {
   for (const side of [evidence.source, evidence.runtime]) assert.match(side.listSha256, /^[a-f0-9]{64}$/u);
   if (category === 'member' || mailRun || senderRun) {
     assert.equal(evidence.source.revision, readPolicy().revision);
-    assert.equal(evidence.runtime.revision, liveConfig.channels['kurumi-qq'].accessControl.revision);
+    assert.equal(evidence.runtime.revision, senderRun ? readPolicy().revision : liveConfig.channels['kurumi-qq'].accessControl.revision);
   }
   if (sourceStatus === 'current') {
     assert.equal(evidence.source.listSha256 === evidence.runtime.listSha256, runtimeStatus === 'active');
@@ -321,7 +320,7 @@ function verifyFeedback(result, runtimeStatus, sourceStatus = 'current') {
 }
 const commit = verify => adminTool(() => ({action: 'commit', proposalId: proposal.proposalId}), result => {
   verify(result);
-  if (result.ok) verifyFeedback(result, 'pending_sync');
+  if (result.ok) verifyFeedback(result, senderRun ? 'active' : 'pending_sync');
 });
 const changeStatus = (draft, runtimeStatus, sourceStatus) => ({
   ...adminTool({action: 'status', proposalId: draft.proposalId}, result => verifyFeedback(result, runtimeStatus, sourceStatus)),
@@ -478,7 +477,19 @@ async function mailSenderScenario() {
   const select = (action, fields = {}) => ({action, category, ...fields});
   const freeze = result => { assert(result.ok && result.status === 'pending'); proposal = result; };
   const ok = result => assert.equal(result.ok, true, JSON.stringify(result));
-  const readInbox = verify => ({name: 'email_inbox', args: {action: 'read', uid: 1}, verify});
+  const readInbox = (verify, uid = 1) => ({name: 'email_inbox', args: {action: 'read', uid}, verify});
+  const trusted = result => {
+    ok(result);
+    assert.equal(result.trusted, true);
+    assert.equal(result.trustSource, 'allowlist');
+    assert.equal(result.bodyText, 'TRUSTED_SENDER_BODY');
+  };
+  const untrusted = result => {
+    ok(result);
+    assert.equal(result.trusted, false);
+    assert.equal(result.requiresAccessApproval, true);
+    assert.equal(result.bodyText, undefined);
+  };
   const show = async change => {
     const preview = await turn(owner, '请变更邮件发件人白名单并直接确认', [
       adminTool(select('propose', {change}), freeze),
@@ -492,48 +503,40 @@ async function mailSenderScenario() {
       assert.equal(result.inSync, true);
       assert.deepEqual(result.runtime, []);
     }),
-    readInbox(result => {
-      ok(result);
-      assert.equal(result.trusted, false);
-      assert.equal(result.requiresAccessApproval, true);
-      assert.equal(result.bodyText, undefined);
-    }),
+    readInbox(untrusted),
   ]);
+  const baseline = fs.readFileSync(runtimeFile);
   await show({op: 'add', key: senderAddr});
   await turn(owner, '确认', [
     confirm(ok),
-    commit(result => assert(result.ok && result.activation === 'pending_sync')),
-    readInbox(result => assert(result.ok && !result.trusted)),
+    commit(result => assert(result.ok && result.activation === 'active')),
+    readInbox(trusted),
+    readInbox(result => {
+      untrusted(result);
+      assert.equal(result.trustReason, 'auth_failed_downgraded');
+    }, 2),
   ]);
   assert.deepEqual(readPolicy().subjects[0].mailSenders, [senderAddr]);
-  report.cases.push('Mail sender allowlist addition writes source; unsynced runtime stays untrusted');
+  assert(fs.readFileSync(runtimeFile).equals(baseline));
+  report.cases.push('Confirmed sender takes effect in the authorizing turn; authentication failure still requires approval');
   const added = proposal;
 
-  await restart();
-  await turn(owner, '重启后验证发件人白名单生效并可直接读取邮件', [
-    changeStatus(added, 'active'),
-    readInbox(result => {
-      ok(result);
-      assert.equal(result.trusted, true);
-      assert.equal(result.trustSource, 'allowlist');
-      assert.equal(result.bodyText, 'TRUSTED_SENDER_BODY');
-    }),
-  ]);
-  report.cases.push('Compiled allowedSenders unlocks inbox reads after gateway restart');
+  await restart({synchronize: false});
+  assert(fs.readFileSync(runtimeFile).equals(baseline));
+  await turn(owner, '核对未同步配置重启后的发件人信任', [changeStatus(added, 'active'), readInbox(trusted)]);
+  report.cases.push('Sender trust survives restart with the original compiled configuration');
 
-  await show({op: 'remove', key: senderAddr});
-  await turn(owner, '确认', [confirm(ok), commit(ok), changeStatus(added, 'active', 'superseded')]);
   await restart();
-  await turn(owner, '撤销发件人白名单后验证回退为需逐封确认', [
-    readInbox(result => {
-      ok(result);
-      assert.equal(result.trusted, false);
-      assert.equal(result.bodyText, undefined);
-    }),
+  const compiled = fs.readFileSync(runtimeFile);
+  assert(liveConfig.plugins.entries['kurumi-mail'].config.allowedSenders.includes(senderAddr));
+  await show({op: 'remove', key: senderAddr});
+  await turn(owner, '确认', [
+    confirm(ok), commit(ok), readInbox(untrusted),
     changeStatus(added, 'not_active', 'superseded'),
     adminTool(select('get', {key: senderAddr}), result => assert(result.ok && result.inSync && result.source === null && result.runtime === null)),
   ]);
-  report.cases.push('Revoking allowedSenders removes automatic inbox trust on restart');
+  assert(fs.readFileSync(runtimeFile).equals(compiled));
+  report.cases.push('Confirmed revocation supersedes a compiled allowedSender immediately');
 }
 
 async function toolScenario() {
@@ -787,6 +790,15 @@ try {
         text: 'TRUSTED_SENDER_BODY',
       }).raw,
     });
+    mockImap.addMessage('INBOX', {
+      rawBuffer: 'Authentication-Results: fixture.test; dkim=fail\r\n' + buildMessage({
+        messageId: 'sender-admin-2@example.test',
+        from: {name: 'Sender fixture', address: 'trusted-sender@example.test'},
+        to: [IMAP_TEST_USER],
+        subject: '认证失败测试邮件',
+        text: 'AUTHENTICATION_FAILED_BODY',
+      }).raw,
+    });
     imapAddr = await mockImap.start();
   }
   writeJson(intentFile, {_managed: Object.keys(config), ...config});
@@ -807,7 +819,8 @@ try {
   report.diagnosticsRoot = root;
   process.exitCode = 1;
 } finally {
-  if (!await stop()) {
+  report.gatewayStopped = await stop();
+  if (!report.gatewayStopped) {
     report.passed = false;
     report.error ??= 'Isolated Gateway did not stop gracefully';
     process.exitCode = 1;
@@ -816,12 +829,14 @@ try {
   await onebot.close();
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));
-  if (knowledgeMap && !await knowledgeMap.close()) {
+  if (knowledgeMap) report.knowledgeMapStopped = await knowledgeMap.close();
+  if (report.knowledgeMapStopped === false) {
     report.passed = false;
     report.error ??= 'KnowledgeMap API did not stop cleanly';
     process.exitCode = 1;
   }
   if (report.passed) fs.rmSync(root, {recursive: true, force: true});
+  else report.diagnosticsRoot ??= root;
   report.fixtureCleaned = !fs.existsSync(root);
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});

@@ -1,5 +1,6 @@
 // Isolated OpenClaw Gateway acceptance for Doc 37 Stage 3A (external Git), 3B (selfMaintenance), and 4 (backend adapters).
 // Uses local deterministic model, loopback OneBot, local bare remote + synthetic repos, real Landlock, and headless CLI adapter.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
@@ -9,7 +10,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {git} from '../../plugins/kurumi-coding/workspaces.js';
+import {git, runChecks} from '../../plugins/kurumi-coding/workspaces.js';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy, memberRow} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
@@ -121,9 +122,7 @@ const report = {at: new Date().toISOString(), boundary: 'Isolated Gateway, exter
 let active, requestSeq = 0;
 const model = http.createServer(async (req, res) => {
   try {
-    const chunks = [];
-    for await (const chunk of req) chunks.push(chunk);
-    const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    const body = await readFixtureJson(req);
     const messages = body.messages ?? [];
     const text = c => typeof c === 'string' ? c : (c ?? []).map(v => v.text ?? '').join('\n');
     const lastUser = messages.findLast(m => m.role === 'user');
@@ -201,7 +200,7 @@ const cfg = withHostControl(compileAccessConfig({
     entries: {main: {workspace: path.join(state, 'workspace'), tools: {alsoAllow: ['kurumi_code', 'personal_confirmation']}}},
   },
   models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${modelAddr}/v1`, apiKey: 'synthetic', api: 'openai-completions',
-    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 262144, maxTokens: 1000}]}}},
+    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1000}]}}},
   plugins: {
     allow: ['kurumi-coding', 'kurumi-qq', 'personal-confirmation'],
     load: {paths: ['kurumi-coding', 'kurumi-qq', 'personal-confirmation'].map(p => path.join(repo, 'chatbot/plugins', p))},
@@ -356,6 +355,25 @@ try {
   assert.equal(Boolean(readOneBotLedger(path.join(state, 'channel'), db => db.prepare("SELECT count(*) as c FROM outbound WHERE status='sent'").get()).c), true);
   report.cases.push({name: 'stage3b_self_maintenance_gateway_gate', passed: true});
 
+  // Verify the actual kurumi-fusion checks declared in config/runtime.config.json pass inside a clean detached worktree under Landlock.
+  const realCodingCfg = JSON.parse(fs.readFileSync(path.join(repo, 'config/runtime.config.json'), 'utf8')).plugins.entries['kurumi-coding']?.config;
+  const realFusionProject = realCodingCfg?.projects?.find(p => p.id === 'kurumi-fusion');
+  assert.ok(realFusionProject && realCodingCfg?.writeBoundary?.launcher, 'kurumi-fusion coding project config present');
+  const kfWorktree = path.join(boundary, 'kf-real-worktree');
+  const kfCheckLog = path.join(boundary, 'kf-real-checks.log');
+  execFileSync('/usr/bin/git', ['worktree', 'add', '--detach', kfWorktree, 'HEAD'], {cwd: repo, stdio: 'pipe'});
+  try {
+    const kfChecks = await runChecks(realFusionProject, kfWorktree, kfCheckLog, undefined, {
+      root: boundary,
+      launcher: realCodingCfg.writeBoundary.launcher,
+    });
+    assert.equal(kfChecks.ok, true, `real kurumi-fusion checks failed under Landlock: ${JSON.stringify(kfChecks)}`);
+    assert.equal(kfChecks.rows.every(r => !r.skipped && r.code === 0), true);
+  } finally {
+    try { execFileSync('/usr/bin/git', ['worktree', 'remove', '--force', kfWorktree], {cwd: repo, stdio: 'pipe'}); } catch {}
+  }
+  report.cases.push({name: 'stage3b_real_kurumi_fusion_checks_under_landlock', passed: true});
+
   report.passed = true;
 } catch (error) {
   report.passed = false;
@@ -363,10 +381,17 @@ try {
   report.diagnosticsRoot = root;
   process.exitCode = 1;
 } finally {
-  report.gracefulStop = await coding.close();
+  report.gatewayStopped = await coding.close();
+  if (!report.gatewayStopped) {
+    report.passed = false;
+    report.error ??= 'Isolated Gateway did not stop gracefully';
+    report.diagnosticsRoot = root;
+    process.exitCode = 1;
+  }
   model.closeAllConnections();
   await Promise.all([onebot.close(), new Promise(resolve => model.close(resolve))]);
   if (report.passed) fs.rmSync(root, {recursive: true, force: true});
+  report.fixtureCleaned = !fs.existsSync(root);
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});
   console.log(JSON.stringify({passed: report.passed, cases: report.cases.length, error: report.error ?? report.fixtureError}));

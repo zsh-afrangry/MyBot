@@ -7,6 +7,8 @@ import {isDeepStrictEqual, promisify} from 'node:util';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import {accessPolicy, agentFor, allowedMembers, MEMBER_TOOLS, sessionFor} from '../../packages/access-control/index.js';
 import {validateWriteFence, writeFenceRoots} from '../../packages/coding-runtime/write-fence.js';
+import {REPO_ROOT} from '../../../scripts/fusion/lib/runtime-paths.mjs';
+import {classifyHealth} from './scenario-reporting.mjs';
 
 const exec = promisify(execFile);
 const fields = text => Object.fromEntries(text.trim().split('\n').map(line => {
@@ -28,6 +30,7 @@ function accessProjection(cfg) {
     globalDeny: cfg.tools.deny,
     admin: entries['kurumi-access-admin'].config,
     recipients: entries['kurumi-mail'].config.allowedRecipients,
+    senders: entries['kurumi-mail'].config.allowedSenders,
     exec: entries['kurumi-host-control'].config.exec,
     projects: entries['kurumi-coding'].config.projects,
     projectWriteBoundary: entries['kurumi-coding'].config.writeBoundary,
@@ -147,29 +150,45 @@ export async function verifyProductionDeployment({repo}) {
       if (withoutSession) report.uncovered.push('member session catalog for accounts without a session');
       return {verifiedSessions, withoutSession};
     });
-    await step('five-owner-admin-categories', () => {
-      const {admin, exec: ownerExec, recipients, projects, projectWriteBoundary} = accessProjection(cfg);
-      const categories = ['mail_recipient', 'owner_tool', 'exec_root', 'coding_project'];
-      if (owner.permissions['access.manage'] !== true || admin.sourceRoot !== repo
-        || !isDeepStrictEqual([...admin.enabledCategories].sort(), categories.sort())
-        || !isDeepStrictEqual(recipients, owner.mailRecipients)) throw Error('owner_admin_registration_mismatch');
+    await step('owner-admin-categories', () => {
+      const {admin, exec: ownerExec, recipients, senders, projects, projectWriteBoundary} = accessProjection(cfg);
+      const repoCfg = JSON.parse(readFileSync(join(repo, 'config/runtime.config.json'), 'utf8'));
+      const categories = repoCfg.plugins.entries['kurumi-access-admin'].config.enabledCategories;
+      if (owner.permissions['access.manage'] !== true || admin.sourceRoot !== REPO_ROOT
+        || !isDeepStrictEqual([...admin.enabledCategories].sort(), [...categories].sort())
+        || !isDeepStrictEqual(recipients, owner.mailRecipients)
+        || (admin.enabledCategories.includes('mail_sender') && !isDeepStrictEqual(senders, owner.mailSenders ?? []))) {
+        throw Error('owner_admin_registration_mismatch');
+      }
       validateWriteFence(ownerExec.writeBoundary);
       validateWriteFence(projectWriteBoundary);
       const extraRoots = writeFenceRoots(ownerExec.writeBoundary).length - 1;
-      return {categories: categories.length + 1, recipients: recipients.length, extraRoots, projects: projects.length};
+      return {categories: categories.length + 1, recipients: recipients.length,
+        ...(Array.isArray(senders) ? {senders: senders.length} : {}), extraRoots, projects: projects.length};
     });
     for (const [name, script] of [['managed-config-aligned', 'sync-config.mjs'], ['persona-projection-aligned', 'sync-persona.mjs'],
-      ['installed-dependencies-approved', 'verify-dependencies.mjs'], ['semantic-health', 'health.mjs']]) {
+      ['installed-dependencies-approved', 'verify-dependencies.mjs']]) {
       await step(name, async () => {
-        const {stdout} = await exec(process.execPath, [join(repo, 'scripts/fusion', script)], {
+        await exec(process.execPath, [join(repo, 'scripts/fusion', script)], {
           cwd: repo, timeout: 45000, maxBuffer: 1024 * 1024});
-        if (script === 'health.mjs') {
-          const health = JSON.parse(stdout);
-          if (!health.ok) throw Error('semantic_health_failed');
-          return {ok: true, issues: health.issues.length};
-        }
         return true; // Do not retain output which may contain paths/private configuration.
       });
+    }
+    let health;
+    try {
+      let stdout;
+      try {
+        ({stdout} = await exec(process.execPath, [join(repo, 'scripts/fusion/health.mjs')],
+          {cwd: repo, timeout: 45000, maxBuffer: 1024 * 1024}));
+      } catch (error) {
+        if (error.code !== 1 || typeof error.stdout !== 'string') throw error;
+        stdout = error.stdout;
+      }
+      health = classifyHealth(JSON.parse(stdout));
+    } catch { /* Both checks remain failed if the health report is unavailable. */ }
+    for (const [name, result] of [['semantic-health-base', health?.base], ['semantic-health-cron', health?.cron]]) {
+      report.checks.push({name, status: result?.ok ? 'passed' : 'failed',
+        ...(result && {evidence: result})});
     }
     await step('service-and-config-stable-during-observation', async () => {
       if (appliedHash !== await appliedAccessConfig(rpc, configFile, cfg)

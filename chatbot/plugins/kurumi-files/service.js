@@ -1030,6 +1030,7 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
         if (!pattern && !query) fail('invalid_files_arguments');
         const nameMatcher = compileSearchMatcher(pattern);
         const maxResults = Math.max(1, Math.min(100, Number.isSafeInteger(args.maxResults) ? args.maxResults : 30));
+        const visitBudget = query ? 3000 : 25000;
         const HEAVY_IGNORED_DIRS = new Set(['.git', 'node_modules', '__pycache__', '.venv']);
         const targetBase = path.basename(target.canonicalPath);
 
@@ -1038,7 +1039,7 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
         let skippedRedlines = 0;
         let truncated = false;
         const queue = [target.canonicalPath];
-        while (queue.length > 0 && matches.length < maxResults && visited < 2000) {
+        while (queue.length > 0 && matches.length < maxResults && visited < visitBudget) {
           const dir = queue.shift();
           let children;
           try {
@@ -1047,12 +1048,11 @@ export function createFilesService(rawConfig, filesStore, leaseStore, {stateRoot
             continue;
           }
           for (const child of children) {
-            visited++;
-            if (visited > 2000) { truncated = true; break; }
             const childPath = path.join(dir, child.name);
             const cls = classifyNormalizedPath(childPath, cfg, redlineList);
             if (cls.tier === 'T3') { skippedRedlines++; continue; }
             if (child.isSymbolicLink()) continue;
+            if (++visited > visitBudget) { truncated = true; break; }
 
             if (child.isDirectory()) {
               const skipProtectedBranch = cls.readOnly && !target.readOnly;

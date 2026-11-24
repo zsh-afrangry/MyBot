@@ -1,5 +1,6 @@
 // Real isolated Gateway with loopback OneBot and model, and a local synthetic ACP peer.
 // Writes only temporary fixtures and a new --out evidence file. No paid model, QQ network, real DSH or production writes.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -42,7 +43,7 @@ let modelFailure;
 const toolCall = (id, args) => ({role: 'assistant', content: null, tool_calls: [
   {id, type: 'function', function: {name: 'kurumi_code', arguments: JSON.stringify(args)}},
 ]});
-const readJson = async req => {const chunks = []; for await (const chunk of req) chunks.push(chunk); return JSON.parse(Buffer.concat(chunks).toString('utf8'));};
+const readJson = readFixtureJson;
 const listen = async server => {server.listen(0, '127.0.0.1'); await once(server, 'listening'); return '127.0.0.1:' + server.address().port;};
 const onebot = await createOneBotPeer({token, botId: bot, subjects: [owner]});
 const {sends} = onebot;
@@ -163,7 +164,7 @@ async function run(enabled) {
   const config = withHostControl(compileAccessConfig({
     agents: {ownership: 'explicit', defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}, systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['kurumi_code']}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://' + modelAddress + '/v1', apiKey: 'synthetic', api: 'openai-completions',
-      models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 262144, maxTokens: 1000}]}}},
+      models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1000}]}}},
     plugins: {allow: ['kurumi-coding', 'kurumi-qq'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-coding'), path.join(repo, 'chatbot/plugins/kurumi-qq')]},
       entries: {'kurumi-coding': {enabled, config: pluginConfig}, 'kurumi-qq': {enabled}}, slots: {memory: 'none'}},
     channels: {'kurumi-qq': {enabled, httpUrl: onebot.httpUrl, wsUrl: onebot.wsUrl, httpTokenFile: tokenFile, wsTokenFile: tokenFile,
@@ -201,7 +202,7 @@ finally {
   model.closeAllConnections();
   await Promise.all([onebot.close(), new Promise(resolve => model.close(resolve))]);
   if (report.passed) {fs.rmSync(root, {recursive: true, force: true}); report.fixtureRemoved = !fs.existsSync(root);}
-  else report.diagnosticDirectory = root;
+  else {report.diagnosticDirectory = root; report.fixtureRemoved = false;}
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});
   console.log(JSON.stringify({passed: report.passed, stages: report.stages.length, error: report.error}));
 }

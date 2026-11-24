@@ -8,7 +8,8 @@ import path from 'node:path';
 import {setTimeout as delay} from 'node:timers/promises';
 import {fileURLToPath} from 'node:url';
 import {fixture} from './fixtures.mjs';
-import {DSH, CODEX, availableBackends, createBackendClient, describeBackends, selectBackend, validateBackends} from '../../plugins/kurumi-coding/backends.js';
+import {DSH, CODEX, availableBackends, createBackendClient, describeBackends, launchOptions, selectBackend, validateBackends} from '../../plugins/kurumi-coding/backends.js';
+import {AcpClient} from '../../packages/coding-runtime/acp-client.js';
 
 const tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-coding-adapters-'));
 test.after(() => fs.rmSync(tmpBase, {recursive: true, force: true}));
@@ -178,4 +179,82 @@ test('acp adapter preset works with real AcpClient stdio peer and failed codex s
   assert.equal(cxDone.reason, 'codex_sandbox_unavailable');
   const stderrLog = fs.readFileSync(path.join(f.pluginConfig.root, 'tasks', cx.id, 'codex.stderr'), 'utf8');
   assert.match(stderrLog, /landlock sandbox probe blocked by test diag/);
+});
+
+test('AcpClient passes string models unquoted and array models JSON-encoded; launchOptions stages opencode config and DSH web providers', async t => {
+  const sentOptions = [];
+  const acpPeer = fileURLToPath(new URL('./acp-peer.mjs', import.meta.url));
+  const capturePeer = makeFakeCli('model-capture-peer.sh', `
+    const readline = require('readline');
+    readline.createInterface({input: process.stdin}).on('line', line => {
+      const f = JSON.parse(line);
+      if (f.method === 'initialize') process.stdout.write(JSON.stringify({jsonrpc: '2.0', id: f.id, result: {protocolVersion: 1}}) + '\\n');
+      else if (f.method === 'session/new') process.stdout.write(JSON.stringify({jsonrpc: '2.0', id: f.id, result: {sessionId: 's-1'}}) + '\\n');
+      else if (f.method === 'session/set_config_option') {
+        require('fs').appendFileSync(process.env.MODEL_LOG, f.params.value + '\\n');
+        process.stdout.write(JSON.stringify({jsonrpc: '2.0', id: f.id, result: {}}) + '\\n');
+      } else if (f.method === 'session/close') process.stdout.write(JSON.stringify({jsonrpc: '2.0', id: f.id, result: {}}) + '\\n');
+    });
+  `);
+  const modelLog = path.join(tmpBase, 'model-options.log');
+  fs.writeFileSync(modelLog, '');
+
+  const strClient = new AcpClient({command: capturePeer, args: [], cwd: tmpBase, env: {...process.env, MODEL_LOG: modelLog}, stderrFile: path.join(tmpBase, 'str.stderr')});
+  await strClient.initialize();
+  await strClient.open(tmpBase, {model: 'volc-ark/deepseek-v4-1-flash-economy-261017'});
+  await strClient.closeSession();
+  await strClient.stop();
+
+  const arrClient = new AcpClient({command: capturePeer, args: [], cwd: tmpBase, env: {...process.env, MODEL_LOG: modelLog}, stderrFile: path.join(tmpBase, 'arr.stderr')});
+  await arrClient.initialize();
+  await arrClient.open(tmpBase, {model: ['volc-ark', 'deepseek-v4-1-flash-economy-261017']});
+  await arrClient.closeSession();
+  await arrClient.stop();
+
+  const recorded = fs.readFileSync(modelLog, 'utf8').trim().split('\n');
+  assert.deepEqual(recorded, [
+    'volc-ark/deepseek-v4-1-flash-economy-261017',
+    '["volc-ark","deepseek-v4-1-flash-economy-261017"]',
+  ]);
+  void sentOptions;
+  void acpPeer;
+
+  // launchOptions with opencode configFile and DSH web llm-pi-ai inheritance.
+  const f = await fixture(t, {
+    configure(pluginConfig) {
+      const dshProfiles = path.join(pluginConfig.dsh.home, 'profiles');
+      fs.mkdirSync(path.join(dshProfiles, 'acp'), {recursive: true});
+      fs.mkdirSync(path.join(dshProfiles, 'web'), {recursive: true});
+      fs.writeFileSync(path.join(dshProfiles, 'acp', 'cordis.patch.yml'), '[]\n');
+      fs.writeFileSync(path.join(dshProfiles, 'web', 'cordis.patch.yml'), '- id: ui\n  x: 1\n- id: llm-pi-ai\n  name: test\n  config:\n    providers:\n      volc-ark:\n        api: openai-completions\n- id: locale\n  x: 2\n');
+      const ocSrc = path.join(tmpBase, 'opencode.source.json');
+      fs.writeFileSync(ocSrc, JSON.stringify({provider: {'volc-ark': {options: {baseURL: 'https://example.invalid/v1'}}}}, null, 2));
+      pluginConfig.dsh.model = ['volc-ark', 'deepseek-v4-1-flash-economy-261017'];
+      pluginConfig.backends = {
+        opencode: {driver: 'acp', command: capturePeer, args: ['acp'], model: 'volc-ark/deepseek-v4-1-flash-economy-261017', configFile: ocSrc},
+      };
+    },
+  });
+
+  const dshTaskDir = path.join(f.pluginConfig.root, 'tasks', 't-dsh');
+  fs.mkdirSync(dshTaskDir, {recursive: true});
+  const dshLaunch = launchOptions(f.pluginConfig, {id: 't-dsh', cwd: f.source, backend: DSH}, dshTaskDir, process.env);
+  assert.deepEqual(dshLaunch.model, ['volc-ark', 'deepseek-v4-1-flash-economy-261017']);
+  const dshPatch = fs.readFileSync(path.join(dshTaskDir, 'acp.patch.yml'), 'utf8');
+  assert.match(dshPatch, /- id: llm-pi-ai/);
+  assert.doesNotMatch(dshPatch, /- id: locale/);
+
+  const ocTaskDir = path.join(f.pluginConfig.root, 'tasks', 't-oc');
+  fs.mkdirSync(ocTaskDir, {recursive: true});
+  const ocLaunch = launchOptions(f.pluginConfig, {id: 't-oc', cwd: f.source, backend: 'opencode'}, ocTaskDir, process.env);
+  assert.equal(ocLaunch.model, 'volc-ark/deepseek-v4-1-flash-economy-261017');
+  const stagedFile = path.join(f.pluginConfig.root, 'backend', 'opencode-home', '.config', 'opencode', 'opencode.json');
+  assert.equal(fs.statSync(stagedFile).mode & 0o777, 0o600);
+  const staged = JSON.parse(fs.readFileSync(stagedFile, 'utf8'));
+  assert.equal(staged.permission.edit, 'allow');
+  assert.equal(staged.permission.bash, 'allow');
+  assert.equal(staged.permission.external_directory, 'deny');
+  assert.equal(staged.permission.webfetch, 'deny');
+  const sourceAfter = JSON.parse(fs.readFileSync(path.join(tmpBase, 'opencode.source.json'), 'utf8'));
+  assert.equal(sourceAfter.permission, undefined);
 });

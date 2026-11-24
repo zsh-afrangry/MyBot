@@ -51,8 +51,12 @@ export function disableOwnerFileRecovery(cfg){
 // External coding repositories are live user/host source trees outside recovery snapshots.
 export function disableExternalCodingRecovery(cfg){
  const coding=cfg.plugins?.entries?.['kurumi-coding']?.config;
- if(!coding||!Array.isArray(coding.projects))return;
- coding.projects=coding.projects.filter(project=>project?.externalRoot!==true&&project?.selfMaintenance!==true);
+ if(!coding)return;
+ if(Array.isArray(coding.projects)){
+  coding.projects=coding.projects.filter(project=>project?.externalRoot!==true&&project?.selfMaintenance!==true);
+ }
+ delete coding.backends;
+ delete coding.codex;
 }
 // A recovery copy never starts paid paper jobs, even outside its test sandbox.
 export function disablePaperRecovery(cfg,runtime){

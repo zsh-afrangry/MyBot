@@ -30,7 +30,10 @@ export class KnowledgeMapClient {
     });
   }
   async request(path, {method = 'GET', query = {}, body, key, runId, signal} = {}) {
-    if (!/^\/api\/assistant\/[a-z]+(?:\/[a-z]+){0,2}$/.test(path)) throw new BridgeError('invalid_path', '不允许任意API路径');
+    if (!/^\/api\/assistant\/[a-z]+(?:\/[a-z]+){0,2}$/.test(path)
+      && !/^\/api\/assistant\/bills\/import\/group\/(?:preview|commit|receipt)$/.test(path)) {
+      throw new BridgeError('invalid_path', '不允许任意API路径');
+    }
     if (!['GET', 'POST'].includes(method)) throw new BridgeError('invalid_method', '本轮不开放此HTTP动作');
     let token;
     try {

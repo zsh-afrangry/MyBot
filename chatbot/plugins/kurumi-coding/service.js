@@ -8,6 +8,7 @@ import {processIdentity, sameProcess, descendants} from '../../packages/coding-r
 import {inspectOwnedRuntime, stopOwnedRuntime} from '../../packages/coding-runtime/reconciliation.js';
 import {attachProjectRegistry} from '../../packages/coding-runtime/project-registry.js';
 import {fencedDirectory, probeWriteFence, writeFenceRoots} from '../../packages/coding-runtime/write-fence.js';
+import {scopeFromInboundEvent, prepareConfirmationPreview, recordConfirmationDelivery} from '@kurumi/confirmation-core';
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
 import {CodingResultRecorder, readCodingResult, resultText} from './results.js';
@@ -18,6 +19,58 @@ import {DSH, createBackendClient, launchOptions, selectBackend, taskBackend} fro
 
 const inFlight = new Set(['queued', 'running', 'checking', 'cancelling', 'merging']);
 const settings = ({projects: _projects, ...rest}) => rest;
+const sanitizePreviewLine = (value, max = 72) => {
+  const text = String(value ?? '').replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim();
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
+};
+const summarizeSubject = subject => {
+  const match = /^Verified coding task ([a-f0-9]{8})-[a-f0-9-]{27}$/i.exec(String(subject ?? '').trim());
+  return match ? `已验证任务 ${match[1]}` : sanitizePreviewLine(subject, 42);
+};
+function parseNumstat(output) {
+  const entries = [];
+  for (const line of String(output ?? '').split('\n').filter(Boolean)) {
+    const parts = line.split('\t');
+    if (parts.length < 3) continue;
+    const [addedRaw, removedRaw, ...rest] = parts;
+    const file = rest.join('\t');
+    const binary = addedRaw === '-' || removedRaw === '-';
+    entries.push({file, binary, added: binary ? 0 : Number(addedRaw) || 0, removed: binary ? 0 : Number(removedRaw) || 0});
+  }
+  return entries;
+}
+function formatChangeSummary(entries, fallbackPaths) {
+  if (!entries.length) {
+    return fallbackPaths.slice(0, 5).join('、') + (fallbackPaths.length > 5 ? ` 等共 ${fallbackPaths.length} 个文件` : '');
+  }
+  const shown = entries.slice(0, 5).map(e => e.binary ? `${e.file}（二进制）` : `${e.file}（+${e.added}/-${e.removed}）`);
+  return shown.join('、') + (entries.length > 5 ? ` 等共 ${entries.length} 个文件` : '');
+}
+function gitLeadSummary(roGit, project, target, task, commits) {
+  const shortBranch = `codex/qq-${task.id.slice(0, 8)}`;
+  let remoteRef = '';
+  try {
+    remoteRef = roGit(project.root, 'for-each-ref', '--format=%(upstream:short)', `refs/heads/${project.branch}`).trim().split('\n')[0] || '';
+    if (!remoteRef) remoteRef = roGit(project.root, 'for-each-ref', '--format=%(refname:short)', `refs/remotes/origin/${project.branch}`).trim().split('\n')[0] || '';
+  } catch { remoteRef = ''; }
+  if (!remoteRef) return `${shortBranch} 领先本地 ${project.branch} ${commits.length} 个提交（无远端追踪分支）`;
+  try {
+    const aheadBefore = Number(roGit(project.root, 'rev-list', '--count', `${remoteRef}..${target.head}`).trim()) || 0;
+    const behind = Number(roGit(project.root, 'rev-list', '--count', `${target.head}..${remoteRef}`).trim()) || 0;
+    const aheadAfter = aheadBefore + commits.length;
+    const behindText = behind > 0 ? `；另落后 ${remoteRef} ${behind} 个提交` : '';
+    if (aheadBefore === 0) {
+      const detail = task.title ? `（仅本次任务：${sanitizePreviewLine(task.title, 48)}）` : '（仅包含本次任务改动）';
+      return `当前本地 ${project.branch} 与 ${remoteRef} 齐平，合入后将领先 ${aheadAfter} 个提交${detail}${behindText}`;
+    }
+    const prior = roGit(project.root, 'log', '--format=%s', '-n', '3', `${remoteRef}..${target.head}`)
+      .trim().split('\n').filter(Boolean).map(summarizeSubject);
+    const priorText = prior.length ? `；此前未推送提交包含：${prior.join('；')}${aheadBefore > prior.length ? ' 等' : ''}` : '';
+    return `当前本地 ${project.branch} 已领先 ${remoteRef} ${aheadBefore} 个提交，合入后将领先 ${aheadAfter} 个提交（含本次任务${priorText}）${behindText}`;
+  } catch {
+    return `${shortBranch} 领先本地 ${project.branch} ${commits.length} 个提交`;
+  }
+}
 
 export class CodingService {
   constructor(config, {authorize, sendText, composeNotice, assertProjectCurrent = () => {}, trace = () => {}, clientFactory = createBackendClient} = {}) {
@@ -129,22 +182,26 @@ export class CodingService {
     return {...this.describe(task), title: task.title ?? null, createdAt: task.createdAt, rounds,
       ...(preview?.payload?.taskCommit ? {taskCommit: preview.payload.taskCommit, candidate: preview.payload.candidate} : {})};
   }
-  submit({projectId, task: text, title: label, backend: requestedBackend}, {requester, key, correlation}) {
+  submit({projectId, task: text, title: label, backend: requestedBackend, autoPreview}, {requester, key, correlation}) {
     this.authorize(requester, 'tasks.code');
     taskText(text);
     const title = resultText(taskTitle(label)) || undefined;
+    if (autoPreview !== undefined && typeof autoPreview !== 'boolean') throw fail('invalid_coding_auto_preview');
     if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
     const backend = selectBackend(this.config, requestedBackend);
-    const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester, title, ...(backend === DSH ? {} : {backend})}));
+    const project = this.project(projectId), requestHash = digest(JSON.stringify({projectId, text, requester, title, ...(backend === DSH ? {} : {backend}), ...(typeof autoPreview === 'boolean' ? {autoPreview} : {})}));
     const old = this.store.find(key);
     if (old) { if (old.requestHash !== requestHash) throw fail('coding_request_key_conflict'); return this.describe(this.task(old.id, requester)); }
     this.assertProjectCurrent(project);
     const id = randomUUID();
     const workspace = createWorkspace(this.config, project, id);
     const task = {id, projectId, projectRoot: project.root, projectRegistrationId: project.registrationId,
-      text, title, backend, requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
+      text, title, backend, ...(typeof autoPreview === 'boolean' ? {autoPreview} : {}), requestKey: key, requestHash, requester, correlation, createdAt: Date.now(), state: 'queued', ...workspace};
     this.store.create(task); this.event(task, 'coding.submitted');
     this.launch(task, text); return this.describe(this.store.get(id));
+  }
+  shouldAutoPreview(task) {
+    return typeof task?.autoPreview === 'boolean' ? task.autoPreview : this.config.autoPreviewOnReady === true;
   }
   launch(task, text) {
     if (this.active.has(task.id)) throw fail('coding_task_busy');
@@ -246,13 +303,14 @@ export class CodingService {
       throw error;
     } finally { await client.stop(); this.finishResult(this.store.get(id)); }
   }
-  continue(id, text, requester, key) {
+  continue(id, text, requester, key, {autoPreview} = {}) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
     this.assertProjectCurrent(this.project(task.projectId));
     selectBackend(this.config, taskBackend(task));
     taskText(text);
+    if (autoPreview !== undefined && typeof autoPreview !== 'boolean') throw fail('invalid_coding_auto_preview');
     if (typeof key !== 'string' || !/^[a-f0-9]{64}$/.test(key)) throw fail('missing_coding_request_key');
-    const hash = digest(JSON.stringify({id, text, requester}));
+    const hash = digest(JSON.stringify({id, text, requester, ...(typeof autoPreview === 'boolean' ? {autoPreview} : {})}));
     const old = this.store.findCommand(key);
     if (old) { if (old.task_id !== id || old.hash !== hash) throw fail('coding_request_key_conflict'); return this.describe(task); }
     if (task.state === 'needs_reconciliation' && task.mergeProposalId) throw fail('merge_reconciliation_required');
@@ -260,7 +318,10 @@ export class CodingService {
     const runtime = inspectOwnedRuntime(task.runtimeIdentity, task.runtimeProcesses, task.cwd);
     if (!runtime.verified) throw fail('runtime_reconciliation_unverified');
     if (!runtime.stopped) throw fail('original_runtime_still_running');
-    assertWorkspace(task); this.store.command(key, id, hash); this.store.invalidate(id); this.launch(task, text); return this.describe(this.store.get(id));
+    assertWorkspace(task); this.store.command(key, id, hash); this.store.invalidate(id);
+    const nextTask = typeof autoPreview === 'boolean' ? {...task, autoPreview} : task;
+    if (typeof autoPreview === 'boolean') this.store.save(nextTask);
+    this.launch(nextTask, text); return this.describe(this.store.get(id));
   }
   async cancel(id, requester) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
@@ -336,9 +397,13 @@ export class CodingService {
   }
   async preview(id, requester, scope) {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    return this._previewTask(task, requester, scope, {allowActive: false});
+  }
+  async _previewTask(task, requester, scope, {allowActive = false} = {}) {
+    const id = task.id;
     const project = structuredClone(this.project(task.projectId));
     this.assertProjectCurrent(project);
-    if (task.state !== 'ready' || this.active.has(id)) throw fail('coding_task_not_ready');
+    if (task.state !== 'ready' || (!allowActive && this.active.has(id))) throw fail('coding_task_not_ready');
     assertWorkspace(task);
     if (this.git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
     if (this.projectLocks.has(project.id)) throw fail('project_merge_busy');
@@ -362,9 +427,9 @@ export class CodingService {
       }
       const checkedHash = workingHash(candidateDir, roGit), checkPlan = structuredClone(project.checks);
       const checks = await runChecks({...project, checks: checkPlan}, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'), undefined, this.config.writeBoundary);
-      if (!checks.ok || (project.selfMaintenance === true && checks.rows.some(r => r.skipped))) throw fail('candidate_checks_failed');
       this.task(id, requester); this.authorize(requester, 'tasks.code'); this.assertProjectCurrent(project);
-      if (this.active.has(id) || this.store.get(id).verifiedCommit !== task.verifiedCommit || this.store.get(id).state !== 'ready') throw fail('coding_task_not_ready');
+      if ((!allowActive && this.active.has(id)) || this.store.get(id).verifiedCommit !== task.verifiedCommit || this.store.get(id).state !== 'ready') throw fail('coding_task_not_ready');
+      if (!checks.ok || (project.selfMaintenance === true && checks.rows.some(r => r.skipped))) throw fail('candidate_checks_failed');
       if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch || this.project(task.projectId).kind !== project.kind
         || JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
       if (workingHash(candidateDir, roGit) !== checkedHash) throw fail('checked_candidate_changed');
@@ -378,12 +443,17 @@ export class CodingService {
       }
       const plan = directory ? directoryPlan(project, task, candidateDir, roGit) : undefined;
       const paths = directory ? plan.changes.map(c => c.name) : roGit(candidateDir, 'diff', '--no-ext-diff', '--name-only', target.head, candidate, '--').trim().split('\n');
+      const numstat = directory ? [] : parseNumstat(roGit(candidateDir, 'diff', '--no-ext-diff', '--numstat', target.head, candidate, '--'));
       const payload = {taskId: id, projectId: project.id, projectRoot: project.root, taskCommit: task.verifiedCommit, target, candidate, diffBase,
         diffHash: digest(diff), candidateDir, checks, ...(directory ? {directoryPlan: plan} : {})};
       const scopeLine = directory ? '仅确认后目录回写；不包含push。'
         : project.selfMaintenance === true ? '仅确认后本地合入；不写.openclaw-fusion、不自动重启服务、不包含push。'
-        : '仅确认后本地合入；不包含push。';
-      const previewText = `${directory ? '实验目录待确认回写' : '编码任务待确认合入'}\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${directory ? project.root : project.branch + ' @ ' + target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + (r.skipped ? '=不适用' : '=通过')).join('；')}\n${directory ? '原目录基线一致，回写前再次核对；原目录不建立Git。' : '目标当前有未提交内容：' + (target.status ? '有，合入不得覆盖' : '无')}\n差异SHA256：${payload.diffHash}\n执行范围：${scopeLine}`;
+        : `仅确认后本地合入到 ${project.branch}；不包含push（不改动远端）。`;
+      const checksSummary = checks.rows.map(r => r.name + (r.skipped ? '（不适用）' : '（通过）')).join('、');
+      const titleLine = task.title ? `任务说明：${sanitizePreviewLine(task.title, 72)}\n` : '';
+      const previewText = directory
+        ? `实验目录待确认回写（${project.id}）\n${titleLine}目标目录：${project.root}\n本次改动：${formatChangeSummary([], paths)}\n检查与状态：${checksSummary}；原目录基线一致，回写前会再次核对，原目录不建立Git\n执行范围：${scopeLine}`
+        : `编码任务待确认合入（${project.id}）\n${titleLine}分支方向：codex/qq-${id.slice(0, 8)} → ${project.branch}（本次合入 ${commits.length} 个提交）\n本次改动：${formatChangeSummary(numstat, paths)}\n检查与状态：${checksSummary}；目标分支工作区${target.status ? '有未提交改动（合入不会覆盖）' : '干净'}\n分支领先情况：${gitLeadSummary(roGit, project, target, task, commits)}\n推送范围：${scopeLine}`;
       const result = this.store.preview(task, payload, previewText, scope);
       this.store.save({...task, candidate}); this.event(task, 'coding.merge_preview', {candidate, proposalId: result.proposalId, payloadHash: result.payloadHash});
       return {...result,presentationFacts:[previewText]};
@@ -466,16 +536,50 @@ export class CodingService {
       this.authorize(task.requester, 'qq.reply');
       task = this.task(task.id, task.requester);
       this.finishResult(task);
+      const bgEvent = {
+        channel: 'kurumi-qq',
+        accountId: 'default',
+        senderId: task.requester.subjectId,
+        conversationId: task.requester.to,
+        sessionKey: task.requester.sessionKey,
+        messageId: `coding-notify:${key}`,
+        isGroup: false,
+      };
+      const bgScope = scopeFromInboundEvent(bgEvent);
+      let autoPreview, autoPreviewBlocked;
+      if (task.state === 'ready' && this.shouldAutoPreview(task) && bgScope) {
+        try {
+          autoPreview = await this._previewTask(task, task.requester, bgScope, {allowActive: true});
+          task = this.store.get(task.id);
+        } catch (error) {
+          autoPreviewBlocked = {code: error?.code ?? 'preview_failed'};
+        }
+      }
       let result = readCodingResult(this.store, task, {limit: 1800});
       if (result.available && result.page.nextOffset !== null) result = readCodingResult(this.store, task, {offset: Math.max(0, result.page.totalChars - 1800), limit: 1800});
       if (!this.composeNotice) throw fail('assistant_notice_unavailable');
+      const mergePreview = autoPreview
+        ? {status: 'pending', projectId: task.projectId, proposalId: autoPreview.proposalId}
+        : autoPreviewBlocked ? {status: 'blocked', code: autoPreviewBlocked.code} : undefined;
       const body = await this.composeNotice({taskId:task.id,projectId:task.projectId,backend:taskBackend(task),state:task.state,workspaceKind:task.workspaceKind,
         roundId:task.executionRoundId,reason:task.reason,hostChecks:task.checks,verifiedCommit:task.verifiedCommit,
-        permissionSummary:task.permissionSummary,result},task.requester);
+        permissionSummary:task.permissionSummary,...(mergePreview ? {mergePreview} : {}),result},task.requester);
       // The plugin owns task identity: the header is composed here, so the model body never has to echo the full id.
       if(typeof body!=='string' || !body.trim() || body.length>3300)throw fail('assistant_notice_reply_missing');
       const header = `【编码任务 ${task.id.slice(0, 8)}${task.title ? '·' + task.title : ''}】`;
-      const text = `${header}\n${body.trim()}`;
+      let text = `${header}\n${body.trim()}`;
+      let previewPrepared = false;
+      if (autoPreview) {
+        const facts = autoPreview.presentationFacts ?? [autoPreview.previewText];
+        const missing = facts.filter(f => !text.includes(f));
+        if (missing.length) text = `${text}\n\n${missing.join('\n')}`;
+        previewPrepared = prepareConfirmationPreview(
+          bgEvent,
+          {domain: 'coding', proposalId: autoPreview.proposalId, payloadHash: autoPreview.payloadHash},
+          autoPreview.previewText,
+          facts,
+        );
+      }
       const latest=this.store.get(task.id);
       if(!this.started || latest.executionRoundId!==task.executionRoundId || latest.state!==task.state)throw fail('notification_task_changed');
       this.authorize(task.requester,'tasks.read');this.authorize(task.requester,'qq.reply');
@@ -486,6 +590,15 @@ export class CodingService {
       attempt = sending;
       const receipt = await this.sendText({to: task.requester.to, text, key});
       if (receipt?.channel !== 'kurumi-qq' || typeof receipt.messageId !== 'string' || !/^-?[1-9][0-9]*$/.test(receipt.messageId)) throw fail('missing_delivery_receipt');
+      if (previewPrepared) {
+        recordConfirmationDelivery({
+          accountId: bgEvent.accountId,
+          conversationId: bgEvent.conversationId,
+          sourceMessageId: bgEvent.messageId,
+          messageId: receipt.messageId,
+          text,
+        });
+      }
       const state = 'platform_accepted';
       if (this.store.settleDelivery(task.id, attempt, {state, messageId: receipt.messageId})) {
         this.event(this.store.get(task.id), 'coding.delivery', {state});
