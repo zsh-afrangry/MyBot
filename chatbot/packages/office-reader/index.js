@@ -4,6 +4,8 @@ import {parseDocx} from './docx.js';
 import {OfficeReaderError, officeFail} from './errors.js';
 import {formatExcelSerial, parseBillExportXlsx, parseXlsx} from './xlsx.js';
 
+export {MAX_OFFICE_FILE_BYTES} from './zip.js';
+
 export {
   OfficeReaderError,
   formatExcelSerial,

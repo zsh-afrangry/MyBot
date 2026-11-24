@@ -9,6 +9,7 @@ import {
   markConfirmationProposalCommitted,
   registerConfirmationProposal,
 } from '../../packages/confirmation-core/dist/index.js';
+import {billFileLabel} from './import-presentation.js';
 
 export const BILLS_IMPORT_DOMAIN = 'bills_import';
 export const BILLS_IMPORT_BACKEND_ID = 'kurumi-bills-import';
@@ -83,12 +84,23 @@ export class BillImportStore {
   }
 
   get natural() {
-    return createNaturalConfirmationBackend(this.db, {
+    const backend = createNaturalConfirmationBackend(this.db, {
       subjectId: 'owner',
       domains: [BILLS_IMPORT_DOMAIN],
       now: this.now,
       supportsBatch: false,
     });
+    const find = this.db.prepare('SELECT source_filename, file_sha256 FROM bill_import_proposals WHERE id=?');
+    return {...backend, list: event => backend.list(event).map(preview => {
+      // Pending previews saved by the previous release used a diagnostic
+      // heading. The proposal payload and its already-recorded proof stay intact.
+      const first = preview.presentationFacts?.[0];
+      if (!first?.startsWith('账单导入预览 · ') || !first.includes('（sha256:')) return preview;
+      const row = find.get(preview.proposalId);
+      if (!row || first !== `账单导入预览 · ${row.source_filename}（sha256:${row.file_sha256.slice(0, 12)}）`) return preview;
+      const facts = ['账单导入预览 · ' + billFileLabel(row.source_filename, row.file_sha256), ...preview.presentationFacts.slice(1)];
+      return {...preview, presentationFacts: facts, previewText: facts.join('\n')};
+    })};
   }
 
   transaction(work) {
@@ -109,12 +121,13 @@ export class BillImportStore {
     const payloadHash = sha256(canonicalPlan);
     const at = this.now();
     const expiresAtUtc = at + ttlSeconds;
+    const first = plan.kind === 'group' ? plan.files[0] : plan;
     this.transaction(() => {
       registerConfirmationProposal(this.db, {
         proposalId,
         payloadHash,
         domain: BILLS_IMPORT_DOMAIN,
-        actionKind: 'bills.import',
+        actionKind: plan.kind === 'group' ? 'bills.import.group' : 'bills.import',
         subjectId: 'owner',
         scope,
         createdAtUtc: at,
@@ -128,10 +141,10 @@ export class BillImportStore {
       `).run(
         proposalId,
         owner,
-        plan.sourcePath,
-        plan.fileName,
-        plan.sheetName ?? null,
-        plan.fileSha256,
+        first.sourcePath,
+        first.fileName,
+        first.sheetName ?? null,
+        first.fileSha256,
         plan.previewHash,
         canonicalPlan,
         'pending',

@@ -203,17 +203,17 @@ const call = (method, params = {}, timeout = 40000) => callGatewayFromCli(method
   {config: liveConfig, url: `ws://127.0.0.1:${port}`, token, timeout: String(timeout), json: true}, params,
   {deviceIdentity: null, sharedStateMode: 'read-only'});
 
-async function start() {
+async function start({synchronize = true} = {}) {
   scenarioSignal.throwIfAborted();
   for (const [file, contents] of personaFiles(source, state).files) applyPersonaFile(file, contents);
   const previous = fs.readFileSync(runtimeFile);
-  assert.equal(syncConfig({...syncRoots, args: ['--apply']}), 0);
+  if (synchronize) assert.equal(syncConfig({...syncRoots, args: ['--apply']}), 0);
   const current = fs.readFileSync(runtimeFile);
   if (!current.equals(previous)) {
     assert(fs.readFileSync(path.join(syncRoots.rollbackRoot, 'openclaw.before.json')).equals(previous),
       'Sync must preserve the prior configuration');
   }
-  assert.equal(syncConfig(syncRoots), 0, 'The applied runtime must pass the canonical sync check');
+  if (synchronize) assert.equal(syncConfig(syncRoots), 0, 'The applied runtime must pass the canonical sync check');
   liveConfig = JSON.parse(current);
   const fd = fs.openSync(path.join(state, 'gateway.log'), 'a', 0o600);
   try {
@@ -262,9 +262,9 @@ async function stopGateway() {
   return !forced;
 }
 
-async function restart() {
+async function restart(options) {
   if (!await stop()) throw Error('Failed to stop the isolated Gateway before synchronization');
-  await start();
+  await start(options);
 }
 
 async function turn(from, text, steps) {
@@ -312,7 +312,7 @@ function verifyFeedback(result, runtimeStatus, sourceStatus = 'current') {
   for (const side of [evidence.source, evidence.runtime]) assert.match(side.listSha256, /^[a-f0-9]{64}$/u);
   if (category === 'member' || mailRun || senderRun) {
     assert.equal(evidence.source.revision, readPolicy().revision);
-    assert.equal(evidence.runtime.revision, liveConfig.channels['kurumi-qq'].accessControl.revision);
+    assert.equal(evidence.runtime.revision, senderRun ? readPolicy().revision : liveConfig.channels['kurumi-qq'].accessControl.revision);
   }
   if (sourceStatus === 'current') {
     assert.equal(evidence.source.listSha256 === evidence.runtime.listSha256, runtimeStatus === 'active');
@@ -321,7 +321,7 @@ function verifyFeedback(result, runtimeStatus, sourceStatus = 'current') {
 }
 const commit = verify => adminTool(() => ({action: 'commit', proposalId: proposal.proposalId}), result => {
   verify(result);
-  if (result.ok) verifyFeedback(result, 'pending_sync');
+  if (result.ok) verifyFeedback(result, senderRun ? 'active' : 'pending_sync');
 });
 const changeStatus = (draft, runtimeStatus, sourceStatus) => ({
   ...adminTool({action: 'status', proposalId: draft.proposalId}, result => verifyFeedback(result, runtimeStatus, sourceStatus)),
@@ -478,7 +478,19 @@ async function mailSenderScenario() {
   const select = (action, fields = {}) => ({action, category, ...fields});
   const freeze = result => { assert(result.ok && result.status === 'pending'); proposal = result; };
   const ok = result => assert.equal(result.ok, true, JSON.stringify(result));
-  const readInbox = verify => ({name: 'email_inbox', args: {action: 'read', uid: 1}, verify});
+  const readInbox = (verify, uid = 1) => ({name: 'email_inbox', args: {action: 'read', uid}, verify});
+  const trusted = result => {
+    ok(result);
+    assert.equal(result.trusted, true);
+    assert.equal(result.trustSource, 'allowlist');
+    assert.equal(result.bodyText, 'TRUSTED_SENDER_BODY');
+  };
+  const untrusted = result => {
+    ok(result);
+    assert.equal(result.trusted, false);
+    assert.equal(result.requiresAccessApproval, true);
+    assert.equal(result.bodyText, undefined);
+  };
   const show = async change => {
     const preview = await turn(owner, '请变更邮件发件人白名单并直接确认', [
       adminTool(select('propose', {change}), freeze),
@@ -492,48 +504,40 @@ async function mailSenderScenario() {
       assert.equal(result.inSync, true);
       assert.deepEqual(result.runtime, []);
     }),
-    readInbox(result => {
-      ok(result);
-      assert.equal(result.trusted, false);
-      assert.equal(result.requiresAccessApproval, true);
-      assert.equal(result.bodyText, undefined);
-    }),
+    readInbox(untrusted),
   ]);
+  const baseline = fs.readFileSync(runtimeFile);
   await show({op: 'add', key: senderAddr});
   await turn(owner, '确认', [
     confirm(ok),
-    commit(result => assert(result.ok && result.activation === 'pending_sync')),
-    readInbox(result => assert(result.ok && !result.trusted)),
+    commit(result => assert(result.ok && result.activation === 'active')),
+    readInbox(trusted),
+    readInbox(result => {
+      untrusted(result);
+      assert.equal(result.trustReason, 'auth_failed_downgraded');
+    }, 2),
   ]);
   assert.deepEqual(readPolicy().subjects[0].mailSenders, [senderAddr]);
-  report.cases.push('Mail sender allowlist addition writes source; unsynced runtime stays untrusted');
+  assert(fs.readFileSync(runtimeFile).equals(baseline));
+  report.cases.push('Confirmed sender takes effect in the authorizing turn; authentication failure still requires approval');
   const added = proposal;
 
-  await restart();
-  await turn(owner, '重启后验证发件人白名单生效并可直接读取邮件', [
-    changeStatus(added, 'active'),
-    readInbox(result => {
-      ok(result);
-      assert.equal(result.trusted, true);
-      assert.equal(result.trustSource, 'allowlist');
-      assert.equal(result.bodyText, 'TRUSTED_SENDER_BODY');
-    }),
-  ]);
-  report.cases.push('Compiled allowedSenders unlocks inbox reads after gateway restart');
+  await restart({synchronize: false});
+  assert(fs.readFileSync(runtimeFile).equals(baseline));
+  await turn(owner, '核对未同步配置重启后的发件人信任', [changeStatus(added, 'active'), readInbox(trusted)]);
+  report.cases.push('Sender trust survives restart with the original compiled configuration');
 
-  await show({op: 'remove', key: senderAddr});
-  await turn(owner, '确认', [confirm(ok), commit(ok), changeStatus(added, 'active', 'superseded')]);
   await restart();
-  await turn(owner, '撤销发件人白名单后验证回退为需逐封确认', [
-    readInbox(result => {
-      ok(result);
-      assert.equal(result.trusted, false);
-      assert.equal(result.bodyText, undefined);
-    }),
+  const compiled = fs.readFileSync(runtimeFile);
+  assert(liveConfig.plugins.entries['kurumi-mail'].config.allowedSenders.includes(senderAddr));
+  await show({op: 'remove', key: senderAddr});
+  await turn(owner, '确认', [
+    confirm(ok), commit(ok), readInbox(untrusted),
     changeStatus(added, 'not_active', 'superseded'),
     adminTool(select('get', {key: senderAddr}), result => assert(result.ok && result.inSync && result.source === null && result.runtime === null)),
   ]);
-  report.cases.push('Revoking allowedSenders removes automatic inbox trust on restart');
+  assert(fs.readFileSync(runtimeFile).equals(compiled));
+  report.cases.push('Confirmed revocation supersedes a compiled allowedSender immediately');
 }
 
 async function toolScenario() {
@@ -785,6 +789,15 @@ try {
         to: [IMAP_TEST_USER],
         subject: '发件人白名单验收邮件',
         text: 'TRUSTED_SENDER_BODY',
+      }).raw,
+    });
+    mockImap.addMessage('INBOX', {
+      rawBuffer: 'Authentication-Results: fixture.test; dkim=fail\r\n' + buildMessage({
+        messageId: 'sender-admin-2@example.test',
+        from: {name: 'Sender fixture', address: 'trusted-sender@example.test'},
+        to: [IMAP_TEST_USER],
+        subject: '认证失败测试邮件',
+        text: 'AUTHENTICATION_FAILED_BODY',
       }).raw,
     });
     imapAddr = await mockImap.start();

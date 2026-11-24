@@ -368,7 +368,7 @@ test('mail preview freezes one address and distinguishes source, active and supe
   assert.deepEqual(f.run({action: 'list', category}).runtime, []);
 });
 
-test('mail_sender whitelist validates, syncs into allowedSenders and rejects members', t => {
+test('mail_sender applies confirmed writes immediately and leaves directly edited addresses for config sync', t => {
   const category = 'mail_sender';
   const f = fixture(t, [category]);
   const sender = 'Bills-Export@Example.Test';
@@ -376,14 +376,28 @@ test('mail_sender whitelist validates, syncs into allowedSenders and rejects mem
   assert.deepEqual(f.run({action: 'list', category}).source, []);
   const add = f.propose({op: 'add', key: sender}, category);
   assert(add.previewText.includes(normalized));
+  assert.throws(() => f.commit(add), {code: 'approval_required'});
+  assert.deepEqual(f.run({action: 'list', category}).runtime, []);
   f.approve(add);
-  assert.equal(f.commit(add).activation, 'pending_sync');
+  const written = f.commit(add);
+  assert.equal(written.activation, 'active');
+  assert.equal(written.feedback.evidence.runtime.revision, f.original.revision + 1);
+  const fileOnly = 'file-only@example.test';
+  const edited = JSON.parse(f.read());
+  edited.revision++;
+  edited.subjects[0].mailSenders.push(fileOnly);
+  f.writePolicy(edited);
+  assert.deepEqual(f.run({action: 'list', category}).runtime, [normalized]);
   f.sync();
   assert.equal(f.status(add).activation, 'active');
-  assert.deepEqual(f.run({action: 'list', category}).runtime, [normalized]);
-  f.apply({op: 'remove', key: normalized}, category);
-  f.sync();
-  assert.deepEqual(f.run({action: 'list', category}).runtime, []);
+  assert.deepEqual(f.run({action: 'list', category}).runtime, [normalized, fileOnly]);
+  const replace = f.apply({op: 'replace', key: normalized, replacement: 'alternate@example.test'}, category);
+  assert.equal(f.status(replace).activation, 'active');
+  assert.deepEqual(f.run({action: 'list', category}).runtime, ['alternate@example.test', fileOnly]);
+  const remove = f.apply({op: 'remove', key: 'alternate@example.test'}, category);
+  assert.equal(f.status(remove).activation, 'active');
+  assert.equal(f.status(add).feedback.evidence.runtime.status, 'not_active');
+  assert.deepEqual(f.run({action: 'list', category}).runtime, [fileOnly]);
   assert.throws(() => f.run({action: 'list', category}, context(memberRow(OTHER))), {code: 'capability_not_allowed'});
 });
 

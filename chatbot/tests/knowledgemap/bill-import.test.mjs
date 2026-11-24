@@ -354,7 +354,37 @@ test('knowledge_bill_import previews, confirms, commits idempotently, detects fi
   assert.equal(batches.ok, true);
   assert.equal(batches.items.length, 2);
 
-  // 6. Redlines, symlinks, and non-owner callers fail closed.
+  // A group with a lost response is recovered through its group receipt.
+  const billPath3 = path.join(kurumiSpace, 'another-export.xlsx');
+  fs.writeFileSync(billPath3, makeBillXlsx([
+    ['2026-12-02 10:00:00', '新大类A', '新子类B', '支出', 'GROUP_RECEIPT', '8.00'],
+  ]));
+  const groupAt = Date.now() + 5000;
+  const groupPreview = inboundFor('一起预览这两个文件', 'm-group-preview', groupAt);
+  harness.fire('reply_dispatch', msgEvent(groupPreview.content, groupPreview.messageId, groupAt));
+  const group = await execJson(harness.tool('knowledge_bill_import'), {
+    action: 'preview', files: [{path: billPath2}, {path: billPath3}],
+  }, 'call-group-preview');
+  assert.equal(group.status, 'needs_confirmation', group.error?.code);
+  assert.deepEqual(group.summary.files.map(file => file.insertCount), [0, 1]);
+  confirmDelivered(groupPreview, group, group.previewText, group.presentationFacts);
+  km.client.fetchImpl = async (...args) => {
+    const response = await origFetch(...args);
+    if (String(args[0]).endsWith('/bills/import/group/commit')) {
+      await response.body?.cancel();
+      throw Error('Synthetic response lost after group commit');
+    }
+    return response;
+  };
+  const groupLost = await execJson(harness.tool('knowledge_bill_import'), {action: 'commit', proposalId: group.proposalId}, 'call-group-lost');
+  assert.equal(groupLost.error.code, 'write_result_unknown');
+  const groupReceipt = await execJson(harness.tool('knowledge_bill_import'), {action: 'status', proposalId: group.proposalId}, 'call-group-status');
+  assert.equal(groupReceipt.status, 'committed');
+  assert.deepEqual(groupReceipt.result.files.map(file => file.inserted_count), [0, 1]);
+  assert(!JSON.stringify(groupReceipt).includes('file_sha256'));
+  assert.equal((await km.web('bills/')).total, 7);
+
+  // Redlines, symlinks, and non-owner callers fail closed.
   const sshKey = path.join(sshDir, 'id_ed25519');
   fs.writeFileSync(sshKey, 'KEY');
   const symlinkPath = path.join(downloads, 'escape.xlsx');
