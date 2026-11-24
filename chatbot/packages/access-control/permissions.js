@@ -35,6 +35,7 @@ const CONFIRMATION = {
   planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'], coding: ['tasks.read', 'tasks.code'],
   access: ['access.manage', 'access.manage'], host_sudo: ['host.sudo.read', 'host.sudo.manage'],
   host_files: ['files.read', 'files.manage'], scoped_lease: ['lease.read', 'lease.manage'],
+  bills_import: ['bills.read', 'bills.manage'],
 };
 
 function actions(groups, fallback) {
@@ -76,6 +77,7 @@ const POLICIES = {
   automations: actions({'automations.read': ['list', 'get', 'status', 'runs']}, 'automations.manage'),
   kurumi_document: actions({'papers.rename': ['rename'], 'papers.import': ['fetch'], 'papers.read': ['list', 'get', 'find']}),
   kurumi_translate: actions({'papers.translate': ['start'], 'papers.read': ['status', 'list'], 'papers.cancel': ['cancel']}),
+  knowledge_bill_import: actions({'bills.read': ['preview', 'status', 'batches'], 'bills.manage': ['commit']}),
 };
 
 export function toolPermission(name, args = {}) {

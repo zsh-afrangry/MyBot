@@ -7,9 +7,9 @@
     "properties":{
       "baseUrl":{"type":"string"},
       "tokenFile":{"type":"string","pattern":"^/"},
-      "feedbackActions":{"type":"array","uniqueItems":true,"items":{"type":"string","enum":["bill.create","bill.update","bill.delete"]}}
+      "feedbackActions":{"type":"array","uniqueItems":true,"items":{"type":"string","enum":["bill.create","bill.update","bill.delete","bill.import"]}}
     }
   },
-  "contracts":{"tools":["knowledge_bills_get","knowledge_bill_add","knowledge_bill_manage"]},
-  "toolMetadata":{"knowledge_bills_get":{"optional":true},"knowledge_bill_add":{"optional":true},"knowledge_bill_manage":{"optional":true}}
+  "contracts":{"tools":["knowledge_bills_get","knowledge_bill_add","knowledge_bill_manage","knowledge_bill_import"]},
+  "toolMetadata":{"knowledge_bills_get":{"optional":true},"knowledge_bill_add":{"optional":true},"knowledge_bill_manage":{"optional":true},"knowledge_bill_import":{"optional":true}}
 }

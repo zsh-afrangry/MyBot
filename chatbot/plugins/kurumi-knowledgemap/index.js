@@ -2,14 +2,18 @@
 import {KnowledgeMapClient, BridgeError, requestKey} from '../../packages/knowledgemap-client/client.js';
 import {createBridgeInbound} from '../../packages/knowledgemap-client/inbound.js';
 import {createToolTrace} from '../../packages/knowledgemap-client/tool-trace.js';
+import {registerConfirmationBackend} from '../../packages/confirmation-core/dist/index.js';
+import {createRuntimeTraceSink} from '../../packages/observability/index.js';
 import {businessFeedback} from '../../packages/feedback-core/index.js';
 import {authorizedOwner as ownerAuthorized} from '../../packages/access-control/index.js';
-import {readFileSync} from 'node:fs';
+import fs, {readFileSync} from 'node:fs';
 import {toolPluginMetadataSymbol} from 'openclaw/plugin-sdk/tool-plugin';
+import {billImportTool, executeBillImport, isKnownImportError} from './bill-import.js';
+import {BILLS_IMPORT_BACKEND_ID, BillImportStore} from './import-store.js';
 const json = value => ({content: [{type: 'text', text: JSON.stringify(value)}]});
 const string = maxLength => ({type: 'string', maxLength});
 const integer = {type: 'integer', minimum: 1};
-const billActions = ['bill.create','bill.update','bill.delete'];
+const billActions = ['bill.create','bill.update','bill.delete','bill.import'];
 const messageIdPattern = '^-?[1-9][0-9]{0,15}$';
 const messageIdFormat = new RegExp(messageIdPattern, 'u');
 const receiptPath = '/api/assistant/bills/receipt';
@@ -54,27 +58,90 @@ export const billTools = [
     }}},
 ];
 
-export function createKnowledgeMapPlugin({clientFactory = options => new KnowledgeMapClient(options)} = {}) {
+export {billImportTool};
+export const allBillTools = [...billTools, billImportTool];
+
+export function createKnowledgeMapPlugin({
+  clientFactory = options => new KnowledgeMapClient(options),
+  stateRoot: overrideStateRoot,
+  verifyRoots,
+  trace: overrideTrace,
+} = {}) {
   const plugin = {id: 'kurumi-knowledgemap', name: 'KnowledgeMap bills', register(api) {
     const client = clientFactory(api.pluginConfig), owner = api.config.channels?.['kurumi-qq']?.ownerId;
     const feedbackActions = new Set(api.pluginConfig?.feedbackActions ?? billActions);
     const inbound = createBridgeInbound(owner);
-    const trace = createToolTrace(billTools.map(t => t.name)); trace.attach(api);
+    const trace = createToolTrace(allBillTools.map(t => t.name)); trace.attach(api);
+    let importStore, unregisterImport, activeStateRoot;
+    const resolveStateRoot = () => overrideStateRoot ?? api.runtime?.state?.resolveStateDir?.() ?? process.env.OPENCLAW_STATE_DIR;
+    const ensureImportService = () => {
+      const sr = resolveStateRoot();
+      if (!sr) return undefined;
+      activeStateRoot = fs.realpathSync(sr);
+      if (!importStore) importStore = new BillImportStore(activeStateRoot);
+      return importStore;
+    };
+    const emitTrace = event => {
+      if (overrideTrace) return overrideTrace(event);
+      const sr = activeStateRoot ?? resolveStateRoot();
+      if (sr) return createRuntimeTraceSink('trace-events.jsonl', {stateRoot: fs.realpathSync(sr)}).emit(event);
+    };
     if (api.registrationMode === 'full' || api.registrationMode === undefined) {
       api.on('reply_dispatch', event => inbound.receive(event));
       api.on('before_reset', (event, ctx) => inbound.end(event, ctx)); api.on('session_end', (event, ctx) => inbound.end(event, ctx));
+      if (typeof api.registerService === 'function') {
+        api.registerService({
+          id: 'kurumi-bills-import',
+          start() {
+            const store = ensureImportService();
+            if (!store) return;
+            const natural = store.natural;
+            unregisterImport = registerConfirmationBackend({
+              id: BILLS_IMPORT_BACKEND_ID,
+              open: () => ({
+                natural,
+                listInboundConfirmationCandidates: () => [],
+                recordInboundConfirmation: () => false,
+                close() {},
+              }),
+            });
+          },
+          stop() {
+            const release = unregisterImport;
+            unregisterImport = undefined;
+            release?.();
+            const currentStore = importStore;
+            importStore = undefined;
+            activeStateRoot = undefined;
+            currentStore?.close();
+          },
+        });
+      }
     }
-    for (const declaration of billTools) api.registerTool({contextVersion: 2, create: ctx => {
+    for (const declaration of allBillTools) api.registerTool({contextVersion: 2, create: ctx => {
       const request = inbound.current();
       return {...declaration, async execute(callId, args = {}, signal) {
         const config = () => ctx.getRuntimeConfig?.() ?? api.config;
-        const permission = declaration.name==='knowledge_bills_get'?'bills.read':'bills.manage';
+        const permission = declaration.name === 'knowledge_bills_get'
+          ? 'bills.read'
+          : declaration.name === 'knowledge_bill_import' && args?.action !== 'commit'
+            ? 'bills.read'
+            : 'bills.manage';
         const authorized = () => ownerAuthorized(ctx, config(), permission);
         const forbidden = () => json({ok:false,error:{code:'forbidden_context',message:'只支持本人QQ私聊'}});
         if (!authorized()) return forbidden();
         ctx.assertInvocationCurrent(); signal?.throwIfAborted();
         try {
           const runId = trace.resolve(ctx, callId, declaration.name);
+          if (declaration.name === 'knowledge_bill_import') {
+            const store = overrideStateRoot ? ensureImportService() : importStore;
+            const sr = activeStateRoot ?? resolveStateRoot();
+            return json(await executeBillImport({
+              args, ctx, callId, signal, runId, config, authorized, forbidden, client,
+              importStore: store, inbound, request, owner, stateRoot: sr, verifyRoots,
+              feedbackActions, emitTrace,
+            }));
+          }
           if (declaration.name !== 'knowledge_bills_get') {
             const current = inbound.require(request, ctx, config());
             const create = declaration.name === 'knowledge_bill_add';
@@ -119,15 +186,17 @@ export function createKnowledgeMapPlugin({clientFactory = options => new Knowled
           const result = await client.request(action === 'tags' ? '/api/assistant/tags' : action === 'monthly' ? '/api/assistant/bills/monthly' : '/api/assistant/bills', {query: action === 'get' ? {id: query.id, limit: 1} : query, signal, runId});
           return json(action === 'get' ? result.items?.length ? {ok: true, item: result.items[0]} : {ok: false, error: {code: 'not_found', message: '未找到账单，请重新查询'}} : result);
         } catch (error) {
-          return json(error instanceof BridgeError ? error.toJSON() : {ok: false, error: {code: 'request_rejected', message: String(error.message).slice(0, 200)}});
+          return json(isKnownImportError(error)
+            ? {ok: false, error: {code: error.code, message: String(error.message).slice(0, 200)}}
+            : {ok: false, error: {code: 'request_rejected', message: String(error.message).slice(0, 200)}});
         }
       }};
     }}, {name: declaration.name, optional: true});
   }};
   Object.defineProperty(plugin, toolPluginMetadataSymbol, {value: {
-    id: plugin.id, name: plugin.name, description: 'KnowledgeMap shared bills with single-record maintenance', activation: {onStartup: true},
+    id: plugin.id, name: plugin.name, description: 'KnowledgeMap shared bills with single-record maintenance and batch import', activation: {onStartup: true},
     configSchema: JSON.parse(readFileSync(new URL('./openclaw.plugin.json', import.meta.url), 'utf8')).configSchema,
-    tools: billTools.map(tool => ({...tool, optional: true})),
+    tools: allBillTools.map(tool => ({...tool, optional: true})),
   }});
   return plugin;
 }

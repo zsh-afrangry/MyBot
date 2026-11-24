@@ -94,7 +94,7 @@ test('Background lanes are limited to configured owner tasks and read-only weath
 
 test('Natural confirmation checks each domain and action against the current identity permissions',()=>{
  const c=cfg(),[owner,member]=c.channels['kurumi-qq'].accessControl.subjects;
- for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send'],['coding','tasks.read','tasks.code'],['host_sudo','host.sudo.read','host.sudo.manage'],['host_files','files.read','files.manage'],['scoped_lease','lease.read','lease.manage']]){
+ for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send'],['coding','tasks.read','tasks.code'],['host_sudo','host.sudo.read','host.sudo.manage'],['host_files','files.read','files.manage'],['scoped_lease','lease.read','lease.manage'],['bills_import','bills.read','bills.manage']]){
   for(const action of ['list','preview','confirm']){assert.equal(hook(c,owner,'personal_confirmation',{domain,action}),undefined);assert(hook(c,member,'personal_confirmation',{domain,action}));}
   owner.permissions[write]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'confirm'}));assert.equal(hook(c,owner,'personal_confirmation',{domain,action:'list'}),undefined);owner.permissions[write]=true;
   owner.permissions[read]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'list'}));assert(hook(c,owner,'personal_confirmation',{domain,action:'preview'}));owner.permissions[read]=true;

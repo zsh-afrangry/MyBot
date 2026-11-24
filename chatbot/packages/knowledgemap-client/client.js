@@ -30,7 +30,7 @@ export class KnowledgeMapClient {
     });
   }
   async request(path, {method = 'GET', query = {}, body, key, runId, signal} = {}) {
-    if (!/^\/api\/assistant\/[a-z]+(?:\/[a-z]+)?$/.test(path)) throw new BridgeError('invalid_path', '不允许任意API路径');
+    if (!/^\/api\/assistant\/[a-z]+(?:\/[a-z]+){0,2}$/.test(path)) throw new BridgeError('invalid_path', '不允许任意API路径');
     if (!['GET', 'POST'].includes(method)) throw new BridgeError('invalid_method', '本轮不开放此HTTP动作');
     let token;
     try {
@@ -78,7 +78,7 @@ export class KnowledgeMapClient {
       code = safe.code; throw safe;
     } finally {
       try {this.trace({method, path, requestKey: key ?? null, runId: runId ?? null, code, status,
-        durationMs: Date.now() - started, itemId: result?.item?.id ?? null});} catch { /* Observation failure cannot rewrite a committed business result. */ }
+        durationMs: Date.now() - started, itemId: result?.item?.id ?? result?.batch_id ?? null});} catch { /* Observation failure cannot rewrite a committed business result. */ }
     }
   }
   async allTasks({history = false, query = '', signal, runId} = {}) {

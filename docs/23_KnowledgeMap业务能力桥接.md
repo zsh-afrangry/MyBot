@@ -9,7 +9,7 @@
 | 模块 | 能力 | 边界 |
 | --- | --- | --- |
 | 待做事项 / 提醒列表 | 查询、新增、修改、完成、作废、恢复；每日播报 | 一次性到点提醒是另一种能力，见[文档3](3_个人提醒.md) |
-| 记账 | 新增、查询、月汇总、单笔修改和实际删除；分类取自真实标签目录 | 唯一目标直接执行，歧义先澄清；不批量，不承诺删除可撤销 |
+| 记账 | 新增、查询、月汇总、单笔修改、实际删除与导出 `.xlsx` 批量导入；分类取自真实标签目录 | 单笔唯一目标直接执行，歧义先澄清；批量导入走 `bills_import` 二次确认与指纹防重（生产待启用） |
 | 天气 | 地点查询、天气读取，说明观测时间、数据时效和失败 | 网页默认跟随已确认所在地；天气模块见[文档2](2_天气模块.md) |
 
 不做：TradeSim、Notes/知识图谱、条件事件触发、通用工作流引擎、批量账单维护。
@@ -46,6 +46,7 @@
 - 明确且唯一的单笔修改、删除直接执行；先查真实记录和 version，指代有歧义先澄清。删除沿用网站的实际删除规则，不是作废或回收站，保留请求回执和删除前快照供审计。
 - 账单带共享 version，网站编辑/删除和助手维护都按 ID 与 version 提交；冲突时重新查询，不覆盖新事实。业务写入和幂等回执同事务。
 - 每条消息一笔，不传槽位。后端处理结构化动作并校验字段。账单提交反馈见[文档34](34_统一反馈模块.md#接口)。
+- 导出 `.xlsx` 批量导入通过 `knowledge_bill_import` 走 `preview → bills_import 二次确认 → commit` 闭环，同事务建缺失分类/小类并按单行来源指纹防重，见[文档38](38_月度邮件账单导入与多格式读取.md)。
 
 ## 接口
 
@@ -56,6 +57,7 @@
 | `knowledge_bills_get` | `bills.read` | 账单查询：`tags` 查真实分类，`list` 按日期/分类/备注分页，`get` 按 id 取单笔和 version，`monthly` 月汇总 |
 | `knowledge_bill_add` | `bills.manage` | 新增一笔，必需 `amount`（十进制字符串）和 `expense_date`（YYYY-MM-DD） |
 | `knowledge_bill_manage` | `bills.manage` | `action=update\|delete`，带 `id` 和 `expected_version` |
+| `knowledge_bill_import` | `bills.read`（`preview\|status\|batches`）/ `bills.manage`（`commit`） | 导出 `.xlsx` 批量预览、未知分类统计、`bills_import` 确认与幂等导入（生产待启用） |
 | `personal_reminder_list_get` | `reminder-list.read` | 查询共享有效项或历史，同时返回本地播报设置 |
 | `personal_reminder_list_manage` | `reminder-list.manage`；`schedule/pause/resume` 为 `reminder-list.schedule` | 新增、修改、完成、作废、恢复和播报设置 |
 | `personal_weather_get_brief` | `weather.read` | 天气，见[文档2](2_天气模块.md) |
@@ -98,7 +100,7 @@
 | --- | --- |
 | `chatbot/packages/knowledgemap-client/{client,inbound}.js` | 固定地址异步 HTTP 客户端、可信当前请求、错误/分页/日志 |
 | `chatbot/packages/knowledgemap-client/tool-trace.{js,d.ts}` | runId 关联，不参与授权 |
-| `chatbot/plugins/kurumi-knowledgemap/` | 三个账单工具 |
+| `chatbot/plugins/kurumi-knowledgemap/` | 四个账单工具（单笔维护与 `.xlsx` 批导入）与确认提案库 `bill-imports.sqlite` |
 | `chatbot/plugins/personal-reminder-list/{index,remote,data-source}.js` | 提醒列表工具、共享模式实现、持久切换标记 |
 | `chatbot/scripts/reminder-list.mjs` | 固定播报 runner |
 | `chatbot/packages/personal-domains/src/knowledgemap-client.ts` | 天气 API 适配，保留地点解析、逐小时和预警 |
@@ -154,10 +156,11 @@ Fusion 和 KnowledgeMap 分别采集，Fusion 的 SQLite 快照不含 MySQL，�
 离线用例，不外发、不碰生产：
 
 ```bash
-/usr/bin/node --test chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/bills.test.mjs chatbot/tests/knowledgemap/http.test.mjs
+/usr/bin/node --test chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/bills.test.mjs chatbot/tests/knowledgemap/bill-import.test.mjs chatbot/tests/knowledgemap/http.test.mjs
 /usr/bin/node --test chatbot/tests/reminder-list/*.test.mjs
 /usr/bin/node --test chatbot/tests/response/notification.test.mjs
-node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario shared-city
+/usr/bin/node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario shared-city
+/usr/bin/node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario bills-import
 ```
 
 `bridge.test.mjs` 覆盖播报失败/防重/设置竞态、空列表只记 skipped、旧 runner 防旧写和共享模式工具声明；`http.test.mjs` 起本机独立 FastAPI/SQLite，核对两入口数据一致；`chatbot/tests/reminder-list/` 是 SQLite 实现的回归，不证明共享业务。

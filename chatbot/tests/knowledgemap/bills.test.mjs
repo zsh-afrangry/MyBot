@@ -8,7 +8,7 @@ import {mkdtempSync,readFileSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {createToolTrace} from '../../packages/knowledgemap-client/tool-trace.js';
-import {createKnowledgeMapPlugin, billTools} from '../../plugins/kurumi-knowledgemap/index.js';
+import {createKnowledgeMapPlugin, billTools, allBillTools} from '../../plugins/kurumi-knowledgemap/index.js';
 import {startIsolatedKnowledgeMap} from './isolated-api.mjs';
 
 const owner = '365999865', sessionKey = `agent:main:kurumi-qq:direct:${owner}`;
@@ -30,12 +30,14 @@ function fixture({client,pluginConfig} = {}) {
 }
 const execute = async (tool, args, callId = 'c1') => JSON.parse((await tool.execute(callId, args)).content[0].text);
 
-test('manifest, model catalog and approved runtime expose the same three bill tools', () => {
+test('manifest, model catalog and approved runtime expose the expected bill tools', () => {
   const manifest = JSON.parse(readFileSync(new URL('../../plugins/kurumi-knowledgemap/openclaw.plugin.json', import.meta.url)));
   const config = JSON.parse(readFileSync(new URL('../../../config/runtime.config.json', import.meta.url)));
-  assert.deepEqual(manifest.contracts.tools, billTools.map(t => t.name));
-  for (const {name} of billTools) {
+  assert.deepEqual(manifest.contracts.tools, allBillTools.map(t => t.name));
+  for (const {name} of allBillTools) {
     assert.equal(manifest.toolMetadata[name].optional, true);
+  }
+  for (const {name} of billTools) {
     assert.ok(config.agents.entries.main.tools.alsoAllow.includes(name));
   }
 });
