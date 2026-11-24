@@ -28,6 +28,7 @@ function accessProjection(cfg) {
     globalDeny: cfg.tools.deny,
     admin: entries['kurumi-access-admin'].config,
     recipients: entries['kurumi-mail'].config.allowedRecipients,
+    senders: entries['kurumi-mail'].config.allowedSenders,
     exec: entries['kurumi-host-control'].config.exec,
     projects: entries['kurumi-coding'].config.projects,
     projectWriteBoundary: entries['kurumi-coding'].config.writeBoundary,
@@ -147,16 +148,21 @@ export async function verifyProductionDeployment({repo}) {
       if (withoutSession) report.uncovered.push('member session catalog for accounts without a session');
       return {verifiedSessions, withoutSession};
     });
-    await step('five-owner-admin-categories', () => {
-      const {admin, exec: ownerExec, recipients, projects, projectWriteBoundary} = accessProjection(cfg);
-      const categories = ['mail_recipient', 'owner_tool', 'exec_root', 'coding_project'];
+    await step('owner-admin-categories', () => {
+      const {admin, exec: ownerExec, recipients, senders, projects, projectWriteBoundary} = accessProjection(cfg);
+      const repoCfg = JSON.parse(readFileSync(join(repo, 'config/runtime.config.json'), 'utf8'));
+      const categories = repoCfg.plugins.entries['kurumi-access-admin'].config.enabledCategories;
       if (owner.permissions['access.manage'] !== true || admin.sourceRoot !== repo
-        || !isDeepStrictEqual([...admin.enabledCategories].sort(), categories.sort())
-        || !isDeepStrictEqual(recipients, owner.mailRecipients)) throw Error('owner_admin_registration_mismatch');
+        || !isDeepStrictEqual([...admin.enabledCategories].sort(), [...categories].sort())
+        || !isDeepStrictEqual(recipients, owner.mailRecipients)
+        || (admin.enabledCategories.includes('mail_sender') && !isDeepStrictEqual(senders, owner.mailSenders ?? []))) {
+        throw Error('owner_admin_registration_mismatch');
+      }
       validateWriteFence(ownerExec.writeBoundary);
       validateWriteFence(projectWriteBoundary);
       const extraRoots = writeFenceRoots(ownerExec.writeBoundary).length - 1;
-      return {categories: categories.length + 1, recipients: recipients.length, extraRoots, projects: projects.length};
+      return {categories: categories.length + 1, recipients: recipients.length,
+        ...(Array.isArray(senders) ? {senders: senders.length} : {}), extraRoots, projects: projects.length};
     });
     for (const [name, script] of [['managed-config-aligned', 'sync-config.mjs'], ['persona-projection-aligned', 'sync-persona.mjs'],
       ['installed-dependencies-approved', 'verify-dependencies.mjs'], ['semantic-health', 'health.mjs']]) {
