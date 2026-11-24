@@ -276,6 +276,30 @@ for (const p of dbs) {
 }
 check('assemble: databases placed at runtime paths', dbPlaced.length === dbs.length && dbs.length > 0, `${dbPlaced.length} database(s)`);
 
+// 6b'. Gateway 租约净化。live 备份（gateway 运行中取得）必然携带指向生产进程的活跃
+// gateway-owner / agent-database 租约；恢复副本的隔离命名空间无法验证该 holder（官方提示
+// 用 `openclaw gateway recover-lock` 显式接管），doctor 与探针 gateway 都会因此拒绝进入
+// 维护。这里按"原 holder 已停、锁已显式恢复"的语义清空租约表，等价于人工 recover-lock。
+// 仅作用于 --target 内的恢复副本，assertNoProduction 已保证不触生产路径。
+{
+  const leaseTables = ['state_leases', 'agent_database_leases'];
+  let cleared = 0, dbsWithLeases = 0;
+  for (const rel of dbPlaced) {
+    const db = path.join(runtime, rel);
+    let con;
+    try { con = new DatabaseSync(db); } catch { continue; }
+    try {
+      for (const t of leaseTables) {
+        const has = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(t);
+        if (!has) continue;
+        const n = con.prepare(`DELETE FROM ${t}`).run().changes;
+        if (n > 0) { cleared += n; dbsWithLeases++; }
+      }
+    } finally { con.close(); }
+  }
+  check('assemble: restored gateway leases cleared', true, `${cleared} lease row(s) cleared in ${dbsWithLeases} database(s)`);
+}
+
 // 6c. Config + credential plane.
 let cfg = null;
 try {
