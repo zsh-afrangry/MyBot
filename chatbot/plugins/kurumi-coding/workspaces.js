@@ -16,6 +16,44 @@ export function executionEnv() {
   }
   return {...env, GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_OPTIONAL_LOCKS: '0'};
 }
+export const DEFAULT_SELF_MAINTENANCE_PROTECTED_PATHS = Object.freeze([
+  '.openclaw-fusion',
+  '.git',
+  'config/access-control.json',
+  'config/runtime.config.json',
+]);
+
+export function assertSelfMaintenanceCandidateSafe(project, roGit, diffBase, candidate, candidateDir) {
+  if (project?.selfMaintenance !== true) return;
+  const protectedList = [...new Set([
+    ...DEFAULT_SELF_MAINTENANCE_PROTECTED_PATHS,
+    ...(Array.isArray(project.protectedPaths) ? project.protectedPaths : []),
+  ])];
+  const rawNames = roGit(candidateDir, 'diff', '--no-ext-diff', '--name-only', '-z', diffBase, candidate, '--')
+    .split('\0').filter(Boolean);
+  for (const rel of rawNames) {
+    const posixRel = rel.replaceAll('\\', '/');
+    if (posixRel.split('/').includes('.openclaw-fusion')) throw fail('self_maintenance_protected_diff');
+    if (protectedList.some(prefix => posixRel === prefix || posixRel.startsWith(prefix.replace(/\/+$/u, '') + '/'))) {
+      throw fail('self_maintenance_protected_diff');
+    }
+    const candidateFile = path.join(candidateDir, rel);
+    try {
+      const lst = fs.lstatSync(candidateFile);
+      if (lst.isSymbolicLink()) {
+        const target = fs.readlinkSync(candidateFile);
+        const resolved = path.resolve(path.dirname(candidateFile), target);
+        if (!inside(resolved, candidateDir) || resolved.includes('.openclaw-fusion')) {
+          throw fail('self_maintenance_protected_diff');
+        }
+      }
+    } catch (error) {
+      if (error?.code === 'self_maintenance_protected_diff') throw error;
+      if (error?.code !== 'ENOENT') throw error;
+    }
+  }
+}
+
 export function isExternalProject(config, project) {
   return Boolean(project?.externalRoot) && !inside(project.root, config.writeBoundary.root);
 }
@@ -78,7 +116,12 @@ export function projectPolicy(config) {
   for (const p of config.projects) {
     if (p.externalRoot !== undefined && typeof p.externalRoot !== 'boolean') throw fail('invalid_project_flags');
     if (p.allowRemote !== undefined && typeof p.allowRemote !== 'boolean') throw fail('invalid_project_flags');
+    if (p.selfMaintenance !== undefined && typeof p.selfMaintenance !== 'boolean') throw fail('invalid_project_flags');
+    if (p.protectedPaths !== undefined && (!Array.isArray(p.protectedPaths) || p.protectedPaths.some(item => typeof item !== 'string' || !item || path.isAbsolute(item) || item.includes('\0') || item.split('/').includes('..')))) {
+      throw fail('invalid_project_flags');
+    }
     canonical(p.root);
+    if (p.selfMaintenance === true && p.externalRoot !== true) throw fail('self_maintenance_requires_external_root');
     if (p.externalRoot === true) {
       if (p.kind === 'directory') throw fail('external_directory_project_not_allowed');
       if (inside(config.writeBoundary.root, p.root) || inside(p.root, config.writeBoundary.root)) {
@@ -104,7 +147,12 @@ export function projectPolicy(config) {
       || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(p.registrationId))) throw fail('invalid_project_registration');
     if (roots.some(root => inside(root, p.root) || inside(p.root, root))) throw fail('overlapping_project_roots');
     roots.push(p.root);
-    for (const protectedPath of [config.root, config.worktrees, config.dsh.home, '/home/afrangry/.openclaw-fusion', '/home/afrangry/kurumi-fusion', '/home/afrangry/kurumi-archive', '/home/afrangry/.npm-global', '/opt/deepseek-harness']) {
+    const protectedPaths = [
+      config.root, config.worktrees, config.dsh.home,
+      '/home/afrangry/.openclaw-fusion', '/home/afrangry/kurumi-archive', '/home/afrangry/.npm-global', '/opt/deepseek-harness',
+      ...(p.selfMaintenance === true ? [] : ['/home/afrangry/kurumi-fusion']),
+    ];
+    for (const protectedPath of protectedPaths) {
       if (inside(p.root, protectedPath) || inside(protectedPath, p.root)) throw fail('protected_project_root');
     }
     if (p.kind !== undefined && !['git', 'directory'].includes(p.kind)) throw fail('invalid_project_kind');

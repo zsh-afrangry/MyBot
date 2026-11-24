@@ -11,7 +11,7 @@ import {fencedDirectory, probeWriteFence, writeFenceRoots} from '../../packages/
 import {CodingStore} from './store.js';
 import {PermissionAudit} from './permissions.js';
 import {CodingResultRecorder, readCodingResult, resultText} from './results.js';
-import {projectPolicy, projectGit, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, fencedGit, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite} from './workspaces.js';
+import {projectPolicy, projectGit, createWorkspace, assertTaskLocation, assertCandidateLocation, assertWorkspace, runChecks, commitUnit, snapshot, targetState, fencedGit, workingHash, assertDirtyPreserved, rollbackUnit, executionEnv, assertNoUntrackedOverwrite, assertSelfMaintenanceCandidateSafe} from './workspaces.js';
 import {digest, fail, taskText, taskTitle} from './policy.js';
 import {directoryState, directoryPlan, prepareDirectoryWriteback, runDirectoryWriteback, directoryWritebackState} from './directory-workspaces.js';
 import {DSH, createBackendClient, launchOptions, selectBackend, taskBackend} from './backends.js';
@@ -228,8 +228,9 @@ export class CodingService {
       assertTaskLocation(this.config, this.project(task.projectId), task);
       if (JSON.stringify(this.project(task.projectId).checks) !== JSON.stringify(checkPlan)) throw fail('checks_changed_during_validation');
       if (workingHash(task.cwd, this.git) !== checkedHash) throw fail('checked_tree_changed');
-      update({checks}); this.event(task, 'coding.checked', {ok: checks.ok, checkCount: checks.rows.length});
-      if (!checks.ok) { update({state: 'check_failed', reason: 'registered_checks_failed'}); await this.notify(task); return; }
+      const checkOk = checks.ok && (!project.selfMaintenance || checks.rows.every(r => !r.skipped));
+      update({checks: {...checks, ok: checkOk}}); this.event(task, 'coding.checked', {ok: checkOk, checkCount: checks.rows.length});
+      if (!checkOk) { update({state: 'check_failed', reason: 'registered_checks_failed'}); await this.notify(task); return; }
       this.authorize(task.requester, 'tasks.code'); entry.controller.signal.throwIfAborted();
       const verifiedCommit = commitUnit(task, checkedHash, this.projectGit(this.project(task.projectId), 'worktree'));
       update({verifiedCommit, state: 'ready', runtimeIdentity: undefined, runtimeProcesses: undefined}); this.event(task, 'coding.ready', {verifiedCommit});
@@ -361,7 +362,7 @@ export class CodingService {
       }
       const checkedHash = workingHash(candidateDir, roGit), checkPlan = structuredClone(project.checks);
       const checks = await runChecks({...project, checks: checkPlan}, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'), undefined, this.config.writeBoundary);
-      if (!checks.ok) throw fail('candidate_checks_failed');
+      if (!checks.ok || (project.selfMaintenance === true && checks.rows.some(r => r.skipped))) throw fail('candidate_checks_failed');
       this.task(id, requester); this.authorize(requester, 'tasks.code'); this.assertProjectCurrent(project);
       if (this.active.has(id) || this.store.get(id).verifiedCommit !== task.verifiedCommit || this.store.get(id).state !== 'ready') throw fail('coding_task_not_ready');
       if (this.project(task.projectId).root !== project.root || this.project(task.projectId).branch !== project.branch || this.project(task.projectId).kind !== project.kind
@@ -371,12 +372,18 @@ export class CodingService {
       const candidate = roGit(candidateDir, 'rev-parse', 'HEAD').trim();
       const diffBase = directory ? task.base : target.head;
       const diff = roGit(candidateDir, 'diff', '--no-ext-diff', '--no-textconv', diffBase, candidate, '--');
-      if (!directory) assertNoUntrackedOverwrite(project, target.head, candidate, roGit);
+      if (!directory) {
+        assertNoUntrackedOverwrite(project, target.head, candidate, roGit);
+        assertSelfMaintenanceCandidateSafe(project, roGit, diffBase, candidate, candidateDir);
+      }
       const plan = directory ? directoryPlan(project, task, candidateDir, roGit) : undefined;
       const paths = directory ? plan.changes.map(c => c.name) : roGit(candidateDir, 'diff', '--no-ext-diff', '--name-only', target.head, candidate, '--').trim().split('\n');
       const payload = {taskId: id, projectId: project.id, projectRoot: project.root, taskCommit: task.verifiedCommit, target, candidate, diffBase,
         diffHash: digest(diff), candidateDir, checks, ...(directory ? {directoryPlan: plan} : {})};
-      const previewText = `${directory ? '实验目录待确认回写' : '编码任务待确认合入'}\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${directory ? project.root : project.branch + ' @ ' + target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + (r.skipped ? '=不适用' : '=通过')).join('；')}\n${directory ? '原目录基线一致，回写前再次核对；原目录不建立Git。' : '目标当前有未提交内容：' + (target.status ? '有，合入不得覆盖' : '无')}\n差异SHA256：${payload.diffHash}\n执行范围：仅${directory ? '确认后目录回写' : '确认后本地合入'}；不包含push。`;
+      const scopeLine = directory ? '仅确认后目录回写；不包含push。'
+        : project.selfMaintenance === true ? '仅确认后本地合入；不写.openclaw-fusion、不自动重启服务、不包含push。'
+        : '仅确认后本地合入；不包含push。';
+      const previewText = `${directory ? '实验目录待确认回写' : '编码任务待确认合入'}\n项目：${project.id}\n任务：${id}\n任务提交：${task.verifiedCommit}\n目标：${directory ? project.root : project.branch + ' @ ' + target.head}\n候选：${candidate}\n变更文件：${paths.join('、')}\n检查：${checks.rows.map(r => r.name + (r.skipped ? '=不适用' : '=通过')).join('；')}\n${directory ? '原目录基线一致，回写前再次核对；原目录不建立Git。' : '目标当前有未提交内容：' + (target.status ? '有，合入不得覆盖' : '无')}\n差异SHA256：${payload.diffHash}\n执行范围：${scopeLine}`;
       const result = this.store.preview(task, payload, previewText, scope);
       this.store.save({...task, candidate}); this.event(task, 'coding.merge_preview', {candidate, proposalId: result.proposalId, payloadHash: result.payloadHash});
       return {...result,presentationFacts:[previewText]};
@@ -416,10 +423,13 @@ export class CodingService {
       if (JSON.stringify(this.target(project)) !== JSON.stringify(preview.payload.target)) { this.store.invalidate(id); throw fail('merge_preview_stale'); }
       this.store.save({...current, mergeChecks: {...checks, candidate: preview.payload.candidate, at: new Date().toISOString()}});
       this.event(this.store.get(id), 'coding.merge_checked', {ok: checks.ok, checkCount: checks.rows.length});
-      if (!checks.ok) throw fail('candidate_checks_failed');
+      if (!checks.ok || (project.selfMaintenance === true && checks.rows.some(r => r.skipped))) throw fail('candidate_checks_failed');
       if (directory) {
         if (JSON.stringify(directoryPlan(project, task, preview.payload.candidateDir, roGit)) !== JSON.stringify(preview.payload.directoryPlan)) throw fail('candidate_changed');
-      } else assertNoUntrackedOverwrite(project, preview.payload.target.head, preview.payload.candidate, roGit);
+      } else {
+        assertNoUntrackedOverwrite(project, preview.payload.target.head, preview.payload.candidate, roGit);
+        assertSelfMaintenanceCandidateSafe(project, roGit, preview.payload.diffBase ?? preview.payload.target.head, preview.payload.candidate, preview.payload.candidateDir);
+      }
       assertCurrent(); const payload = this.store.claimMerge(task, proposalId, scope);
       this.event(this.store.get(id), 'coding.merge_authorized', {proposalId});
       try {
