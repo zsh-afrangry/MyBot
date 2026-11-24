@@ -27,6 +27,7 @@ const mappingInputs = new Map([
   ['personal_confirmation', [{action: 'list', domain: 'personal_reminder'}]],
   ['personal_reminder_list_manage', [{action: 'add'}]],
   ['knowledge_bill_import', [{action: 'preview'}, {action: 'commit'}, {action: 'status'}, {action: 'batches'}]],
+  ['email_inbox', [{action: 'folders'}, {action: 'list'}, {action: 'save_attachment'}, {action: 'mark_read'}, {action: 'commit_manage'}]],
   // Probe every current action of these exempt tools to catch even a partial mapping.
   ['kurumi_paper', [{action: 'fetch'}, {action: 'text'}, {action: 'page'}]],
   ['kurumi_project_git', [{action: 'status'}, {action: 'diff'}, {action: 'branch'}, {action: 'commit'}]],

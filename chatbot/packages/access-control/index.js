@@ -18,16 +18,17 @@ export function validatePolicy(value) {
   if (!keysOnly(value, ['version', 'revision', 'subjects']) || value.version !== 1 || !Number.isSafeInteger(value.revision) || value.revision < 1 || !Array.isArray(value.subjects) || value.subjects.length > 100) deny('invalid_access_policy');
   const policy = structuredClone(value), ids = new Set();
   for (const row of policy.subjects) {
-    if (!keysOnly(row, ['qq', 'kind', 'role', 'enabled', 'permissions', 'mailRecipients', 'note', 'expiresAt'])
+    if (!keysOnly(row, ['qq', 'kind', 'role', 'enabled', 'permissions', 'mailRecipients', 'mailSenders', 'note', 'expiresAt'])
       || typeof row.qq !== 'string' || !QQ_ID.test(row.qq) || !['user','group'].includes(row.kind)
       || !['owner','member'].includes(row.role) || typeof row.enabled !== 'boolean' || !obj(row.permissions)
       || Object.entries(row.permissions).some(([p,v]) => !PERMISSIONS.includes(p) || typeof v !== 'boolean')
       || (row.note !== undefined && (typeof row.note !== 'string' || row.note.length > 500))
       || (row.expiresAt != null && (typeof row.expiresAt !== 'string' || !/^\d{4}-\d\d-\d\dT/.test(row.expiresAt) || !Number.isFinite(Date.parse(row.expiresAt))))
-      || !Array.isArray(row.mailRecipients) || row.mailRecipients.length > 20 || row.mailRecipients.some(s => typeof s !== 'string' || s !== s.trim().toLowerCase() || !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(s))) deny('invalid_access_subject');
+      || !Array.isArray(row.mailRecipients) || row.mailRecipients.length > 20 || row.mailRecipients.some(s => typeof s !== 'string' || s !== s.trim().toLowerCase() || !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(s))
+      || (row.mailSenders !== undefined && (!Array.isArray(row.mailSenders) || row.mailSenders.length > 50 || row.mailSenders.some(s => typeof s !== 'string' || s !== s.trim().toLowerCase() || !/^[^\s@<>;,]+@[^\s@<>;,]+\.[^\s@<>;,]+$/.test(s))))) deny('invalid_access_subject');
     const key = subjectKey(row.qq, row.kind);
     if (ids.has(key)) deny('duplicate_access_subject'); ids.add(key);
-    if (row.role !== 'owner' && (OWNER_PERMISSIONS.some(p => row.permissions[p] === true) || row.mailRecipients.length)) deny('capability_requires_owner_isolation');
+    if (row.role !== 'owner' && (OWNER_PERMISSIONS.some(p => row.permissions[p] === true) || row.mailRecipients.length || (row.mailSenders?.length ?? 0) > 0)) deny('capability_requires_owner_isolation');
     if (row.kind === 'group' && (row.role === 'owner' || row.enabled || Object.values(row.permissions).some(Boolean))) deny('group_support_not_enabled');
   }
   const owners = policy.subjects.filter(r => r.role === 'owner');
@@ -81,6 +82,7 @@ export function allowedMembers(cfg) {
   return accessPolicy(cfg).subjects.filter(r => r.kind === 'user' && r.enabled && r.permissions['chat.use'] && (!r.expiresAt || Date.parse(r.expiresAt) > Date.now()));
 }
 export function mailRecipients(cfg) { return [...primaryOwner(cfg).mailRecipients]; }
+export function mailSenders(cfg) { return [...(primaryOwner(cfg).mailSenders ?? [])]; }
 
 // A mandatory trusted host tool policy also covers built-in tools. Domain adapters recheck effects.
 export function toolPolicyDecision(event, ctx, cfg) {

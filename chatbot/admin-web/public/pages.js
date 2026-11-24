@@ -5,7 +5,7 @@ const routeOf = (name, params = {}) => {
   const search = new URLSearchParams(Object.entries(params).filter(([, value]) => value !== null && value !== undefined && value !== ''));
   return name + (search.size ? '?' + search : '');
 };
-const auditLabel = {member: 'QQ 白名单', mail: '邮件收件人', persona: '人格素材'};
+const auditLabel = {member: 'QQ 白名单', mail: '邮件收件人', mail_sender: '邮件发件人', persona: '人格素材'};
 const operationLabel = {add: '新增', edit: '更新', remove: '移除'};
 const serviceIcons = {fusion: 'layers', snowluma: 'link', onebot: 'user', dsh: 'command', km: 'bank', web: 'home'};
 const sourceLabels = {on: ['已配置启用', 'green'], off: ['停用', 'neutral'], unconfigured: ['未配置', 'neutral'],
@@ -241,15 +241,17 @@ function memberForm(ctx, data, row = null) {
     err, div('dialog-actions', button('取消', () => el.close(), {kind: 'ghost'}), submit))));
 }
 
-function emailForm(ctx, data, addr = null) {
+function emailForm(ctx, data, addr = null, kind = 'mail') {
+  const sender = kind === 'mail_sender';
   const input = h('input', {type: 'email', required: true, maxlength: '254', value: addr ?? '', placeholder: 'name@example.com'});
   const err = errorLine();
-  const el = dialog(addr ? '更新邮件收件人' : '新增邮件收件人', '按完整邮箱地址维护。保存名单不会发送邮件。');
+  const el = dialog(addr ? (sender ? '更新邮件发件人' : '更新邮件收件人') : (sender ? '新增邮件发件人' : '新增邮件收件人'),
+    sender ? '按完整发件邮箱地址维护。同步后收件箱信任状态按新名单判定。' : '按完整邮箱地址维护。保存名单不会发送邮件。');
   const submit = button('预览变更', undefined, {submit: true, kind: 'primary', icon: 'arrow'});
   el.querySelector('.dialog-body').append(h('form', {onsubmit: async event => {
     event.preventDefault(); submit.disabled = true; err.hidden = true;
     try {
-      await confirmChange(ctx, {kind: 'mail', operation: addr ? 'edit' : 'add', address: addr,
+      await confirmChange(ctx, {kind, operation: addr ? 'edit' : 'add', address: addr,
         nextAddress: input.value, revision: data.revision});
     } catch (error) {showError(err, error);}
     finally {submit.disabled = false;}
@@ -296,7 +298,7 @@ function protectedLists(data) {
 }
 
 export async function access(ctx) {
-  const view = ['members', 'recipients', 'managed', 'matrix', 'audit'].includes(ctx.part) ? ctx.part : 'members';
+  const view = ['members', 'recipients', 'senders', 'managed', 'matrix', 'audit'].includes(ctx.part) ? ctx.part : 'members';
   if (view === 'audit') {
     const data = await ctx.api('/audit');
     return stack(heading('配置 / 变更记录', '变更记录', '最近 50 条管理台的源文件保存记录。'), accessTabs(view),
@@ -316,20 +318,24 @@ export async function access(ctx) {
     ? '没有读到有效的运行策略；当前只显示仓库配置。'
     : '这里保存仓库意图。先审阅配置差异，按同步流程应用，成员工作区按身份管理契约准备。', 'warning');
 
-  let content;
-  if (view === 'recipients') {
+  const emailPanel = (kind, title, intro, emptyText, addLabel, field) => {
     const owner = data.rows.find(r => r.source.role === 'owner');
-    const now = owner?.source.mailRecipients ?? [];
-    const eff = owner?.effective?.mailRecipients ?? null;
+    const now = owner?.source?.[field] ?? [];
+    const eff = owner?.effective ? (owner.effective[field] ?? []) : null;
     const addresses = [...new Set([...now, ...(eff ?? [])])];
-    content = panel('邮件收件人', '主人可用的 SMTP 精确地址白名单。', table(['邮件地址', '仓库', '运行副本', '操作'],
+    return panel(title, intro, table(['邮件地址', '仓库', '运行副本', '操作'],
       addresses.map(address => [mono(address), now.includes(address) ? chip('已登记', 'green') : chip('已移除', 'amber'),
         eff === null ? chip('未读取') : eff.includes(address) ? chip('已登记', 'green') : chip('未登记'),
         now.includes(address) ? div('actions',
-          button('编辑', () => emailForm(ctx, data, address), {kind: 'ghost small-button', icon: 'edit'}),
-          button('移除', () => remove('mail', address), {kind: 'danger-text small-button'})) : muted('待同步')]),
-      '收件人白名单为空'), button('新增收件人', () => emailForm(ctx, data), {kind: 'primary', icon: 'plus'}));
-  } else if (view === 'matrix') content = permissionMatrix(data);
+          button('编辑', () => emailForm(ctx, data, address, kind), {kind: 'ghost small-button', icon: 'edit'}),
+          button('移除', () => remove(kind, address), {kind: 'danger-text small-button'})) : muted('待同步')]),
+      emptyText), button(addLabel, () => emailForm(ctx, data, null, kind), {kind: 'primary', icon: 'plus'}));
+  };
+
+  let content;
+  if (view === 'recipients') content = emailPanel('mail', '邮件收件人', '主人可用的 SMTP 精确地址白名单。', '收件人白名单为空', '新增收件人', 'mailRecipients');
+  else if (view === 'senders') content = emailPanel('mail_sender', '邮件发件人', '收件箱自动信任读取与保存附件的精确发件地址白名单。', '发件人白名单为空', '新增发件人', 'mailSenders');
+  else if (view === 'matrix') content = permissionMatrix(data);
   else content = panel('QQ 身份', '新增、编辑和移除普通成员。移除只影响名单登记，会话和资料仍保留。', table(
     ['QQ 身份', '源状态', '权限', '到期时间', '运行对照', '操作'], [
       ...data.rows.map(({source: row, aligned: synced}) => [
@@ -344,13 +350,13 @@ export async function access(ctx) {
     ]), button('新增成员', () => memberForm(ctx, data), {kind: 'primary', icon: 'plus'}));
 
   return stack(
-    heading('配置 / 访问控制', '身份与白名单', '管理 QQ 成员与邮件收件人，核对权限和运行状态。', aligned(data.aligned)),
+    heading('配置 / 访问控制', '身份与白名单', '管理 QQ 成员与邮件收发件人白名单，核对权限和运行状态。', aligned(data.aligned)),
     div('inline version-note', chip('仓库修订 ' + data.sourceRevision), chip('运行修订 ' + (data.runtimeRevision ?? '未知')),
       link('权限契约', 'modules/doc/24', {arrow: true})),
     accessTabs(view), drift, content);
 }
 
-const accessTabs = view => tabs([['members', 'QQ 身份'], ['recipients', '邮件收件人'], ['managed', '受管名单'], ['matrix', '权限矩阵'], ['audit', '变更记录']],
+const accessTabs = view => tabs([['members', 'QQ 身份'], ['recipients', '邮件收件人'], ['senders', '邮件发件人'], ['managed', '受管名单'], ['matrix', '权限矩阵'], ['audit', '变更记录']],
   view, id => 'access/' + id);
 
 function noteList(items, type, revealed) {

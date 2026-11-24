@@ -83,7 +83,7 @@ export async function loadChanges(sourceRoot, runtimeRoot) {
     },
     preview(body) {
       if (body?.kind === 'persona') return personaChange(deps, body);
-      if (body?.kind === 'member' || body?.kind === 'mail') return policyChange(deps, body);
+      if (body?.kind === 'member' || body?.kind === 'mail' || body?.kind === 'mail_sender') return policyChange(deps, body);
       throw bad('没有对应的变更类型。');
     },
     commit(change) {
@@ -222,10 +222,11 @@ function memberChange(deps, policy, input) {
   return {before, after, label: 'QQ · ' + qq, target: 'QQ · …' + qq.slice(-4)};
 }
 
-function mailChange(policy, input) {
+function mailChange(policy, input, kind) {
   fields(input, ['kind', 'operation', 'address', 'nextAddress', 'revision']);
   const {operation} = input;
-  if (!['add', 'edit', 'remove'].includes(operation)) throw bad('无效的收件人操作。');
+  const sender = kind === 'mail_sender';
+  if (!['add', 'edit', 'remove'].includes(operation)) throw bad(sender ? '无效的发件人操作。' : '无效的收件人操作。');
   const normalize = address => {
     const normalized = typeof address === 'string' ? address.trim().toLowerCase() : '';
     if (!EMAIL.test(normalized) || normalized.length > 254 || /[\p{Cc}\p{Cf}]/u.test(normalized)) throw bad('请输入一个完整的邮箱地址。');
@@ -234,19 +235,21 @@ function mailChange(policy, input) {
   const before = operation === 'add' ? null : normalize(input.address);
   const after = operation === 'remove' ? null : normalize(input.nextAddress);
   const owner = policy.subjects.find(row => row.role === 'owner');
-  if (before && !owner.mailRecipients.includes(before)) throw conflict();
-  if (after && owner.mailRecipients.includes(after)) throw bad('邮箱已经在白名单中。');
-  owner.mailRecipients = before
-    ? owner.mailRecipients.flatMap(address => address !== before ? [address] : after ? [after] : [])
-    : [...owner.mailRecipients, after];
-  return {before, after, label: '邮件收件人', target: '地址 · ' + sha(before ?? after).slice(0, 8)};
+  const key = sender ? 'mailSenders' : 'mailRecipients';
+  const current = owner[key] ?? [];
+  if (before && !current.includes(before)) throw conflict();
+  if (after && current.includes(after)) throw bad('邮箱已经在白名单中。');
+  owner[key] = before
+    ? current.flatMap(address => address !== before ? [address] : after ? [after] : [])
+    : [...current, after];
+  return {before, after, label: sender ? '邮件发件人' : '邮件收件人', target: '地址 · ' + sha(before ?? after).slice(0, 8)};
 }
 
 function policyChange(deps, input) {
   const source = readPolicy(deps);
   if (source.hash !== input.revision) throw conflict();
   const policy = structuredClone(source.policy);
-  const diff = input.kind === 'member' ? memberChange(deps, policy, input) : mailChange(policy, input);
+  const diff = input.kind === 'member' ? memberChange(deps, policy, input) : mailChange(policy, input, input.kind);
   policy.revision++;
   const runtime = readFile(deps.sourceRoot, 'config/runtime.config.json');
   try {

@@ -89,6 +89,7 @@ export default {
         'For update, grant enables permissions and revoke removes permissions. Null clears note or expiresAt.',
         'Remove deletes the membership record, retaining its data.',
         'For enabled category mail_recipient, use key for one exact address, with replacement for replace. This does not send mail.',
+        'For enabled category mail_sender, use key for one exact trusted inbox sender address, with replacement for replace. Unlisted senders require per-email access approval.',
         'For enabled category owner_tool, use key for one registered tool name. Business permissions and denials still apply.',
         'For enabled category exec_root, use key for one absolute directory path inside an operator-approved base. This only changes additional executable write directories.',
         'For enabled category coding_project, use the stable project ID as key. Add requires root, kind, branch for Git, and an approved checkProfile from list. Update fields of that same ID or remove it; this never runs a coding task.',

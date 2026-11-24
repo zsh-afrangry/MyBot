@@ -21,6 +21,8 @@ import {git} from '../../plugins/kurumi-coding/workspaces.js';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import {syncConfig} from '../../../scripts/fusion/sync-config.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
+import {buildMessage} from '../../plugins/kurumi-mail/mime.js';
+import {IMAP_CERT_FILE, IMAP_TEST_PASS, IMAP_TEST_USER, MockImapServer} from '../../plugins/kurumi-mail/test/mock-imap.js';
 import {closeOnScenarioDisconnect, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
 import {startIsolatedKnowledgeMap} from '../knowledgemap/isolated-api.mjs';
 import {ownerPolicy} from './fixtures.mjs';
@@ -28,7 +30,7 @@ import {withHostControl} from './host-config.mjs';
 
 const [flag, out, mode, category = 'member', ...extra] = process.argv.slice(2);
 assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out), 'Require a new absolute --out');
-assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'owner_tool', 'exec_root', 'coding_project'].includes(category) && !extra.length);
+assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'mail_sender', 'owner_tool', 'exec_root', 'coding_project'].includes(category) && !extra.length);
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-access-admin-host-'));
@@ -61,7 +63,7 @@ fs.writeFileSync(path.join(source, 'scripts/fusion/templates/AGENTS.md'), '{{PER
 fs.copyFileSync(path.join(repo, 'scripts/fusion/templates/MEMBER_AGENTS.md'), path.join(source, 'scripts/fusion/templates/MEMBER_AGENTS.md'));
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(state, file), token, {mode: 0o600});
 
-let active, proposal, child, stopCurrent, removeDisconnectHandler, completingTask, knowledgeMap, liveConfig;
+let active, proposal, child, stopCurrent, removeDisconnectHandler, completingTask, knowledgeMap, mockImap, imapAddr, liveConfig;
 const onebot = await createOneBotPeer({token, botId: bot, subjects: [owner, member]});
 const {sends} = onebot;
 function unwrap(value) {
@@ -137,7 +139,7 @@ const port = probe.address().port;
 await new Promise(resolve => probe.close(resolve));
 const endpoint = `127.0.0.1:${server.address().port}`;
 const admin = 'kurumi-access-admin', confirmation = 'personal-confirmation';
-const mail = 'kurumi-mail', mailRun = category === 'mail_recipient', bills = 'kurumi-knowledgemap';
+const mail = 'kurumi-mail', mailRun = category === 'mail_recipient', senderRun = category === 'mail_sender', bills = 'kurumi-knowledgemap';
 const execRun = category === 'exec_root', fixed = path.join(root, 'exec-fixed');
 const base = path.join(root, 'ordinary'), extraRoot = path.join(base, '目录 A');
 const launcher = '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run';
@@ -161,7 +163,7 @@ if (projectRun) {
   fs.writeFileSync(fakePeer, '#!/bin/bash\nexec ' + [process.execPath,
     path.join(repo, 'chatbot/tests/coding/acp-peer.mjs'), '--project-registry-fixture', gates].map(quote).join(' ') + ' "$@"\n', {mode: 0o700});
 }
-const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun ? [mail] : []), ...(toolRun ? [bills] : []), ...(projectRun ? [coding] : [])];
+const plugins = ['kurumi-qq', admin, confirmation, ...(mailRun || senderRun ? [mail] : []), ...(toolRun ? [bills] : []), ...(projectRun ? [coding] : [])];
 const workspace = path.join(state, 'workspace');
 const model = {primary: 'fixture/fixture'};
 const config = withHostControl({
@@ -173,7 +175,7 @@ const config = withHostControl({
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
   agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
     entries: {main: {workspace, model, tools: {profile: 'messaging',
-      alsoAllow: ['personal_confirmation', 'kurumi_access', ...(mailRun ? ['email_draft', 'email_send'] : []), ...(execRun ? ['exec'] : []),
+      alsoAllow: ['personal_confirmation', 'kurumi_access', ...(mailRun ? ['email_draft', 'email_send'] : []), ...(senderRun ? ['email_inbox'] : []), ...(execRun ? ['exec'] : []),
         ...(projectRun ? ['kurumi_code'] : [])],
       deny: ['read', 'write', 'edit', 'apply_patch', ...(!execRun ? ['exec'] : []), 'process', 'message', 'sessions_spawn'],
       ...(execRun ? {exec: {host: 'gateway', mode: 'full', timeoutSeconds: 10, notifyOnExit: false}} : {}),
@@ -188,7 +190,7 @@ const config = withHostControl({
       ...(category !== 'member' ? {enabledCategories: [category]} : {}),
       ...(execRun ? {execDirectoryBases: [base]} : {}), ...(projectRun ? {projectCheckProfiles} : {})}},
     [confirmation]: {enabled: true, hooks: {allowConversationAccess: true}},
-    ...(mailRun ? {[mail]: {enabled: true}} : {}),
+    ...(mailRun || senderRun ? {[mail]: {enabled: true}} : {}),
     ...(projectRun ? {[coding]: {enabled: true, config: {pilot: true, root: codingRoot, worktrees: path.join(pilot, 'worktrees'),
       dsh: {command: fakePeer, home: fakeHome, model: ['fixture', 'fixture']}, projects: [],
       writeBoundary: {root: pilot, launcher}}}} : {}),
@@ -219,6 +221,13 @@ async function start() {
       '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
       cwd: state, detached: true, stdio: ['ignore', fd, fd], env: {PATH: process.env.PATH, HOME: state,
         OPENCLAW_EXEC_SHELL_SNAPSHOT: '0',
+        ...(senderRun ? {
+          NODE_EXTRA_CA_CERTS: IMAP_CERT_FILE,
+          KURUMI_MAIL_USER: IMAP_TEST_USER,
+          KURUMI_MAIL_AUTH_CODE: IMAP_TEST_PASS,
+          KURUMI_IMAP_HOST: '127.0.0.1',
+          KURUMI_IMAP_PORT: String(imapAddr.port),
+        } : {}),
         LANG: 'C.UTF-8', OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_STATE_DIR: state, OPENCLAW_CONFIG_PATH: runtimeFile,
         OPENCLAW_AGENT_DIR: path.join(state, 'agents/main/agent')},
     });
@@ -301,7 +310,7 @@ function verifyFeedback(result, runtimeStatus, sourceStatus = 'current') {
   assert.equal(evidence.source.status, sourceStatus);
   assert.equal(evidence.runtime.status, runtimeStatus);
   for (const side of [evidence.source, evidence.runtime]) assert.match(side.listSha256, /^[a-f0-9]{64}$/u);
-  if (category === 'member' || mailRun) {
+  if (category === 'member' || mailRun || senderRun) {
     assert.equal(evidence.source.revision, readPolicy().revision);
     assert.equal(evidence.runtime.revision, liveConfig.channels['kurumi-qq'].accessControl.revision);
   }
@@ -462,6 +471,69 @@ async function mailScenario() {
     adminTool(select('get', {key: recipient}), result => assert(result.ok && result.inSync && result.source === null && result.runtime === null)),
   ]);
   report.cases.push('Revocation rejects both To and Cc, including an older draft, without opening SMTP');
+}
+
+async function mailSenderScenario() {
+  const senderAddr = 'trusted-sender@example.test';
+  const select = (action, fields = {}) => ({action, category, ...fields});
+  const freeze = result => { assert(result.ok && result.status === 'pending'); proposal = result; };
+  const ok = result => assert.equal(result.ok, true, JSON.stringify(result));
+  const readInbox = verify => ({name: 'email_inbox', args: {action: 'read', uid: 1}, verify});
+  const show = async change => {
+    const preview = await turn(owner, '请变更邮件发件人白名单并直接确认', [
+      adminTool(select('propose', {change}), freeze),
+      confirm(isError('proposal_not_presented')),
+    ]);
+    assert(preview.sent.map(textOfSend).join('\n').includes(proposal.previewText));
+  };
+  await turn(owner, '查看邮件发件人白名单与初始邮件信任状态', [
+    adminTool(select('list'), result => {
+      ok(result);
+      assert.equal(result.inSync, true);
+      assert.deepEqual(result.runtime, []);
+    }),
+    readInbox(result => {
+      ok(result);
+      assert.equal(result.trusted, false);
+      assert.equal(result.requiresAccessApproval, true);
+      assert.equal(result.bodyText, undefined);
+    }),
+  ]);
+  await show({op: 'add', key: senderAddr});
+  await turn(owner, '确认', [
+    confirm(ok),
+    commit(result => assert(result.ok && result.activation === 'pending_sync')),
+    readInbox(result => assert(result.ok && !result.trusted)),
+  ]);
+  assert.deepEqual(readPolicy().subjects[0].mailSenders, [senderAddr]);
+  report.cases.push('Mail sender allowlist addition writes source; unsynced runtime stays untrusted');
+  const added = proposal;
+
+  await restart();
+  await turn(owner, '重启后验证发件人白名单生效并可直接读取邮件', [
+    changeStatus(added, 'active'),
+    readInbox(result => {
+      ok(result);
+      assert.equal(result.trusted, true);
+      assert.equal(result.trustSource, 'allowlist');
+      assert.equal(result.bodyText, 'TRUSTED_SENDER_BODY');
+    }),
+  ]);
+  report.cases.push('Compiled allowedSenders unlocks inbox reads after gateway restart');
+
+  await show({op: 'remove', key: senderAddr});
+  await turn(owner, '确认', [confirm(ok), commit(ok), changeStatus(added, 'active', 'superseded')]);
+  await restart();
+  await turn(owner, '撤销发件人白名单后验证回退为需逐封确认', [
+    readInbox(result => {
+      ok(result);
+      assert.equal(result.trusted, false);
+      assert.equal(result.bodyText, undefined);
+    }),
+    changeStatus(added, 'not_active', 'superseded'),
+    adminTool(select('get', {key: senderAddr}), result => assert(result.ok && result.inSync && result.source === null && result.runtime === null)),
+  ]);
+  report.cases.push('Revoking allowedSenders removes automatic inbox trust on restart');
 }
 
 async function toolScenario() {
@@ -704,12 +776,26 @@ try {
     catch (error) { report.blocked = true; throw error; }
     config.plugins.entries[bills] = {enabled: true, config: knowledgeMap.config};
   }
+  if (senderRun) {
+    mockImap = new MockImapServer();
+    mockImap.addMessage('INBOX', {
+      rawBuffer: buildMessage({
+        messageId: 'sender-admin-1@example.test',
+        from: {name: 'Trusted Sender', address: 'trusted-sender@example.test'},
+        to: [IMAP_TEST_USER],
+        subject: '发件人白名单验收邮件',
+        text: 'TRUSTED_SENDER_BODY',
+      }).raw,
+    });
+    imapAddr = await mockImap.start();
+  }
   writeJson(intentFile, {_managed: Object.keys(config), ...config});
   writeJson(runtimeFile, {});
   report.configSha256 = createHash('sha256').update(fs.readFileSync(intentFile)).digest('hex');
   await start();
   await assert.rejects(call('kurumi-qq.testInbound', {}, 3000), /unknown method|not found/iu);
   if (mailRun) await mailScenario();
+  else if (senderRun) await mailSenderScenario();
   else if (toolRun) await toolScenario();
   else if (execRun) await execScenario();
   else if (projectRun) await projectScenario();
@@ -726,6 +812,7 @@ try {
     report.error ??= 'Isolated Gateway did not stop gracefully';
     process.exitCode = 1;
   }
+  await mockImap?.stop();
   await onebot.close();
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));

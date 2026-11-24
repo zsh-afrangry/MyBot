@@ -12,28 +12,38 @@
 //   * Credentials come from the runtime environment (runtime-env.json is expanded by run-gateway.mjs
 //     into the gateway process). They are never returned by any tool, never written to the audit
 //     table, and never included in error messages.
+import path from "node:path";
 import { confirmationBackendIds, registerConfirmationBackend } from "@kurumi/confirmation-core";
 import { assertOwnerContext, requireConfirmationScope } from "./inbound.js";
-import { ENV_AUTH_CODE, ENV_USER, createMailApplication, mailStateDirectory, readMailConfig } from "./application.js";
+import { ENV_AUTH_CODE, ENV_USER, createMailApplication, mailStateDirectory, openClawStateDirectory, readImapConfig, readMailConfig } from "./application.js";
+import { executeInboxAction } from "./inbox-service.js";
+import { InboxStore, MAIL_INBOX_BACKEND_ID } from "./inbox-store.js";
+import { defaultImapConnector, withImapClient } from "./imap.js";
 import { normalizeAllowlist } from "./policy.js";
 import { defaultConnector, SmtpClient } from "./smtp.js";
 import {Documents, documentRoot} from '../../packages/documents/index.js';
+import { createRuntimeTraceSink } from "../../packages/observability/index.js";
+import { createToolTrace } from "../../packages/observability/tool-trace.js";
 import {mailDraftFeedback, mailFeedbackActions, mailReceiptFeedback, mailSendFeedback} from "./feedback.js";
 
 const PLUGIN_ID = "kurumi-mail";
 const BACKEND_ID = "kurumi-mail";
 const CHANNEL = "kurumi-qq";
+const ALL_MAIL_FEEDBACK_ACTIONS = [...mailFeedbackActions, "mail.inbox.access", "mail.inbox.manage"];
 
-/** Recipient allowlist from the plugin's managed config. Passed to the store and to policy checks. */
-function allowlistOf(api) {
-  return normalizeAllowlist(api.pluginConfig?.allowedRecipients);
+function allowlistOf(api, cfg) {
+  return normalizeAllowlist((cfg ?? api.config)?.plugins?.entries?.[PLUGIN_ID]?.config?.allowedRecipients ?? api.pluginConfig?.allowedRecipients);
+}
+
+function allowedSendersOf(api, cfg) {
+  return normalizeAllowlist((cfg ?? api.config)?.plugins?.entries?.[PLUGIN_ID]?.config?.allowedSenders ?? api.pluginConfig?.allowedSenders);
 }
 
 function json(value) {
   return { content: [{ type: "text", text: JSON.stringify(value, null, 2) }] };
 }
 
-export function createMailPlugin({ registry, connector } = {}) {
+export function createMailPlugin({ registry, connector, imapConnector = defaultImapConnector, stateRoot: overrideStateRoot, trace: overrideTrace } = {}) {
   const plugin = {
   id: PLUGIN_ID,
   name: "Kurumi mail",
@@ -46,8 +56,17 @@ export function createMailPlugin({ registry, connector } = {}) {
       storeAdapter: api.pluginConfig?.storeAdapter,
       resolveAttachment: id => new Documents(documentRoot(api.config)).get(id),
     });
-    const feedbackActions = new Set(api.pluginConfig?.feedbackActions ?? mailFeedbackActions);
-    const storeOptions = () => ({ stateDirectory: mailStateDirectory(), allowedRecipients: allowlistOf(api) });
+    const feedbackActions = new Set(api.pluginConfig?.feedbackActions ?? ALL_MAIL_FEEDBACK_ACTIONS);
+    const effectiveStateRoot = () => overrideStateRoot ?? api.runtime?.state?.resolveStateDir?.() ?? openClawStateDirectory();
+    const effectiveMailDir = () => overrideStateRoot ? path.join(overrideStateRoot, "state", "kurumi-mail") : mailStateDirectory();
+    const storeOptions = () => ({ stateDirectory: effectiveMailDir(), allowedRecipients: allowlistOf(api) });
+    const openInboxStore = () => new InboxStore({ stateDirectory: effectiveMailDir() });
+    const emitTrace = event => {
+      if (overrideTrace) return overrideTrace(event);
+      return createRuntimeTraceSink("trace-events.jsonl", { stateRoot: effectiveStateRoot() }).emit(event);
+    };
+    const inboxTrace = createToolTrace(["email_inbox"]);
+    if (typeof api.on === "function") inboxTrace.attach(api);
     /** Open the selected store for one operation. Nothing here constructs a concrete store. */
     const withStore = (work) => {
       const store = application.openStore(storeOptions());
@@ -83,42 +102,78 @@ export function createMailPlugin({ registry, connector } = {}) {
       },
     });
 
+    let unregisterInboxBackend;
+    api.registerService({
+      id: "kurumi-mail-inbox-backend",
+      start() {
+        unregisterInboxBackend = registerConfirmationBackend({
+          id: MAIL_INBOX_BACKEND_ID,
+          open: () => {
+            const store = openInboxStore();
+            return {
+              natural: store.natural,
+              listInboundConfirmationCandidates: () => [],
+              recordInboundConfirmation: () => false,
+              close: () => store.close(),
+            };
+          },
+        });
+        api.logger?.info?.(JSON.stringify({
+          component: "kurumi-mail",
+          event: "inbox-confirmation-backend-registered",
+          backend: MAIL_INBOX_BACKEND_ID,
+          registered: confirmationBackendIds(),
+        }));
+      },
+      stop() {
+        const unregister = unregisterInboxBackend;
+        unregisterInboxBackend = undefined;
+        unregister?.();
+      },
+    });
+
     api.registerTool({
       contextVersion: 2,
       create: (ctx) => ({
         name: "email_status",
         label: "Mail configuration status",
         description:
-          "Report whether email sending is configured (sender account, SMTP host/port) without revealing the authorization code. "
-          + "Set probe=true to additionally open a real TLS connection and authenticate, which verifies the authorization code works; "
+          "Report whether email sending and IMAP inbox access are configured (account, SMTP/IMAP host/port) without revealing the authorization code. "
+          + "Set probe=true to additionally open TLS connections and authenticate, verifying the authorization code; "
           + "no message is sent. Owner private chat only.",
         parameters: {
           type: "object",
           additionalProperties: false,
-          properties: { probe: { type: "boolean", description: "Also connect and authenticate to the SMTP server." } },
+          properties: { probe: { type: "boolean", description: "Also connect and authenticate to SMTP and IMAP servers." } },
         },
         async execute(callId, args, signal) {
-          assertOwnerContext(ctx, api.config, "mail.status");
+          const resolvedCfg = assertOwnerContext(ctx, api.config, "mail.status");
           ctx.assertInvocationCurrent?.();
           const config = readMailConfig();
-          const allowedRecipients = allowlistOf(api);
+          const imapConfig = readImapConfig();
+          const allowedRecipients = allowlistOf(api, resolvedCfg);
+          const allowedSenders = allowedSendersOf(api, resolvedCfg);
           const result = {
             ok: true,
             configured: config.configured,
             sender: config.user || null,
             host: config.host,
             port: config.port,
+            imapHost: imapConfig.host,
+            imapPort: imapConfig.port,
             allowedRecipients,
+            allowedSenders,
             policyAdapter: application.policyId,
             storeAdapter: application.storeId,
             confirmationBackendRegistered: confirmationBackendIds().includes(BACKEND_ID),
+            inboxConfirmationBackendRegistered: confirmationBackendIds().includes(MAIL_INBOX_BACKEND_ID),
             recipientPolicy: allowedRecipients.length === 0
               ? "closed: the allowlist is empty, so no recipient is permitted"
               : "allowlist",
             secretsExposed: false,
           };
           if (!config.configured) {
-            result.hint = `Set ${ENV_USER} and ${ENV_AUTH_CODE} in the runtime environment (QQ Mail: Settings -> Account -> enable SMTP -> generate an authorization code; it is not the QQ password).`;
+            result.hint = `Set ${ENV_USER} and ${ENV_AUTH_CODE} in the runtime environment (QQ Mail: Settings -> Account -> enable SMTP/IMAP -> generate an authorization code; it is not the QQ password).`;
             return json(result);
           }
           if (args?.probe === true) {
@@ -135,8 +190,16 @@ export function createMailPlugin({ registry, connector } = {}) {
               result.ok = false;
               result.smtp = "failed";
               result.code = error?.code ?? "error";
-              // Message text is built without credentials by smtp.js; keep it short anyway.
               result.reason = String(error?.message ?? error).slice(0, 200);
+            }
+            try {
+              await withImapClient(imapConfig, { readOnly: true, folder: null, connector: imapConnector }, async () => true);
+              result.imap = "authenticated";
+            } catch (error) {
+              result.ok = false;
+              result.imap = "failed";
+              result.imapCode = error?.code ?? "error";
+              result.imapReason = String(error?.message ?? error).slice(0, 200);
             }
           }
           return json(result);
@@ -180,11 +243,11 @@ export function createMailPlugin({ registry, connector } = {}) {
           },
         },
         async execute(callId, args, signal) {
-          assertOwnerContext(ctx, api.config, "mail.draft");
+          const resolvedCfg = assertOwnerContext(ctx, api.config, "mail.draft");
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           const scope = requireConfirmationScope(ctx);
-          const result = withStore((store) => application.directives.createDraft(store, args, scope, allowlistOf(api)));
+          const result = withStore((store) => application.directives.createDraft(store, args, scope, allowlistOf(api, resolvedCfg)));
           if (result.ok) {
             result.from = readMailConfig().user || null;
             if (feedbackActions.has("mail.draft")) result.feedback = mailDraftFeedback(result);
@@ -215,7 +278,7 @@ export function createMailPlugin({ registry, connector } = {}) {
           },
         },
         async execute(callId, args, signal) {
-          assertOwnerContext(ctx, api.config, "mail.send");
+          const resolvedCfg = assertOwnerContext(ctx, api.config, "mail.send");
           ctx.assertInvocationCurrent?.();
           signal?.throwIfAborted();
           const scope = requireConfirmationScope(ctx);
@@ -224,7 +287,7 @@ export function createMailPlugin({ registry, connector } = {}) {
             const result = await application.directives.sendDraft(store, args, {
               scope,
               config: readMailConfig(),
-              allowedRecipients: allowlistOf(api),
+              allowedRecipients: allowlistOf(api, resolvedCfg),
               connector,
               logger: api.logger,
             });
@@ -276,6 +339,80 @@ export function createMailPlugin({ registry, connector } = {}) {
         },
       }),
     });
+
+    api.registerTool({
+      contextVersion: 2,
+      create: (ctx) => ({
+        name: "email_inbox",
+        label: "Manage IMAP inbox & untrusted sender access",
+        description:
+          "Owner private chat only. Browse folders, list/search headers, read emails, save attachments to workspace mail-attachments/, "
+          + "mark read/unread, and move/trash emails without physical EXPUNGE. "
+          + "Senders outside allowedSenders or failing SPF/DKIM only expose safe metadata; use propose_access -> personal_confirmation(domain=\"mail_inbox\") -> commit_access "
+          + "to unlock one email for 24h (or propose 长期信任 via kurumi_access category=mail_sender). move/trash require propose_manage -> personal_confirmation(domain=\"mail_inbox\") -> commit_manage.",
+        parameters: {
+          type: "object",
+          additionalProperties: false,
+          required: ["action"],
+          properties: {
+            action: {
+              type: "string",
+              enum: [
+                "folders", "list", "search", "read", "save_attachment",
+                "propose_access", "commit_access",
+                "mark_read", "mark_unread",
+                "propose_manage", "commit_manage", "status",
+              ],
+            },
+            account: { type: "string", maxLength: 64, description: "Account id; defaults to 'default'." },
+            folder: { type: "string", maxLength: 128, description: "Mailbox folder name; defaults to 'INBOX'." },
+            uid: { type: "integer", minimum: 1 },
+            uidValidity: { type: "integer", minimum: 1 },
+            limit: { type: "integer", minimum: 1, maximum: 50 },
+            unseenOnly: { type: "boolean" },
+            from: { type: "string", maxLength: 200 },
+            subject: { type: "string", maxLength: 200 },
+            since: { type: "string", pattern: "^\\d{4}-\\d{2}-\\d{2}$" },
+            partId: { type: "string", maxLength: 32 },
+            allowSaveAttachment: { type: "boolean" },
+            op: { type: "string", enum: ["move", "trash"] },
+            targetFolder: { type: "string", maxLength: 128 },
+            proposalId: { type: "string", pattern: "^[a-fA-F0-9-]{36}$" },
+          },
+        },
+        async execute(callId, args = {}, signal) {
+          assertOwnerContext(ctx, api.config);
+          try {
+            const runId = inboxTrace.resolve(ctx, callId, "email_inbox");
+            const res = await executeInboxAction({
+              args,
+              ctx,
+              callId,
+              signal,
+              runId,
+              api,
+              imapConnector,
+              openStore: openInboxStore,
+              allowedSendersOf: cfg => allowedSendersOf(api, cfg),
+              stateRoot: effectiveStateRoot(),
+              feedbackActions,
+              emitTrace,
+            });
+            return json(res);
+          } catch (error) {
+            signal?.throwIfAborted();
+            if (error?.code === "unauthorized_owner_context" || error?.code === "untrusted_confirmation_context") {
+              throw error;
+            }
+            if (typeof error?.code === "string") {
+              return json({ ok: false, code: error.code, message: String(error.message ?? error.code).slice(0, 200) });
+            }
+            api.logger?.warn?.("Inbox operation failed");
+            return json({ ok: false, code: "inbox_operation_failed", message: "收件箱操作失败" });
+          }
+        },
+      }),
+    }, { name: "email_inbox", optional: true });
   },
   };
   return plugin;

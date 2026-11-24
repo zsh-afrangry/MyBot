@@ -12,11 +12,11 @@
       "sourceRoot": {"type": "string", "minLength": 2},
       "feedbackActions": {
         "type": "array", "uniqueItems": true,
-        "items": {"type": "string", "enum": ["access.member", "access.mail_recipient", "access.owner_tool", "access.exec_root", "access.coding_project"]}
+        "items": {"type": "string", "enum": ["access.member", "access.mail_recipient", "access.mail_sender", "access.owner_tool", "access.exec_root", "access.coding_project"]}
       },
       "enabledCategories": {
         "type": "array", "uniqueItems": true,
-        "items": {"type": "string", "enum": ["mail_recipient", "owner_tool", "exec_root", "coding_project"]}
+        "items": {"type": "string", "enum": ["mail_recipient", "mail_sender", "owner_tool", "exec_root", "coding_project"]}
       },
       "execDirectoryBases": {
         "type": "array", "maxItems": 16, "uniqueItems": true,

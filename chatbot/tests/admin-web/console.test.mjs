@@ -90,13 +90,17 @@ test('QQ member and mail recipient CRUD validate policy and never update the run
   for (const [operation, address, nextAddress] of [
     ['add', null, 'Second@Example.com'], ['edit', 'second@example.com', 'third@example.com'], ['remove', 'third@example.com', null],
   ]) await commit(api, (await preview(api, {kind: 'mail', operation, revision: (await current()).revision, address, nextAddress})).id);
+  for (const [operation, address, nextAddress] of [
+    ['add', null, 'Bills@Example.com'], ['edit', 'bills@example.com', 'bank@example.com'], ['remove', 'bank@example.com', null],
+  ]) await commit(api, (await preview(api, {kind: 'mail_sender', operation, revision: (await current()).revision, address, nextAddress})).id);
   const end = await current();
   assert.equal(end.rows.length, 1);
   assert.deepEqual(end.rows[0].source.mailRecipients, ['first@example.com']);
-  assert.equal(end.sourceRevision, 7);
+  assert.deepEqual(end.rows[0].source.mailSenders, []);
+  assert.equal(end.sourceRevision, 10);
   assert.equal(f.file(f.runtime, 'openclaw.json'), effective);
   const audit = (await api('/audit')).body.rows;
-  assert.equal(audit.length, 6);
+  assert.equal(audit.length, 9);
   assert.doesNotMatch(JSON.stringify(audit), /example\.com|100000002|合成成员/u);
   assert.equal(fs.statSync(path.join(f.local, 'access-key')).mode & 0o777, 0o600);
 });

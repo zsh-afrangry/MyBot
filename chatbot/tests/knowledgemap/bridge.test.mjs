@@ -221,7 +221,7 @@ test('bill plugin enforces current owner request and exposes only approved bill 
   createKnowledgeMapPlugin({clientFactory: () => ({request: async (path, options) => {sent = {path, ...options}; return {ok: true};}})}).register({
     config, pluginConfig: {}, on: (n, f) => hooks[n] = f, registerTool: (f, m) => factories[m.name] = f,
   });
-  assert.deepEqual(Object.keys(factories).sort(), ['knowledge_bill_add', 'knowledge_bill_manage', 'knowledge_bills_get']);
+  assert.deepEqual(Object.keys(factories).sort(), ['knowledge_bill_add', 'knowledge_bill_import', 'knowledge_bill_manage', 'knowledge_bills_get']);
   const context = ctx(), create = name => factories[name].create(context);
   assert.equal((await run(create('knowledge_bill_add'), {amount: '14.00', expense_date: '2026-10-17'})).ok, false);
   hooks.reply_dispatch(event('我午饭吃了14元'));

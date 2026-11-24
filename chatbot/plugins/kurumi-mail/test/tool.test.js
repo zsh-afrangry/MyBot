@@ -144,7 +144,7 @@ test("a non-owner context cannot use any mail tool", async (t) => {
   };
   process.env.OPENCLAW_STATE_DIR = state;
   createMailPlugin().register(api);
-  for (const name of ["email_status", "email_draft", "email_send", "email_outbox"]) {
+  for (const name of ["email_status", "email_draft", "email_send", "email_outbox", "email_inbox"]) {
     await assert.rejects(
       () => tools.get(name).execute("call-1", { to: "a@x.test", subject: "s", text: "t", action: "list" }, undefined),
       /owner's private chat only/u,

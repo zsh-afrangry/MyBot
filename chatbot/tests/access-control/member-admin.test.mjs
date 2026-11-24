@@ -368,6 +368,25 @@ test('mail preview freezes one address and distinguishes source, active and supe
   assert.deepEqual(f.run({action: 'list', category}).runtime, []);
 });
 
+test('mail_sender whitelist validates, syncs into allowedSenders and rejects members', t => {
+  const category = 'mail_sender';
+  const f = fixture(t, [category]);
+  const sender = 'Bills-Export@Example.Test';
+  const normalized = 'bills-export@example.test';
+  assert.deepEqual(f.run({action: 'list', category}).source, []);
+  const add = f.propose({op: 'add', key: sender}, category);
+  assert(add.previewText.includes(normalized));
+  f.approve(add);
+  assert.equal(f.commit(add).activation, 'pending_sync');
+  f.sync();
+  assert.equal(f.status(add).activation, 'active');
+  assert.deepEqual(f.run({action: 'list', category}).runtime, [normalized]);
+  f.apply({op: 'remove', key: normalized}, category);
+  f.sync();
+  assert.deepEqual(f.run({action: 'list', category}).runtime, []);
+  assert.throws(() => f.run({action: 'list', category}, context(memberRow(OTHER))), {code: 'capability_not_allowed'});
+});
+
 test('mail rejects mixed shapes, duplicate/wildcard entries, members, and stale policy', t => {
   const category = 'mail_recipient';
   const f = fixture(t, [category]);

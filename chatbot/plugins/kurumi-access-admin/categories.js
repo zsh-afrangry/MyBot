@@ -40,6 +40,28 @@ const categories = {
     preview: ({before, after}, revision) => stringListPreview('邮件收件人', before, after,
       '同步后收件人与抄送均按新名单校验；本次变更不发送邮件。', revision),
   },
+  mail_sender: {
+    target: 'access',
+    arg: 'key',
+    parseKey: recipientKey,
+    key: entry => entry,
+    list: policy => stringListView(owner(policy).mailSenders ?? []),
+    live: (_policy, cfg) => {
+      const values = cfg.plugins?.entries?.['kurumi-mail']?.config?.allowedSenders;
+      return Array.isArray(values) ? stringListView(values) : [];
+    },
+    build(policy, change) {
+      const next = validatePolicy(policy);
+      const row = owner(next);
+      const changeRow = stringListChange(row.mailSenders ?? [], change, recipientKey);
+      row.mailSenders = changeRow.entries;
+      next.revision += 1;
+      validatePolicy(next);
+      return {...changeRow, next};
+    },
+    preview: ({before, after}, revision) => stringListPreview('邮件发件人', before, after,
+      '同步后收件箱发件人按新白名单判定信任；未列入的发件人仍需单封确认。', revision),
+  },
   owner_tool: ownerToolCategory,
   exec_root: execRootCategory,
   coding_project: codingProjectCategory,

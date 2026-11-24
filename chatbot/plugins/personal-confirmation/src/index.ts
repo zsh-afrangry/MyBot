@@ -6,13 +6,13 @@ import { createConfirmationRuntime, type ConfirmationArguments } from './runtime
 
 // Narrow host-hook compatibility surface; the installed host has these public hooks.
 type HookApi = OpenClawPluginApi & {on(name: string, callback: (...args: any[]) => unknown, options?: Record<string, unknown>): void};
-const domains = ['personal_reminder', 'personal_profile', 'planning', 'mail', 'coding', 'access', 'host_sudo', 'host_files', 'scoped_lease', 'bills_import'];
+const domains = ['personal_reminder', 'personal_profile', 'planning', 'mail', 'coding', 'access', 'host_sudo', 'host_files', 'scoped_lease', 'bills_import', 'mail_inbox'];
 const parameters = {
   type: 'object', additionalProperties: false, required: ['action', 'domain'],
   properties: {
     action: {type: 'string', enum: ['list', 'preview', 'confirm']},
     domain: {type: 'string', enum: domains,
-      description: 'Required: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding, QQ member=access, controlled host admin=host_sudo, controlled files=host_files, scoped task lease=scoped_lease, bill batch import=bills_import. Coding, access, host_sudo, host_files, scoped_lease and bills_import confirm one target at a time.'},
+      description: 'Required: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding, QQ member=access, controlled host admin=host_sudo, controlled files=host_files, scoped task lease=scoped_lease, bill batch import=bills_import, inbox sensitive action/untrusted email unlock=mail_inbox. Coding, access, host_sudo, host_files, scoped_lease, bills_import and mail_inbox confirm one target at a time.'},
     proposalId: {type: 'string', pattern: '^[a-fA-F0-9-]{36}$'},
     payloadHash: {type: 'string', pattern: '^[a-f0-9]{64}$'},
     targets: {type: 'array', minItems: 1, maxItems: MAX_CONFIRMATION_TARGETS,
@@ -50,7 +50,7 @@ const entry: ReturnType<typeof definePluginEntry> = definePluginEntry({
     for (const name of ['before_reset', 'session_end']) hooks.on(name, runtime.reset);
     api.registerTool({contextVersion: 2, create: ctx => ({
       name: 'personal_confirmation', label: 'Confirm a pending proposal',
-      description: 'REQUIRED domain mapping: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding, QQ member=access, controlled host admin=host_sudo, controlled files=host_files, scoped task lease=scoped_lease, bill batch import=bills_import. Coding, access, host_sudo, host_files, scoped_lease and bills_import confirm one target at a time. '
+      description: 'REQUIRED domain mapping: reminder=personal_reminder, Profile=personal_profile, trip=planning, email=mail, coding=coding, QQ member=access, controlled host admin=host_sudo, controlled files=host_files, scoped task lease=scoped_lease, bill batch import=bills_import, inbox sensitive action/untrusted email unlock=mail_inbox. Coding, access, host_sudo, host_files, scoped_lease, bills_import and mail_inbox confirm one target at a time. '
         + 'Read pending proposals with action=list. To re-display, MUST use action=preview; list is not a presentation receipt. '
         + 'Resolve the current owner confirmation to previously delivered frozen previews. '
         + 'For one use action=confirm with its real proposalId/payloadHash. For explicit multiple use ONE call with complete targets (max 16, outer domain=first target). '

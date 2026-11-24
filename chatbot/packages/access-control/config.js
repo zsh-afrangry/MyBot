@@ -9,7 +9,14 @@ export function compileAccessConfig(input, value) {
   const weather = cfg.plugins?.entries?.['personal-weather']?.config;
   if (weather) weather.scheduledOwnerId = owner.qq;
   const mail = cfg.plugins?.entries?.['kurumi-mail'];
-  if (mail) mail.config = {...mail.config, allowedRecipients: [...owner.mailRecipients]};
+  if (mail) {
+    const {allowedSenders: _prevSenders, ...restMailConfig} = mail.config ?? {};
+    mail.config = {
+      ...restMailConfig,
+      allowedRecipients: [...owner.mailRecipients],
+      ...(owner.mailSenders !== undefined ? {allowedSenders: [...owner.mailSenders]} : {}),
+    };
+  }
   const entries = cfg.agents.entries;
   for (const key of Object.keys(entries)) if (/^qq-user-\d+$/.test(key)) delete entries[key];
   cfg.bindings = (cfg.bindings ?? []).filter(b => !/^qq-user-\d+$/.test(b.agentId));

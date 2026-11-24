@@ -11,7 +11,7 @@ const policy=()=>({...ownerPolicy(),subjects:[...ownerPolicy().subjects,memberRo
 const cfg=()=>{const c=withAccess({});c.channels['kurumi-qq'].accessControl=policy();return c;};
 function hook(c,row,name,params={}){const a=context(row);return toolPolicyDecision({toolName:name,params},{agentId:a.agentId,sessionKey:a.sessionKey,requester:{channel:a.messageChannel,senderId:a.requesterSenderId,senderIsOwner:a.senderIsOwner,accountId:'default'}},c);}
 test('Strict version, unknown permission, duplicate, owner/group and unsupported member grants fail closed',()=>{
- const bad=[p=>p.version=2,p=>p.revision=0,p=>p.subjects.push(p.subjects[1]),p=>p.subjects[1].qq='../xx',p=>p.subjects[1].permissions.unknown=true,p=>p.subjects[1].permissions['mail.send']=true,p=>p.subjects[1].mailRecipients=['any@example.test'],p=>p.subjects[1].kind='group',p=>p.subjects[0].expiresAt='2099-01-01T00:00:00Z',p=>p.subjects=[]];
+ const bad=[p=>p.version=2,p=>p.revision=0,p=>p.subjects.push(p.subjects[1]),p=>p.subjects[1].qq='../xx',p=>p.subjects[1].permissions.unknown=true,p=>p.subjects[1].permissions['mail.send']=true,p=>p.subjects[1].mailRecipients=['any@example.test'],p=>p.subjects[1].mailSenders=['any@example.test'],p=>p.subjects[1].kind='group',p=>p.subjects[0].expiresAt='2099-01-01T00:00:00Z',p=>p.subjects=[]];
  for(const mutate of bad){const p=policy();mutate(p);assert.throws(()=>validatePolicy(p));}
  const p=policy();p.subjects.push({...memberRow(OTHER),kind:'group',enabled:false,permissions:{}});assert.equal(validatePolicy(p).subjects.length,3);
  assert.throws(()=>actorFromContext(context(p.subjects[0]),{channels:{'kurumi-qq':{ownerId:OWNER}}}),{code:'invalid_access_policy'});
@@ -94,7 +94,7 @@ test('Background lanes are limited to configured owner tasks and read-only weath
 
 test('Natural confirmation checks each domain and action against the current identity permissions',()=>{
  const c=cfg(),[owner,member]=c.channels['kurumi-qq'].accessControl.subjects;
- for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send'],['coding','tasks.read','tasks.code'],['host_sudo','host.sudo.read','host.sudo.manage'],['host_files','files.read','files.manage'],['scoped_lease','lease.read','lease.manage'],['bills_import','bills.read','bills.manage']]){
+ for(const [domain,read,write] of [['personal_reminder','reminders.read','reminders.manage'],['personal_profile','profile.read','profile.manage'],['planning','planning.read','planning.manage'],['mail','mail.history','mail.send'],['coding','tasks.read','tasks.code'],['host_sudo','host.sudo.read','host.sudo.manage'],['host_files','files.read','files.manage'],['scoped_lease','lease.read','lease.manage'],['bills_import','bills.read','bills.manage'],['mail_inbox','mail.inbox.read','mail.inbox.manage']]){
   for(const action of ['list','preview','confirm']){assert.equal(hook(c,owner,'personal_confirmation',{domain,action}),undefined);assert(hook(c,member,'personal_confirmation',{domain,action}));}
   owner.permissions[write]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'confirm'}));assert.equal(hook(c,owner,'personal_confirmation',{domain,action:'list'}),undefined);owner.permissions[write]=true;
   owner.permissions[read]=false;assert(hook(c,owner,'personal_confirmation',{domain,action:'list'}));assert(hook(c,owner,'personal_confirmation',{domain,action:'preview'}));owner.permissions[read]=true;

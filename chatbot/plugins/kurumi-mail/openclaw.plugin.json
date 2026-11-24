@@ -13,11 +13,18 @@
         },
         "description": "Recipient allowlist (exact addresses). Empty means no recipient is permitted; there is no wildcard."
       },
+      "allowedSenders": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "Trusted inbox sender allowlist (exact addresses). Unlisted or SPF/DKIM-failed senders require per-email owner confirmation."
+      },
       "feedbackActions": {
         "type": "array",
-        "items": {"type": "string", "enum": ["mail.draft", "mail.send"]},
+        "items": {"type": "string", "enum": ["mail.draft", "mail.send", "mail.inbox.access", "mail.inbox.manage"]},
         "uniqueItems": true,
-        "description": "Mail actions that expose feedback. Defaults to both actions."
+        "description": "Mail actions that expose feedback. Defaults to all mail actions."
       },
       "policyAdapter": {
         "type": "string",
@@ -38,7 +45,8 @@
       "email_status",
       "email_draft",
       "email_send",
-      "email_outbox"
+      "email_outbox",
+      "email_inbox"
     ]
   },
   "toolMetadata": {
@@ -52,6 +60,9 @@
       "optional": true
     },
     "email_outbox": {
+      "optional": true
+    },
+    "email_inbox": {
       "optional": true
     }
   }

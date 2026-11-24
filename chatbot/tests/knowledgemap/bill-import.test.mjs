@@ -368,3 +368,69 @@ test('knowledge_bill_import previews, confirms, commits idempotently, detects fi
   assert.equal(memberRes.ok, false);
   assert.equal(memberRes.error.code, 'forbidden_context');
 });
+
+test('knowledge_bill_import deduplicates overlapping reverse-chronological date ranges cleanly', {timeout: 30000}, async t => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'km-bill-overlap-'));
+  const stateRoot = path.join(root, 'state');
+  const fakeHome = path.join(root, 'fake-home');
+  const kurumiSpace = path.join(fakeHome, 'kurumi-space');
+  for (const d of [stateRoot, kurumiSpace]) fs.mkdirSync(d, {recursive: true});
+
+  let km;
+  let harness;
+  t.after(async () => {
+    core.clearNaturalConfirmationRequest(sessionKey);
+    harness?.stop();
+    if (km) await km.close();
+    fs.rmSync(root, {recursive: true, force: true});
+  });
+
+  km = await startIsolatedKnowledgeMap(root);
+  harness = createHarness({client: km.client, stateRoot, fakeHome, kurumiSpace});
+
+  // Reverse-chronological rows matching real app export order, with an overlapping Oct 4-7 slice.
+  const oct1to7 = path.join(kurumiSpace, 'oct1to7.xlsx');
+  fs.writeFileSync(oct1to7, makeBillXlsx([
+    ['2026-10-07 18:00:00', '餐饮', '午饭', '支出', 'OVL_SHARED_1', '20.00'],
+    ['2026-10-05 09:00:00', '交通', '地铁', '支出', 'OVL_SHARED_2', '4.00'],
+    ['2026-10-01 12:00:00', '餐饮', '午饭', '支出', 'OVL_EARLY_ONLY', '15.00'],
+  ]));
+  const oct4to14 = path.join(kurumiSpace, 'oct4to14.xlsx');
+  fs.writeFileSync(oct4to14, makeBillXlsx([
+    ['2026-10-14 20:00:00', '新重叠分类', '新子类', '支出', 'OVL_LATE_ONLY', '60.00'],
+    ['2026-10-07 18:00:00', '餐饮', '午饭', '支出', 'OVL_SHARED_1', '20.00'],
+    ['2026-10-05 09:00:00', '交通', '地铁', '支出', 'OVL_SHARED_2', '4.00'],
+  ]));
+
+  const commitBatch = async (filePath, suffix) => {
+    const tPrev = Date.now();
+    const pv = inboundFor('预览', 'm-ovl-p-' + suffix, tPrev);
+    harness.fire('reply_dispatch', msgEvent(pv.content, pv.messageId, tPrev));
+    const prev = await execJson(harness.tool('knowledge_bill_import'), {action: 'preview', path: filePath}, 'c-p-' + suffix);
+    assert.equal(prev.ok, true, JSON.stringify(prev));
+    assert.equal(prev.status, 'needs_confirmation');
+    assert.equal(core.prepareConfirmationPreview(pv, {domain: 'bills_import', proposalId: prev.proposalId, payloadHash: prev.payloadHash}, prev.previewText, prev.presentationFacts), true);
+    core.recordConfirmationDelivery({accountId: 'default', conversationId: pv.conversationId, sourceMessageId: pv.messageId, messageId: 'pv-ovl-' + suffix, text: prev.previewText});
+    const tConf = Math.max(Date.now() + 2000, tPrev + 2000);
+    const cf = inboundFor('确认', 'm-ovl-c-' + suffix, tConf);
+    harness.fire('reply_dispatch', msgEvent(cf.content, cf.messageId, tConf));
+    core.captureNaturalConfirmationRequest(cf);
+    assert.equal(core.confirmNaturalProposal(cf, {domain: 'bills_import', proposalId: prev.proposalId, payloadHash: prev.payloadHash}, tConf).ok, true);
+    const committed = await execJson(harness.tool('knowledge_bill_import'), {action: 'commit', proposalId: prev.proposalId}, 'c-c-' + suffix);
+    assert.equal(committed.ok, true, JSON.stringify(committed));
+    return {prev, committed};
+  };
+
+  const b1 = await commitBatch(oct1to7, '1');
+  assert.equal(b1.committed.inserted_count, 3);
+  assert.equal((await km.web('bills/')).total, 3);
+
+  const b2 = await commitBatch(oct4to14, '2');
+  assert.equal(b2.prev.summary.insertCount, 1);
+  assert.equal(b2.prev.summary.skippedCount, 2);
+  assert.equal(b2.prev.summary.manualOverlapHintsCount, 0);
+  assert.equal(b2.prev.summary.plannedNewTags.length, 2);
+  assert.equal(b2.committed.inserted_count, 1);
+  assert.equal(b2.committed.skipped_count, 2);
+  assert.equal((await km.web('bills/')).total, 4);
+});

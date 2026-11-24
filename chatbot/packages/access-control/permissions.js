@@ -7,6 +7,7 @@ export const SHARED_PERMISSIONS = Object.freeze([
 export const OWNER_PERMISSIONS = Object.freeze([
   'papers.rename',
   'commands.admin', 'access.manage', 'stickers.use', 'mail.status', 'mail.draft', 'mail.send', 'mail.history',
+  'mail.inbox.read', 'mail.inbox.attachment', 'mail.inbox.manage',
   'weather.read', 'profile.read', 'profile.manage', 'planning.read', 'planning.manage',
   'reminders.read', 'reminders.manage', 'reminder-list.read', 'reminder-list.manage', 'reminder-list.schedule',
   'memory.read', 'memory.manage', 'memory.raw.read', 'memory.organize', 'bills.read', 'bills.manage', 'tasks.code', 'tasks.research', 'tasks.read',
@@ -35,7 +36,7 @@ const CONFIRMATION = {
   planning: ['planning.read', 'planning.manage'], mail: ['mail.history', 'mail.send'], coding: ['tasks.read', 'tasks.code'],
   access: ['access.manage', 'access.manage'], host_sudo: ['host.sudo.read', 'host.sudo.manage'],
   host_files: ['files.read', 'files.manage'], scoped_lease: ['lease.read', 'lease.manage'],
-  bills_import: ['bills.read', 'bills.manage'],
+  bills_import: ['bills.read', 'bills.manage'], mail_inbox: ['mail.inbox.read', 'mail.inbox.manage'],
 };
 
 function actions(groups, fallback) {
@@ -48,6 +49,11 @@ function actions(groups, fallback) {
 
 const POLICIES = {
   email_outbox: actions({'mail.history': [undefined, null, 'list', 'audit', 'receipt', 'cancel']}),
+  email_inbox: actions({
+    'mail.inbox.read': ['folders', 'list', 'search', 'read', 'status', 'propose_access'],
+    'mail.inbox.attachment': ['save_attachment'],
+    'mail.inbox.manage': ['mark_read', 'mark_unread', 'propose_manage', 'commit_manage', 'commit_access'],
+  }),
   personal_confirmation: {
     resolve: args => ['list', 'preview', 'confirm'].includes(args.action) && Object.hasOwn(CONFIRMATION, args.domain)
       ? CONFIRMATION[args.domain][args.action === 'confirm' ? 1 : 0] : undefined,

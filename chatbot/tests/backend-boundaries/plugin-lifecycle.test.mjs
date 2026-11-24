@@ -116,12 +116,13 @@ test('OpenClaw stop interrupts paper workers and queued jobs without sending or 
 
 test('OpenClaw stops mail confirmation registration and supports restart and failed startup cleanup', {timeout: 10000}, async t => {
   const before = confirmationBackendIds();
-  assert(!before.includes('kurumi-mail'));
+  assert(!before.includes('kurumi-mail') && !before.includes('kurumi-mail-inbox'));
   const services = servicesOf(createMailPlugin());
-  t.after(() => services[0].stop?.());
+  t.after(() => Promise.all(services.map(service => service.stop?.())));
   const host = await start(services);
-  assert.deepEqual(confirmationBackendIds(), [...before, 'kurumi-mail'].sort());
-  await host.stop(); await host.stop(); services[0].stop?.();
+  assert.deepEqual(confirmationBackendIds(), [...before, 'kurumi-mail', 'kurumi-mail-inbox'].sort());
+  await host.stop(); await host.stop();
+  for (const service of services) service.stop?.();
   assert.deepEqual(confirmationBackendIds(), before);
   const restarted = await start(services);
   await restarted.stop();

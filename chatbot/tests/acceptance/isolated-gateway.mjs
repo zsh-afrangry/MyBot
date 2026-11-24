@@ -11,7 +11,7 @@ import {closeOnScenarioDisconnect, scenarioSignal} from './scenario-lifecycle.mj
 
 // Accepts a temporary root owned by the caller. The child inherits no
 // production state, shell credentials or agent-dir overrides.
-export async function startIsolatedGateway({repo, root, token, configure, preload}) {
+export async function startIsolatedGateway({repo, root, token, configure, preload, env}) {
   scenarioSignal.throwIfAborted();
   const probe = createServer();
   probe.listen(0, '127.0.0.1');
@@ -33,7 +33,7 @@ export async function startIsolatedGateway({repo, root, token, configure, preloa
     child = spawn(process.execPath, [...(preload ? ['--import', preload] : []),
       join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(port),
       '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {cwd: root, detached: true, stdio: ['ignore', fd, fd],
-      env: {PATH: process.env.PATH, HOME: root, LANG: 'C.UTF-8', OPENCLAW_STATE_DIR: root, OPENCLAW_CONFIG_PATH: configFile,
+      env: {...(env ?? {}), PATH: process.env.PATH, HOME: root, LANG: 'C.UTF-8', OPENCLAW_STATE_DIR: root, OPENCLAW_CONFIG_PATH: configFile,
         OPENCLAW_GATEWAY_TOKEN: token}});
   } finally {closeSync(fd);}
   let fault, stopped;
