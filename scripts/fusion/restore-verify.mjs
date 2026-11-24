@@ -431,7 +431,10 @@ if(cfg&&restoredRepo){
    cfg=JSON.parse(fs.readFileSync(runtime+'/openclaw.json'));assertNoProduction(cfg);
    check('isolated official schema migration',doctor.status===0);
    const protectedKeys=['agents','tools','commands','bindings','plugins','channels'];
-   check('migration preserves authorization and plugin intent',protectedKeys.every(k=>isDeepStrictEqual(before[k],cfg[k])));
+   // 2026.11.8 的 doctor 会把 agents.defaults.heartbeat.every='0m'（停用心跳的旧表达）规范化为删除该键；
+   // 语义不变（缺省即禁用），属于升级契约批准的归一化，比对前双方先剔除。
+   const stripHeartbeatZero=(o)=>{const c=structuredClone(o);if(c&&typeof c==='object'&&c.agents?.defaults?.heartbeat&&c.agents.defaults.heartbeat.every==='0m')delete c.agents.defaults.heartbeat;return c;};
+   check('migration preserves authorization and plugin intent',protectedKeys.every(k=>isDeepStrictEqual(stripHeartbeatZero(before)[k],stripHeartbeatZero(cfg)[k])));
    const versions={};for(const name of fs.readdirSync(runtime+'/agents')){
     const file=runtime+'/agents/'+name+'/agent/openclaw-agent.sqlite';if(!fs.existsSync(file))continue;
     const db=new DatabaseSync(file,{readOnly:true});versions[name]=db.prepare('PRAGMA user_version').get().user_version;db.close();
