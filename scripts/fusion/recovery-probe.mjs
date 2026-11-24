@@ -65,8 +65,18 @@ try{
  const {stageImage}=await import('file://'+repo+'/chatbot/plugins/kurumi-qq/src/media.js');
  const media=await stageImage({data:{file:image}},cfg.channels['kurumi-qq']);assert(media.contentType.startsWith('image/'));assert(media.path.startsWith(runtime+'/'));
  await sendPayload({cfg,to:'user:'+cfg.channels['kurumi-qq'].ownerId,text:'',mediaUrl:image,key:'recovery-image-'+Date.now()});assert.equal(sends.length,2);
- const status=await callGatewayFromCli('channels.status',{url:'ws://127.0.0.1:18891',token:process.env.OPENCLAW_GATEWAY_TOKEN,timeout:'3000',json:true},{});
- assert(status.channelAccounts['kurumi-qq'][0].connected,'Restored channel must connect to isolated OneBot');
+ // 2026.11.8 内核插件加载变慢（隔离探针实测 ~19s），channels 启动晚于 health 就绪；
+ // 对频道连接做有界重试等待，断言本身不变：最终仍要求 kurumi-qq 真正连上隔离 OneBot。
+ let status,qqConnected=false;
+ for(let i=0;i<30;i++){
+  if(exited)throw Error('Isolated Gateway exited; inspect private gateway-probe.log');
+  try{
+   status=await callGatewayFromCli('channels.status',{url:'ws://127.0.0.1:18891',token:process.env.OPENCLAW_GATEWAY_TOKEN,timeout:'3000',json:true},{});
+  }catch{status=undefined;}
+  if(status?.channelAccounts?.['kurumi-qq']?.[0]?.connected){qqConnected=true;break;}
+  await delay(1000);
+ }
+ assert(qqConnected,'Restored channel must connect to isolated OneBot');
  const {projectCatalog}=await import('file://'+repo+'/chatbot/plugins/kurumi-tasks/projects.js');
  const {runSandbox}=await import('file://'+repo+'/chatbot/packages/sandbox/index.js');
  let projectChecks=0;
