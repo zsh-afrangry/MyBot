@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 15,
+  "revision": 16,
   "subjects": [
     {
       "qq": "365999865",
@@ -67,7 +67,8 @@
       "mailSenders": [
         "1794511189@qq.com",
         "365999865@qq.com",
-        "zsh1794511189@gmail.com"
+        "zsh1794511189@gmail.com",
+        "wallet@email.vivo.com"
       ]
     },
     {
