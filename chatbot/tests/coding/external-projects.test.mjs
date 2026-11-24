@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {fixture} from './fixtures.mjs';
+import {fixture, core} from './fixtures.mjs';
 import {git, projectPolicy, targetState} from '../../plugins/kurumi-coding/workspaces.js';
 
 const tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-ext-projects-'));
@@ -170,7 +170,12 @@ test('external Git workflow isolates worktree under Landlock, blocks direct writ
 
   const preview = await f.run({action: 'preview', taskId: started.id});
   assert.equal(preview.status, 'pending');
+  assert.match(preview.previewText, /分支方向：codex\/qq-[a-f0-9]{8} → master（本次合入 1 个提交）/);
+  assert.match(preview.previewText, /本次改动：value\.mjs（\+\d+\/-\d+）/);
+  assert.match(preview.previewText, /分支领先情况：/);
   assert.match(preview.previewText, /不包含push/);
+  assert.doesNotMatch(preview.previewText, /[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/i);
+  assert.doesNotMatch(preview.previewText, /\b[a-f0-9]{40,64}\b/i);
 
   // Before confirmation, merge refuses; externalRepo remains untouched.
   await assert.rejects(f.run({action: 'merge', taskId: started.id, proposalId: preview.proposalId}), /approval_required/);
@@ -185,4 +190,57 @@ test('external Git workflow isolates worktree under Landlock, blocks direct writ
   assert.equal(fs.existsSync(path.join(externalRepo, 'check-escape.txt')), checkTriedExternalWrite);
   // Confirm origin bare remote never received any push or ref update.
   assert.equal(git(bareRemote, 'for-each-ref').trim(), '');
+});
+
+test('autoPreview attaches non-developer remote-lead preview directly to ready notification and allows immediate confirmation', async t => {
+  const {externalRepo, bareRemote, boundaryRoot} = setupExternalGitProject('ext-autopv');
+  assert.equal(spawnSync('/usr/bin/git', ['-C', externalRepo, 'push', '-u', 'origin', 'master']).status, 0);
+  fs.writeFileSync(path.join(externalRepo, 'prior.txt'), 'unpushed baseline\n');
+  git(externalRepo, 'add', 'prior.txt');
+  git(externalRepo, '-c', 'user.name=Dev', '-c', 'user.email=dev@localhost', 'commit', '-m', 'Prior unpushed feature');
+
+  const f = await fixture(t, {
+    root: path.join(boundaryRoot, 'root'),
+    configure: plugin => {
+      plugin.autoPreviewOnReady = true;
+      plugin.projects = [{
+        id: 'external-repo',
+        root: externalRepo,
+        branch: 'master',
+        externalRoot: true,
+        allowRemote: true,
+        checks: [{name: 'ok-check', argv: ['/usr/bin/node', '-e', 'process.exit(0)']}],
+      }];
+    },
+    behavior: async ({cwd}) => {
+      fs.writeFileSync(path.join(cwd, 'value.mjs'), 'export const value = 7;\n');
+    },
+  });
+
+  const started = await f.run({action: 'start', projectId: 'external-repo', title: '调整默认数值', task: 'Set value to 7.'});
+  const ready = await f.settle(started.id);
+  assert.equal(ready.state, 'ready');
+  assert.equal(f.deliveries.length, 1);
+
+  const delivered = f.deliveries[0].text;
+  assert.match(delivered, /编码任务待确认合入（external-repo）/);
+  assert.match(delivered, /任务说明：调整默认数值/);
+  assert.match(delivered, /当前本地 master 已领先 origin\/master 1 个提交，合入后将领先 2 个提交（含本次任务；此前未推送提交包含：Prior unpushed feature）/);
+  assert.doesNotMatch(delivered, /\b[a-f0-9]{40,64}\b/i);
+
+  const pvRow = f.service.store.latestPreview(started.id);
+  assert.ok(pvRow);
+  const confirmEvent = f.event('确认');
+  core.captureNaturalConfirmationRequest(confirmEvent);
+  const proposals = core.listNaturalConfirmations(confirmEvent).filter(p => p.domain === 'coding');
+  assert.equal(proposals.length, 1);
+  const granted = core.confirmNaturalProposal(confirmEvent, {
+    domain: 'coding', proposalId: proposals[0].proposalId, payloadHash: proposals[0].payloadHash,
+  });
+  assert.equal(granted.ok, true);
+
+  const merged = await f.run({action: 'merge', taskId: started.id, proposalId: proposals[0].proposalId});
+  assert.equal(merged.state, 'merged');
+  assert.match(fs.readFileSync(path.join(externalRepo, 'value.mjs'), 'utf8'), /value = 7/);
+  assert.equal(git(bareRemote, 'rev-list', '--count', 'master').trim(), '1');
 });

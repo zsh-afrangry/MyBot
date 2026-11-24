@@ -440,6 +440,7 @@
           "pilot": true,
           "root": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/state",
           "worktrees": "/home/afrangry/.local/share/kurumi-coding-pilot-20261029/worktrees",
+          "autoPreviewOnReady": true,
           "dsh": {
             "command": "/opt/deepseek-harness/node_modules/.bin/dsh",
             "home": "/var/lib/dsh/.dsh",
@@ -535,11 +536,25 @@
               "selfMaintenance": true,
               "checks": [
                 {
-                  "name": "pure node boundary and stack tests",
+                  "name": "access control policy check",
+                  "argv": [
+                    "/usr/bin/node",
+                    "chatbot/scripts/access-control.mjs",
+                    "--check"
+                  ],
+                  "timeoutMs": 15000
+                },
+                {
+                  "name": "pure node fusion stack and recovery tests",
                   "argv": [
                     "/usr/bin/node",
                     "--test",
-                    "chatbot/tests/backend-boundaries/dependencies.test.mjs",
+                    "scripts/fusion/test/backup-layout.test.mjs",
+                    "scripts/fusion/test/backup-retention.test.mjs",
+                    "scripts/fusion/test/health-cron.test.mjs",
+                    "scripts/fusion/test/recovery.test.mjs",
+                    "scripts/fusion/test/register-project.test.mjs",
+                    "scripts/fusion/test/runtime-retention.test.mjs",
                     "scripts/fusion/test/stack.test.mjs"
                   ],
                   "timeoutMs": 20000
