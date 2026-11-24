@@ -46,8 +46,7 @@
 - 明确且唯一的单笔修改、删除直接执行；先查真实记录和 version，指代有歧义先澄清。删除沿用网站的实际删除规则，不是作废或回收站，保留请求回执和删除前快照供审计。
 - 账单带共享 version，网站编辑/删除和助手维护都按 ID 与 version 提交；冲突时重新查询，不覆盖新事实。业务写入和幂等回执同事务。
 - 每条消息一笔，不传槽位。后端处理结构化动作并校验字段。账单提交反馈见[文档34](34_统一反馈模块.md#接口)。
-- `knowledge_bill_import` 的 `preview` 接受单份 `path` 或按顺序排列的 `files:[{path,sheet?}]`（2～8 份 XLSX，合计最多 5000 条有效记录）。预览按顺序计算各文件之间及账本中已有的重复条目。主人确认一份冻结提案后，KnowledgeMap 一次提交整组并逐份回执。文件或导入计划变化时重新预览。回执未知先按原提案回查。
-- 账单确认预览显示原文件名、每份新增与跳过及分类摘要。哈希和暂存路径留在内部。文件内容相同才标出相同的文件序号。
+- XLSX 账单导入的分组、确认和回执见[文档38](38_月度邮件账单导入与多格式读取.md)。
 
 ## 接口
 
@@ -58,7 +57,7 @@
 | `knowledge_bills_get` | `bills.read` | 账单查询：`tags` 查真实分类，`list` 按日期/分类/备注分页，`get` 按 id 取单笔和 version，`monthly` 月汇总 |
 | `knowledge_bill_add` | `bills.manage` | 新增一笔，必需 `amount`（十进制字符串）和 `expense_date`（YYYY-MM-DD） |
 | `knowledge_bill_manage` | `bills.manage` | `action=update\|delete`，带 `id` 和 `expected_version` |
-| `knowledge_bill_import` | `bills.read`（`preview\|status\|batches`）/ `bills.manage`（`commit`） | 导出 `.xlsx` 批量预览、未知分类统计、`bills_import` 确认与幂等导入 |
+| `knowledge_bill_import` | `bills.read`（`preview\|status\|batches`）/ `bills.manage`（`commit`） | [账单导入接口](38_月度邮件账单导入与多格式读取.md#接口) |
 | `personal_reminder_list_get` | `reminder-list.read` | 查询共享有效项或历史，同时返回本地播报设置 |
 | `personal_reminder_list_manage` | `reminder-list.manage`；`schedule/pause/resume` 为 `reminder-list.schedule` | 新增、修改、完成、作废、恢复和播报设置 |
 | `personal_weather_get_brief` | `weather.read` | 天气，见[文档2](2_天气模块.md) |
@@ -93,7 +92,7 @@
 
 ### 链路关联
 
-真实 runId 由 [tool-trace.js](../chatbot/packages/knowledgemap-client/tool-trace.js) 在宿主 before/after_tool_call 钩子中按可信会话和真实 toolCallId 关联，完成或重置时清理。工厂上下文不提供 runId，模型参数不参与生成。账单、事项、天气共用这一关联，HTTP 头、旁路事件和业务写日志用同一值；固定 Cron 没有对话 run 时留空。日志隐藏凭据和不必要的个人正文，查询入口见[文档18](18_跨模块链路日志查询.md#适配器与关联规则)。
+真实 runId 由 [tool-trace.js](../chatbot/packages/knowledgemap-client/tool-trace.js) 在宿主 before/after_tool_call 钩子中按可信会话和真实 toolCallId 关联，完成或重置时清理。工厂上下文不提供 runId，模型参数不参与生成。账单、事项、天气共用这一关联，HTTP 头、旁路事件和业务写日志用同一值；固定 Cron 没有对话 run 时留空。日志隐藏凭据和不必要的个人正文，查询入口见[文档18](18_跨模块链路日志查询.md#接口)。
 
 ### 代码入口
 
@@ -157,18 +156,17 @@ Fusion 和 KnowledgeMap 分别采集，Fusion 的 SQLite 快照不含 MySQL，�
 离线用例，不外发、不碰生产：
 
 ```bash
-/usr/bin/node --test chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/bills.test.mjs chatbot/tests/knowledgemap/bill-import.test.mjs chatbot/tests/knowledgemap/http.test.mjs
+/usr/bin/node --test chatbot/tests/knowledgemap/bridge.test.mjs chatbot/tests/knowledgemap/bills.test.mjs chatbot/tests/knowledgemap/http.test.mjs
 /usr/bin/node --test chatbot/tests/reminder-list/*.test.mjs
 /usr/bin/node --test chatbot/tests/response/notification.test.mjs
 /usr/bin/node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario shared-city
-/usr/bin/node chatbot/scripts/scenario-acceptance.mjs --target isolated --scenario bills-import
 ```
 
 `bridge.test.mjs` 覆盖播报失败/防重/设置竞态、空列表只记 skipped、旧 runner 防旧写和共享模式工具声明；`http.test.mjs` 起本机独立 FastAPI/SQLite，核对两入口数据一致；`chatbot/tests/reminder-list/` 是 SQLite 实现的回归，不证明共享业务。
 
 共享城市通过隔离网关与浏览器场景，并在生产鉴权网站核对真实天气、选点及恢复跟随；未发送 QQ 消息，所在地版本保持不变。
 
-默认四个播报时段及模型故障后的恢复通过隔离时钟与模拟模型验证；账单维护通过真实模型与隔离宿主验证，账单汇总连续查询通过本人 QQ 往返验证。真实 QQ 已验证逐份导入。多文件单次确认、此前的单文件接口和回执经隔离 API 验收。
+默认四个播报时段及模型故障后的恢复通过隔离时钟与模拟模型验证。单笔账单维护通过真实模型与隔离宿主验证，账单汇总连续查询通过本人 QQ 往返验证。单笔写入的真人 QQ 验收与长期稳定性待验证。导入验收见[文档38](38_月度邮件账单导入与多格式读取.md#如何验证)。
 
 带副作用的验收脚本，运行前读头部注释：
 
