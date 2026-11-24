@@ -1,6 +1,7 @@
 // Isolated OpenClaw Gateway acceptance for kurumi-host-admin (docs/37 Stage 1).
 // Uses local deterministic model, loopback OneBot WebSocket/HTTP, Landlock exec, and stubbed sudo/systemctl scripts.
 // Never invokes real sudo, systemd, paid model, or real QQ; writes only disposable state and a new --out file.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
 import {randomBytes} from 'node:crypto';
@@ -22,7 +23,8 @@ import {closeOnScenarioDisconnect, scenarioProgress, scenarioSignal} from '../ac
 import {git} from '../../plugins/kurumi-coding/workspaces.js';
 
 const [flag, out, ...extra] = process.argv.slice(2);
-assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out) && !extra.length, 'Require a new absolute --out');
+const fault = extra.length === 2 && extra[0] === '--diagnostic-fault' && extra[1] === 'host-fixture';
+assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out) && (!extra.length || fault), 'Require a new absolute --out');
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 
@@ -160,10 +162,8 @@ function modelReply(body, tool, res, text = '宿主测试回复。') {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url !== '/v1/chat/completions' || req.method !== 'POST') { res.writeHead(404).end(); return; }
-    let raw = '';
-    for await (const bytes of req) raw += bytes;
+    const body = await readFixtureJson(req);
     res.setHeader('content-type', 'application/json');
-    const body = JSON.parse(raw);
     assert(++report.requests <= 90, 'Unexpected model request count');
     assert(active, 'Unexpected foreground model request');
     if (active.member) {
@@ -247,7 +247,7 @@ const buildConfig = (target = 'todeskd.service') => compileAccessConfig(withHost
         baseUrl: `http://${endpoint}/v1`,
         apiKey: 'synthetic',
         api: 'openai-completions',
-        models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}],
+        models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}],
       },
     },
   },
@@ -436,6 +436,7 @@ let proposal, driftProposal;
 
 try {
   await step('start isolated gateway with kurumi-host-admin', () => start('todeskd.service'), 'environment');
+  if (fault) await step('fixture diagnostic failure', async () => {throw Error('synthetic host fixture failure');});
 
   await step('owner lists configured host-admin actions and leaseEligible=false', async () => {
     await turn(owner, '看看有哪些受控系统操作', [{
@@ -693,7 +694,7 @@ try {
   process.exitCode = 1;
 } finally {
   scenarioProgress('stop isolated gateway', 'started', 'cleanup');
-  const stopped = await stop();
+  const stopped = report.gatewayStopped = await stop();
   scenarioProgress('stop isolated gateway', stopped ? 'passed' : 'failed', 'cleanup');
   if (!stopped) {
     report.passed = false;
@@ -704,6 +705,7 @@ try {
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));
   if (report.passed) fs.rmSync(root, {recursive: true, force: true});
+  else report.diagnosticsRoot ??= root;
   report.fixtureCleaned = !fs.existsSync(root);
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});

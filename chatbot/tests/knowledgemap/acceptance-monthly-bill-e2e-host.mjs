@@ -1,6 +1,7 @@
 // End-to-end isolated host acceptance: IMAP email with bill .xlsx attachment -> save_attachment ->
 // knowledge_bill_import(preview -> confirm -> commit) -> overlapping second .xlsx delta import ->
 // email_inbox(propose_manage move -> confirm -> commit_manage) -> log-query cross-module trace verification.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {once} from 'node:events';
@@ -183,9 +184,7 @@ function modelReply(body, tool, res, text = '月度账单全链路验收完成�
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url !== '/v1/chat/completions' || req.method !== 'POST') { res.writeHead(404).end(); return; }
-    const chunks = [];
-    for await (const c of req) chunks.push(c);
-    const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+    const body = await readFixtureJson(req);
     res.setHeader('content-type', 'application/json');
     assert(++report.requests <= 90, 'Unexpected model request budget exceeded');
     assert(active, 'Unexpected model request');
@@ -264,7 +263,7 @@ try {
           baseUrl: `http://127.0.0.1:${server.address().port}/v1`,
           apiKey: 'synthetic',
           api: 'openai-completions',
-          models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 262144, maxTokens: 1200}],
+          models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200}],
         },
       },
     },
@@ -513,11 +512,16 @@ try {
   report.passed = false;
   report.error = report.fixtureError ?? error.message;
 } finally {
-  if (await gateway?.close() === false) {
+  report.gatewayStopped = await gateway?.close() ?? null;
+  if (report.gatewayStopped === false) {
     report.passed = false;
     report.error ??= 'Isolated Gateway did not stop gracefully';
   }
-  await km?.close();
+  report.knowledgeMapStopped = await km?.close() ?? null;
+  if (report.knowledgeMapStopped === false) {
+    report.passed = false;
+    report.error ??= 'KnowledgeMap API did not stop cleanly';
+  }
   await imap?.stop();
   server.closeAllConnections();
   await Promise.all([peer?.close(), new Promise(resolve => server.close(resolve))]);

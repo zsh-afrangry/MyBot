@@ -1,5 +1,6 @@
 // Disposable Gateway and KnowledgeMap SQLite, deterministic model and loopback OneBot.
 // Weather requests receive an injected HTTP 503. The fixture uses no production data or accounts.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from './fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {once} from 'node:events';
@@ -85,9 +86,7 @@ try {
   });
   model = await openHttp(async (req, res) => {
     try {
-      let body = '';
-      for await (const chunk of req) body += chunk;
-      const request = JSON.parse(body), message = {role: 'assistant', ...reply(request)};
+      const request = await readFixtureJson(req), message = {role: 'assistant', ...reply(request)};
       const finish = message.tool_calls ? 'tool_calls' : 'stop';
       const base = {id: 'daily-fixture', created: 1, model: 'fixture'};
       if (!request.stream) return res.setHeader('content-type', 'application/json').end(JSON.stringify({
@@ -123,7 +122,7 @@ try {
       heartbeat: {every: '0m'}, model: {primary: 'fixture/fixture'}},
     entries: {main: {workspace, tools: {allow: [weatherTool, 'kurumi_logs']}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://127.0.0.1:' + model.address().port + '/v1',
-      apiKey: 'fixture', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture', contextWindow: 64000, maxTokens: 600}]}}},
+      apiKey: 'fixture', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture', contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 600}]}}},
     plugins: {allow: plugins, load: {paths: plugins.map(id => join(repo, 'chatbot/plugins', id))}, slots: {memory: 'none'}, entries},
     channels: {'kurumi-qq': {enabled: true, httpUrl: peer.httpUrl, wsUrl: peer.wsUrl, httpTokenFile: tokenFile, wsTokenFile: tokenFile,
       stateDir: channelDir, mediaRoot: join(root, 'media'), segmentDelayMs: 0, inboundDebounceMs: 200, testIngress: false}},
@@ -208,6 +207,8 @@ try {
   report.error = (modelError ?? error).stack;
 } finally {
   const closed = await Promise.all([gateway?.close(), km?.close(), peer?.close(), closeHttp(model), closeHttp(weatherApi)]);
+  report.gatewayStopped = closed[0] ?? null;
+  report.knowledgeMapStopped = closed[1] ?? null;
   if (closed.includes(false)) {
     report.passed = false;
     report.error ??= 'Fixture service shutdown failed';

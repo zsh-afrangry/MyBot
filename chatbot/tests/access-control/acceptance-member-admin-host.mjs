@@ -3,6 +3,7 @@
 // owner_tool starts the real KnowledgeMap API on a disposable SQLite database.
 // Uses synthetic QQ identities and (for coding_project) a local ACP stub.
 // No real QQ, paid model, DSH, production writes or production restart.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
 import {createHash, randomBytes} from 'node:crypto';
@@ -92,10 +93,8 @@ function modelReply(body, tool, res, text = '宿主测试回复。') {
 const server = http.createServer(async (req, res) => {
   try {
     if (req.url !== '/v1/chat/completions' || req.method !== 'POST') {res.writeHead(404).end(); return;}
-    let raw = '';
-    for await (const bytes of req) raw += bytes;
+    const body = await readFixtureJson(req);
     res.setHeader('content-type', 'application/json');
-    const body = JSON.parse(raw);
     assert(++report.requests <= (projectRun ? 125 : toolRun ? 90 : 60), 'Unexpected model request count');
     // Only the synthetic ACP gate can release the background notice, between foreground turns.
     if (!active && completingTask) return modelReply(body, undefined, res, '合成任务完成 ' + completingTask);
@@ -171,7 +170,7 @@ const config = withHostControl({
     reload: {mode: 'off'}},
   discovery: {mdns: {mode: 'off'}}, update: {checkOnStart: false},
   models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${endpoint}/v1`, apiKey: 'synthetic', api: 'openai-completions',
-    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200,
+    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200,
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
   agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
     entries: {main: {workspace, model, tools: {profile: 'messaging',
@@ -820,7 +819,8 @@ try {
   report.diagnosticsRoot = root;
   process.exitCode = 1;
 } finally {
-  if (!await stop()) {
+  report.gatewayStopped = await stop();
+  if (!report.gatewayStopped) {
     report.passed = false;
     report.error ??= 'Isolated Gateway did not stop gracefully';
     process.exitCode = 1;
@@ -829,12 +829,14 @@ try {
   await onebot.close();
   server.closeAllConnections();
   await new Promise(resolve => server.close(resolve));
-  if (knowledgeMap && !await knowledgeMap.close()) {
+  if (knowledgeMap) report.knowledgeMapStopped = await knowledgeMap.close();
+  if (report.knowledgeMapStopped === false) {
     report.passed = false;
     report.error ??= 'KnowledgeMap API did not stop cleanly';
     process.exitCode = 1;
   }
   if (report.passed) fs.rmSync(root, {recursive: true, force: true});
+  else report.diagnosticsRoot ??= root;
   report.fixtureCleaned = !fs.existsSync(root);
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});

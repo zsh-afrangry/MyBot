@@ -1,5 +1,6 @@
 // Isolated OpenClaw + loopback OneBot. Only the PDF CDN bytes and model are
 // fixtures. No real account, translation, paid model, or production state.
+import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from './fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
 import {once} from 'node:events';
@@ -113,9 +114,7 @@ try {
     try {
       assert.equal(request.url, '/v1/chat/completions');
       assert(++calls <= 12, 'Fixture model request budget exceeded');
-      let body = '';
-      for await (const piece of request) body += piece;
-      answer(JSON.parse(body), response);
+      answer(await readFixtureJson(request), response);
     } catch (error) {
       modelFault ??= error;
       response.writeHead(400).end('{"error":{"message":"media fixture failed"}}');
@@ -134,7 +133,7 @@ try {
       entries: {main: {workspace, model: modelChoice, tools: {allow: ['kurumi_document_send']}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://127.0.0.1:' + model.address().port + '/v1',
       apiKey: 'synthetic', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture',
-        input: ['text', 'image'], contextWindow: 64000, maxTokens: 600}]}}},
+        input: ['text', 'image'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 600}]}}},
     plugins: {allow: ids, load: {paths: ids.map(id => join(repo, 'chatbot/plugins', id))}, entries: {
       'kurumi-qq': {enabled: true}, 'kurumi-papers': {enabled: true, config: {
         root: papers, python: '/usr/bin/false', credentialsFile: join(root, 'absent'), liveTranslationEnabled: false}},
@@ -176,7 +175,8 @@ try {
   report.passed = false;
   report.error = modelFault?.message ?? error.message;
 } finally {
-  if (await gateway?.close() === false) {
+  report.gatewayStopped = await gateway?.close() ?? null;
+  if (report.gatewayStopped === false) {
     report.passed = false;
     report.error ??= 'Isolated Gateway did not stop gracefully';
   }
