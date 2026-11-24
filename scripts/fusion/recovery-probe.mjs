@@ -15,6 +15,9 @@ assert(!fs.existsSync('/home/afrangry/kurumi-fusion'),'Production source must be
 assert(!fs.existsSync('/run/user'),'Host service bus must be invisible');
 assert(!fs.existsSync('/sys/class/net'),'Host network topology must be invisible');
 const cfg=JSON.parse(fs.readFileSync(runtime+'/openclaw.json'));
+// 编码任务基线：live 备份里可能已有活跃任务，探针的不变量是"探针期间没有任何任务被执行"，
+// 即数量与恢复时一致，而不是库必须为空。备份缺库或无表时基线为 0（保持旧行为）。
+const codingTasksBefore=(()=>{try{const db=new DatabaseSync(cfg.plugins.entries['kurumi-coding'].config.root+'/coding.sqlite',{readOnly:true});const n=Number(db.prepare('SELECT count(*) n FROM coding_tasks').get().n);db.close();return n;}catch{return 0;}})();
 const req=createRequire(repo+'/chatbot/plugins/kurumi-qq/index.js');
 assert(req.resolve('ws').startsWith(target+'/'));
 assert(req.resolve('openclaw/plugin-sdk/media-runtime').startsWith(target+'/'));
@@ -104,7 +107,7 @@ try{
  assert.equal(fenceCheck.status,0,'Restored execution fence failed: '+fenceCheck.stderr.slice(-800));
  assert.equal(fs.readFileSync(fenceAllowed,'utf8'),'allowed');assert(!fs.existsSync(fenceDenied));fs.unlinkSync(fenceAllowed);
  const pilotDb=new DatabaseSync(coding.root+'/coding.sqlite',{readOnly:true});
- const codingTasks=Number(pilotDb.prepare('SELECT count(*) n FROM coding_tasks').get().n);pilotDb.close();assert.equal(codingTasks,0);
+ const codingTasks=Number(pilotDb.prepare('SELECT count(*) n FROM coding_tasks').get().n);pilotDb.close();assert.equal(codingTasks,codingTasksBefore,'Restored development task store changed during probe');
  const python=cfg.plugins.entries['kurumi-papers'].config.python;
  assert(python.startsWith(runtime+'/venvs/'));
  const py=spawnSync(python,['-B','-c','import sys, babeldoc, pdf2zh_next, pymupdf; print(sys.version.split()[0])'],{encoding:'utf8',timeout:30000});
