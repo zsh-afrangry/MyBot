@@ -445,9 +445,21 @@
             "command": "/opt/deepseek-harness/node_modules/.bin/dsh",
             "home": "/var/lib/dsh/.dsh",
             "model": [
-              "deepseek-official",
-              "deepseek-flash"
+              "volc-ark",
+              "deepseek-v4-1-flash-economy-261017"
             ]
+          },
+          "backends": {
+            "opencode": {
+              "driver": "acp",
+              "label": "OpenCode ACP",
+              "command": "/home/afrangry/.local/bin/opencode",
+              "args": [
+                "acp"
+              ],
+              "model": "volc-ark/deepseek-v4-1-flash-economy-261017",
+              "configFile": "/home/afrangry/.config/opencode/opencode.json"
+            }
           },
           "projects": [
             {

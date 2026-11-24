@@ -34,7 +34,7 @@ export class AcpClient extends StdioRpc {
     const opened = await this.request(sessionId ? 'session/resume' : 'session/new', {cwd, mcpServers: [], ...(sessionId ? {sessionId} : {})});
     this.sessionId = sessionId ?? opened.sessionId;
     if (!this.sessionId) throw Object.assign(Error('ACP did not return a session'), {code: 'missing_external_session'});
-    if (model) await this.request('session/set_config_option', {sessionId: this.sessionId, configId: 'model', value: JSON.stringify(model)});
+    if (model) await this.request('session/set_config_option', {sessionId: this.sessionId, configId: 'model', value: typeof model === 'string' ? model : JSON.stringify(model)});
     return this.sessionId;
   }
   prompt(text) {

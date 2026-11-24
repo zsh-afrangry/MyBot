@@ -97,11 +97,18 @@ test('recovery disables kurumi-files and strips ordinary-file roots without alte
  assert.deepEqual(cfg.plugins.entries['kurumi-coding'],coding);
 });
 test('recovery disables external and self-maintenance coding projects while retaining synthetic pilot projects',()=>{
- const cfg={plugins:{entries:{'kurumi-coding':{enabled:true,config:{projects:[
-  {id:'pilot-a',root:'/tmp/r/pilot/source',branch:'main'},
-  {id:'ext-repo',root:'/home/afrangry/repository',branch:'master',externalRoot:true,allowRemote:true},
-  {id:'self-repo',root:'/tmp/r/repos/kurumi-fusion',branch:'main',externalRoot:true,selfMaintenance:true},
- ]}}}}};
+ const cfg={plugins:{entries:{'kurumi-coding':{enabled:true,config:{
+  codex:{command:'/home/afrangry/.local/bin/codex',model:'gpt-5'},
+  backends:{opencode:{driver:'acp',command:'/home/afrangry/.local/bin/opencode',args:['acp']}},
+  projects:[
+   {id:'pilot-a',root:'/tmp/r/pilot/source',branch:'main'},
+   {id:'ext-repo',root:'/home/afrangry/repository',branch:'master',externalRoot:true,allowRemote:true},
+   {id:'self-repo',root:'/tmp/r/repos/kurumi-fusion',branch:'main',externalRoot:true,selfMaintenance:true},
+  ],
+ }}}}};
  disableExternalCodingRecovery(cfg);
- assert.deepEqual(cfg.plugins.entries['kurumi-coding'].config.projects,[{id:'pilot-a',root:'/tmp/r/pilot/source',branch:'main'}]);
+ const coding=cfg.plugins.entries['kurumi-coding'].config;
+ assert.deepEqual(coding.projects,[{id:'pilot-a',root:'/tmp/r/pilot/source',branch:'main'}]);
+ assert.equal(coding.backends,undefined);
+ assert.equal(coding.codex,undefined);
 });

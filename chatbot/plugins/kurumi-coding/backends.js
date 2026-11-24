@@ -31,6 +31,22 @@ const FORBIDDEN_ENV_KEYS = new Set([
   'LD_PRELOAD', 'LD_LIBRARY_PATH', 'NODE_OPTIONS',
 ]);
 
+function extractTopLevelYamlItem(yamlText, targetId) {
+  const lines = String(yamlText ?? '').split('\n');
+  let start = -1, end = lines.length;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trimEnd() === `- id: ${targetId}` || lines[i].startsWith(`- id: ${targetId} `)) {
+      start = i;
+      continue;
+    }
+    if (start >= 0 && (/^- /.test(lines[i]) || /^#/.test(lines[i]))) {
+      end = i;
+      break;
+    }
+  }
+  return start >= 0 ? `${lines.slice(start, end).join('\n').trimEnd()}\n` : '';
+}
+
 function validateExecutable(command, boundaryRoot, errorCode = 'invalid_coding_backend') {
   if (typeof command !== 'string' || !path.isAbsolute(command) || path.resolve(command) !== command
     || command.startsWith(boundaryRoot + path.sep) || !fs.statSync(command, {throwIfNoEntry: false})?.isFile()
@@ -107,6 +123,14 @@ function validateCustomEntry(id, entry, config) {
       throw fail('invalid_coding_backend');
     }
   }
+  if (entry.configFile !== undefined) {
+    const stat = fs.statSync(entry.configFile, {throwIfNoEntry: false});
+    if (typeof entry.configFile !== 'string' || !path.isAbsolute(entry.configFile) || path.resolve(entry.configFile) !== entry.configFile
+      || entry.configFile.startsWith(boundaryRoot + path.sep) || !stat?.isFile()
+      || fs.realpathSync(entry.configFile).startsWith(boundaryRoot + path.sep)) {
+      throw fail('invalid_coding_backend');
+    }
+  }
   if (driver === 'codex') {
     const home = entry.homeDir ?? path.join(config.root, 'backend', `${id}-home`);
     const stat = fs.statSync(home, {throwIfNoEntry: false});
@@ -127,6 +151,7 @@ function validateCustomEntry(id, entry, config) {
     promptMode,
     promptFlag,
     homeDir: entry.homeDir,
+    configFile: entry.configFile,
     env,
   };
 }
@@ -265,7 +290,13 @@ export function launchOptions(config, task, directory, env) {
     const patch = path.join(directory, 'acp.patch.yml');
     const backendRoot = path.join(config.root, 'backend');
     const backendHome = fencedDirectory(boundary, path.relative(boundary.root, path.join(backendRoot, 'dsh-home')));
-    fs.writeFileSync(patch, `- id: session-title-llm\n  disabled: true\n- id: credentials\n  config:\n    path: ${JSON.stringify(path.join(home, '.credentials.yaml'))}\n    watch: false\n- id: session-persistence-jsonl\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'sessions'))}\n- id: storage-json\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'storages'))}\n- id: attachment-local\n  config:\n    dshHome: ${JSON.stringify(backendRoot)}\n`, {mode: 0o600});
+    const acpPatchFile = path.join(home, 'profiles', 'acp', 'cordis.patch.yml');
+    const webPatchFile = path.join(home, 'profiles', 'web', 'cordis.patch.yml');
+    const acpPatchText = fs.existsSync(acpPatchFile) ? fs.readFileSync(acpPatchFile, 'utf8') : '';
+    const inheritedProviders = extractTopLevelYamlItem(acpPatchText, 'llm-pi-ai')
+      ? ''
+      : (fs.existsSync(webPatchFile) ? extractTopLevelYamlItem(fs.readFileSync(webPatchFile, 'utf8'), 'llm-pi-ai') : '');
+    fs.writeFileSync(patch, `- id: session-title-llm\n  disabled: true\n- id: credentials\n  config:\n    path: ${JSON.stringify(path.join(home, '.credentials.yaml'))}\n    watch: false\n- id: session-persistence-jsonl\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'sessions'))}\n- id: storage-json\n  config:\n    root: ${JSON.stringify(path.join(backendRoot, 'storages'))}\n- id: attachment-local\n  config:\n    dshHome: ${JSON.stringify(backendRoot)}\n${inheritedProviders}`, {mode: 0o600});
     const confined = confinedProcess(boundary, command, ['--profile', 'acp', '--patch', patch], task.cwd);
     return {
       backend,
@@ -283,6 +314,28 @@ export function launchOptions(config, task, directory, env) {
 
   // Non-DSH ACP or headless CLI backends get an isolated per-backend home + task.cwd Landlock fence.
   const home = resolveIsolatedHome(config, spec.id, spec.homeDir);
+  if (spec.id === 'opencode' && spec.configFile) {
+    const ocConfigTarget = path.join(home, '.config', 'opencode');
+    const ocConfigDir = home.startsWith(config.writeBoundary.root + path.sep)
+      ? fencedDirectory(config.writeBoundary, path.relative(config.writeBoundary.root, ocConfigTarget))
+      : (fs.mkdirSync(ocConfigTarget, {recursive: true, mode: 0o700}), ocConfigTarget);
+    const ocCfg = JSON.parse(fs.readFileSync(spec.configFile, 'utf8'));
+    ocCfg.permission = {
+      ...(ocCfg.permission && typeof ocCfg.permission === 'object' && !Array.isArray(ocCfg.permission) ? ocCfg.permission : {}),
+      read: 'allow',
+      edit: 'allow',
+      glob: 'allow',
+      grep: 'allow',
+      list: 'allow',
+      bash: 'allow',
+      todowrite: 'allow',
+      todoread: 'allow',
+      webfetch: 'deny',
+      websearch: 'deny',
+      external_directory: 'deny',
+    };
+    fs.writeFileSync(path.join(ocConfigDir, 'opencode.json'), `${JSON.stringify(ocCfg, null, 2)}\n`, {mode: 0o600});
+  }
   const boundary = {root: home, additionalRoots: [task.cwd], launcher: config.writeBoundary.launcher};
   if (spec.driver === 'acp') {
     const confined = confinedProcess(boundary, spec.command, spec.args ?? [], task.cwd);
