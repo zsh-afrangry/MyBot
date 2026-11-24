@@ -2,7 +2,7 @@ import test from 'node:test';import assert from 'node:assert/strict';
 import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import {spawnSync,spawn} from 'node:child_process';
 import {serviceLease} from '../lib/backup-service.mjs';
 import {captureWorkingTree} from '../lib/working-tree-backup.mjs';
-import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs,disableOwnerFileRecovery,disableProactiveRecovery} from '../lib/recovery-isolation.mjs';
+import {newRecoveryTarget,remap,assertNoProduction,sandboxArgs,disableOwnerFileRecovery,disableExternalCodingRecovery,disableProactiveRecovery} from '../lib/recovery-isolation.mjs';
 import {lockedPackages} from '../lib/package-manifests.mjs';
 const tmp=()=>fs.mkdtempSync('/tmp/kurumi-recovery-test-');
 function mock(initial,failStart=false){let state=initial;const calls=[];const run=(_cmd,args)=>{if(args.includes('show'))return {status:0,stdout:state};if(args.includes('stop')){calls.push('stop');state='inactive';return {status:0};}if(args.includes('start')){calls.push('start');if(failStart)return {status:1};state='active';return {status:0};}throw Error('unexpected');};return {run,calls};}
@@ -95,4 +95,13 @@ test('recovery disables kurumi-files and strips ordinary-file roots without alte
  for(const key of ['t0Roots','t1Roots','t2Roots','defaultWorkspace'])assert.equal(cfg.plugins.entries['kurumi-files'].config[key],undefined);
  assert.equal(cfg.plugins.entries['kurumi-files'].config.homeDir,'/home/afrangry');
  assert.deepEqual(cfg.plugins.entries['kurumi-coding'],coding);
+});
+test('recovery disables external and self-maintenance coding projects while retaining synthetic pilot projects',()=>{
+ const cfg={plugins:{entries:{'kurumi-coding':{enabled:true,config:{projects:[
+  {id:'pilot-a',root:'/tmp/r/pilot/source',branch:'main'},
+  {id:'ext-repo',root:'/home/afrangry/repository',branch:'master',externalRoot:true,allowRemote:true},
+  {id:'self-repo',root:'/tmp/r/repos/kurumi-fusion',branch:'main',externalRoot:true,selfMaintenance:true},
+ ]}}}}};
+ disableExternalCodingRecovery(cfg);
+ assert.deepEqual(cfg.plugins.entries['kurumi-coding'].config.projects,[{id:'pilot-a',root:'/tmp/r/pilot/source',branch:'main'}]);
 });

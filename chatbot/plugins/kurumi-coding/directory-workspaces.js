@@ -7,6 +7,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {confinedProcess} from '@kurumi/coding-runtime/write-fence';
 const fail = code => Object.assign(Error(code), {code});
+const cmpName = (a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
 const digest = value => createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex');
 function hashFile(file) {
   const h = createHash('sha256'), fd = fs.openSync(file, 'r'), buffer = Buffer.alloc(1024 * 1024);
@@ -34,7 +35,7 @@ export function directoryState(root, {ignoreGit = false} = {}) {
       rows.push(row); if (row.kind === 'directory') walk(file, rel);
     }
   }
-  walk(root); return rows.sort((a, b) => a.name.localeCompare(b.name));
+  walk(root); return rows.sort(cmpName);
 }
 export function copyDirectory(root, target, baseline) {
   fs.mkdirSync(target, {mode: 0o700});
@@ -75,7 +76,7 @@ export function directoryPlan(project, task, candidateDir, git) {
     } else final.delete(change.name);
   }
   for (const [name, prior] of before) if (final.has(name) && final.get(name).kind !== prior.kind) throw fail('directory_type_change_not_supported');
-  return {baseline, changes, expected: [...final.values()].sort((a, b) => a.name.localeCompare(b.name))};
+  return {baseline, changes, expected: [...final.values()].sort(cmpName)};
 }
 function saveJournal(file, value) {
   const temporary = file + '.' + randomUUID();

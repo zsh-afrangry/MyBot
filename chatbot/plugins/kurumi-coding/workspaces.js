@@ -14,7 +14,37 @@ export function executionEnv() {
   for (const key of ['PATH', 'HOME', 'USER', 'LOGNAME', 'LANG', 'LC_ALL', 'TMPDIR', 'XDG_CACHE_HOME', 'SSL_CERT_FILE', 'SSL_CERT_DIR', 'HTTP_PROXY', 'HTTPS_PROXY', 'ALL_PROXY', 'NO_PROXY', 'http_proxy', 'https_proxy', 'all_proxy', 'no_proxy']) {
     if (process.env[key] !== undefined) env[key] = process.env[key];
   }
-  return {...env, GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null'};
+  return {...env, GIT_TERMINAL_PROMPT: '0', GIT_CONFIG_NOSYSTEM: '1', GIT_CONFIG_GLOBAL: '/dev/null', GIT_OPTIONAL_LOCKS: '0'};
+}
+export function isExternalProject(config, project) {
+  return Boolean(project?.externalRoot) && !inside(project.root, config.writeBoundary.root);
+}
+export function gitBoundaryFor(config, project, mode = 'readonly') {
+  if (!isExternalProject(config, project) || mode === 'readonly') return config.writeBoundary;
+  if (mode === 'worktree') {
+    return {
+      ...config.writeBoundary,
+      additionalRoots: [...(config.writeBoundary.additionalRoots ?? []), path.join(project.root, '.git')],
+    };
+  }
+  if (mode === 'merge') {
+    return {
+      ...config.writeBoundary,
+      additionalRoots: [...(config.writeBoundary.additionalRoots ?? []), project.root],
+    };
+  }
+  throw fail('invalid_git_boundary_mode');
+}
+export function projectGit(config, project, mode = 'readonly') {
+  const boundary = gitBoundaryFor(config, project, mode);
+  const external = isExternalProject(config, project);
+  return (cwd, ...args) => {
+    if (external && cwd === project.root && mode !== 'merge') {
+      const anchor = fs.existsSync(config.worktrees) ? config.worktrees : config.root;
+      return fencedGit(boundary, anchor, '-C', project.root, ...args);
+    }
+    return fencedGit(boundary, cwd, ...args);
+  };
 }
 export function git(cwd, ...args) {
   return runGit(cwd, args);
@@ -38,12 +68,25 @@ function canonical(file) {
   if (fs.realpathSync(ancestor) !== ancestor) throw fail('invalid_coding_paths');
 }
 export function projectPolicy(config) {
-  // Pilot projects require an explicit operator-owned filesystem write boundary.
+  // Pilot projects require an explicit operator-owned filesystem write boundary; external Git repos opt in explicitly.
   if (config?.pilot !== true || !Array.isArray(config.projects)) throw fail('coding_pilot_not_configured');
   validateWriteFence(config.writeBoundary);
   canonical(config.root); canonical(config.worktrees);
-  for (const file of [config.root, config.worktrees, ...config.projects.map(p => p.root)]) {
+  for (const file of [config.root, config.worktrees]) {
     if (!inside(file, config.writeBoundary.root) || file === config.writeBoundary.root) throw fail('coding_paths_outside_write_boundary');
+  }
+  for (const p of config.projects) {
+    if (p.externalRoot !== undefined && typeof p.externalRoot !== 'boolean') throw fail('invalid_project_flags');
+    if (p.allowRemote !== undefined && typeof p.allowRemote !== 'boolean') throw fail('invalid_project_flags');
+    canonical(p.root);
+    if (p.externalRoot === true) {
+      if (p.kind === 'directory') throw fail('external_directory_project_not_allowed');
+      if (inside(config.writeBoundary.root, p.root) || inside(p.root, config.writeBoundary.root)) {
+        if (!inside(p.root, config.writeBoundary.root) || p.root === config.writeBoundary.root) throw fail('overlapping_coding_paths');
+      }
+    } else if (!inside(p.root, config.writeBoundary.root) || p.root === config.writeBoundary.root) {
+      throw fail('coding_paths_outside_write_boundary');
+    }
   }
   for (const protectedPath of ['/home/afrangry/.openclaw-fusion', '/home/afrangry/kurumi-fusion', '/home/afrangry/kurumi-archive', '/home/afrangry/.npm-global', '/opt/deepseek-harness']) {
     if (inside(protectedPath, config.writeBoundary.root) || inside(config.writeBoundary.root, protectedPath)) throw fail('protected_write_boundary');
@@ -61,7 +104,7 @@ export function projectPolicy(config) {
       || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(p.registrationId))) throw fail('invalid_project_registration');
     if (roots.some(root => inside(root, p.root) || inside(p.root, root))) throw fail('overlapping_project_roots');
     roots.push(p.root);
-    for (const protectedPath of [config.root, config.worktrees, config.dsh.home, '/home/afrangry/.openclaw-fusion', '/home/afrangry/kurumi-archive', '/home/afrangry/.npm-global']) {
+    for (const protectedPath of [config.root, config.worktrees, config.dsh.home, '/home/afrangry/.openclaw-fusion', '/home/afrangry/kurumi-fusion', '/home/afrangry/kurumi-archive', '/home/afrangry/.npm-global', '/opt/deepseek-harness']) {
       if (inside(p.root, protectedPath) || inside(protectedPath, p.root)) throw fail('protected_project_root');
     }
     if (p.kind !== undefined && !['git', 'directory'].includes(p.kind)) throw fail('invalid_project_kind');
@@ -75,7 +118,8 @@ export function projectPolicy(config) {
       if (git(p.root, 'rev-parse', '--show-toplevel').trim() !== p.root) throw fail('invalid_project_root');
       if (!/^[a-zA-Z0-9][a-zA-Z0-9/_-]*$/.test(p.branch ?? '')) throw fail('invalid_project_branch');
       git(p.root, 'rev-parse', '--verify', `refs/heads/${p.branch}^{commit}`);
-      if (git(p.root, 'remote').trim() || fs.existsSync(path.join(p.root, '.gitmodules'))) throw fail('pilot_requires_synthetic_local_repository');
+      if (fs.existsSync(path.join(p.root, '.gitmodules'))) throw fail('pilot_requires_synthetic_local_repository');
+      if (p.allowRemote !== true && git(p.root, 'remote').trim()) throw fail('pilot_requires_synthetic_local_repository');
     }
     if (!Array.isArray(p.checks) || !p.checks.length || p.checks.some(c => !/^[\w .-]{1,100}$/.test(c.name ?? '') || !Array.isArray(c.argv) || !path.isAbsolute(c.argv[0] ?? '') || c.argv.some(a => typeof a !== 'string' || a.includes('\0'))
       || (c.timeoutMs !== undefined && (!Number.isSafeInteger(c.timeoutMs) || c.timeoutMs <= 0))
@@ -85,7 +129,7 @@ export function projectPolicy(config) {
 export function createWorkspace(config, project, id) {
   fs.mkdirSync(config.worktrees, {recursive: true, mode: 0o700});
   const cwd = path.join(config.worktrees, id), branch = `codex/qq-${id}`;
-  const run = (cwd, ...args) => fencedGit(config.writeBoundary, cwd, ...args);
+  const run = projectGit(config, project, 'worktree');
   if (project.kind === 'directory') {
     const directoryBaseline = directoryState(project.root);
     copyDirectory(project.root, cwd, directoryBaseline);
@@ -103,7 +147,14 @@ export function createWorkspace(config, project, id) {
 export function assertTaskLocation(config, project, task) {
   if (task.projectRegistrationId !== project.registrationId
     || (task.projectRoot !== undefined && task.projectRoot !== project.root)) throw fail('task_project_changed');
-  for (const file of [config.root, config.worktrees, project.root, task.cwd]) {
+  if (project.externalRoot === true) {
+    canonical(project.root);
+    if (inside(config.writeBoundary.root, project.root)) throw fail('overlapping_coding_paths');
+  }
+  const checkedPaths = project.externalRoot === true
+    ? [config.root, config.worktrees, task.cwd]
+    : [config.root, config.worktrees, project.root, task.cwd];
+  for (const file of checkedPaths) {
     canonical(file);
     if (!inside(file, config.writeBoundary.root) || file === config.writeBoundary.root) throw fail('coding_paths_outside_write_boundary');
   }
