@@ -129,7 +129,7 @@ try {
     'chat.use': true, 'qq.reply': true, 'papers.import': true, 'papers.read': true, 'qq.file.reply': true,
   }});
   cfg = withHostControl(compileAccessConfig({
-    agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model: modelChoice, heartbeat: {every: '0m'}},
+    agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model: modelChoice},
       entries: {main: {workspace, model: modelChoice, tools: {allow: ['kurumi_document_send']}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://127.0.0.1:' + model.address().port + '/v1',
       apiKey: 'synthetic', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture',

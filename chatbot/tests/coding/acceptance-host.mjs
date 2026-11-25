@@ -16,6 +16,7 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
+import {readPluginCatalog,waitForPluginStates} from '../acceptance/catalog-ready.mjs';
 
 const out = process.argv[process.argv.indexOf('--out') + 1];
 if (!process.argv.includes('--out') || !path.isAbsolute(out ?? '') || fs.existsSync(out)) throw Error('Require a new absolute --out');
@@ -162,7 +163,7 @@ async function run(enabled) {
   const codingRoot = path.join(directory, 'coding');
   const pluginConfig = {pilot: true, writeBoundary: {root, launcher: '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run'}, root: codingRoot, worktrees: path.join(directory, 'worktrees'), dsh: {command: peer, home: dshHome, model: ['fixture', 'fixture']}, projects: [{id: 'fixture', root: source, branch: 'main', checks: [{name: 'fixture check', argv: [process.execPath, '-e', 'process.exit(0)']}]}]};
   const config = withHostControl(compileAccessConfig({
-    agents: {ownership: 'explicit', defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}, systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['kurumi_code']}}}},
+    agents: {ownership: 'explicit', defaults: {workspace: path.join(directory, 'workspace'),  systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['kurumi_code']}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://' + modelAddress + '/v1', apiKey: 'synthetic', api: 'openai-completions',
       models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1000}]}}},
     plugins: {allow: ['kurumi-coding', 'kurumi-qq'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-coding'), path.join(repo, 'chatbot/plugins/kurumi-qq')]},
@@ -177,7 +178,7 @@ async function run(enabled) {
   const stage = {enabled, configSha256: host.configSha256}; report.stages.push(stage);
   try {
     await host.ready();
-    const plugins = await call('plugins.list'), catalog = await call('tools.catalog', {agentId: 'main', includePlugins: true});
+    const plugins = await waitForPluginStates(call,{'kurumi-coding':enabled?['active']:['disabled','unloaded']}), catalog = await readPluginCatalog(call);
     const plugin = plugins.plugins.find(p => p.id === 'kurumi-coding'); assert(plugin);
     const names = catalog.groups.filter(g => g.pluginId === 'kurumi-coding').flatMap(g => g.tools.map(t => t.id));
     if (enabled) {assert.equal(plugin.runtime.state, 'active'); assert.deepEqual(names, ['kurumi_code']);}

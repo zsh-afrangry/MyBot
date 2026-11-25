@@ -71,7 +71,7 @@
 
 ## 同步契约
 
-`tools.codeMode=false`显式维持现有业务工具调用模式。OpenClaw2026.11.1缺省按模型自动启用Code Mode；官方DeepSeek模型会把业务工具包装为JavaScript `exec/wait`，与本项目将`exec`绑定宿主命令权限/目录约束的策略冲突。本轮不开放这项新执行模式，不修改宿主exec、成员或天气的授权范围。后续若采用Code Mode，须独立验证宿主权威`toolKind/toolInputKind`、内层工具授权与执行器边界。配置依据见[官方说明](https://docs.openclaw.ai/tools/code-mode/configuration)。
+`tools.codeMode=false`显式维持现有业务工具调用模式。Code Mode 可能把业务工具包装为JavaScript `exec/wait`，与本项目将`exec`绑定宿主命令权限/目录约束的策略冲突。启用前须独立验证宿主权威`toolKind/toolInputKind`、内层工具授权与执行器边界。配置依据见[官方说明](https://docs.openclaw.ai/tools/code-mode/configuration)。
 
 `sync-config.mjs` 是唯一的运行配置同步入口。它先校验 `access-control.json`，编译 `channels.kurumi-qq.accessControl`、ownerId、主人命令名单、天气 scheduledOwnerId、邮件 allowedRecipients 以及成员 Agent/binding，再按受管键同步；这几项不在 `runtime.config.json` 重复编辑。配置原子替换，错误策略不写入；更换既有 owner QQ 要显式迁移个人数据，不能直接改表。完整权限、资源归属与登记步骤见[文档24](../docs/24_统一身份与权限管理.md)。
 
@@ -207,7 +207,7 @@ QQ 与 `kurumi-host-control` 作为一组随受管配置同步。宿主控制服
 
 ### N3自主行动的可选配置（生产未启用）
 
-N3由`kurumi-host-control`内的`proactive/`组件装配。禁用示例见`config/proactive.example.json`，配置位置为`plugins.entries.kurumi-host-control.config.proactive`。`runtime.config.json`当前没有该键、main没有`kurumi_proactive`、身份未授予四项proactive权限；生产仍未创建N3库/定时器。原生`heartbeat.every=0m`、Code Mode、main禁用项及既有Cron保持。
+N3由`kurumi-host-control`内的`proactive/`组件装配。禁用示例见`config/proactive.example.json`，配置位置为`plugins.entries.kurumi-host-control.config.proactive`。`runtime.config.json`当前没有该键、main没有`kurumi_proactive`、身份未授予四项proactive权限；生产仍未创建N3库/定时器。原生心跳停用状态按[文档12](../docs/12_目录资产与Git备份整理.md#原理)核对；Code Mode、main禁用项及既有Cron保持。
 
 启用候选须一起审阅：intervalMs/timeoutMs、night明确时段/时区/真实主人活动新鲜度、reads四类只读用途、publicSearch及notifyEnabled；仅主人显式`proactive.use/notify/read/manage`和main新增窄工具`kurumi_proactive`，不解禁read/write/exec/message等原生能力。参数修改使活跃凭据失效，重新装配后生效；暂停跨重启保留。示例的30分钟/60秒、23–08点/15分钟是待审核参数，不是已批准生产取值。具体功能/权限契约见文档25/24。
 

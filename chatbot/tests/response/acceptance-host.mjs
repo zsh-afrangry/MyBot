@@ -52,7 +52,7 @@ export default {id:'notice-probe',register(api){
 }};`);
 const cfg=compileAccessConfig({gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},
  models:{providers:{fixture:{baseUrl:'http://127.0.0.1:'+model.address().port+'/v1',apiKey:'synthetic',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:1000}]}}},
- agents:{ownership:'explicit',defaults:{workspace:root+'/workspace',systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'}},entries:{main:{workspace:root+'/workspace',model:{primary:'fixture/fixture'},tools:{deny:['read','write','edit','exec','process','message','sessions_spawn'],allow:[]}}}},
+ agents:{ownership:'explicit',defaults:{workspace:root+'/workspace',systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'}},entries:{main:{workspace:root+'/workspace',model:{primary:'fixture/fixture'},tools:{deny:['read','write','edit','exec','process','message','sessions_spawn'],allow:[]}}}},
  channels:{'kurumi-qq':{enabled:true,httpUrl:'http://127.0.0.1:'+onebot.address().port,wsUrl:'ws://127.0.0.1:'+onebot.address().port,httpTokenFile:root+'/http-token',wsTokenFile:root+'/ws-token',stateDir:root+'/channel',mediaRoot:root+'/media',testIngress:true,dailySendLimit:20,segmentDelayMs:0}},
  plugins:{allow:['kurumi-qq','notice-probe'],load:{paths:[repo+'/chatbot/plugins/kurumi-qq',probe]},entries:{'kurumi-qq':{enabled:true},'notice-probe':{enabled:true}},slots:{memory:'none'}},
  session:{dmScope:'per-channel-peer'},cron:{enabled:true},tools:{codeMode:false,web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:root+'/runtime.log'}},ownerPolicy(owner));

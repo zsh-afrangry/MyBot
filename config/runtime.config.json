@@ -20,10 +20,6 @@
       "model": {
         "primary": "deepseek/deepseek-flash"
       },
-      "heartbeat": {
-        "every": "0m",
-        "agentId": "main"
-      },
       "systemAgent": {
         "agentId": "main"
       },

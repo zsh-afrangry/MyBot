@@ -12,7 +12,7 @@ export function bindLocalCodingTurn(runId, turn) {
 export function localCodingDecision(event, ctx) {
   if (ctx.agentId !== LOCAL_CODING_AGENT && !ctx.sessionKey?.startsWith(`agent:${LOCAL_CODING_AGENT}:`)) return undefined;
   const turn = turns.get(ctx.runId);
-  if (ctx.agentId !== LOCAL_CODING_AGENT || !turn || ctx.sessionKey !== turn.requester.sessionKey
+  if (ctx.agentId !== LOCAL_CODING_AGENT || !turn || ctx.sessionKey !== turn.sessionKey
     || (ctx.sessionId != null && ctx.sessionId !== turn.sessionId) || !turn.current()) {
     return {block: true, blockReason: 'local_coding_turn_required'};
   }

@@ -3,7 +3,8 @@
 import {createHash} from 'node:crypto';
 
 export const error = code => Object.assign(new Error(code), {code});
-export const isWakeSession=ctx=>/^agent:main:kurumi-proactive:[0-9]{5,12}$/.test(ctx?.sessionKey??'');
+// Reserve the whole namespace so malformed or per-turn keys cannot escape wake policy.
+export const isWakeSession=ctx=>/^agent:main:kurumi-proactive:/.test(ctx?.sessionKey??'');
 export const digest = value => createHash('sha256').update(value).digest('hex');
 export const time = value => {
   if (!Number.isSafeInteger(value) || value < 0) throw error('invalid_time');

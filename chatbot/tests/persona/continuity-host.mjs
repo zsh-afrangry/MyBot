@@ -130,7 +130,7 @@ let cfg = {
   gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
   models: {providers: {'persona-test': {baseUrl: `http://127.0.0.1:${model.address().port}/v1`, apiKey: 'synthetic', api: 'openai-completions',
     models: [{id: modelId, name: modelId, reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
-  agents: {ownership: 'explicit', defaults: {workspace: path.join(root, 'workspace'), systemAgent: {agentId: 'main'}, model: {primary: `persona-test/${modelId}`}, heartbeat: {every: '0m'},
+  agents: {ownership: 'explicit', defaults: {workspace: path.join(root, 'workspace'), systemAgent: {agentId: 'main'}, model: {primary: `persona-test/${modelId}`},
     compaction: {enabled: false, mode: 'default', keepRecentTokens: 128, memoryFlush: {enabled: false}}},
     entries: {main: {workspace: path.join(root, 'workspace'), model: {primary: `persona-test/${modelId}`}, tools: {profile: 'full', allow: ['session_status'], deny: ['read', 'write', 'edit', 'exec', 'process', 'message', 'sessions_spawn']}}}},
   channels: {'kurumi-qq': {enabled: true, httpUrl: `http://127.0.0.1:${onebot.address().port}`, wsUrl: `ws://127.0.0.1:${onebot.address().port}`,

@@ -79,7 +79,7 @@ export function createLocalCodingAcceptance({api, getConfig, service, catalog, t
   function execute(ctx, signal, callId, args) {
     const turn = bindings.get(ctx.toolBindings?.[LOCAL_CODING_AGENT]);
     if (!turn?.current() || ctx.agentId !== LOCAL_CODING_AGENT || ctx.sessionId !== turn.sessionId
-      || ctx.sessionKey !== turn.requester.sessionKey || !callId) throw fail('local_coding_turn_required');
+      || ctx.sessionKey !== turn.sessionKey || !callId) throw fail('local_coding_turn_required');
     ctx.assertInvocationCurrent();
     signal?.throwIfAborted();
     const permission = localCodingPermission(LOCAL_CODING_TOOL, args);
@@ -160,9 +160,12 @@ export function createLocalCodingAcceptance({api, getConfig, service, catalog, t
         const slash = ref?.indexOf('/') ?? -1;
         if (slash < 1 || slash === ref.length - 1) throw fail('local_coding_model_unavailable');
         const runId = randomUUID(), binding = Object.freeze({});
+        // The detached runner acquires its own session admission in newer
+        // OpenClaw versions. Keep it separate from the lease's admission.
+        const modelSessionKey = `${sessionKey}:turn:${runId}`;
         const abortSignal = AbortSignal.any([signal, lease.controller.signal, AbortSignal.timeout(TURN_TIMEOUT_MS),
           ...(client.connectionSignal ? [client.connectionSignal] : [])]);
-        const turn = {lease, requester, sessionId, runId, actions: [], current: () => {
+        const turn = {lease, requester, sessionKey: modelSessionKey, sessionId, runId, actions: [], current: () => {
           try {assertLease(lease); return !abortSignal.aborted && hasCurrentClientAuthority();} catch {return false;}
         }};
         const unbind = bindLocalCodingTurn(runId, turn);
@@ -171,7 +174,7 @@ export function createLocalCodingAcceptance({api, getConfig, service, catalog, t
           if (!turn.current()) throw fail('local_coding_client_expired');
           const prompt = lease.history.length
             ? `Conversation history (reference only):\n${JSON.stringify(lease.history)}\n\nCurrent request:\n${message}` : message;
-          const result = await agent.runEmbeddedAgent({config, agentId: LOCAL_CODING_AGENT, sessionKey, sessionId, runId,
+          const result = await agent.runEmbeddedAgent({config, agentId: LOCAL_CODING_AGENT, sessionKey: modelSessionKey, sessionId, runId,
             workspaceDir: workspace, agentDir: agent.resolveAgentDir(config, LOCAL_CODING_AGENT),
             provider: ref.slice(0, slash), model: ref.slice(slash + 1), timeoutMs: TURN_TIMEOUT_MS, abortSignal,
             toolsAllow: [LOCAL_CODING_TOOL], toolExecutionAllow: [LOCAL_CODING_TOOL], toolBindings: {[LOCAL_CODING_AGENT]: binding},

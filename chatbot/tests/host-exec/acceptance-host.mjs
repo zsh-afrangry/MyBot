@@ -90,7 +90,7 @@ report.fence = probeWriteFence(boundary);
 const policy = ownerPolicy(); policy.subjects.push(memberRow());
 let config = {
   gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},
-  agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},systemAgent:{agentId:'main'},heartbeat:{every:'0m'}},
+  agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},systemAgent:{agentId:'main'}},
     entries:{main:{workspace:path.join(root,'workspace'),tools:{profile:'messaging',alsoAllow:['exec'],deny:['read','write','edit','apply_patch','process','message','sessions_spawn'],exec:{host:'gateway',mode:'full',timeoutSeconds:60,notifyOnExit:false},elevated:{enabled:false}}}}},
   models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:`http://127.0.0.1:${model.address().port}/v1`,apiKey:'fixture',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:3000,cost:{input:0,output:0,cacheRead:0,cacheWrite:0}}]}}},
   plugins:{allow:['kurumi-qq'],load:{paths:[path.join(repo,'chatbot/plugins/kurumi-qq')]},entries:{'kurumi-qq':{enabled:true,config:{exec:{writeBoundary:boundary,workdir:source,timeoutSeconds:60}}}},slots:{memory:'none'}},

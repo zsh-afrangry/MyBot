@@ -32,7 +32,7 @@ const report = {passed:false, boundary:'Isolated real Gateway and KnowledgeMap w
 try {
   gateway = await startIsolatedGateway({repo, root, token:gatewayToken, configure(port) {
     gatewayPort = port;
-    return {agents:{defaults:{workspace:join(root,'workspace'), heartbeat:{every:'0m'}},
+    return {agents:{defaults:{workspace:join(root,'workspace')},
       entries:{main:{workspace:join(root,'workspace')}}},
     plugins:{allow:['personal-profile'], load:{paths:[join(repo,'chatbot/plugins/personal-profile')]},
       slots:{memory:'none'}, entries:{'personal-profile':{enabled:true, config:{shareDefaultCity:true, bridgeTokenFile:tokenFile}}}},

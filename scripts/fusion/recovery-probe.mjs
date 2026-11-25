@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {spawn,spawnSync} from 'node:child_process';
-import {DatabaseSync} from 'node:sqlite';
 import http from 'node:http';
 import {createRequire} from 'node:module';
 import {setTimeout as delay} from 'node:timers/promises';
+import {snapshotCodingActivity,snapshotCronDefinitions,verifyCronProbe} from './lib/recovery-checks.mjs';
+import {isDeepStrictEqual} from 'node:util';
 const [target,scope='legacy']=process.argv.slice(2),runtime=target+'/runtime',repo=target+'/repos/kurumi-fusion',sdk=target+'/sdk/openclaw';
 assert(['legacy','fusion-only'].includes(scope),'Unknown recovery probe scope');
 assert(!fs.existsSync('/home/afrangry/.openclaw-fusion'),'Production state must be invisible');
@@ -15,6 +16,11 @@ assert(!fs.existsSync('/home/afrangry/kurumi-fusion'),'Production source must be
 assert(!fs.existsSync('/run/user'),'Host service bus must be invisible');
 assert(!fs.existsSync('/sys/class/net'),'Host network topology must be invisible');
 const cfg=JSON.parse(fs.readFileSync(runtime+'/openclaw.json'));
+// A restored task may become needs_reconciliation on startup, but no new round
+// or execution event should appear in the isolated probe.
+const codingFile=cfg.plugins.entries['kurumi-coding'].config.root+'/coding.sqlite';
+const codingBefore=snapshotCodingActivity(codingFile);
+const cronBefore=snapshotCronDefinitions(runtime+'/state/openclaw.sqlite');
 const req=createRequire(repo+'/chatbot/plugins/kurumi-qq/index.js');
 assert(req.resolve('ws').startsWith(target+'/'));
 assert(req.resolve('openclaw/plugin-sdk/media-runtime').startsWith(target+'/'));
@@ -65,8 +71,18 @@ try{
  const {stageImage}=await import('file://'+repo+'/chatbot/plugins/kurumi-qq/src/media.js');
  const media=await stageImage({data:{file:image}},cfg.channels['kurumi-qq']);assert(media.contentType.startsWith('image/'));assert(media.path.startsWith(runtime+'/'));
  await sendPayload({cfg,to:'user:'+cfg.channels['kurumi-qq'].ownerId,text:'',mediaUrl:image,key:'recovery-image-'+Date.now()});assert.equal(sends.length,2);
- const status=await callGatewayFromCli('channels.status',{url:'ws://127.0.0.1:18891',token:process.env.OPENCLAW_GATEWAY_TOKEN,timeout:'3000',json:true},{});
- assert(status.channelAccounts['kurumi-qq'][0].connected,'Restored channel must connect to isolated OneBot');
+ // 2026.11.8 内核插件加载变慢（隔离探针实测 ~19s），channels 启动晚于 health 就绪；
+ // 对频道连接做有界重试等待，断言本身不变：最终仍要求 kurumi-qq 真正连上隔离 OneBot。
+ let status,qqConnected=false;
+ for(let i=0;i<30;i++){
+  if(exited)throw Error('Isolated Gateway exited; inspect private gateway-probe.log');
+  try{
+   status=await callGatewayFromCli('channels.status',{url:'ws://127.0.0.1:18891',token:process.env.OPENCLAW_GATEWAY_TOKEN,timeout:'3000',json:true},{});
+  }catch{status=undefined;}
+  if(status?.channelAccounts?.['kurumi-qq']?.[0]?.connected){qqConnected=true;break;}
+  await delay(1000);
+ }
+ assert(qqConnected,'Restored channel must connect to isolated OneBot');
  const {projectCatalog}=await import('file://'+repo+'/chatbot/plugins/kurumi-tasks/projects.js');
  const {runSandbox}=await import('file://'+repo+'/chatbot/packages/sandbox/index.js');
  let projectChecks=0;
@@ -75,7 +91,7 @@ try{
   assert.equal(result.code,0,'Restored project check failed: '+result.output.slice(-1500));projectChecks++;
  }
 
- // Check the real restored execution fence and empty development task store without running DSH.
+ // Check the real restored execution fence and retained development task store without running DSH.
  const {projectPolicy}=await import('file://'+repo+'/chatbot/plugins/kurumi-coding/workspaces.js');
  const {probeWriteFence}=await import('file://'+repo+'/chatbot/packages/coding-runtime/write-fence.js');
  const coding=cfg.plugins.entries['kurumi-coding'].config;
@@ -93,14 +109,18 @@ try{
  const fenceCheck=spawnSync(coding.writeBoundary.launcher,['--ro','/','--rw','/dev/null','--rw',coding.writeBoundary.root,'--',process.execPath,'-e',fenceScript],{encoding:'utf8',timeout:5000});
  assert.equal(fenceCheck.status,0,'Restored execution fence failed: '+fenceCheck.stderr.slice(-800));
  assert.equal(fs.readFileSync(fenceAllowed,'utf8'),'allowed');assert(!fs.existsSync(fenceDenied));fs.unlinkSync(fenceAllowed);
- const pilotDb=new DatabaseSync(coding.root+'/coding.sqlite',{readOnly:true});
- const codingTasks=Number(pilotDb.prepare('SELECT count(*) n FROM coding_tasks').get().n);pilotDb.close();assert.equal(codingTasks,0);
+ const codingAfter=snapshotCodingActivity(codingFile);
+ assert(isDeepStrictEqual(codingAfter,codingBefore),'A coding task, execution round or event changed during the probe');
+ const codingTasks=codingAfter.tasks.length;
  const python=cfg.plugins.entries['kurumi-papers'].config.python;
  assert(python.startsWith(runtime+'/venvs/'));
  const py=spawnSync(python,['-B','-c','import sys, babeldoc, pdf2zh_next, pymupdf; print(sys.version.split()[0])'],{encoding:'utf8',timeout:30000});
  assert.equal(py.status,0,'Restored paper interpreter/imports failed: '+py.stderr.slice(-800));
- const cronDb=new DatabaseSync(runtime+'/state/openclaw.sqlite',{readOnly:true});
- const enabledJobs=Number(cronDb.prepare('SELECT count(*) n FROM cron_jobs WHERE enabled=1').get().n);cronDb.close();assert.equal(enabledJobs,5);
+ const cronAfter=snapshotCronDefinitions(runtime+'/state/openclaw.sqlite');
+ const sdkVersion=JSON.parse(fs.readFileSync(sdk+'/package.json')).version;
+ const legacyHeartbeat=sdkVersion==='2026.11.1'?cfg.agents?.defaults?.heartbeat:undefined;
+ assert(verifyCronProbe(cronBefore,cronAfter,{legacyHeartbeat,isolatedStore:runtime+'/cron/jobs.json'}),'Cron job definitions changed during the probe');
+ const enabledJobs=cronAfter.filter(job=>job.enabled===1).length;
 
  fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingPolicyUsesInertBackend:scope==='fusion-only',externalDshUnavailableRejected,codingWriteFence:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));
  console.log('Isolated Gateway health and all plugin imports passed; production paths and network inaccessible');

@@ -5,6 +5,7 @@ import fs from 'node:fs';import path from 'node:path';import os from 'node:os';i
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes,createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';import {DatabaseSync} from 'node:sqlite';import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
+import {waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {WeatherStore} from '../../packages/personal-domains/dist/store.js';import {ReminderStore} from '../../packages/personal-domains/dist/reminder-store.js';
@@ -94,7 +95,7 @@ const settings=JSON.parse(fs.readFileSync(repo+'/config/proactive.example.json')
 // Make this test's current time daytime; no activity claim or production value.
 const minute=new Date().getUTCHours()*60+new Date().getUTCMinutes();settings.night={startMinute:(minute+120)%1440,endMinute:(minute+121)%1440,timeZone:'UTC',activityMaxAgeMs:900000};
 const cfg={gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},session:{dmScope:'per-channel-peer'},
-  agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'},compaction:{memoryFlush:{enabled:false}}},
+  agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},compaction:{memoryFlush:{enabled:false}}},
     entries:{main:{workspace,model:{primary:'fixture/fixture'},tools:{allow:['kurumi_proactive','web_fetch'],deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
   models:{mode:'merge',providers:{fixture:{baseUrl:httpUrl+'/v1',apiKey:'synthetic-local-only',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:1000}]}}},
   channels:{'kurumi-qq':{enabled:true,ownerId:owner,accessControl:ownerPolicy(owner),httpUrl,wsUrl:httpUrl.replace('http:','ws:')+'/events',httpTokenFile:bridgeToken,wsTokenFile:bridgeToken,
@@ -131,7 +132,8 @@ try {
   assert(bootstrapRequestsBeforeQuiet>0);assert(report.bootstrap.verifiedRequests>bootstrapRequestsBeforeQuiet);
   const wakeBindings=inspect('SELECT binding FROM wake_run WHERE event_key IN (?,?)','full','quiet').map(row=>JSON.parse(row.binding));
   assert.equal(wakeBindings.length,2);assert.notEqual(wakeBindings[0].sessionId,wakeBindings[1].sessionId);
-  assert(wakeBindings.every(binding=>binding.agentId==='main'&&binding.sessionKey==='agent:main:kurumi-proactive:'+owner));
+  assert(wakeBindings.every(binding=>binding.agentId==='main'&&binding.sessionKey==='agent:main:kurumi-proactive:'+owner+':turn:'+binding.sessionId));
+  assert.notEqual(wakeBindings[0].sessionKey,wakeBindings[1].sessionKey);
   report.cases.push({label:'fresh-detached-wakes-share-main-persona-bootstrap-at-actual-model-boundary',passed:true});
   report.cases.push({label:'actual-model-can-choose-silence-with-existing-self-record',passed:true});
   mode='public';assert.equal((await call('kurumi-proactive.run',{eventKey:'public'})).status,'silent');
@@ -162,9 +164,24 @@ try {
   mode='silent';wsClient.send(JSON.stringify({time:Math.floor(Date.now()/1000),self_id:Number(bot),post_type:'message',message_type:'private',user_id:Number(owner),message_id:3003,message:[{type:'text',data:{text:'合成新请求优先'}}]}));
   const cancelled=await inflight;assert.equal(cancelled.status,'cancelled');holdResolve?.();holdSeen=undefined;
   report.cases.push({label:'actual-foreground-admission-preempts-detached-background-model',passed:true});
+  const key='agent:main:kurumi-qq:direct:'+owner;
   const beforeReset=(await call('kurumi-proactive.status')).control;
-  await call('sessions.reset',{key:'agent:main:kurumi-qq:direct:'+owner,reason:'new'});
+  // Reset while the foreground reply can still own source work following preemption.
+  const concurrentReset=await call('sessions.reset',{key,reason:'new'});
+  assert.equal(concurrentReset.ok,true);
+  assert(concurrentReset.entry?.lifecycleRevision);
   const afterReset=(await call('kurumi-proactive.status')).control;assert(afterReset.epoch>beforeReset.epoch);assert.equal(afterReset.last_activity,beforeReset.last_activity);
+  report.cases.push({label:'concurrent-reset-after-preemption-commits-a-session-lifecycle',passed:true});
+  wsClient.send(JSON.stringify({time:Math.floor(Date.now()/1000),self_id:Number(bot),post_type:'message',message_type:'private',user_id:Number(owner),message_id:3004,message:[{type:'text',data:{text:'合成重置后的新请求'}}]}));
+  await waitForOneBotTurn(root+'/state/channel',[bot+':'+owner+':3004'],{timeoutMs:15000});
+  const beforeSettledReset=(await call('kurumi-proactive.status')).control;
+  const settledReset=await call('sessions.reset',{key,reason:'new'});
+  assert.equal(settledReset.ok,true);
+  assert(settledReset.entry?.lifecycleRevision);
+  assert.notEqual(settledReset.entry.lifecycleRevision,concurrentReset.entry.lifecycleRevision);
+  const afterSettledReset=(await call('kurumi-proactive.status')).control;
+  assert(afterSettledReset.epoch>beforeSettledReset.epoch);
+  assert.equal(afterSettledReset.last_activity,beforeSettledReset.last_activity);
   report.cases.push({label:'actual-foreground-session-reset-fences-composition-without-fabricating-owner-activity',passed:true});
   mode='silent';const state=await call('kurumi-proactive.status');assert.equal(state.active,0);assert(state.control.last_activity>0);assert.deepEqual(fingerprints(),before);
   assert(!report.peerError,report.peerError);delete report.recordToRemove;report.passed=true;

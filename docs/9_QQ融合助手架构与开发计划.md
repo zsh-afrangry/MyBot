@@ -174,19 +174,19 @@ KnowledgeMap 只保留 `/home/afrangry/repository` 为事实源；启动器改�
 
 | 项目 | 约束与入口 |
 | --- | --- |
-| 宿主和连接库 | 版本由 `config/openclaw-release.json` 指定（OpenClaw 2026.11.1、`ws` 8.22.0），用 `verify-dependencies.mjs` 检查。仓库的 `node_modules/openclaw` 链接到全局安装，全局升级会同时替换它 |
+| 宿主和连接库 | 版本由 `config/openclaw-release.json` 指定，用 `verify-dependencies.mjs` 检查。仓库的 `node_modules/openclaw` 链接到全局安装，全局升级会同时替换它 |
 | 全局升级 | 不直接运行 `openclaw update`。先更新版本契约和锁文件并验证。`run-gateway.mjs` 把非自身请求的子进程退出（含 0）视为失败，systemd 重试到上限后停在 failed，用 `systemctl --user --failed` 检查 |
 | 交互保护 | `scripts/fusion/openclaw-update-guard.sh` 可由 `~/.bashrc` 加载，拦截普通 `openclaw update`，放行 `update status`、`--dry-run`、`--help`。显式升级用 `KURUMI_ALLOW_OPENCLAW_UPDATE=1`。它拦不住 `npm i -g`、绝对路径或 `command openclaw update` |
 | 服务模板 | 源码模板和已安装单元分别维护，同步后执行 `systemctl --user daemon-reload` |
 | 依赖安装 | 领域包按各自 lockfile `npm ci`；第三方 Tavily 由 `install-plugins.mjs` 和 `config/plugins.package-lock.json` 管理 |
 | 主机工具 | Git、Bubblewrap、Poppler、prlimit |
 
-升级顺序：先更新版本契约和锁文件，通过依赖检查、构建、领域回归和隔离恢复验证，再部署。恢复和升级演练见[文档12](12_目录资产与Git备份整理.md)。2026.11.1 的 DeepSeek 由独立官方插件 `@openclaw/deepseek-provider` 提供，版本锁在受管插件清单里，显式列入 allow/load/entries；数据库从 24 迁到 27 以及共享库迁移必须停写后运行官方 doctor，只替换 npm 包完成不了。
+升级顺序：先更新版本契约和锁文件，通过依赖检查、构建、领域回归和隔离恢复验证，再部署。恢复、旧心跳迁移和升级演练见[文档12](12_目录资产与Git备份整理.md)。DeepSeek 由独立官方插件 `@openclaw/deepseek-provider` 提供，版本锁在受管插件清单里，显式列入 allow/load/entries；数据库迁移必须停写后运行官方 doctor，只替换 npm 包完成不了。
 
-仅当当前数据库与批准版本匹配而全局宿主被意外替换时，才用系统 Node 重装批准版本。这会改全局安装，要作为已授权的修复步骤执行：
+仅当当前数据库与批准版本匹配而全局宿主被意外替换时，才重装批准版本。若版本需要本地补丁，使用[文档12](12_目录资产与Git备份整理.md#进行中openclaw-2026118-升级)记录的已验证工件。其余版本可用下列命令重装。替换全局安装需要授权。
 
 ```bash
-PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global openclaw@2026.11.1
+PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global "openclaw@$(/usr/bin/node -p "require('./config/openclaw-release.json').version")"
 ```
 
 ### QQ 图片与引用

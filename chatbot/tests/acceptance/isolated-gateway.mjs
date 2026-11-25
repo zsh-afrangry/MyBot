@@ -2,9 +2,10 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {once} from 'node:events';
-import {openSync, closeSync, writeFileSync} from 'node:fs';
+import {openSync, closeSync, writeFileSync, chmodSync, lstatSync, realpathSync} from 'node:fs';
 import {createServer} from 'node:net';
-import {join} from 'node:path';
+import {join, sep} from 'node:path';
+import {tmpdir} from 'node:os';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
 import {waitForAcceptance} from './onebot-peer.mjs';
 import {closeOnScenarioDisconnect, scenarioSignal} from './scenario-lifecycle.mjs';
@@ -13,6 +14,9 @@ import {closeOnScenarioDisconnect, scenarioSignal} from './scenario-lifecycle.mj
 // production state, shell credentials or agent-dir overrides.
 export async function startIsolatedGateway({repo, root, token, configure, preload, env}) {
   scenarioSignal.throwIfAborted();
+  const actual=realpathSync(root),temp=realpathSync(tmpdir());
+  if (!actual.startsWith(temp+sep) || lstatSync(root).isSymbolicLink()) throw Error('Isolated Gateway root must be a temporary directory');
+  chmodSync(actual,0o700);
   const probe = createServer();
   probe.listen(0, '127.0.0.1');
   await once(probe, 'listening');
@@ -64,7 +68,7 @@ export async function startIsolatedGateway({repo, root, token, configure, preloa
         if (fault) throw fault;
         assert(child.exitCode === null && child.signalCode === null, 'Isolated Gateway exited');
         try {return await call('health', {}, 1000);} catch {return false;}
-      }, 'isolated Gateway health', {timeoutMs: 20000});
+      }, 'isolated Gateway health', {timeoutMs: 45000});
     },
     close,
   };

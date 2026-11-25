@@ -407,7 +407,7 @@ try {
     'personal_weather_get_brief', ...['personal_profile', 'personal_planning'].flatMap(domain => ['state_get', 'change_propose', 'change_commit'].map(name => domain + '_' + name))];
   const cfg = withHostControl(compileAccessConfig({
     agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'},
-      heartbeat: {every: '0m'}, model: {primary: 'fixture/fixture'}}, entries: {main: {workspace, tools: {allow: tools}}}},
+       model: {primary: 'fixture/fixture'}}, entries: {main: {workspace, tools: {allow: tools}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://127.0.0.1:' + model.address().port + '/v1',
       apiKey: 'fixture', api: 'openai-completions', models: [{id: 'fixture', name: 'fixture', contextWindow: realModel ? 128000 : FIXTURE_CONTEXT_WINDOW, maxTokens: 1200}]}}},
     plugins: {allow: plugins, load: {paths: plugins.map(id => join(repo, 'chatbot/plugins', id))},

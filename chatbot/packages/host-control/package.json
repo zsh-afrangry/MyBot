@@ -2,5 +2,8 @@
   "name": "@kurumi/host-control",
   "private": true,
   "type": "module",
-  "exports": "./index.js"
+  "exports": {
+    ".": "./index.js",
+    "./local-coding": "./local-coding.js"
+  }
 }
