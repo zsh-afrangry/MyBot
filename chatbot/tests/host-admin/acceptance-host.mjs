@@ -20,7 +20,7 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {closeOnScenarioDisconnect, scenarioProgress, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
-import {configuredModel, findObservedToolResult, observeToolResults, relayConfiguredModel} from '../acceptance/configured-dialogue.mjs';
+import {configuredModel, findObservedToolResult, observedAuthorization, observeToolResults, relayConfiguredModel} from '../acceptance/configured-dialogue.mjs';
 import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
 import {git} from '../../plugins/kurumi-coding/workspaces.js';
 
@@ -470,7 +470,7 @@ async function modelScenario() {
   await step('next-turn confirmation runs the registered stub exactly once', async () => {
     const confirmation = await turn(owner, '确认，执行刚才预览的远程桌面服务重启。');
     const id = {proposalId: proposal.proposalId};
-    assert.equal(get(confirmation, 'personal_confirmation', {action: 'confirm', domain: 'host_sudo', ...id}).status, 'authorized');
+    assert(observedAuthorization(confirmation.results, {...proposal, domain: 'host_sudo'}), 'Missing authorization for the presented proposal');
     const result = get(confirmation, hostTool, {action: 'commit', ...id});
     assert.equal(result.status, 'succeeded');
     assert.equal(result.afterState.MainPID, '101');

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {findObservedToolResult, observeToolResults} from './configured-dialogue.mjs';
+import {findObservedToolResult, observedAuthorization, observeToolResults} from './configured-dialogue.mjs';
 
 function exchange(id, name, args, value) {
   return [
@@ -30,4 +30,14 @@ test('selects the requested proposal receipt when the same turn also queries cur
   ], results);
   assert.deepEqual(findObservedToolResult(results, 'state_get', {proposal_id: 'p1'}).value, {receipt: 'p1'});
   assert.equal(findObservedToolResult(results, 'state_get', {proposal_id: 'missing'}), undefined);
+});
+
+test('matches a focused confirmation by the authorized proposal in the response', () => {
+  const results = [], draft = {domain: 'host_sudo', proposalId: 'p1', payloadHash: 'frozen'};
+  observeToolResults()(exchange('a', 'dispatch_action', {
+    id: 'openclaw:personal-confirmation:personal_confirmation', args: {action: 'confirm', domain: draft.domain},
+  }, {ok: true, status: 'authorized', results: [{...draft, status: 'authorized', ok: true}]}), results);
+  assert(observedAuthorization(results, draft));
+  assert(!observedAuthorization(results, {...draft, proposalId: 'p2'}));
+  assert(!observedAuthorization(results, {...draft, payloadHash: 'other'}));
 });

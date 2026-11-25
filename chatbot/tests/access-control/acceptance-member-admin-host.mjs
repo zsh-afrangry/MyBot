@@ -26,7 +26,7 @@ import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitF
 import {buildMessage} from '../../plugins/kurumi-mail/mime.js';
 import {IMAP_CERT_FILE, IMAP_TEST_PASS, IMAP_TEST_USER, MockImapServer} from '../../plugins/kurumi-mail/test/mock-imap.js';
 import {closeOnScenarioDisconnect, scenarioProgress, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
-import {configuredModel, findObservedToolResult, observeToolResults, relayConfiguredModel} from '../acceptance/configured-dialogue.mjs';
+import {configuredModel, findObservedToolResult, observedAuthorization, observeToolResults, relayConfiguredModel} from '../acceptance/configured-dialogue.mjs';
 import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
 import {startIsolatedKnowledgeMap} from '../knowledgemap/isolated-api.mjs';
 import {ownerPolicy} from './fixtures.mjs';
@@ -453,7 +453,7 @@ async function memberModelScenario() {
   const confirmChange = async (draft, request, revision) => {
     const turnResult = await turn(owner, request);
     const id = {proposalId: draft.proposalId};
-    assert.equal(get(turnResult, 'personal_confirmation', {action: 'confirm', domain: 'access', ...id}).status, 'authorized');
+    assert(observedAuthorization(turnResult.results, {...draft, domain: 'access'}), 'Missing authorization for the presented proposal');
     const written = get(turnResult, 'kurumi_access', {action: 'commit', ...id});
     assert.equal(written.sourceRevision, revision);
     verifyFeedback(written, 'pending_sync');

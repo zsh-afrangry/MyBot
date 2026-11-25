@@ -59,6 +59,15 @@ export function findObservedToolResult(results, tool, identifiers) {
     && Object.entries(identifiers ?? {}).every(([key, value]) => row.args?.[key] === value));
 }
 
+// A confirmation may identify a proposal through the host's presentation
+// focus, so correlate the returned grant rather than the model's arguments.
+export function observedAuthorization(results, {domain, proposalId, payloadHash}) {
+  return results.some(row => row.tool === 'personal_confirmation' && row.args?.action === 'confirm'
+    && row.args.domain === domain && row.value?.ok === true
+    && (row.value.results ?? [row.value]).some(grant => grant.ok === true && grant.status === 'authorized'
+      && grant.domain === domain && grant.proposalId === proposalId && grant.payloadHash === payloadHash));
+}
+
 export function observeToolResults() {
   const calls = new Map(), seen = new Set();
   return (messages, results) => {
