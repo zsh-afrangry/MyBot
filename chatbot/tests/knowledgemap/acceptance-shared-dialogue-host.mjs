@@ -15,6 +15,7 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
 import {assertionDiagnostics} from '../acceptance/assertion-diagnostics.mjs';
 import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
+import {configuredModel, observeToolResults, relayConfiguredModel} from '../acceptance/configured-dialogue.mjs';
 import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
 import {createOneBotPeer, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
@@ -38,21 +39,7 @@ const report = {at: new Date().toISOString(), passed: false, cases: [], requests
   cognition: realModel ? 'configured-provider' : 'deterministic fixture',
   boundary: 'Isolated Gateway, loopback OneBot and KnowledgeMap FastAPI/SQLite; synthetic identities and data'};
 let km, peer, gateway, model, active, upstream, failureStep, currentTurn;
-const seenCalls = new Map(), seenResults = new Set();
-
-function loadModel() {
-  const source = JSON.parse(fs.readFileSync(path.join(repo, 'config/runtime.config.json'), 'utf8'));
-  const primary = source.agents.entries.main.model?.primary ?? source.agents.defaults.model.primary;
-  const [providerId, modelId] = primary.split('/'), provider = source.models.providers[providerId];
-  const url = new URL(provider.baseUrl);
-  if (url.origin !== 'https://api.deepseek.com' || url.username || url.password || url.search || url.hash || !modelId) {
-    throw Error('unsupported_model_endpoint');
-  }
-  const env = JSON.parse(fs.readFileSync('/home/afrangry/.openclaw-fusion/runtime-env.json', 'utf8'));
-  const key = env[provider.apiKey?.id];
-  if (typeof key !== 'string' || !key) throw Error('model_credential_unavailable');
-  return {primary, modelId, url: url.href.replace(/\/$/u, '') + '/chat/completions', key};
-}
+const observeResults = observeToolResults();
 
 function decode(value) {
   for (let i = 0; i < 7; i++) {
@@ -63,22 +50,6 @@ function decode(value) {
     break;
   }
   return value;
-}
-
-function rememberToolResults(messages) {
-  for (const message of messages) {
-    for (const call of message.tool_calls ?? []) {
-      let input;
-      try {input = JSON.parse(call.function.arguments);} catch {input = {};}
-      seenCalls.set(call.id, input.id ?? call.function.name);
-    }
-  }
-  for (const message of messages) {
-    const id = message.tool_call_id;
-    if (message.role !== 'tool' || !id || seenResults.has(id) || !seenCalls.has(id)) continue;
-    seenResults.add(id);
-    active.results.push({tool: seenCalls.get(id), value: decode(message.content)});
-  }
 }
 
 function complete(response, request, message) {
@@ -100,14 +71,8 @@ async function respond(req, res) {
     const body = await readFixtureJson(req);
     if (realModel) {
       assert(report.requests <= 80, 'Real model request budget exceeded');
-      rememberToolResults(body.messages ?? []);
-      const response = await fetch(upstream.url, {method: 'POST', redirect: 'error',
-        headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + upstream.key},
-        signal: AbortSignal.timeout(60000), body: JSON.stringify({...body, model: upstream.modelId, max_tokens: 2000, temperature: 0})});
-      if (!response.ok) throw Error('Configured model HTTP ' + response.status);
-      res.writeHead(200, {'Content-Type': response.headers.get('content-type') ?? 'application/json'});
-      for await (const chunk of response.body) res.write(chunk);
-      return res.end();
+      observeResults(body.messages ?? [], active.results);
+      return await relayConfiguredModel(upstream, body, res);
     }
     if (active.observe) {
       const last = body.messages.findLast(message => message.role === 'tool');
@@ -197,7 +162,7 @@ const queryBill = query => ({name: 'knowledge_bills_get', args: {action: 'list',
 try {
   scenarioProgress('gateway-start', 'started', 'environment');
   failureStep = 'gateway-start';
-  if (realModel) {upstream = loadModel(); report.primaryModel = upstream.primary;}
+  if (realModel) {upstream = configuredModel(repo); report.primaryModel = upstream.primary;}
   for (const dir of [workspace, channelDir, path.join(root, 'media')]) fs.mkdirSync(dir, {recursive: true, mode: 0o700});
   const tokenFile = path.join(root, 'onebot-token');
   fs.writeFileSync(tokenFile, token, {mode: 0o600});
