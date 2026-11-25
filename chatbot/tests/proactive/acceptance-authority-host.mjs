@@ -107,7 +107,7 @@ export default {id:'proactive-probe',register(api){
 }};
 `);
 const cfg={gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},
-  agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'}},
+  agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'}},
     entries:{main:{workspace,model:{primary:'fixture/fixture'},tools:{allow:['fixture_read','fixture_write'],deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
   models:{mode:'merge',providers:{fixture:{baseUrl:'http://127.0.0.1:'+model.address().port+'/v1',apiKey:'synthetic-local-only',api:'openai-completions',
     models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:1000}]}}},

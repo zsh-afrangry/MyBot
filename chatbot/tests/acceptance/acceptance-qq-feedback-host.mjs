@@ -67,7 +67,7 @@ try{
   model.listen(0,'127.0.0.1');await once(model,'listening');
   const plugins=['kurumi-qq','kurumi-logs'];
   const cfg=withHostControl(compileAccessConfig({
-    agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},heartbeat:{every:'0m'},model:{primary:'fixture/fixture'}},
+    agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'}},
       entries:{main:{workspace,tools:{allow:['kurumi_logs']}}}},
     models:{catalogRefresh:{enabled:false},providers:{fixture:{baseUrl:'http://127.0.0.1:'+model.address().port+'/v1',
       apiKey:'fixture',api:'openai-completions',models:[{id:'fixture',name:'fixture',contextWindow: FIXTURE_CONTEXT_WINDOW,maxTokens:600}]}}},

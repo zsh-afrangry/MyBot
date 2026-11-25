@@ -66,9 +66,9 @@ node scripts/fusion/backup-retention.mjs --apply                                
 
 `--skip-deps` 只做材料检查。默认通过只表示隔离 Gateway 加模拟传输可以运行。不要在主机上直接运行恢复副本的 `run-gateway.mjs`。
 
-**升级演练。** `restore-verify.mjs --adapt-source <本地 bundle> --adapt-sdk <工件 tar.gz>`（两项必须同时给）在隔离副本里替换代码和内核并迁移其数据库，结果标为 `upgrade-rehearsal`，不能登记成恢复点。演练按新源码生成隔离配置，按新锁文件安装外部插件，在无生产路径和网络的命名空间里运行官方 `doctor --fix`，确认 agent schema 升到批准版本、权限和插件意图不变后才启动。
+**升级演练。** `restore-verify.mjs --adapt-source <本地 bundle> --adapt-sdk <工件 tar.gz>`（两项必须同时给）在隔离副本里替换代码和内核并迁移其数据库，结果标为 `upgrade-rehearsal`，不能登记成恢复点。演练按新源码生成隔离配置，保留已知的旧停用心跳供 [Doctor 迁移](https://docs.openclaw.ai/gateway/heartbeat)，按新锁文件安装外部插件，在无生产路径和网络的命名空间里运行官方 `doctor --fix`；启动前核对 agent schema、权限、插件意图和原有定时任务，新任务须保持停用。其他旧心跳配置需要单独审查。
 
-**生产升级顺序。** 先备好回退状态，停 Fusion，替换已验证的工件和源码，安装锁定的 provider，同步受管配置，运行官方迁移，最后启动服务。升级若迁移了数据库，回退必须同时恢复对应旧版内核和旧状态，不能把旧二进制接到升级后的库上。官方 Doctor 产生的配置 bak、迁移原件、update-captures 只是本次升级的临时回退材料，确认迁移完成并有新的恢复点后才清理，不删除未完成迁移或来源不明的材料。配置同步覆盖备份根 `.working/config-sync/openclaw.before.json` 的待验证预像，确认生效后由操作者清理。宿主的 `openclaw.json.last-good` 有消费者，保留。
+**生产升级顺序。** 先备好回退状态，停 Fusion，替换已验证的工件和源码并安装锁定的 provider；保留旧配置运行官方迁移，核对停用心跳和原有定时任务后，同步新受管配置并启动服务。升级若迁移了数据库，回退必须同时恢复对应旧版内核和旧状态，不能把旧二进制接到升级后的库上。官方 Doctor 产生的配置 bak、迁移原件、update-captures 只是本次升级的临时回退材料，确认迁移完成并有新的恢复点后才清理，不删除未完成迁移或来源不明的材料。配置同步覆盖备份根 `.working/config-sync/openclaw.before.json` 的待验证预像，确认生效后由操作者清理。宿主的 `openclaw.json.last-good` 有消费者，保留。
 
 **Git。** 日常在 kurumi-fusion 里看 `git status --short`、`git log -1`、`git worktree list`。配置、人格、依赖和服务健康检查只证明部署对齐，不证明已提交或推送。远端写入需要用户明确授权。读取远端时不要输出带凭据的 URL。`git ls-remote` 只证明远端可读。
 
@@ -98,3 +98,8 @@ git log --oneline main..HEAD                         # 当前分支与 main 的�
 ```
 
 保留计划会校验 VERIFIED 与清单哈希；文件存在不能代替完整隔离恢复。需要制作/复验新点时按上面的授权接口执行。
+
+## 进行中：OpenClaw 2026.11.8 升级
+
+- 升级分支已对齐当前源码；旧版停用心跳向新版自动化任务迁移的合成隔离样本已验证。
+- 当前整合版本尚未执行完整恢复演练或生产升级；需按开发指引取得相应授权，验证真实备份副本、依赖和回退路径。

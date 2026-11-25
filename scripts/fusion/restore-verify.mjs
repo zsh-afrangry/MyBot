@@ -40,6 +40,7 @@ import {isDeepStrictEqual} from 'node:util';
 import {artifactKindsForRestore,hashFile,treeHash,discoverDatabases} from './lib/backup-layout.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
 import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery,disableOwnerFileRecovery,disableExternalCodingRecovery,disableProactiveRecovery} from './lib/recovery-isolation.mjs';
+import {carryDisabledHeartbeat,expectedAfterHeartbeatMigration,clearCopiedGatewayLeases,snapshotCronDefinitions,verifyCronMigration} from './lib/recovery-checks.mjs';
 
 const argv = process.argv.slice(2);
 const arg = (name, fallback = null) => {
@@ -276,41 +277,24 @@ for (const p of dbs) {
 }
 check('assemble: databases placed at runtime paths', dbPlaced.length === dbs.length && dbs.length > 0, `${dbPlaced.length} database(s)`);
 
-// 6b'. Gateway 租约净化。live 备份（gateway 运行中取得）必然携带指向生产进程的活跃
-// gateway-owner / agent-database 租约；恢复副本的隔离命名空间无法验证该 holder（官方提示
-// 用 `openclaw gateway recover-lock` 显式接管），doctor 与探针 gateway 都会因此拒绝进入
-// 维护。这里按"原 holder 已停、锁已显式恢复"的语义清空租约表，等价于人工 recover-lock。
-// 仅作用于 --target 内的恢复副本，assertNoProduction 已保证不触生产路径。
-{
-  const leaseTables = ['state_leases', 'agent_database_leases'];
-  let cleared = 0, dbsWithLeases = 0;
-  for (const rel of dbPlaced) {
-    const db = path.join(runtime, rel);
-    let con;
-    try { con = new DatabaseSync(db); } catch { continue; }
-    try {
-      for (const t of leaseTables) {
-        const has = con.prepare("SELECT 1 FROM sqlite_master WHERE type='table' AND name=?").get(t);
-        if (!has) continue;
-        const n = con.prepare(`DELETE FROM ${t}`).run().changes;
-        if (n > 0) { cleared += n; dbsWithLeases++; }
-      }
-    } finally { con.close(); }
-  }
-  check('assemble: restored gateway leases cleared', true, `${cleared} lease row(s) cleared in ${dbsWithLeases} database(s)`);
-}
+// The copied state DB can retain the original gateway's leases. The recovery
+// helper restricts cleanup to that copy and preserves unrelated lease scopes.
+const clearedLeases = clearCopiedGatewayLeases(target);
+check('assemble: restored gateway leases cleared', true, `${clearedLeases.gateway} gateway, ${clearedLeases.agent} agent lease(s)`);
 
 // 6c. Config + credential plane.
 let cfg = null;
 try {
   cfg = JSON.parse(fs.readFileSync(path.join(backup, 'config/openclaw.json'), 'utf8'));
   if(adaptSource){
+    const previous=structuredClone(cfg);
     const source=clones.get('kurumi-fusion');
     const intent=JSON.parse(fs.readFileSync(source+'/config/runtime.config.json'));
     const managed=intent._managed;delete intent._managed;
     const {compileAccessConfig}=await import('file://'+source+'/chatbot/packages/access-control/config.js');
     const canonical=compileAccessConfig(intent,JSON.parse(fs.readFileSync(source+'/config/access-control.json')));
     for(const key of managed){if(key in canonical)cfg[key]=canonical[key];else delete cfg[key];}
+    carryDisabledHeartbeat(cfg,previous);
   }
   fs.copyFileSync(path.join(backup, 'config/openclaw.json'), path.join(runtime, 'openclaw.json'));
   check('assemble: runtime config loads', true, `${Object.keys(cfg).length} top-level keys`);
@@ -449,26 +433,30 @@ if(cfg&&restoredRepo){
   if(results.some(r=>!r.ok))throw Error('Cannot start recovery probe: earlier check failed');
   if(adaptSource){
    const before=structuredClone(cfg);
+   const cronBefore=snapshotCronDefinitions(runtime+'/state/openclaw.sqlite');
    const env=Object.entries(inertEnv).flatMap(([k,v])=>['--setenv',k,String(v)]);
    const doctor=sh('bwrap',[...sandboxArgs(target),'--setenv','OPENCLAW_STATE_DIR',runtime,'--setenv','OPENCLAW_CONFIG_PATH',runtime+'/openclaw.json','--setenv','OPENCLAW_AGENT_DIR',runtime+'/agents/main/agent',...env,'/usr/bin/node',sdk+'/openclaw.mjs','doctor','--fix','--non-interactive','--yes','--no-workspace-suggestions'],{timeout:120000});
    fs.writeFileSync(target+'/doctor.log',doctor.stdout+doctor.stderr,{mode:0o600});
    cfg=JSON.parse(fs.readFileSync(runtime+'/openclaw.json'));assertNoProduction(cfg);
    check('isolated official schema migration',doctor.status===0);
    const protectedKeys=['agents','tools','commands','bindings','plugins','channels'];
-   // 2026.11.8 的 doctor 会把 agents.defaults.heartbeat.every='0m'（停用心跳的旧表达）规范化为删除该键；
-   // 语义不变（缺省即禁用），属于升级契约批准的归一化，比对前双方先剔除。
-   const stripHeartbeatZero=(o)=>{const c=structuredClone(o);if(c&&typeof c==='object'&&c.agents?.defaults?.heartbeat&&c.agents.defaults.heartbeat.every==='0m')delete c.agents.defaults.heartbeat;return c;};
-   check('migration preserves authorization and plugin intent',protectedKeys.every(k=>isDeepStrictEqual(stripHeartbeatZero(before)[k],stripHeartbeatZero(cfg)[k])));
+   const expectedConfig=expectedAfterHeartbeatMigration(before);
+   const configProtected=protectedKeys.every(k=>isDeepStrictEqual(expectedConfig[k],cfg[k]));
+   check('migration preserves authorization and plugin intent',configProtected);
+   const cronProtected=verifyCronMigration(cronBefore,snapshotCronDefinitions(runtime+'/state/openclaw.sqlite'));
+   check('migration preserves existing jobs and does not enable new jobs',cronProtected);
    const versions={};for(const name of fs.readdirSync(runtime+'/agents')){
     const file=runtime+'/agents/'+name+'/agent/openclaw-agent.sqlite';if(!fs.existsSync(file))continue;
     const db=new DatabaseSync(file,{readOnly:true});versions[name]=db.prepare('PRAGMA user_version').get().user_version;db.close();
    }
-   fs.writeFileSync(target+'/migration-result.json',JSON.stringify({versions,configProtected:true}),{mode:0o600});
-   check('all retained agent schemas reach approved version',Object.values(versions).every(v=>v===release.agentSchemaVersion));
+   fs.writeFileSync(target+'/migration-result.json',JSON.stringify({versions,configProtected,cronProtected}),{mode:0o600});
+   check('all retained agent schemas reach approved version',Object.hasOwn(versions,'main')&&Object.values(versions).every(v=>v===release.agentSchemaVersion));
    if(results.some(r=>!r.ok))throw Error('Upgrade migration validation failed; inspect private doctor.log');
   }
   const probe=path.join(target,'recovery-probe.mjs');
   fs.copyFileSync(fileURLToPath(new URL('./recovery-probe.mjs',import.meta.url)),probe);
+  fs.mkdirSync(path.join(target,'lib'),{recursive:true,mode:0o700});
+  fs.copyFileSync(fileURLToPath(new URL('./lib/recovery-checks.mjs',import.meta.url)),path.join(target,'lib/recovery-checks.mjs'));
   const result=sh('bwrap',[...sandboxArgs(target),'/usr/bin/node',probe,target,expected.scope??'legacy'],{timeout:120000});
   check('isolated Gateway startup, plugin imports and production exclusion',result.status===0,result.status===0?result.stdout.trim():(result.stderr+result.stdout).slice(-1800));
  }

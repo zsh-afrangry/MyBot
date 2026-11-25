@@ -204,7 +204,7 @@ const codingConfig = {
 const cfg = withHostControl(compileAccessConfig({
   agents: {
     ownership: 'explicit',
-    defaults: {workspace: path.join(state, 'workspace'), heartbeat: {every: '0m'}, systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}},
+    defaults: {workspace: path.join(state, 'workspace'),  systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}},
     entries: {main: {workspace: path.join(state, 'workspace'), tools: {alsoAllow: ['kurumi_code', 'personal_confirmation']}}},
   },
   models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${modelAddr}/v1`, apiKey: 'synthetic', api: 'openai-completions',

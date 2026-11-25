@@ -172,7 +172,7 @@ const config = withHostControl({
   models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${endpoint}/v1`, apiKey: 'synthetic', api: 'openai-completions',
     models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200,
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
-  agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
+  agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model},
     entries: {main: {workspace, model, tools: {profile: 'messaging',
       alsoAllow: ['personal_confirmation', 'kurumi_access', ...(mailRun ? ['email_draft', 'email_send'] : []), ...(senderRun ? ['email_inbox'] : []), ...(execRun ? ['exec'] : []),
         ...(projectRun ? ['kurumi_code'] : [])],

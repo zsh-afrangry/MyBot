@@ -218,7 +218,7 @@ cfg.gateway = {mode: 'local', port: gatewayPort, bind: 'loopback', auth: {mode: 
 cfg.models = {providers: {'memory-fixture': {baseUrl: `http://127.0.0.1:${model.address().port}/v1`, apiKey: 'synthetic', api: 'openai-completions',
   models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: 64000, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}};
 const workspace = path.join(root, 'workspace');
-cfg.agents = {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model: {primary: 'memory-fixture/fixture'}, heartbeat: {every: '0m'}, compaction: {enabled: false}}, entries: {
+cfg.agents = {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model: {primary: 'memory-fixture/fixture'},  compaction: {enabled: false}}, entries: {
   main: {workspace, model: {primary: 'memory-fixture/fixture'}, tools: {profile: 'full', allow: ['kurumi_memory', 'session_status'], deny: ['read', 'write', 'edit', 'exec', 'process', 'message', 'sessions_spawn']}},
   ['qq-user-' + MEMBER]: {workspace: path.join(root, 'users', MEMBER, 'workspace'), model: {primary: 'memory-fixture/fixture'}, tools: {profile: 'messaging', allow: ['session_status'], deny: ['read', 'write', 'edit', 'exec', 'process', 'message', 'sessions_spawn', 'kurumi_memory']}},
 }};

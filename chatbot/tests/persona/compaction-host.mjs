@@ -160,7 +160,7 @@ function buildConfig(root, variant, port, probeRoot) {
   cfg.gateway = {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}};
   cfg.models = {providers: {'compaction-fixture': {baseUrl: `http://127.0.0.1:${model.address().port}/v1`, apiKey: 'synthetic', api: 'openai-completions',
     models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: WINDOW, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}};
-  cfg.agents = {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model: {primary}, heartbeat: {every: '0m'}, ...(Object.keys(compaction).length ? {compaction} : {})}, entries: {
+  cfg.agents = {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model: {primary},  ...(Object.keys(compaction).length ? {compaction} : {})}, entries: {
     main: {workspace, model: {primary}, tools: {profile: 'messaging', alsoAllow: ['kurumi_memory', 'session_status'], deny: prodMain.deny}},
     ['qq-user-' + MEMBER]: {workspace: path.join(root, 'users', MEMBER, 'workspace'), model: {primary}, tools: {profile: 'messaging', allow: ['session_status'], deny: [...prodMain.deny, 'kurumi_memory']}},
   }};

@@ -79,7 +79,7 @@ export default {id:'paper-notice-probe',register(api){
 `);
 const cfg={
  gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},
- agents:{defaults:{workspace,model:{primary:'fixture/notice-fixture'},heartbeat:{every:'0m'}},entries:{main:{workspace,model:{primary:'fixture/notice-fixture'},tools:{allow:['paper_notice_probe']}}}},
+ agents:{defaults:{workspace,model:{primary:'fixture/notice-fixture'}},entries:{main:{workspace,model:{primary:'fixture/notice-fixture'},tools:{allow:['paper_notice_probe']}}}},
  models:{mode:'merge',providers:{fixture:{baseUrl:'http://127.0.0.1:'+model.address().port+'/v1',apiKey:'synthetic-local-only',api:'openai-completions',models:[{id:'notice-fixture',name:'Local notice fixture',reasoning:false,input:['text'],contextWindow:100000,maxTokens:1000}]}}},
  plugins:{allow:['paper-notice-probe'],load:{paths:[probe]},entries:{'paper-notice-probe':{enabled:true}},slots:{memory:'none'}},
  cron:{enabled:false},tools:{codeMode:false,web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:path.join(root,'runtime.log')},

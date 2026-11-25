@@ -4,10 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {spawn,spawnSync} from 'node:child_process';
-import {DatabaseSync} from 'node:sqlite';
 import http from 'node:http';
 import {createRequire} from 'node:module';
 import {setTimeout as delay} from 'node:timers/promises';
+import {snapshotCodingActivity,snapshotCronDefinitions} from './lib/recovery-checks.mjs';
+import {isDeepStrictEqual} from 'node:util';
 const [target,scope='legacy']=process.argv.slice(2),runtime=target+'/runtime',repo=target+'/repos/kurumi-fusion',sdk=target+'/sdk/openclaw';
 assert(['legacy','fusion-only'].includes(scope),'Unknown recovery probe scope');
 assert(!fs.existsSync('/home/afrangry/.openclaw-fusion'),'Production state must be invisible');
@@ -15,9 +16,11 @@ assert(!fs.existsSync('/home/afrangry/kurumi-fusion'),'Production source must be
 assert(!fs.existsSync('/run/user'),'Host service bus must be invisible');
 assert(!fs.existsSync('/sys/class/net'),'Host network topology must be invisible');
 const cfg=JSON.parse(fs.readFileSync(runtime+'/openclaw.json'));
-// 编码任务基线：live 备份里可能已有活跃任务，探针的不变量是"探针期间没有任何任务被执行"，
-// 即数量与恢复时一致，而不是库必须为空。备份缺库或无表时基线为 0（保持旧行为）。
-const codingTasksBefore=(()=>{try{const db=new DatabaseSync(cfg.plugins.entries['kurumi-coding'].config.root+'/coding.sqlite',{readOnly:true});const n=Number(db.prepare('SELECT count(*) n FROM coding_tasks').get().n);db.close();return n;}catch{return 0;}})();
+// A restored task may become needs_reconciliation on startup, but no new round
+// or execution event should appear in the isolated probe.
+const codingFile=cfg.plugins.entries['kurumi-coding'].config.root+'/coding.sqlite';
+const codingBefore=snapshotCodingActivity(codingFile);
+const cronBefore=snapshotCronDefinitions(runtime+'/state/openclaw.sqlite');
 const req=createRequire(repo+'/chatbot/plugins/kurumi-qq/index.js');
 assert(req.resolve('ws').startsWith(target+'/'));
 assert(req.resolve('openclaw/plugin-sdk/media-runtime').startsWith(target+'/'));
@@ -106,14 +109,16 @@ try{
  const fenceCheck=spawnSync(coding.writeBoundary.launcher,['--ro','/','--rw','/dev/null','--rw',coding.writeBoundary.root,'--',process.execPath,'-e',fenceScript],{encoding:'utf8',timeout:5000});
  assert.equal(fenceCheck.status,0,'Restored execution fence failed: '+fenceCheck.stderr.slice(-800));
  assert.equal(fs.readFileSync(fenceAllowed,'utf8'),'allowed');assert(!fs.existsSync(fenceDenied));fs.unlinkSync(fenceAllowed);
- const pilotDb=new DatabaseSync(coding.root+'/coding.sqlite',{readOnly:true});
- const codingTasks=Number(pilotDb.prepare('SELECT count(*) n FROM coding_tasks').get().n);pilotDb.close();assert.equal(codingTasks,codingTasksBefore,'Restored development task store changed during probe');
+ const codingAfter=snapshotCodingActivity(codingFile);
+ assert(isDeepStrictEqual(codingAfter,codingBefore),'A coding task, execution round or event changed during the probe');
+ const codingTasks=codingAfter.tasks.length;
  const python=cfg.plugins.entries['kurumi-papers'].config.python;
  assert(python.startsWith(runtime+'/venvs/'));
  const py=spawnSync(python,['-B','-c','import sys, babeldoc, pdf2zh_next, pymupdf; print(sys.version.split()[0])'],{encoding:'utf8',timeout:30000});
  assert.equal(py.status,0,'Restored paper interpreter/imports failed: '+py.stderr.slice(-800));
- const cronDb=new DatabaseSync(runtime+'/state/openclaw.sqlite',{readOnly:true});
- const enabledJobs=Number(cronDb.prepare('SELECT count(*) n FROM cron_jobs WHERE enabled=1').get().n);cronDb.close();assert.equal(enabledJobs,5);
+ const cronAfter=snapshotCronDefinitions(runtime+'/state/openclaw.sqlite');
+ assert(isDeepStrictEqual(cronAfter,cronBefore),'Cron job definitions changed during the probe');
+ const enabledJobs=cronAfter.filter(job=>job.enabled===1).length;
 
  fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingPolicyUsesInertBackend:scope==='fusion-only',externalDshUnavailableRejected,codingWriteFence:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));
  console.log('Isolated Gateway health and all plugin imports passed; production paths and network inaccessible');

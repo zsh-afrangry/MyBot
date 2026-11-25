@@ -94,7 +94,7 @@ const settings=JSON.parse(fs.readFileSync(repo+'/config/proactive.example.json')
 // Make this test's current time daytime; no activity claim or production value.
 const minute=new Date().getUTCHours()*60+new Date().getUTCMinutes();settings.night={startMinute:(minute+120)%1440,endMinute:(minute+121)%1440,timeZone:'UTC',activityMaxAgeMs:900000};
 const cfg={gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},session:{dmScope:'per-channel-peer'},
-  agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},heartbeat:{every:'0m'},compaction:{memoryFlush:{enabled:false}}},
+  agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'},compaction:{memoryFlush:{enabled:false}}},
     entries:{main:{workspace,model:{primary:'fixture/fixture'},tools:{allow:['kurumi_proactive','web_fetch'],deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
   models:{mode:'merge',providers:{fixture:{baseUrl:httpUrl+'/v1',apiKey:'synthetic-local-only',api:'openai-completions',models:[{id:'fixture',name:'fixture',reasoning:false,input:['text'],contextWindow:64000,maxTokens:1000}]}}},
   channels:{'kurumi-qq':{enabled:true,ownerId:owner,accessControl:ownerPolicy(owner),httpUrl,wsUrl:httpUrl.replace('http:','ws:')+'/events',httpTokenFile:bridgeToken,wsTokenFile:bridgeToken,

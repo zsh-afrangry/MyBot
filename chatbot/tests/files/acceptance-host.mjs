@@ -227,7 +227,7 @@ const buildConfig = () => compileAccessConfig(withHostControl({
   },
   agents: {
     ownership: 'explicit',
-    defaults: {workspace, systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}, heartbeat: {every: '0m'}},
+    defaults: {workspace, systemAgent: {agentId: 'main'}, model: {primary: 'fixture/fixture'}},
     entries: {
       main: {
         workspace,

@@ -2,6 +2,7 @@
 // model, actual tool/CLI execution and loopback replies. No real model/API/QQ or production writes.
 // Writes only temporary state/processes and the explicitly supplied new --out evidence file.
 import {withHostControl} from '../access-control/host-config.mjs';
+import {readPluginCatalog,waitForPluginStates} from '../acceptance/catalog-ready.mjs';
 import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import http from 'node:http';import net from 'node:net';
 import {spawn} from 'node:child_process';import {once} from 'node:events';import {randomBytes,createHash} from 'node:crypto';import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';import {WebSocketServer} from 'ws';import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
@@ -13,8 +14,8 @@ if(!process.argv.includes('--out')||!path.isAbsolute(out??'')||fs.existsSync(out
 const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSync(path.join(os.tmpdir(),'kurumi-logs-host-'));
 const report={at:new Date().toISOString(),boundary:'Real isolated Gateway/captured plugin, actual QQ mandatory policy and owner ingress, deterministic local model, fixed CLI read of synthetic logs, loopback replies and enabled/disabled lifecycle. No model provider, no external API, no QQ network, no production write or production service restart.',stages:[]};
 async function run(enabled){
- const directory=path.join(root,enabled?'enabled':'disabled');fs.mkdirSync(directory);
- const state=path.join(directory,'host'),source=path.join(directory,'query-data'),token=randomBytes(24).toString('hex'),owner='100001',bot='100002',member='100003';fs.mkdirSync(state);
+ const directory=path.join(root,enabled?'enabled':'disabled');fs.mkdirSync(directory,{mode:0o700});
+ const state=path.join(directory,'host'),source=path.join(directory,'query-data'),token=randomBytes(24).toString('hex'),owner='100001',bot='100002',member='100003';fs.mkdirSync(state,{mode:0o700});
  const stage={enabled,queries:[],modelRequests:0};report.stages.push(stage);
  let socket,peer,wss,child;const replies=new Set();let seq=100,modelError,memberReply=false;
  const opaqueRunId='cron:job:'+'x'.repeat(180)+'/原生 ID';
@@ -117,7 +118,7 @@ async function run(enabled){
  }
  const probe=net.createServer();await new Promise(r=>probe.listen(0,'127.0.0.1',r));const port=probe.address().port;await new Promise(r=>probe.close(r));
  const workspace=path.join(state,'workspace');fs.mkdirSync(workspace);fs.writeFileSync(workspace+'/AGENTS.md','Use only the offered tool for the synthetic log query.');
- let cfg={gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},heartbeat:{every:'0m'},compaction:{memoryFlush:{enabled:false}}},entries:{main:{workspace,tools:{allow:['kurumi_logs'],deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
+ let cfg={gateway:{mode:'local',port,bind:'loopback',auth:{mode:'token',token},controlUi:{enabled:false}},agents:{ownership:'explicit',defaults:{workspace,systemAgent:{agentId:'main'},compaction:{memoryFlush:{enabled:false}}},entries:{main:{workspace,tools:{allow:['kurumi_logs'],deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
   plugins:{allow:['kurumi-logs'],load:{paths:[repo+'/chatbot/plugins/kurumi-logs']},entries:{'kurumi-logs':{enabled,config:{backendRoot:repo,runtimeRoot:source,snowlumaRoot:source}}},slots:{memory:'none'}},cron:{enabled:false},tools:{toolSearch:false,codeMode:false,web:{search:{enabled:false},fetch:{enabled:false}}},logging:{file:state+'/runtime.log'}};
  if(enabled){
   const url='http://127.0.0.1:'+peer.address().port;
@@ -135,7 +136,7 @@ async function run(enabled){
  const call=(method,params={},timeout=10000)=>callGatewayFromCli(method,{url:'ws://127.0.0.1:'+port,token,timeout:String(timeout),json:true},params);
  try{
   let ready=false;for(let n=0;n<100;n++){try{await call('health',{},1000);if(!enabled||socket?.readyState===1){ready=true;break;}}catch{}if(child.exitCode!==null)throw Error('Isolated Gateway exited');await new Promise(r=>setTimeout(r,200));}assert(ready,'Gateway readiness timed out');
-  const plugins=await call('plugins.list'),catalog=await call('tools.catalog',{agentId:'main',includePlugins:true});const plugin=plugins.plugins.find(p=>p.id==='kurumi-logs');assert(plugin);
+  const plugins=await waitForPluginStates(call,{'kurumi-logs':enabled?['active']:['disabled','unloaded']}),catalog=await readPluginCatalog(call);const plugin=plugins.plugins.find(p=>p.id==='kurumi-logs');assert(plugin);
   const names=catalog.groups.filter(g=>g.pluginId==='kurumi-logs').flatMap(g=>g.tools.map(t=>t.id));
   if(enabled){
    assert.equal(plugin.runtime.state,'active');assert.deepEqual(names,['kurumi_logs']);

@@ -19,7 +19,9 @@ test('configured web-deepseek trace is queryable and formatted without query tex
     .register({pluginConfig: {credentialsFile, traceFile}, registerWebSearchProvider: p => {providers.search = p;}, registerWebFetchProvider: () => {}});
   await assert.rejects(providers.search.createTool({}).execute({query: '不应出现在日志'}), error => error.code === 'upstream_timeout');
 
-  assert.deepEqual(collectEvents({runtimeRoot: root, sources: ['web-deepseek'], from: 0, to: Date.now() + 1000}), [], 'unconfigured trace yields nothing');
+  const unconfigured = collectEvents({runtimeRoot: root, sources: ['web-deepseek'], from: 0, to: Date.now() + 1000});
+  assert.equal(unconfigured.length, 0, 'unconfigured trace yields no events');
+  assert.deepEqual(unconfigured.sourceStatus, [{source: 'web-deepseek', status: 'not_configured'}]);
   fs.writeFileSync(path.join(root, 'openclaw.json'), JSON.stringify({plugins: {entries: {'kurumi-web-deepseek': {config: {credentialsFile, traceFile}}}}}));
   const events = collectEvents({runtimeRoot: root, sources: ['web-deepseek'], from: 0, to: Date.now() + 1000});
   assert.equal(events.length, 1);

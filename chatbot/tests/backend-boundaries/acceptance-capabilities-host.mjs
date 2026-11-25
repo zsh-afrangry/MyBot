@@ -10,6 +10,7 @@ import {randomBytes} from 'node:crypto';
 import {fileURLToPath, pathToFileURL} from 'node:url';
 import assert from 'node:assert/strict';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
+import {readPluginCatalog,waitForPluginStates} from '../acceptance/catalog-ready.mjs';
 
 const out = process.argv[process.argv.indexOf('--out') + 1];
 if (!process.argv.includes('--out') || !path.isAbsolute(out ?? '') || fs.existsSync(out)) throw Error('Require a new absolute --out');
@@ -27,7 +28,7 @@ const manifests = Object.fromEntries(ids.map(id => [id, JSON.parse(fs.readFileSy
 const report = {at: new Date().toISOString(), boundary: 'Real isolated Gateway and plugin/tool RPC catalogs. No model provider, external API, QQ network or production write.', stages: []};
 
 async function run(disabled) {
-  const directory = path.join(root, disabled ?? 'all'); fs.mkdirSync(directory);
+  const directory = path.join(root, disabled ?? 'all'); fs.mkdirSync(directory,{mode:0o700});
   const portProbe = net.createServer(); portProbe.listen(0, '127.0.0.1'); await once(portProbe, 'listening');
   const port = portProbe.address().port; await new Promise(resolve => portProbe.close(resolve));
   const entries = Object.fromEntries(ids.map(id => [id, {enabled: id !== disabled, config:
@@ -35,7 +36,7 @@ async function run(disabled) {
   entries['capability-probe'] = {enabled: true};
   const config = {
     gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
-    agents: {defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}}, entries: {main: {workspace: path.join(directory, 'workspace')}}},
+    agents: {defaults: {workspace: path.join(directory, 'workspace')}, entries: {main: {workspace: path.join(directory, 'workspace')}}},
     plugins: {allow: [...ids, 'capability-probe'], load: {paths: [...ids.map(id => path.join(repo, 'chatbot/plugins', id)), probe]}, entries, slots: {memory: 'none'}},
     cron: {enabled: false}, tools: {web: {search: {enabled: false}, fetch: {enabled: false}}},
     logging: {file: path.join(directory, 'runtime.log')},
@@ -45,7 +46,7 @@ async function run(disabled) {
   const fd = fs.openSync(path.join(directory, 'gateway.log'), 'w', 0o600);
   const child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
     cwd: repo, detached: true, stdio: ['ignore', fd, fd],
-    env: {PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'C.UTF-8', OPENCLAW_STATE_DIR: directory,
+    env: {PATH: process.env.PATH, HOME: directory, LANG: 'C.UTF-8', OPENCLAW_STATE_DIR: directory,
       OPENCLAW_CONFIG_PATH: configFile, OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_AGENT_DIR: path.join(directory, 'agents/main/agent')},
   }); fs.closeSync(fd);
   const call = (method, params = {}, timeout = 10000) => callGatewayFromCli(method,
@@ -57,7 +58,8 @@ async function run(disabled) {
       catch { if (child.exitCode !== null) throw Error('Isolated Gateway exited: ' + fs.readFileSync(path.join(directory, 'gateway.log'), 'utf8').replaceAll(token, '[token]').slice(-4000)); await new Promise(r => setTimeout(r, 300)); }
     }
     assert(ready, 'Isolated Gateway readiness timed out');
-    const plugins = await call('plugins.list'), catalog = await call('tools.catalog', {agentId: 'main', includePlugins: true});
+    const expectedStates=Object.fromEntries(ids.map(id=>[id,id===disabled?['disabled','unloaded']:['active']]));
+    const plugins = await waitForPluginStates(call,expectedStates), catalog = await readPluginCatalog(call);
     const backends = (await call('capability-probe.backends')).ids;
     const expectedBackends = ['personal-profile', 'personal-planning', 'personal-reminder']
       .filter(id => id !== disabled && !(disabled === 'personal-reminders' && id === 'personal-reminder')).sort();

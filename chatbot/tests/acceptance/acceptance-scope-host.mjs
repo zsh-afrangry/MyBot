@@ -116,7 +116,7 @@ try {
   await once(model, 'listening');
   const expectedOwnerKey = 'agent:main:kurumi-qq:direct:' + owner;
   host = await startIsolatedGateway({repo, root, token, configure: () => compileAccessConfig({
-    agents: {ownership: 'explicit', defaults: {workspace: mainWorkspace, systemAgent: {agentId: 'main'}, heartbeat: {every: '0m'},
+    agents: {ownership: 'explicit', defaults: {workspace: mainWorkspace, systemAgent: {agentId: 'main'},
       model: {primary: 'fixture/fixture'}}, entries: {main: {workspace: mainWorkspace, tools: {allow: ['session_status']}},
       [agentId]: {workspace: testWorkspace, tools: {allow: [tool]}}}},
     models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: 'http://127.0.0.1:' + model.address().port + '/v1',

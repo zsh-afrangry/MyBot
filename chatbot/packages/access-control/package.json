@@ -10,6 +10,7 @@
       "default": "./index.js"
     },
     "./config-source": "./config-source.js",
-    "./mail-senders": "./mail-senders.js"
+    "./mail-senders": "./mail-senders.js",
+    "./local-coding": "./local-coding.js"
   }
 }

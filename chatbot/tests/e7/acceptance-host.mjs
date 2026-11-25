@@ -10,6 +10,7 @@ import {randomBytes} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import assert from 'node:assert/strict';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
+import {readPluginCatalog,waitForPluginStates} from '../acceptance/catalog-ready.mjs';
 
 const out = process.argv[process.argv.indexOf('--out') + 1];
 if (!process.argv.includes('--out') || !path.isAbsolute(out ?? '') || fs.existsSync(out)) throw Error('Require a new absolute --out');
@@ -18,13 +19,13 @@ const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-e7-host-'));
 const token = randomBytes(24).toString('hex');
 const report = {at: new Date().toISOString(), boundary: 'Real isolated Gateway/plugin loading, RPC catalog and graceful process stop. No model provider, external API, QQ network or production write. Tool handler/permission and timer behavior covered separately by offline tests.', stages: []};
 async function run(enabled) {
-  const directory = path.join(root, enabled ? 'enabled' : 'disabled'); fs.mkdirSync(directory);
+  const directory = path.join(root, enabled ? 'enabled' : 'disabled'); fs.mkdirSync(directory,{mode:0o700});
   const socket = net.createServer(); socket.listen(0, '127.0.0.1'); await once(socket, 'listening');
   const port = socket.address().port; await new Promise(r => socket.close(r));
   const cacheRoot = path.join(directory, 'cache');
   const config = {
     gateway: {mode: 'local', port, bind: 'loopback', auth: {mode: 'token', token}, controlUi: {enabled: false}},
-    agents: {defaults: {workspace: path.join(directory, 'workspace'), heartbeat: {every: '0m'}}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['e7_data', 'e7_image']}}}},
+    agents: {defaults: {workspace: path.join(directory, 'workspace')}, entries: {main: {workspace: path.join(directory, 'workspace'), tools: {alsoAllow: ['e7_data', 'e7_image']}}}},
     plugins: {allow: ['kurumi-e7'], load: {paths: [path.join(repo, 'chatbot/plugins/kurumi-e7')]}, entries: {'kurumi-e7': {enabled, config: {cacheRoot}}}, slots: {memory: 'none'}},
     cron: {enabled: false}, tools: {web: {search: {enabled: false}, fetch: {enabled: false}}}, logging: {file: path.join(directory, 'runtime.log')},
   };
@@ -33,7 +34,7 @@ async function run(enabled) {
   const fd = fs.openSync(path.join(directory, 'gateway.log'), 'w', 0o600);
   const child = spawn(process.execPath, [path.join(repo, 'node_modules/openclaw/openclaw.mjs'), 'gateway', 'run', '--port', String(port), '--bind', 'loopback', '--auth', 'token', '--tailscale', 'off'], {
     cwd: repo, detached: true, stdio: ['ignore', fd, fd],
-    env: {PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'C.UTF-8', OPENCLAW_STATE_DIR: directory, OPENCLAW_CONFIG_PATH: configFile,
+    env: {PATH: process.env.PATH, HOME: directory, LANG: 'C.UTF-8', OPENCLAW_STATE_DIR: directory, OPENCLAW_CONFIG_PATH: configFile,
       OPENCLAW_GATEWAY_TOKEN: token, OPENCLAW_AGENT_DIR: path.join(directory, 'agents/main/agent')},
   }); fs.closeSync(fd);
   const call = (method, params = {}, timeout = 10000) => callGatewayFromCli(method,
@@ -46,7 +47,7 @@ async function run(enabled) {
       catch {if (child.exitCode !== null) throw Error('Isolated Gateway exited'); await new Promise(r => setTimeout(r, 300));}
     }
     assert(ready, 'Gateway readiness timed out');
-    const plugins = await call('plugins.list'), catalog = await call('tools.catalog', {agentId: 'main', includePlugins: true});
+    const plugins = await waitForPluginStates(call,{'kurumi-e7':enabled?['active']:['disabled','unloaded']}), catalog = await readPluginCatalog(call);
     const plugin = plugins.plugins.find(p => p.id === 'kurumi-e7'); assert(plugin);
     const names = catalog.groups.filter(g => g.pluginId === 'kurumi-e7').flatMap(g => g.tools.map(t => t.id));
     if (enabled) {assert.equal(plugin.runtime.state, 'active'); assert.deepEqual(names.sort(), ['e7_data', 'e7_image']);}
