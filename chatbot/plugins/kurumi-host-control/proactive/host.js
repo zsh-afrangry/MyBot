@@ -24,7 +24,10 @@ export function createHostAdapter({api,getConfig,timeoutMs,prepare}) {
           await agent.session.upsertSessionEntry({storePath,sessionKey,entry:{sessionId:randomUUID(),updatedAt:Date.now()}});
           const entry=await agent.session.getSessionEntryAsync({storePath,sessionKey,readConsistency:'latest'});
           admittedSignal.throwIfAborted();if(!entry?.sessionId)throw error('wake_session_missing');
-          prepare({sessionKey,sessionId:entry.sessionId});
+          // A detached run has its own OpenClaw admission; the stable session
+          // remains held to fence owner/session lifecycle changes.
+          const sessionId=randomUUID();
+          prepare({sessionKey:sessionKey+':turn:'+sessionId,sessionId});
           return run(admittedSignal);
         }));
     },

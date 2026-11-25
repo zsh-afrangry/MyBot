@@ -109,6 +109,7 @@ test('composition accepts only matched owner lifecycle metadata and clears exact
   const key='agent:main:kurumi-qq:direct:100001',before=epoch();
   hooks.get('before_reset')({sessionKey:key},{sessionKey:'agent:main:other',agentId:'main'});
   hooks.get('session_end')({sessionKey:key},{sessionKey:key,agentId:'member'});
+  hooks.get('session_end')({},{});
   provider.acceptInbound({origin:'onebot',subjectId:'100001',agentId:'member',sessionKey:key});assert.equal(epoch(),before);
   hooks.get('before_reset')({sessionKey:key},{sessionKey:key,agentId:'main'});assert.equal(epoch(),before+1);
   hooks.get('session_end')({sessionKey:'agent:main:kurumi-proactive:100001'},{agentId:'main'});assert.equal(epoch(),before+2);

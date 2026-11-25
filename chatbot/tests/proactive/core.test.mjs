@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import {WakeStore} from '../../packages/proactive-core/store.js';
-import {binding,decision,assertContactTime} from '../../packages/proactive-core/policy.js';
+import {binding,decision,assertContactTime,isWakeSession} from '../../packages/proactive-core/policy.js';
 import {createWakeAuthority} from '../../packages/proactive-core/authority.js';
 import {createWakeService} from '../../packages/proactive-core/service.js';
 
@@ -23,6 +23,12 @@ function fixture(t) {
   return {root,file,store,open,authority,get config(){return config;},set config(v){config=v;},now:()=>current,advance:n=>{current+=n;},setTime:n=>{current=n;},
     context:run=>({runId:run.run_id,agentId:run.binding.agentId,sessionKey:run.binding.sessionKey,sessionId:run.binding.sessionId})};
 }
+
+test('the complete proactive session namespace is subject to wake policy',()=>{
+  for(const sessionKey of ['agent:main:kurumi-proactive:100001','agent:main:kurumi-proactive:100001:turn:abc',
+    'agent:main:kurumi-proactive:malformed'])assert.equal(isWakeSession({sessionKey}),true);
+  for(const sessionKey of ['agent:main:kurumi-qq:direct:100001','agent:member:kurumi-proactive:100001',''])assert.equal(isWakeSession({sessionKey}),false);
+});
 
 test('binding refuses disabled/member/foreign route, invalid identity, time policy and broad tools',()=>{
   for(const patch of [{enabled:false},{role:'member'},{subjectKey:'group:100001'},{policyRevision:0},{sessionId:''},{generation:-1},

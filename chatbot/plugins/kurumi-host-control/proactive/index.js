@@ -64,7 +64,7 @@ export function createProactiveComponent(dependencies={}) {
       if(options.notifyEnabled)activeSubject(cfg,ownerId,'proactive.notify');
       const memory=adapters.memory();recent.read(memory.generation);
       return {enabled:true,role:'owner',subjectKey:scope,policyRevision:accessPolicy(cfg).revision,
-        agentId:'main',sessionKey:key,sessionId:prepared.sessionId,generation:memory.generation,notifyEnabled:options.notifyEnabled,
+        agentId:'main',sessionKey:prepared.sessionKey,sessionId:prepared.sessionId,generation:memory.generation,notifyEnabled:options.notifyEnabled,
         tools,
         route:{channel:'kurumi-qq',accountId:'default',to:'user:'+ownerId},night:options.night};
     };
@@ -103,7 +103,7 @@ export function createProactiveComponent(dependencies={}) {
       });
       const end=(event={},ctx={})=>{
         const target=ctx.sessionKey??event.sessionKey,agent=ctx.agentId??event.agentId;
-        if((target!==key&&target!=='agent:main:kurumi-qq:direct:'+ownerId)
+        if((target!==key&&(!prepared||target!==prepared.sessionKey)&&target!=='agent:main:kurumi-qq:direct:'+ownerId)
           ||(agent!==undefined&&agent!=='main')
           ||(ctx.sessionKey&&event.sessionKey&&ctx.sessionKey!==event.sessionKey))return;
         attempt?.abort();engine?.authority.invalidate(scope);recent.clear();calls.clear();
