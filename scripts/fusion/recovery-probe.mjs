@@ -7,7 +7,7 @@ import {spawn,spawnSync} from 'node:child_process';
 import http from 'node:http';
 import {createRequire} from 'node:module';
 import {setTimeout as delay} from 'node:timers/promises';
-import {snapshotCodingActivity,snapshotCronDefinitions} from './lib/recovery-checks.mjs';
+import {snapshotCodingActivity,snapshotCronDefinitions,verifyCronProbe} from './lib/recovery-checks.mjs';
 import {isDeepStrictEqual} from 'node:util';
 const [target,scope='legacy']=process.argv.slice(2),runtime=target+'/runtime',repo=target+'/repos/kurumi-fusion',sdk=target+'/sdk/openclaw';
 assert(['legacy','fusion-only'].includes(scope),'Unknown recovery probe scope');
@@ -91,7 +91,7 @@ try{
   assert.equal(result.code,0,'Restored project check failed: '+result.output.slice(-1500));projectChecks++;
  }
 
- // Check the real restored execution fence and empty development task store without running DSH.
+ // Check the real restored execution fence and retained development task store without running DSH.
  const {projectPolicy}=await import('file://'+repo+'/chatbot/plugins/kurumi-coding/workspaces.js');
  const {probeWriteFence}=await import('file://'+repo+'/chatbot/packages/coding-runtime/write-fence.js');
  const coding=cfg.plugins.entries['kurumi-coding'].config;
@@ -117,7 +117,9 @@ try{
  const py=spawnSync(python,['-B','-c','import sys, babeldoc, pdf2zh_next, pymupdf; print(sys.version.split()[0])'],{encoding:'utf8',timeout:30000});
  assert.equal(py.status,0,'Restored paper interpreter/imports failed: '+py.stderr.slice(-800));
  const cronAfter=snapshotCronDefinitions(runtime+'/state/openclaw.sqlite');
- assert(isDeepStrictEqual(cronAfter,cronBefore),'Cron job definitions changed during the probe');
+ const sdkVersion=JSON.parse(fs.readFileSync(sdk+'/package.json')).version;
+ const legacyHeartbeat=sdkVersion==='2026.11.1'?cfg.agents?.defaults?.heartbeat:undefined;
+ assert(verifyCronProbe(cronBefore,cronAfter,{legacyHeartbeat,isolatedStore:runtime+'/cron/jobs.json'}),'Cron job definitions changed during the probe');
  const enabledJobs=cronAfter.filter(job=>job.enabled===1).length;
 
  fs.writeFileSync(target+'/isolation-result.json',JSON.stringify({ok:true,loaded,productionInvisible:true,hostBusInvisible:true,networkNamespace:true,gatewayHealth:true,mockOneBotDelivery:2,imageStaging:true,projectChecks,codingPolicy:true,codingPolicyUsesInertBackend:scope==='fusion-only',externalDshUnavailableRejected,codingWriteFence:true,codingTasks,paperPython:py.stdout.trim(),enabledJobs,realDelivery:false,cronEnabled:false},null,2));

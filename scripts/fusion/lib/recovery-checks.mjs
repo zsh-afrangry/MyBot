@@ -118,3 +118,22 @@ export function verifyCronMigration(before, after) {
   }
   return after.every(job => known.has(key(job)) || job.enabled === 0);
 }
+
+// OpenClaw 2026.11.1 can re-materialize the legacy disabled heartbeat in the
+// probe's relocated default Cron store. The captured jobs must still be exact.
+export function verifyCronProbe(before, after, {legacyHeartbeat, isolatedStore} = {}) {
+  if (isDeepStrictEqual(before, after)) return true;
+  if (!supportedHeartbeat(legacyHeartbeat) || !isolatedStore || after.length !== before.length + 1) return false;
+  const key = job => JSON.stringify([job.store, job.id]);
+  const byKey = new Map(after.map(job => [key(job), job]));
+  if (!before.every(job => isDeepStrictEqual(job, byKey.get(key(job))))) return false;
+  const captured = new Set(before.map(key));
+  const added = after.find(job => !captured.has(key(job)));
+  const isDisabledHeartbeat = job => job.kind === 'heartbeat' && job.enabled === 0
+    && job.definition.enabled === false && job.definition.agentId === 'main'
+    && job.definition.declarationKey === 'heartbeat:main' && job.definition.payload?.kind === 'heartbeat';
+  const withoutIdentity = ({id, createdAtMs, ...definition}) => definition;
+  return !!added && added.store === isolatedStore && isDisabledHeartbeat(added)
+    && before.some(job => job.store !== isolatedStore && isDisabledHeartbeat(job)
+      && isDeepStrictEqual(withoutIdentity(job.definition), withoutIdentity(added.definition)));
+}

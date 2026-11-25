@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import {DatabaseSync} from 'node:sqlite';
-import {carryDisabledHeartbeat,expectedAfterHeartbeatMigration,clearCopiedGatewayLeases,snapshotCodingActivity,snapshotCronDefinitions,verifyCronMigration} from '../lib/recovery-checks.mjs';
+import {carryDisabledHeartbeat,expectedAfterHeartbeatMigration,clearCopiedGatewayLeases,snapshotCodingActivity,snapshotCronDefinitions,verifyCronMigration,verifyCronProbe} from '../lib/recovery-checks.mjs';
 
 const tmp=()=>fs.mkdtempSync('/tmp/kurumi-recovery-checks-');
 
@@ -63,4 +63,20 @@ test('upgrade preserves ordinary cron definitions and only adds disabled jobs',(
   db.prepare('UPDATE cron_jobs SET job_json=? WHERE job_id=?').run(JSON.stringify({schedule:{kind:'every',everyMs:1},payload:{kind:'command'}}),'ordinary');
   assert.equal(verifyCronMigration(before,snapshotCronDefinitions(file)),false);db.close();
  }finally{fs.rmSync(dir,{recursive:true});}
+});
+
+test('only the matching disabled legacy heartbeat can appear in the relocated probe store',()=>{
+ const definition={id:'one',createdAtMs:1,agentId:'main',declarationKey:'heartbeat:main',enabled:false,
+   schedule:{kind:'every',everyMs:1800000},payload:{kind:'heartbeat'}};
+ const original={id:'one',store:'/original/cron/jobs.json',kind:'heartbeat',enabled:0,definition};
+ const isolatedStore='/tmp/restored/cron/jobs.json';
+ const copy={...original,id:'two',store:isolatedStore,definition:{...definition,id:'two',createdAtMs:2}};
+ const options={legacyHeartbeat:{every:'0m',agentId:'main'},isolatedStore};
+ assert(verifyCronProbe([original],[copy,original],options));
+ assert(!verifyCronProbe([original],[copy,original],{isolatedStore}));
+ assert(!verifyCronProbe([original],[copy,original],{...options,legacyHeartbeat:{every:'10m'}}));
+ assert(!verifyCronProbe([original],[{...copy,enabled:1},original],options));
+ assert(!verifyCronProbe([original],[{...copy,store:'/elsewhere'},original],options));
+ assert(!verifyCronProbe([original],[{...copy,definition:{...copy.definition,schedule:{everyMs:5000}}},original],options));
+ assert(!verifyCronProbe([original],[copy,{...original,enabled:1}],options));
 });
