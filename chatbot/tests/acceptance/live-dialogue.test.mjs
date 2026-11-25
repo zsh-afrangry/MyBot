@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import {test} from 'node:test';
-import {evaluateCodingCatalog, evaluateCodingTask, summarizeEvents, verdict, verifyCodingEvidence} from '../../scripts/acceptance-live-dialogue.mjs';
+import {evaluateCodingCatalog, evaluateCodingPreview, evaluateCodingStart, evaluateCodingTask,
+  summarizeEvents, verdict, verifyCodingEvidence} from '../../scripts/acceptance-live-dialogue.mjs';
 
 const sources = [{source: 'openclaw-session', status: 'available'}, {source: 'access-control', status: 'available'}];
 const turn = {status: 'ok', replyChars: 20};
@@ -43,9 +44,34 @@ test('coding catalog requires the requested backend and registered project', () 
     action: 'list', status: 'ok', backends: ['dsh-acp', 'opencode'], projects: ['kurumi-fusion'],
   }]};
   assert.deepEqual(evaluateCodingCatalog(catalog, 'opencode'), {status: 'passed', scope: 'coding_catalog'});
+  assert.deepEqual(evaluateCodingCatalog({...catalog, actions: [...catalog.actions, ...catalog.actions]}, 'opencode'),
+    {status: 'passed', scope: 'coding_catalog'});
   assert.deepEqual(evaluateCodingCatalog(catalog, 'missing'), {status: 'failed', reason: 'coding_catalog_not_verified'});
   assert.deepEqual(evaluateCodingCatalog({...catalog, actions: [{action: 'list', status: 'ok'}]}, 'opencode'),
     {status: 'blocked', reason: 'coding_catalog_evidence_missing'});
+});
+
+test('coding turns allow related read-only calls without accepting another task or write action', () => {
+  const start = {status: 'ok', replyChars: 20, actions: [
+    {action: 'list', status: 'ok'}, {action: 'start', status: 'ok', taskId: 'task'},
+    {action: 'status', status: 'ok', taskId: 'task'},
+  ]};
+  assert.deepEqual(evaluateCodingStart(start), {status: 'passed', taskId: 'task'});
+  assert.deepEqual(evaluateCodingStart({...start, actions: [...start.actions,
+    {action: 'preview', status: 'error', code: 'coding_task_not_ready', taskId: 'task'}]}),
+  {status: 'passed', taskId: 'task'});
+  assert.deepEqual(evaluateCodingStart({...start, actions: [...start.actions, {action: 'start', status: 'ok', taskId: 'other'}]}),
+    {status: 'failed', reason: 'coding_start_not_verified'});
+  assert.deepEqual(evaluateCodingStart({...start, actions: [...start.actions, {action: 'status', status: 'ok', taskId: 'other'}]}),
+    {status: 'failed', reason: 'coding_start_not_verified'});
+  const preview = {status: 'ok', replyChars: 20, actions: [
+    {action: 'status', status: 'ok', taskId: 'task'},
+    {action: 'preview', status: 'error', code: 'self_maintenance_protected_diff', taskId: 'task'},
+    {action: 'preview', status: 'error', code: 'self_maintenance_protected_diff', taskId: 'task'},
+  ]};
+  assert.deepEqual(evaluateCodingPreview(preview, 'task'), {status: 'passed', scope: 'coding_protected_diff'});
+  assert.deepEqual(evaluateCodingPreview({...preview, actions: [...preview.actions, {action: 'cancel', status: 'ok', taskId: 'task'}]}, 'task'),
+    {status: 'failed', reason: 'coding_protected_diff_not_verified'});
 });
 
 test('coding task requires matching backend, commit, checks, result and exact difference', () => {
