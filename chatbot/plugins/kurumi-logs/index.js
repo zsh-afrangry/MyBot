@@ -11,7 +11,7 @@ export const LOG_TOOL = {
   parameters:{type:'object',additionalProperties:false,properties:{
     view:{type:'string',enum:['overview','events','errors','stats','tree','interactions','daily-feedback','qq-messages','qq-evidence'],description:'qq-messages按时段和peer查私聊消息候选；qq-evidence用eventRef或messageId查本人私聊的成员白名单证据；daily-feedback按计划时刻核对列表或天气播报；interactions查其他QQ私聊留存文本；tree业务执行树；overview概览；events事件；errors故障；stats统计'},
     broadcast:{type:'string',enum:['reminder-list','weather'],description:'仅daily-feedback，选择每日播报类型'},
-    scheduledAt:{type:'string',maxLength:40,description:'仅daily-feedback，Cron计划时间，如2026-11-22T08:00，无时区按上海时间；若返回多个候选，用cronJobId指定任务'},
+    scheduledAt:{type:'string',maxLength:40,description:'仅daily-feedback，原Cron计划时间，如2026-11-22T08:00或2026-11-22T08:00:15；保留用户给出的秒数，不取整，无时区按上海时间；若返回多个候选，用cronJobId指定任务'},
     peer:{type:'string',pattern:'^[0-9]{5,12}$',description:'qq-messages默认本人，可指定私聊QQ号；interactions指定其他QQ号，不填查其他账号预览'},
     direction:{type:'string',enum:['inbound','reply'],description:'用于qq-messages或interactions；inbound入站，reply模型生成的回复'},
     nodeId:{type:'string',description:'tree返回的节点ID；逐层读取直接子节点'},

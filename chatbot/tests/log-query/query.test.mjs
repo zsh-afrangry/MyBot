@@ -159,7 +159,7 @@ test('relocated plugin adapter still queries the configured backend instead of i
  const f=fixture(t),capture=path.join(f.root,'capture/package-0/node_modules/kurumi-logs');fs.mkdirSync(capture,{recursive:true});
  fs.writeFileSync(path.join(f.root,'capture/package-0/package.json'),JSON.stringify({type:'module'}));
  for(const name of ['query.js','policy.js'])fs.copyFileSync(new URL('../../plugins/kurumi-logs/'+name,import.meta.url),path.join(capture,name));
- for (const file of ['log-query/sources.js','log-query/daily-feedback-query.js','access-control/index.js','access-control/permissions.js']) {
+ for (const file of ['log-query/sources.js','log-query/daily-feedback-query.js','access-control/index.js','access-control/permissions.js','access-control/local-coding.js']) {
   const target=path.resolve(capture,'../../packages',file);fs.mkdirSync(path.dirname(target),{recursive:true});
   fs.copyFileSync(new URL('../../packages/'+file,import.meta.url),target);
  }
