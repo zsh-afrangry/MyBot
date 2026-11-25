@@ -1,5 +1,5 @@
 // Isolated defaults use only loopback fixtures; production runs read-only service checks.
-// --model on isolated confirmation calls the configured paid model with synthetic conversations.
+// --model on supported isolated dialogue scenarios calls the configured paid model with synthetic conversations.
 import {execFileSync, spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {accessSync, closeSync, constants, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
@@ -32,6 +32,9 @@ const scenarios = {
   'access-mail': admin('mail_recipient', '收件人同步及旧草稿拒绝'),
   'access-mail-sender': admin('mail_sender', '发件人白名单登记、同步与撤权'),
   'knowledge-bills-access': admin('owner_tool', 'KnowledgeMap 查账与主人工具白名单同步、撤权', ['KnowledgeMap FastAPI/SQLite test server']),
+  'shared-dialogue': {target: 'isolated', file: 'knowledgemap/acceptance-shared-dialogue-host.mjs',
+    workload: '共享事项与账单的对话、业务状态及日志回查',
+    requires: ['KnowledgeMap FastAPI/SQLite test server'], timeoutMs: 180000, modelTimeoutMs: 600000},
   'bills-feedback': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/knowledgemap/bills.test.mjs'],workload:'账单提交、丢失响应后只读回执与删除后回查',
     requires:['KnowledgeMap FastAPI/SQLite test server'],timeoutMs:60000},
@@ -84,7 +87,7 @@ node chatbot/scripts/scenario-acceptance.mjs --target isolated [--scenario ID] [
 node chatbot/scripts/scenario-acceptance.mjs --target production [--scenario deployment] [--out PATH]
 
 --out 须位于仓库的 test-output/ 内，是尚不存在的报告文件。
---model 仅用于独立实例的 confirmation，调用已配置的真实模型。--due 只运行确认、Cron 到点及回执场景。
+--model 用于独立实例的 confirmation 或 shared-dialogue，调用已配置的真实模型。--due 只运行确认、Cron 到点及回执场景。
 --diagnostic-fault 用于复现独立场景的受控失败：confirmation 可用 gateway-start 或 reminder-lookup，bills-feedback 可用 bills-assertion，host-admin 可用 host-fixture。
 生产目标目前只覆盖只读部署核验。`;
 
@@ -103,8 +106,8 @@ function options(args) {
   if (result.scenario && (!Object.hasOwn(scenarios, result.scenario) || scenarios[result.scenario].target !== result.target)) {
     throw Error('Unknown scenario for ' + result.target);
   }
-  if (result.model && (result.target !== 'isolated' || result.scenario !== 'confirmation')) {
-    throw Error('--model requires --target isolated --scenario confirmation');
+  if (result.model && (result.target !== 'isolated' || !scenarios[result.scenario]?.modelTimeoutMs)) {
+    throw Error('--model requires a supported isolated dialogue scenario');
   }
   if (result.due && (result.target !== 'isolated' || result.scenario !== 'confirmation' || result['diagnostic-fault'])) {
     throw Error('--due requires --target isolated --scenario confirmation without a diagnostic fault');

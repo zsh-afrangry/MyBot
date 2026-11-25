@@ -16,6 +16,7 @@ import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitF
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
 import {scenarioProgress,scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
 import {assertionDiagnostics} from '../acceptance/assertion-diagnostics.mjs';
+import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
 import {readQqTranscript} from '../../packages/log-query/qq-messages.js';
 import {eventReference} from '../../packages/log-query/log-query-privacy.mjs';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
@@ -204,17 +205,10 @@ async function actualTurn(label,text,verify,steps=[]){
  await verify(sent);
  let logEvidence;
  if(dueDialogue){
-  const finishedAt=new Date().toISOString(),reference=failureReference(runningStep,finishedAt);
-  assert(reference.status==='available'&&reference.runId,'Turn has no uniquely correlated inbound log');
-  const {events}=readQqTranscript(root,owner,runningStep.startedAt,Date.parse(finishedAt));
-  const scoped=events.filter(event=>event.correlation?.runId===reference.runId);
-  assert(scoped.some(event=>event.kind==='agent.tool_call')&&scoped.some(event=>event.kind==='agent.tool_result'),
+  logEvidence=captureDialogueEvidence({root,owner,startedAt:runningStep.startedAt,
+   finishedAt:Date.now(),messageIds:runningStep.inbound});
+  assert(logEvidence.events.some(event=>event.kind==='agent.tool_call')&&logEvidence.events.some(event=>event.kind==='agent.tool_result'),
    'Turn has no correlated tool call and result');
-  logEvidence={source:'openclaw-session',runId:reference.runId,messageIds:reference.messageIds,
-   events:scoped.map(event=>({kind:event.kind,eventRef:eventReference(event),at:event.at,
-    ...(typeof event.data?.tool==='string'&&{tool:event.data.tool}),
-    ...Object.fromEntries(['toolCallId','parentToolCallId','reminderId','cronJobId','qqMessageId']
-     .filter(key=>typeof event.correlation?.[key]==='string').map(key=>[key,event.correlation[key]]))}))};
  }
  report.cases.push({label,passed:true,requests:report.requests-requests,receiptCount:sent.filter(s=>s.accepted).length,
   ...(logEvidence&&{logEvidence})});
