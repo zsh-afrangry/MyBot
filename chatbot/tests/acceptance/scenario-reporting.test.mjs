@@ -20,6 +20,20 @@ test('the due reminder selector rejects incompatible targets before starting a s
   }
 });
 
+test('live upstream requires the explicit real-model web dialogue selector', () => {
+  const script = fileURLToPath(new URL('../../scripts/scenario-acceptance.mjs', import.meta.url));
+  for (const args of [
+    ['--target', 'isolated', '--live'],
+    ['--target', 'isolated', '--scenario', 'web-dialogue', '--live'],
+    ['--target', 'isolated', '--scenario', 'confirmation', '--model', '--live'],
+    ['--target', 'production', '--scenario', 'deployment', '--live'],
+  ]) {
+    const result = spawnSync(process.execPath, [script, ...args], {encoding: 'utf8', timeout: 10000});
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /--live requires/);
+  }
+});
+
 test('production health separates historical Cron failures without hiding either failure', () => {
   const cronFailure = 'Cron job fixture last run failed';
   const healthy = {ok: true, issues: [], cron: {jobs: []}};
