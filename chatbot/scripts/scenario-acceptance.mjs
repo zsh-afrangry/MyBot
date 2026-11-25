@@ -1,5 +1,6 @@
 // Isolated defaults use only loopback fixtures; production runs read-only service checks.
-// --model on isolated confirmation calls the configured paid model with synthetic conversations.
+// --model calls the configured paid model with synthetic conversations.
+// --live on web-dialogue also queries Tavily and a public IANA page; no QQ or production-state writes.
 import {execFileSync, spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {accessSync, closeSync, constants, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
@@ -32,6 +33,9 @@ const scenarios = {
   'access-mail': admin('mail_recipient', '收件人同步及旧草稿拒绝'),
   'access-mail-sender': admin('mail_sender', '发件人白名单登记、同步与撤权'),
   'knowledge-bills-access': admin('owner_tool', 'KnowledgeMap 查账与主人工具白名单同步、撤权', ['KnowledgeMap FastAPI/SQLite test server']),
+  'shared-dialogue': {target: 'isolated', file: 'knowledgemap/acceptance-shared-dialogue-host.mjs',
+    workload: '共享事项与账单的对话、业务状态及日志回查',
+    requires: ['KnowledgeMap FastAPI/SQLite test server'], timeoutMs: 180000, modelTimeoutMs: 600000},
   'bills-feedback': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/knowledgemap/bills.test.mjs'],workload:'账单提交、丢失响应后只读回执与删除后回查',
     requires:['KnowledgeMap FastAPI/SQLite test server'],timeoutMs:60000},
@@ -40,7 +44,7 @@ const scenarios = {
     requires:['Landlock','KnowledgeMap FastAPI/SQLite test server'],timeoutMs:120000},
   'monthly-bill-e2e': {target:'isolated',file:'knowledgemap/acceptance-monthly-bill-e2e-host.mjs',
     workload:'收件箱收信保存xlsx→预览→确认导入→重叠表防重→移动归档与全链路日志',
-    requires:['Landlock','KnowledgeMap FastAPI/SQLite test server'],timeoutMs:150000},
+    requires:['Landlock','KnowledgeMap FastAPI/SQLite test server'],timeoutMs:150000,modelTimeoutMs:600000},
   'mail-inbox': {target:'isolated',file:'mail/acceptance-inbox-host.mjs',
     workload:'回环TLS收件箱读取、陌生发件人单封确认放行、附件落地与无EXPUNGE整理',
     requires:['Landlock'],timeoutMs:120000},
@@ -50,9 +54,15 @@ const scenarios = {
   'mail-feedback': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/plugins/kurumi-mail/test/tool.test.js'],
     workload:'邮件确认与逐封 SMTP 回执、响应丢失和重开后回查',timeoutMs:60000},
+  'mail-dialogue': {target:'isolated',file:'mail/acceptance-dialogue-host.mjs',
+    workload:'邮件对话预览、确认、本地 SMTP 逐收件人回执和回查',timeoutMs:120000,modelTimeoutMs:480000},
   'paper-feedback': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/papers/feedback.test.mjs'],
     workload:'译稿逐份回查、QQ 回执丢失与冻结邮件附件',timeoutMs:60000},
+  'paper-dialogue': {target:'isolated',file:'papers/acceptance-dialogue-host.mjs',
+    workload:'合成 PDF 入站、后台任务、产物和本地文件回执',requires:['Poppler','Bubblewrap'],timeoutMs:120000,modelTimeoutMs:480000},
+  'web-dialogue': {target:'isolated',file:'web/acceptance-dialogue-host.mjs',
+    workload:'联网搜索、读取搜索结果原文与来源关联',requires:['Tavily plugin'],timeoutMs:120000,modelTimeoutMs:480000},
   'access-exec': admin('exec_root', '普通目录写入范围同步与撤权', ['Landlock']),
   'access-project': admin('coding_project', '项目准入、检查预设与历史任务', ['Landlock', 'Git']),
   'host-admin': {target: 'isolated', file: 'host-admin/acceptance-host.mjs',
@@ -65,12 +75,12 @@ const scenarios = {
   'qq-evidence-gaps': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/log-query/qq-evidence.test.mjs'],workload:'QQ 业务证据的缺失、故障、时间范围和相邻告警',timeoutMs:30000},
   'daily-feedback': {target:'isolated', file:'acceptance/acceptance-daily-feedback-host.mjs',
-    workload:'空清单跳过、天气取数失败后 QQ 受理与计划时刻回查',
-    requires:['KnowledgeMap FastAPI/SQLite test server'], timeoutMs:160000},
+    workload:'待办和天气播报的生成、跳过、失败与计划时刻回查',
+    requires:['KnowledgeMap FastAPI/SQLite test server'], timeoutMs:300000, modelTimeoutMs:600000},
   'e7-image-feedback': {target: 'isolated', file: 'acceptance/acceptance-business-feedback-host.mjs',
-    args: ['image'], workload: 'E7 零命中、真实渲染、QQ 图片受理和原请求回查', requires: ['Bubblewrap'], timeoutMs: 100000},
+    args: ['image'], workload: 'E7 查询、零命中、真实渲染、本地图片受理和原请求回查', requires: ['Bubblewrap'], timeoutMs: 100000, modelTimeoutMs: 600000},
   'profile-planning-feedback': {target: 'isolated', file: 'acceptance/acceptance-business-feedback-host.mjs',
-    args: ['profile-planning'], workload: '所在地与行程确认、按提案回查及历史所在地核对', timeoutMs: 100000},
+    args: ['profile-planning'], workload: '所在地与行程确认、天气和历史所在地核对', timeoutMs: 120000, modelTimeoutMs: 600000},
   'shared-city': {target:'isolated', file:'acceptance/acceptance-shared-city-host.mjs',
     workload:'真实隔离网关与鉴权网站读取已确认所在地；网页选点独立',
     requires:['KnowledgeMap FastAPI test environment'], timeoutMs:90000},
@@ -80,11 +90,12 @@ const scenarios = {
   deployment: {target: 'production', workload: '在用进程、工具目录、健康和配置对齐'},
 };
 const usage = `node chatbot/scripts/scenario-acceptance.mjs --list
-node chatbot/scripts/scenario-acceptance.mjs --target isolated [--scenario ID] [--model] [--due] [--out PATH]
+node chatbot/scripts/scenario-acceptance.mjs --target isolated [--scenario ID] [--model] [--due] [--live] [--out PATH]
 node chatbot/scripts/scenario-acceptance.mjs --target production [--scenario deployment] [--out PATH]
 
 --out 须位于仓库的 test-output/ 内，是尚不存在的报告文件。
---model 仅用于独立实例的 confirmation，调用已配置的真实模型。--due 只运行确认、Cron 到点及回执场景。
+--model 调用真实模型；不指定场景时运行全部支持真实模型的代表场景（含提醒到点）。
+--due 只运行确认、Cron 到点及回执场景。--live 仅用于 --model 的 web-dialogue，调用真实 Tavily 和公共网页。
 --diagnostic-fault 用于复现独立场景的受控失败：confirmation 可用 gateway-start 或 reminder-lookup，bills-feedback 可用 bills-assertion，host-admin 可用 host-fixture。
 生产目标目前只覆盖只读部署核验。`;
 
@@ -93,7 +104,7 @@ function options(args) {
   for (let i = 0; i < args.length; i++) {
     const flag = args[i], key = flag.slice(2);
     if (!flag.startsWith('--') || Object.hasOwn(result, key)) throw Error('Unknown or duplicate option: ' + flag);
-    if (['list', 'help', 'model', 'due'].includes(key)) result[key] = true;
+    if (['list', 'help', 'model', 'due', 'live'].includes(key)) result[key] = true;
     else if (valueFlags.has(key) && args[i + 1] && !args[i + 1].startsWith('--')) result[key] = args[++i];
     else throw Error('Unknown option or missing value: ' + flag);
   }
@@ -103,11 +114,14 @@ function options(args) {
   if (result.scenario && (!Object.hasOwn(scenarios, result.scenario) || scenarios[result.scenario].target !== result.target)) {
     throw Error('Unknown scenario for ' + result.target);
   }
-  if (result.model && (result.target !== 'isolated' || result.scenario !== 'confirmation')) {
-    throw Error('--model requires --target isolated --scenario confirmation');
+  if (result.model && (result.target !== 'isolated' || (result.scenario && !scenarios[result.scenario]?.modelTimeoutMs))) {
+    throw Error('--model requires isolated dialogue scenarios');
   }
   if (result.due && (result.target !== 'isolated' || result.scenario !== 'confirmation' || result['diagnostic-fault'])) {
     throw Error('--due requires --target isolated --scenario confirmation without a diagnostic fault');
+  }
+  if (result.live && (result.target !== 'isolated' || result.scenario !== 'web-dialogue' || !result.model || result.due || result['diagnostic-fault'])) {
+    throw Error('--live requires --target isolated --scenario web-dialogue --model');
   }
   const faultScenario = {'gateway-start':'confirmation','reminder-lookup':'confirmation','bills-assertion':'bills-feedback','host-fixture':'host-admin'};
   if (result['diagnostic-fault'] && (result.target!=='isolated' || result.model ||
@@ -153,7 +167,7 @@ function revision() {
   return {commit: git('rev-parse', 'HEAD').toString().trim(), dirty: diff.length > 0 || untracked.length > 0, diffSha256: hash.digest('hex')};
 }
 
-async function runIsolated(id, model, directory, signal, diagnosticFault, due) {
+async function runIsolated(id, model, directory, signal, diagnosticFault, due, live) {
   const evidence = join(directory, id + '.json');
   const scenario = scenarios[id];
   const timeoutMs = model && due ? 600000 : model ? scenario.modelTimeoutMs : scenario.timeoutMs;
@@ -167,7 +181,7 @@ async function runIsolated(id, model, directory, signal, diagnosticFault, due) {
     failure:{phase:'environment',step:'dependencies',category:'blocked'}};
   const argv = [join(repo, 'chatbot/tests', scenario.file), '--out', evidence, ...(scenario.args ?? []),
     ...(model ? ['--model'] : []), ...(due ? ['--due-dialogue'] : []),
-    ...(diagnosticFault ? ['--diagnostic-fault',diagnosticFault] : [])];
+    ...(diagnosticFault ? ['--diagnostic-fault',diagnosticFault] : []), ...(live ? ['--live'] : [])];
   let current, lastPassed, firstFailed, stoppedAt;
   const start = performance.now();
   const result = await new Promise(resolveResult => {
@@ -238,6 +252,7 @@ async function runIsolated(id, model, directory, signal, diagnosticFault, due) {
       cases: data.cases?.length ?? data.stages?.length ?? 0,
       ...(typeof data.configSha256 === 'string' && {configSha256: data.configSha256}),
       ...(typeof data.primaryModel === 'string' && {primaryModel: data.primaryModel}),
+      ...(typeof data.boundary === 'string' && {boundary: data.boundary}),
       cleanupVerified: data.fixtureCleaned ?? data.fixtureRemoved ?? null,
       cleanup: fixtureCleanup(data), evidence};
   } catch {
@@ -275,9 +290,12 @@ try {
         process.on('SIGINT', stop);
         process.on('SIGTERM', stop);
         try {
-          for (const id of args.scenario ? [args.scenario] : Object.keys(scenarios).filter(id => scenarios[id].target === 'isolated')) {
+          const selected = args.scenario ? [args.scenario] : Object.keys(scenarios)
+            .filter(id => scenarios[id].target === 'isolated' && (!args.model || scenarios[id].modelTimeoutMs));
+          for (const id of selected) {
             if (controller.signal.aborted) break;
-            report.scenarios.push(await runIsolated(id, args.model, evidence, controller.signal,args['diagnostic-fault'],args.due));
+            const due = args.due || (args.model && !args.scenario && id === 'confirmation');
+            report.scenarios.push(await runIsolated(id, args.model, evidence, controller.signal,args['diagnostic-fault'],due,args.live));
           }
           if (controller.signal.aborted) report.reason = 'interrupted';
         } finally {
@@ -285,7 +303,8 @@ try {
           process.removeListener('SIGTERM', stop);
         }
         report.uncovered = ['real QQ delivery', 'production interaction', 'real DSH/Codex backend and production MySQL',
-          ...(args.model ? (args.due ? [] : ['native reminder due-time delivery in the real-model run']) : ['real-model behavior']),
+          ...(args.model ? (args.due || !args.scenario ? [] : ['native reminder due-time delivery in the real-model run']) : ['real-model behavior']),
+          ...(!args.live ? ['real Tavily and public-page upstream'] : []),
           'unregistered domain scenarios'];
       }
       const after = revision();
