@@ -39,6 +39,7 @@ import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
 import {artifactKindsForRestore,hashFile,treeHash,discoverDatabases,extractArtifact} from './lib/backup-layout.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
+import {assertOpenClawRelease} from './lib/openclaw-release.mjs';
 import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery,disableOwnerFileRecovery,disableExternalCodingRecovery,disableProactiveRecovery} from './lib/recovery-isolation.mjs';
 import {carryDisabledHeartbeat,expectedAfterHeartbeatMigration,clearCopiedGatewayLeases,snapshotCronDefinitions,verifyCronMigration} from './lib/recovery-checks.mjs';
 
@@ -327,7 +328,8 @@ if(!skipDeps){
   try{extractArtifact(archive,destinations[kind]);}catch(error){throw Error('Dependency extraction failed: '+kind,{cause:error});}
   check('immutable dependency restored: '+kind,treeHash(path.join(destinations[kind],rec.rootName))===rec.treeHash);
  }
- check('SDK matches approved source release',JSON.parse(fs.readFileSync(sdk+'/package.json')).version===release.version);
+ assertOpenClawRelease(sdk,release);
+ check('SDK matches approved source release',true);
 }
 
 // 6d. Third-party plugin prefix rebuilt from the versioned lockfile (not copied from production).

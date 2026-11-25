@@ -101,6 +101,7 @@ git log --oneline main..HEAD                         # 当前分支与 main 的�
 
 ## 进行中：OpenClaw 2026.11.8 升级
 
-- 升级分支已对齐当前源码；旧版停用心跳向新版自动化任务迁移的合成隔离样本已验证。
-- 2026.11.8 隔离场景在前台回合仍收尾时调用 `sessions.reset`，两次返回 `Session source cleanup failed`；同一场景在 2026.11.1 通过，等待前台回合完成后及合成 QQ 的 `/new` 直接抢占后台均在 2026.11.8 通过。并发 RPC 重置的影响和处理待确认，不能据此认定升级已具备生产条件。
+- 旧版停用心跳向新版自动化任务迁移的合成隔离样本已验证。
+- 原版 2026.11.8 的 `sessions.reset` 会把前台回合自身的取消误记为来源清理失败。用 `node scripts/fusion/patch-openclaw.mjs --sdk <暂存的绝对 SDK 路径>` 构建升级工件。补丁只接受匹配的原版文件，按回合自身的取消信号识别预期取消。启动、依赖、备份与恢复检查验证补丁后的文件哈希。
+- 在升级工作树运行 `node chatbot/tests/proactive/acceptance-runtime-host.mjs --out "$PWD/test-output/openclaw-upgrade/proactive-runtime.json"`。原版在并发重置处失败，补丁版 15 项隔离验收通过，覆盖重置后接收新消息及前台结束后的重置。输出路径须未被占用。
 - 2026-11-25 用既有非停写备份和源码 `cf65f4e` 完成升级恢复演练：32 项通过，含官方迁移、任务状态和隔离网关启动；该备份不能作为生产回退点。生产升级及停写恢复点仍需按开发指引单独授权。

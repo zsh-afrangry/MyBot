@@ -164,10 +164,24 @@ try {
   mode='silent';wsClient.send(JSON.stringify({time:Math.floor(Date.now()/1000),self_id:Number(bot),post_type:'message',message_type:'private',user_id:Number(owner),message_id:3003,message:[{type:'text',data:{text:'合成新请求优先'}}]}));
   const cancelled=await inflight;assert.equal(cancelled.status,'cancelled');holdResolve?.();holdSeen=undefined;
   report.cases.push({label:'actual-foreground-admission-preempts-detached-background-model',passed:true});
-  await waitForOneBotTurn(root+'/state/channel',[bot+':'+owner+':3003'],{timeoutMs:15000});
+  const key='agent:main:kurumi-qq:direct:'+owner;
   const beforeReset=(await call('kurumi-proactive.status')).control;
-  await call('sessions.reset',{key:'agent:main:kurumi-qq:direct:'+owner,reason:'new'});
+  // Reset while the foreground reply can still own source work following preemption.
+  const concurrentReset=await call('sessions.reset',{key,reason:'new'});
+  assert.equal(concurrentReset.ok,true);
+  assert(concurrentReset.entry?.lifecycleRevision);
   const afterReset=(await call('kurumi-proactive.status')).control;assert(afterReset.epoch>beforeReset.epoch);assert.equal(afterReset.last_activity,beforeReset.last_activity);
+  report.cases.push({label:'concurrent-reset-after-preemption-commits-a-session-lifecycle',passed:true});
+  wsClient.send(JSON.stringify({time:Math.floor(Date.now()/1000),self_id:Number(bot),post_type:'message',message_type:'private',user_id:Number(owner),message_id:3004,message:[{type:'text',data:{text:'合成重置后的新请求'}}]}));
+  await waitForOneBotTurn(root+'/state/channel',[bot+':'+owner+':3004'],{timeoutMs:15000});
+  const beforeSettledReset=(await call('kurumi-proactive.status')).control;
+  const settledReset=await call('sessions.reset',{key,reason:'new'});
+  assert.equal(settledReset.ok,true);
+  assert(settledReset.entry?.lifecycleRevision);
+  assert.notEqual(settledReset.entry.lifecycleRevision,concurrentReset.entry.lifecycleRevision);
+  const afterSettledReset=(await call('kurumi-proactive.status')).control;
+  assert(afterSettledReset.epoch>beforeSettledReset.epoch);
+  assert.equal(afterSettledReset.last_activity,beforeSettledReset.last_activity);
   report.cases.push({label:'actual-foreground-session-reset-fences-composition-without-fabricating-owner-activity',passed:true});
   mode='silent';const state=await call('kurumi-proactive.status');assert.equal(state.active,0);assert(state.control.last_activity>0);assert.deepEqual(fingerprints(),before);
   assert(!report.peerError,report.peerError);delete report.recordToRemove;report.passed=true;

@@ -15,11 +15,9 @@ import path from 'node:path';
 import { STATE_DIR, REPO_ROOT } from './lib/runtime-paths.mjs';
 import { PLUGINS } from './lib/plugins.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
-import {OPENCLAW_RELEASE} from './lib/openclaw-release.mjs';
+import {assertOpenClawRelease,OPENCLAW_RELEASE,SDK_ROOT} from './lib/openclaw-release.mjs';
 import {FENCE_ROOT, FENCE_RELEASE, verifyExecFence} from './lib/exec-fence.mjs';
 
-const SDK = '/home/afrangry/.npm-global/lib/node_modules/openclaw';
-const EXPECTED_SDK = OPENCLAW_RELEASE.version;
 const PACKAGES = lockedPackages(REPO_ROOT).map(p => p.relative);
 // Anything under these roots is archived/foreign and must never satisfy a runtime import.
 // kurumi-archive is where the legacy trees now live after step 7, so it MUST be listed here —
@@ -188,9 +186,10 @@ const sdkLink = path.join(REPO_ROOT, 'node_modules/openclaw');
 if (!fs.existsSync(sdkLink)) {
   problems.push('pinned SDK link node_modules/openclaw is missing');
 } else {
-  const actual = JSON.parse(fs.readFileSync(path.join(sdkLink, 'package.json'), 'utf8')).version;
-  if (actual !== EXPECTED_SDK) problems.push(`pinned SDK is ${actual}, expected ${EXPECTED_SDK}`);
-  else notes.push(`pinned SDK openclaw@${actual} -> ${SDK}`);
+  try {
+    assertOpenClawRelease(sdkLink);
+    notes.push(`pinned SDK openclaw@${OPENCLAW_RELEASE.version} -> ${SDK_ROOT}`);
+  } catch (error) {problems.push(error.message);}
 }
 
 // --- 4. controlled plugin prefix -------------------------------------------------------
