@@ -24,6 +24,12 @@ export function ensureArtifact(kind,version,source,store=path.join(BACKUP_ROOT,'
  if(fs.existsSync(archive))throw Error('Unregistered artifact already exists');const tmp=archive+'.tmp-'+randomUUID();
  try{const r=spawnSync('tar',['-I','gzip -1','--exclude=__pycache__','-cf',tmp,'-C',path.dirname(source),path.basename(source)],{encoding:'utf8',timeout:180000});if(r.status!==0)throw Error('Dependency artifact archive failed');if(treeHash(source)!==fingerprint)throw Error('Dependency source changed while archiving');const record={kind,version,name,rootName:path.basename(source),sha256:hashFile(tmp),treeHash:fingerprint,bytes:fs.statSync(tmp).size,platform:process.platform,arch:process.arch};fs.chmodSync(tmp,0o600);fs.renameSync(tmp,archive);fs.writeFileSync(meta,JSON.stringify(record,null,2)+'\n',{mode:0o600});return record;}finally{fs.rmSync(tmp,{force:true});}
 }
+// Call after validating the archive hash and member paths. The private recovery
+// directory contains the archived modes even when the caller has a strict umask.
+export function extractArtifact(archive,destination){
+ const result=spawnSync('tar',['-xzf',archive,'--same-permissions','--no-same-owner','-C',destination],{encoding:'utf8',timeout:180000});
+ if(result.status!==0)throw Error('Dependency extraction failed');
+}
 export function discoverDatabases(root,{skip=SKIP_RUNTIME}={}){
  const out=[];function walk(dir,depth=0){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const f=path.join(dir,e.name);if(e.isDirectory()){if((depth===0&&skip.has(e.name))||['node_modules','__pycache__','.git','.cache'].includes(e.name))continue;walk(f,depth+1);}else if(e.isFile()&&/\.(sqlite|db)$/.test(e.name))out.push(f);}}walk(root);return out.sort();
 }

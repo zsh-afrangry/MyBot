@@ -37,7 +37,7 @@ import { createHash } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
 import {isDeepStrictEqual} from 'node:util';
-import {artifactKindsForRestore,hashFile,treeHash,discoverDatabases} from './lib/backup-layout.mjs';
+import {artifactKindsForRestore,hashFile,treeHash,discoverDatabases,extractArtifact} from './lib/backup-layout.mjs';
 import {lockedPackages} from './lib/package-manifests.mjs';
 import {newRecoveryTarget,remap,remapLinks,assertNoProduction,sandboxArgs,disablePaperRecovery,disableKnowledgeMapRecovery,disableOwnerFileRecovery,disableExternalCodingRecovery,disableProactiveRecovery} from './lib/recovery-isolation.mjs';
 import {carryDisabledHeartbeat,expectedAfterHeartbeatMigration,clearCopiedGatewayLeases,snapshotCronDefinitions,verifyCronMigration} from './lib/recovery-checks.mjs';
@@ -324,7 +324,7 @@ if(!skipDeps){
   const listing=sh('tar',['-tzf',archive]);
   if(listing.status!==0||listing.stdout.split('\n').filter(Boolean).some(n=>n.startsWith('/')||n.split('/').includes('..')||!n.startsWith(rec.rootName+'/')))throw Error('Unsafe dependency archive');
   fs.mkdirSync(destinations[kind],{recursive:true,mode:0o700});
-  const x=sh('tar',['-xzf',archive,'-C',destinations[kind]]);if(x.status!==0)throw Error('Dependency extraction failed: '+kind);
+  try{extractArtifact(archive,destinations[kind]);}catch(error){throw Error('Dependency extraction failed: '+kind,{cause:error});}
   check('immutable dependency restored: '+kind,treeHash(path.join(destinations[kind],rec.rootName))===rec.treeHash);
  }
  check('SDK matches approved source release',JSON.parse(fs.readFileSync(sdk+'/package.json')).version===release.version);

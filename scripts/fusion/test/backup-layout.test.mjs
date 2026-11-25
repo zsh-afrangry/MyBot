@@ -1,5 +1,5 @@
 // Offline temporary-directory backup format regression; no production, service or network writes.
-import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import os from'node:os';import path from'node:path';import{artifactKindsForRestore,discoverDatabases,ensureArtifact,skippedRuntime}from'../lib/backup-layout.mjs';
+import test from'node:test';import assert from'node:assert/strict';import fs from'node:fs';import os from'node:os';import path from'node:path';import{artifactKindsForRestore,discoverDatabases,ensureArtifact,extractArtifact,skippedRuntime,treeHash}from'../lib/backup-layout.mjs';
 const temp=t=>{const p=fs.mkdtempSync(path.join(os.tmpdir(),'fusion-layout-'));t.after(()=>fs.rmSync(p,{recursive:true,force:true}));return p;};
 test('Fusion-only points exclude independent DSH while legacy v3 points retain their recovery inputs',()=>{
  assert.deepEqual(artifactKindsForRestore({formatVersion:3,scope:'fusion-only'}),['openclaw','paper-python','exec-fence']);
@@ -9,3 +9,11 @@ test('Fusion-only points exclude independent DSH while legacy v3 points retain t
 });
 test('SQLite discovery covers deep .db and .sqlite while omitting dependencies and symlinks',t=>{const p=temp(t);for(const f of ['a/b/c/d/e/f/state.db','state/core.sqlite','state/proactive/proactive.sqlite','venvs/a/ignored.sqlite','plugins/node_modules/x/ignored.db','tmp/ignored.sqlite']){fs.mkdirSync(path.dirname(p+'/'+f),{recursive:true});fs.writeFileSync(p+'/'+f,'fixture');}fs.symlinkSync(p+'/state',p+'/linked');assert.deepEqual(discoverDatabases(p).map(x=>path.relative(p,x)),['a/b/c/d/e/f/state.db','state/core.sqlite','state/proactive/proactive.sqlite']);assert(skippedRuntime('runtime.2.log'));assert(skippedRuntime('openclaw.json.bak.old'));assert(skippedRuntime('openclaw.json.bak'));assert(skippedRuntime('openclaw.json.bak.1'));assert(!skippedRuntime('openclaw.json.bakery'));assert(!skippedRuntime('openclaw.json.last-good'));});
 test('artifacts are reusable, detect corruption, and preserve distinct trees with one version',t=>{const p=temp(t),src=p+'/source',store=p+'/artifacts';fs.mkdirSync(src);fs.writeFileSync(src+'/entry','one');const a=ensureArtifact('sdk','1.0',src,store);assert.deepEqual(ensureArtifact('sdk','1.0',src,store),a);fs.writeFileSync(src+'/entry','two');const b=ensureArtifact('sdk','1.0',src,store);assert.notEqual(a.name,b.name);assert(fs.existsSync(store+'/'+a.name));fs.appendFileSync(store+'/'+b.name,'corrupt');assert.throws(()=>ensureArtifact('sdk','1.0',src,store),/corrupted/);});
+test('artifact recovery preserves executable and data modes under a strict umask',t=>{
+ const p=temp(t),src=p+'/source',store=p+'/artifacts',destination=p+'/restored';fs.mkdirSync(src);fs.mkdirSync(destination,{mode:0o700});
+ fs.writeFileSync(src+'/run','fixture');fs.chmodSync(src+'/run',0o755);fs.writeFileSync(src+'/data','fixture');fs.chmodSync(src+'/data',0o644);
+ const artifact=ensureArtifact('sdk','1.0',src,store),previous=process.umask(0o077);
+ try{extractArtifact(store+'/'+artifact.name,destination);}finally{process.umask(previous);}
+ assert.equal(treeHash(destination+'/source'),artifact.treeHash);
+ assert.equal(fs.statSync(destination+'/source/run').mode&0o777,0o755);assert.equal(fs.statSync(destination+'/source/data').mode&0o777,0o644);
+});
