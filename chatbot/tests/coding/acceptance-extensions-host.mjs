@@ -516,16 +516,18 @@ try {
   let driverTaskId;
   const driverRpc = async params => {
     if (params.op !== 'turn') return call(params);
-    let args;
-    if (params.message.includes('后端和已登记项目')) args = {action: 'list'};
+    let steps;
+    if (params.message.includes('后端和已登记项目')) steps = [{args: {action: 'list'}}];
     else if (params.message.includes('启动测试任务')) {
-      args = {action: 'start', projectId: 'kurumi-fusion', task: 'LOCAL_PROTECTED_DIFF'};
-    } else args = {action: 'preview', taskId: driverTaskId};
-    active = {next: 0, steps: [{name: 'kurumi_code', args}]};
+      steps = [{args: {action: 'list'}},
+        {args: {action: 'start', projectId: 'kurumi-fusion', task: 'LOCAL_PROTECTED_DIFF'},
+          verify: result => {assert.equal(typeof result.id, 'string'); driverTaskId = result.id;}},
+        {args: () => ({action: 'status', taskId: driverTaskId})}];
+    } else steps = [{args: {action: 'status', taskId: driverTaskId}}, {args: {action: 'preview', taskId: driverTaskId}}];
+    active = {next: 0, steps: steps.map(step => ({name: 'kurumi_code', ...step}))};
     try {
       const result = await call(params);
-      assert.equal(active.next, 1);
-      if (args.action === 'start') driverTaskId = result.actions[0].taskId;
+      assert.equal(active.next, steps.length);
       return result;
     } finally {active = undefined;}
   };
