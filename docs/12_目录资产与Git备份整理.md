@@ -1,4 +1,4 @@
-状态：已完成（2026-11-19；仅 Fusion 成套隔离恢复，不含真实 QQ 登录与独立项目）
+状态：开发中（OpenClaw 2026.11.8 已部署，待主人复核）
 
 # 系统资产、备份与回退
 
@@ -14,7 +14,7 @@
 | 私有运行状态 | `/home/afrangry/.openclaw-fusion` | 身份、凭据、人格投影、会话、记忆、SQLite、产物。不建运行根 Git |
 | 私密备份 | `/home/afrangry/kurumi-backups` | 恢复点、共享工件、唯一源码历史。目录 700，文件 600 |
 | 编码试点 | `/home/afrangry/.local/share/kurumi-coding-pilot-20261029` | 普通文件写入的窄边界，Fusion 拥有，纳入恢复范围，不是第二个开发仓库 |
-| OpenClaw 安装 | `/home/afrangry/.npm-global/lib/node_modules/openclaw` | 固定版本的第三方内核，不改它的源码 |
+| OpenClaw 安装 | `/home/afrangry/.npm-global/lib/node_modules/openclaw` | 固定版本的第三方内核，部署前校验仓库要求的补丁与工件 |
 | 外部项目 | KnowledgeMap 业务 API、DeepSeek Harness（DSH） | 独立项目。Fusion 只保留自己的接口配置、专用凭据和控制状态，不采集它们的源码、数据库、安装或全局认证 |
 | QQ 传输 | SnowLuma、QQ 及登录配置 | 实际运行依赖。隔离恢复用模拟 OneBot，不恢复真实 QQ 登录 |
 
@@ -68,7 +68,7 @@ node scripts/fusion/backup-retention.mjs --apply                                
 
 **升级演练。** `restore-verify.mjs --adapt-source <本地 bundle> --adapt-sdk <工件 tar.gz>`（两项必须同时给）在隔离副本里替换代码和内核并迁移其数据库，结果标为 `upgrade-rehearsal`，不能登记成恢复点。演练按新源码生成隔离配置，保留已知的旧停用心跳供 [Doctor 迁移](https://docs.openclaw.ai/gateway/heartbeat)，按新锁文件安装外部插件，在无生产路径和网络的命名空间里运行官方 `doctor --fix`；启动前核对 agent schema、权限、插件意图和原有定时任务，新任务须保持停用。其他旧心跳配置需要单独审查。
 
-**生产升级顺序。** 先备好回退状态，停 Fusion，替换已验证的工件和源码并安装锁定的 provider；保留旧配置运行官方迁移，核对停用心跳和原有定时任务后，同步新受管配置并启动服务。升级若迁移了数据库，回退必须同时恢复对应旧版内核和旧状态，不能把旧二进制接到升级后的库上。官方 Doctor 产生的配置 bak、迁移原件、update-captures 只是本次升级的临时回退材料，确认迁移完成并有新的恢复点后才清理，不删除未完成迁移或来源不明的材料。配置同步覆盖备份根 `.working/config-sync/openclaw.before.json` 的待验证预像，确认生效后由操作者清理。宿主的 `openclaw.json.last-good` 有消费者，保留。
+**生产升级顺序。** 先验证旧版停写恢复点并暂存新内核和锁定的 provider；停 Fusion 后保留最后停写状态，用副本和旧配置运行官方迁移。核对停用心跳、原有定时任务及 agent schema 后，同步受管配置，启用已验证的内核、源码和迁移副本，再启动服务。升级若迁移了数据库，回退必须同时恢复对应旧版内核和旧状态，不能把旧二进制接到升级后的库上。官方 Doctor 产生的配置 bak、迁移原件、update-captures 只是本次升级的临时回退材料，确认迁移完成并有新的恢复点后才清理，不删除未完成迁移或来源不明的材料。配置同步覆盖备份根 `.working/config-sync/openclaw.before.json` 的待验证预像，确认生效后由操作者清理。宿主的 `openclaw.json.last-good` 有消费者，保留。
 
 **Git。** 日常在 kurumi-fusion 里看 `git status --short`、`git log -1`、`git worktree list`。配置、人格、依赖和服务健康检查只证明部署对齐，不证明已提交或推送。远端写入需要用户明确授权。读取远端时不要输出带凭据的 URL。`git ls-remote` 只证明远端可读。
 
@@ -101,7 +101,6 @@ git log --oneline main..HEAD                         # 当前分支与 main 的�
 
 ## 进行中：OpenClaw 2026.11.8 升级
 
-- 旧版停用心跳向新版自动化任务迁移的合成隔离样本已验证。
-- 原版 2026.11.8 的 `sessions.reset` 会把前台回合自身的取消误记为来源清理失败。用 `node scripts/fusion/patch-openclaw.mjs --sdk <暂存的绝对 SDK 路径>` 构建升级工件。补丁只接受匹配的原版文件，按回合自身的取消信号识别预期取消。启动、依赖、备份与恢复检查验证补丁后的文件哈希。
-- 在升级工作树运行 `node chatbot/tests/proactive/acceptance-runtime-host.mjs --out "$PWD/test-output/openclaw-upgrade/proactive-runtime.json"`。原版在并发重置处失败，补丁版 15 项隔离验收通过，覆盖重置后接收新消息及前台结束后的重置。输出路径须未被占用。
-- 2026-11-26 用既有非停写备份、源码 `914ef7d` 和带补丁工件重跑升级恢复演练，32 项通过，含官方迁移、任务状态和隔离网关启动。生产升级及停写恢复点仍需按开发指引单独授权。
+- 补丁让 `sessions.reset` 识别该前台回合自己的取消信号，独立故障仍上报。用 `node scripts/fusion/patch-openclaw.mjs --sdk <暂存的绝对 SDK 路径>` 构建工件；启动、依赖、备份和恢复均校验补丁哈希。
+- 旧版停写恢复点 27 项通过；用同一快照迁移新版并启动隔离网关，32 项通过。并发重置和权限隔离验收分别通过 15 项、12 项，覆盖取消前台回合后接收新消息。隔离验收不含真实 QQ 或付费模型。
+- 2026-11-26 本地合入 `d6cc477` 并切换 Fusion；5 个 agent 数据库迁移到 schema 38，6 个 Cron 任务保留，停用心跳仍停用。健康、依赖、配置和人格自检通过。最后停写的旧状态与旧内核单独保留；独立 DSH 与 KnowledgeMap 不在本次恢复范围。待主人复核实际 QQ 对话体验。
