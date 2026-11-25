@@ -58,6 +58,8 @@ const scenarios = {
   'paper-feedback': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/papers/feedback.test.mjs'],
     workload:'译稿逐份回查、QQ 回执丢失与冻结邮件附件',timeoutMs:60000},
+  'paper-dialogue': {target:'isolated',file:'papers/acceptance-dialogue-host.mjs',
+    workload:'合成 PDF 入站、后台任务、产物和本地文件回执',requires:['Poppler','Bubblewrap'],timeoutMs:120000,modelTimeoutMs:480000},
   'access-exec': admin('exec_root', '普通目录写入范围同步与撤权', ['Landlock']),
   'access-project': admin('coding_project', '项目准入、检查预设与历史任务', ['Landlock', 'Git']),
   'host-admin': {target: 'isolated', file: 'host-admin/acceptance-host.mjs',
