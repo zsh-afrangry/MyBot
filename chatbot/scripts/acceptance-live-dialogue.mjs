@@ -2,7 +2,7 @@
 // Real configured model and running Gateway: creates a new production agent session and calls a paid model.
 // Uses an independent local session, does not deliver through QQ or impersonate a QQ identity.
 // Obtain authorization before running. Only technical evidence is written to test-output/.
-import {spawn} from 'node:child_process';
+import {execFileSync, spawn} from 'node:child_process';
 import {createHash, randomUUID} from 'node:crypto';
 import {closeSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSync} from 'node:fs';
 import {join, resolve} from 'node:path';
@@ -13,7 +13,7 @@ import {redactText} from '../packages/observability/index.js';
 const repo = fileURLToPath(new URL('../../', import.meta.url)).replace(/\/$/u, '');
 const runtimeRoot = '/home/afrangry/.openclaw-fusion';
 const usage = `node chatbot/scripts/acceptance-live-dialogue.mjs --message <text> [--message <next turn>] [--expect-tool <name>] [--expect-reply <text>] [--out <new JSON>]
-node chatbot/scripts/acceptance-live-dialogue.mjs --coding-check <catalog|protected-diff> [--out <new JSON>]
+node chatbot/scripts/acceptance-live-dialogue.mjs --coding-check <catalog|protected-diff> [--expected-backend <id>] [--out <new JSON>]
 
 Creates a separate local Gateway session and calls the configured real model. No QQ delivery.
 The report records hashes and technical evidence, not prompts or reply text. A denied tool is blocked, not passed.`;
@@ -23,21 +23,23 @@ function options(argv) {
   const result = {messages: []};
   for (let i = 0; i < argv.length; i++) {
     const name = argv[i], value = argv[++i];
-    if (!['--message', '--expect-tool', '--expect-reply', '--out', '--coding-check'].includes(name)
+    if (!['--message', '--expect-tool', '--expect-reply', '--out', '--coding-check', '--expected-backend'].includes(name)
       || typeof value !== 'string' || !value.trim() || value.startsWith('--')) throw Error('Invalid or missing argument');
     if (name === '--message') result.messages.push(value);
     else {
-      const key = {'--expect-tool': 'expectTool', '--expect-reply': 'expectReply', '--out': 'out', '--coding-check': 'codingCheck'}[name];
+      const key = {'--expect-tool': 'expectTool', '--expect-reply': 'expectReply', '--out': 'out',
+        '--coding-check': 'codingCheck', '--expected-backend': 'expectedBackend'}[name];
       if (result[key]) throw Error('Duplicate option: ' + name);
       result[key] = value;
     }
   }
   if (result.codingCheck) {
     if (!['catalog', 'protected-diff'].includes(result.codingCheck) || result.messages.length || result.expectTool || result.expectReply) throw Error('Invalid coding check options');
-  } else if (!result.messages.length || result.messages.length > 32 || result.messages.some(text => text.length > 10000)) {
+  } else if (result.expectedBackend || !result.messages.length || result.messages.length > 32 || result.messages.some(text => text.length > 10000)) {
     throw Error('Require 1–32 messages of at most 10000 characters');
   }
   if (result.expectTool && !/^[a-z][a-z0-9_]{0,79}$/u.test(result.expectTool)) throw Error('Invalid expected tool name');
+  if (result.expectedBackend && !/^[a-z][a-z0-9-]{0,39}$/u.test(result.expectedBackend)) throw Error('Invalid expected backend');
   return result;
 }
 
@@ -64,18 +66,58 @@ export function summarizeEvents(events) {
     ...(typeof row.data?.decision === 'string' && {decision: row.data.decision}),
     ...(typeof row.data?.code === 'string' && {code: row.data.code}),
     ...(row.kind?.startsWith('coding.') && {action: row.data?.action, status: row.data?.status,
-      taskId: row.correlation?.taskId, runId: row.correlation?.runId})}));
+      taskId: row.correlation?.taskId, runId: row.correlation?.runId,
+      backend: row.data?.backend, projectId: row.data?.projectId, ok: row.data?.ok, verifiedCommit: row.data?.verifiedCommit})}));
 }
 
-function verifyCodingEvidence(verdict, report, events) {
+export function verifyCodingEvidence(verdict, report, events) {
   if (verdict.status !== 'passed') return verdict;
   const trace = events.filter(row => row.kind === 'coding.acceptance_action');
-  const traced = report.turns.every(turn => turn.actions.every(action => trace.some(row => row.runId === turn.runId
+  const traced = report.turns.length > 0 && report.turns.every(turn => turn.runId && Array.isArray(turn.actions)
+    && turn.actions.length > 0 && turn.actions.every(action => trace.some(row => row.runId === turn.runId
     && row.action === action.action && row.status === action.status && row.taskId === action.taskId && row.code === action.code)));
   const receipt = !report.task || events.some(row => row.kind === 'coding.delivery'
     && row.taskId === report.task.taskId && row.status === 'local_available');
-  if (!report.leaseClosed || !traced || !receipt) return {status: 'blocked', reason: 'coding_evidence_incomplete'};
+  const taskTrace = !report.task || ['coding.submitted', 'coding.checked', 'coding.ready'].every(kind => events.some(row =>
+    row.kind === kind && row.taskId === report.task.taskId && row.backend === report.expectedBackend
+    && row.projectId === 'kurumi-fusion' && (kind !== 'coding.checked' || row.ok === true)
+    && (kind !== 'coding.ready' || row.verifiedCommit === report.task.verifiedCommit)));
+  if (!report.leaseClosed || !traced || !receipt || !taskTrace) return {status: 'blocked', reason: 'coding_evidence_incomplete'};
   return verdict;
+}
+
+export function evaluateCodingCatalog(turn, expectedBackend) {
+  if (!expectedBackend || !Array.isArray(turn?.actions)) return {status: 'blocked', reason: 'coding_catalog_evidence_missing'};
+  const [action] = turn.actions;
+  if (turn.status !== 'ok' || !turn.replyChars || turn.actions.length !== 1 || action?.action !== 'list' || action.status !== 'ok') {
+    return {status: 'failed', reason: 'coding_catalog_not_verified'};
+  }
+  if (!Array.isArray(action.backends) || !Array.isArray(action.projects)) return {status: 'blocked', reason: 'coding_catalog_evidence_missing'};
+  if (!action.backends.includes(expectedBackend) || !action.projects.includes('kurumi-fusion')) {
+    return {status: 'failed', reason: 'coding_catalog_not_verified'};
+  }
+  return {status: 'passed', scope: 'coding_catalog'};
+}
+
+export function evaluateCodingTask({taskId, expectedBackend, task, result, diff}) {
+  if (!taskId || !expectedBackend || !task || !result || !diff
+    || typeof task.active !== 'boolean' || typeof task.checksPassed !== 'boolean' || typeof task.resultAvailable !== 'boolean'
+    || typeof result.available !== 'boolean' || typeof result.currentRound !== 'boolean'
+    || typeof diff.exact !== 'boolean' || !Array.isArray(diff.paths)
+    || !task.taskId || !result.taskId || !diff.taskId || !task.state
+    || !task.backend || !task.projectId || !task.base || !task.verifiedCommit
+    || !result.backend || !result.roundId || !result.verifiedCommit || !diff.base || !diff.verifiedCommit) {
+    return {status: 'blocked', reason: 'coding_task_evidence_missing'};
+  }
+  if (task.taskId !== taskId || result.taskId !== taskId || diff.taskId !== taskId
+    || task.backend !== expectedBackend || result.backend !== expectedBackend || task.projectId !== 'kurumi-fusion'
+    || task.state !== 'ready' || task.active !== false || !task.checksPassed || !task.resultAvailable
+    || !result.available || !result.currentRound || result.verifiedCommit !== task.verifiedCommit
+    || diff.base !== task.base || diff.verifiedCommit !== task.verifiedCommit
+    || !diff.exact || diff.paths.length !== 1 || diff.paths[0] !== 'config/access-control.json') {
+    return {status: 'failed', reason: 'coding_task_result_not_verified'};
+  }
+  return {status: 'passed', scope: 'coding_task_evidence'};
 }
 
 export function verdict({turns, events, sources, expectTool, expectReplyMatched = true}) {
@@ -116,27 +158,29 @@ export async function callCodingAcceptance(config, token, params) {
     params, {deviceIdentity: null, sharedStateMode: 'read-only', scopes: ['operator.admin']});
 }
 
-async function executeCodingCheck(config, token, check, report) {
-  const rpc = params => callCodingAcceptance(config, token, params);
-  const {leaseId, sessionKey} = await rpc({op: 'open'});
+export async function executeCodingCheck(rpc, check, report, requestedBackend) {
+  const {leaseId, sessionKey, backend} = await rpc({op: 'open'});
   report.sessionKey = sessionKey;
+  report.expectedBackend = requestedBackend ?? backend;
   async function turn(message) {
     const {status, runId, reply, actions} = await rpc({op: 'turn', leaseId, message});
-    report.turns.push({status, runId, promptSha256: digest(message), replySha256: digest(reply), replyChars: reply.length, actions});
-    return actions;
+    const turn = {status, runId, promptSha256: digest(message), replySha256: digest(reply), replyChars: reply.length, actions};
+    report.turns.push(turn);
+    return turn;
   }
   try {
+    if (!backend) return {status: 'blocked', reason: 'coding_backend_evidence_missing'};
+    if (report.expectedBackend !== backend) return {status: 'failed', reason: 'coding_backend_mismatch'};
     if (check === 'catalog') {
-      const actions = await turn('请调用编码工具的 list，查询当前启用的编码后端和已登记项目，并简要回复。');
-      const ok = actions.length === 1 && actions[0].action === 'list' && actions[0].status === 'ok'
-        && actions[0].backends?.length > 0 && actions[0].projects?.includes('kurumi-fusion');
-      return ok ? {status: 'passed', scope: 'coding_catalog'} : {status: 'failed', reason: 'coding_catalog_not_verified'};
+      const listed = await turn('请调用编码工具的 list，查询当前启用的编码后端和已登记项目，并简要回复。');
+      return evaluateCodingCatalog(listed, report.expectedBackend);
     }
     const start = await turn('请用编码工具在 kurumi-fusion 项目启动测试任务。只在独立工作树把 config/access-control.json 中 version 属性的冒号后再加一个空格。保留 JSON 值和其他文件。完成后告诉我任务已启动，我会另行检查预览。');
-    if (start.length !== 1 || start[0].action !== 'start' || start[0].status !== 'ok' || !start[0].taskId) {
+    if (start.status !== 'ok' || !start.replyChars || start.actions?.length !== 1
+      || start.actions[0].action !== 'start' || start.actions[0].status !== 'ok' || !start.actions[0].taskId) {
       return {status: 'failed', reason: 'coding_start_not_verified'};
     }
-    const {taskId} = start[0];
+    const {taskId} = start.actions[0];
     const deadline = Date.now() + 5 * 60_000;
     do {
       report.task = await rpc({op: 'status', leaseId, taskId});
@@ -144,12 +188,18 @@ async function executeCodingCheck(config, token, check, report) {
       await delay(2000);
     } while (Date.now() < deadline);
     if (report.task.active) return {status: 'failed', reason: 'coding_task_timed_out'};
-    if (report.task.state !== 'ready' || !report.task.checksPassed || !report.task.resultAvailable) {
+    if (report.task.state !== 'ready') {
       return {status: 'failed', reason: 'coding_task_result_not_verified'};
     }
+    report.result = await rpc({op: 'result', leaseId, taskId});
+    report.diff = await rpc({op: 'inspect-diff', leaseId, taskId});
+    const taskVerdict = evaluateCodingTask({taskId, expectedBackend: report.expectedBackend,
+      task: report.task, result: report.result, diff: report.diff});
+    if (taskVerdict.status !== 'passed') return taskVerdict;
     const preview = await turn(`请调用编码工具的 preview 检查任务 ${taskId}，然后转述工具返回的结果。`);
-    return preview.length === 1 && preview[0].action === 'preview' && preview[0].taskId === taskId
-      && preview[0].code === 'self_maintenance_protected_diff'
+    return preview.status === 'ok' && preview.replyChars && preview.actions?.length === 1
+      && preview.actions[0].action === 'preview' && preview.actions[0].taskId === taskId
+      && preview.actions[0].status === 'error' && preview.actions[0].code === 'self_maintenance_protected_diff'
       ? {status: 'passed', scope: 'coding_protected_diff'} : {status: 'failed', reason: 'coding_protected_diff_not_verified'};
   } finally {
     try {report.leaseClosed = (await rpc({op: 'close', leaseId})).closed === true;}
@@ -178,10 +228,13 @@ async function main(argv) {
   const report = {at: new Date().toISOString(), target: 'live-local-dialogue', sessionKey,
     boundary: 'real Gateway and model, local session, no QQ delivery or synthetic QQ authority', turns: []};
   try {
+    const git = (...args) => execFileSync('/usr/bin/git', ['-C', repo, ...args], {encoding: 'utf8'});
+    report.revision = {commit: git('rev-parse', 'HEAD').trim(), dirty: Boolean(git('status', '--porcelain=v1'))};
     const {OPENCLAW_GATEWAY_TOKEN: token} = JSON.parse(readFileSync(join(runtimeRoot, 'runtime-env.json'), 'utf8'));
     const config = JSON.parse(readFileSync(join(runtimeRoot, 'openclaw.json'), 'utf8'));
     let lastReply = '';
-    const coding = args.codingCheck ? await executeCodingCheck(config, token, args.codingCheck, report) : undefined;
+    const coding = args.codingCheck ? await executeCodingCheck(params => callCodingAcceptance(config, token, params),
+      args.codingCheck, report, args.expectedBackend) : undefined;
     for (const message of args.messages) {
       let result;
       try {result = await sendGatewayTurn({config, token, sessionKey, message});}
@@ -199,9 +252,11 @@ async function main(argv) {
     }
     const finishedAt = new Date().toISOString();
     const logArgs = [join(repo, 'chatbot/scripts/log-query.mjs'), '--from', report.at,
-      '--to', new Date(Date.parse(finishedAt) + 10000).toISOString(), '--session-key', report.sessionKey,
-      '--source', 'openclaw-session', '--source', 'access-control', '--source', 'trace-events',
-      '--source', 'openclaw-runtime', '--no-text', '--json'];
+      '--to', new Date(Date.parse(finishedAt) + 10000).toISOString(), '--session-key', report.sessionKey];
+    if (coding) logArgs.push('--source', 'trace-events');
+    else logArgs.push('--source', 'openclaw-session', '--source', 'access-control', '--source', 'trace-events',
+      '--source', 'openclaw-runtime', '--no-text');
+    logArgs.push('--json');
     const logs = await queryLogs(logArgs);
     const events = summarizeEvents(logs?.events ?? []);
     const sources = (logs?.sourceStatus ?? []).map(({source, status}) => ({source, status}));

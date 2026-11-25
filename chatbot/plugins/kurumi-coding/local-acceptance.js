@@ -13,7 +13,33 @@ const TURN_TIMEOUT_MS = 60_000;
 const MAX_LEASES = 4;
 const MAX_TURNS = 16;
 const MAX_TASKS = 2;
-const paramsByOp = {open: ['op'], turn: ['op', 'leaseId', 'message'], status: ['op', 'leaseId', 'taskId'], close: ['op', 'leaseId']};
+const paramsByOp = {
+  open: ['op'], turn: ['op', 'leaseId', 'message'],
+  status: ['op', 'leaseId', 'taskId'], result: ['op', 'leaseId', 'taskId'],
+  'inspect-diff': ['op', 'leaseId', 'taskId'], close: ['op', 'leaseId'],
+};
+const protectedPath = 'config/access-control.json';
+
+function inspectProtectedDiff(service, taskId, requester) {
+  const {task, diff, committedDiff} = service.diff(taskId, requester);
+  if (task.state !== 'ready' || !task.base || !task.verifiedCommit) throw fail('coding_task_not_ready');
+  const git = (...args) => service.git(task.cwd, ...args);
+  const paths = git('diff', '--name-only', '-z', '--no-renames', task.base, task.verifiedCommit, '--')
+    .split('\0').filter(Boolean);
+  const raw = git('diff', '--raw', '-z', '--no-abbrev', '--no-renames', task.base, task.verifiedCommit, '--');
+  const clean = git('status', '--porcelain=v1', '-z', '--untracked-files=normal') === '';
+  const expectedRaw = /^:100644 100644 [a-f0-9]+ [a-f0-9]+ M\0config\/access-control\.json\0$/u;
+  let exact = false;
+  if (expectedRaw.test(raw) && diff === committedDiff && clean) {
+    const before = git('show', task.base + ':' + protectedPath);
+    const after = git('show', task.verifiedCommit + ':' + protectedPath);
+    const version = /^ {2}"version":(?=[ \t]*\d)/gmu;
+    if ([...before.matchAll(version)].length === 1) {
+      exact = after === before.replace(version, '$& ');
+    }
+  }
+  return {taskId: task.id, base: task.base, verifiedCommit: task.verifiedCommit, paths, exact};
+}
 
 export function createLocalCodingAcceptance({api, getConfig, service, catalog, trace}) {
   const leases = new Map();
@@ -187,16 +213,23 @@ export function createLocalCodingAcceptance({api, getConfig, service, catalog, t
             requester: {subjectId: 'local-coding:' + enrollment.id, leaseId: id, sessionKey, route: 'local-coding'}};
           lease.timer = setTimeout(() => close(lease), Math.max(1, expiresAt - Date.now())).unref();
           leases.set(id, lease);
-          return respond(true, {leaseId: id, sessionKey, expiresAt});
+          return respond(true, {leaseId: id, sessionKey, expiresAt, backend: enrollment.backend});
         }
         const lease = leases.get(leaseId);
         if (op === 'close' && lease) {close(lease); return respond(true, {closed: true});}
         assertLease(lease);
         if (op === 'status') {
           const task = service.status(params.taskId, lease.requester);
-          return respond(true, {taskId: task.id, state: task.state, reason: task.reason, checksPassed: task.checks?.ok,
+          return respond(true, {taskId: task.id, projectId: task.projectId, backend: task.backend,
+            base: task.base, verifiedCommit: task.verifiedCommit, state: task.state, reason: task.reason, checksPassed: task.checks?.ok,
             active: service.active.has(task.id), resultAvailable: task.delivery?.state === 'local_available'});
         }
+        if (op === 'result') {
+          const {task, result} = service.result(params.taskId, lease.requester, {limit: 1});
+          return respond(true, {taskId: task.id, backend: result.backend, roundId: result.roundId,
+            verifiedCommit: result.verifiedCommit, available: result.available, currentRound: result.currentRound});
+        }
+        if (op === 'inspect-diff') return respond(true, inspectProtectedDiff(service, params.taskId, lease.requester));
         return respond(true, await runTurn(lease, params.message, request));
       } catch (error) {
         respond(false, undefined, {code: 'UNAVAILABLE', message: error.code ?? 'local_coding_request_failed'});
