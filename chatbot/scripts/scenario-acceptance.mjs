@@ -53,6 +53,8 @@ const scenarios = {
   'mail-feedback': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/plugins/kurumi-mail/test/tool.test.js'],
     workload:'邮件确认与逐封 SMTP 回执、响应丢失和重开后回查',timeoutMs:60000},
+  'mail-dialogue': {target:'isolated',file:'mail/acceptance-dialogue-host.mjs',
+    workload:'邮件对话预览、确认、本地 SMTP 逐收件人回执和回查',timeoutMs:120000,modelTimeoutMs:480000},
   'paper-feedback': {target:'isolated',file:'acceptance/test-evidence.mjs',
     args:['chatbot/tests/papers/feedback.test.mjs'],
     workload:'译稿逐份回查、QQ 回执丢失与冻结邮件附件',timeoutMs:60000},
