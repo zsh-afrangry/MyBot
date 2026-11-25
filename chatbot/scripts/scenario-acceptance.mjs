@@ -43,7 +43,7 @@ const scenarios = {
     requires:['Landlock','KnowledgeMap FastAPI/SQLite test server'],timeoutMs:120000},
   'monthly-bill-e2e': {target:'isolated',file:'knowledgemap/acceptance-monthly-bill-e2e-host.mjs',
     workload:'收件箱收信保存xlsx→预览→确认导入→重叠表防重→移动归档与全链路日志',
-    requires:['Landlock','KnowledgeMap FastAPI/SQLite test server'],timeoutMs:150000},
+    requires:['Landlock','KnowledgeMap FastAPI/SQLite test server'],timeoutMs:150000,modelTimeoutMs:600000},
   'mail-inbox': {target:'isolated',file:'mail/acceptance-inbox-host.mjs',
     workload:'回环TLS收件箱读取、陌生发件人单封确认放行、附件落地与无EXPUNGE整理',
     requires:['Landlock'],timeoutMs:120000},
@@ -87,7 +87,7 @@ node chatbot/scripts/scenario-acceptance.mjs --target isolated [--scenario ID] [
 node chatbot/scripts/scenario-acceptance.mjs --target production [--scenario deployment] [--out PATH]
 
 --out 须位于仓库的 test-output/ 内，是尚不存在的报告文件。
---model 用于独立实例的 confirmation 或 shared-dialogue，调用已配置的真实模型。--due 只运行确认、Cron 到点及回执场景。
+--model 用于支持对话的独立场景，调用已配置的真实模型。--due 只运行确认、Cron 到点及回执场景。
 --diagnostic-fault 用于复现独立场景的受控失败：confirmation 可用 gateway-start 或 reminder-lookup，bills-feedback 可用 bills-assertion，host-admin 可用 host-fixture。
 生产目标目前只覆盖只读部署核验。`;
 

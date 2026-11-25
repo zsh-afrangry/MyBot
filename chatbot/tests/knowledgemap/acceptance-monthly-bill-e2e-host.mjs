@@ -1,6 +1,7 @@
 // End-to-end isolated host acceptance: IMAP email with bill .xlsx attachment -> save_attachment ->
 // knowledge_bill_import(preview -> confirm -> commit) -> overlapping second .xlsx delta import ->
 // email_inbox(propose_manage move -> confirm -> commit_manage) -> log-query cross-module trace verification.
+// --model calls the configured paid model using synthetic data; no production state, real QQ or real mail.
 import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {randomBytes} from 'node:crypto';
@@ -13,17 +14,22 @@ import {fileURLToPath} from 'node:url';
 import zlib from 'node:zlib';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {collectEvents} from '../../packages/log-query/index.js';
+import {redactText} from '../../packages/observability/index.js';
 import {buildMessage} from '../../plugins/kurumi-mail/mime.js';
 import {IMAP_CERT_FILE, IMAP_TEST_PASS, IMAP_TEST_USER, MockImapServer} from '../../plugins/kurumi-mail/test/mock-imap.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
+import {configuredModel, observeToolResults, syntheticPersona} from '../acceptance/configured-dialogue.mjs';
+import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
+import {assertionDiagnostics} from '../acceptance/assertion-diagnostics.mjs';
 import {createOneBotPeer, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
-import {scenarioProgress} from '../acceptance/scenario-lifecycle.mjs';
+import {scenarioProgress, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
 import {startIsolatedKnowledgeMap} from './isolated-api.mjs';
 
 const [flag, out, ...extra] = process.argv.slice(2);
-assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out) && !extra.length, 'Require a new absolute --out');
+const realModel = extra.length === 1 && extra[0] === '--model';
+assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out) && (!extra.length || realModel), 'Require a new absolute --out');
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 
@@ -144,6 +150,7 @@ const report = {
   cases: [],
   requests: 0,
   primaryModel: 'fixture/fixture',
+  cognition: realModel ? 'configured-provider' : 'deterministic fixture',
 };
 
 function unwrap(value) {
@@ -161,7 +168,8 @@ function unwrap(value) {
   return value;
 }
 
-let active;
+let active, upstream, failureStep, currentTurn;
+const observeResults = observeToolResults();
 function modelReply(body, tool, res, text = '月度账单全链路验收完成。') {
   const choice = tool ? {
     role: 'assistant',
@@ -188,6 +196,16 @@ const server = http.createServer(async (req, res) => {
     res.setHeader('content-type', 'application/json');
     assert(++report.requests <= 90, 'Unexpected model request budget exceeded');
     assert(active, 'Unexpected model request');
+    if (realModel) {
+      observeResults(body.messages ?? [], active.results);
+      const response = await fetch(upstream.url, {method: 'POST', redirect: 'error',
+        headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + upstream.key},
+        signal: AbortSignal.timeout(60000), body: JSON.stringify({...body, model: upstream.modelId, max_tokens: 2000, temperature: 0})});
+      if (!response.ok) throw Error('Configured model HTTP ' + response.status);
+      res.writeHead(200, {'Content-Type': response.headers.get('content-type') ?? 'application/json'});
+      for await (const chunk of response.body) res.write(chunk);
+      return res.end();
+    }
     if (active.observe) {
       const last = body.messages.findLast(m => m.role === 'tool');
       active.observe(unwrap(last?.content));
@@ -205,13 +223,16 @@ const server = http.createServer(async (req, res) => {
     const args = typeof step.args === 'function' ? step.args() : step.args;
     return modelReply(body, ['dispatch_action', {id: step.name, args}], res);
   } catch (error) {
-    report.fixtureError = error.message;
+    report.fixtureError = redactText(error.message);
     res.writeHead(400).end(JSON.stringify({error: {message: 'monthly_bill_e2e_fixture_failed'}}));
   }
 });
 
 let gateway, peer, km, imap;
 try {
+  scenarioProgress('gateway-start', 'started', 'environment');
+  failureStep = 'gateway-start';
+  if (realModel) {upstream = configuredModel(repo); report.primaryModel = upstream.primary;}
   km = await startIsolatedKnowledgeMap(root);
   imap = new MockImapServer();
 
@@ -263,7 +284,7 @@ try {
           baseUrl: `http://127.0.0.1:${server.address().port}/v1`,
           apiKey: 'synthetic',
           api: 'openai-completions',
-          models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200}],
+          models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: realModel ? 128000 : FIXTURE_CONTEXT_WINDOW, maxTokens: 1200}],
         },
       },
     },
@@ -323,6 +344,9 @@ try {
     logging: {file: path.join(state, 'runtime.log')},
   }, repo), policy);
 
+  if (realModel) syntheticPersona({repo, root: state, config: cfg, policy,
+    userFile: '这是一次虚构邮件与账单场景。时区为 Asia/Shanghai。'});
+
   gateway = await startIsolatedGateway({
     repo,
     root: state,
@@ -338,8 +362,97 @@ try {
   });
   await gateway.ready();
   await waitForAcceptance(peer.connected, 'monthly-bill-e2e OneBot socket');
-  scenarioProgress('gateway-ready');
+  await assert.rejects(gateway.call('kurumi-qq.testInbound', {}, 3000), /unknown method|not found/iu);
+  scenarioProgress('gateway-start', 'passed', 'environment');
+  failureStep = undefined;
 
+  if (realModel) {
+    let p1, p2, archive;
+    const result = (results, tool, predicate = () => true) => {
+      const found = results.find(row => row.tool === tool && predicate(row.value));
+      assert(found, 'Missing expected ' + tool + ' result');
+      return found;
+    };
+    const turn = async (label, message, verify) => {
+      scenarioSignal.throwIfAborted();
+      failureStep = label;
+      scenarioProgress(label, 'started', 'check');
+      active = {results: []};
+      const startedAt = Date.now(), before = peer.sends.length;
+      const event = peer.message(owner, message), inbound = await peer.send(event);
+      currentTurn = {startedAt, messageIds: [String(event.message_id)]};
+      await waitForOneBotTurn(channelDir, [inbound], {timeoutMs: 180000, check() {
+        scenarioSignal.throwIfAborted(); peer.check(); assert(!report.fixtureError, report.fixtureError);
+      }});
+      const sends = peer.sends.slice(before);
+      assert(sends.length && sends.every(send => send.accepted), 'No accepted loopback reply');
+      const dialogue = captureDialogueEvidence({root: state, owner, startedAt, finishedAt: Date.now(), messageIds: currentTurn.messageIds});
+      currentTurn.runId = dialogue.runId;
+      const events = collectEvents({runtimeRoot: state, from: startedAt, to: Date.now() + 1000,
+        sources: ['trace-events', 'knowledgemap']}).filter(row => row.correlation?.runId === dialogue.runId);
+      await verify({results: active.results, sends, events});
+      report.cases.push({label, passed: true, receiptCount: sends.length, dialogue,
+        events: events.map(row => ({kind: row.kind, at: row.at,
+          ...Object.fromEntries(['runId', 'toolCallId', 'proposalId', 'businessId']
+            .filter(key => row.correlation?.[key] != null).map(key => [key, row.correlation[key]])),
+          ...Object.fromEntries(['uid', 'uidValidity', 'partId', 'status', 'method']
+            .filter(key => row.data?.[key] != null).map(key => [key, row.data[key]]))}))});
+      active = undefined; currentTurn = undefined; failureStep = undefined;
+      scenarioProgress(label, 'passed', 'check');
+    };
+    const totals = async expected => assert.equal((await km.web('bills/')).total, expected);
+    const expectPreview = (results, events, uid, inserted, skipped) => {
+      const attachment = result(results, 'email_inbox', value => value?.action === 'save_attachment' && value.uid === uid);
+      const preview = result(results, 'knowledge_bill_import', value => value?.status === 'needs_confirmation');
+      assert.equal(preview.args.path, attachment.value.path, 'Preview did not use the saved attachment');
+      assert.equal(preview.value.summary.insertCount, inserted);
+      assert.equal(preview.value.summary.skippedCount, skipped);
+      assert(events.some(row => row.kind === 'mail.inbox.attachment_saved' && row.data?.uid === uid));
+      assert(events.some(row => row.kind === 'business.api'));
+      return preview.value;
+    };
+    const expectCommit = (results, events, proposal, inserted) => {
+      const commit = result(results, 'knowledge_bill_import', value => value?.proposalId === proposal.proposalId && value?.inserted_count === inserted);
+      assert.equal(commit.value.ok, true);
+      assert(events.some(row => row.kind === 'bills.import.commit' && row.correlation?.proposalId === proposal.proposalId));
+    };
+
+    await turn('mail-first-preview', '请查收来自 bills@export.example、日期为10月1日至7日的账单邮件，保存附件并预览导入，先不要提交。',
+      async ({results, sends, events}) => {
+        p1 = expectPreview(results, events, uid1, 2, 0);
+        assert(sends.some(send => textOfSend(send).includes('oct-1-7.xlsx')), 'Preview did not identify the first attachment');
+        await totals(0);
+      });
+    await turn('mail-first-confirm', '确认导入刚才预览的第一份账单。', async ({results, events}) => {
+      expectCommit(results, events, p1, 2); await totals(2);
+    });
+    await turn('mail-overlap-preview', '请保存并预览另一封10月4日至14日账单邮件的附件，先不要提交。',
+      async ({results, sends, events}) => {
+        p2 = expectPreview(results, events, uid2, 1, 1);
+        assert(sends.some(send => textOfSend(send).includes('oct-4-14.xlsx')), 'Preview did not identify the second attachment');
+        await totals(2);
+      });
+    await turn('mail-overlap-confirm', '确认导入刚才预览的第二份账单。', async ({results, events}) => {
+      expectCommit(results, events, p2, 1); await totals(3);
+    });
+    await turn('mail-repeat-preview', '请再次用刚才第二份附件检查是否还有账单需要导入，只做预览。', async ({results}) => {
+      const repeated = result(results, 'knowledge_bill_import', value => value?.status === 'already_imported');
+      assert.equal(repeated.value.nothingToImport, true);
+      await totals(3);
+    });
+    await turn('mail-archive-preview', '请把第一封10月1日至7日的账单邮件移到“账单归档”，先给我预览。', async ({results}) => {
+      archive = result(results, 'email_inbox', value => value?.domain === 'mail_inbox' && value?.proposalId).value;
+      assert.equal(imap.getMessages('账单归档').length, 0);
+    });
+    await turn('mail-archive-confirm', '确认移动刚才的第一封账单邮件。', async ({results, events}) => {
+      const move = result(results, 'email_inbox', value => value?.action === 'commit_manage' && value?.proposalId === archive.proposalId);
+      assert.equal(move.value.expunged, false);
+      assert(events.some(row => row.kind === 'mail.inbox.manage_commit' && row.correlation?.proposalId === archive.proposalId
+        && row.data?.uid === uid1));
+      assert.equal(imap.getMessages('账单归档').length, 1); assert.equal(imap.expungeAttempted, false);
+      await totals(3);
+    });
+  } else {
   // Step 1: Receive mail 1 -> save_attachment -> knowledge_bill_import(preview)
   let saved1Path, p1, p2, moveProp;
   active = {
@@ -506,29 +619,50 @@ try {
   assert(!serialized.includes('E2E_SHARED_NOTE'));
   assert(!serialized.includes(IMAP_TEST_PASS));
   report.cases.push('confirmed_archive_and_cross_module_log_query_verified');
+  }
 
   report.passed = true;
 } catch (error) {
   report.passed = false;
-  report.error = report.fixtureError ?? error.message;
+  report.error = report.fixtureError ?? redactText(String(error.message));
+  report.failureDetails = assertionDiagnostics(error);
+  report.blocked = failureStep === 'gateway-start';
+  if (currentTurn && !currentTurn.runId) {
+    try {currentTurn.runId = captureDialogueEvidence({root: state, owner, ...currentTurn, finishedAt: Date.now()}).runId;} catch {}
+  }
+  if (currentTurn?.runId) {
+    const from = new Date(currentTurn.startedAt).toISOString(), to = new Date(Date.now() + 1000).toISOString();
+    report.failureReference = {status: 'available', kind: 'log-query', runtimeRoot: state,
+      runId: currentTurn.runId, messageIds: currentTurn.messageIds, command: process.execPath,
+      args: [path.join(repo, 'chatbot/scripts/log-query.mjs'), '--runtime-root', state, '--snowluma-root', state,
+        '--from', from, '--to', to, '--run-id=' + currentTurn.runId,
+        '--source', 'openclaw-session', '--source', 'trace-events', '--source', 'knowledgemap', '--no-text', '--json']};
+  }
+  if (failureStep) scenarioProgress(failureStep, 'failed', report.blocked ? 'environment' : 'check');
 } finally {
-  report.gatewayStopped = await gateway?.close() ?? null;
-  if (report.gatewayStopped === false) {
-    report.passed = false;
-    report.error ??= 'Isolated Gateway did not stop gracefully';
+  scenarioProgress('fixture-cleanup', 'started', 'cleanup');
+  const stop = async (resource, close) => {
+    if (!resource) return null;
+    try {return (await close()) !== false;} catch {return false;}
+  };
+  report.gatewayStopped = await stop(gateway, () => gateway.close());
+  report.knowledgeMapStopped = await stop(km, () => km.close());
+  report.imapStopped = await stop(imap, () => imap.stop());
+  report.peerStopped = await stop(peer, () => peer.close());
+  report.modelStopped = server.listening ? await stop(server, () => new Promise((resolve, reject) => {
+    server.closeAllConnections(); server.close(error => error ? reject(error) : resolve(true));
+  })) : null;
+  if ([report.gatewayStopped, report.knowledgeMapStopped, report.imapStopped, report.peerStopped, report.modelStopped].includes(false)) {
+    report.passed = false; report.error ??= 'Isolated service did not stop cleanly';
   }
-  report.knowledgeMapStopped = await km?.close() ?? null;
-  if (report.knowledgeMapStopped === false) {
-    report.passed = false;
-    report.error ??= 'KnowledgeMap API did not stop cleanly';
-  }
-  await imap?.stop();
-  server.closeAllConnections();
-  await Promise.all([peer?.close(), new Promise(resolve => server.close(resolve))]);
   report.configSha256 = gateway?.configSha256;
-  if (report.passed) fs.rmSync(root, {recursive: true, force: true});
-  else { report.diagnosticsRoot = root; process.exitCode = 1; }
+  if (report.passed) {try {fs.rmSync(root, {recursive: true, force: true});} catch {}}
   report.fixtureCleaned = !fs.existsSync(root);
+  if (!report.fixtureCleaned) {
+    report.passed = false; report.error ??= 'Isolated fixture was retained';
+    report.diagnosticsRoot = root; process.exitCode = 1;
+  }
+  scenarioProgress('fixture-cleanup', report.fixtureCleaned ? 'passed' : 'failed', 'cleanup');
   fs.mkdirSync(path.dirname(out), {recursive: true});
   fs.writeFileSync(out, JSON.stringify(report, null, 2) + '\n', {flag: 'wx', mode: 0o600});
   console.log(JSON.stringify({passed: report.passed, cases: report.cases.length, error: report.error, evidence: out}));
