@@ -1,5 +1,5 @@
 // Disposable OpenClaw and loopback OneBot. --model calls the configured paid model
-// with synthetic profile/planning/weather data; no real QQ or production writes.
+// with synthetic profile/planning/weather or E7 data; no real QQ or production writes.
 // Runs real domain tools and renders fixture E7 cards, or confirms and reads a temporary Profile/Planning SQLite database.
 import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from './fixture-model.mjs';
 import assert from 'node:assert/strict';
@@ -26,7 +26,7 @@ import {createOneBotPeer, textOfSend, waitForAcceptance, waitForOneBotTurn} from
 import {scenarioProgress, scenarioSignal} from './scenario-lifecycle.mjs';
 
 const [flag, out, scenario, ...extra] = process.argv.slice(2);
-const realModel = scenario === 'profile-planning' && extra.length === 1 && extra[0] === '--model';
+const realModel = extra.length === 1 && extra[0] === '--model';
 assert(flag === '--out' && isAbsolute(out ?? '') && !existsSync(out) && ['image', 'profile-planning'].includes(scenario) && (!extra.length || realModel));
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(resolve(out).startsWith(resolve(repo, 'test-output') + sep), 'Use test-output for evidence');
@@ -114,9 +114,15 @@ async function turn(message, steps, answer = () => '已经核对。') {
   await waitForOneBotTurn(channelDir, [id], {check, timeoutMs: realModel ? 180000 : 20000});
   const sends = peer.sends.slice(before);
   assert(sends.length && sends.every(send => send.accepted), 'No accepted loopback reply');
-  const results = realModel ? steps.map(([name]) => {
-    const row = active.observed.findLast(result => result.tool === name);
+  const results = realModel ? steps.map(([name, expected]) => {
+    const row = active.observed.findLast(result => result.tool === name
+      && (name !== 'kurumi_logs' || !expected.messageId || String(result.args?.messageId) === expected.messageId));
     assert(row, 'Missing expected ' + name + ' result');
+    if (name === 'kurumi_logs' && typeof row.value === 'string' && row.value.includes('EXTERNAL_UNTRUSTED_CONTENT')) {
+      const start = row.value.indexOf('{"status":"ok"');
+      assert(start >= 0, 'Missing authorized log result');
+      return JSON.parse(row.value.slice(start, row.value.lastIndexOf('}') + 1));
+    }
     return row.value;
   }) : active.results;
   assert.equal(results.length, steps.length);
@@ -124,7 +130,7 @@ async function turn(message, steps, answer = () => '已经核对。') {
   currentTurn.runId = dialogue.runId;
   report.turns.push({label: failureStep, dialogue});
   scenarioProgress(failureStep, 'passed', 'check');
-  return {id: String(event.message_id), results, sends};
+  return {id: String(event.message_id), results, sends, observed: active.observed};
 }
 
 async function seedE7(cacheRoot) {
@@ -159,7 +165,7 @@ async function acceptImages() {
   const imageCall = (verify, extra = {}) => ['e7_image', {...args, ...extra}, verify];
   const images = () => peer.sends.filter(isImage);
   async function lookup(id, imageStatus, platformStatus) {
-    const {results} = await turn('请核对这条发图请求的结果。', [['kurumi_logs',
+    const {results} = await turn(realModel ? `请按原请求消息 ID ${id} 核对这次发图结果。` : '请核对这条发图请求的结果。', [['kurumi_logs',
       {view: 'events', sources: ['channel-delivery'], kind: 'qq.image_feedback', messageId: id, noText: true},
     ]]);
     assert.equal(results[0].total, 1);
@@ -175,15 +181,17 @@ async function acceptImages() {
     assert.equal(result.error.code, 'no_build_samples');
     assert.equal(result.feedback?.status, 'skipped');
   }, {filters: {minStats: {spd: 1000}}})]);
+  if (realModel) {assert.equal(empty.results[0].error?.code, 'no_build_samples'); assert.equal(empty.results[0].feedback?.status, 'skipped');}
   assert.equal((await lookup(empty.id, 'no_results', 'not_attempted')).feedback.evidence.code, 'no_build_samples');
   assert.equal(images().length, 0);
   report.cases.push('Zero matching builds yields a request receipt and no OneBot image sends');
 
   const sent = await turn('发一张测试甲的一套配装图。', [
     imageCall(result => assert.equal(result.status, 'sent')),
-    imageCall(result => assert.equal(result.status, 'already_sent'), {kind: 'hero_card'}),
+    ...(!realModel ? [imageCall(result => assert.equal(result.status, 'already_sent'), {kind: 'hero_card'})] : []),
   ]);
-  assert.equal(sent.results[0].messageId, sent.results[1].messageId);
+  assert.equal(sent.results[0].status, 'sent');
+  if (!realModel) assert.equal(sent.results[0].messageId, sent.results[1].messageId);
   const [physical] = images();
   assert(physical?.accepted);
   assert.equal(String(physical.user_id), owner);
@@ -197,6 +205,16 @@ async function acceptImages() {
   assert.equal(images().length, 1);
   report.cases.push('A rendered E7 card is accepted once and repeated owner queries return that same receipt');
 
+  if (realModel) {
+    const data = await turn('查一下测试甲的技能，注明 E7·WIKI 数据来源和校对日期。', [['e7_data', {action: 'hero', heroCode: 'test-hero-1'}]]);
+    const query = data.observed.findLast(row => row.tool === 'e7_data' && row.args?.action === 'hero' && row.args.heroCode === 'test-hero-1');
+    assert(query, 'The model did not select the matching hero query');
+    const text = data.sends.map(textOfSend).join('');
+    assert(/E7.?WIKI/iu.test(text) && /UTC|20\d\d/u.test(text), 'E7 reply omitted its source or date');
+    assert(/测试技能|第一段|第二段/u.test(text), 'E7 reply omitted the source skill data');
+    report.cases.push('A natural E7 query selects the matching hero data and cites the source date');
+    return;
+  }
   imageResponse = 'lose-receipt';
   const lost = await turn('再发一张测试甲的配装图。', [imageCall(result => {
     assert.equal(result.feedback?.status, 'succeeded');
@@ -357,7 +375,7 @@ try {
       bridgeTokenFile: tokenFile, apiHost: 'fixture.invalid', apiKey: 'fixture'}},
   })};
   const plugins = Object.keys(entries);
-  const tools = image ? ['e7_image', 'kurumi_logs'] : ['personal_confirmation',
+  const tools = image ? ['e7_data', 'e7_image', 'kurumi_logs'] : ['personal_confirmation',
     'personal_weather_get_brief', ...['personal_profile', 'personal_planning'].flatMap(domain => ['state_get', 'change_propose', 'change_commit'].map(name => domain + '_' + name))];
   const cfg = withHostControl(compileAccessConfig({
     agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'},
@@ -372,7 +390,7 @@ try {
     session: {dmScope: 'per-channel-peer'}, cron: {enabled: false}, update: {checkOnStart: false}, logging: {file: join(root, 'runtime.log')},
   }, ownerPolicy(owner)), repo);
   if (realModel) syntheticPersona({repo, root, config: cfg, policy: ownerPolicy(owner),
-    userFile: '这是一次虚构地点、行程和天气场景。时区为 Asia/Shanghai。'});
+    userFile: image ? '这是一次虚构第七史诗资料与图片场景。' : '这是一次虚构地点、行程和天气场景。时区为 Asia/Shanghai。'});
   gateway = await startIsolatedGateway({repo, root, token, configure: () => cfg, preload: limitFixtureFetch()});
   await gateway.ready();
   await waitForAcceptance(peer.connected, 'OneBot connection');

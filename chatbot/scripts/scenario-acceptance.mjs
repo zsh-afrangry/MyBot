@@ -75,7 +75,7 @@ const scenarios = {
     workload:'待办和天气播报的生成、跳过、失败与计划时刻回查',
     requires:['KnowledgeMap FastAPI/SQLite test server'], timeoutMs:300000, modelTimeoutMs:600000},
   'e7-image-feedback': {target: 'isolated', file: 'acceptance/acceptance-business-feedback-host.mjs',
-    args: ['image'], workload: 'E7 零命中、真实渲染、QQ 图片受理和原请求回查', requires: ['Bubblewrap'], timeoutMs: 100000},
+    args: ['image'], workload: 'E7 查询、零命中、真实渲染、本地图片受理和原请求回查', requires: ['Bubblewrap'], timeoutMs: 100000, modelTimeoutMs: 600000},
   'profile-planning-feedback': {target: 'isolated', file: 'acceptance/acceptance-business-feedback-host.mjs',
     args: ['profile-planning'], workload: '所在地与行程确认、天气和历史所在地核对', timeoutMs: 120000, modelTimeoutMs: 600000},
   'shared-city': {target:'isolated', file:'acceptance/acceptance-shared-city-host.mjs',
