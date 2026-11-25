@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "revision": 16,
+  "revision": 17,
   "subjects": [
     {
       "qq": "365999865",
@@ -131,5 +131,10 @@
       "mailRecipients": [],
       "note": "用户明确授权用于真人验收；与现有成员相同，仅一般聊天与自身论文检索、导入、翻译、取消及QQ文件回传，使用独立工作区。"
     }
-  ]
+  ],
+  "localCodingAcceptance": {
+    "id": "codex-local-coding",
+    "backend": "opencode",
+    "expiresAt": "2026-11-25T15:15:18.036Z"
+  }
 }
