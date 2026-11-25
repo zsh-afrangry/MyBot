@@ -17,6 +17,7 @@ import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
 import {scenarioProgress,scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
 import {assertionDiagnostics} from '../acceptance/assertion-diagnostics.mjs';
 import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
+import {observedToolCall} from '../acceptance/configured-dialogue.mjs';
 import {readQqTranscript} from '../../packages/log-query/qq-messages.js';
 import {eventReference} from '../../packages/log-query/log-query-privacy.mjs';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
@@ -97,7 +98,13 @@ const model=http.createServer(async(req,res)=>{
   }
   if(realModel){
    assert(report.requests<=50,'real model request budget');
-   for(const m of body.messages??[])for(const c of m.tool_calls??[]){if(seenModelCalls.has(c.id))continue;seenModelCalls.add(c.id);let a;try{a=JSON.parse(c.function.arguments);}catch{a={};}report.modelCalls??=[];report.modelCalls.push({name:c.function.name,target:typeof a.id==='string'?a.id:null,action:a.action??a.args?.action??null,domain:a.domain??a.args?.domain??null});}
+   for(const m of body.messages??[])for(const c of m.tool_calls??[]){
+    if(seenModelCalls.has(c.id))continue;
+    seenModelCalls.add(c.id);
+    const {tool,args}=observedToolCall(c.function);
+    report.modelCalls??=[];
+    report.modelCalls.push({name:tool,action:args.action??null,domain:args.domain??null});
+   }
    if(active.label==='model-read-due-reminder')for(const message of body.messages??[]){
     if(message.role!=='tool')continue;
     const value=decode(message.content);
@@ -300,7 +307,7 @@ async function verifyDueReminder(){
   await actualTurn('model-reconcile-due-reminder','请不带参数调用 personal_reminder_state_get，查看目前的一次性提醒。',async()=>{
    if(realModel){
     const calls=(report.modelCalls??[]).slice(beforeCalls);
-    assert(calls.some(call=>call.name==='personal_reminder_state_get'||call.target==='personal_reminder_state_get'),
+    assert(calls.some(call=>call.name==='personal_reminder_state_get'),
      'Real model did not query the reminder state');
    }
    const [row]=query('SELECT status,delivered_at_utc FROM reminders WHERE reminder_id=?',due.reminderId);
@@ -312,7 +319,7 @@ async function verifyDueReminder(){
   await actualTurn('model-read-due-reminder',`请调用 personal_reminder_state_get 查询一次性提醒 ${due.reminderId} 的到点和投递结果。`,async()=>{
    if(realModel){
     const calls=(report.modelCalls??[]).slice(beforeCalls);
-    assert(calls.some(call=>call.name==='personal_reminder_state_get'||call.target==='personal_reminder_state_get'),
+    assert(calls.some(call=>call.name==='personal_reminder_state_get'),
      'Real model did not query the reminder feedback');
     assert(active.feedback,'Reminder feedback was not observed in the model turn');
     verifyFeedback(active.feedback);

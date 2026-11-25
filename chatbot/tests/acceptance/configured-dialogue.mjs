@@ -17,6 +17,18 @@ export function configuredModel(repo) {
   return {primary, modelId, url: url.href.replace(/\/$/u, '') + '/chat/completions', key};
 }
 
+export async function relayConfiguredModel(upstream, request, reply) {
+  const response = await fetch(upstream.url, {
+    method: 'POST', redirect: 'error', signal: AbortSignal.timeout(60000),
+    headers: {'Content-Type': 'application/json', Authorization: 'Bearer ' + upstream.key},
+    body: JSON.stringify({...request, model: upstream.modelId, max_tokens: 2000, temperature: 0}),
+  });
+  if (!response.ok) throw Error('Configured model HTTP ' + response.status);
+  reply.writeHead(200, {'Content-Type': response.headers.get('content-type') ?? 'application/json'});
+  for await (const chunk of response.body) reply.write(chunk);
+  reply.end();
+}
+
 export function syntheticPersona({repo, root, config, policy, userFile}) {
   const source = path.join(root, 'persona-source');
   const put = (file, bytes) => {
@@ -32,13 +44,35 @@ export function syntheticPersona({repo, root, config, policy, userFile}) {
   for (const [file, text] of personaFiles(source, root).files) applyPersonaFile(file, text);
 }
 
+export function observedToolCall({name, arguments: payload}) {
+  let args;
+  try {args = JSON.parse(payload);} catch {args = {};}
+  if (name === 'dispatch_action' && typeof args?.id === 'string') {
+    const tool = /^openclaw:[^:]+:([^:]+)$/u.exec(args.id)?.[1] ?? args.id;
+    return {tool, args: args.args ?? {}};
+  }
+  return {tool: name, args: args ?? {}};
+}
+
+export function findObservedToolResult(results, tool, identifiers) {
+  return results.findLast(row => row.tool === tool
+    && Object.entries(identifiers ?? {}).every(([key, value]) => row.args?.[key] === value));
+}
+
+// A confirmation may identify a proposal through the host's presentation
+// focus, so correlate the returned grant rather than the model's arguments.
+export function observedAuthorization(results, {domain, proposalId, payloadHash}) {
+  return results.some(row => row.tool === 'personal_confirmation' && row.args?.action === 'confirm'
+    && row.args.domain === domain && row.value?.ok === true
+    && (row.value.results ?? [row.value]).some(grant => grant.ok === true && grant.status === 'authorized'
+      && grant.domain === domain && grant.proposalId === proposalId && grant.payloadHash === payloadHash));
+}
+
 export function observeToolResults() {
   const calls = new Map(), seen = new Set();
   return (messages, results) => {
     for (const message of messages) for (const call of message.tool_calls ?? []) {
-      let args;
-      try {args = JSON.parse(call.function.arguments);} catch {args = {};}
-      calls.set(call.id, {tool: args.id ?? call.function.name, args: args.args ?? args});
+      calls.set(call.id, observedToolCall(call.function));
     }
     for (const message of messages) {
       const id = message.tool_call_id;

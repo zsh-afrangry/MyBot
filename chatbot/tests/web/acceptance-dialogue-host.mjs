@@ -14,7 +14,7 @@ import {redactText} from '../../packages/observability/index.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
 import {assertionDiagnostics} from '../acceptance/assertion-diagnostics.mjs';
-import {configuredModel, observeToolResults, syntheticPersona} from '../acceptance/configured-dialogue.mjs';
+import {configuredModel, observedToolCall, observeToolResults, syntheticPersona} from '../acceptance/configured-dialogue.mjs';
 import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
 import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import {startIsolatedGateway} from '../acceptance/isolated-gateway.mjs';
@@ -153,9 +153,19 @@ try {
   const sends = peer.sends.slice(before), answer = sends.map(textOfSend).join('');
   assert(sends.length && sends.every(send => send.accepted));
   const searches = active.results.filter(row => row.tool === 'web_search');
+  const citations = answer.match(/https?:\/\/[^\s)\]>`，。]+/gu) ?? [];
+  const isIana = url => ['iana.org', 'www.iana.org'].includes(new URL(url).hostname);
+  const matchesCitation = (citation, url) => {
+    if (citation === url) return true;
+    if (!live || typeof url !== 'string' || !url.startsWith('http://') || !isIana(url)) return false;
+    // IANA's redirect may return HTTP while the model cites its HTTPS form.
+    return citation === 'https://' + url.slice('http://'.length);
+  };
   const fetch = active.results.find(row => row.tool === 'web_fetch' && typeof row.args?.url === 'string'
-    && answer.includes(row.args.url) && searches.some(search => JSON.stringify(search.value).includes(row.args.url))
-    && (!live || /iana\.org/iu.test(row.args.url)));
+    && searches.some(search => search.value?.results?.some(result => result.url === row.args.url))
+    && row.value?.status >= 200 && row.value.status < 300
+    && citations.some(cite => matchesCitation(cite, row.args.url) || matchesCitation(cite, row.value.finalUrl))
+    && (!live || (isIana(row.args.url) && isIana(row.value.finalUrl ?? row.args.url))));
   assert(fetch, 'Reply must cite a fetched page from the search results');
   // A parallel search and guessed URL do not prove that the page came from the search.
   const searchCalls = new Set(); let seenMatchingSearch = false, fetchedAfterSearch = false;
@@ -163,8 +173,7 @@ try {
     if (message.role === 'tool' && searchCalls.has(message.tool_call_id)
         && JSON.stringify(message.content).includes(fetch.args.url)) seenMatchingSearch = true;
     for (const call of message.tool_calls ?? []) {
-      let args; try {args = JSON.parse(call.function.arguments);} catch {args = {};}
-      const tool = args.id ?? call.function.name, callArgs = args.args ?? args;
+      const {tool, args: callArgs} = observedToolCall(call.function);
       if (tool === 'web_search') searchCalls.add(call.id);
       if (tool === 'web_fetch' && callArgs.url === fetch.args.url && seenMatchingSearch) fetchedAfterSearch = true;
     }

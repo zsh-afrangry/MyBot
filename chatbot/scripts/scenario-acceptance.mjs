@@ -29,7 +29,7 @@ const scenarios = {
     workload: '编码服务取消、等待超时、重启核对与档案聚合', requires: ['Landlock', 'Git'], timeoutMs: 120000},
   'coding-extensions': {target: 'isolated', file: 'coding/acceptance-extensions-host.mjs',
     workload: '外部真实 Git 仓库、自维护禁区闸门与可扩展 CLI 适配器', requires: ['Landlock', 'Git'], timeoutMs: 120000},
-  'access-member': admin('member', '成员确认新增、隔离会话和撤权'),
+  'access-member': {...admin('member', '成员确认新增、隔离会话和撤权'), modelTimeoutMs: 600000},
   'access-mail': admin('mail_recipient', '收件人同步及旧草稿拒绝'),
   'access-mail-sender': admin('mail_sender', '发件人白名单登记、同步与撤权'),
   'knowledge-bills-access': admin('owner_tool', 'KnowledgeMap 查账与主人工具白名单同步、撤权', ['KnowledgeMap FastAPI/SQLite test server']),
@@ -66,7 +66,7 @@ const scenarios = {
   'access-exec': admin('exec_root', '普通目录写入范围同步与撤权', ['Landlock']),
   'access-project': admin('coding_project', '项目准入、检查预设与历史任务', ['Landlock', 'Git']),
   'host-admin': {target: 'isolated', file: 'host-admin/acceptance-host.mjs',
-    workload: '受控系统操作确认、拒绝、防重放、exec隔离与状态核验', requires: ['Landlock'], timeoutMs: 120000},
+    workload: '受控系统操作确认、拒绝、防重放、exec隔离与状态核验', requires: ['Landlock'], timeoutMs: 120000, modelTimeoutMs: 480000},
   'host-files': {target: 'isolated', file: 'files/acceptance-host.mjs',
     workload: '分级文件工具、自动快照恢复、exec边界迁移与有界任务租约', requires: ['Landlock'], timeoutMs: 120000},
   'office-files': {target: 'isolated', file: 'files/acceptance-office-host.mjs',
@@ -171,7 +171,7 @@ async function runIsolated(id, model, directory, signal, diagnosticFault, due, l
   const evidence = join(directory, id + '.json');
   const scenario = scenarios[id];
   const timeoutMs = model && due ? 600000 : model ? scenario.modelTimeoutMs : scenario.timeoutMs;
-  const info = {name: id, timeoutMs, requires: scenario.requires ?? []};
+  const info = {name: id, workload: scenario.workload, timeoutMs, requires: scenario.requires ?? []};
   const executable = name => {
     try {accessSync(localDependencies[name], constants.X_OK); return true;}
     catch {return false;}
@@ -292,6 +292,7 @@ try {
         try {
           const selected = args.scenario ? [args.scenario] : Object.keys(scenarios)
             .filter(id => scenarios[id].target === 'isolated' && (!args.model || scenarios[id].modelTimeoutMs));
+          report.selected = selected;
           for (const id of selected) {
             if (controller.signal.aborted) break;
             const due = args.due || (args.model && !args.scenario && id === 'confirmation');

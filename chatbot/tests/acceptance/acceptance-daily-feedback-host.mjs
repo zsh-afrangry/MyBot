@@ -332,7 +332,7 @@ try {
   const adjacent = await lookup('weather', failedWeather.at - 1000);
   assert.equal(adjacent.feedback.status, 'unknown');
   assert.equal(adjacent.notification.platformStatus, 'unknown');
-  if (realModel) assert(/未知|无法|没查到|没有.{0,8}记录|不能.{0,8}(?:确认|判断)|不清楚/u.test(lastLookupText),
+  if (realModel) assert(/未知|无法|没查到|查不到|未查到|没有.{0,8}记录|不能.{0,8}(?:确认|判断)|不清楚/u.test(lastLookupText),
     'Reply must acknowledge unknown evidence');
   if (realModel) {
     const repeated = readDailyFeedback(root, dailyFeedbackQuery({broadcast: 'weather', scheduledAt: localTime(failedWeather.at)}));
