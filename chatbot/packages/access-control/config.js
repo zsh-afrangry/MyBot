@@ -1,6 +1,7 @@
 // Compile one editable permission matrix into the existing atomic runtime configuration plane.
 import path from 'node:path';
 import {validatePolicy, agentFor, MEMBER_TOOLS} from './index.js';
+import {LOCAL_CODING_AGENT, LOCAL_CODING_TOOL} from './local-coding.js';
 export function compileAccessConfig(input, value) {
   const cfg = structuredClone(input), policy = validatePolicy(value), owner = policy.subjects.find(r => r.role === 'owner');
   cfg.channels['kurumi-qq'].ownerId = owner.qq;
@@ -18,6 +19,13 @@ export function compileAccessConfig(input, value) {
     };
   }
   const entries = cfg.agents.entries;
+  if (policy.localCodingAcceptance) {
+    entries[LOCAL_CODING_AGENT] = {
+      workspace: path.join(path.dirname(entries.main.workspace), 'acceptance', 'coding-workspace'),
+      model: structuredClone(entries.main.model), skills: [],
+      tools: {profile: 'full', allow: [LOCAL_CODING_TOOL]},
+    };
+  } else delete entries[LOCAL_CODING_AGENT];
   for (const key of Object.keys(entries)) if (/^qq-user-\d+$/.test(key)) delete entries[key];
   cfg.bindings = (cfg.bindings ?? []).filter(b => !/^qq-user-\d+$/.test(b.agentId));
   for (const row of policy.subjects) {

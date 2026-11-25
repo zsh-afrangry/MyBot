@@ -7,7 +7,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 import {fixture} from './fixtures.mjs';
-import {git, projectPolicy} from '../../plugins/kurumi-coding/workspaces.js';
+import {assertSelfMaintenanceCandidateSafe, git, projectPolicy} from '../../plugins/kurumi-coding/workspaces.js';
 
 const tmpBase = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-self-maint-'));
 test.after(() => fs.rmSync(tmpBase, {recursive: true, force: true}));
@@ -75,6 +75,14 @@ test('selfMaintenance policy checks opt-in flags, real kurumi-fusion gating, and
     ...base,
     projects: [{id: 'kf', root: '/home/afrangry/kurumi-fusion', branch: 'main', externalRoot: true, allowRemote: true, selfMaintenance: true, checks: [{name: 'ok', argv: [process.execPath, checkFile]}]}],
   }));
+});
+
+test('selfMaintenance rejects moving a protected file away from its original path', () => {
+  const {selfRepo, baseline} = setupSyntheticFusion('rename-');
+  git(selfRepo, 'mv', 'config/access-control.json', 'config/renamed.json');
+  git(selfRepo, '-c', 'user.name=Maint', '-c', 'user.email=maint@localhost', 'commit', '-m', 'Rename policy fixture');
+  assert.throws(() => assertSelfMaintenanceCandidateSafe({selfMaintenance: true}, git, baseline, 'HEAD', selfRepo),
+    {code: 'self_maintenance_protected_diff'});
 });
 
 test('selfMaintenance blocks protected diffs, escaping symlinks, and skipped checks, while permitting tested code edits to confirm and merge safely', async t => {

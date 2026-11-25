@@ -399,7 +399,12 @@ export class CodingService {
     const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
     return this._previewTask(task, requester, scope, {allowActive: false});
   }
-  async _previewTask(task, requester, scope, {allowActive = false} = {}) {
+  async inspectPreview(id, requester, signal) {
+    const task = this.task(id, requester); this.authorize(requester, 'tasks.code');
+    if (requester.route !== 'local-coding') throw fail('local_coding_scope_denied');
+    return this._previewTask(task, requester, undefined, {inspectOnly: true, signal});
+  }
+  async _previewTask(task, requester, scope, {allowActive = false, inspectOnly = false, signal} = {}) {
     const id = task.id;
     const project = structuredClone(this.project(task.projectId));
     this.assertProjectCurrent(project);
@@ -408,13 +413,15 @@ export class CodingService {
     if (this.git(task.cwd, 'status', '--porcelain=v1').trim()) throw fail('task_has_unverified_changes');
     if (this.projectLocks.has(project.id)) throw fail('project_merge_busy');
     this.projectLocks.add(project.id);
+    let candidateDir, previewGit;
     try {
       const roGit = this.projectGit(project, 'readonly');
       const wtGit = this.projectGit(project, 'worktree');
+      previewGit = wtGit;
       const directory = project.kind === 'directory', target = this.target(project);
       if (!directory && target.branch !== project.branch) throw fail('target_branch_changed');
       if (directory && JSON.stringify(target.files) !== JSON.stringify(task.directoryBaseline)) throw fail('directory_source_changed');
-      const candidateDir = path.join(this.config.worktrees, `candidate-${randomUUID()}`);
+      candidateDir = path.join(this.config.worktrees, `candidate-${randomUUID()}`);
       const commits = roGit(task.cwd, 'rev-list', '--reverse', `${task.base}..${task.verifiedCommit}`).trim().split('\n').filter(Boolean);
       if (!commits.length) throw fail('no_coding_changes');
       if (directory) {
@@ -426,7 +433,8 @@ export class CodingService {
         catch {throw fail('merge_conflict');}
       }
       const checkedHash = workingHash(candidateDir, roGit), checkPlan = structuredClone(project.checks);
-      const checks = await runChecks({...project, checks: checkPlan}, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'), undefined, this.config.writeBoundary);
+      const checks = await runChecks({...project, checks: checkPlan}, candidateDir, path.join(this.config.root, 'tasks', id, 'candidate-checks.log'), signal, this.config.writeBoundary);
+      signal?.throwIfAborted();
       this.task(id, requester); this.authorize(requester, 'tasks.code'); this.assertProjectCurrent(project);
       if ((!allowActive && this.active.has(id)) || this.store.get(id).verifiedCommit !== task.verifiedCommit || this.store.get(id).state !== 'ready') throw fail('coding_task_not_ready');
       if (!checks.ok || (project.selfMaintenance === true && checks.rows.some(r => r.skipped))) throw fail('candidate_checks_failed');
@@ -444,6 +452,7 @@ export class CodingService {
       const plan = directory ? directoryPlan(project, task, candidateDir, roGit) : undefined;
       const paths = directory ? plan.changes.map(c => c.name) : roGit(candidateDir, 'diff', '--no-ext-diff', '--name-only', target.head, candidate, '--').trim().split('\n');
       const numstat = directory ? [] : parseNumstat(roGit(candidateDir, 'diff', '--no-ext-diff', '--numstat', target.head, candidate, '--'));
+      if (inspectOnly) return {ok: true, status: 'verified', projectId: project.id, candidate, paths, checks};
       const payload = {taskId: id, projectId: project.id, projectRoot: project.root, taskCommit: task.verifiedCommit, target, candidate, diffBase,
         diffHash: digest(diff), candidateDir, checks, ...(directory ? {directoryPlan: plan} : {})};
       const scopeLine = directory ? '仅确认后目录回写；不包含push。'
@@ -457,7 +466,13 @@ export class CodingService {
       const result = this.store.preview(task, payload, previewText, scope);
       this.store.save({...task, candidate}); this.event(task, 'coding.merge_preview', {candidate, proposalId: result.proposalId, payloadHash: result.payloadHash});
       return {...result,presentationFacts:[previewText]};
-    } finally { this.projectLocks.delete(project.id); }
+    } finally {
+      try {
+        if (inspectOnly && candidateDir && fs.existsSync(candidateDir)) {
+          previewGit(project.root, 'worktree', 'remove', '--force', candidateDir);
+        }
+      } finally {this.projectLocks.delete(project.id);}
+    }
   }
   async merge(id, proposalId, requester, scope, assertCurrent) {
     const task = this.task(id, requester), project = structuredClone(this.project(task.projectId));
@@ -529,6 +544,13 @@ export class CodingService {
     task = current;
     const key = `coding:${task.id}:${task.executionRoundId ?? task.verifiedCommit}:${task.state}`;
     if (task.delivery?.key === key) return;
+    if (task.requester.route === 'local-coding') {
+      try {this.authorize(task.requester, 'tasks.read');} catch {return;}
+      this.finishResult(task);
+      this.store.saveDelivery(task, {state: 'local_available', key, roundId: task.executionRoundId});
+      this.event(task, 'coding.delivery', {status: 'local_available'});
+      return;
+    }
     let attempt = {state: 'generating', key, roundId: task.executionRoundId};
     this.store.saveDelivery(task, attempt);
     try {

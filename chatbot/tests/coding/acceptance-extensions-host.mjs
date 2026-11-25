@@ -10,6 +10,9 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {DatabaseSync} from 'node:sqlite';
+import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
+import {callCodingAcceptance} from '../../scripts/acceptance-live-dialogue.mjs';
 import {git, runChecks} from '../../plugins/kurumi-coding/workspaces.js';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy, memberRow} from '../access-control/fixtures.mjs';
@@ -102,6 +105,9 @@ const cliBody = `
     } else if (prompt.includes('SELF_GOOD_DIFF')) {
       fs.writeFileSync(path.join(process.cwd(), 'src/core.mjs'), ${JSON.stringify('export const factor = 10;\n')});
       process.stdout.write(${JSON.stringify('SELF_GOOD_DONE\n')});
+    } else if (prompt.includes('LOCAL_GOOD_DIFF')) {
+      fs.writeFileSync(path.join(process.cwd(), 'src/core.mjs'), ${JSON.stringify('export const factor = 10;\n// local acceptance\n')});
+      process.stdout.write(${JSON.stringify('LOCAL_GOOD_DONE\n')});
     }
   });
 `;
@@ -148,6 +154,7 @@ const model = http.createServer(async (req, res) => {
     }
 
     assert(active, `No active foreground turn (roles=${messages.map(m => m.role).join(',')}, last=${userText.slice(0, 200)})`);
+    if (active.verifyMessages) active.verifyMessages(messages);
     if (active.observe) {
       const lastTool = messages.findLast(m => m.role === 'tool');
       let parsed = lastTool?.content;
@@ -175,6 +182,7 @@ await once(model, 'listening');
 const modelAddr = '127.0.0.1:' + model.address().port;
 
 const policy = ownerPolicy(owner);
+policy.localCodingAcceptance = {id: 'fixture', backend: 'claude-code', expiresAt: new Date(Date.now() + 10 * 60_000).toISOString()};
 policy.subjects.push(memberRow(member));
 
 const launcher = '/home/afrangry/.openclaw-fusion/tools/node-addon-system-linux-x64/bin/landlock-run';
@@ -189,7 +197,7 @@ const codingConfig = {
   },
   projects: [
     {id: 'ext-repo', root: externalRepo, branch: 'master', externalRoot: true, allowRemote: true, checks: [{name: 'ext check', argv: [process.execPath, extCheck]}]},
-    {id: 'self-maint', root: selfRepo, branch: 'main', externalRoot: true, selfMaintenance: true, checks: [{name: 'self check', argv: [process.execPath, selfCheck]}]},
+    {id: 'kurumi-fusion', root: selfRepo, branch: 'main', externalRoot: true, selfMaintenance: true, checks: [{name: 'self check', argv: [process.execPath, selfCheck]}]},
   ],
 };
 
@@ -256,7 +264,7 @@ try {
         assert(r.backends.includes('claude-code'));
         assert(r.backendDetails.some(b => b.id === 'claude-code' && b.driver === 'cli'));
         assert(r.projects.some(p => p.id === 'ext-repo'));
-        assert(r.projects.some(p => p.id === 'self-maint'));
+        assert(r.projects.some(p => p.id === 'kurumi-fusion'));
       },
     },
     {
@@ -309,7 +317,7 @@ try {
   // Stage 3B: self-maintenance rejects protected config/access-control edit, then accepts safe edit.
   await qqTurn(owner, '启动自维护敏感路径防护测试', [{
     name: 'kurumi_code',
-    args: {action: 'start', projectId: 'self-maint', backend: 'claude-code', title: '自维护越界检查', task: 'SELF_BAD_DIFF'},
+    args: {action: 'start', projectId: 'kurumi-fusion', backend: 'claude-code', title: '自维护越界检查', task: 'SELF_BAD_DIFF'},
     verify(r) { selfTaskId = r.id; },
   }]);
   await waitForAcceptance(() => sends.find(s => textOfSend(s).includes(selfTaskId.slice(0, 8))), 'self-maint bad task ready');
@@ -323,7 +331,7 @@ try {
   let selfGoodId;
   await qqTurn(owner, '启动安全自维护测试任务', [{
     name: 'kurumi_code',
-    args: {action: 'start', projectId: 'self-maint', backend: 'claude-code', title: '安全代码更新', task: 'SELF_GOOD_DIFF'},
+    args: {action: 'start', projectId: 'kurumi-fusion', backend: 'claude-code', title: '安全代码更新', task: 'SELF_GOOD_DIFF'},
     verify(r) { selfGoodId = r.id; },
   }]);
   await waitForAcceptance(() => sends.find(s => textOfSend(s).includes(selfGoodId.slice(0, 8))), 'self-maint good task ready');
@@ -373,6 +381,105 @@ try {
     try { execFileSync('/usr/bin/git', ['worktree', 'remove', '--force', kfWorktree], {cwd: repo, stdio: 'pipe'}); } catch {}
   }
   report.cases.push({name: 'stage3b_real_kurumi_fusion_checks_under_landlock', passed: true});
+
+  const rpcMethod = 'kurumi-coding.acceptance';
+  const gatewayConfig = JSON.parse(fs.readFileSync(path.join(state, 'openclaw.json'), 'utf8'));
+  const call = params => callCodingAcceptance(gatewayConfig, token, params);
+  await assert.rejects(callGatewayFromCli(rpcMethod, {
+    config: gatewayConfig, url: 'ws://127.0.0.1:' + gatewayConfig.gateway.port, token, timeout: '5000', json: true,
+  }, {op: 'open'}, {deviceIdentity: null, sharedStateMode: 'read-only', scopes: ['operator.write']}), /scope/i);
+  const {leaseId, sessionKey} = await call({op: 'open'});
+  const {leaseId: otherLease} = await call({op: 'open'});
+  const qqCount = sends.length;
+  const localTurn = async (message, steps, verifyMessages) => {
+    active = {next: 0, steps: steps.map(step => ({name: 'kurumi_code', ...step})), verifyMessages};
+    try {
+      const result = await call({op: 'turn', leaseId, message});
+      assert.equal(result.reply, '完成。');
+      assert.equal(active.next, steps.length);
+      assert.equal(active.observe, undefined);
+      return result;
+    } finally {active = undefined;}
+  };
+  const listed = await localTurn('查一下实际编码后端与项目', [{args: {action: 'list'}, verify: r => {
+    assert(r.backends.includes('claude-code'));
+    assert.equal(r.writableProject, 'kurumi-fusion');
+    assert.equal(r.tasks.length, 0);
+  }}]);
+  assert.equal(listed.sessionKey, sessionKey);
+  assert.deepEqual(listed.actions[0].projects, ['ext-repo', 'kurumi-fusion']);
+  await assert.rejects(call({op: 'turn', leaseId, message: '查询', senderIsOwner: true}), /local_coding_invalid_request/u);
+  active = {next: 0, steps: [{name: 'kurumi_code', args: {action: 'list'},
+    verify: r => assert.match(JSON.stringify(r), /local_coding_turn_required/u)}]};
+  try {
+    await callGatewayFromCli('agent', {
+      config: gatewayConfig, url: 'ws://127.0.0.1:' + gatewayConfig.gateway.port, token, timeout: '20000', json: true,
+    }, {agentId: 'kurumi-acceptance', sessionKey, message: 'OUTSIDE_ACCEPTANCE_HISTORY', deliver: false, timeout: 15,
+      idempotencyKey: randomBytes(16).toString('hex')},
+    {deviceIdentity: null, sharedStateMode: 'read-only', scopes: ['operator.write'], expectFinal: true});
+    assert.equal(active.next, 1);
+    assert.equal(active.observe, undefined);
+  } finally {active = undefined;}
+  const denied = await localTurn('试着在未授权的项目启动任务', [{args: {action: 'start', projectId: 'ext-repo', task: 'EXT_UPDATE'},
+    verify: r => assert.equal(r.code, 'local_coding_project_or_backend_denied')}], messages => {
+    assert.match(JSON.stringify(messages), /查一下实际编码后端与项目/u);
+    assert.doesNotMatch(JSON.stringify(messages), /OUTSIDE_ACCEPTANCE_HISTORY/u);
+  });
+  assert.equal(denied.actions[0].status, 'error');
+  const started = await localTurn('检查受保护的权限配置能否进入预览', [{args: {
+    action: 'start', projectId: 'kurumi-fusion', task: 'SELF_BAD_DIFF', title: 'Protected file fixture',
+  }, verify: r => assert.equal(r.backend, 'claude-code')}]);
+  const taskId = started.actions[0].taskId;
+  await assert.rejects(call({op: 'status', leaseId: otherLease, taskId}), /unknown_coding_task/u);
+  await assert.rejects(call({op: 'status', leaseId, taskId: selfGoodId}), /unknown_coding_task/u);
+  const done = await waitForAcceptance(async () => {
+    const status = await call({op: 'status', leaseId, taskId});
+    return status.active ? undefined : status;
+  }, 'local coding result');
+  assert.equal(done.state, 'ready');
+  assert.equal(done.checksPassed, true);
+  assert.equal(done.resultAvailable, true);
+  const blocked = await localTurn('检查预览结果', [{args: {action: 'preview', taskId},
+    verify: r => assert.equal(r.code, 'self_maintenance_protected_diff')}]);
+  assert.equal(blocked.actions[0].code, 'self_maintenance_protected_diff');
+  await localTurn('查询持久化的后台结果', [{args: {action: 'result', taskId}, verify: r => {
+    assert.equal(r.task.delivery.state, 'local_available');
+    assert.equal(r.result.available, true);
+  }}]);
+  const good = await localTurn('启动允许的代码改动', [{args: {
+    action: 'start', projectId: 'kurumi-fusion', task: 'LOCAL_GOOD_DIFF',
+  }, verify: r => assert.equal(r.backend, 'claude-code')}]);
+  const goodId = good.actions[0].taskId;
+  await waitForAcceptance(async () => {
+    const status = await call({op: 'status', leaseId, taskId: goodId});
+    if (status.active) return undefined;
+    assert.equal(status.state, 'ready');
+    assert.equal(status.resultAvailable, true);
+    return status;
+  }, 'allowed local coding result');
+  const sourceHead = git(selfRepo, 'rev-parse', 'HEAD');
+  await localTurn('预览这次允许的改动', [{args: {action: 'preview', taskId: goodId}, verify: r => {
+    assert.equal(r.status, 'verified');
+    assert.deepEqual(r.paths, ['src/core.mjs']);
+    assert.equal(r.proposalId, undefined);
+  }}]);
+  assert.equal(git(selfRepo, 'rev-parse', 'HEAD'), sourceHead);
+  const db = new DatabaseSync(path.join(codingConfig.root, 'coding.sqlite'), {readOnly: true});
+  try {assert.equal(db.prepare('SELECT count(*) AS count FROM coding_previews WHERE task_id IN (?, ?)').get(taskId, goodId).count, 0);}
+  finally {db.close();}
+
+  const logs = JSON.parse(execFileSync(process.execPath, [path.join(repo, 'chatbot/scripts/log-query.mjs'),
+    '--runtime-root', state, '--snowluma-root', state, '--session-key', sessionKey, '--source', 'trace-events',
+    '--since', 'all', '--no-text', '--json'], {encoding: 'utf8'}));
+  assert(logs.events.some(row => row.correlation?.runId === blocked.runId && row.kind === 'coding.acceptance_action'
+    && row.data.code === 'self_maintenance_protected_diff'));
+  assert(logs.events.some(row => row.correlation?.taskId === taskId && row.kind === 'coding.delivery' && row.data.status === 'local_available'));
+  assert.equal(sends.length, qqCount);
+  assert.equal(fs.readFileSync(path.join(selfRepo, 'config/access-control.json'), 'utf8'), '{"subjects":[]}\n');
+  assert.deepEqual(await call({op: 'close', leaseId}), {closed: true});
+  await assert.rejects(call({op: 'status', leaseId, taskId}), /local_coding_lease_expired/u);
+  await call({op: 'close', leaseId: otherLease});
+  report.cases.push({name: 'local_coding_real_host_catalog_protected_preview_and_result_isolation', passed: true});
 
   report.passed = true;
 } catch (error) {

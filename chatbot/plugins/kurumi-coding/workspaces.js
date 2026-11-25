@@ -29,7 +29,7 @@ export function assertSelfMaintenanceCandidateSafe(project, roGit, diffBase, can
     ...DEFAULT_SELF_MAINTENANCE_PROTECTED_PATHS,
     ...(Array.isArray(project.protectedPaths) ? project.protectedPaths : []),
   ])];
-  const rawNames = roGit(candidateDir, 'diff', '--no-ext-diff', '--name-only', '-z', diffBase, candidate, '--')
+  const rawNames = roGit(candidateDir, 'diff', '--no-ext-diff', '--no-renames', '--name-only', '-z', diffBase, candidate, '--')
     .split('\0').filter(Boolean);
   for (const rel of rawNames) {
     const posixRel = rel.replaceAll('\\', '/');
