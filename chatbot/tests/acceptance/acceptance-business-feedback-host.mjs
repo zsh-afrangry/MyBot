@@ -283,7 +283,10 @@ async function acceptProfilePlanning() {
     return committed;
   }
   async function lookup(domain, proposal, description = '刚才的提案') {
-    const {results} = await turn(`请按原提案核对${description}的记录。`, [[domain + '_state_get', {proposal_id: proposal.proposalId}]]);
+    const request = realModel
+      ? `请按提案 ID ${proposal.proposalId} 核对${description}的记录，查询这份提案的状态和回执。`
+      : `请按原提案核对${description}的记录。`;
+    const {results} = await turn(request, [[domain + '_state_get', {proposal_id: proposal.proposalId}]]);
     return results[0];
   }
 
