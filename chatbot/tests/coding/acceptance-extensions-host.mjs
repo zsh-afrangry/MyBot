@@ -12,7 +12,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {DatabaseSync} from 'node:sqlite';
 import {callGatewayFromCli} from 'openclaw/plugin-sdk/gateway-runtime';
-import {callCodingAcceptance} from '../../scripts/acceptance-live-dialogue.mjs';
+import {callCodingAcceptance, executeCodingCheck, summarizeEvents, verifyCodingEvidence} from '../../scripts/acceptance-live-dialogue.mjs';
 import {git, runChecks} from '../../plugins/kurumi-coding/workspaces.js';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy, memberRow} from '../access-control/fixtures.mjs';
@@ -52,7 +52,8 @@ fs.writeFileSync(path.join(externalRepo, 'untracked.note'), 'untracked preserved
 fs.writeFileSync(path.join(fakeRuntimeCanary, 'openclaw.json'), '{"runtime":"untouched"}\n');
 fs.mkdirSync(path.join(selfRepo, 'config'), {recursive: true});
 fs.mkdirSync(path.join(selfRepo, 'src'), {recursive: true});
-fs.writeFileSync(path.join(selfRepo, 'config/access-control.json'), '{"subjects":[]}\n');
+const selfAccessBaseline = '{\n  "version": 1,\n  "subjects": []\n}\n';
+fs.writeFileSync(path.join(selfRepo, 'config/access-control.json'), selfAccessBaseline);
 fs.writeFileSync(path.join(selfRepo, 'src/core.mjs'), 'export const factor = 2;\n');
 git(selfRepo, 'init', '-b', 'main');
 git(selfRepo, 'add', '.');
@@ -108,6 +109,9 @@ const cliBody = `
     } else if (prompt.includes('LOCAL_GOOD_DIFF')) {
       fs.writeFileSync(path.join(process.cwd(), 'src/core.mjs'), ${JSON.stringify('export const factor = 10;\n// local acceptance\n')});
       process.stdout.write(${JSON.stringify('LOCAL_GOOD_DONE\n')});
+    } else if (prompt.includes('LOCAL_PROTECTED_DIFF')) {
+      fs.writeFileSync(path.join(process.cwd(), 'config/access-control.json'), ${JSON.stringify(selfAccessBaseline.replace('"version":', '"version": '))});
+      process.stdout.write(${JSON.stringify('LOCAL_PROTECTED_DONE\n')});
     }
   });
 `;
@@ -388,13 +392,14 @@ try {
   await assert.rejects(callGatewayFromCli(rpcMethod, {
     config: gatewayConfig, url: 'ws://127.0.0.1:' + gatewayConfig.gateway.port, token, timeout: '5000', json: true,
   }, {op: 'open'}, {deviceIdentity: null, sharedStateMode: 'read-only', scopes: ['operator.write']}), /scope/i);
-  const {leaseId, sessionKey} = await call({op: 'open'});
+  const {leaseId, sessionKey, backend} = await call({op: 'open'});
+  assert.equal(backend, 'claude-code');
   const {leaseId: otherLease} = await call({op: 'open'});
   const qqCount = sends.length;
-  const localTurn = async (message, steps, verifyMessages) => {
+  const localTurn = async (message, steps, verifyMessages, currentLease = leaseId) => {
     active = {next: 0, steps: steps.map(step => ({name: 'kurumi_code', ...step})), verifyMessages};
     try {
-      const result = await call({op: 'turn', leaseId, message});
+      const result = await call({op: 'turn', leaseId: currentLease, message});
       assert.equal(result.reply, '完成。');
       assert.equal(active.next, steps.length);
       assert.equal(active.observe, undefined);
@@ -439,6 +444,16 @@ try {
   assert.equal(done.state, 'ready');
   assert.equal(done.checksPassed, true);
   assert.equal(done.resultAvailable, true);
+  assert.equal(done.backend, 'claude-code');
+  assert.equal(done.projectId, 'kurumi-fusion');
+  const resultEvidence = await call({op: 'result', leaseId, taskId});
+  assert.equal(resultEvidence.available, true);
+  assert.equal(resultEvidence.backend, 'claude-code');
+  assert.equal(resultEvidence.verifiedCommit, done.verifiedCommit);
+  const badDiff = await call({op: 'inspect-diff', leaseId, taskId});
+  assert.equal(badDiff.exact, false);
+  await assert.rejects(call({op: 'inspect-diff', leaseId: otherLease, taskId}), /unknown_coding_task/u);
+  await assert.rejects(call({op: 'result', leaseId: otherLease, taskId}), /unknown_coding_task/u);
   const blocked = await localTurn('检查预览结果', [{args: {action: 'preview', taskId},
     verify: r => assert.equal(r.code, 'self_maintenance_protected_diff')}]);
   assert.equal(blocked.actions[0].code, 'self_maintenance_protected_diff');
@@ -475,10 +490,56 @@ try {
     && row.data.code === 'self_maintenance_protected_diff'));
   assert(logs.events.some(row => row.correlation?.taskId === taskId && row.kind === 'coding.delivery' && row.data.status === 'local_available'));
   assert.equal(sends.length, qqCount);
-  assert.equal(fs.readFileSync(path.join(selfRepo, 'config/access-control.json'), 'utf8'), '{"subjects":[]}\n');
+  assert.equal(fs.readFileSync(path.join(selfRepo, 'config/access-control.json'), 'utf8'), selfAccessBaseline);
   assert.deepEqual(await call({op: 'close', leaseId}), {closed: true});
   await assert.rejects(call({op: 'status', leaseId, taskId}), /local_coding_lease_expired/u);
+
+  const exactStart = await localTurn('检查指定空白变更', [{args: {
+    action: 'start', projectId: 'kurumi-fusion', task: 'LOCAL_PROTECTED_DIFF',
+  }, verify: r => assert.equal(r.backend, 'claude-code')}], undefined, otherLease);
+  const exactId = exactStart.actions[0].taskId;
+  const exactStatus = await waitForAcceptance(async () => {
+    const status = await call({op: 'status', leaseId: otherLease, taskId: exactId});
+    return status.active ? undefined : status;
+  }, 'exact protected diff');
+  assert.equal(exactStatus.state, 'ready');
+  const exactDiff = await call({op: 'inspect-diff', leaseId: otherLease, taskId: exactId});
+  assert.equal(exactDiff.exact, true);
+  assert.deepEqual(exactDiff.paths, ['config/access-control.json']);
+  assert.equal(exactDiff.verifiedCommit, exactStatus.verifiedCommit);
+  await localTurn('检查指定空白变更的预览', [{args: {action: 'preview', taskId: exactId},
+    verify: r => assert.equal(r.code, 'self_maintenance_protected_diff')}], undefined, otherLease);
+  assert.equal(sends.length, qqCount);
+  assert.equal(fs.readFileSync(path.join(selfRepo, 'config/access-control.json'), 'utf8'), selfAccessBaseline);
   await call({op: 'close', leaseId: otherLease});
+
+  let driverTaskId;
+  const driverRpc = async params => {
+    if (params.op !== 'turn') return call(params);
+    let args;
+    if (params.message.includes('后端和已登记项目')) args = {action: 'list'};
+    else if (params.message.includes('启动测试任务')) {
+      args = {action: 'start', projectId: 'kurumi-fusion', task: 'LOCAL_PROTECTED_DIFF'};
+    } else args = {action: 'preview', taskId: driverTaskId};
+    active = {next: 0, steps: [{name: 'kurumi_code', args}]};
+    try {
+      const result = await call(params);
+      assert.equal(active.next, 1);
+      if (args.action === 'start') driverTaskId = result.actions[0].taskId;
+      return result;
+    } finally {active = undefined;}
+  };
+  const catalogReport = {turns: []};
+  assert.deepEqual(await executeCodingCheck(driverRpc, 'catalog', catalogReport, 'claude-code'),
+    {status: 'passed', scope: 'coding_catalog'});
+  const driverReport = {turns: []};
+  const driverVerdict = await executeCodingCheck(driverRpc, 'protected-diff', driverReport, 'claude-code');
+  assert.deepEqual(driverVerdict, {status: 'passed', scope: 'coding_protected_diff'});
+  const driverLogs = JSON.parse(execFileSync(process.execPath, [path.join(repo, 'chatbot/scripts/log-query.mjs'),
+    '--runtime-root', state, '--snowluma-root', state, '--session-key', driverReport.sessionKey, '--source', 'trace-events',
+    '--since', 'all', '--json'], {encoding: 'utf8'}));
+  assert.deepEqual(verifyCodingEvidence(driverVerdict, driverReport, summarizeEvents(driverLogs.events)), driverVerdict);
+  assert.equal(sends.length, qqCount);
   report.cases.push({name: 'local_coding_real_host_catalog_protected_preview_and_result_isolation', passed: true});
 
   report.passed = true;
