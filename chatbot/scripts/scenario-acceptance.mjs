@@ -80,11 +80,11 @@ const scenarios = {
   deployment: {target: 'production', workload: '在用进程、工具目录、健康和配置对齐'},
 };
 const usage = `node chatbot/scripts/scenario-acceptance.mjs --list
-node chatbot/scripts/scenario-acceptance.mjs --target isolated [--scenario ID] [--model] [--out PATH]
+node chatbot/scripts/scenario-acceptance.mjs --target isolated [--scenario ID] [--model] [--due] [--out PATH]
 node chatbot/scripts/scenario-acceptance.mjs --target production [--scenario deployment] [--out PATH]
 
 --out 须位于仓库的 test-output/ 内，是尚不存在的报告文件。
---model 仅用于独立实例的 confirmation，调用已配置的真实模型。
+--model 仅用于独立实例的 confirmation，调用已配置的真实模型。--due 只运行确认、Cron 到点及回执场景。
 --diagnostic-fault 用于复现独立场景的受控失败：confirmation 可用 gateway-start 或 reminder-lookup，bills-feedback 可用 bills-assertion，host-admin 可用 host-fixture。
 生产目标目前只覆盖只读部署核验。`;
 
@@ -93,7 +93,7 @@ function options(args) {
   for (let i = 0; i < args.length; i++) {
     const flag = args[i], key = flag.slice(2);
     if (!flag.startsWith('--') || Object.hasOwn(result, key)) throw Error('Unknown or duplicate option: ' + flag);
-    if (['list', 'help', 'model'].includes(key)) result[key] = true;
+    if (['list', 'help', 'model', 'due'].includes(key)) result[key] = true;
     else if (valueFlags.has(key) && args[i + 1] && !args[i + 1].startsWith('--')) result[key] = args[++i];
     else throw Error('Unknown option or missing value: ' + flag);
   }
@@ -105,6 +105,9 @@ function options(args) {
   }
   if (result.model && (result.target !== 'isolated' || result.scenario !== 'confirmation')) {
     throw Error('--model requires --target isolated --scenario confirmation');
+  }
+  if (result.due && (result.target !== 'isolated' || result.scenario !== 'confirmation' || result['diagnostic-fault'])) {
+    throw Error('--due requires --target isolated --scenario confirmation without a diagnostic fault');
   }
   const faultScenario = {'gateway-start':'confirmation','reminder-lookup':'confirmation','bills-assertion':'bills-feedback','host-fixture':'host-admin'};
   if (result['diagnostic-fault'] && (result.target!=='isolated' || result.model ||
@@ -150,10 +153,10 @@ function revision() {
   return {commit: git('rev-parse', 'HEAD').toString().trim(), dirty: diff.length > 0 || untracked.length > 0, diffSha256: hash.digest('hex')};
 }
 
-async function runIsolated(id, model, directory, signal, diagnosticFault) {
+async function runIsolated(id, model, directory, signal, diagnosticFault, due) {
   const evidence = join(directory, id + '.json');
   const scenario = scenarios[id];
-  const timeoutMs = model ? scenario.modelTimeoutMs : scenario.timeoutMs;
+  const timeoutMs = model && due ? 600000 : model ? scenario.modelTimeoutMs : scenario.timeoutMs;
   const info = {name: id, timeoutMs, requires: scenario.requires ?? []};
   const executable = name => {
     try {accessSync(localDependencies[name], constants.X_OK); return true;}
@@ -162,7 +165,8 @@ async function runIsolated(id, model, directory, signal, diagnosticFault) {
   const missing = info.requires.filter(name => Object.hasOwn(localDependencies, name) && !executable(name));
   if (missing.length) return {...info, status: 'blocked', reason: 'missing_dependencies', missing,
     failure:{phase:'environment',step:'dependencies',category:'blocked'}};
-  const argv = [join(repo, 'chatbot/tests', scenario.file), '--out', evidence, ...(scenario.args ?? []), ...(model ? ['--model'] : []),
+  const argv = [join(repo, 'chatbot/tests', scenario.file), '--out', evidence, ...(scenario.args ?? []),
+    ...(model ? ['--model'] : []), ...(due ? ['--due-dialogue'] : []),
     ...(diagnosticFault ? ['--diagnostic-fault',diagnosticFault] : [])];
   let current, lastPassed, firstFailed, stoppedAt;
   const start = performance.now();
@@ -273,7 +277,7 @@ try {
         try {
           for (const id of args.scenario ? [args.scenario] : Object.keys(scenarios).filter(id => scenarios[id].target === 'isolated')) {
             if (controller.signal.aborted) break;
-            report.scenarios.push(await runIsolated(id, args.model, evidence, controller.signal,args['diagnostic-fault']));
+            report.scenarios.push(await runIsolated(id, args.model, evidence, controller.signal,args['diagnostic-fault'],args.due));
           }
           if (controller.signal.aborted) report.reason = 'interrupted';
         } finally {
@@ -281,7 +285,7 @@ try {
           process.removeListener('SIGTERM', stop);
         }
         report.uncovered = ['real QQ delivery', 'production interaction', 'real DSH/Codex backend and production MySQL',
-          ...(args.model ? ['native reminder due-time delivery in the real-model run'] : ['real-model behavior']),
+          ...(args.model ? (args.due ? [] : ['native reminder due-time delivery in the real-model run']) : ['real-model behavior']),
           'unregistered domain scenarios'];
       }
       const after = revision();

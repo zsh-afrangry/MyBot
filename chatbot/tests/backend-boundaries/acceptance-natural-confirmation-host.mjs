@@ -21,7 +21,7 @@ import {eventReference} from '../../packages/log-query/log-query-privacy.mjs';
 import {applyPersonaFile, personaFiles} from '../../../scripts/fusion/lib/persona-workspaces.mjs';
 import assert from 'node:assert/strict';
 
-const progress=process.argv.includes('--progress'),realModel=process.argv.includes('--model');
+const progress=process.argv.includes('--progress'),realModel=process.argv.includes('--model'),dueDialogue=process.argv.includes('--due-dialogue');
 const faultIndex=process.argv.indexOf('--diagnostic-fault');
 const fault=faultIndex<0 ? undefined : process.argv[faultIndex+1];
 assert(faultIndex<0 || !realModel && ['gateway-start','reminder-lookup'].includes(fault),'Require an isolated diagnostic fault');
@@ -32,7 +32,7 @@ const repo=fileURLToPath(new URL('../../../',import.meta.url)),root=fs.mkdtempSy
 const owner='100001',bot='100002',token=randomBytes(24).toString('hex');
 const report={at:new Date().toISOString(),boundary:'Isolated OpenClaw, formal QQ ingress/debounce, domain hooks/tools/SQLite and loopback OneBot receipts. No QQ platform, SMTP, production state or restart.',
  cognition:realModel?'configured-provider':'deterministic fixture',ingress:'onebot-websocket',testIngress:false,
- nativeCron:!realModel,cases:[],requests:0};
+ nativeCron:!realModel||dueDialogue,cases:[],requests:0};
 let upstream;
 function readConfiguredModel(){
  const source=JSON.parse(fs.readFileSync(path.join(repo,'config/runtime.config.json'),'utf8'));
@@ -82,18 +82,9 @@ const model=http.createServer(async(req,res)=>{
  try{
   assert(active);assert(++report.requests<=150,'request budget');
   const body=await readFixtureJson(req);
-  if(realModel){
-   assert(report.requests<=50,'real model request budget');
-   for(const m of body.messages??[])for(const c of m.tool_calls??[]){if(seenModelCalls.has(c.id))continue;seenModelCalls.add(c.id);let a;try{a=JSON.parse(c.function.arguments);}catch{a={};}report.modelCalls??=[];report.modelCalls.push({name:c.function.name,action:a.action??a.args?.action??null,domain:a.domain??a.args?.domain??null});}
-   const response=await fetch(upstream.url,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:'Bearer '+upstream.key},signal:AbortSignal.timeout(60000),body:JSON.stringify({...body,model:upstream.modelId,max_tokens:2000,temperature:0})});
-   if(!response.ok)throw Error('Official model HTTP '+response.status);
-   res.writeHead(200,{'Content-Type':response.headers.get('content-type')??'application/json'});for await(const chunk of response.body)res.write(chunk);res.end();return;
-  }
-  // Model fixture transcripts are synthetic, retained only on a failed local fixture.
-  fs.appendFileSync(path.join(root,'model-fixture.jsonl'),JSON.stringify(body)+'\n',{mode:0o600});
-  if(fault==='reminder-lookup' && active.label===historyLookup) throw Error('fixture_history_summary_rejected');
   const user=body.messages.findLast(m=>m.role==='user'&&!String(m.content??'').startsWith('OpenClaw runtime context:'));
-  if(JSON.stringify(user?.content??'').includes('这是已由本人确认且已到时间的一次性提醒')){
+  const dueNotice=JSON.stringify(user?.content??'').includes('这是已由本人确认且已到时间的一次性提醒');
+  if(dueNotice){
    assert(due);
    assert((body.tools??[]).every(t=>['tool_search','tool_describe','dispatch_action'].includes(t.function.name)),
     'Reminder notice exposed a business tool');
@@ -102,6 +93,23 @@ const model=http.createServer(async(req,res)=>{
    assert(Date.now()>=due.at,'Reminder composition started before due');
    due.sendOffset=sends.length;
    due.noticeCalls++;
+  }
+  if(realModel){
+   assert(report.requests<=50,'real model request budget');
+   for(const m of body.messages??[])for(const c of m.tool_calls??[]){if(seenModelCalls.has(c.id))continue;seenModelCalls.add(c.id);let a;try{a=JSON.parse(c.function.arguments);}catch{a={};}report.modelCalls??=[];report.modelCalls.push({name:c.function.name,target:typeof a.id==='string'?a.id:null,action:a.action??a.args?.action??null,domain:a.domain??a.args?.domain??null});}
+   if(active.label==='model-read-due-reminder')for(const message of body.messages??[]){
+    if(message.role!=='tool')continue;
+    const value=decode(message.content);
+    if(value?.notification?.evidence?.cronJobId===due?.jobId)active.feedback=value;
+   }
+   const response=await fetch(upstream.url,{method:'POST',redirect:'error',headers:{'Content-Type':'application/json',Authorization:'Bearer '+upstream.key},signal:AbortSignal.timeout(60000),body:JSON.stringify({...body,model:upstream.modelId,max_tokens:2000,temperature:0})});
+   if(!response.ok)throw Error('Official model HTTP '+response.status);
+   res.writeHead(200,{'Content-Type':response.headers.get('content-type')??'application/json'});for await(const chunk of response.body)res.write(chunk);res.end();return;
+  }
+  // Model fixture transcripts are synthetic, retained only on a failed local fixture.
+  fs.appendFileSync(path.join(root,'model-fixture.jsonl'),JSON.stringify(body)+'\n',{mode:0o600});
+  if(fault==='reminder-lookup' && active.label===historyLookup) throw Error('fixture_history_summary_rejected');
+  if(dueNotice){
    return complete(res,body,{role:'assistant',content:due.lost?'到点了，回执故障模拟。':'到点了，记得看看这条合成提醒。'});
   }
   const all=JSON.stringify(body.messages);assert(all.includes('KURUMI_CONFIRMATION_CURRENT_USER'),'missing trusted current user prompt');
@@ -153,7 +161,7 @@ const cfg=()=>withHostControl(compileAccessConfig({
  agents:{ownership:'explicit',defaults:{workspace:path.join(root,'workspace'),systemAgent:{agentId:'main'},model:{primary:'fixture/fixture'}},entries:{main:{workspace:path.join(root,'workspace'),model:{primary:'fixture/fixture'},tools:{profile:'full',allow:tools,deny:['read','write','edit','exec','process','message','sessions_spawn']}}}},
  channels:{'kurumi-qq':{enabled:true,httpUrl:onebot.httpUrl,wsUrl:onebot.wsUrl,httpTokenFile:path.join(root,'http-token'),wsTokenFile:path.join(root,'ws-token'),stateDir:channelDir,mediaRoot:path.join(root,'media'),testIngress:false,inboundDebounceMs:200,inboundDebounceMaxWaitMs:1000,dailySendLimit:100,segmentDelayMs:0}},
  plugins:{allow:ids,load:{paths:ids.map(id=>path.join(repo,'chatbot/plugins',id))},entries:Object.fromEntries(ids.map(id=>[id,{enabled:true,...(id==='personal-confirmation'?{hooks:{allowConversationAccess:true}}:{}),...(id==='personal-reminders'?{config:{reminderBackend:'native-service',reminderRunnerRoot:path.join(repo,'chatbot/plugins/personal-reminders')}}:{})}])),slots:{memory:'none'}},
- session:{dmScope:'per-channel-peer'},cron:{enabled:!realModel},update:{checkOnStart:false},logging:{file:path.join(root,'runtime.log')},tools:{...(realModel?{codeMode:false}:{}),deny:['exec','process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},
+ session:{dmScope:'per-channel-peer'},cron:{enabled:!realModel||dueDialogue},update:{checkOnStart:false},logging:{file:path.join(root,'runtime.log')},tools:{...(realModel?{codeMode:false}:{}),deny:['exec','process','message','sessions_spawn'],web:{search:{enabled:false},fetch:{enabled:false}}},
 },ownerPolicy(owner),repo),repo);
 function preparePersona(){
  if(!realModel){fs.writeFileSync(path.join(root,'workspace/AGENTS.md'),'Use the registered typed business tools.');return;}
@@ -188,10 +196,29 @@ async function turn(label,text,steps,verify,options){
  assert.equal(active.next,steps.length);assert(!active.expected,'last tool result was not observed');
  await verify?.(sent);report.cases.push({label,passed:true,toolCalls:steps.length,receiptCount:sent.filter(s=>s.accepted).length});finishStep('passed');console.log(JSON.stringify({case:label,passed:true}));
 }
-async function actualTurn(label,text,verify){
+async function actualTurn(label,text,verify,steps=[]){
  beginStep(label);
- active={label};const requests=report.requests,sent=await exchange(text);
- await verify(sent);report.cases.push({label,passed:true,requests:report.requests-requests,receiptCount:sent.filter(s=>s.accepted).length});finishStep('passed');console.log(JSON.stringify({case:label,passed:true}));}
+ active=realModel?{label}:{label,steps,next:0,discovered:false};
+ const requests=report.requests,sent=await exchange(text);
+ if(!realModel){assert.equal(active.next,steps.length);assert(!active.expected,'last tool result was not observed');}
+ await verify(sent);
+ let logEvidence;
+ if(dueDialogue){
+  const finishedAt=new Date().toISOString(),reference=failureReference(runningStep,finishedAt);
+  assert(reference.status==='available'&&reference.runId,'Turn has no uniquely correlated inbound log');
+  const {events}=readQqTranscript(root,owner,runningStep.startedAt,Date.parse(finishedAt));
+  const scoped=events.filter(event=>event.correlation?.runId===reference.runId);
+  assert(scoped.some(event=>event.kind==='agent.tool_call')&&scoped.some(event=>event.kind==='agent.tool_result'),
+   'Turn has no correlated tool call and result');
+  logEvidence={source:'openclaw-session',runId:reference.runId,messageIds:reference.messageIds,
+   events:scoped.map(event=>({kind:event.kind,eventRef:eventReference(event),at:event.at,
+    ...(typeof event.data?.tool==='string'&&{tool:event.data.tool}),
+    ...Object.fromEntries(['toolCallId','parentToolCallId','reminderId','cronJobId','qqMessageId']
+     .filter(key=>typeof event.correlation?.[key]==='string').map(key=>[key,event.correlation[key]]))}))};
+ }
+ report.cases.push({label,passed:true,requests:report.requests-requests,receiptCount:sent.filter(s=>s.accepted).length,
+  ...(logEvidence&&{logEvidence})});
+ finishStep('passed');console.log(JSON.stringify({case:label,passed:true}));}
 const count=(table,where='1')=>query('SELECT COUNT(*) n FROM '+table+' WHERE '+where)[0].n;
 async function actualCases(){
  await actualTurn('model-single-preview',`请帮我创建一个一次性提醒：${futureDay} 晚上八点，提醒我做合成验收甲。先给预览，不要直接提交。`,sent=>{assert.equal(count('confirmation_proposals'),1);assert.equal(count('approval_grants'),0);assert.equal(count('confirmation_previews','presented_at_utc IS NOT NULL'),1);assert(JSON.stringify(sent).includes('合成验收甲'));});
@@ -209,19 +236,21 @@ const confirmation=(expected={ok:true},i=-1)=>['personal_confirmation',()=>({act
 
 async function scheduleDueReminder(lost=false){
  const beforeReminders=count('reminders'),beforeGrants=count('approval_grants');
- const jobIds=async()=>(await host.call('cron.list',{includeDisabled:true})).jobs.map(job=>job.id).sort();
+ const reminderJobs=jobs=>jobs.filter(job=>job.payload?.kind!=='heartbeat');
+ const jobIds=async()=>reminderJobs((await host.call('cron.list',{includeDisabled:true})).jobs).map(job=>job.id).sort();
  const beforeJobs=await jobIds();
  // The domain enforces a full minute of lead time and minute-granular input.
- const at=Math.ceil((Date.now()+75000)/60000)*60000;
+ const at=Math.ceil((Date.now()+(realModel?180000:75000))/60000)*60000;
  const content=lost?'合成验收：模拟到点投递回执丢失':'合成验收：检查准时提醒';
  due={at,content,noticeCalls:0,lost};
  const time=localTime.format(at);
- await turn(lost?'lost-qq-receipt-preview':'due-reminder-preview-does-not-schedule',`请在 ${time} 提醒我：${content}。先给预览。`,[propose(content,time.replace(' ','T'))],async sent=>{
+ const reminderTurn=dueDialogue?(label,text,steps,verify)=>actualTurn(label,text,verify,steps):turn;
+ await reminderTurn(lost?'lost-qq-receipt-preview':'due-reminder-preview-does-not-schedule',`请在 ${time} 提醒我：${content}。先给预览。`,[propose(content,time.replace(' ','T'))],async sent=>{
   assert(sent.some(s=>s.accepted&&textOfSend(s).includes(content)));
   assert.equal(count('reminders'),beforeReminders);assert.equal(count('approval_grants'),beforeGrants);
   assert.deepEqual(await jobIds(),beforeJobs);
  });
- await turn(lost?'lost-qq-receipt-registers-one-native-job':'due-reminder-next-turn-registers-one-native-job','确认。',[
+ await reminderTurn(lost?'lost-qq-receipt-registers-one-native-job':'due-reminder-next-turn-registers-one-native-job','确认。',[
   ['personal_confirmation',{action:'list',domain:'personal_reminder'},{ok:true}],confirmation(),['personal_reminder_commit',()=>commit(),{ok:true}],
  ],async()=>{
   assert.equal(count('reminders'),beforeReminders+1);
@@ -230,7 +259,7 @@ async function scheduleDueReminder(lost=false){
   const [row]=reminders;assert.equal(row.status,'scheduled');assert.equal(row.scheduled_at_utc*1000,at);
   assert.equal(count('approval_grants','consumed_at_utc IS NOT NULL'),beforeGrants+1);
   const jobs=(await host.call('cron.list',{includeDisabled:true})).jobs;
-  assert.deepEqual(jobs.map(job=>job.id).sort(),[...beforeJobs,row.cron_job_id].sort());
+  assert.deepEqual(reminderJobs(jobs).map(job=>job.id).sort(),[...beforeJobs,row.cron_job_id].sort());
   const job=jobs.find(job=>job.id===row.cron_job_id);
   assert.equal(job.delivery.to,'user:'+owner);assert.equal(job.delivery.channel,'kurumi-qq');
   assert.equal(Date.parse(job.schedule.at),at);
@@ -247,9 +276,12 @@ async function verifyDueReminder(){
  assert.equal(run.status,'ok');assert.equal(run.delivered,true);assert.equal(run.deliveryStatus,'delivered');
  assert(run.runAtMs>=due.at,'Native Cron ran before the approved time');
  const notices=sends.slice(due.sendOffset),text=notices.map(textOfSend).join('\n');
- assert.equal(notices.filter(s=>textOfSend(s).includes('到点了，记得看看这条合成提醒。')).length,1,
-  'Exactly one native reminder opening must reach OneBot');
- assert(text.includes(due.content));assert(text.includes(localTime.format(due.at)));
+ if(!realModel){
+  assert.equal(notices.filter(s=>textOfSend(s).includes('到点了，记得看看这条合成提醒。')).length,1,
+   'Exactly one native reminder opening must reach OneBot');
+  assert(text.includes(localTime.format(due.at)));
+ }
+ assert(text.includes(due.content));
  const deliveryKeys=new Set();
  for(const notice of notices){
   assert(notice.accepted);assert.equal(String(notice.user_id),owner);
@@ -258,6 +290,46 @@ async function verifyDueReminder(){
  }
  assert.equal(deliveryKeys.size,1,'Notice segments must belong to one logical delivery');
  assert.equal(due.noticeCalls,1);
+ const verifyFeedback=result=>{
+  assert.equal(result.feedback.status,'finished');
+  assert.equal(result.notification.action,'reminder.delivery');
+  assert.equal(result.notification.status,'succeeded');
+  assert.deepEqual(result.notification.evidence,{
+   source:'cron.runs',cronJobId:due.jobId,runAtMs:run.runAtMs,runId:'cron:'+due.jobId+':'+run.runAtMs,
+   hostDeliveryStatus:'reported_sent',noticeStatus:'generated',
+  });
+  assert.deepEqual(result.notification.segments.map(part=>part.messageId),notices.map(row=>row.messageId));
+  assert(result.notification.segments.every(part=>part.platformStatus==='accepted'&&part.recipientStatus==='unverified'));
+ };
+ if(dueDialogue){
+  let beforeCalls=report.modelCalls?.length??0;
+  await actualTurn('model-reconcile-due-reminder','请不带参数调用 personal_reminder_state_get，查看目前的一次性提醒。',async()=>{
+   if(realModel){
+    const calls=(report.modelCalls??[]).slice(beforeCalls);
+    assert(calls.some(call=>call.name==='personal_reminder_state_get'||call.target==='personal_reminder_state_get'),
+     'Real model did not query the reminder state');
+   }
+   const [row]=query('SELECT status,delivered_at_utc FROM reminders WHERE reminder_id=?',due.reminderId);
+   assert.equal(row.status,'delivered');assert(row.delivered_at_utc*1000>=due.at);
+   assert.equal((await history()).entries.length,1);
+   assert(!(await host.call('cron.list',{includeDisabled:true})).jobs.some(job=>job.id===due.jobId));
+  },[['personal_reminder_state_get',{},{ok:true}]]);
+  beforeCalls=report.modelCalls?.length??0;
+  await actualTurn('model-read-due-reminder',`请调用 personal_reminder_state_get 查询一次性提醒 ${due.reminderId} 的到点和投递结果。`,async()=>{
+   if(realModel){
+    const calls=(report.modelCalls??[]).slice(beforeCalls);
+    assert(calls.some(call=>call.name==='personal_reminder_state_get'||call.target==='personal_reminder_state_get'),
+     'Real model did not query the reminder feedback');
+    assert(active.feedback,'Reminder feedback was not observed in the model turn');
+    verifyFeedback(active.feedback);
+   }
+  },[['personal_reminder_state_get',{reminder_id:due.reminderId},{ok:true,verify:verifyFeedback}]]);
+  report.dueReminder={reminderId:due.reminderId,cronJobId:due.jobId,cronRuns:1,noticeCalls:due.noticeCalls,
+   runId:'cron:'+due.jobId+':'+run.runAtMs,
+   oneBotReceipts:notices.map(s=>s.messageId),scheduledAt:new Date(due.at).toISOString(),
+   runAt:new Date(run.runAtMs).toISOString(),finalState:'delivered',cronRemovedAfterRun:true};
+  return;
+ }
  await turn('deliver-and-reconcile-due-reminder','查一下现在还有哪些未到点的一次性提醒。',[
   ['personal_reminder_state_get',{},{ok:true}],
  ],async()=>{
@@ -268,15 +340,7 @@ async function verifyDueReminder(){
  });
  await turn('read-due-reminder-run-and-host-receipt','那条到点提醒的执行结果是什么？',[
   ['personal_reminder_state_get',{reminder_id:due.reminderId},{ok:true,verify(result){
-   assert.equal(result.feedback.status,'finished');
-   assert.equal(result.notification.action,'reminder.delivery');
-   assert.equal(result.notification.status,'succeeded');
-   assert.deepEqual(result.notification.evidence,{
-    source:'cron.runs',cronJobId:due.jobId,runAtMs:run.runAtMs,runId:'cron:'+due.jobId+':'+run.runAtMs,
-    hostDeliveryStatus:'reported_sent',noticeStatus:'generated',
-   });
-   assert.deepEqual(result.notification.segments.map(part=>part.messageId),notices.map(row=>row.messageId));
-   assert(result.notification.segments.every(part=>part.platformStatus==='accepted'&&part.recipientStatus==='unverified'));
+   verifyFeedback(result);
   }}],
  ],async()=>{
   assert.equal(due.noticeCalls,1);
@@ -335,7 +399,13 @@ try{
  await waitForAcceptance(onebot.connected,'OneBot socket');
  await assert.rejects(host.call('kurumi-qq.testInbound',{},3000),/unknown method|not found/iu);
  finishStep('passed');
- if(realModel){await actualCases();report.passed=true;}else{
+ if(dueDialogue){
+  await scheduleDueReminder();
+  beginStep('due-reminder-delivery');
+  await verifyDueReminder();
+  finishStep('passed');
+  report.passed=true;
+ }else if(realModel){await actualCases();report.passed=true;}else{
  await turn('same-message-cannot-confirm','生成一个测试提醒并直接确认',[propose('宿主测试甲'),confirmation({ok:false,code:'proposal_not_presented'})],sent=>{
   assert(sent.length>0);assert(JSON.stringify(sent).includes('模型自然说明'));assert(query('SELECT presented_at_utc FROM confirmation_previews')[0].presented_at_utc);assert.equal(query('SELECT * FROM approval_grants').length,0);
  });
