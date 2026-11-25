@@ -1,6 +1,6 @@
 // Isolated OpenClaw Gateway acceptance for kurumi-host-admin (docs/37 Stage 1).
-// Uses local deterministic model, loopback OneBot WebSocket/HTTP, Landlock exec, and stubbed sudo/systemctl scripts.
-// Never invokes real sudo, systemd, paid model, or real QQ; writes only disposable state and a new --out file.
+// --model sends synthetic conversations to the configured paid model; otherwise cognition is deterministic.
+// Only loopback OneBot, temporary state and a new --out report; sudo/systemctl always use local stubs.
 import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
@@ -20,11 +20,14 @@ import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {withHostControl} from '../access-control/host-config.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {closeOnScenarioDisconnect, scenarioProgress, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
+import {configuredModel, findObservedToolResult, observeToolResults, relayConfiguredModel} from '../acceptance/configured-dialogue.mjs';
+import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
 import {git} from '../../plugins/kurumi-coding/workspaces.js';
 
 const [flag, out, ...extra] = process.argv.slice(2);
 const fault = extra.length === 2 && extra[0] === '--diagnostic-fault' && extra[1] === 'host-fixture';
-assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out) && (!extra.length || fault), 'Require a new absolute --out');
+const realModel = extra.length === 1 && extra[0] === '--model';
+assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out) && (!extra.length || fault || realModel), 'Require a new absolute --out');
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 
@@ -117,7 +120,8 @@ for (const dir of [workspace, memberWorkspace]) {
 const report = {
   at: new Date().toISOString(),
   openclaw: JSON.parse(fs.readFileSync(path.join(repo, 'node_modules/openclaw/package.json'), 'utf8')).version,
-  boundary: 'Isolated Gateway, deterministic loopback model, simulated OneBot HTTP/WS, Landlock exec, stubbed sudo/systemctl. No real sudo, systemd, QQ, or paid model.',
+  boundary: 'Isolated Gateway, loopback OneBot HTTP/WS, Landlock, and stubbed sudo/systemctl. No real sudo, systemd or QQ.',
+  cognition: realModel ? 'configured-provider' : 'deterministic fixture',
   cases: [],
   requests: 0,
   primaryModel: 'fixture/fixture',
@@ -138,7 +142,8 @@ function unwrap(value) {
   return value;
 }
 
-let active;
+let active, upstream;
+const observeResults = observeToolResults();
 function modelReply(body, tool, res, text = '宿主测试回复。') {
   const choice = tool ? {
     role: 'assistant',
@@ -169,6 +174,10 @@ const server = http.createServer(async (req, res) => {
     if (active.member) {
       const names = body.tools?.map(tool => tool.function?.name) ?? [];
       assert(!names.includes('kurumi_host_admin') && !names.includes('personal_confirmation'), 'Member tool catalog must not expose host_admin or confirmation');
+    }
+    if (realModel) {
+      observeResults(body.messages ?? [], active.results);
+      return await relayConfiguredModel(upstream, body, res);
     }
     if (active.observe) {
       const last = body.messages.findLast(message => message.role === 'tool');
@@ -247,7 +256,7 @@ const buildConfig = (target = 'todeskd.service') => compileAccessConfig(withHost
         baseUrl: `http://${endpoint}/v1`,
         apiKey: 'synthetic',
         api: 'openai-completions',
-        models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}],
+        models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: realModel ? 128000 : FIXTURE_CONTEXT_WINDOW, maxTokens: 1200, cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}],
       },
     },
   },
@@ -387,11 +396,12 @@ async function restart(target = 'todeskd.service') {
 }
 
 async function turn(from, text, steps, reply = '宿主测试回复。') {
-  active = {next: 0, steps, member: from === member, reply};
+  const startedAt = Date.now();
+  active = {next: 0, steps, member: from === member, reply, results: []};
   const startLen = sends.length;
   const id = await onebot.send(onebot.message(from, text));
   await waitForOneBotTurn(channelDir, [id], {
-    timeoutMs: 25000,
+    timeoutMs: realModel ? 120000 : 25000,
     check() {
       onebot.check();
       assert(!report.fixtureError, report.fixtureError);
@@ -399,8 +409,11 @@ async function turn(from, text, steps, reply = '宿主测试回复。') {
   });
   onebot.check();
   assert(!report.fixtureError, report.fixtureError);
-  assert.equal(active.next, steps.length);
-  assert.equal(active.observe, undefined, 'Last tool result not observed');
+  if (!realModel) {
+    assert.equal(active.next, steps.length);
+    assert.equal(active.observe, undefined, 'Last tool result not observed');
+  }
+  const {results} = active;
   active = undefined;
   const sent = sends.slice(startLen);
   assert(sent.length >= 1 && sent.every(message => message.accepted && String(message.user_id) === from));
@@ -408,7 +421,11 @@ async function turn(from, text, steps, reply = '宿主测试回复。') {
     const receipt = readOneBotLedger(channelDir, db => db.prepare('SELECT status FROM outbound WHERE message_id=?').get(entry.messageId));
     assert.equal(receipt?.status, 'sent', 'OneBot receipt was not recorded');
   }
-  return {sent, messageId: id.split(':').at(-1)};
+  const messageId = id.split(':').at(-1);
+  if (realModel) {
+    (report.turns ??= []).push(captureDialogueEvidence({root: state, owner: from, startedAt, finishedAt: Date.now(), messageIds: [messageId]}));
+  }
+  return {sent, messageId, results};
 }
 
 async function step(label, fn, phase = 'check') {
@@ -434,10 +451,45 @@ const readAudit = (sql, ...params) => {
 
 let proposal, driftProposal;
 
-try {
-  await step('start isolated gateway with kurumi-host-admin', () => start('todeskd.service'), 'environment');
-  if (fault) await step('fixture diagnostic failure', async () => {throw Error('synthetic host fixture failure');});
+async function modelScenario() {
+  const get = ({results}, tool, identifiers) => {
+    const row = findObservedToolResult(results, tool, identifiers);
+    assert(row, 'Missing expected ' + tool + ' result for ' + identifiers.action);
+    return row.value;
+  };
+  const hostTool = 'kurumi_host_admin';
+  await step('natural request presents a frozen host operation without running it', async () => {
+    const preview = await turn(owner, '请预览重启远程桌面服务的受控系统操作 restart_todeskd，完整呈现预览，等我确认后再执行。');
+    proposal = get(preview, hostTool, {action: 'propose', actionId: 'restart_todeskd'});
+    assert.equal(proposal.status, 'pending');
+    assert.equal(proposal.beforeState.MainPID, '100');
+    assert(proposal.presentationFacts.every(fact => preview.sent.map(textOfSend).join('\n').includes(fact)));
+    assert(readAudit('SELECT presented_at_utc FROM confirmation_previews WHERE proposal_id=?', proposal.proposalId)?.presented_at_utc);
+    assert.equal(readCalls().length, 0);
+  });
+  await step('next-turn confirmation runs the registered stub exactly once', async () => {
+    const confirmation = await turn(owner, '确认，执行刚才预览的远程桌面服务重启。');
+    const id = {proposalId: proposal.proposalId};
+    assert.equal(get(confirmation, 'personal_confirmation', {action: 'confirm', domain: 'host_sudo', ...id}).status, 'authorized');
+    const result = get(confirmation, hostTool, {action: 'commit', ...id});
+    assert.equal(result.status, 'succeeded');
+    assert.equal(result.afterState.MainPID, '101');
+    assert.equal(result.verification.active, true);
+    assert.equal(readAudit('SELECT status FROM approval_grants WHERE proposal_id=?', proposal.proposalId)?.status, 'consumed');
+    assert.deepEqual(readCalls().map(row => row.args), [['-n', '--', systemctlStub, 'restart', 'todeskd.service']]);
+  });
+  await step('read-only status returns the same executed receipt without another restart', async () => {
+    const lookup = await turn(owner, `请只查询受控系统操作提案 ${proposal.proposalId} 的执行结果，不要再重启。`);
+    const receipt = get(lookup, hostTool, {action: 'status', proposalId: proposal.proposalId});
+    assert.equal(receipt.status, 'succeeded');
+    assert.equal(receipt.afterState.MainPID, '101');
+    assert.equal(receipt.currentState.MainPID, '101');
+    assert.equal(readCalls().length, 1);
+    report.proposalId = proposal.proposalId;
+  });
+}
 
+async function fixtureScenario() {
   await step('owner lists configured host-admin actions and leaseEligible=false', async () => {
     await turn(owner, '看看有哪些受控系统操作', [{
       name: 'kurumi_host_admin',
@@ -686,6 +738,18 @@ try {
     assert(!JSON.stringify(accessOut).includes(sudoStub));
   });
 
+}
+
+try {
+  if (realModel) {
+    await step('configure model for synthetic host conversation', () => {
+      try {upstream = configuredModel(repo); report.primaryModel = upstream.primary;}
+      catch {report.blocked = true; throw Error('Configured model or credential is unavailable');}
+    }, 'environment');
+  }
+  await step('start isolated gateway with kurumi-host-admin', () => start('todeskd.service'), 'environment');
+  if (fault) await step('fixture diagnostic failure', async () => {throw Error('synthetic host fixture failure');});
+  await (realModel ? modelScenario() : fixtureScenario());
   report.passed = true;
 } catch (error) {
   report.passed = false;

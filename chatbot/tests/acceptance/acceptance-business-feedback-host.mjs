@@ -19,7 +19,7 @@ import {withHostControl} from '../access-control/host-config.mjs';
 import {bodies} from '../e7/fixtures.mjs';
 import {E7Service} from '../../plugins/kurumi-e7/service.js';
 import {startIsolatedGateway} from './isolated-gateway.mjs';
-import {configuredModel, observeToolResults, syntheticPersona} from './configured-dialogue.mjs';
+import {configuredModel, findObservedToolResult, observeToolResults, syntheticPersona} from './configured-dialogue.mjs';
 import {captureDialogueEvidence} from './dialogue-evidence.mjs';
 import {assertionDiagnostics} from './assertion-diagnostics.mjs';
 import {createOneBotPeer, textOfSend, waitForAcceptance, waitForOneBotTurn} from './onebot-peer.mjs';
@@ -115,8 +115,9 @@ async function turn(message, steps, answer = () => '已经核对。') {
   const sends = peer.sends.slice(before);
   assert(sends.length && sends.every(send => send.accepted), 'No accepted loopback reply');
   const results = realModel ? steps.map(([name, expected]) => {
-    const row = active.observed.findLast(result => result.tool === name
-      && (name !== 'kurumi_logs' || !expected.messageId || String(result.args?.messageId) === expected.messageId));
+    const identifiers = Object.fromEntries(['messageId', 'proposal_id']
+      .filter(key => expected?.[key] !== undefined).map(key => [key, expected[key]]));
+    const row = findObservedToolResult(active.observed, name, identifiers);
     assert(row, 'Missing expected ' + name + ' result');
     if (name === 'kurumi_logs' && typeof row.value === 'string' && row.value.includes('EXTERNAL_UNTRUSTED_CONTENT')) {
       const start = row.value.indexOf('{"status":"ok"');
