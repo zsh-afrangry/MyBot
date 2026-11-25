@@ -19,7 +19,7 @@ import {withHostControl} from '../access-control/host-config.mjs';
 import {bodies} from '../e7/fixtures.mjs';
 import {E7Service} from '../../plugins/kurumi-e7/service.js';
 import {startIsolatedGateway} from './isolated-gateway.mjs';
-import {configuredModel, observeToolResults, syntheticPersona} from './configured-dialogue.mjs';
+import {configuredModel, findObservedToolResult, observedAuthorization, observeToolResults, syntheticPersona} from './configured-dialogue.mjs';
 import {captureDialogueEvidence} from './dialogue-evidence.mjs';
 import {assertionDiagnostics} from './assertion-diagnostics.mjs';
 import {createOneBotPeer, textOfSend, waitForAcceptance, waitForOneBotTurn} from './onebot-peer.mjs';
@@ -115,8 +115,9 @@ async function turn(message, steps, answer = () => '已经核对。') {
   const sends = peer.sends.slice(before);
   assert(sends.length && sends.every(send => send.accepted), 'No accepted loopback reply');
   const results = realModel ? steps.map(([name, expected]) => {
-    const row = active.observed.findLast(result => result.tool === name
-      && (name !== 'kurumi_logs' || !expected.messageId || String(result.args?.messageId) === expected.messageId));
+    const identifiers = Object.fromEntries(['messageId', 'proposal_id']
+      .filter(key => expected?.[key] !== undefined).map(key => [key, expected[key]]));
+    const row = findObservedToolResult(active.observed, name, identifiers);
     assert(row, 'Missing expected ' + name + ' result');
     if (name === 'kurumi_logs' && typeof row.value === 'string' && row.value.includes('EXTERNAL_UNTRUSTED_CONTENT')) {
       const start = row.value.indexOf('{"status":"ok"');
@@ -236,26 +237,47 @@ async function acceptProfilePlanning() {
         locationPeriods: count('location_periods')};
     } finally {db.close();}
   };
+  const explicitSelection = new Set();
   async function propose(domain, message, request) {
-    const {results, sends} = await turn(message, [[domain + '_change_propose', {schema_version: 1, request},
+    const before = existsSync(file) ? facts() : undefined;
+    const tool = domain + '_change_propose';
+    const {results: [draft], sends, observed} = await turn(message, [[tool, {schema_version: 1, request},
       result => assert.equal(result.status, 'pending')]], ([result]) => result.previewText);
+    assert.equal(draft.status, 'pending');
     assert(sends.some(send => send.accepted && textOfSend(send).includes('提案确认截止')));
-    return results[0];
+    const after = facts();
+    if (before) assert.deepEqual(after, before, 'A proposal must not authorize or write a business change');
+    else assert.deepEqual([after.grants, after.changes, after.trips], [0, 0, 0], 'Initial preview must not change business state');
+    const drafts = observed.filter(row => row.tool === tool && row.value?.status === 'pending');
+    if (new Set(drafts.map(row => row.value.proposalId)).size > 1) {
+      assert(drafts.every(row => row.value.payloadHash === draft.payloadHash), 'Multiple distinct changes require clarification');
+      explicitSelection.add(draft.proposalId);
+      (report.previewSelections ??= []).push({proposalId: draft.proposalId, alternatives: drafts.map(row => row.value.proposalId)});
+    }
+    return draft;
   }
   const params = proposal => ({proposal_id: proposal.proposalId, payload_hash: proposal.payloadHash});
   async function confirm(domain, confirmationDomain, proposal) {
     const savedText = result => '已保存：' + (result.feedback.evidence.savedLocation ?? result.feedback.evidence.destination);
-    const {results, sends} = await turn('确认', [
-      ['personal_confirmation', {action: 'confirm', domain: confirmationDomain, proposalId: proposal.proposalId, payloadHash: proposal.payloadHash},
-        result => assert.equal(result.ok, true, JSON.stringify(result))],
+    const selection = {domain: confirmationDomain, proposalId: proposal.proposalId, payloadHash: proposal.payloadHash};
+    const steps = [
+      ...(!realModel ? [['personal_confirmation', {action: 'confirm', ...selection},
+        result => assert.equal(result.ok, true)]] : []),
       [domain + '_change_commit', params(proposal), result => {
         assert.equal(result.status, 'committed');
         assert.equal(result.feedback?.status, 'succeeded');
       }],
-    ], ([, result]) => savedText(result));
-    const savedValue = results[1].feedback.evidence.savedLocation ?? results[1].feedback.evidence.destination;
-    assert(sends.some(send => send.accepted && textOfSend(send).includes(realModel ? savedValue : savedText(results[1]))));
-    return results[1];
+    ];
+    const request = explicitSelection.has(proposal.proposalId)
+      ? `我确认提交提案 ${proposal.proposalId}，只确认这一份，其他草稿不用处理。` : '确认';
+    const {results, sends, observed} = await turn(request, steps, rows => savedText(rows.at(-1)));
+    if (realModel) assert(observedAuthorization(observed, selection), 'Missing authorization for the selected proposal');
+    const committed = results.at(-1);
+    assert.equal(committed.status, 'committed');
+    assert.equal(committed.feedback?.status, 'succeeded');
+    const savedValue = committed.feedback.evidence.savedLocation ?? committed.feedback.evidence.destination;
+    assert(sends.some(send => send.accepted && textOfSend(send).includes(realModel ? savedValue : savedText(committed))));
+    return committed;
   }
   async function lookup(domain, proposal, description = '刚才的提案') {
     const {results} = await turn(`请按原提案核对${description}的记录。`, [[domain + '_state_get', {proposal_id: proposal.proposalId}]]);

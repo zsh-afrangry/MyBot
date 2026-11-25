@@ -2,7 +2,8 @@
 // Writes only its temporary source checkout and state, plus a new --out report.
 // owner_tool starts the real KnowledgeMap API on a disposable SQLite database.
 // Uses synthetic QQ identities and (for coding_project) a local ACP stub.
-// No real QQ, paid model, DSH, production writes or production restart.
+// --category member --model sends synthetic dialogue to the configured paid model.
+// No real QQ, DSH, production writes or production restart.
 import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from '../acceptance/fixture-model.mjs';
 import assert from 'node:assert/strict';
 import {execFileSync, spawn} from 'node:child_process';
@@ -24,14 +25,17 @@ import {syncConfig} from '../../../scripts/fusion/sync-config.mjs';
 import {createOneBotPeer, readOneBotLedger, textOfSend, waitForAcceptance, waitForOneBotTurn} from '../acceptance/onebot-peer.mjs';
 import {buildMessage} from '../../plugins/kurumi-mail/mime.js';
 import {IMAP_CERT_FILE, IMAP_TEST_PASS, IMAP_TEST_USER, MockImapServer} from '../../plugins/kurumi-mail/test/mock-imap.js';
-import {closeOnScenarioDisconnect, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
+import {closeOnScenarioDisconnect, scenarioProgress, scenarioSignal} from '../acceptance/scenario-lifecycle.mjs';
+import {configuredModel, findObservedToolResult, observedAuthorization, observeToolResults, relayConfiguredModel} from '../acceptance/configured-dialogue.mjs';
+import {captureDialogueEvidence} from '../acceptance/dialogue-evidence.mjs';
 import {startIsolatedKnowledgeMap} from '../knowledgemap/isolated-api.mjs';
 import {ownerPolicy} from './fixtures.mjs';
 import {withHostControl} from './host-config.mjs';
 
 const [flag, out, mode, category = 'member', ...extra] = process.argv.slice(2);
+const realModel = category === 'member' && extra.length === 1 && extra[0] === '--model';
 assert(flag === '--out' && path.isAbsolute(out ?? '') && !fs.existsSync(out), 'Require a new absolute --out');
-assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'mail_sender', 'owner_tool', 'exec_root', 'coding_project'].includes(category) && !extra.length);
+assert((mode === undefined || mode === '--category') && ['member', 'mail_recipient', 'mail_sender', 'owner_tool', 'exec_root', 'coding_project'].includes(category) && (!extra.length || realModel));
 const repo = fileURLToPath(new URL('../../../', import.meta.url));
 assert(path.resolve(out).startsWith(path.resolve(repo, 'test-output') + path.sep), 'Use test-output for evidence');
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'kurumi-access-admin-host-'));
@@ -49,7 +53,8 @@ const token = randomBytes(24).toString('hex');
 const readPolicy = () => JSON.parse(fs.readFileSync(policyFile, 'utf8'));
 const writeJson = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', {mode: 0o600});
 const report = {openclaw: JSON.parse(fs.readFileSync(path.join(repo, 'node_modules/openclaw/package.json'))).version,
-  boundary: 'Isolated Gateway, deterministic model and loopback OneBot WebSocket/HTTP. Canonical config sync on synthetic source and state.',
+  boundary: 'Isolated Gateway and loopback OneBot WebSocket/HTTP. Canonical config sync on synthetic source and state.',
+  cognition: realModel ? 'configured-provider' : 'deterministic fixture',
   category, cases: [], feedback: [], requests: 0, primaryModel: 'fixture/fixture'};
 
 for (const dir of ['config', 'roles', 'scripts/fusion/templates']) fs.mkdirSync(path.join(source, dir), {recursive: true});
@@ -65,6 +70,8 @@ fs.copyFileSync(path.join(repo, 'scripts/fusion/templates/MEMBER_AGENTS.md'), pa
 for (const file of ['http-token', 'ws-token']) fs.writeFileSync(path.join(state, file), token, {mode: 0o600});
 
 let active, proposal, child, stopCurrent, removeDisconnectHandler, completingTask, knowledgeMap, mockImap, imapAddr, liveConfig;
+let upstream;
+const observeResults = observeToolResults();
 const onebot = await createOneBotPeer({token, botId: bot, subjects: [owner, member]});
 const {sends} = onebot;
 function unwrap(value) {
@@ -102,6 +109,10 @@ const server = http.createServer(async (req, res) => {
     if (active.member) {
       const names = body.tools?.map(tool => tool.function?.name) ?? [];
       assert(!names.includes('kurumi_access') && !names.includes('personal_confirmation'));
+    }
+    if (realModel) {
+      observeResults(body.messages ?? [], active.results);
+      return await relayConfiguredModel(upstream, body, res);
     }
     if (active.observe) {
       const last = body.messages.findLast(message => message.role === 'tool');
@@ -170,7 +181,7 @@ const config = withHostControl({
     reload: {mode: 'off'}},
   discovery: {mdns: {mode: 'off'}}, update: {checkOnStart: false},
   models: {catalogRefresh: {enabled: false}, providers: {fixture: {baseUrl: `http://${endpoint}/v1`, apiKey: 'synthetic', api: 'openai-completions',
-    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: FIXTURE_CONTEXT_WINDOW, maxTokens: 1200,
+    models: [{id: 'fixture', name: 'fixture', reasoning: false, input: ['text'], contextWindow: realModel ? 128000 : FIXTURE_CONTEXT_WINDOW, maxTokens: 1200,
       cost: {input: 0, output: 0, cacheRead: 0, cacheWrite: 0}}]}}},
   agents: {ownership: 'explicit', defaults: {workspace, systemAgent: {agentId: 'main'}, model, heartbeat: {every: '0m'}},
     entries: {main: {workspace, model, tools: {profile: 'messaging',
@@ -267,16 +278,20 @@ async function restart(options) {
 }
 
 async function turn(from, text, steps) {
-  active = {next: 0, steps, member: from === member};
+  const startedAt = Date.now();
+  active = {next: 0, steps, member: from === member, results: []};
   const start = sends.length;
   const id = await onebot.send(onebot.message(from, text));
-  await waitForOneBotTurn(channelDir, [id], {timeoutMs: 20000, check() {
+  await waitForOneBotTurn(channelDir, [id], {timeoutMs: realModel ? 120000 : 20000, check() {
     onebot.check(); assert(!report.fixtureError, report.fixtureError);
   }});
   onebot.check();
   assert(!report.fixtureError, report.fixtureError);
-  assert.equal(active.next, steps.length);
-  assert.equal(active.observe, undefined, 'Last tool result not observed');
+  if (!realModel) {
+    assert.equal(active.next, steps.length);
+    assert.equal(active.observe, undefined, 'Last tool result not observed');
+  }
+  const {results} = active;
   active = undefined;
   const sent = sends.slice(start);
   assert(sent.length >= 1 && sent.every(message => message.accepted && String(message.user_id) === from));
@@ -284,7 +299,11 @@ async function turn(from, text, steps) {
     const receipt = readOneBotLedger(channelDir, db => db.prepare('SELECT status FROM outbound WHERE message_id=?').get(entry.messageId));
     assert.equal(receipt?.status, 'sent', 'OneBot receipt was not recorded');
   }
-  return {sent,messageId:id.split(':').at(-1)};
+  const messageId = id.split(':').at(-1);
+  if (realModel) {
+    (report.turns ??= []).push(captureDialogueEvidence({root: state, owner: from, startedAt, finishedAt: Date.now(), messageIds: [messageId]}));
+  }
+  return {sent, messageId, results};
 }
 
 async function assertMemberRejected() {
@@ -422,6 +441,71 @@ async function memberScenario() {
   await assertMemberRejected();
   assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
   report.cases.push('Revocation removes access on restart and preserves the member workspace');
+}
+
+async function memberModelScenario() {
+  const registered = () => readPolicy().subjects.find(row => row.qq === member);
+  const get = ({results}, tool, identifiers) => {
+    const row = findObservedToolResult(results, tool, identifiers);
+    assert(row, 'Missing expected ' + tool + ' result for ' + identifiers.action);
+    return row.value;
+  };
+  const confirmChange = async (draft, request, revision) => {
+    const turnResult = await turn(owner, request);
+    const id = {proposalId: draft.proposalId};
+    assert(observedAuthorization(turnResult.results, {...draft, domain: 'access'}), 'Missing authorization for the presented proposal');
+    const written = get(turnResult, 'kurumi_access', {action: 'commit', ...id});
+    assert.equal(written.sourceRevision, revision);
+    verifyFeedback(written, 'pending_sync');
+    assert.equal(readAudit('SELECT status FROM approval_grants WHERE proposal_id=?', draft.proposalId)?.status, 'consumed');
+  };
+  const previewChange = async request => {
+    const result = await turn(owner, request);
+    const draft = get(result, 'kurumi_access', {action: 'propose'});
+    assert.equal(draft.status, 'pending');
+    assert(result.sent.map(textOfSend).join('\n').includes(draft.previewText));
+    assert(readAudit('SELECT presented_at_utc FROM confirmation_previews WHERE proposal_id=?', draft.proposalId)?.presented_at_utc);
+    return draft;
+  };
+  const check = async (label, fn) => {
+    scenarioProgress(label, 'started', 'check');
+    try {await fn();}
+    catch (error) {scenarioProgress(label, 'failed', 'check'); throw error;}
+    report.cases.push({label, passed: true});
+    scenarioProgress(label, 'passed', 'check');
+  };
+  let added;
+  await check('natural registration request presents a frozen preview before writing', async () => {
+    added = await previewChange(`请预览把 QQ ${member} 加为成员，只授予聊天和 QQ 回复权限。完整展示预览，等我下一条消息确认。`);
+    assert.equal(registered(), undefined);
+    assert.equal(readPolicy().revision, 1);
+    await assertMemberRejected();
+  });
+  await check('confirmed registration takes effect only after isolated synchronization and restart', async () => {
+    await confirmChange(added, '确认，登记刚才预览的成员。', 2);
+    assert.equal(registered()?.role, 'member');
+    assert.deepEqual(registered().permissions, {'chat.use': true, 'qq.reply': true});
+    await assertMemberRejected();
+    await restart();
+    await turn(member, '请回复你好。');
+    const subject = registered();
+    const catalog = await call('tools.effective', {agentId: agentFor(subject), sessionKey: sessionFor(subject)});
+    assert.equal(catalog.agentId, agentFor(subject));
+    assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
+  });
+  await check('natural revocation request leaves the member registered until confirmation', async () => {
+    proposal = await previewChange(`请预览移除刚才登记的 QQ ${member} 成员。完整显示预览，等我确认。`);
+    assert.equal(registered()?.role, 'member');
+    assert.equal(readPolicy().revision, 2);
+  });
+  await check('confirmed revocation removes access and preserves the isolated workspace', async () => {
+    await confirmChange(proposal, '确认移除刚才预览的成员。', 3);
+    assert.equal(registered(), undefined);
+    await restart();
+    await assertMemberRejected();
+    assert(fs.existsSync(path.join(state, 'users', member, 'workspace', 'AGENTS.md')));
+    report.proposals = {added: added.proposalId, removed: proposal.proposalId};
+  });
 }
 
 async function mailScenario() {
@@ -772,6 +856,12 @@ async function projectScenario() {
 }
 
 try {
+  if (realModel) {
+    scenarioProgress('configure model for synthetic member conversation', 'started', 'environment');
+    try {upstream = configuredModel(repo); report.primaryModel = upstream.primary;}
+    catch {report.blocked = true; throw Error('Configured model or credential is unavailable');}
+    scenarioProgress('configure model for synthetic member conversation', 'passed', 'environment');
+  }
   if (toolRun) {
     report.boundary += ' Real KnowledgeMap FastAPI with disposable SQLite.';
     report.uncovered = ['real model semantics', 'real QQ platform', 'production configuration activation or KnowledgeMap MySQL'];
@@ -811,6 +901,7 @@ try {
   else if (toolRun) await toolScenario();
   else if (execRun) await execScenario();
   else if (projectRun) await projectScenario();
+  else if (realModel) await memberModelScenario();
   else await memberScenario();
   report.passed = true;
 } catch (error) {
