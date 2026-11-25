@@ -1,6 +1,7 @@
 // Shared identity/capability checks; no filesystem I/O, model parsing or default-allow fallback.
 // Runtime policy is compiled from config/access-control.json by sync-config. See docs/24.
 import {PERMISSIONS, OWNER_PERMISSIONS, toolPermission} from './permissions.js';
+import {validLocalCodingEnrollment} from './local-coding.js';
 export {PERMISSIONS, SHARED_PERMISSIONS, OWNER_PERMISSIONS, MEMBER_TOOLS, toolPermission, toolPermissions} from './permissions.js';
 export const CHANNEL = 'kurumi-qq';
 export const QQ_ID = /^[0-9]{5,12}$/;
@@ -15,7 +16,8 @@ export const agentFor = row => row.role === 'owner' ? 'main' : `qq-user-${row.qq
 export const sessionFor = row => `agent:${agentFor(row)}:${CHANNEL}:direct:${row.qq}`;
 
 export function validatePolicy(value) {
-  if (!keysOnly(value, ['version', 'revision', 'subjects']) || value.version !== 1 || !Number.isSafeInteger(value.revision) || value.revision < 1 || !Array.isArray(value.subjects) || value.subjects.length > 100) deny('invalid_access_policy');
+  if (!keysOnly(value, ['version', 'revision', 'subjects', 'localCodingAcceptance']) || value.version !== 1 || !Number.isSafeInteger(value.revision) || value.revision < 1 || !Array.isArray(value.subjects) || value.subjects.length > 100) deny('invalid_access_policy');
+  if (Object.hasOwn(value, 'localCodingAcceptance') && !validLocalCodingEnrollment(value.localCodingAcceptance)) deny('invalid_local_coding_enrollment');
   const policy = structuredClone(value), ids = new Set();
   for (const row of policy.subjects) {
     if (!keysOnly(row, ['qq', 'kind', 'role', 'enabled', 'permissions', 'mailRecipients', 'mailSenders', 'note', 'expiresAt'])

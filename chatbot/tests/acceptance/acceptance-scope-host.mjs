@@ -3,7 +3,7 @@
 // Separated fixture DBs/notification worker only. No paid model, real QQ, production data or service changes.
 import {FIXTURE_CONTEXT_WINDOW, readFixtureJson} from './fixture-model.mjs';
 import assert from 'node:assert/strict';
-import {randomBytes} from 'node:crypto';
+import {randomBytes, randomUUID} from 'node:crypto';
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs';
 import {dirname, isAbsolute, join} from 'node:path';
 import {tmpdir} from 'node:os';
@@ -11,6 +11,7 @@ import {createServer} from 'node:http';
 import {once} from 'node:events';
 import {DatabaseSync} from 'node:sqlite';
 import {fileURLToPath} from 'node:url';
+import {sendGatewayTurn} from '../../scripts/acceptance-live-dialogue.mjs';
 import {compileAccessConfig} from '../../packages/access-control/config.js';
 import {ownerPolicy} from '../access-control/fixtures.mjs';
 import {startIsolatedGateway} from './isolated-gateway.mjs';
@@ -37,12 +38,20 @@ function startModel() {
       assert(++report.requests <= 25, 'Fixture model budget exceeded');
       const body = await readFixtureJson(req, {maxBytes: 2 * 1024 * 1024}), messages = body.messages ?? [];
       const prompt = JSON.stringify(messages), visible = body.tools?.map(t => t.function?.name) ?? [];
+      const localTurn = messages.findLastIndex(m => m.role === 'user' &&
+        /LOCAL_PROBE_(REMEMBER_42|RECALL)/u.test(JSON.stringify(m.content ?? '')));
       const userIndex = messages.findLastIndex(m => m.role === 'user' &&
         /OWNER_SCOPE_LANE|SCOPE_STEP=/u.test(JSON.stringify(m.content ?? '')));
       const current = JSON.stringify(messages[userIndex]?.content ?? '');
       const ownerTurn = current.includes('OWNER_SCOPE_LANE');
       let message;
-      if (ownerTurn) {
+      if (localTurn >= 0) {
+        assert(prompt.includes('OWNER_WORKSPACE_ONLY'));
+        assert(!prompt.includes('PROBE_WORKSPACE_ONLY'));
+        const recall = JSON.stringify(messages[localTurn].content).includes('LOCAL_PROBE_RECALL');
+        if (recall) assert(JSON.stringify(messages.slice(0, localTurn)).includes('LOCAL_PROBE_REMEMBER_42'));
+        message = {role: 'assistant', content: recall ? 'LOCAL_PROBE_42' : 'LOCAL_PROBE_READY'};
+      } else if (ownerTurn) {
         assert(prompt.includes('OWNER_WORKSPACE_ONLY')); assert(!prompt.includes('PROBE_WORKSPACE_ONLY'));
         assert(!prompt.includes('SCOPE_STEP=')); assert(!visible.includes(tool));
         ownerGate.seen = true;
@@ -206,6 +215,17 @@ try {
   assert.deepEqual(query('b', 'SELECT * FROM approval_grants'), []);
   assert.deepEqual(query('b', 'SELECT * FROM jobs'), []);
   checked('no-preview-receipt-means-no-approval-or-job');
+
+  const config = JSON.parse(readFileSync(join(root, 'openclaw.json'), 'utf8'));
+  const localSession = {config, token, sessionKey: 'agent:main:codex-acceptance-' + randomUUID()};
+  for (const [message, reply] of [['LOCAL_PROBE_REMEMBER_42', 'LOCAL_PROBE_READY'], ['LOCAL_PROBE_RECALL', 'LOCAL_PROBE_42']]) {
+    const result = await sendGatewayTurn({...localSession, message});
+    check();
+    assert.equal(result.status, 'ok');
+    assert.equal((result.result?.payloads ?? result.payloads)?.at(-1)?.text, reply);
+  }
+  assert.equal(peer.sends.length, 1);
+  checked('local-gateway-rpc-waits-for-replies-and-preserves-session-without-qq-delivery');
   report.passed = true;
 } catch (error) {
   report.passed = false;

@@ -1,5 +1,6 @@
 import {accessPolicy, toolPermission, toolPolicyDecision} from '../../packages/access-control/index.js';
 import {attachHostControl} from '../../packages/host-control/index.js';
+import {localCodingDecision} from '../../packages/host-control/local-coding.js';
 import {confineOwnerExec} from '../../packages/host-exec/index.js';
 import {createRuntimeTraceSink} from '../../packages/observability/index.js';
 import {isWakeSession} from '../../packages/proactive-core/policy.js';
@@ -15,7 +16,7 @@ export default {id: 'kurumi-host-control', name: 'Kurumi host controls', registe
     evaluate(event, ctx) {
       let result = isWakeSession(ctx)
         ? (proactive ? proactive.toolDecision(event, ctx) : {block: true, blockReason: 'wake_registration_unavailable'})
-        : toolPolicyDecision(event, ctx, cfg);
+        : localCodingDecision(event, ctx) ?? toolPolicyDecision(event, ctx, cfg);
       if (!result?.block && event.toolName === 'exec') result = confineOwnerExec(event.params, api.pluginConfig?.exec);
       try {
         audit.emit({source: 'access-control', kind: 'access.tool',
