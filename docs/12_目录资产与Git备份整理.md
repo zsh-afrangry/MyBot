@@ -1,4 +1,4 @@
-状态：开发中（OpenClaw 2026.11.8 已部署，待主人复核）
+状态：已完成（2026-11-26，OpenClaw 2026.11.8 真人 QQ 与隔离恢复验收）
 
 # 系统资产、备份与回退
 
@@ -72,6 +72,10 @@ node scripts/fusion/backup-retention.mjs --apply                                
 
 **Git。** 日常在 kurumi-fusion 里看 `git status --short`、`git log -1`、`git worktree list`。配置、人格、依赖和服务健康检查只证明部署对齐，不证明已提交或推送。远端写入需要用户明确授权。读取远端时不要输出带凭据的 URL。`git ls-remote` 只证明远端可读。
 
+### OpenClaw 补丁工件
+
+OpenClaw 2026.11.8 的 `sessions.reset` 补丁识别被重置的前台回合自身的取消信号，独立清理故障仍会上报。部署或重装须使用通过验证的补丁工件；制作工件时对暂存安装运行 `node scripts/fusion/patch-openclaw.mjs --sdk <暂存 SDK 的绝对路径>`。启动、依赖校验、备份和恢复均核对补丁哈希。
+
 ### 旧系统回退
 
 旧 A/B 整体恢复不再支持，当前只保证上面范围内的 Fusion 成套恢复。旧消费者（`qq-bridge.service`、`openclaw-gateway.service`）保持屏蔽，不与 Fusion 同时运行。恢复前先停掉当前写入方，隔离验证时禁止 QQ、邮件等真实外发。
@@ -82,7 +86,6 @@ node scripts/fusion/backup-retention.mjs --apply                                
 - 隔离恢复不证明真实模型、真实 QQ 登录或独立 DSH 能恢复。使用编码能力还需要 DSH 项目本身可用；恢复验证里 DSH 缺失时编码策略必须拒绝执行，其余策略用不执行的 `/usr/bin/false` 作可用性夹具检查。
 - 普通文件管理登记的下载/文档目录不在恢复范围，对这些文件的改动无法靠恢复点或 Git 撤销。范围见[文档28](28_本机编码工具委托与实验任务.md)。
 - 当前生产没有启用 N3。已有恢复点不含 N3 状态；启用前要制作并验证匹配的新恢复点。
-- 最新登记点 `2026-11-18-17-45-34-post-doc-cleanup` 对应源码 `debe707`，通过 26 项 Fusion 隔离恢复检查。当前保留该点和 R8（`9b98c9c`）。保留名单以 `backup-retention.mjs` 的只读输出为准。
 - 旧时点（迁移前的 `kurumi-baselines`）已经删除，旧的忽略文件没有逐项证明被等价覆盖，无法补回。
 - 备份根下五份 `knowledgemap-*` 目录是 KnowledgeMap 的独立备份，不计入 Fusion 恢复点，也不被自动保留清理选中。SnowLuma 目录下的旧备份属于 DSH 历史资料，不由 Fusion 处理。
 - 清单里的符号链接以 `symlink:<链接目标>` 的 SHA256 记录，用 `restore-verify.mjs` 核验，普通 `sha256sum -c` 会跟随链接，不能代替。
@@ -92,15 +95,11 @@ node scripts/fusion/backup-retention.mjs --apply                                
 
 ```bash
 node scripts/fusion/backup-retention.mjs             # 只预览保留计划
-/usr/bin/node --test scripts/fusion/test/recovery.test.mjs scripts/fusion/test/backup-layout.test.mjs scripts/fusion/test/backup-retention.test.mjs
+/usr/bin/node --test scripts/fusion/test/recovery.test.mjs scripts/fusion/test/recovery-checks.test.mjs scripts/fusion/test/backup-layout.test.mjs scripts/fusion/test/backup-retention.test.mjs
 git status --short --branch
 git log --oneline main..HEAD                         # 当前分支与 main 的差异，不代表已推送
 ```
 
 保留计划会校验 VERIFIED 与清单哈希；文件存在不能代替完整隔离恢复。需要制作/复验新点时按上面的授权接口执行。
 
-## 进行中：OpenClaw 2026.11.8 升级
-
-- 补丁让 `sessions.reset` 识别该前台回合自己的取消信号，独立故障仍上报。用 `node scripts/fusion/patch-openclaw.mjs --sdk <暂存的绝对 SDK 路径>` 构建工件；启动、依赖、备份和恢复均校验补丁哈希。
-- 旧版停写恢复点 27 项通过；用同一快照迁移新版并启动隔离网关，32 项通过。并发重置和权限隔离验收分别通过 15 项、12 项，覆盖取消前台回合后接收新消息。隔离验收不含真实 QQ 或付费模型。
-- 2026-11-26 本地合入 `d6cc477` 并切换 Fusion；5 个 agent 数据库迁移到 schema 38，6 个 Cron 任务保留，停用心跳仍停用。健康、依赖、配置和人格自检通过。最后停写的旧状态与旧内核单独保留；独立 DSH 与 KnowledgeMap 不在本次恢复范围。待主人复核实际 QQ 对话体验。
+验收：OpenClaw 2026.11.1 停写快照隔离恢复 27/27；2026.11.8 隔离迁移 32/32、并发重置 15/15、权限场景 12/12；生产只读自检及主人 QQ 对话均通过。隔离恢复未验证真实 QQ 登录、真实模型或外部项目恢复。

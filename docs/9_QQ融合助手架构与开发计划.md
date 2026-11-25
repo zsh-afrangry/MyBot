@@ -183,7 +183,7 @@ KnowledgeMap 只保留 `/home/afrangry/repository` 为事实源；启动器改�
 
 升级顺序：先更新版本契约和锁文件，通过依赖检查、构建、领域回归和隔离恢复验证，再部署。恢复、旧心跳迁移和升级演练见[文档12](12_目录资产与Git备份整理.md)。DeepSeek 由独立官方插件 `@openclaw/deepseek-provider` 提供，版本锁在受管插件清单里，显式列入 allow/load/entries；数据库迁移必须停写后运行官方 doctor，只替换 npm 包完成不了。
 
-仅当当前数据库与批准版本匹配而全局宿主被意外替换时，才重装批准版本。若版本需要本地补丁，使用[文档12](12_目录资产与Git备份整理.md#进行中openclaw-2026118-升级)记录的已验证工件。其余版本可用下列命令重装。替换全局安装需要授权。
+仅当当前数据库与批准版本匹配而全局宿主被意外替换时，才重装批准版本。若版本需要本地补丁，使用[文档12](12_目录资产与Git备份整理.md#openclaw-补丁工件)记录的已验证工件。其余版本可用下列命令重装。替换全局安装需要授权。
 
 ```bash
 PATH=/usr/bin:/bin /usr/bin/npm i -g --prefix /home/afrangry/.npm-global "openclaw@$(/usr/bin/node -p "require('./config/openclaw-release.json').version")"
