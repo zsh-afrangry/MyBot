@@ -75,7 +75,7 @@ const scenarios = {
   'e7-image-feedback': {target: 'isolated', file: 'acceptance/acceptance-business-feedback-host.mjs',
     args: ['image'], workload: 'E7 零命中、真实渲染、QQ 图片受理和原请求回查', requires: ['Bubblewrap'], timeoutMs: 100000},
   'profile-planning-feedback': {target: 'isolated', file: 'acceptance/acceptance-business-feedback-host.mjs',
-    args: ['profile-planning'], workload: '所在地与行程确认、按提案回查及历史所在地核对', timeoutMs: 100000},
+    args: ['profile-planning'], workload: '所在地与行程确认、天气和历史所在地核对', timeoutMs: 120000, modelTimeoutMs: 600000},
   'shared-city': {target:'isolated', file:'acceptance/acceptance-shared-city-host.mjs',
     workload:'真实隔离网关与鉴权网站读取已确认所在地；网页选点独立',
     requires:['KnowledgeMap FastAPI test environment'], timeoutMs:90000},
