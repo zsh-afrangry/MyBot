@@ -115,7 +115,7 @@ async function turn(message, steps, answer = () => '已经核对。') {
   const sends = peer.sends.slice(before);
   assert(sends.length && sends.every(send => send.accepted), 'No accepted loopback reply');
   const results = realModel ? steps.map(([name, expected]) => {
-    const identifiers = Object.fromEntries(['messageId', 'proposal_id']
+    const identifiers = Object.fromEntries(['messageId', 'proposal_id', ...(name === 'kurumi_logs' ? ['kind'] : [])]
       .filter(key => expected?.[key] !== undefined).map(key => [key, expected[key]]));
     const row = findObservedToolResult(active.observed, name, identifiers);
     assert(row, 'Missing expected ' + name + ' result');
@@ -166,7 +166,7 @@ async function acceptImages() {
   const imageCall = (verify, extra = {}) => ['e7_image', {...args, ...extra}, verify];
   const images = () => peer.sends.filter(isImage);
   async function lookup(id, imageStatus, platformStatus) {
-    const {results} = await turn(realModel ? `请按原请求消息 ID ${id} 核对这次发图结果。` : '请核对这条发图请求的结果。', [['kurumi_logs',
+    const {results} = await turn(realModel ? `请按原请求消息 ID ${id} 核对这次发图结果，用 kurumi_logs 的 events 视图、channel-delivery 来源，只查 qq.image_feedback 事件。` : '请核对这条发图请求的结果。', [['kurumi_logs',
       {view: 'events', sources: ['channel-delivery'], kind: 'qq.image_feedback', messageId: id, noText: true},
     ]]);
     assert.equal(results[0].total, 1);
