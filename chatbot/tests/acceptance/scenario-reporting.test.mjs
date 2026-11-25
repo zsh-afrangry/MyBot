@@ -1,9 +1,24 @@
 import assert from 'node:assert/strict';
+import {spawnSync} from 'node:child_process';
 import {mkdtempSync, mkdirSync, rmSync, symlinkSync, writeFileSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {test} from 'node:test';
+import {fileURLToPath} from 'node:url';
 import {classifyHealth, deploymentFailures, failureDiagnostic, fixtureCleanup, fixtureReference} from './scenario-reporting.mjs';
+
+test('the due reminder selector rejects incompatible targets before starting a scenario', () => {
+  const script = fileURLToPath(new URL('../../scripts/scenario-acceptance.mjs', import.meta.url));
+  for (const args of [
+    ['--target', 'production', '--scenario', 'deployment', '--due'],
+    ['--target', 'isolated', '--scenario', 'coding', '--due'],
+    ['--target', 'isolated', '--scenario', 'confirmation', '--due', '--diagnostic-fault', 'gateway-start'],
+  ]) {
+    const result = spawnSync(process.execPath, [script, ...args], {encoding: 'utf8', timeout: 10000});
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /--due requires/);
+  }
+});
 
 test('production health separates historical Cron failures without hiding either failure', () => {
   const cronFailure = 'Cron job fixture last run failed';
