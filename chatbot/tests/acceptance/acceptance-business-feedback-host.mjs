@@ -178,7 +178,10 @@ async function acceptImages() {
     assert.equal(event.data.notification.clientDelivery, 'unknown');
     return event.data;
   }
-  const empty = await turn('发一张测试甲速度大于一千的配装图。', [imageCall(result => {
+  const emptyRequest = realModel
+    ? '请用发图工具 e7_image 尝试发一张测试甲速度大于一千的配装图。即使没有样本也请用它核对发图结果，不要发不符合筛选的图。'
+    : '发一张测试甲速度大于一千的配装图。';
+  const empty = await turn(emptyRequest, [imageCall(result => {
     assert.equal(result.error.code, 'no_build_samples');
     assert.equal(result.feedback?.status, 'skipped');
   }, {filters: {minStats: {spd: 1000}}})]);
